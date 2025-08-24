@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+  <title>Relação de Notas Fiscais</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* Estilo Apple - Variáveis de cores e estilos */
+    :root {
+      --bg: #f5f5f7;
+      --fg: #1d1d1f;
+      --primary: #0071e3;
+      --primary-dark: #006edb;
+      --ok: #34c759;
+      --ok-dark: #2c9e48;
+      --muted: #86868b;
+      --card: #ffffff;
+      --border: #d2d2d7;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      --whatsapp: #25D366;
+      --radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.47059;
+      font-weight: 400;
+      letter-spacing: -0.022em;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.003em;
+      color: #1d1d1f;
+      animation: fadeInDown 0.6s ease;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      animation: fadeInUp 0.6s ease;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .campo {
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #515154;
+      margin: 0 0 8px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    /* Inputs no estilo Apple */
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 15px;
+      background: #ffffff;
+      transition: var(--transition);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      color: #1d1d1f;
+    }
+
+    input:hover, select:hover, textarea:hover {
+      border-color: #a2a2a8;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+      outline: 0;
+    }
+
+    #forn, #fornEdit {
+      text-transform: uppercase;
+    }
+
+    #forn::placeholder, #fornEdit::placeholder {
+      text-transform: initial;
+    }
+
+    /* Estilo para sugestões (datalist) */
+    input[list] {
+      position: relative;
+    }
+
+    datalist {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 5px;
+    }
+
+    datalist option {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    /* Estilo do campo de fotos e miniaturas */
+    .file-input-label {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #ffffff;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 15px;
+      color: #515154;
+      text-align: center;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary);
+      background: rgba(0, 123, 255, 0.04);
+    }
+
+    .file-input-label.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+    }
+
+    .file-input-label i {
+      margin-right: 8px;
+      color: var(--primary);
+    }
+
+    #fotos {
+      display: none;
+    }
+
+    #miniaturas-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    #miniaturas-container img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    #miniaturas-container img:hover {
+      transform: scale(1.05);
+    }
+
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .status-container .hint {
+      margin-top: 0;
+    }
+
+    /* Botões com Estilo Apple */
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .actions button {
+      flex: 1;
+      padding: 14px 20px;
+      border: 0;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 15px;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      letter-spacing: -0.01em;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #salvarBtn {
+      background: var(--ok);
+      color: #fff;
+    }
+
+    #salvarBtn:hover {
+      background: var(--ok-dark);
+    }
+
+    #gerenciarBtn {
+      background: #515154;
+      color: #fff;
+    }
+
+    #gerenciarBtn:hover {
+      background: #424245;
+    }
+
+    #exportBtn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    #exportBtn:hover {
+      background: var(--primary-dark);
+    }
+
+    #limparBtn {
+      background: rgba(0, 0, 0, 0.04);
+      color: #424245;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    #limparBtn:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    #saida {
+      width: 100%;
+      height: 200px;
+      margin-top: 22px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      border: 1px dashed #cfd6df;
+      border-radius: var(--radius);
+      padding: 16px;
+      background: #fbfcfe;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    select {
+      padding: 14px 16px;
+    }
+
+    /* Estilos do Modal (Pop-up) no estilo Apple */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal-content {
+      background-color: var(--card);
+      margin: 10% auto;
+      padding: 0;
+      border-radius: 14px;
+      max-width: 500px;
+      position: relative;
+      animation: slideInTop 0.3s;
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    .close:hover, .close:focus {
+      color: #000;
+      text-decoration: none;
+    }
+
+    #lista-notas-pendentes {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nota-item {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .nota-item:hover {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .nota-item:last-child {
+      border-bottom: none;
+    }
+
+    .nota-info {
+      font-weight: 500;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .nota-info span {
+      font-weight: normal;
+      font-size: 12px;
+      color: #777;
+    }
+
+    .nota-enviada .nota-info {
+      color: var(--ok);
+    }
+
+    .nota-enviada .nota-info i {
+      margin-left: 8px;
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .actions-item {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .actions-item button {
+      height: 38px;
+      width: 38px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+
+    .actions-item .edit-btn, .actions-item .delete-btn {
+      background: #f0f2f5;
+      color: #5a6472;
+    }
+
+    .actions-item .edit-btn:hover, .actions-item .delete-btn:hover {
+      background: #e0e2e5;
+    }
+
+    .actions-item .whatsapp-btn {
+      background: var(--whatsapp);
+      color: #fff;
+    }
+
+    .actions-item .whatsapp-btn:hover {
+      background: #128C7E;
+    }
+
+    .actions-item i {
+      font-size: 18px;
+    }
+
+    /* Estilos para o painel de edição */
+    .edit-panel {
+      display: none;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      margin-top: 10px;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .edit-panel.show {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .edit-panel .campo {
+      margin-bottom: 0;
+    }
+
+    .edit-fields-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .edit-fields-row .campo {
+      flex: 1 1 30%;
+    }
+
+    .edit-fields-row input, .edit-fields-row select {
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    /* Popup (toast) - Estilo Apple */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      display: none;
+      font-size: 14px;
+      z-index: 9999;
+      animation: toastIn 0.3s ease;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    /* Rodapé */
+    footer {
+      margin-top: 28px;
+      text-align: center;
+      color: #5a6472;
+      font-size: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      letter-spacing: 0.4px;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    }
+
+    footer b {
+      font-weight: 600;
+    }
+
+    /* Animações */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideInTop {
+      from {
+        transform: translateY(-30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    @media (max-width: 734px) {
+      body {
+        padding: 16px;
+        font-size: 16px; /* Melhor legibilidade em mobile */
+      }
+      
+      .wrap {
+        max-width: 100%;
+      }
+      
+      h1 {
+        font-size: 24px;
+        margin-bottom: 22px;
+      }
+      
+      .card {
+        padding: 20px;
+      }
+      
+      .actions {
+        flex-direction: column;
+      }
+      
+      .actions button {
+        width: 100%;
+      }
+      
+      .modal-content {
+        margin: 20% 16px;
+        width: auto;
+      }
+      
+      .edit-fields-row {
+        flex-direction: column;
+        gap: 0;
+      }
+      
+      input, select, textarea {
+        padding: 16px; /* Área de toque maior para mobile */
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Relação de Notas Fiscais</h1>
+
+    <div class="card">
+      <div class="campo">
+        <label for="data">Data</label>
+        <div class="data-container">
+          <input type="text" id="data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="nf">NF</label>
+        <input type="text" id="nf" inputmode="numeric" placeholder="Número da Nota Fiscal" autocomplete="off" />
+      </div>
+
+      <div class="campo">
+        <label for="venc">Vencimento</label>
+        <div class="data-container">
+          <input type="text" id="venc" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="valor">Valor Total</label>
+        <input id="valor" type="text" inputmode="decimal" pattern="[0-9.,]*" placeholder="Ex.: 1.200,50" />
+      </div>
+
+      <div class="campo">
+        <label for="forn">Fornecedor</label>
+        <input type="text" id="forn" placeholder="Nome do fornecedor" autocomplete="off" list="fornecedores-sugeridos" />
+        <datalist id="fornecedores-sugeridos"></datalist>
+      </div>
+
+      <div class="campo">
+        <label for="obs">Observações</label>
+        <select id="obs">
+          <option value="">Recurso a ser pago</option>
+          <option value="C/C CTI">C/C CTI</option>
+          <option value="C/C SANTA CASA">C/C SANTA CASA</option>
+          <option value="Recurso Proprio Santa Casa">Recurso Proprio Santa Casa</option>
+          <option value="Recurso Proprio CTI">Recurso Proprio CTI</option>
+          <option value="PAGO">PAGO</option>
+        </select>
+      </div>
+      
+      <div class="campo">
+        <label for="fotos">Anexar Imagens</label>
+        <label for="fotos" class="file-input-label">
+          <i class="fas fa-camera"></i> Selecionar Imagens
+        </label>
+        <input type="file" id="fotos" multiple accept="image/*" />
+        <div class="status-container">
+            <span class="hint" id="fileCountHint">Nenhuma imagem acumulada.</span>
+        </div>
+        <div id="miniaturas-container"></div>
+      </div>
+
+      <div class="actions">
+        <button id="salvarBtn" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar Nota</button>
+        <button id="gerenciarBtn" onclick="abrirModalGerenciar()"><i class="fas fa-list-check"></i> Gerenciar Notas</button>
+        <button id="exportBtn" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar Texto</button>
+        <button id="limparBtn" onclick="limpar()"><i class="fas fa-trash"></i> Limpar Tudo</button>
+      </div>
+
+      <textarea id="saida" readonly placeholder="O texto para sua planilha aparecerá aqui..."></textarea>
+    </div>
+
+    <footer>
+      <span>— Desenvolvido por <b>Leandro Mendonça</b> —</span>
+    </footer>
+  </div>
+  
+  <div id="modalGerenciar" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Notas Salvas</h2>
+        <span class="close" onclick="fecharModal('modalGerenciar')">&times;</span>
+      </div>
+      <ul id="lista-notas-pendentes"></ul>
+      <p class="hint" style="text-align:center; margin-top: 20px; padding: 0 24px 20px;">Clique em "Compartilhar" para enviar individualmente.</p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">✅ Linhas copiadas! Agora é só colar no Excel.</div>
+
+<script>
+  let linhas = [];
+  let fotosAcumuladas = [];
+  const notasPendentes = [];
+  
+  // Elementos do DOM
+  const dataEl = document.getElementById('data');
+  const nfEl = document.getElementById('nf');
+  const vencEl = document.getElementById('venc');
+  const valorEl = document.getElementById('valor');
+  const fornEl = document.getElementById('forn');
+  const obsEl = document.getElementById('obs');
+  const saidaEl = document.getElementById('saida');
+  const fotosEl = document.getElementById('fotos');
+  const fileLabelEl = document.querySelector('.file-input-label');
+  const fileCountHintEl = document.getElementById('fileCountHint');
+  const miniaturasContainer = document.getElementById('miniaturas-container');
+  const modalGerenciar = document.getElementById('modalGerenciar');
+  const listaNotasPendentes = document.getElementById('lista-notas-pendentes');
+  const obsOptions = Array.from(obsEl.options).map(o => o.value);
+
+  // Elementos para sugestão de fornecedores
+  const fornDatalist = document.getElementById('fornecedores-sugeridos');
+  let fornecedoresSugeridos = [];
+
+  // --- Funções de Estado (localStorage) ---
+  function carregarFornecedores() {
+      const savedFornecedores = localStorage.getItem('fornecedores');
+      if (savedFornecedores) {
+          fornecedoresSugeridos = JSON.parse(savedFornecedores);
+          popularDatalist(fornDatalist);
+      }
+  }
+  function salvarFornecedores() {
+      localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
+  }
+  function adicionarFornecedor(forn) {
+      if (forn && !fornecedoresSugeridos.includes(forn)) {
+          fornecedoresSugeridos.push(forn);
+          salvarFornecedores();
+          popularDatalist(fornDatalist);
+      }
+  }
+  function popularDatalist(datalistEl) {
+      datalistEl.innerHTML = '';
+      fornecedoresSugeridos.forEach(forn => {
+          const option = document.createElement('option');
+          option.value = forn;
+          datalistEl.appendChild(option);
+      });
+  }
+
+  // --- Funções de Animação e Utilitárias ---
+  function animateButton(btn, newText, newIconClass, originalText) {
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `<i class="${newIconClass}"></i> ${newText}`;
+    setTimeout(() => {
+      btn.innerHTML = originalHTML;
+    }, 1500);
+  }
+  function fmtData(iso) {
+    if (!iso) return '';
+    return iso;
+  }
+  function getLinha(nota) {
+    return [
+      fmtData(nota.data), nota.nf, fmtData(nota.vencimento), nota.valor, "", nota.fornecedor, "", "", nota.obs
+    ].join("\t");
+  }
+  function rebuildSaida() {
+      linhas.length = 0;
+      notasPendentes.forEach(nota => {
+          linhas.push(getLinha(nota));
+      });
+      saidaEl.value = linhas.join("\n");
+  }
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(()=> t.style.display='none', 2200);
+  }
+  
+  // --- Formatação de Data ao Digitar ---
+  function formatarData(input) {
+    let value = input.value.replace(/\D/g, '');
+    let formattedValue = '';
+    
+    if (value.length > 0) {
+      formattedValue += value.substring(0, 2);
+    }
+    if (value.length > 2) {
+      formattedValue += '/' + value.substring(2, 4);
+    }
+    if (value.length > 4) {
+      formattedValue += '/' + value.substring(4, 8);
+    }
+    input.value = formattedValue;
+  }
+
+  // --- Funções Principais ---
+  function salvarNota() {
+    const fornecedor = fornEl.value.trim().toUpperCase();
+
+    if (!fornecedor) {
+      toast("Por favor, preencha o Fornecedor.");
+      return;
+    }
+    
+    adicionarFornecedor(fornecedor);
+
+    const notaObj = {
+      nf: nfEl.value.trim(),
+      fornecedor: fornecedor,
+      vencimento: vencEl.value.trim(),
+      valor: valorEl.value.trim(),
+      data: dataEl.value.trim(),
+      obs: obsEl.value.trim(),
+      fotos: fotosAcumuladas,
+      enviada: false
+    };
+    notasPendentes.push(notaObj);
+
+    rebuildSaida();
+
+    const dataMantida = dataEl.value;
+    [nfEl, vencEl, valorEl, fornEl, obsEl, fotosEl].forEach(el => el.value = "");
+    fotosAcumuladas = [];
+    dataEl.value = dataMantida;
+    
+    fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
+    fileLabelEl.classList.remove('active');
+    miniaturasContainer.innerHTML = '';
+    
+    toast("✅ Nota salva! Agora você pode começar a próxima.");
+    nfEl.focus();
+  }
+
+  function abrirModalGerenciar() {
+    if (notasPendentes.length === 0) {
+        toast("Nenhuma nota salva para gerenciar.");
+        return;
+    }
+    listaNotasPendentes.innerHTML = '';
+    notasPendentes.forEach((nota, index) => {
+      const li = document.createElement('li');
+      li.classList.add('nota-item');
+      if (nota.enviada) li.classList.add('nota-enviada');
+      li.innerHTML = `
+        <div class="actions-row">
+          <span class="nota-info">${nota.fornecedor} ${nota.nf}
+            ${nota.enviada ? '<i class="fas fa-check-circle"></i>' : ''}
+          </span>
+          <div class="actions-item">
+            ${nota.fotos.length > 0 ? 
+              `<button class="whatsapp-btn" onclick="compartilharNota(notasPendentes[${index}], ${index})">
+                <i class="fab fa-whatsapp"></i>
+              </button>` : `<span style="font-size:12px;color:var(--muted)">Sem fotos</span>`}
+            <button class="edit-btn" onclick="toggleEditPanel(this, ${index})"><i class="fas fa-pen"></i></button>
+            <button class="delete-btn" onclick="deletarNota(${index})"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="edit-panel">
+          <div class="edit-fields-row">
+            <div class="campo">
+                <label for="fornEdit-${index}">Fornecedor</label>
+                <input type="text" id="fornEdit-${index}" value="${nota.fornecedor}" list="fornecedores-sugeridos-edit">
+            </div>
+            <div class="campo">
+                <label for="nfEdit-${index}">NF</label>
+                <input type="text" id="nfEdit-${index}" value="${nota.nf}">
+            </div>
+            <div class="campo">
+                <label for="vencEdit-${index}">Vencimento</label>
+                <input type="text" id="vencEdit-${index}" value="${nota.vencimento}">
+            </div>
+          </div>
+          <div class="edit-fields-row">
+            <div class="campo" style="flex:1;">
+                <label for="valorEdit-${index}">Valor</label>
+                <input type="text" id="valorEdit-${index}" value="${nota.valor}">
+            </div>
+            <div class="campo" style="flex:1;">
+                <label for="obsEdit-${index}">Observações</label>
+                <select id="obsEdit-${index}"></select>
+            </div>
+          </div>
+          <div class="actions">
+            <button style="background:var(--ok);color:#fff; flex: 1;" onclick="salvarEdicao(${index})">
+              <i class="fas fa-save"></i> Salvar
+            </button>
+          </div>
+        </div>
+      `;
+      listaNotasPendentes.appendChild(li);
+      
+      const selectObs = li.querySelector(`#obsEdit-${index}`);
+      obsOptions.forEach(val => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = val || 'Recurso a ser pago';
+          selectObs.appendChild(opt);
+      });
+      selectObs.value = nota.obs;
+    });
+    modalGerenciar.style.display = 'block';
+  }
+
+  function toggleEditPanel(btn, index) {
+      const li = btn.closest('.nota-item');
+      const panel = li.querySelector('.edit-panel');
+      const allPanels = document.querySelectorAll('.edit-panel');
+      
+      allPanels.forEach(p => {
+        if (p !== panel && p.classList.contains('show')) {
+          p.classList.remove('show');
+        }
+      });
+      panel.classList.toggle('show');
+  }
+
+  function salvarEdicao(index) {
+      const li = document.getElementById('lista-notas-pendentes').children[index];
+      const nota = notasPendentes[index];
+      
+      nota.fornecedor = li.querySelector(`#fornEdit-${index}`).value.trim().toUpperCase();
+      nota.nf = li.querySelector(`#nfEdit-${index}`).value.trim();
+      
+      const vencimentoEditado = li.querySelector(`#vencEdit-${index}`).value.trim();
+      nota.vencimento = vencimentoEditado;
+
+      nota.valor = li.querySelector(`#valorEdit-${index}`).value.trim();
+      nota.obs = li.querySelector(`#obsEdit-${index}`).value.trim();
+      
+      adicionarFornecedor(nota.fornecedor);
+
+      rebuildSaida();
+      toggleEditPanel(li.querySelector('.edit-btn'), index);
+      li.querySelector('.nota-info').innerHTML = `${nota.fornecedor} ${nota.nf}`;
+      toast('✅ Nota editada e salva!');
+  }
+
+  function deletarNota(index) {
+    if (confirm("Tem certeza que deseja excluir esta nota?")) {
+      notasPendentes.splice(index, 1);
+      rebuildSaida();
+      listaNotasPendentes.children[index].remove();
+      toast("🗑️ Nota excluída!");
+    }
+  }
+
+  function fecharModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  async function exportar() {
+    if (!saidaEl.value) {
+      toast("Nada para copiar.");
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(saidaEl.value);
+      toast("✅ Linhas copiadas! Agora é só colar no Excel.");
+      const exportBtn = document.getElementById('exportBtn');
+      animateButton(exportBtn, 'Copiado', 'fas fa-check', '<i class="fas fa-clipboard"></i> Copiar Texto');
+    } catch {
+      saidaEl.select();
+      document.execCommand("copy");
+      toast("✅ Linhas copiadas! Agora é só colar no Excel.");
+    }
+  }
+
+  function limpar() {
+    linhas.length = 0;
+    saidaEl.value = "";
+    notasPendentes.length = 0;
+    fotosAcumuladas.length = 0;
+    
+    const camposEntrada = [dataEl, nfEl, vencEl, valorEl, fornEl, obsEl, fotosEl];
+    camposEntrada.forEach(el => el.value = "");
+    
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    dataEl.value = `${day}/${month}/${year}`;
+    
+    fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
+    fileLabelEl.classList.remove('active');
+    miniaturasContainer.innerHTML = '';
+    
+    toast("🗑️ Tudo limpo. Pode começar de novo!");
+    
+    const limparBtn = document.getElementById('limparBtn');
+    animateButton(limparBtn, 'Limpo!', 'fas fa-trash', '<i class="fas fa-trash"></i> Limpar Tudo');
+  }
+
+  async function gerarImagemSeparadora(fornecedor, nf) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const width = 600;
+      const height = 150;
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.fillStyle = '#0b1b31';
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 30px Inter';
+      ctx.textAlign = 'center';
+      
+      const texto = `${fornecedor} ${nf}`;
+      const marcador = `↓`;
+      
+      ctx.fillText(texto, width / 2, height / 2 - 10);
+      
+      ctx.font = '50px sans-serif';
+      ctx.fillText(marcador, width / 2, height / 2 + 50);
+
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  }
+
+  async function compartilharNota(nota, index) {
+    try {
+      if (!navigator.share) {
+        toast("O compartilhamento de arquivos não é suportado pelo seu navegador.");
+        return;
+      }
+
+      const imagemSeparadora = await gerarImagemSeparadora(nota.fornecedor, nota.nf);
+      const arquivosParaCompartilhar = [];
+      
+      arquivosParaCompartilhar.push(new File([imagemSeparadora], 'separador.png', { type: 'image/png' }));
+      
+      for (const foto of nota.fotos) {
+        arquivosParaCompartilhar.push(foto);
+      }
+      
+      if (navigator.canShare({ files: arquivosParaCompartilhar })) {
+        await navigator.share({
+          files: arquivosParaCompartilhar,
+        });
+        
+        notasPendentes[index].enviada = true;
+        abrirModalGerenciar();
+        toast("✅ Conteúdo enviado para o WhatsApp!");
+
+      } else {
+        toast("O compartilhamento de múltiplas fotos não é suportado pelo seu navegador.");
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      toast("Erro ao compartilhar. Tente novamente.");
+    }
+  }
+
+  // --- Inicialização e Event Listeners ---
+  document.addEventListener('DOMContentLoaded', () => {
+      carregarFornecedores();
+      // Define a data de hoje ao carregar a página
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      dataEl.value = `${day}/${month}/${year}`;
+  });
+
+  dataEl.addEventListener('input', (e) => {
+    formatarData(e.target);
+  });
+
+  vencEl.addEventListener('input', (e) => {
+    formatarData(e.target);
+  });
+  
+  fornEl.addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+  
+  fotosEl.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      
+      fotosAcumuladas = fotosAcumuladas.concat(newFiles);
+      
+      fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
+      fileLabelEl.classList.add('active');
+
+      newFiles.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              const img = document.createElement('img');
+              img.src = event.target.result;
+              miniaturasContainer.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+      });
+
+      e.target.value = "";
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+      e.preventDefault();
+      const ordem = [dataEl, nfEl, vencEl, valorEl, fornEl, obsEl];
+      const idx = ordem.indexOf(e.target);
+      if (idx > -1 && idx < ordem.length - 1) {
+        if (e.target === dataEl) {
+          const dataCopiada = dataEl.value;
+          vencEl.value = dataCopiada;
+        }
+        ordem[idx + 1].focus();
+      } else if (e.target === obsEl) {
+        salvarNota();
+      }
+    }
+  });
+</script>
+</body>
+</html>
