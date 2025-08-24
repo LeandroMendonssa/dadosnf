@@ -30,6 +30,15 @@
       --radius: 12px;
       --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
+    
+    /* Dark Mode */
+    .dark-mode {
+      --bg: #1c1c1e;
+      --fg: #f5f5f7;
+      --card: #2c2c2e;
+      --border: #48484a;
+      --muted: #8e8e93;
+    }
 
     * {
       box-sizing: border-box;
@@ -60,7 +69,7 @@
       font-size: 28px;
       font-weight: 600;
       letter-spacing: -0.003em;
-      color: #1d1d1f;
+      color: var(--fg);
       animation: fadeInDown 0.6s ease;
     }
 
@@ -86,7 +95,7 @@
     label {
       display: block;
       font-size: 13px;
-      color: #515154;
+      color: var(--muted);
       margin: 0 0 8px;
       font-weight: 500;
       letter-spacing: -0.01em;
@@ -99,10 +108,10 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 15px;
-      background: #ffffff;
+      background: var(--card);
       transition: var(--transition);
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-      color: #1d1d1f;
+      color: var(--fg);
     }
 
     input:hover, select:hover, textarea:hover {
@@ -113,6 +122,11 @@
       border-color: var(--primary);
       box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
       outline: 0;
+    }
+
+    .dark-mode input, .dark-mode select, .dark-mode textarea {
+      background: var(--card);
+      color: var(--fg);
     }
 
     #forn, #fornEdit {
@@ -132,8 +146,9 @@
       width: 100%;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: #fff;
+      background: var(--card);
       padding: 5px;
+      color: var(--fg);
     }
 
     datalist option {
@@ -147,11 +162,11 @@
       padding: 14px 16px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: #ffffff;
+      background: var(--card);
       cursor: pointer;
       transition: var(--transition);
       font-size: 15px;
-      color: #515154;
+      color: var(--muted);
       text-align: center;
     }
 
@@ -228,6 +243,7 @@
       gap: 8px;
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
       letter-spacing: -0.01em;
+      color: #fff;
     }
 
     button:active {
@@ -236,7 +252,6 @@
 
     #salvarBtn {
       background: var(--ok);
-      color: #fff;
     }
 
     #salvarBtn:hover {
@@ -245,7 +260,6 @@
 
     #gerenciarBtn {
       background: #515154;
-      color: #fff;
     }
 
     #gerenciarBtn:hover {
@@ -254,7 +268,6 @@
 
     #exportBtn {
       background: var(--primary);
-      color: #fff;
     }
 
     #exportBtn:hover {
@@ -263,8 +276,12 @@
 
     #limparBtn {
       background: rgba(0, 0, 0, 0.04);
-      color: #424245;
+      color: var(--fg);
       border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .dark-mode #limparBtn {
+      color: #fff;
     }
 
     #limparBtn:hover {
@@ -282,10 +299,11 @@
       height: 200px;
       margin-top: 22px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      border: 1px dashed #cfd6df;
+      border: 1px dashed var(--border);
       border-radius: var(--radius);
       padding: 16px;
-      background: #fbfcfe;
+      background: var(--bg);
+      color: var(--fg);
       font-size: 13px;
       line-height: 1.4;
     }
@@ -341,9 +359,13 @@
       transition: color 0.2s;
       cursor: pointer;
     }
+    
+    .dark-mode .close {
+      color: var(--muted);
+    }
 
     .close:hover, .close:focus {
-      color: #000;
+      color: var(--fg);
       text-decoration: none;
     }
 
@@ -363,6 +385,10 @@
       background: rgba(0, 0, 0, 0.02);
     }
 
+    .dark-mode .nota-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
     .nota-item:last-child {
       border-bottom: none;
     }
@@ -370,13 +396,13 @@
     .nota-info {
       font-weight: 500;
       font-size: 14px;
-      color: #444;
+      color: var(--fg);
     }
 
     .nota-info span {
       font-weight: normal;
       font-size: 12px;
-      color: #777;
+      color: var(--muted);
     }
 
     .nota-enviada .nota-info {
@@ -407,16 +433,32 @@
       align-items: center;
       justify-content: center;
       border-radius: 8px;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .dark-mode .actions-item button {
+      background: var(--card);
     }
 
     .actions-item .edit-btn, .actions-item .delete-btn {
       background: #f0f2f5;
       color: #5a6472;
+      border: none;
+    }
+    .dark-mode .actions-item .edit-btn, .dark-mode .actions-item .delete-btn {
+      background: #48484a;
+      color: #d2d2d7;
     }
 
     .actions-item .edit-btn:hover, .actions-item .delete-btn:hover {
       background: #e0e2e5;
     }
+    .dark-mode .actions-item .edit-btn:hover, .dark-mode .actions-item .delete-btn:hover {
+      background: #58585a;
+    }
+
 
     .actions-item .whatsapp-btn {
       background: var(--whatsapp);
@@ -435,7 +477,7 @@
     .edit-panel {
       display: none;
       padding: 15px;
-      background-color: #f8f9fa;
+      background-color: var(--bg);
       border-radius: 8px;
       margin-top: 10px;
       transition: all 0.3s ease-in-out;
@@ -492,7 +534,7 @@
     footer {
       margin-top: 28px;
       text-align: center;
-      color: #5a6472;
+      color: var(--muted);
       font-size: 12px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
@@ -503,12 +545,12 @@
     footer b {
       font-weight: 600;
     }
-    
-    /* --- Estilos para o Menu Lateral Retrátil --- */
+
+    /* --- Estilos para o Menu Lateral Retrátil (Histórico) --- */
     #sidebar-menu {
       position: fixed;
       top: 0;
-      left: -280px; /* Esconde o menu fora da tela */
+      left: 0;
       height: 100%;
       width: 280px;
       background-color: rgba(255, 255, 255, 0.9);
@@ -516,14 +558,19 @@
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       z-index: 1000;
       box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transform: translateX(-100%); /* Esconde o menu fora da tela */
       transition: transform 0.3s ease-in-out;
       padding: 16px;
       display: flex;
       flex-direction: column;
     }
+
+    .dark-mode #sidebar-menu {
+      background-color: rgba(44, 44, 46, 0.9);
+    }
     
     #sidebar-menu.show {
-      transform: translateX(280px); /* Move o menu para dentro da tela */
+      transform: translateX(0); /* Move o menu para dentro da tela */
     }
     
     .sidebar-header {
@@ -532,49 +579,14 @@
       align-items: center;
       padding: 12px 0;
       margin-bottom: 20px;
+      position: relative;
     }
-    
-    #sidebar-title {
-      font-size: 32px; /* Título maior, como solicitado */
-      font-weight: 700;
-      letter-spacing: -0.015em;
-      color: var(--fg);
-      margin: 0;
-    }
-    
-    .close-sidebar {
-      font-size: 30px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
-    
-    #lista-notas-antigas {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-      overflow-y: auto;
-    }
-    
-    #lista-notas-antigas li {
-      padding: 12px 16px;
-      border-radius: var(--radius);
-      transition: var(--transition);
-      cursor: pointer;
-    }
-    
-    #lista-notas-antigas li:hover {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Novo botão para abrir o menu */
+
     #open-sidebar-btn {
-      position: fixed;
-      top: 16px;
-      left: 16px;
+      position: absolute;
+      left: -52px;
+      top: 50%;
+      transform: translateY(-50%);
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 50%;
@@ -586,27 +598,94 @@
       font-size: 20px;
       color: var(--primary);
       cursor: pointer;
-      z-index: 1001;
       box-shadow: var(--shadow);
       transition: var(--transition);
     }
-    
     #open-sidebar-btn:hover {
-      transform: scale(1.05);
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .dark-mode #open-sidebar-btn {
+      background: var(--card);
     }
     
-    /* Ajusta o conteúdo principal para a direita quando o menu está aberto */
-    #overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 999;
-      display: none;
-      transition: opacity 0.3s ease;
-      opacity: 0;
+    #sidebar-title {
+      font-size: 26px; /* Título ajustado */
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: var(--fg);
+      margin: 0;
+    }
+
+    .close-sidebar {
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 20px;
+        border-top: 1px solid var(--border);
+        padding-top: 15px;
+    }
+    .sidebar-section h3 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .sidebar-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-list li {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      cursor: pointer;
+      color: var(--fg);
+      font-size: 14px;
+    }
+
+    .sidebar-list li:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    .dark-mode .sidebar-list li:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    .sidebar-list li .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sidebar-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    .sidebar-actions button {
+        flex: 1;
+        padding: 10px;
+        font-size: 14px;
+        height: auto;
+        border-radius: 8px;
+    }
+    #toggle-dark-mode-btn {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--border);
+    }
+    .dark-mode #toggle-dark-mode-btn {
+      background: var(--card);
+      color: var(--fg);
     }
 
     /* Animações */
@@ -644,7 +723,7 @@
     @media (max-width: 734px) {
       body {
         padding: 16px;
-        font-size: 16px; /* Melhor legibilidade em mobile */
+        font-size: 16px;
       }
       
       .wrap {
@@ -679,25 +758,77 @@
       }
       
       input, select, textarea {
-        padding: 16px; /* Área de toque maior para mobile */
+        padding: 16px;
+      }
+
+      #sidebar-menu {
+        width: 100%;
+      }
+      #sidebar-menu.show {
+        transform: translateX(0);
+      }
+      #open-sidebar-btn {
+        top: 16px;
+        left: 16px;
+        transform: translateY(0%);
       }
     }
   </style>
 </head>
 <body>
-  <button id="open-sidebar-btn" onclick="toggleSidebar()">
-    <i class="fas fa-bars"></i>
-  </button>
   
   <aside id="sidebar-menu">
     <div class="sidebar-header">
-      <h2 id="sidebar-title">Notas Antigas</h2>
+      <h2 id="sidebar-title">Histórico</h2>
+      <button id="open-sidebar-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
       <button class="close-sidebar" onclick="toggleSidebar()">&times;</button>
     </div>
-    <ul id="lista-notas-antigas">
-      <li>Nota Antiga 1</li>
-      <li>Nota Antiga 2</li>
-    </ul>
+    
+    <div class="sidebar-section">
+      <h3>Pedidos & Recursos</h3>
+      <div class="campo" style="margin-bottom: 10px;">
+        <label for="pedido-num">Nº do Pedido</label>
+        <input type="text" id="pedido-num" placeholder="Ex: 1245">
+      </div>
+      <div class="campo" style="margin-bottom: 10px;">
+        <label for="pedido-recurso">Recurso</label>
+        <select id="pedido-recurso">
+          <option value="">Selecione...</option>
+          <option value="Santa Casa">Santa Casa</option>
+          <option value="CTI">CTI</option>
+        </select>
+      </div>
+      <button id="add-pedido-btn" class="actions-item" style="width: 100%; background: var(--ok); color: #fff; padding: 10px 15px; border-radius: var(--radius);"><i class="fas fa-plus"></i> Adicionar</button>
+      <ul id="lista-pedidos" class="sidebar-list" style="margin-top: 10px;"></ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Fornecedores</h3>
+      <div class="campo" style="margin-bottom: 10px;">
+        <label for="forn-manage">Gerenciar Fornecedores</label>
+        <input type="text" id="forn-manage" placeholder="Adicionar novo fornecedor">
+      </div>
+      <ul id="lista-fornecedores-manage" class="sidebar-list"></ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Opções</h3>
+      <div class="sidebar-actions">
+          <button id="toggle-dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Modo Escuro</button>
+          <button id="export-backup-btn" class="actions-item" style="background: #515154; color: #fff;" onclick="exportData()"><i class="fas fa-file-export"></i> Backup</button>
+          <button id="import-backup-btn" class="actions-item" style="background: var(--primary); color: #fff;" onclick="document.getElementById('file-input-backup').click()"><i class="fas fa-file-import"></i> Restaurar</button>
+          <input type="file" id="file-input-backup" accept=".json" style="display:none;" onchange="importData(event)">
+      </div>
+    </div>
+    
+    <div class="sidebar-section" style="flex-grow: 1;">
+      <h3>Notas no Histórico</h3>
+      <ul id="lista-historico" class="sidebar-list"></ul>
+      <div class="sidebar-actions">
+        <button id="limpar-historico-btn" class="actions-item" style="background: #b33939; color: #fff;" onclick="limparHistorico()"><i class="fas fa-trash-alt"></i> Limpar Histórico</button>
+      </div>
+    </div>
+
   </aside>
 
   <div class="wrap">
@@ -789,7 +920,10 @@
 <script>
   let linhas = [];
   let fotosAcumuladas = [];
-  const notasPendentes = [];
+  let notasPendentes = [];
+  let historicoNotas = [];
+  let fornecedoresSugeridos = [];
+  let pedidosRecursos = {};
   
   // Elementos do DOM
   const dataEl = document.getElementById('data');
@@ -806,29 +940,51 @@
   const modalGerenciar = document.getElementById('modalGerenciar');
   const listaNotasPendentes = document.getElementById('lista-notas-pendentes');
   const obsOptions = Array.from(obsEl.options).map(o => o.value);
-
-  // Elementos para sugestão de fornecedores
   const fornDatalist = document.getElementById('fornecedores-sugeridos');
-  let fornecedoresSugeridos = [];
-
+  const listaHistoricoEl = document.getElementById('lista-historico');
+  const listaPedidosEl = document.getElementById('lista-pedidos');
+  const listaFornManageEl = document.getElementById('lista-fornecedores-manage');
+  const fornManageInput = document.getElementById('forn-manage');
+  const addPedidoBtn = document.getElementById('add-pedido-btn');
+  const pedidoNumInput = document.getElementById('pedido-num');
+  const pedidoRecursoSelect = document.getElementById('pedido-recurso');
+  
   // --- Funções de Estado (localStorage) ---
-  function carregarFornecedores() {
-      const savedFornecedores = localStorage.getItem('fornecedores');
-      if (savedFornecedores) {
-          fornecedoresSugeridos = JSON.parse(savedFornecedores);
-          popularDatalist(fornDatalist);
+  function carregarEstado() {
+      const savedForn = localStorage.getItem('fornecedores');
+      if (savedForn) fornecedoresSugeridos = JSON.parse(savedForn);
+      popularDatalist(fornDatalist);
+      
+      const savedHistorico = localStorage.getItem('historicoNotas');
+      if (savedHistorico) historicoNotas = JSON.parse(savedHistorico);
+      popularListaHistorico();
+      
+      const savedPedidos = localStorage.getItem('pedidosRecursos');
+      if (savedPedidos) pedidosRecursos = JSON.parse(savedPedidos);
+      popularListaPedidos();
+
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+          document.body.classList.add('dark-mode');
       }
   }
-  function salvarFornecedores() {
+
+  function salvarEstado() {
       localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
+      localStorage.setItem('historicoNotas', JSON.stringify(historicoNotas));
+      localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos));
   }
+
   function adicionarFornecedor(forn) {
-      if (forn && !fornecedoresSugeridos.includes(forn)) {
-          fornecedoresSugeridos.push(forn);
-          salvarFornecedores();
+      const fornUpper = forn.trim().toUpperCase();
+      if (fornUpper && !fornecedoresSugeridos.includes(fornUpper)) {
+          fornecedoresSugeridos.push(fornUpper);
+          salvarEstado();
           popularDatalist(fornDatalist);
+          popularListaFornecedores();
       }
   }
+
   function popularDatalist(datalistEl) {
       datalistEl.innerHTML = '';
       fornecedoresSugeridos.forEach(forn => {
@@ -836,6 +992,34 @@
           option.value = forn;
           datalistEl.appendChild(option);
       });
+  }
+
+  function popularListaHistorico() {
+    listaHistoricoEl.innerHTML = '';
+    historicoNotas.forEach(nota => {
+      const li = document.createElement('li');
+      li.textContent = `${nota.fornecedor} - ${nota.nf}`;
+      li.classList.add('nota-item');
+      listaHistoricoEl.appendChild(li);
+    });
+  }
+
+  function popularListaPedidos() {
+    listaPedidosEl.innerHTML = '';
+    for (const pedido in pedidosRecursos) {
+      const li = document.createElement('li');
+      li.innerHTML = `Pedido **${pedido}**: ${pedidosRecursos[pedido]} <button onclick="deletarPedido('${pedido}')" style="background: none; border: none; color: #b33939; font-size: 14px;"><i class="fas fa-times-circle"></i></button>`;
+      listaPedidosEl.appendChild(li);
+    }
+  }
+
+  function popularListaFornecedores() {
+    listaFornManageEl.innerHTML = '';
+    fornecedoresSugeridos.forEach(forn => {
+      const li = document.createElement('li');
+      li.innerHTML = `${forn} <button onclick="deletarFornecedor('${forn}')" style="background: none; border: none; color: #b33939; font-size: 14px;"><i class="fas fa-times-circle"></i></button>`;
+      listaFornManageEl.appendChild(li);
+    });
   }
 
   // --- Funções de Animação e Utilitárias ---
@@ -870,7 +1054,6 @@
     window.__toastTimer = setTimeout(()=> t.style.display='none', 2200);
   }
   
-  // --- Formatação de Data ao Digitar ---
   function formatarData(input) {
     let value = input.value.replace(/\D/g, '');
     let formattedValue = '';
@@ -1061,9 +1244,17 @@
   }
 
   function limpar() {
+    if (notasPendentes.length > 0) {
+      historicoNotas = historicoNotas.concat(notasPendentes);
+      notasPendentes = [];
+      salvarEstado();
+      popularListaHistorico();
+      toast("🗑️ Notas movidas para o Histórico.");
+    } else {
+      toast("Nenhuma nota para limpar. Tudo pronto para começar!");
+    }
     linhas.length = 0;
     saidaEl.value = "";
-    notasPendentes.length = 0;
     fotosAcumuladas.length = 0;
     
     const camposEntrada = [dataEl, nfEl, vencEl, valorEl, fornEl, obsEl, fotosEl];
@@ -1079,10 +1270,8 @@
     fileLabelEl.classList.remove('active');
     miniaturasContainer.innerHTML = '';
     
-    toast("🗑️ Tudo limpo. Pode começar de novo!");
-    
     const limparBtn = document.getElementById('limparBtn');
-    animateButton(limparBtn, 'Limpo!', 'fas fa-trash', '<i class="fas fa-trash"></i> Limpar Tudo');
+    animateButton(limparBtn, 'Movido!', 'fas fa-check', '<i class="fas fa-trash"></i> Limpar Tudo');
   }
 
   async function gerarImagemSeparadora(fornecedor, nf) {
@@ -1097,7 +1286,7 @@
       ctx.fillRect(0, 0, width, height);
       
       ctx.fillStyle = '#fff';
-      ctx.font = 'bold 30px Inter';
+      ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'center';
       
       const texto = `${fornecedor} ${nf}`;
@@ -1145,16 +1334,116 @@
     }
   }
   
-  // Função para abrir/fechar o menu lateral
+  // --- Novas Funções ---
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar-menu');
     sidebar.classList.toggle('show');
+    if (sidebar.classList.contains('show')) {
+      popularListaHistorico();
+      popularListaFornecedores();
+      popularListaPedidos();
+    }
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    if (document.body.classList.contains('dark-mode')) {
+      localStorage.setItem('theme', 'dark');
+      document.getElementById('toggle-dark-mode-btn').innerHTML = '<i class="fas fa-sun"></i> Modo Claro';
+    } else {
+      localStorage.setItem('theme', 'light');
+      document.getElementById('toggle-dark-mode-btn').innerHTML = '<i class="fas fa-moon"></i> Modo Escuro';
+    }
+  }
+
+  function limparHistorico() {
+    if (confirm("Tem certeza que deseja limpar todo o Histórico de notas? Esta ação não pode ser desfeita.")) {
+      historicoNotas = [];
+      salvarEstado();
+      popularListaHistorico();
+      toast("Histórico limpo com sucesso!");
+    }
+  }
+
+  function adicionarPedido() {
+    const pedidoNum = pedidoNumInput.value.trim();
+    const recurso = pedidoRecursoSelect.value;
+    if (pedidoNum && recurso) {
+        pedidosRecursos[pedidoNum] = recurso;
+        salvarEstado();
+        popularListaPedidos();
+        pedidoNumInput.value = '';
+        pedidoRecursoSelect.value = '';
+        toast(`Pedido ${pedidoNum} associado a ${recurso}!`);
+    } else {
+        toast('Preencha o número do pedido e selecione um recurso.');
+    }
+  }
+
+  function deletarPedido(pedido) {
+    if (confirm(`Tem certeza que deseja excluir o pedido ${pedido}?`)) {
+      delete pedidosRecursos[pedido];
+      salvarEstado();
+      popularListaPedidos();
+      toast(`Pedido ${pedido} excluído.`);
+    }
+  }
+
+  function deletarFornecedor(forn) {
+    if (confirm(`Tem certeza que deseja excluir o fornecedor ${forn}?`)) {
+      fornecedoresSugeridos = fornecedoresSugeridos.filter(f => f !== forn);
+      salvarEstado();
+      popularDatalist(fornDatalist);
+      popularListaFornecedores();
+      toast(`Fornecedor ${forn} excluído.`);
+    }
+  }
+
+  function exportData() {
+    const data = {
+      historicoNotas: historicoNotas,
+      fornecedoresSugeridos: fornecedoresSugeridos,
+      pedidosRecursos: pedidosRecursos
+    };
+    const dataStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_notas_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Backup salvo com sucesso!");
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (importedData.historicoNotas && importedData.fornecedoresSugeridos && importedData.pedidosRecursos) {
+          historicoNotas = importedData.historicoNotas;
+          fornecedoresSugeridos = importedData.fornecedoresSugeridos;
+          pedidosRecursos = importedData.pedidosRecursos;
+          salvarEstado();
+          carregarEstado();
+          toast("Dados restaurados com sucesso!");
+        } else {
+          toast("Arquivo de backup inválido.");
+        }
+      } catch (error) {
+        toast("Erro ao ler o arquivo de backup.");
+      }
+    };
+    reader.readAsText(file);
   }
 
   // --- Inicialização e Event Listeners ---
   document.addEventListener('DOMContentLoaded', () => {
-      carregarFornecedores();
-      // Define a data de hoje ao carregar a página
+      carregarEstado();
       const today = new Date();
       const day = String(today.getDate()).padStart(2, '0');
       const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1177,12 +1466,9 @@
   fotosEl.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      
       fotosAcumuladas = fotosAcumuladas.concat(newFiles);
-      
       fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
       fileLabelEl.classList.add('active');
-
       newFiles.forEach(file => {
           const reader = new FileReader();
           reader.onload = (event) => {
@@ -1192,10 +1478,18 @@
           };
           reader.readAsDataURL(file);
       });
-
       e.target.value = "";
     }
   });
+
+  fornManageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      adicionarFornecedor(e.target.value);
+      e.target.value = '';
+    }
+  });
+
+  addPedidoBtn.addEventListener('click', adicionarPedido);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
