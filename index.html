@@ -418,13 +418,23 @@
         transition: color 0.2s;
         cursor: pointer;
     }
+
+    /* Correção para o botão de fechar */
+    .close-popup, .modal-preview-fechar {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
     
     .close-popup:hover, .close-popup:focus {
         color: var(--text-dark);
         text-decoration: none;
     }
     
-    #lista-notas-pendentes, #lista-historico, #lista-pedidos, #lista-fornecedores-manage {
+    #lista-notas-pendentes, #lista-historico, #lista-pedidos, #lista-fornecedores-manage, #lista-observacoes-manage {
       list-style: none;
       padding: 0;
       margin: 0;
@@ -1032,13 +1042,13 @@
       }
     }
 
-    .fornecedor-input-group {
+    .fornecedor-input-group, .observacoes-input-group {
         display: flex;
         gap: 10px;
         align-items: center;
     }
 
-    .fornecedor-input-group input {
+    .fornecedor-input-group input, .observacoes-input-group input {
         flex: 1;
     }
 
@@ -1050,13 +1060,13 @@
         color: var(--text-dark);
     }
     
-    #lista-fornecedores-manage {
+    #lista-fornecedores-manage, #lista-observacoes-manage {
         margin-top: 20px;
         padding-top: 10px;
         border-top: 1px solid var(--border-color);
     }
     
-    #lista-fornecedores-manage li {
+    #lista-fornecedores-manage li, #lista-observacoes-manage li {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -1071,11 +1081,11 @@
         transition: background 0.2s ease;
     }
     
-    #lista-fornecedores-manage li:hover {
+    #lista-fornecedores-manage li:hover, #lista-observacoes-manage li:hover {
         background: var(--border-color);
     }
 
-    #lista-fornecedores-manage button {
+    #lista-fornecedores-manage button, #lista-observacoes-manage button {
         background: none;
         border: none;
         color: var(--button-danger);
@@ -1092,6 +1102,7 @@
     <div class="left-icons">
       <button id="fornecedores-btn" onclick="togglePopup('fornecedores-popup')" title="Fornecedores"><i class="fas fa-truck"></i></button>
       <button id="pedidos-btn" onclick="togglePopup('pedidos-popup')" title="Pedidos"><i class="fas fa-box"></i></button>
+      <button id="observacoes-btn" onclick="togglePopup('observacoes-popup')" title="Observações"><i class="fas fa-comment-dots"></i></button>
       <button id="gerenciar-btn-top" onclick="togglePopup('gerenciar-notas-popup')" title="Gerenciar Notas"><i class="fas fa-list-check"></i></button>
       <button id="historico-btn" onclick="togglePopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
     </div>
@@ -1139,13 +1150,6 @@
       <div class="campo">
         <label for="obs">Observações</label>
         <select id="obs">
-          <option value="">Recurso a ser pago</option>
-          <option value="C/C CTI">C/C CTI</option>
-          <option value="C/C SANTA CASA">C/C SANTA CASA</option>
-          <option value="Recurso Proprio Santa Casa">Recurso Proprio Santa Casa</option>
-          <option value="Recurso Proprio CTI">Recurso Proprio CTI</option>
-          <option value="PAGO">PAGO</option>
-          <option value="REMESSA">REMESSA</option>
         </select>
       </div>
       
@@ -1243,7 +1247,24 @@
       </div>
     </div>
   </div>
-  
+
+  <div id="observacoes-popup" class="popup-modal">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2>Observações e Recursos</h2>
+        <span class="close-popup" onclick="closePopup('observacoes-popup')">&times;</span>
+      </div>
+      <div class="menu-section">
+        <h3 class="manage-section-title">Adicionar Nova Observação</h3>
+        <div class="observacoes-input-group">
+          <input type="text" id="obs-manage" placeholder="Ex: C/C UPA">
+          <button class="actions-button" style="background: var(--button-primary); color: white; border: none; padding: 10px 15px; border-radius: 8px;" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i></button>
+        </div>
+        <ul id="lista-observacoes-manage"></ul>
+      </div>
+    </div>
+  </div>
+
   <div id="modalPreview" class="modal-preview">
     <span class="modal-preview-fechar" onclick="fecharPreview()">&times;</span>
     <img class="modal-preview-conteudo" id="imgPreview">
@@ -1268,6 +1289,7 @@
   let historicoNotas = [];
   let fotosAcumuladas = [];
   let fornecedoresSugeridos = [];
+  let observacoesSugeridas = []; // Nova variável para as observações
   let pedidosRecursos = {};
   let fotoAtualIndex = 0;
   let fotoAtualFonte = 'acumulada'; // 'acumulada' ou 'nota'
@@ -1301,8 +1323,10 @@
   const pedidoNumInput = document.getElementById('pedido-num');
   const pedidoRecursoSelect = document.getElementById('pedido-recurso');
   
+  const listaObservacoesManageEl = document.getElementById('lista-observacoes-manage'); // Novo elemento
+  const obsManageInput = document.getElementById('obs-manage'); // Novo input
+
   const popups = document.querySelectorAll('.popup-modal');
-  const obsOptions = Array.from(obsEl.options).map(o => o.value);
   
   // Variáveis para o IndexedDB
   const DB_NAME = 'notasdb';
@@ -1439,6 +1463,10 @@
       const savedForn = localStorage.getItem('fornecedores');
       if (savedForn) fornecedoresSugeridos = JSON.parse(savedForn);
       popularDatalist(fornDatalist);
+
+      const savedObs = localStorage.getItem('observacoes'); // Carrega observações
+      if (savedObs) observacoesSugeridas = JSON.parse(savedObs);
+      popularObservacoesList();
       
       const savedPedidos = localStorage.getItem('pedidosRecursos');
       if (savedPedidos) pedidosRecursos = JSON.parse(savedPedidos);
@@ -1465,8 +1493,9 @@
   }
   
   async function salvarEstado() {
-    // Salva fornecedores e pedidos no localStorage
+    // Salva fornecedores, observações e pedidos no localStorage
     localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
+    localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); // Salva observações
     localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos));
   }
   
@@ -1486,6 +1515,15 @@
       }
   }
 
+  function adicionarObservacao(obs) {
+    const obsUpper = obs.trim();
+    if (obsUpper && !observacoesSugeridas.includes(obsUpper)) {
+      observacoesSugeridas.push(obsUpper);
+      salvarEstado();
+      popularObservacoesList();
+    }
+  }
+
   function popularDatalist(datalistEl) {
       datalistEl.innerHTML = '';
       fornecedoresSugeridos.forEach(forn => {
@@ -1493,6 +1531,29 @@
           option.value = forn;
           datalistEl.appendChild(option);
       });
+  }
+
+  function popularObservacoesList() {
+    // Popula a lista suspensa do formulário principal
+    obsEl.innerHTML = '';
+    const placeholderOpt = document.createElement('option');
+    placeholderOpt.value = '';
+    placeholderOpt.textContent = 'Recurso a ser pago';
+    obsEl.appendChild(placeholderOpt);
+    observacoesSugeridas.forEach(obs => {
+      const option = document.createElement('option');
+      option.value = obs;
+      option.textContent = obs;
+      obsEl.appendChild(option);
+    });
+
+    // Popula a lista do modal de gerenciamento
+    listaObservacoesManageEl.innerHTML = '';
+    observacoesSugeridas.sort().forEach(obs => {
+      const li = document.createElement('li');
+      li.innerHTML = `${obs} <button onclick="deletarObservacao('${obs}')"><i class="fas fa-times-circle"></i></button>`;
+      listaObservacoesManageEl.appendChild(li);
+    });
   }
 
   function popularListaPedidos() {
@@ -1586,9 +1647,8 @@
   }
   
   function formatarValor(valor) {
-    if (!valor) return 'N/A';
-    const numero = parseFloat(valor.replace('R$', '').trim().replace(/\./g, '').replace(',', '.'));
-    if (isNaN(numero)) return 'N/A';
+    if (!valor || isNaN(parseFloat(valor.replace(',', '.')))) return 'N/A';
+    const numero = parseFloat(valor.replace(',', '.'));
     return `R$ ${numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
@@ -1596,11 +1656,22 @@
     if (!iso) return '';
     return iso;
   }
+  
   function getLinha(nota) {
+    let vencimentoSaida = nota.vencimento;
+    let obsSaida = nota.obs;
+
+    // Lógica para a modalidade REMESSA
+    if (nota.obs === "REMESSA") {
+      vencimentoSaida = "REMESSA";
+      obsSaida = "Recurso Proprio Santa Casa";
+    }
+
     return [
-      fmtData(nota.data), nota.nf, fmtData(nota.vencimento), nota.valor, "", nota.fornecedor, "", "", nota.obs
+      fmtData(nota.data), nota.nf, vencimentoSaida, nota.valor, "", nota.fornecedor, "", "", obsSaida
     ].join("\t");
   }
+
   function rebuildSaida() {
       let linhas = [];
       notasPendentes.forEach(nota => {
@@ -1608,6 +1679,7 @@
       });
       saidaEl.value = linhas.join("\n");
   }
+  
   function toast(msg){
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -1630,12 +1702,6 @@
       formattedValue += '/' + value.substring(4, 8);
     }
     input.value = formattedValue;
-  }
-
-  function formatarValorInput(e) {
-      let value = e.target.value.replace(/\D/g, '');
-      value = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      e.target.value = value;
   }
   
   function rebuildNotasPendentesList(pagina = 1) {
@@ -1661,6 +1727,7 @@
       
       const li = document.createElement('li');
       li.classList.add('nota-item');
+      li.dataset.noteId = nota.id; // Adicionado para a correção
       if (nota.enviada) li.classList.add('nota-enviada');
       
       let fotoStatusHTML = '';
@@ -1701,12 +1768,15 @@
           </button>
         `;
       }
+      
+      // Implementação da exibição da observação nos cards
+      const obsDisplay = nota.obs ? ` | Obs: ${nota.obs}` : '';
 
       li.innerHTML = `
         <div class="nota-info"><b>${nota.fornecedor} ${nota.nf || ''}</b></div>
         <div class="nota-data">Criada em: ${formatarDataHora(nota.dataCriacao)}</div>
         <div class="nota-detalhes">
-          Venc: ${nota.vencimento || 'N/A'} | Valor: ${formatarValor(nota.valor)}
+          Venc: ${nota.vencimento || 'N/A'} | Valor: ${nota.valor || 'N/A'}${obsDisplay}
         </div>
         <div class="actions-row">
           <div class="actions-item">
@@ -1749,23 +1819,21 @@
       `;
       listaNotasPendentes.appendChild(li);
       
-      const valorEditEl = li.querySelector(`#valorEdit-${globalIndex}`);
-      if (valorEditEl) {
-          valorEditEl.value = nota.valor || '';
-          valorEditEl.addEventListener('input', formatarValorInput);
-      }
-
       const obsSelectEdit = li.querySelector(`#obsEdit-${globalIndex}`);
-      obsOptions.forEach(option => {
+      // Populando a lista de observações no painel de edição
+      const placeholderOpt = document.createElement('option');
+      placeholderOpt.value = '';
+      placeholderOpt.textContent = 'Recurso a ser pago';
+      obsSelectEdit.appendChild(placeholderOpt);
+      observacoesSugeridas.forEach(obs => {
           const optEl = document.createElement('option');
-          optEl.value = option;
-          optEl.textContent = option || 'Recurso a ser pago';
+          optEl.value = obs;
+          optEl.textContent = obs;
           obsSelectEdit.appendChild(optEl);
       });
       obsSelectEdit.value = nota.obs;
 
       reconstruirPainelFotosEdit(globalIndex);
-
     });
     
     criarPaginacao(paginacaoNotasEl, notasPendentes.length, pagina, 'notas');
@@ -1925,6 +1993,8 @@
         popularListaFornecedores();
       } else if (idPopup === 'historico-popup') {
         popularListaHistorico();
+      } else if (idPopup === 'observacoes-popup') {
+        popularObservacoesList();
       }
     }
   }
@@ -1950,27 +2020,32 @@
       panel.classList.toggle('show');
   }
 
-  async function salvarEdicao(index) {
-      const li = document.querySelectorAll('.nota-item')[index % itensPorPagina];
-      const nota = notasPendentes[index];
+  async function salvarEdicao(globalIndex) {
+      const nota = notasPendentes[globalIndex];
+      const panel = document.querySelector(`#gerenciar-notas-popup #lista-notas-pendentes li[data-note-id="${nota.id}"] .edit-panel`);
       
-      nota.fornecedor = li.querySelector(`#fornEdit-${index}`).value.trim().toUpperCase();
-      nota.nf = li.querySelector(`#nfEdit-${index}`).value.trim();
+      if (!panel) {
+          toast('Erro ao encontrar o painel de edição.');
+          return;
+      }
+
+      nota.fornecedor = panel.querySelector(`#fornEdit-${globalIndex}`).value.trim().toUpperCase();
+      nota.nf = panel.querySelector(`#nfEdit-${globalIndex}`).value.trim();
       
-      const vencimentoEditado = li.querySelector(`#vencEdit-${index}`).value.trim();
+      const vencimentoEditado = panel.querySelector(`#vencEdit-${globalIndex}`).value.trim();
       nota.vencimento = vencimentoEditado;
 
-      nota.valor = li.querySelector(`#valorEdit-${index}`).value.trim();
-      nota.obs = li.querySelector(`#obsEdit-${index}`).value.trim();
+      nota.valor = panel.querySelector(`#valorEdit-${globalIndex}`).value.trim();
+      nota.obs = panel.querySelector(`#obsEdit-${globalIndex}`).value.trim();
       
       adicionarFornecedor(nota.fornecedor);
 
       await saveNoteDB(nota);
-      notasPendentes[index] = nota;
       rebuildSaida();
       rebuildNotasPendentesList(paginaAtualNotas);
       toast('✓ Nota editada e salva!');
   }
+
 
   async function deletarNota(index) {
     if (confirm("Tem certeza que deseja excluir esta nota?")) {
@@ -2048,6 +2123,8 @@
     rebuildNotasPendentesList(1);
     
     toast("Conteúdo limpo e notas movidas para o histórico.");
+
+    nfEl.focus(); // Coloca o cursor no campo NF
   }
 
   async function gerarImagemSeparadora(fornecedor, nf) {
@@ -2163,6 +2240,27 @@
       popularListaFornecedores();
       toast(`Fornecedor ${forn} excluído.`);
     }
+  }
+
+  // FUNÇÕES PARA ADICIONAR/DELETAR OBSERVAÇÕES
+  function adicionarObservacaoManage() {
+      const obs = obsManageInput.value.trim();
+      if (obs) {
+          adicionarObservacao(obs);
+          obsManageInput.value = '';
+          toast(`Observação "${obs}" adicionada!`);
+      } else {
+          toast('Digite o nome da observação.');
+      }
+  }
+
+  function deletarObservacao(obs) {
+      if (confirm(`Tem certeza que deseja excluir a observação "${obs}"?`)) {
+          observacoesSugeridas = observacoesSugeridas.filter(o => o !== obs);
+          salvarEstado();
+          popularObservacoesList();
+          toast(`Observação "${obs}" excluída.`);
+      }
   }
 
   function removerFoto(index) {
@@ -2341,6 +2439,8 @@
     miniaturasContainer.innerHTML = '';
     
     fotosEl.value = null;
+
+    nfEl.focus();
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -2365,6 +2465,13 @@
               }
           });
       });
+
+      // Configurar o menu suspenso de observações com as opções salvas
+      const defaultObs = ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"];
+      defaultObs.forEach(obs => adicionarObservacao(obs)); // Adiciona as opções padrão se não existirem
+      popularObservacoesList();
+
+      nfEl.focus();
   });
 
   dataEl.addEventListener('input', (e) => {
@@ -2375,7 +2482,7 @@
     formatarData(e.target);
   });
   
-  valorEl.addEventListener('input', formatarValorInput);
+  // Event listener para o campo de valor removido para permitir vírgula
   
   fornEl.addEventListener('input', (e) => {
     e.target.value = e.target.value.toUpperCase();
@@ -2388,6 +2495,12 @@
   fornManageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       adicionarFornecedorManage();
+    }
+  });
+
+  obsManageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      adicionarObservacaoManage();
     }
   });
 
