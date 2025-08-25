@@ -306,6 +306,17 @@
 
     select {
       padding: 14px 16px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(94, 114, 128)" d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+    
+    body.dark-mode select {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(160, 160, 160)" d="M7 10l5 5 5-5z"/></svg>');
     }
     
     .popup-modal {
@@ -1941,6 +1952,7 @@
     fornEl.focus();
     adicionarFornecedor(nota.fornecedor);
     toast("✅ Nota salva!");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
 
