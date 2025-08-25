@@ -963,10 +963,10 @@
   
   <header class="top-header">
     <div class="left-icons">
-      <button id="fornecedores-btn" onclick="openPopup('fornecedores-popup')" title="Fornecedores"><i class="fas fa-truck"></i></button>
-      <button id="pedidos-btn" onclick="openPopup('pedidos-popup')" title="Pedidos"><i class="fas fa-box"></i></button>
-      <button id="historico-btn" onclick="openPopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
-      <button id="gerenciar-btn-top" onclick="openPopup('gerenciar-notas-popup')" title="Gerenciar Notas"><i class="fas fa-list-check"></i></button>
+      <button id="fornecedores-btn" onclick="togglePopup('fornecedores-popup')" title="Fornecedores"><i class="fas fa-truck"></i></button>
+      <button id="pedidos-btn" onclick="togglePopup('pedidos-popup')" title="Pedidos"><i class="fas fa-box"></i></button>
+      <button id="historico-btn" onclick="togglePopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
+      <button id="gerenciar-btn-top" onclick="togglePopup('gerenciar-notas-popup')" title="Gerenciar Notas"><i class="fas fa-list-check"></i></button>
     </div>
     <div class="right-icons">
       <button id="theme-toggle" onclick="toggleTheme()" title="Alternar tema"><i class="fas fa-moon"></i></button>
@@ -1035,7 +1035,7 @@
         <button id="salvarBtn" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button>
         <button id="exportBtn" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar</button>
         <button id="limparBtn" onclick="limpar()"><i class="fas fa-trash"></i> Limpar</button>
-        <button id="gerenciarBtn" class="full-width" onclick="openPopup('gerenciar-notas-popup')"><i class="fas fa-list-check"></i> Gerenciar Notas</button>
+        <button id="gerenciarBtn" class="full-width" onclick="togglePopup('gerenciar-notas-popup')"><i class="fas fa-list-check"></i> Gerenciar Notas</button>
       </div>
 
       <textarea id="saida" readonly placeholder="O texto para sua planilha aparecerá aqui..."></textarea>
@@ -1556,6 +1556,15 @@
       }
   }
 
+  function togglePopup(idPopup) {
+      const popup = document.getElementById(idPopup);
+      if (popup.style.display === 'flex') {
+          closePopup(idPopup);
+      } else {
+          openPopup(idPopup);
+      }
+  }
+
   function openPopup(idPopup) {
     const popup = document.getElementById(idPopup);
     if (popup) {
@@ -1613,7 +1622,6 @@
 
       rebuildSaida();
       await salvarEstado();
-      toggleEditPanel(li.querySelector('.edit-btn'), index);
       rebuildNotasPendentesList(paginaAtualNotas);
       toast('✅ Nota editada e salva!');
   }
@@ -1664,7 +1672,7 @@
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
     dataEl.value = `${day}/${month}/${year}`;
-    
+
     fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
     fileLabelEl.classList.remove('active');
     miniaturasContainer.innerHTML = '';
