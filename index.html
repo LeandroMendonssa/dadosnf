@@ -22,10 +22,22 @@
       --button-primary: #3498db;
       --button-secondary: #95a5a6;
       --button-success: #2ecc71;
-      --button-danger: #e74c3c;
+      --button-danger: #e74c4c;
       --shadow: rgba(0, 0, 0, 0.1);
       --radius: 12px;
       --transition: all 0.3s ease;
+      
+      /* Novas cores para os botões e status */
+      --button-save: #2ecc71; /* Verde - Salvar */
+      --button-copy: #3498db; /* Azul - Copiar */
+      --button-manage: #5e35b1; /* Roxo Escuro - Gerenciar Notas */
+      --button-clean: #e74c4c; /* Vermelho - Limpar */
+      --status-photos-sent: #2ecc71; /* Verde - Fotos Enviadas (correspondendo ao WhatsApp) */
+      --bg-edit-panel: #f8f9fa; /* Fundo cinza claro para o painel de edição */
+      
+      /* Estilos para a notificação de fotos já enviadas */
+      --sent-notification-bg: #ffffff; /* Fundo branco para a notificação */
+      --sent-notification-text: #2ecc71; /* Texto verde para a notificação */
     }
 
     body.dark-mode {
@@ -35,6 +47,16 @@
       --text-light: #a0a0a0;
       --border-color: #333;
       --shadow: rgba(255, 255, 255, 0.08);
+      
+      /* Novas cores para o modo escuro */
+      --button-save: #2ecc71; 
+      --button-copy: #4fa4e3;
+      --button-manage: #8e62d3;
+      --button-clean: #e74c4c;
+      --status-photos-sent: #2ecc71;
+      --bg-edit-panel: #2a2a2a;
+      --sent-notification-bg: #1e1e1e; /* Fundo da notificação no modo escuro */
+      --sent-notification-text: #2ecc71;
     }
     
     * {
@@ -136,6 +158,23 @@
       text-transform: uppercase;
     }
     
+    .valor-container {
+        position: relative;
+    }
+
+    .valor-prefix {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-light);
+        pointer-events: none;
+    }
+
+    #valor, #valorEdit {
+        padding-left: 16px;
+    }
+    
     .file-input-label {
       display: block;
       padding: 14px 16px;
@@ -149,7 +188,12 @@
       text-align: center;
     }
 
-    .file-input-label:hover {
+    .file-input-label.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .file-input-label:not(.disabled):hover {
       border-color: var(--button-primary);
       background: rgba(52, 152, 219, 0.04);
     }
@@ -224,7 +268,7 @@
     
     .actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-top: 8px;
     }
@@ -245,29 +289,22 @@
       letter-spacing: -0.01em;
       color: #fff;
     }
-    
-    .actions button.full-width {
+
+    .actions button.center {
         grid-column: 1 / -1;
     }
-
+    
     #salvarBtn {
-      background: var(--button-success);
+      background: var(--button-save); 
+      color: #fff;
     }
 
     #salvarBtn:hover {
       opacity: 0.9;
     }
 
-    #gerenciarBtn {
-      background: var(--button-primary);
-    }
-
-    #gerenciarBtn:hover {
-      opacity: 0.9;
-    }
-
     #exportBtn {
-      background: var(--button-secondary);
+      background: var(--button-copy);
       color: #fff;
     }
 
@@ -276,12 +313,21 @@
     }
     
     #limparBtn {
-      background: #6c757d;
+      background: var(--button-clean);
       color: #fff;
     }
 
     #limparBtn:hover {
-      background: #5a6268;
+      opacity: 0.9;
+    }
+    
+    #gerenciarBtn {
+      background: var(--button-manage);
+      color: #fff;
+    }
+
+    #gerenciarBtn:hover {
+      opacity: 0.9;
     }
 
     .hint {
@@ -309,14 +355,16 @@
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(94, 114, 128)" d="M7 10l5 5 5-5z"/></svg>');
+      /* Ajuste da cor da seta para maior visibilidade */
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(44, 62, 80)" d="M7 10l5 5 5-5z"/></svg>');
       background-repeat: no-repeat;
       background-position: right 12px center;
       padding-right: 40px;
     }
     
     body.dark-mode select {
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(160, 160, 160)" d="M7 10l5 5 5-5z"/></svg>');
+        /* Ajuste da cor da seta para maior visibilidade no modo escuro */
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(224, 224, 224)" d="M7 10l5 5 5-5z"/></svg>');
     }
     
     .popup-modal {
@@ -403,11 +451,28 @@
       color: var(--text-dark);
       margin-bottom: 8px;
     }
+    
+    .nota-info b {
+        font-weight: 700;
+    }
+    
+    .nota-data {
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 400;
+        margin-bottom: 8px;
+    }
 
     .nota-detalhes {
       font-size: 12px;
       color: var(--text-light);
       margin-bottom: 8px;
+    }
+    
+    .historico-detalhes {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 8px;
     }
 
     .nota-enviada .nota-info {
@@ -417,7 +482,7 @@
     .nota-enviada .nota-info i {
       margin-left: 8px;
     }
-
+    
     .actions-row {
       display: flex;
       justify-content: space-between;
@@ -427,7 +492,7 @@
     .actions-item {
       display: flex;
       gap: 12px;
-      align-items: center;
+      align-items: center; 
     }
 
     .actions-item button {
@@ -458,6 +523,28 @@
       background: #128C7E;
     }
 
+    .actions-item .edit-btn {
+      color: var(--button-copy);
+    }
+    
+    .actions-item .delete-btn {
+      color: var(--button-danger);
+    }
+
+    .actions-item .sent-btn {
+      background: var(--button-success); /* Fundo verde */
+      color: #fff; /* Ícone branco */
+      border: none;
+      font-weight: bold;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+    }
+    
+    .actions-item .sent-btn:hover {
+      opacity: 0.9;
+    }
+
     .actions-item i {
       font-size: 16px;
     }
@@ -469,12 +556,13 @@
       background: var(--bg-primary);
       border-radius: 6px;
       margin-left: 8px;
+      font-weight: 500;
     }
 
     .edit-panel {
       display: none;
       padding: 15px;
-      background-color: var(--bg-primary);
+      background-color: var(--bg-edit-panel);
       border-radius: var(--radius);
       margin-top: 10px;
       transition: all 0.3s ease-in-out;
@@ -507,6 +595,7 @@
       font-size: 13px;
       width: 100%;
       box-sizing: border-box;
+      background: var(--bg-card);
     }
     
     .edit-panel .actions {
@@ -588,7 +677,7 @@
       background: none;
       border: none;
       font-size: 18px;
-      color: var(--text-dark);
+      color: var(--text-light);
       cursor: pointer;
       padding: 8px;
       border-radius: 8px;
@@ -611,6 +700,10 @@
 
     .top-header #theme-toggle i {
       transition: color 0.3s ease;
+    }
+    
+    body.dark-mode .top-header button {
+      color: var(--text-light);
     }
     
     .pedido-container {
@@ -820,6 +913,37 @@
       from { opacity: 0; transform: translate(-50%, 20px); }
       to { opacity: 1; transform: translate(-50%, 0); }
     }
+    
+    /* Novo estilo para o status de fotos no menu de edição */
+    .fotos-edit-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .fotos-edit-status .hint {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--button-success);
+      margin: 0;
+      padding: 8px 12px;
+      background: rgba(46, 204, 113, 0.1);
+      border-radius: 8px;
+    }
+    
+    /* Novo estilo para a notificação de sucesso */
+    .fotos-enviadas-status {
+        background: var(--sent-notification-bg);
+        color: var(--sent-notification-text);
+        font-weight: 600;
+        text-align: center;
+        padding: 12px 20px;
+        border-radius: var(--radius);
+        margin-top: 10px;
+    }
 
     @media (max-width: 734px) {
       body {
@@ -844,7 +968,7 @@
       .actions {
         grid-template-columns: 1fr;
       }
-      
+
       .actions button {
         width: 100%;
       }
@@ -881,20 +1005,23 @@
       }
       
       .btn-list {
-        position: sticky;
-        bottom: 0;
-        background: var(--bg-card);
         padding: 15px 0;
-        margin-bottom: -10px;
       }
       
       .top-header {
         padding: 0 8px;
         height: 50px;
+        gap: 8px;
       }
-      
-      .top-header .left-icons {
+
+      .top-header .left-icons, .top-header .right-icons {
         gap: 4px;
+        flex-grow: 1;
+        justify-content: flex-start;
+      }
+
+      .top-header .right-icons {
+        justify-content: flex-end;
       }
       
       .top-header button {
@@ -965,8 +1092,8 @@
     <div class="left-icons">
       <button id="fornecedores-btn" onclick="togglePopup('fornecedores-popup')" title="Fornecedores"><i class="fas fa-truck"></i></button>
       <button id="pedidos-btn" onclick="togglePopup('pedidos-popup')" title="Pedidos"><i class="fas fa-box"></i></button>
-      <button id="historico-btn" onclick="togglePopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
       <button id="gerenciar-btn-top" onclick="togglePopup('gerenciar-notas-popup')" title="Gerenciar Notas"><i class="fas fa-list-check"></i></button>
+      <button id="historico-btn" onclick="togglePopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
     </div>
     <div class="right-icons">
       <button id="theme-toggle" onclick="toggleTheme()" title="Alternar tema"><i class="fas fa-moon"></i></button>
@@ -998,7 +1125,9 @@
 
       <div class="campo">
         <label for="valor">Valor Total</label>
-        <input id="valor" type="text" inputmode="decimal" pattern="[0-9.,]*" placeholder="Ex.: 1.200,50" />
+        <div class="valor-container">
+          <input id="valor" type="text" inputmode="decimal" pattern="[0-9.,]*" placeholder="Ex.: 1200,50" />
+        </div>
       </div>
 
       <div class="campo">
@@ -1019,7 +1148,7 @@
         </select>
       </div>
       
-      <div class="campo">
+      <div id="fotos-container" class="campo">
         <label for="fotos">Anexar Imagens</label>
         <label for="fotos" class="file-input-label">
           <i class="fas fa-camera"></i> Selecionar Imagens
@@ -1032,7 +1161,7 @@
       </div>
 
       <div class="actions">
-        <button id="salvarBtn" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button>
+        <button id="salvarBtn" class="center" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button>
         <button id="exportBtn" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar</button>
         <button id="limparBtn" onclick="limpar()"><i class="fas fa-trash"></i> Limpar</button>
         <button id="gerenciarBtn" class="full-width" onclick="togglePopup('gerenciar-notas-popup')"><i class="fas fa-list-check"></i> Gerenciar Notas</button>
@@ -1066,10 +1195,11 @@
         <span class="close-popup" onclick="closePopup('historico-popup')">&times;</span>
       </div>
       <div class="menu-section">
-        <ul id="lista-historico" class="menu-list"></ul>
-        <div class="paginacao" id="paginacao-historico"></div>
+        <ul id="lista-historico"></ul>
         <div class="btn-list">
-          <button class="destructive" onclick="limparHistorico()"><i class="fas fa-trash-alt"></i> Limpar Histórico</button>
+          <button class="destructive" onclick="limparHistorico()">
+            <i class="fas fa-trash"></i> Limpar Histórico
+          </button>
         </div>
       </div>
     </div>
@@ -1130,13 +1260,12 @@
     </div>
   </div>
 
-  <div id="toast" class="toast">✅ Linhas copiadas! Agora é só colar no Excel.</div>
+  <div id="toast" class="toast">✓ Linhas copiadas! Agora é só colar no Excel.</div>
 
 <script>
-  let linhas = [];
-  let fotosAcumuladas = [];
   let notasPendentes = [];
   let historicoNotas = [];
+  let fotosAcumuladas = [];
   let fornecedoresSugeridos = [];
   let pedidosRecursos = {};
   let fotoAtualIndex = 0;
@@ -1154,6 +1283,7 @@
   const fornEl = document.getElementById('forn');
   const obsEl = document.getElementById('obs');
   const saidaEl = document.getElementById('saida');
+  const fotosContainer = document.getElementById('fotos-container');
   const fotosEl = document.getElementById('fotos');
   const fileLabelEl = document.querySelector('.file-input-label');
   const fileCountHintEl = document.getElementById('fileCountHint');
@@ -1161,11 +1291,9 @@
   
   const listaNotasPendentes = document.getElementById('lista-notas-pendentes');
   const paginacaoNotasEl = document.getElementById('paginacao-notas');
-  const paginacaoHistoricoEl = document.getElementById('paginacao-historico');
-  const obsOptions = Array.from(obsEl.options).map(o => o.value);
+  const listaHistoricoEl = document.getElementById('lista-historico');
   const fornDatalist = document.getElementById('fornecedores-sugeridos');
   
-  const listaHistoricoEl = document.getElementById('lista-historico');
   const listaPedidosEl = document.getElementById('lista-pedidos');
   const listaFornManageEl = document.getElementById('lista-fornecedores-manage');
   const fornManageInput = document.getElementById('forn-manage');
@@ -1173,35 +1301,143 @@
   const pedidoRecursoSelect = document.getElementById('pedido-recurso');
   
   const popups = document.querySelectorAll('.popup-modal');
+  const obsOptions = Array.from(obsEl.options).map(o => o.value);
+  
+  // Variáveis para o IndexedDB
+  const DB_NAME = 'notasdb';
+  const DB_VERSION = 2; // Incrementar a versão do banco de dados para o novo objeto
+  let db;
 
-  async function fileToDataURL(file) {
-      return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
+  // FUNÇÕES DO INDEXEDDB
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      
+      request.onupgradeneeded = event => {
+        db = event.target.result;
+        if (!db.objectStoreNames.contains('notas')) {
+          db.createObjectStore('notas', { keyPath: 'id', autoIncrement: true });
+        }
+        if (!db.objectStoreNames.contains('historico')) {
+          db.createObjectStore('historico', { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      
+      request.onsuccess = event => {
+        db = event.target.result;
+        resolve(db);
+      };
+      
+      request.onerror = event => {
+        console.error("IndexedDB error:", event.target.errorCode);
+        reject(event.target.errorCode);
+      };
+    });
+  }
+
+  function saveNoteDB(nota) {
+    return new Promise(async (resolve, reject) => {
+      if (!db) {
+        db = await openDB();
+      }
+      const transaction = db.transaction(['notas'], 'readwrite');
+      const store = transaction.objectStore('notas');
+      const request = store.put(nota);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = event => reject(event.target.error);
+    });
+  }
+  
+  function saveHistoryNoteDB(nota) {
+    return new Promise(async (resolve, reject) => {
+      if (!db) {
+        db = await openDB();
+      }
+      const transaction = db.transaction(['historico'], 'readwrite');
+      const store = transaction.objectStore('historico');
+      const request = store.add(nota);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = event => reject(event.target.error);
+    });
+  }
+
+  function getNotesDB() {
+    return new Promise(async (resolve, reject) => {
+      if (!db) {
+        db = await openDB();
+      }
+      const transaction = db.transaction(['notas'], 'readonly');
+      const store = transaction.objectStore('notas');
+      const request = store.getAll();
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = event => reject(event.target.error);
+    });
+  }
+
+  function getHistoryNotesDB() {
+    return new Promise(async (resolve, reject) => {
+      if (!db) {
+        db = await openDB();
+      }
+      const transaction = db.transaction(['historico'], 'readonly');
+      const store = transaction.objectStore('historico');
+      const request = store.getAll();
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = event => reject(event.target.error);
+    });
+  }
+
+  function deleteNoteDB(id) {
+    return new Promise(async (resolve, reject) => {
+      if (!db) {
+        db = await openDB();
+      }
+      const transaction = db.transaction(['notas'], 'readwrite');
+      const store = transaction.objectStore('notas');
+      const request = store.delete(id);
+      
+      request.onsuccess = () => resolve();
+      request.onerror = event => reject(event.target.error);
+    });
+  }
+  
+  function deleteAllNotesDB() {
+    return new Promise(async (resolve, reject) => {
+      if (!db) {
+        db = await openDB();
+      }
+      const transaction = db.transaction(['notas'], 'readwrite');
+      const store = transaction.objectStore('notas');
+      const request = store.clear();
+      
+      request.onsuccess = () => resolve();
+      request.onerror = event => reject(event.target.error);
+    });
+  }
+
+  function deleteAllHistoryDB() {
+      return new Promise(async (resolve, reject) => {
+        if (!db) {
+          db = await openDB();
+        }
+        const transaction = db.transaction(['historico'], 'readwrite');
+        const store = transaction.objectStore('historico');
+        const request = store.clear();
+        
+        request.onsuccess = () => resolve();
+        request.onerror = event => reject(event.target.error);
       });
   }
-
-  async function dataURLtoFile(dataurl, filename) {
-      const arr = dataurl.split(',');
-      const mime = arr[0].match(/:(.*?);/)[1];
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while (n--) {
-          u8arr[n] = bstr.charCodeAt(n);
-      }
-      return new File([u8arr], filename, { type: mime });
-  }
-
+  
   async function carregarEstado() {
+      // Carrega dados do localStorage
       const savedForn = localStorage.getItem('fornecedores');
       if (savedForn) fornecedoresSugeridos = JSON.parse(savedForn);
       popularDatalist(fornDatalist);
-      
-      const savedHistorico = localStorage.getItem('historicoNotas');
-      if (savedHistorico) historicoNotas = JSON.parse(savedHistorico);
       
       const savedPedidos = localStorage.getItem('pedidosRecursos');
       if (savedPedidos) pedidosRecursos = JSON.parse(savedPedidos);
@@ -1212,36 +1448,24 @@
           document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
       }
       
-      const savedNotasPendentes = localStorage.getItem('notasPendentes');
-      if (savedNotasPendentes) {
-          const loadedNotas = JSON.parse(savedNotasPendentes);
-          notasPendentes = await Promise.all(loadedNotas.map(async nota => {
-              if (nota.fotosBase64) {
-                  nota.fotos = await Promise.all(nota.fotosBase64.map((base64, i) => dataURLtoFile(base64, `foto-${i}.jpg`)));
-                  delete nota.fotosBase64;
-              } else {
-                  nota.fotos = [];
-              }
-              return nota;
-          }));
+      // Carrega notas e histórico do IndexedDB
+      try {
+        notasPendentes = await getNotesDB();
+        historicoNotas = await getHistoryNotesDB();
+      } catch (e) {
+        console.error("Erro ao carregar dados do IndexedDB:", e);
+        notasPendentes = [];
+        historicoNotas = [];
       }
       
       rebuildNotasPendentesList();
+      popularListaHistorico();
       rebuildSaida();
   }
   
   async function salvarEstado() {
-    const notasParaSalvar = await Promise.all(notasPendentes.map(async nota => {
-        const notaSalvar = { ...nota, fotos: undefined }; // Evitar loop de serialização
-        if (nota.fotos && nota.fotos.length > 0) {
-            notaSalvar.fotosBase64 = await Promise.all(nota.fotos.map(file => fileToDataURL(file)));
-        }
-        return notaSalvar;
-    }));
-    
-    localStorage.setItem('notasPendentes', JSON.stringify(notasParaSalvar));
+    // Salva fornecedores e pedidos no localStorage
     localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
-    localStorage.setItem('historicoNotas', JSON.stringify(historicoNotas));
     localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos));
   }
   
@@ -1268,29 +1492,6 @@
           option.value = forn;
           datalistEl.appendChild(option);
       });
-  }
-
-  function popularListaHistorico(pagina = 1) {
-    listaHistoricoEl.innerHTML = '';
-    paginaAtualHistorico = pagina;
-    
-    const inicio = (pagina - 1) * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    const notasPagina = historicoNotas.slice(inicio, fim);
-    
-    if (notasPagina.length === 0 && pagina === 1) {
-      listaHistoricoEl.innerHTML = '<li class="nota-item">Nenhuma nota no histórico.</li>';
-    } else {
-      notasPagina.forEach(nota => {
-        const li = document.createElement('li');
-        const dataFormatada = nota.data ? nota.data.slice(0, 5) : 's/data';
-        li.textContent = `${nota.fornecedor} - ${nota.nf || 's/NF'} (${dataFormatada})`;
-        li.classList.add('nota-item');
-        listaHistoricoEl.appendChild(li);
-      });
-    }
-    
-    criarPaginacao(paginacaoHistoricoEl, historicoNotas.length, pagina, 'historico');
   }
 
   function popularListaPedidos() {
@@ -1368,6 +1569,28 @@
       btn.innerHTML = originalHTML;
     }, 1500);
   }
+  
+  function getFirstWord(text) {
+    return text.trim().split(' ')[0];
+  }
+
+  function formatarDataHora(data) {
+    const d = new Date(data);
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const ano = d.getFullYear();
+    const hora = String(d.getHours()).padStart(2, '0');
+    const minuto = String(d.getMinutes()).padStart(2, '0');
+    return `${dia}/${mes}/${ano}, ${hora}:${minuto}`;
+  }
+  
+  function formatarValor(valor) {
+    if (!valor) return 'N/A';
+    const numero = parseFloat(valor.replace('R$', '').trim().replace(/\./g, '').replace(',', '.'));
+    if (isNaN(numero)) return 'N/A';
+    return `R$ ${numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
   function fmtData(iso) {
     if (!iso) return '';
     return iso;
@@ -1378,7 +1601,7 @@
     ].join("\t");
   }
   function rebuildSaida() {
-      linhas.length = 0;
+      let linhas = [];
       notasPendentes.forEach(nota => {
           linhas.push(getLinha(nota));
       });
@@ -1407,47 +1630,86 @@
     }
     input.value = formattedValue;
   }
+
+  function formatarValorInput(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      value = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      e.target.value = value;
+  }
   
   function rebuildNotasPendentesList(pagina = 1) {
     listaNotasPendentes.innerHTML = '';
     paginaAtualNotas = pagina;
     
+    // Inverte a lista para mostrar as notas mais novas no topo
+    const notasInvertidas = [...notasPendentes].reverse();
+    
     const inicio = (pagina - 1) * itensPorPagina;
     const fim = inicio + itensPorPagina;
-    const notasPagina = notasPendentes.slice(inicio, fim);
+    const notasPagina = notasInvertidas.slice(inicio, fim);
     
-    if (notasPendentes.length === 0) {
+    if (notasInvertidas.length === 0) {
         listaNotasPendentes.innerHTML = `<li class="nota-item">Nenhuma nota salva para gerenciar.</li>`;
         paginacaoNotasEl.innerHTML = '';
         return;
     }
     
     notasPagina.forEach((nota, index) => {
-      const globalIndex = inicio + index;
+      // Encontra o índice original da nota no array notasPendentes
+      const globalIndex = notasPendentes.findIndex(n => n.id === nota.id);
+      
       const li = document.createElement('li');
       li.classList.add('nota-item');
       if (nota.enviada) li.classList.add('nota-enviada');
       
-      li.innerHTML = `
-        <div class="nota-info">${nota.fornecedor} ${nota.nf || ''}
-          ${nota.enviada ? '<i class="fas fa-check-circle"></i>' : ''}
-        </div>
-        <div class="nota-detalhes">
-          Venc: ${nota.vencimento || 'N/A'} | Valor: ${nota.valor || 'N/A'}
-        </div>
-        <div class="actions-row">
-          <span></span>
-          <div class="actions-item">
-            ${nota.fotos.length > 0 ? 
-              `<button class="whatsapp-btn" onclick="compartilharNota(${globalIndex})" title="Compartilhar via WhatsApp">
-                <i class="fab fa-whatsapp"></i>
-              </button>` : `<span class="sem-fotos">SEM FOTOS</span>`}
+      let fotoStatusHTML = '';
+      if (!nota.enviada) {
+        if (nota.fotos && nota.fotos.length > 0) {
+          fotoStatusHTML = `
+            <button class="whatsapp-btn" onclick="compartilharNota(${globalIndex})" title="Compartilhar via WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
             <button class="edit-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Editar nota">
               <i class="fas fa-pen"></i>
             </button>
             <button class="delete-btn" onclick="deletarNota(${globalIndex})" title="Excluir nota">
               <i class="fas fa-trash"></i>
             </button>
+          `;
+        } else {
+          fotoStatusHTML = `
+            <span class="sem-fotos">SEM FOTOS</span>
+            <button class="edit-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Editar nota">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="delete-btn" onclick="deletarNota(${globalIndex})" title="Excluir nota">
+              <i class="fas fa-trash"></i>
+            </button>
+          `;
+        }
+      } else {
+        fotoStatusHTML = `
+          <button class="sent-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Fotos Enviadas">
+            <i class="fas fa-check"></i>
+          </button>
+          <button class="edit-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Editar nota">
+              <i class="fas fa-pen"></i>
+          </button>
+          <button class="delete-btn" onclick="deletarNota(${globalIndex})" title="Excluir nota">
+              <i class="fas fa-trash"></i>
+          </button>
+        `;
+      }
+
+      li.innerHTML = `
+        <div class="nota-info"><b>${nota.fornecedor} ${nota.nf || ''}</b></div>
+        <div class="nota-data">Criada em: ${formatarDataHora(nota.dataCriacao)}</div>
+        <div class="nota-detalhes">
+          Venc: ${nota.vencimento || 'N/A'} | Valor: ${formatarValor(nota.valor)}
+        </div>
+        <div class="actions-row">
+          <div class="actions-item">
+            ${fotoStatusHTML}
           </div>
         </div>
         <div class="edit-panel">
@@ -1475,14 +1737,8 @@
                 <select id="obsEdit-${globalIndex}"></select>
             </div>
           </div>
-          <div class="campo">
-            <label for="edit-fotos-${globalIndex}">Anexar Imagens</label>
-            <label for="edit-fotos-${globalIndex}" class="file-input-label">
-              <i class="fas fa-camera"></i> Selecionar Imagens
-            </label>
-            <input type="file" id="edit-fotos-${globalIndex}" class="edit-file-input" multiple accept="image/*" />
-            <div class="miniaturas-container-edit" id="miniaturas-container-edit-${globalIndex}"></div>
-          </div>
+          <div class="campo fotos-edit-container-${globalIndex}">
+            </div>
           <div class="actions">
             <button style="background:var(--button-success);color:#fff; flex: 1;" onclick="salvarEdicao(${globalIndex})">
               <i class="fas fa-save"></i> Salvar
@@ -1491,6 +1747,12 @@
         </div>
       `;
       listaNotasPendentes.appendChild(li);
+      
+      const valorEditEl = li.querySelector(`#valorEdit-${globalIndex}`);
+      if (valorEditEl) {
+          valorEditEl.value = nota.valor || '';
+          valorEditEl.addEventListener('input', formatarValorInput);
+      }
 
       const obsSelectEdit = li.querySelector(`#obsEdit-${globalIndex}`);
       obsOptions.forEach(option => {
@@ -1501,18 +1763,78 @@
       });
       obsSelectEdit.value = nota.obs;
 
-      const editFotosInput = li.querySelector(`#edit-fotos-${globalIndex}`);
-      editFotosInput.addEventListener('change', async (e) => {
-          const files = Array.from(e.target.files);
-          notasPendentes[globalIndex].fotos = notasPendentes[globalIndex].fotos.concat(files);
-          await salvarEstado();
-          reconstruirMiniaturasEdit(globalIndex);
-          rebuildNotasPendentesList(paginaAtualNotas);
-      });
-      reconstruirMiniaturasEdit(globalIndex);
+      reconstruirPainelFotosEdit(globalIndex);
+
     });
     
     criarPaginacao(paginacaoNotasEl, notasPendentes.length, pagina, 'notas');
+  }
+
+  function reconstruirPainelFotosEdit(globalIndex) {
+      const container = document.querySelector(`.fotos-edit-container-${globalIndex}`);
+      const nota = notasPendentes[globalIndex];
+      container.innerHTML = '';
+  
+      if (nota.enviada) {
+          container.innerHTML = `
+              <div class="fotos-enviadas-status">
+                  <i class="fas fa-check-circle"></i> Fotos já enviadas!
+              </div>
+          `;
+      } else {
+          container.innerHTML = `
+              <label for="edit-fotos-${globalIndex}">Anexar Imagens</label>
+              <label for="edit-fotos-${globalIndex}" class="file-input-label">
+                <i class="fas fa-camera"></i> Selecionar Imagens
+              </label>
+              <input type="file" id="edit-fotos-${globalIndex}" class="edit-file-input" multiple accept="image/*" />
+              <div class="miniaturas-container-edit" id="miniaturas-container-edit-${globalIndex}"></div>
+              ${nota.fotos && nota.fotos.length > 0 ?
+                `<button class="actions-button" style="background: var(--button-danger); color: white; width: 100%; border: none; padding: 14px 20px; border-radius: var(--radius); margin-top: 10px; font-weight: 500; font-size: 15px;" onclick="limparFotosNota(${globalIndex})"><i class="fas fa-trash"></i> Limpar Fotos</button>` : ''}
+          `;
+          
+          const editFotosInput = container.querySelector(`#edit-fotos-${globalIndex}`);
+          editFotosInput.addEventListener('change', async (e) => {
+              const files = Array.from(e.target.files);
+              notasPendentes[globalIndex].fotos = notasPendentes[globalIndex].fotos.concat(files);
+              await saveNoteDB(notasPendentes[globalIndex]);
+              reconstruirMiniaturasEdit(globalIndex);
+              rebuildNotasPendentesList(paginaAtualNotas);
+          });
+          
+          reconstruirMiniaturasEdit(globalIndex);
+      }
+  }
+
+  function popularListaHistorico() {
+    listaHistoricoEl.innerHTML = '';
+    if (historicoNotas.length === 0) {
+        listaHistoricoEl.innerHTML = `<li class="nota-item">O histórico está vazio.</li>`;
+        return;
+    }
+    
+    const historicoInvertido = [...historicoNotas].reverse();
+    
+    historicoInvertido.forEach(nota => {
+      const li = document.createElement('li');
+      li.classList.add('nota-item');
+      li.innerHTML = `
+        <div class="nota-info"><b>${getFirstWord(nota.fornecedor)} - ${nota.nf || 'N/A'}</b></div>
+        <div class="historico-detalhes">
+          Movido para histórico em: ${nota.dataHistorico}
+        </div>
+      `;
+      listaHistoricoEl.appendChild(li);
+    });
+  }
+
+  async function limparHistorico() {
+    if (confirm("Tem certeza que deseja apagar todo o histórico de notas? Essa ação é irreversível.")) {
+      await deleteAllHistoryDB();
+      historicoNotas = [];
+      popularListaHistorico();
+      toast("Histórico limpo com sucesso!");
+    }
   }
   
   function reconstruirMiniaturasEdit(globalIndex) {
@@ -1520,6 +1842,15 @@
       const nota = notasPendentes[globalIndex];
       container.innerHTML = '';
 
+      if (!nota.fotos || nota.fotos.length === 0) {
+          const p = document.createElement('p');
+          p.textContent = "Nenhuma foto anexada.";
+          p.style.fontSize = '12px';
+          p.style.color = 'var(--text-light)';
+          container.appendChild(p);
+          return;
+      }
+      
       nota.fotos.forEach((file, i) => {
           const wrapper = document.createElement('div');
           wrapper.className = 'miniatura-wrapper';
@@ -1530,16 +1861,18 @@
               img.src = event.target.result;
               img.onclick = () => abrirPreview(nota.fotos, i, globalIndex);
               
-              const removeBtn = document.createElement('button');
-              removeBtn.className = 'remove-foto';
-              removeBtn.innerHTML = '×';
-              removeBtn.onclick = async (e) => {
-                  e.stopPropagation();
-                  await removerFotoEdit(globalIndex, i);
-              };
+              if (!nota.enviada) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-foto';
+                removeBtn.innerHTML = '×';
+                removeBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    await removerFotoEdit(globalIndex, i);
+                };
+                wrapper.appendChild(removeBtn);
+              }
               
               wrapper.appendChild(img);
-              wrapper.appendChild(removeBtn);
               container.appendChild(wrapper);
           };
           reader.readAsDataURL(file);
@@ -1548,11 +1881,22 @@
 
   async function removerFotoEdit(globalIndex, fotoIndex) {
       if (confirm("Remover esta imagem da nota?")) {
-          notasPendentes[globalIndex].fotos.splice(fotoIndex, 1);
+          const nota = notasPendentes[globalIndex];
+          nota.fotos.splice(fotoIndex, 1);
+          await saveNoteDB(nota);
           reconstruirMiniaturasEdit(globalIndex);
-          await salvarEstado();
           rebuildNotasPendentesList(paginaAtualNotas);
           toast("Imagem removida da nota.");
+      }
+  }
+  
+  async function limparFotosNota(index) {
+      if (confirm("Tem certeza que deseja limpar todas as fotos desta nota?")) {
+          const nota = notasPendentes[index];
+          nota.fotos = [];
+          await saveNoteDB(nota);
+          rebuildNotasPendentesList(paginaAtualNotas);
+          toast("Imagens da nota limpas!");
       }
   }
 
@@ -1574,12 +1918,12 @@
       
       if (idPopup === 'gerenciar-notas-popup') {
         rebuildNotasPendentesList(1);
-      } else if (idPopup === 'historico-popup') {
-        popularListaHistorico(1);
       } else if (idPopup === 'pedidos-popup') {
         popularListaPedidos();
       } else if (idPopup === 'fornecedores-popup') {
         popularListaFornecedores();
+      } else if (idPopup === 'historico-popup') {
+        popularListaHistorico();
       }
     }
   }
@@ -1620,52 +1964,73 @@
       
       adicionarFornecedor(nota.fornecedor);
 
+      await saveNoteDB(nota);
+      notasPendentes[index] = nota;
       rebuildSaida();
-      await salvarEstado();
       rebuildNotasPendentesList(paginaAtualNotas);
-      toast('✅ Nota editada e salva!');
+      toast('✓ Nota editada e salva!');
   }
 
   async function deletarNota(index) {
     if (confirm("Tem certeza que deseja excluir esta nota?")) {
+      const idToDelete = notasPendentes[index].id;
+      await deleteNoteDB(idToDelete);
+      
       notasPendentes.splice(index, 1);
       rebuildSaida();
-      await salvarEstado();
       rebuildNotasPendentesList(paginaAtualNotas);
       toast("🗑️ Nota excluída!");
     }
   }
 
   async function exportar() {
-    if (!saidaEl.value) {
-      toast("Nada para copiar.");
-      return;
+    let linhas = [];
+    notasPendentes.forEach(nota => {
+        linhas.push(getLinha(nota));
+    });
+    
+    if (linhas.length === 0) {
+        toast("Nada para copiar.");
+        return;
     }
     
+    const textoSaida = linhas.join("\n");
+    saidaEl.value = textoSaida;
+    
     try {
-      await navigator.clipboard.writeText(saidaEl.value);
-      toast("✅ Linhas copiadas! Agora é só colar no Excel.");
+      await navigator.clipboard.writeText(textoSaida);
+      toast("✓ Linhas copiadas! Agora é só colar no Excel.");
       const exportBtn = document.getElementById('exportBtn');
       animateButton(exportBtn, 'Copiado', 'fas fa-check', '<i class="fas fa-clipboard"></i> Copiar Texto');
     } catch {
       saidaEl.select();
       document.execCommand("copy");
-      toast("✅ Linhas copiadas! Agora é só colar no Excel.");
+      toast("✓ Linhas copiadas! Agora é só colar no Excel.");
     }
   }
 
-  function limpar() {
-    if (notasPendentes.length > 0) {
-      historicoNotas = historicoNotas.concat(notasPendentes);
-      notasPendentes = [];
-      salvarEstado();
+  async function limpar() {
+    for (const nota of notasPendentes) {
+        const notaHistorico = {
+            fornecedor: nota.fornecedor,
+            nf: nota.nf,
+            dataHistorico: formatarDataHora(new Date())
+        };
+        await saveHistoryNoteDB(notaHistorico);
     }
-    linhas.length = 0;
-    saidaEl.value = "";
-    fotosAcumuladas.length = 0;
     
-    const camposEntrada = [dataEl, nfEl, vencEl, valorEl, fornEl, obsEl, fotosEl];
-    camposEntrada.forEach(el => el.value = "");
+    await deleteAllNotesDB();
+    notasPendentes = [];
+    historicoNotas = await getHistoryNotesDB();
+    fotosAcumuladas = [];
+    
+    rebuildSaida();
+    
+    nfEl.value = "";
+    vencEl.value = "";
+    valorEl.value = "";
+    fornEl.value = "";
+    obsEl.value = "";
     
     const today = new Date();
     const day = String(today.getDate()).padStart(2, '0');
@@ -1673,12 +2038,15 @@
     const year = today.getFullYear();
     dataEl.value = `${day}/${month}/${year}`;
 
+    fotosContainer.style.display = 'block';
     fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
-    fileLabelEl.classList.remove('active');
+    fileLabelEl.classList.remove('active', 'disabled');
+    fileLabelEl.style.cursor = 'pointer';
+    fotosEl.disabled = false;
     miniaturasContainer.innerHTML = '';
     rebuildNotasPendentesList(1);
-
-    toast("Conteúdo limpo e histórico salvo.");
+    
+    toast("Conteúdo limpo e notas movidas para o histórico.");
   }
 
   async function gerarImagemSeparadora(fornecedor, nf) {
@@ -1732,26 +2100,21 @@
           text: textoCompartilhar
         });
         
-        notasPendentes[index].enviada = true;
-        await salvarEstado();
+        nota.enviada = true;
+        nota.fotos = [];
+        await saveNoteDB(nota);
         rebuildNotasPendentesList(paginaAtualNotas);
-        toast("✅ Conteúdo enviado para o WhatsApp!");
-
+        toast("✓ Conteúdo enviado com sucesso!");
       } else {
         toast("O compartilhamento de múltiplas fotos não é suportado pelo seu navegador.");
       }
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
-      toast("Erro ao compartilhar. Tente novamente.");
-    }
-  }
-
-  function limparHistorico() {
-    if (confirm("Tem certeza que deseja limpar todo o Histórico de notas? Esta ação não pode ser desfeita.")) {
-      historicoNotas = [];
-      salvarEstado();
-      popularListaHistorico(1);
-      toast("Histórico limpo com sucesso!");
+      if (error.name !== 'AbortError') {
+        toast("Erro ao compartilhar. Tente novamente.");
+      } else {
+        console.log("Compartilhamento cancelado pelo usuário.");
+      }
     }
   }
 
@@ -1903,14 +2266,15 @@
                   abrirPreview(fotosAcumuladas, novoIndex, null);
               }
           } else if (fotoAtualFonte === 'nota') {
-              notasPendentes[fotoAtualNotaIndex].fotos.splice(fotoAtualIndex, 1);
-              await salvarEstado();
+              const nota = notasPendentes[fotoAtualNotaIndex];
+              nota.fotos.splice(fotoAtualIndex, 1);
+              await saveNoteDB(nota);
               rebuildNotasPendentesList(paginaAtualNotas);
-              if (notasPendentes[fotoAtualNotaIndex].fotos.length === 0) {
+              if (nota.fotos.length === 0) {
                   fecharPreview();
               } else {
-                  let novoIndex = fotoAtualIndex >= notasPendentes[fotoAtualNotaIndex].fotos.length ? notasPendentes[fotoAtualNotaIndex].fotos.length - 1 : fotoAtualIndex;
-                  abrirPreview(notasPendentes[fotoAtualNotaIndex].fotos, novoIndex, fotoAtualNotaIndex);
+                  let novoIndex = fotoAtualIndex >= nota.fotos.length ? nota.fotos.length - 1 : fotoAtualIndex;
+                  abrirPreview(nota.fotos, novoIndex, fotoAtualNotaIndex);
               }
           }
           toast("Imagem excluída.");
@@ -1918,29 +2282,43 @@
   }
 
   async function salvarNota() {
-    const nota = {
-        data: dataEl.value.trim(),
-        nf: nfEl.value.trim(),
-        vencimento: vencEl.value.trim(),
-        valor: valorEl.value.trim(),
-        fornecedor: fornEl.value.trim().toUpperCase(),
-        obs: obsEl.value.trim(),
-        fotos: fotosAcumuladas,
-        enviada: false
-    };
+      const nota = {
+          data: dataEl.value.trim(),
+          nf: nfEl.value.trim(),
+          vencimento: vencEl.value.trim(),
+          valor: valorEl.value.trim(),
+          fornecedor: fornEl.value.trim().toUpperCase(),
+          obs: obsEl.value.trim(),
+          fotos: fotosAcumuladas,
+          enviada: false,
+          dataCriacao: new Date().toISOString()
+      };
 
-    if (!nota.fornecedor) {
-        toast("O campo 'Nome do Fornecedor' é obrigatório.");
-        return;
-    }
+      if (!nota.fornecedor) {
+          toast("O campo 'Nome do Fornecedor' é obrigatório.");
+          return;
+      }
 
-    notasPendentes.push(nota);
-    fotosAcumuladas = [];
-    
-    rebuildSaida();
-    await salvarEstado();
-    rebuildNotasPendentesList(paginaAtualNotas);
-    
+      toast("✓ Salvando nota...");
+      
+      try {
+        const savedId = await saveNoteDB(nota);
+        nota.id = savedId;
+        notasPendentes.push(nota);
+        rebuildSaida();
+        rebuildNotasPendentesList(paginaAtualNotas);
+        limparFormularioPrincipal();
+        adicionarFornecedor(nota.fornecedor);
+        toast("✓ Nota salva!");
+      } catch (e) {
+        console.error("Erro ao salvar nota:", e);
+        toast("✕ Erro ao salvar a nota. Tente novamente.");
+      }
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function limparFormularioPrincipal() {
     nfEl.value = "";
     vencEl.value = "";
     valorEl.value = "";
@@ -1952,20 +2330,21 @@
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
     dataEl.value = `${day}/${month}/${year}`;
-
+    
+    fotosAcumuladas = [];
+    fotosContainer.style.display = 'block';
     fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
-    fileLabelEl.classList.remove('active');
+    fileLabelEl.classList.remove('active', 'disabled');
+    fileLabelEl.style.cursor = 'pointer';
+    fotosEl.disabled = false;
     miniaturasContainer.innerHTML = '';
     
-    fornEl.focus();
-    adicionarFornecedor(nota.fornecedor);
-    toast("✅ Nota salva!");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    fotosEl.value = null;
   }
 
-
-  document.addEventListener('DOMContentLoaded', () => {
-      carregarEstado();
+  document.addEventListener('DOMContentLoaded', async () => {
+      await openDB();
+      await carregarEstado();
       const today = new Date();
       const day = String(today.getDate()).padStart(2, '0');
       const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1995,6 +2374,8 @@
     formatarData(e.target);
   });
   
+  valorEl.addEventListener('input', formatarValorInput);
+  
   fornEl.addEventListener('input', (e) => {
     e.target.value = e.target.value.toUpperCase();
   });
@@ -2017,7 +2398,7 @@
       fileLabelEl.classList.add('active');
       reconstruirMiniaturas();
       
-      e.target.value = "";
+      e.target.value = null;
     }
   });
 
