@@ -1162,8 +1162,29 @@
   const pedidoRecursoSelect = document.getElementById('pedido-recurso');
   
   const popups = document.querySelectorAll('.popup-modal');
-  
-  function carregarEstado() {
+
+  async function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+      });
+  }
+
+  async function dataURLtoFile(dataurl, filename) {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], filename, { type: mime });
+  }
+
+  async function carregarEstado() {
       const savedForn = localStorage.getItem('fornecedores');
       if (savedForn) fornecedoresSugeridos = JSON.parse(savedForn);
       popularDatalist(fornDatalist);
@@ -1183,52 +1204,34 @@
       const savedNotasPendentes = localStorage.getItem('notasPendentes');
       if (savedNotasPendentes) {
           const loadedNotas = JSON.parse(savedNotasPendentes);
-          // Converter arrays de base64 de volta para Files
-          notasPendentes = loadedNotas.map(nota => {
+          notasPendentes = await Promise.all(loadedNotas.map(async nota => {
               if (nota.fotosBase64) {
-                  const fotos = nota.fotosBase64.map(base64 => {
-                      const byteString = atob(base64.split(',')[1]);
-                      const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
-                      const ab = new ArrayBuffer(byteString.length);
-                      const ia = new Uint8Array(ab);
-                      for (let i = 0; i < byteString.length; i++) {
-                          ia[i] = byteString.charCodeAt(i);
-                      }
-                      return new File([ab], `foto-${Date.now()}.${mimeString.split('/')[1]}`, { type: mimeString });
-                  });
-                  nota.fotos = fotos;
+                  nota.fotos = await Promise.all(nota.fotosBase64.map((base64, i) => dataURLtoFile(base64, `foto-${i}.jpg`)));
                   delete nota.fotosBase64;
+              } else {
+                  nota.fotos = [];
               }
               return nota;
-          });
+          }));
       }
       
       rebuildNotasPendentesList();
       rebuildSaida();
   }
-
-  function salvarEstado() {
-      const notasParaSalvar = notasPendentes.map(nota => {
-          const notaSalvar = {...nota};
-          if (notaSalvar.fotos && notaSalvar.fotos.length > 0) {
-              notaSalvar.fotosBase64 = [];
-              for (const foto of notaSalvar.fotos) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                      notaSalvar.fotosBase64.push(e.target.result);
-                      if (notaSalvar.fotosBase64.length === notaSalvar.fotos.length) {
-                          localStorage.setItem('notasPendentes', JSON.stringify(notasPendentes));
-                      }
-                  };
-                  reader.readAsDataURL(foto);
-              }
-          }
-          return notaSalvar;
-      });
-      localStorage.setItem('notasPendentes', JSON.stringify(notasParaSalvar));
-      localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
-      localStorage.setItem('historicoNotas', JSON.stringify(historicoNotas));
-      localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos));
+  
+  async function salvarEstado() {
+    const notasParaSalvar = await Promise.all(notasPendentes.map(async nota => {
+        const notaSalvar = { ...nota, fotos: undefined }; // Evitar loop de serialização
+        if (nota.fotos && nota.fotos.length > 0) {
+            notaSalvar.fotosBase64 = await Promise.all(nota.fotos.map(file => fileToDataURL(file)));
+        }
+        return notaSalvar;
+    }));
+    
+    localStorage.setItem('notasPendentes', JSON.stringify(notasParaSalvar));
+    localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
+    localStorage.setItem('historicoNotas', JSON.stringify(historicoNotas));
+    localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos));
   }
   
   function toggleTheme() {
@@ -1270,7 +1273,7 @@
       notasPagina.forEach(nota => {
         const li = document.createElement('li');
         const dataFormatada = nota.data ? nota.data.slice(0, 5) : 's/data';
-        li.textContent = `${nota.fornecedor} - ${nota.nf} (${dataFormatada})`;
+        li.textContent = `${nota.fornecedor} - ${nota.nf || 's/NF'} (${dataFormatada})`;
         li.classList.add('nota-item');
         listaHistoricoEl.appendChild(li);
       });
@@ -1415,7 +1418,7 @@
       if (nota.enviada) li.classList.add('nota-enviada');
       
       li.innerHTML = `
-        <div class="nota-info">${nota.fornecedor} ${nota.nf}
+        <div class="nota-info">${nota.fornecedor} ${nota.nf || ''}
           ${nota.enviada ? '<i class="fas fa-check-circle"></i>' : ''}
         </div>
         <div class="nota-detalhes">
@@ -1487,15 +1490,14 @@
       });
       obsSelectEdit.value = nota.obs;
 
-      // Adicionar evento para upload de fotos na edição
       const editFotosInput = li.querySelector(`#edit-fotos-${globalIndex}`);
-      editFotosInput.addEventListener('change', (e) => {
+      editFotosInput.addEventListener('change', async (e) => {
           const files = Array.from(e.target.files);
           notasPendentes[globalIndex].fotos = notasPendentes[globalIndex].fotos.concat(files);
+          await salvarEstado();
           reconstruirMiniaturasEdit(globalIndex);
+          rebuildNotasPendentesList(paginaAtualNotas);
       });
-
-      // Reconstruir miniaturas existentes na edição
       reconstruirMiniaturasEdit(globalIndex);
     });
     
@@ -1520,9 +1522,9 @@
               const removeBtn = document.createElement('button');
               removeBtn.className = 'remove-foto';
               removeBtn.innerHTML = '×';
-              removeBtn.onclick = (e) => {
+              removeBtn.onclick = async (e) => {
                   e.stopPropagation();
-                  removerFotoEdit(globalIndex, i);
+                  await removerFotoEdit(globalIndex, i);
               };
               
               wrapper.appendChild(img);
@@ -1533,11 +1535,12 @@
       });
   }
 
-  function removerFotoEdit(globalIndex, fotoIndex) {
+  async function removerFotoEdit(globalIndex, fotoIndex) {
       if (confirm("Remover esta imagem da nota?")) {
           notasPendentes[globalIndex].fotos.splice(fotoIndex, 1);
           reconstruirMiniaturasEdit(globalIndex);
-          salvarEstado();
+          await salvarEstado();
+          rebuildNotasPendentesList(paginaAtualNotas);
           toast("Imagem removida da nota.");
       }
   }
@@ -1582,7 +1585,7 @@
       panel.classList.toggle('show');
   }
 
-  function salvarEdicao(index) {
+  async function salvarEdicao(index) {
       const li = document.querySelectorAll('.nota-item')[index % itensPorPagina];
       const nota = notasPendentes[index];
       
@@ -1598,17 +1601,17 @@
       adicionarFornecedor(nota.fornecedor);
 
       rebuildSaida();
-      salvarEstado();
+      await salvarEstado();
       toggleEditPanel(li.querySelector('.edit-btn'), index);
-      li.querySelector('.nota-info').innerHTML = `${nota.fornecedor} ${nota.nf}`;
+      rebuildNotasPendentesList(paginaAtualNotas);
       toast('✅ Nota editada e salva!');
   }
 
-  function deletarNota(index) {
+  async function deletarNota(index) {
     if (confirm("Tem certeza que deseja excluir esta nota?")) {
       notasPendentes.splice(index, 1);
       rebuildSaida();
-      salvarEstado();
+      await salvarEstado();
       rebuildNotasPendentesList(paginaAtualNotas);
       toast("🗑️ Nota excluída!");
     }
@@ -1702,7 +1705,7 @@
         arquivosParaCompartilhar.push(foto);
       }
       
-      const textoCompartilhar = `${nota.fornecedor} ${nota.nf}`;
+      const textoCompartilhar = `${nota.fornecedor} ${nota.nf || ''}`;
       
       if (navigator.canShare({ files: arquivosParaCompartilhar, text: textoCompartilhar })) {
         await navigator.share({
@@ -1711,7 +1714,7 @@
         });
         
         notasPendentes[index].enviada = true;
-        salvarEstado();
+        await salvarEstado();
         rebuildNotasPendentesList(paginaAtualNotas);
         toast("✅ Conteúdo enviado para o WhatsApp!");
 
@@ -1868,14 +1871,13 @@
       toast("Imagem salva com sucesso!");
   }
 
-  function excluirFotoPreview() {
+  async function excluirFotoPreview() {
       if (confirm("Tem certeza que deseja excluir esta imagem?")) {
           if (fotoAtualFonte === 'acumulada') {
               fotosAcumuladas.splice(fotoAtualIndex, 1);
               fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
               reconstruirMiniaturas();
               if (fotosAcumuladas.length === 0) {
-                  fileLabelEl.classList.remove('active');
                   fecharPreview();
               } else {
                   let novoIndex = fotoAtualIndex >= fotosAcumuladas.length ? fotosAcumuladas.length - 1 : fotoAtualIndex;
@@ -1883,8 +1885,7 @@
               }
           } else if (fotoAtualFonte === 'nota') {
               notasPendentes[fotoAtualNotaIndex].fotos.splice(fotoAtualIndex, 1);
-              reconstruirMiniaturasEdit(fotoAtualNotaIndex);
-              salvarEstado();
+              await salvarEstado();
               rebuildNotasPendentesList(paginaAtualNotas);
               if (notasPendentes[fotoAtualNotaIndex].fotos.length === 0) {
                   fecharPreview();
@@ -1895,6 +1896,51 @@
           }
           toast("Imagem excluída.");
       }
+  }
+
+  async function salvarNota() {
+    const nota = {
+        data: dataEl.value.trim(),
+        nf: nfEl.value.trim(),
+        vencimento: vencEl.value.trim(),
+        valor: valorEl.value.trim(),
+        fornecedor: fornEl.value.trim().toUpperCase(),
+        obs: obsEl.value.trim(),
+        fotos: fotosAcumuladas,
+        enviada: false
+    };
+
+    if (!nota.fornecedor) {
+        toast("O campo 'Nome do Fornecedor' é obrigatório.");
+        return;
+    }
+
+    notasPendentes.push(nota);
+    fotosAcumuladas = [];
+    
+    rebuildSaida();
+    await salvarEstado();
+    rebuildNotasPendentesList(paginaAtualNotas);
+    
+    nfEl.value = "";
+    vencEl.value = "";
+    valorEl.value = "";
+    fornEl.value = "";
+    obsEl.value = "";
+    
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    dataEl.value = `${day}/${month}/${year}`;
+
+    fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
+    fileLabelEl.classList.remove('active');
+    miniaturasContainer.innerHTML = '';
+    
+    fornEl.focus();
+    adicionarFornecedor(nota.fornecedor);
+    toast("✅ Nota salva!");
   }
 
 
