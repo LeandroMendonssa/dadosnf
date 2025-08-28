@@ -298,9 +298,9 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 12px;
-      margin-top: 8px;
+      margin-top: 22px; 
     }
-    
+
     .actions button {
       padding: 14px 20px;
       border: 0;
@@ -497,7 +497,7 @@
     .nota-detalhes {
       font-size: 12px;
       color: var(--text-light);
-      margin-bottom: 8px;
+      margin-bottom: 12px; /* Aumentado espaço para a barra de progresso */
     }
     
     .historico-detalhes {
@@ -518,18 +518,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
     }
-
-    .actions-item {
+    
+    .actions-group {
       display: flex;
       gap: 12px;
-      align-items: center; 
+      align-items: center;
     }
 
-    .actions-item button {
+    .actions-row button {
       height: 38px;
-      width: 38px;
-      padding: 0;
+      padding: 0 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -538,45 +538,49 @@
       color: var(--text-dark);
       border: 1px solid var(--border-color);
       transition: var(--transition);
+      font-size: 13px; /* Tamanho da fonte ajustado */
+      font-weight: 500;
     }
 
-    .actions-item button:hover {
+    .actions-row button.icon-only {
+        width: 38px;
+        padding: 0;
+    }
+
+    .actions-row button:hover {
       transform: scale(1.05);
     }
-    
-    .actions-item .whatsapp-btn {
+
+    .actions-row .whatsapp-btn {
       background: var(--button-whatsapp);
       color: #fff;
       border: none;
     }
 
-    .actions-item .whatsapp-btn:hover {
+    .actions-row .whatsapp-btn:hover {
       background: #128C7E;
     }
 
-    .actions-item .edit-btn {
+    .actions-row .edit-btn {
       color: var(--button-copy);
     }
     
-    .actions-item .delete-btn {
+    .actions-row .delete-btn {
       color: var(--button-danger);
     }
 
-    .actions-item .sent-btn {
+    .actions-row .sent-btn {
       background: var(--button-success);
       color: #fff;
       border: none;
       font-weight: bold;
-      width: 38px;
-      height: 38px;
-      padding: 0;
     }
     
-    .actions-item .sent-btn:hover {
+    .actions-row .sent-btn:hover {
       opacity: 0.9;
     }
 
-    .actions-item i {
+    .actions-row i {
       font-size: 16px;
     }
 
@@ -945,8 +949,9 @@
       body { padding: 16px; font-size: 16px; } .wrap { max-width: 100%; padding-top: 54px; } h1 { font-size: 24px; margin-bottom: 22px; } .card { padding: 20px; } 
       .actions { grid-template-columns: 1fr; } 
       .actions button { width: 100%; } .popup-content { margin: 50px 0 0 0; padding: 16px; width: 100%; height: calc(100vh - 50px); } .edit-fields-row { flex-direction: column; gap: 0; }
-      .edit-fields-row .campo { min-width: 100%; } input, select, textarea { padding: 16px; } .actions-row { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .actions-item { width: 100%; justify-content: flex-end; } .btn-list { padding: 15px 0; } .top-header { padding: 0 8px; height: 50px; gap: 8px; }
+      .edit-fields-row .campo { min-width: 100%; } input, select, textarea { padding: 16px; } 
+      .actions-row { flex-direction: row; align-items: center; gap: 8px; } /* Ajuste para mobile */
+      .actions-group { width: auto; justify-content: flex-end; } .btn-list { padding: 15px 0; } .top-header { padding: 0 8px; height: 50px; gap: 8px; }
       .top-header .left-icons, .top-header .right-icons { gap: 4px; flex-grow: 1; justify-content: flex-start; } .top-header .right-icons { justify-content: flex-end; }
       .top-header button { width: 32px; height: 32px; font-size: 16px; padding: 6px; }
     }
@@ -957,6 +962,49 @@
     #lista-fornecedores-manage li, #lista-observacoes-manage li { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 8px; font-size: 14px; font-weight: 500; color: var(--text-dark); transition: background 0.2s ease; }
     #lista-fornecedores-manage li:hover, #lista-observacoes-manage li:hover { background: var(--border-color); }
     #lista-fornecedores-manage button, #lista-observacoes-manage button { background: none; border: none; color: var(--button-danger); font-size: 16px; cursor: pointer; padding: 0; }
+
+    /* --- ESTILOS DO CHECKLIST --- */
+    .checklist-container {
+        display: none;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+        animation: fadeIn 0.2s ease; /* Animação mais rápida */
+    }
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+    .checklist-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 12px;
+        cursor: pointer;
+        accent-color: var(--button-primary);
+    }
+    .checklist-item label {
+        margin: 0;
+        font-weight: 400;
+        color: var(--text-dark);
+        cursor: pointer;
+    }
+    .progress-bar-container {
+        width: 100%;
+        background-color: var(--bg-primary);
+        border-radius: 4px;
+        height: 8px;
+        margin-top: 4px;
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    .progress-bar {
+        height: 100%;
+        background-color: var(--button-success);
+        width: 0%;
+        transition: width 0.5s ease;
+    }
   </style>
 </head>
 <body>
@@ -1060,6 +1108,22 @@
   const DB_NAME = 'notasdb-fotos', DB_VERSION = 1;
   let db;
 
+  // --- NOVA ESTRUTURA DE CHECKLIST ---
+  const checklistDefinition = {
+    tirarFoto: "Tirar Foto",
+    entradaSistema: "Entrada no sistema",
+    produtosTransferidos: "Produtos transferidos",
+    fotosNoServidor: "Fotos no servidor",
+    cotacaoNoServidor: "Cotação no Servidor",
+    notaEscaneada: "Nota Escaneada",
+    estaNaPlanilha: "Está na planilha",
+    cotacaoAnexada: "Cotação Anexada",
+    notaCarimbada: "Nota Carimbada"
+  };
+
+  // --- VARIÁVEL PARA MANTER O ESTADO DOS CHECKLISTS ABERTOS ---
+  let openChecklistIds = new Set();
+
   function openDB() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onupgradeneeded = e => e.target.result.createObjectStore('fotos', { keyPath: 'id' }); r.onsuccess = e => { db = e.target.result; resolve(db); }; r.onerror = e => { console.error("Erro no IndexedDB:", e.target.errorCode); reject(e.target.errorCode); }; }); }
   function generateUniqueId() { return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; }
   function savePhotoDB(id, file) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); const tx = db.transaction(['fotos'], 'readwrite').objectStore('fotos').put({ id, file }); tx.onsuccess = () => resolve(id); tx.onerror = e => reject(e.target.error); }); }
@@ -1074,6 +1138,14 @@
       try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); toast("Erro ao carregar o armazenamento de fotos."); }
       
       notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => {
+        // Se a mudança veio do próprio cliente (ex: marcar um checkbox), não redesenha a tela inteira.
+        // A atualização local do DOM já cuidou disso, evitando o "pisca".
+        if (snapshot.metadata.hasPendingWrites) {
+            notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return;
+        }
+        
+        // Se a mudança veio do servidor (outro usuário, etc.), redesenha tudo para garantir a sincronia.
         notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         rebuildNotasPendentesList();
       }, error => { console.error("Erro ao carregar notas:", error); toast("Erro ao carregar dados. Verifique sua conexão."); });
@@ -1115,6 +1187,21 @@
   function formatarDataInput(input) { let v = input.value.replace(/\D/g, '').substring(0, 8); if (v.length > 4) v = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`; else if (v.length > 2) v = `${v.slice(0,2)}/${v.slice(2)}`; input.value = v; }
   function formatarValorBlur(event) { const i = event.target; let v = i.value.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, ''); if (v === '' || isNaN(v)) return; i.value = parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
+  function gerarHtmlChecklist(nota) {
+      let html = '';
+      const checklistData = nota.checklist || {};
+      for (const key in checklistDefinition) {
+          const isChecked = checklistData[key] ? 'checked' : '';
+          html += `
+              <div class="checklist-item">
+                  <input type="checkbox" id="check-${key}-${nota.id}" ${isChecked} onchange="atualizarChecklist('${nota.id}', '${key}', this.checked)">
+                  <label for="check-${key}-${nota.id}">${checklistDefinition[key]}</label>
+              </div>
+          `;
+      }
+      return html;
+  }
+
   function rebuildNotasPendentesList(pagina = 1) {
     listaNotasPendentes.innerHTML = ''; paginaAtualNotas = pagina;
     if (notasPendentes.length === 0) {
@@ -1125,34 +1212,53 @@
         notasPendentes.slice(inicio, fim).forEach((nota, index) => {
           const gIndex = inicio + index, li = document.createElement('li');
           li.className = `nota-item ${nota.enviada ? 'nota-enviada' : ''}`; li.dataset.noteId = nota.id;
+          
           let actHTML = '';
-          if (nota.enviada) actHTML = `<button class="sent-btn" title="Fotos Enviadas"><i class="fas fa-check"></i></button>`;
-          else if (nota.fotos && nota.fotos.length > 0) actHTML = `<button class="whatsapp-btn" onclick="compartilharNota(${gIndex})" title="Compartilhar"><i class="fab fa-whatsapp"></i></button>`;
+          if (nota.enviada) actHTML = `<button class="sent-btn icon-only" title="Fotos Enviadas"><i class="fas fa-check"></i></button>`;
+          else if (nota.fotos && nota.fotos.length > 0) actHTML = `<button class="whatsapp-btn icon-only" onclick="compartilharNota(${gIndex})" title="Compartilhar"><i class="fab fa-whatsapp"></i></button>`;
           else actHTML = `<span class="sem-fotos">SEM FOTOS</span>`;
+
+          const totalTasks = Object.keys(checklistDefinition).length;
+          const completedTasks = nota.checklist ? Object.values(nota.checklist).filter(Boolean).length : 0;
+          const progressPercent = (completedTasks / totalTasks) * 100;
+          
           li.innerHTML = `
             <div class="nota-info"><b>${nota.fornecedor} ${nota.nf || ''}</b></div>
             <div class="nota-data">Criada em: ${formatarDataHora(nota.dataCriacao)}</div>
             <div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} ${nota.obs ? `| Obs: ${nota.obs}`:''}</div>
-            <div class="actions-row"><div class="actions-item">${actHTML}<button class="edit-btn" onclick="toggleEditPanel(this)" title="Editar"><i class="fas fa-pen"></i></button><button class="delete-btn" onclick="deletarNota(${gIndex})" title="Excluir"><i class="fas fa-trash"></i></button></div></div>
+            <div class="progress-bar-container"><div class="progress-bar" style="width: ${progressPercent}%"></div></div>
+            <div class="actions-row">
+              <div class="actions-group">
+                 <button onclick="toggleChecklist(this, '${nota.id}')">Progresso: ${completedTasks}/${totalTasks}</button>
+              </div>
+              <div class="actions-group">
+                ${actHTML}
+                <button class="edit-btn icon-only" onclick="toggleEditPanel(this)" title="Editar"><i class="fas fa-pen"></i></button>
+                <button class="delete-btn icon-only" onclick="deletarNota(${gIndex})" title="Excluir"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
             <div class="edit-panel">
               <div class="edit-fields-row"><div class="campo"><label>Fornecedor</label><input type="text" id="fornEdit-${gIndex}" value="${nota.fornecedor||''}" oninput="this.value=this.value.toUpperCase()"></div><div class="campo"><label>NF</label><input type="text" id="nfEdit-${gIndex}" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" id="vencEdit-${gIndex}" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div></div>
               <div class="edit-fields-row"><div class="campo" style="flex:1;"><label>Valor</label><input type="text" id="valorEdit-${gIndex}" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo" style="flex:1;"><label>Observações</label><select id="obsEdit-${gIndex}"></select></div></div>
               <div class="campo fotos-edit-container-${gIndex}"></div>
               <div class="actions"><button style="background:var(--button-success);color:#fff;flex:1;" onclick="salvarEdicao(${gIndex})"><i class="fas fa-save"></i> Salvar</button></div>
-            </div>`;
+            </div>
+            <div class="checklist-container">${gerarHtmlChecklist(nota)}</div>`;
           listaNotasPendentes.appendChild(li);
-          if (nota.id === idPainelEdicaoAberto) li.querySelector('.edit-panel').classList.add('show');
+
+          if (idPainelEdicaoAberto === nota.id) li.querySelector('.edit-panel').classList.add('show');
+          if (openChecklistIds.has(nota.id)) { li.querySelector('.checklist-container').style.display = 'block'; }
+          
           const obsSelectEdit = li.querySelector(`#obsEdit-${gIndex}`);
           obsSelectEdit.innerHTML = '<option value="">Recurso a ser pago</option>';
           observacoesSugeridas.forEach(obs => obsSelectEdit.innerHTML += `<option value="${obs}">${obs}</option>`);
           obsSelectEdit.value = nota.obs || '';
           reconstruirPainelFotosEdit(gIndex);
         });
-        // criarPaginacao(paginacaoNotasEl, notasPendentes.length, pagina); // <-- LINHA REMOVIDA. Esta função não existe e estava causando o erro.
     }
     saidaEl.value = buildSaidaText();
-    if (idPainelEdicaoAberto) idPainelEdicaoAberto = null;
   }
+
 
   async function reconstruirPainelFotosEdit(gIndex) {
       const container = document.querySelector(`.fotos-edit-container-${gIndex}`), nota = notasPendentes[gIndex];
@@ -1199,7 +1305,76 @@
   function togglePopup(id) { const p = document.getElementById(id); if (p.style.display === 'flex') closePopup(id); else openPopup(id); }
   function openPopup(id) { document.body.classList.add('popup-open'); popups.forEach(p => p.style.display = 'none'); document.getElementById(id).style.display = 'flex'; if (id === 'fornecedores-popup') popularListaFornecedores(); else if (id === 'pedidos-popup') popularListaPedidos(); else if (id === 'observacoes-popup') popularObservacoesList(); }
   function closePopup(id) { document.getElementById(id).style.display = 'none'; document.body.classList.remove('popup-open'); }
-  function toggleEditPanel(btn) { btn.closest('.nota-item').querySelector('.edit-panel').classList.toggle('show'); }
+  
+  function toggleEditPanel(btn) {
+    const notaItem = btn.closest('.nota-item');
+    const editPanel = notaItem.querySelector('.edit-panel');
+    const checklistContainer = notaItem.querySelector('.checklist-container');
+    const notaId = notaItem.dataset.noteId;
+    const isEditPanelVisible = editPanel.classList.contains('show');
+
+    if (isEditPanelVisible) {
+        editPanel.classList.remove('show');
+        if (idPainelEdicaoAberto === notaId) idPainelEdicaoAberto = null;
+    } else {
+        editPanel.classList.add('show');
+        idPainelEdicaoAberto = notaId;
+        if (openChecklistIds.has(notaId)) {
+            openChecklistIds.delete(notaId);
+            checklistContainer.style.display = 'none';
+        }
+    }
+  }
+  
+  function toggleChecklist(btn, notaId) {
+    const notaItem = btn.closest('.nota-item');
+    const checklistContainer = notaItem.querySelector('.checklist-container');
+    const editPanel = notaItem.querySelector('.edit-panel');
+    const isChecklistVisible = openChecklistIds.has(notaId);
+
+    if (isChecklistVisible) {
+        openChecklistIds.delete(notaId);
+        checklistContainer.style.display = 'none';
+    } else {
+        openChecklistIds.add(notaId);
+        checklistContainer.style.display = 'block';
+        if (editPanel.classList.contains('show')) {
+            editPanel.classList.remove('show');
+            if (idPainelEdicaoAberto === notaId) idPainelEdicaoAberto = null;
+        }
+    }
+  }
+
+  function atualizarChecklist(notaId, tarefa, isChecked) {
+      const updateData = {};
+      updateData[`checklist.${tarefa}`] = isChecked;
+      
+      // Envia a atualização para o servidor em segundo plano
+      notasCollection.doc(notaId).update(updateData).catch(error => {
+          console.error("Erro ao atualizar checklist:", error);
+          toast("Erro ao salvar progresso.");
+          // Opcional: reverter a mudança visual se a gravação falhar
+      });
+
+      // Atualiza a interface localmente de forma IMEDIATA, sem "piscar"
+      const nota = notasPendentes.find(n => n.id === notaId);
+      if (!nota) return;
+
+      if (!nota.checklist) nota.checklist = {};
+      nota.checklist[tarefa] = isChecked;
+
+      const totalTasks = Object.keys(checklistDefinition).length;
+      const completedTasks = Object.values(nota.checklist).filter(Boolean).length;
+      const progressPercent = (completedTasks / totalTasks) * 100;
+
+      const notaItemEl = document.querySelector(`li[data-note-id="${notaId}"]`);
+      if (notaItemEl) {
+          const progressBar = notaItemEl.querySelector('.progress-bar');
+          const progressButton = notaItemEl.querySelector('.actions-group button');
+          if (progressBar) progressBar.style.width = `${progressPercent}%`;
+          if (progressButton) progressButton.textContent = `Progresso: ${completedTasks}/${totalTasks}`;
+      }
+  }
 
   async function salvarEdicao(gIndex) {
     const nota = notasPendentes[gIndex];
@@ -1308,7 +1483,31 @@
       salvarBtn.disabled = true; salvarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
       try {
           const photoIds = await Promise.all(fotosAcumuladas.map(file => savePhotoDB(generateUniqueId(), file)));
-          await notasCollection.add({ data: dataEl.value.trim(), nf: nfEl.value.trim(), vencimento: vencEl.value.trim(), valor: valorEl.value.trim(), fornecedor, obs: obsEl.value.trim(), fotos: photoIds, enviada: false, dataCriacao: new Date().toISOString() });
+          
+          const checklistInicial = {
+              tirarFoto: fotosAcumuladas.length > 0,
+              entradaSistema: false,
+              produtosTransferidos: false,
+              fotosNoServidor: false,
+              cotacaoNoServidor: false,
+              notaEscaneada: false,
+              estaNaPlanilha: false,
+              cotacaoAnexada: false,
+              notaCarimbada: false
+          };
+          
+          await notasCollection.add({ 
+              data: dataEl.value.trim(), 
+              nf: nfEl.value.trim(), 
+              vencimento: vencEl.value.trim(), 
+              valor: valorEl.value.trim(), 
+              fornecedor, 
+              obs: obsEl.value.trim(), 
+              fotos: photoIds, 
+              enviada: false, 
+              dataCriacao: new Date().toISOString(),
+              checklist: checklistInicial
+          });
           adicionarFornecedor(fornecedor); limparFormularioPrincipal();
           toast("✓ Nota salva!"); window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (e) { console.error("Erro ao salvar nota:", e); toast("✕ Erro ao salvar a nota."); } 
