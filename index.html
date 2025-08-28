@@ -1121,8 +1121,9 @@
     notaCarimbada: "Nota Carimbada"
   };
 
-  // --- VARIÁVEL PARA MANTER O ESTADO DOS CHECKLISTS ABERTOS ---
+  // --- ESTADOS DA INTERFACE ---
   let openChecklistIds = new Set();
+  let isChecklistUpdate = false; // Flag para controlar a atualização do checklist
 
   function openDB() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onupgradeneeded = e => e.target.result.createObjectStore('fotos', { keyPath: 'id' }); r.onsuccess = e => { db = e.target.result; resolve(db); }; r.onerror = e => { console.error("Erro no IndexedDB:", e.target.errorCode); reject(e.target.errorCode); }; }); }
   function generateUniqueId() { return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; }
@@ -1138,14 +1139,15 @@
       try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); toast("Erro ao carregar o armazenamento de fotos."); }
       
       notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => {
-        // Se a mudança veio do próprio cliente (ex: marcar um checkbox), não redesenha a tela inteira.
-        // A atualização local do DOM já cuidou disso, evitando o "pisca".
-        if (snapshot.metadata.hasPendingWrites) {
+        // Lógica de atualização inteligente
+        if (snapshot.metadata.hasPendingWrites && isChecklistUpdate) {
+            isChecklistUpdate = false; // Reseta a flag
             notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            return;
+            saidaEl.value = buildSaidaText(); // Atualiza apenas o campo de saída
+            return; // Pula o redesenho da lista
         }
         
-        // Se a mudança veio do servidor (outro usuário, etc.), redesenha tudo para garantir a sincronia.
+        // Para outras mudanças (do servidor, ou adições/edições locais), redesenha tudo
         notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         rebuildNotasPendentesList();
       }, error => { console.error("Erro ao carregar notas:", error); toast("Erro ao carregar dados. Verifique sua conexão."); });
@@ -1307,59 +1309,56 @@
   function closePopup(id) { document.getElementById(id).style.display = 'none'; document.body.classList.remove('popup-open'); }
   
   function toggleEditPanel(btn) {
-    const notaItem = btn.closest('.nota-item');
-    const editPanel = notaItem.querySelector('.edit-panel');
-    const checklistContainer = notaItem.querySelector('.checklist-container');
-    const notaId = notaItem.dataset.noteId;
-    const isEditPanelVisible = editPanel.classList.contains('show');
+      const notaItem = btn.closest('.nota-item');
+      const editPanel = notaItem.querySelector('.edit-panel');
+      const checklistContainer = notaItem.querySelector('.checklist-container');
+      const notaId = notaItem.dataset.noteId;
+      const isEditPanelVisible = editPanel.classList.contains('show');
 
-    if (isEditPanelVisible) {
-        editPanel.classList.remove('show');
-        if (idPainelEdicaoAberto === notaId) idPainelEdicaoAberto = null;
-    } else {
-        editPanel.classList.add('show');
-        idPainelEdicaoAberto = notaId;
-        if (openChecklistIds.has(notaId)) {
-            openChecklistIds.delete(notaId);
-            checklistContainer.style.display = 'none';
-        }
-    }
+      if (isEditPanelVisible) {
+          editPanel.classList.remove('show');
+          if (idPainelEdicaoAberto === notaId) idPainelEdicaoAberto = null;
+      } else {
+          editPanel.classList.add('show');
+          idPainelEdicaoAberto = notaId;
+          if (openChecklistIds.has(notaId)) {
+              openChecklistIds.delete(notaId);
+              checklistContainer.style.display = 'none';
+          }
+      }
   }
-  
-  function toggleChecklist(btn, notaId) {
-    const notaItem = btn.closest('.nota-item');
-    const checklistContainer = notaItem.querySelector('.checklist-container');
-    const editPanel = notaItem.querySelector('.edit-panel');
-    const isChecklistVisible = openChecklistIds.has(notaId);
 
-    if (isChecklistVisible) {
-        openChecklistIds.delete(notaId);
-        checklistContainer.style.display = 'none';
-    } else {
-        openChecklistIds.add(notaId);
-        checklistContainer.style.display = 'block';
-        if (editPanel.classList.contains('show')) {
-            editPanel.classList.remove('show');
-            if (idPainelEdicaoAberto === notaId) idPainelEdicaoAberto = null;
-        }
-    }
+  function toggleChecklist(btn, notaId) {
+      const notaItem = btn.closest('.nota-item');
+      const checklistContainer = notaItem.querySelector('.checklist-container');
+      const editPanel = notaItem.querySelector('.edit-panel');
+      const isChecklistVisible = openChecklistIds.has(notaId);
+
+      if (isChecklistVisible) {
+          openChecklistIds.delete(notaId);
+          checklistContainer.style.display = 'none';
+      } else {
+          openChecklistIds.add(notaId);
+          checklistContainer.style.display = 'block';
+          if (editPanel.classList.contains('show')) {
+              editPanel.classList.remove('show');
+              if (idPainelEdicaoAberto === notaId) idPainelEdicaoAberto = null;
+          }
+      }
   }
 
   function atualizarChecklist(notaId, tarefa, isChecked) {
+      isChecklistUpdate = true; // Ativa a flag para o listener ignorar o redesenho
       const updateData = {};
       updateData[`checklist.${tarefa}`] = isChecked;
       
-      // Envia a atualização para o servidor em segundo plano
       notasCollection.doc(notaId).update(updateData).catch(error => {
           console.error("Erro ao atualizar checklist:", error);
           toast("Erro ao salvar progresso.");
-          // Opcional: reverter a mudança visual se a gravação falhar
       });
 
-      // Atualiza a interface localmente de forma IMEDIATA, sem "piscar"
       const nota = notasPendentes.find(n => n.id === notaId);
       if (!nota) return;
-
       if (!nota.checklist) nota.checklist = {};
       nota.checklist[tarefa] = isChecked;
 
