@@ -24,7 +24,28 @@
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-primary); color: var(--text-dark); -webkit-user-select: none; user-select: none; }
          
-        .app-container { position: relative; width: 100%; height: 100vh; max-width: 680px; margin: 0 auto; background-color: var(--bg-primary); overflow: hidden; display: flex; flex-direction: column; }
+        /* --- ESTILOS DA TELA DE LOGIN --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-primary);
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; padding: 24px;
+        }
+        .login-box {
+            width: 100%; max-width: 320px; text-align: center;
+        }
+        .login-box .icon { font-size: 48px; color: var(--text-light); margin-bottom: 24px; transition: color 0.4s ease, transform 0.4s ease; }
+        .login-box .icon.unlocked { color: var(--button-success); transform: rotate(-10deg); }
+        .login-box h1 { font-size: 24px; color: var(--text-dark); margin-bottom: 8px; font-weight: 700; }
+        .login-box p { font-size: 16px; color: var(--text-light); margin-bottom: 24px; }
+        .login-box input { text-align: center; font-size: 18px; }
+        .login-box button { margin-top: 16px; background-color: var(--accent-color); }
+        .login-box .error-message { color: var(--button-danger); font-size: 14px; height: 20px; margin-top: 8px; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+
+
+        .app-container { position: relative; width: 100%; height: 100vh; max-width: 680px; margin: 0 auto; background-color: var(--bg-primary); overflow: hidden; display: none; /* Inicia oculto */ flex-direction: column; }
         .main-content { flex-grow: 1; position: relative; overflow: hidden; }
  
         .app-screen, .modal-screen {
@@ -43,7 +64,7 @@
         .screen-content { padding: 24px; overflow-y: auto; flex-grow: 1; }
         .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 1px 2px var(--shadow); }
         .header-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin: 0; }
-        .header-action { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 8px; }
+        .header-action { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 8px; display: flex; align-items: center; gap: 8px; }
  
         .modal-screen .header-title { font-size: 18px; font-weight: 600; }
         .modal-screen .close-modal { font-size: 28px; font-weight: 400; color: var(--text-light); }
@@ -127,7 +148,7 @@
         .actions-button { padding: 14px 20px; border: 0; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 16px; transition: var(--transition-swift); display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; color: #fff; width: 100%; }
         .actions { display: grid; gap: 12px; margin-top: 18px; }
          
-        .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); color: #fff; padding: 14px 22px; border-radius: 12px; display: none; font-size: 14px; z-index: 9999; animation: toastIn 0.3s ease; }
+        .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); color: #fff; padding: 14px 22px; border-radius: 12px; display: none; font-size: 14px; z-index: 10000; animation: toastIn 0.3s ease; }
         .empty-state { text-align: center; color: var(--text-light); padding: 40px 0; }
          
         .modal-preview { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; }
@@ -148,10 +169,22 @@
     </style>
 </head>
 <body>
+
+  <div id="login-screen">
+      <div class="login-box">
+          <div class="icon"><i id="login-icon" class="fas fa-lock"></i></div>
+          <h1>Acesso Restrito</h1>
+          <p>Por favor, insira a senha para continuar.</p>
+          <input type="password" id="password-input" placeholder="••••••••">
+          <div id="error-message" class="error-message"></div>
+          <button id="login-button" class="actions-button" onclick="handleLogin()">Entrar</button>
+      </div>
+  </div>
+
   <div class="app-container" id="app-container">
     <div class="main-content">
         <div class="app-screen active" id="screen-add">
-            <header class="header"><h1 class="header-title">Adicionar Nota</h1><button class="header-action" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
+            <header class="header"><h1 class="header-title">Adicionar Nota</h1><button class="header-action" id="sync-btn-1" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
             <div class="screen-content"><div class="card">
                 <div class="campo"><label for="data">Data</label><input type="text" id="data" placeholder="dd/mm/aaaa"></div>
                 <div class="campo"><label for="nf">NF</label><input type="text" id="nf" placeholder="Número da Nota Fiscal"></div>
@@ -164,15 +197,15 @@
             </div></div>
         </div>
         <div class="app-screen" id="screen-manage">
-            <header class="header"><h1 class="header-title">Gerenciar</h1><button class="header-action" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
+            <header class="header"><h1 class="header-title">Gerenciar</h1><button class="header-action" id="sync-btn-2" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
             <div class="screen-content"><ul id="lista-notas-pendentes" class="nota-list"></ul></div>
         </div>
         <div class="app-screen" id="screen-export">
-            <header class="header"><h1 class="header-title">Exportar</h1><button class="header-action" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
+            <header class="header"><h1 class="header-title">Exportar</h1><button class="header-action" id="sync-btn-3" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
             <div class="screen-content"><textarea id="saida" readonly="" placeholder="O texto das notas pendentes aparecerá aqui..."></textarea><div class="actions"><button class="actions-button" style="background-color: var(--accent-color);" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar</button><button class="actions-button" style="background-color: var(--button-whatsapp);" onclick="compartilharLista()"><i class="fas fa-share-alt"></i> Compartilhar</button><button class="actions-button" style="background-color: var(--text-light);" onclick="limpar()"><i class="fas fa-archive"></i> Arquivar Tudo</button></div></div>
         </div>
         <div class="app-screen" id="screen-history">
-            <header class="header"><h1 class="header-title">Histórico</h1><button class="header-action" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
+            <header class="header"><h1 class="header-title">Histórico</h1><button class="header-action" id="sync-btn-4" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
             <div class="screen-content"><ul id="lista-historico" class="nota-list"></ul><div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button" style="background-color: var(--button-danger);" onclick="limparHistorico()"><i class="fas fa-trash"></i> Limpar Histórico</button></div></div>
         </div>
         <div class="app-screen" id="screen-settings">
@@ -217,14 +250,65 @@
     <div class="modal-preview-nav"><button id="prevBtn" onclick="navegarFotos(-1)"><i class="fas fa-chevron-left"></i></button><button id="nextBtn" onclick="navegarFotos(1)"><i class="fas fa-chevron-right"></i></button></div>
     <div class="modal-preview-bottom"><button class="modal-preview-action" onclick="salvarFotoPreview()"><i class="fas fa-download"></i> Salvar</button><button class="modal-preview-action delete" onclick="excluirFotoPreview()"><i class="fas fa-trash-alt"></i> Excluir</button></div>
   </div>
-  <div id="toast" class="toast" style="display: none;">Preparando fotos...</div>
+  <div id="toast" class="toast" style="display: none;"></div>
  
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
+    // --- LÓGICA DE LOGIN ---
+    // DEFINA SUA SENHA AQUI
+    const SENHA_CORRETA = "1206";
+
+    function checkLogin() {
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            document.getElementById('app-container').style.display = 'flex';
+            document.getElementById('login-screen').style.display = 'none';
+        } else {
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+        }
+    }
+
+    function handleLogin() {
+        const passwordInput = document.getElementById('password-input');
+        const errorMessage = document.getElementById('error-message');
+        const loginIcon = document.getElementById('login-icon');
+        
+        if (passwordInput.value === SENHA_CORRETA) {
+            localStorage.setItem('isLoggedIn', 'true');
+            errorMessage.textContent = '';
+            loginIcon.classList.replace('fa-lock', 'fa-unlock');
+            loginIcon.parentElement.classList.add('unlocked');
+            
+            setTimeout(() => {
+                checkLogin();
+            }, 500); // Espera um pouco para a animação ser vista
+        } else {
+            errorMessage.textContent = 'Senha incorreta.';
+            passwordInput.classList.add('shake');
+            setTimeout(() => {
+                passwordInput.classList.remove('shake');
+                passwordInput.value = '';
+            }, 820);
+        }
+    }
+    document.getElementById('password-input').addEventListener('keyup', function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById("login-button").click();
+        }
+    });
+
+    // --- FIM DA LÓGICA DE LOGIN ---
+
+
     const firebaseConfig = { apiKey: "AIzaSyAwcvJNJhLZ4Wqcw4Wz44XJ9kIdtqKJeJg", authDomain: "relacaonf.firebaseapp.com", projectId: "relacaonf", storageBucket: "relacaonf.appspot.com", messagingSenderId: "773864981925", appId: "1:773864981925:web:a4dadc51ec0a856832144c" };
     firebase.initializeApp(firebaseConfig);
-    const firestore = firebase.firestore(), notasCollection = firestore.collection('notas'), historicoCollection = firestore.collection('historico');
+    const firestore = firebase.firestore();
+    const notasCollection = firestore.collection('notas');
+    const historicoCollection = firestore.collection('historico');
+    const settingsDocRef = firestore.collection('config').doc('appSettings');
+    
     let notasPendentes = [], historicoNotas = [], fotosAcumuladas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {};
     let openChecklistIds = new Set(), isChecklistUpdate = false;
     let fotoAtualIndex = 0, fotosAtuaisParaPreview = [], fotoAtualContexto = {};
@@ -242,6 +326,8 @@
     function deletePhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos'], 'readwrite').objectStore('fotos').delete(id).onsuccess = () => resolve(); }); }
      
     document.addEventListener('DOMContentLoaded', () => {
+        checkLogin(); 
+
         const tabItems = document.querySelectorAll('.tab-item[data-screen]');
         tabItems.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -265,38 +351,83 @@
     function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
     function closeAllModals() { document.querySelectorAll('.modal-screen.active').forEach(modal => modal.classList.remove('active')); }
     function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=> t.style.display='none', 2500); }
+    
     async function sincronizarManualmente(button) {
         const icon = button.querySelector('i');
-        icon.classList.add('fa-spin');
-        button.disabled = true;
+        const allSyncButtons = document.querySelectorAll('.header-action[id^="sync-btn-"]');
+        allSyncButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.querySelector('i').classList.add('fa-spin');
+        });
+        toast("Sincronizando...");
+
         try {
-            const notasSnapshot = await notasCollection.orderBy('dataCriacao', 'desc').get();
-            notasPendentes = notasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            rebuildNotasPendentesList();
-            DOM.saida.value = buildSaidaText();
-            const historicoSnapshot = await historicoCollection.orderBy('dataHistorico', 'desc').get();
-            historicoNotas = historicoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            popularListaHistorico();
-            toast("✓ Dados sincronizados!");
+            await Promise.all([
+                (async () => {
+                    const notasSnapshot = await notasCollection.orderBy('dataCriacao', 'desc').get();
+                    notasPendentes = notasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    rebuildNotasPendentesList();
+                    DOM.saida.value = buildSaidaText();
+                })(),
+                (async () => {
+                    const historicoSnapshot = await historicoCollection.orderBy('dataHistorico', 'desc').get();
+                    historicoNotas = historicoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    popularListaHistorico();
+                })(),
+                carregarConfiguracoesRemotas()
+            ]);
+            toast("✓ Sincronização concluída!");
         } catch (error) {
             console.error("Erro na sincronização manual:", error);
             toast("✕ Falha ao sincronizar.");
         } finally {
             setTimeout(() => {
-                icon.classList.remove('fa-spin');
-                button.disabled = false;
+                allSyncButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.querySelector('i').classList.remove('fa-spin');
+                });
             }, 500);
         }
     }
+
+    async function carregarConfiguracoesRemotas() {
+        try {
+            const doc = await settingsDocRef.get();
+            if (doc.exists) {
+                const data = doc.data();
+                fornecedoresSugeridos = data.fornecedores || [];
+                pedidosRecursos = data.pedidosRecursos || {};
+            } else {
+                fornecedoresSugeridos = [];
+                pedidosRecursos = {};
+            }
+        } catch (error) {
+            console.error("Erro ao carregar configurações:", error);
+            fornecedoresSugeridos = [];
+            pedidosRecursos = {};
+        }
+        popularDatalist();
+        popularListaPedidos();
+    }
+
     async function carregarEstado() {
-        fornecedoresSugeridos = JSON.parse(localStorage.getItem('fornecedores') || '[]'), popularDatalist(); observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); pedidosRecursos = JSON.parse(localStorage.getItem('pedidosRecursos') || '{}'), popularListaPedidos();
+        await carregarConfiguracoesRemotas();
+        
+        observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); 
         if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun'); document.getElementById('theme-label').textContent = 'Modo Claro'; }
+        
         try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); }
+        
         notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => { if (snapshot.metadata.hasPendingWrites && isChecklistUpdate) { isChecklistUpdate = false; notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); return; } handleSnapshotChanges(snapshot); }, error => toast("Erro ao carregar dados."));
         historicoCollection.orderBy('dataHistorico', 'desc').onSnapshot(snapshot => { historicoNotas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); popularListaHistorico(); }, error => console.error("Erro ao carregar histórico:", error));
     }
-    function salvarEstado() { localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos)); localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos)); }
+
+    function salvarObservacoesLocal() { 
+        localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); 
+    }
+    
     function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); const themeToggle = document.getElementById('theme-toggle'); themeToggle.querySelector('i').classList.toggle('fa-moon', !isDark); themeToggle.querySelector('i').classList.toggle('fa-sun', isDark); document.getElementById('theme-label').textContent = isDark ? 'Modo Claro' : 'Modo Escuro'; }
+    
     async function salvarNota() {
         const fornecedor = DOM.forn.value.trim().toUpperCase(); if (!fornecedor) return toast("O campo 'Fornecedor' é obrigatório.");
         const salvarBtn = document.getElementById('salvarBtn'); salvarBtn.disabled = true; salvarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
@@ -304,15 +435,17 @@
             const photoIds = await Promise.all(fotosAcumuladas.map(file => savePhotoDB(generateUniqueId(), file)));
             const checklistInicial = Object.keys(checklistDefinition).reduce((acc, key) => ({ ...acc, [key]: false }), {}); checklistInicial.tirarFoto = photoIds.length > 0;
             await notasCollection.add({ data: DOM.data.value.trim(), nf: DOM.nf.value.trim(), vencimento: DOM.venc.value.trim(), valor: DOM.valor.value.trim(), fornecedor, obs: DOM.obs.value.trim(), fotos: photoIds, enviada: false, dataCriacao: new Date().toISOString(), checklist: checklistInicial });
-            adicionarFornecedor(fornecedor, true); limparFormularioPrincipal(true); toast("✓ Nota salva com sucesso!");
+            await adicionarFornecedor(fornecedor, true);
+            limparFormularioPrincipal(true); toast("✓ Nota salva com sucesso!");
         } catch (e) { console.error("Erro ao salvar nota:", e); toast("✕ Erro ao salvar a nota."); } 
         finally { salvarBtn.disabled = false; salvarBtn.innerHTML = '<i class="fas fa-check"></i> Salvar'; }
     }
+
     async function deletarNota(id) { if (!confirm("Tem certeza que deseja excluir esta nota?")) return; const nota = notasPendentes.find(n => n.id === id); if (nota?.fotos?.length > 0) await Promise.all(nota.fotos.map(id => deletePhotoDB(id))); await notasCollection.doc(id).delete(); toast("🗑️ Nota excluída!"); }
     async function limpar() { if (notasPendentes.length === 0) return toast("Nenhuma nota para arquivar."); if (!confirm(`Arquivar ${notasPendentes.length} nota(s) no histórico? As fotos serão excluídas.`)) return; const batch = firestore.batch(); for (const nota of notasPendentes) { const { id, ...notaData } = nota; notaData.dataHistorico = new Date().toLocaleString('pt-BR'); batch.set(historicoCollection.doc(), notaData); batch.delete(notasCollection.doc(id)); if (nota.fotos?.length > 0) await Promise.all(nota.fotos.map(photoId => deletePhotoDB(photoId))); } await batch.commit(); toast("Notas arquivadas no histórico."); }
     async function limparHistorico() { if (historicoNotas.length === 0 || !confirm("Tem certeza que deseja apagar TODO o histórico? Esta ação é irreversível.")) return; const batch = firestore.batch(); historicoNotas.forEach(nota => batch.delete(historicoCollection.doc(nota.id))); await batch.commit(); toast("Histórico limpo com sucesso!"); }
     function toggleEditPanel(btn, notaId) { const notaItem = btn.closest('.nota-item'); const editPanel = notaItem.querySelector('.edit-panel'); if (openChecklistIds.has(notaId)) { toggleChecklist(btn, notaId); } const isVisible = editPanel.classList.contains('show'); document.querySelectorAll('.edit-panel.show').forEach(p => p.classList.remove('show')); if (!isVisible) { editPanel.classList.add('show'); reconstruirPainelFotosEdit(notaId); } }
-    async function salvarEdicao(id) { const notaItem = document.querySelector(`li[data-note-id="${id}"]`); const data = { fornecedor: notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(), nf: notaItem.querySelector(`.nfEdit`).value.trim(), vencimento: notaItem.querySelector(`.vencEdit`).value.trim(), valor: notaItem.querySelector(`.valorEdit`).value.trim(), obs: notaItem.querySelector(`.obsEdit`).value.trim() }; await notasCollection.doc(id).update(data); adicionarFornecedor(data.fornecedor, true); toast('✓ Nota editada e salva!'); notaItem.querySelector('.edit-panel').classList.remove('show'); }
+    async function salvarEdicao(id) { const notaItem = document.querySelector(`li[data-note-id="${id}"]`); const data = { fornecedor: notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(), nf: notaItem.querySelector(`.nfEdit`).value.trim(), vencimento: notaItem.querySelector(`.vencEdit`).value.trim(), valor: notaItem.querySelector(`.valorEdit`).value.trim(), obs: notaItem.querySelector(`.obsEdit`).value.trim() }; await notasCollection.doc(id).update(data); await adicionarFornecedor(data.fornecedor, true); toast('✓ Nota editada e salva!'); notaItem.querySelector('.edit-panel').classList.remove('show'); }
     async function gerarImagemSeparadora(fornecedor, nf) { const c = document.createElement('canvas'); c.width=600; c.height=150; const ctx=c.getContext('2d'); ctx.fillStyle='#34495e'; ctx.fillRect(0,0,600,150); ctx.fillStyle='#ecf0f1'; ctx.font='bold 30px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif'; ctx.textAlign='center'; ctx.fillText(`${fornecedor} ${nf}`,300,70); ctx.font='50px sans-serif'; ctx.fillText(`↓`,300,130); return new Promise(r=>c.toBlob(r,'image/png')); }
     async function compartilharNota(id) { const nota = notasPendentes.find(n => n.id === id); if (nota.enviada) return toast("Esta nota já foi enviada."); try { toast("Preparando fotos..."); const files = await Promise.all((nota.fotos || []).map(id => getPhotoDB(id))); const validFiles = files.filter(f => f), separador = await gerarImagemSeparadora(nota.fornecedor, nota.nf); const filesToShare = [new File([separador], 'separador.png', { type: 'image/png' }), ...validFiles]; if (navigator.share) await navigator.share({ files: filesToShare, text: `${nota.fornecedor} ${nota.nf || ''}` }); else return toast("Compartilhamento não suportado."); await Promise.all((nota.fotos || []).map(id => deletePhotoDB(id))); await notasCollection.doc(id).update({ enviada: true, fotos: [] }); toast("✓ Nota compartilhada e fotos locais removidas!"); } catch (error) { if (error.name !== 'AbortError') toast("Erro ao compartilhar."); } }
     function toggleChecklist(btn, notaId) { const notaItem = btn.closest('.nota-item'); const checklistContainer = notaItem.querySelector('.checklist-container'); if (notaItem.querySelector('.edit-panel.show')) { toggleEditPanel(btn, notaId); } if (openChecklistIds.has(notaId)) { openChecklistIds.delete(notaId); checklistContainer.classList.remove('show'); } else { openChecklistIds.add(notaId); checklistContainer.classList.add('show'); } }
@@ -370,18 +503,59 @@
     }
     async function reconstruirMiniaturasEdit(notaId) { const nota = notasPendentes.find(n => n.id === notaId); if (!nota || !nota.fotos) return; const container = document.querySelector(`li[data-note-id="${notaId}"] .miniaturas-container-edit`); if(!container) return; container.innerHTML = ''; const files = await Promise.all(nota.fotos.map(id => getPhotoDB(id).catch(() => null))); nota.fotos.forEach((photoId, i) => { const file = files[i], wrapper = document.createElement('div'); wrapper.className = 'miniatura-wrapper'; if (file) { const img = document.createElement('img'), btn = document.createElement('button'); img.src = URL.createObjectURL(file); const fileIndexInThumbnails = files.filter(f => f).indexOf(file); img.onclick = () => abrirPreview(files.filter(f => f), fileIndexInThumbnails, { type: 'nota', id: notaId, photoId: photoId }); btn.className = 'remove-foto'; btn.innerHTML = '×'; btn.onclick = e => { e.stopPropagation(); removerFotoEdit(notaId, i); }; wrapper.append(img, btn); } else { wrapper.innerHTML = `<div class="not-found"><i class="fas fa-ghost"></i></div>`; } container.appendChild(wrapper); }); }
     async function removerFotoEdit(notaId, fIndex) { if (!confirm("Remover esta imagem da nota?")) return; const nota = notasPendentes.find(n => n.id === notaId); const photoId = nota.fotos[fIndex], updatedIds = nota.fotos.filter((_, i) => i !== fIndex); await notasCollection.doc(nota.id).update({ fotos: updatedIds }); await deletePhotoDB(photoId); toast("Imagem removida."); }
-    function adicionarFornecedor(forn, noToast = false) { const f = forn.trim().toUpperCase(); if (f && !fornecedoresSugeridos.includes(f)) { fornecedoresSugeridos.push(f); salvarEstado(); popularDatalist(); if (!noToast) toast(`Fornecedor ${f} adicionado!`); } }
-    function adicionarFornecedorManage() { const f = DOM.fornManageInput.value.trim(); if (f) { adicionarFornecedor(f); popularListaFornecedores(); DOM.fornManageInput.value = ''; } }
-    function deletarFornecedor(f) { if (confirm(`Excluir o fornecedor ${f}?`)) { fornecedoresSugeridos = fornecedoresSugeridos.filter(i => i !== f); salvarEstado(); popularDatalist(); popularListaFornecedores(); toast(`Fornecedor ${f} excluído.`); } }
+    
+    async function adicionarFornecedor(forn, noToast = false) {
+        const f = forn.trim().toUpperCase();
+        if (f && !fornecedoresSugeridos.includes(f)) {
+            fornecedoresSugeridos.push(f);
+            await settingsDocRef.set({ fornecedores: firebase.firestore.FieldValue.arrayUnion(f) }, { merge: true });
+            popularDatalist();
+            if (!noToast) toast(`Fornecedor ${f} adicionado!`);
+        }
+    }
+    async function adicionarFornecedorManage() { const f = DOM.fornManageInput.value.trim(); if (f) { await adicionarFornecedor(f); DOM.fornManageInput.value = ''; } }
+    async function deletarFornecedor(f) {
+        if (confirm(`Excluir o fornecedor ${f}?`)) {
+            fornecedoresSugeridos = fornecedoresSugeridos.filter(i => i !== f);
+            await settingsDocRef.update({ fornecedores: firebase.firestore.FieldValue.arrayRemove(f) });
+            popularDatalist();
+            toast(`Fornecedor ${f} excluído.`);
+        }
+    }
     function popularDatalist() { DOM.fornDatalist.innerHTML = ''; fornecedoresSugeridos.sort().forEach(f => DOM.fornDatalist.innerHTML += `<option value="${f}"></option>`); popularListaFornecedores(); }
     function popularListaFornecedores() { DOM.listaFornManage.innerHTML = ''; fornecedoresSugeridos.sort().forEach(f => DOM.listaFornManage.innerHTML += `<li>${f} <button onclick="deletarFornecedor('${f}')"><i class="fas fa-times-circle"></i></button></li>`); }
-    function adicionarObservacao(obs, noToast = false) { const o = obs.trim(); if (o && !observacoesSugeridas.includes(o)) { observacoesSugeridas.push(o); salvarEstado(); popularObservacoesList(); if (!noToast) toast(`Observação "${o}" adicionada!`); } }
+    
+    function adicionarObservacao(obs, noToast = false) { const o = obs.trim(); if (o && !observacoesSugeridas.includes(o)) { observacoesSugeridas.push(o); salvarObservacoesLocal(); popularObservacoesList(); if (!noToast) toast(`Observação "${o}" adicionada!`); } }
     function adicionarObservacaoManage() { const o = DOM.obsManageInput.value.trim(); if (o) { adicionarObservacao(o); DOM.obsManageInput.value = ''; } }
-    function deletarObservacao(o) { if (confirm(`Excluir a observação "${o}"?`)) { observacoesSugeridas = observacoesSugeridas.filter(i => i !== o); salvarEstado(); popularObservacoesList(); toast(`Observação "${o}" excluída.`); } }
+    function deletarObservacao(o) { if (confirm(`Excluir a observação "${o}"?`)) { observacoesSugeridas = observacoesSugeridas.filter(i => i !== o); salvarObservacoesLocal(); popularObservacoesList(); toast(`Observação "${o}" excluída.`); } }
     function popularObservacoesList() { DOM.obs.innerHTML = '<option value="">Recurso a ser pago</option>'; observacoesSugeridas.sort().forEach(o => DOM.obs.innerHTML += `<option value="${o}">${o}</option>`); DOM.listaObsManage.innerHTML = ''; observacoesSugeridas.sort().forEach(o => DOM.listaObsManage.innerHTML += `<li>${o} <button onclick="deletarObservacao('${o}')"><i class="fas fa-times-circle"></i></button></li>`); }
-    function adicionarPedido() { const pNum = DOM.pedidoNumInput.value.trim(), r = DOM.pedidoRecursoSelect.value; if (pNum && r) { pedidosRecursos[pNum] = r; salvarEstado(); popularListaPedidos(); DOM.pedidoNumInput.value = ''; DOM.pedidoRecursoSelect.value = ''; toast(`Pedido ${pNum} adicionado!`); } else { toast('Preencha o pedido e o recurso.'); } }
-    function deletarPedido(p) { if (confirm(`Excluir o pedido ${p}?`)) { delete pedidosRecursos[p]; salvarEstado(); popularListaPedidos(); toast(`Pedido ${p} excluído.`); } }
+    
+    async function adicionarPedido() {
+        const pNum = DOM.pedidoNumInput.value.trim(), r = DOM.pedidoRecursoSelect.value;
+        if (pNum && r) {
+            pedidosRecursos[pNum] = r;
+            const updateData = {};
+            updateData[`pedidosRecursos.${pNum}`] = r;
+            await settingsDocRef.set(updateData, { merge: true });
+            popularListaPedidos();
+            DOM.pedidoNumInput.value = ''; DOM.pedidoRecursoSelect.value = '';
+            toast(`Pedido ${pNum} adicionado!`);
+        } else {
+            toast('Preencha o pedido e o recurso.');
+        }
+    }
+    async function deletarPedido(p) {
+        if (confirm(`Excluir o pedido ${p}?`)) {
+            delete pedidosRecursos[p];
+            const updateData = {};
+            updateData[`pedidosRecursos.${p}`] = firebase.firestore.FieldValue.delete();
+            await settingsDocRef.update(updateData);
+            popularListaPedidos();
+            toast(`Pedido ${p} excluído.`);
+        }
+    }
     function popularListaPedidos() { DOM.listaPedidos.innerHTML = ''; Object.keys(pedidosRecursos).sort((a,b) => a-b).forEach(p => DOM.listaPedidos.innerHTML += `<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fas fa-times-circle"></i></button></li>`); }
+    
     function formatarDataInput(input) { let v = input.value.replace(/\D/g, '').substring(0, 8); if (v.length > 4) v = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`; else if (v.length > 2) v = `${v.slice(0,2)}/${v.slice(2)}`; input.value = v; }
     function formatarValorBlur(event) { let v = event.target.value.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, ''); if (v) event.target.value = parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function getLinha(nota) { let v = nota.vencimento, o = nota.obs; if (nota.obs === "REMESSA") { v = "REMESSA"; o = "Recurso Proprio Santa Casa"; } return [nota.data, nota.nf, v, nota.valor, "", nota.fornecedor, "", "", o].join("\t"); }
