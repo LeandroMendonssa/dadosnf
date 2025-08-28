@@ -1,6 +1,6 @@
 <html lang="pt-BR"><head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Minhas Notas">
@@ -15,6 +15,7 @@
             --accent-color: #007aff; --accent-color-hover: #0056b3; --button-success: #34c759;
             --button-danger: #ff3b30; --button-whatsapp: #25d366; --radius: 16px;
             --shadow: rgba(0, 0, 0, 0.05); --transition-swift: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --app-height: 100vh; /* Variável para a altura da tela */
         }
         body.dark-mode {
             --bg-primary: #000000; --bg-secondary: #1c1c1e; --bg-tertiary: #2c2c2e;
@@ -45,7 +46,7 @@
         .shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
 
 
-        .app-container { position: relative; width: 100%; height: 100vh; max-width: 680px; margin: 0 auto; background-color: var(--bg-primary); overflow: hidden; display: none; /* Inicia oculto */ flex-direction: column; }
+        .app-container { position: relative; width: 100%; height: var(--app-height); /* Usa a variável de altura */ max-width: 680px; margin: 0 auto; background-color: var(--bg-primary); overflow: hidden; display: none; flex-direction: column; }
         .main-content { flex-grow: 1; position: relative; overflow: hidden; }
  
         .app-screen, .modal-screen {
@@ -61,7 +62,7 @@
         }
         .modal-screen { z-index: 1000; position: fixed; max-width: 680px; margin: 0 auto; }
          
-        .screen-content { padding: 24px; overflow-y: auto; flex-grow: 1; }
+        .screen-content { padding: 24px; overflow-y: auto; flex-grow: 1; padding-bottom: 40px; }
         .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 1px 2px var(--shadow); }
         .header-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin: 0; }
         .header-action { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 8px; display: flex; align-items: center; gap: 8px; }
@@ -69,7 +70,7 @@
         .modal-screen .header-title { font-size: 18px; font-weight: 600; }
         .modal-screen .close-modal { font-size: 28px; font-weight: 400; color: var(--text-light); }
  
-        .tab-bar { z-index: 1001; display: flex; justify-content: space-around; align-items: center; background-color: rgba(255, 255, 255, 0.85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); padding: 8px 0; flex-shrink: 0; }
+        .tab-bar { z-index: 1001; display: flex; justify-content: space-around; align-items: center; background-color: rgba(255, 255, 255, 0.85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); padding: 8px 0; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); /* Espaçamento para a barra inicial do iOS */ }
         body.dark-mode .tab-bar { background-color: rgba(28, 28, 30, 0.85); border-top-color: var(--border-color); }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-light); font-size: 11px; font-weight: 500; cursor: pointer; border: none; background: none; padding: 4px 12px; flex: 1; }
         .tab-item i { font-size: 22px; }
@@ -148,7 +149,7 @@
         .actions-button { padding: 14px 20px; border: 0; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 16px; transition: var(--transition-swift); display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; color: #fff; width: 100%; }
         .actions { display: grid; gap: 12px; margin-top: 18px; }
          
-        .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); color: #fff; padding: 14px 22px; border-radius: 12px; display: none; font-size: 14px; z-index: 10000; animation: toastIn 0.3s ease; }
+        .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); color: #fff; padding: 14px 22px; border-radius: 12px; display: none; font-size: 14px; z-index: 10000; animation: toastIn 0.3s ease; text-align: center; /* Alinhamento Central */ }
         .empty-state { text-align: center; color: var(--text-light); padding: 40px 0; }
          
         .modal-preview { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; }
@@ -213,10 +214,11 @@
             <div class="screen-content">
                 <ul class="settings-list-group">
                     <li><a onclick="openModal('fornecedores-modal')"><i class="icon fas fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fas fa-chevron-right"></i></a></li>
-                    <li><a onclick="openModal('pedidos-modal')"><i class="icon fas fa-box" style="background-color: #bd10e0;"></i> Pedidos <i class="fas fa-chevron-right"></i></a></li>
+                    <li><a onclick="openModal('pedidos-modal')"><i class="icon fas fa-box" style="background-color: #bd10e0;"></i> Pedidos e Recursos <i class="fas fa-chevron-right"></i></a></li>
                     <li><a onclick="openModal('observacoes-modal')"><i class="icon fas fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fas fa-chevron-right"></i></a></li>
                 </ul>
                 <ul class="settings-list-group">
+                    <li><a onclick="openModal('login-modal')"><i class="icon fas fa-key" style="background-color: #4cd964;"></i> Senha e Login <i class="fas fa-chevron-right"></i></a></li>
                     <li><div id="theme-toggle" onclick="toggleTheme()"><i class="icon fas fa-moon" style="background-color: #5856d6;"></i><span id="theme-label">Modo Escuro</span></div></li>
                 </ul>
             </div>
@@ -228,12 +230,21 @@
         <div class="screen-content"><div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i> Adicionar Fornecedor</button><ul id="lista-fornecedores-manage" class="manage-list"></ul></div>
     </div>
     <div id="pedidos-modal" class="modal-screen">
-        <header class="header"><h1 class="header-title">Pedidos & Recursos</h1><button class="header-action close-modal" onclick="closeModal('pedidos-modal')">×</button></header>
+        <header class="header"><h1 class="header-title">Pedidos e Recursos</h1><button class="header-action close-modal" onclick="closeModal('pedidos-modal')">×</button></header>
         <div class="screen-content"><div class="modal-campo"><label>Nº do Pedido</label><input type="text" id="pedido-num" placeholder="Digite o número do pedido"></div><div class="modal-campo"><label>Recurso</label><select id="pedido-recurso"><option value="">Selecione...</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div><button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="adicionarPedido()"><i class="fas fa-plus"></i> Adicionar</button><ul id="lista-pedidos" class="manage-list"></ul></div>
     </div>
     <div id="observacoes-modal" class="modal-screen">
         <header class="header"><h1 class="header-title">Observações</h1><button class="header-action close-modal" onclick="closeModal('observacoes-modal')">×</button></header>
         <div class="screen-content"><div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i> Adicionar Observação</button><ul id="lista-observacoes-manage" class="manage-list"></ul></div>
+    </div>
+    <div id="login-modal" class="modal-screen">
+        <header class="header"><h1 class="header-title">Senha e Login</h1><button class="header-action close-modal" onclick="closeModal('login-modal')">×</button></header>
+        <div class="screen-content">
+            <div class="modal-campo"><label>Usuário Principal</label><input type="text" value="Leandro" readonly></div>
+            <div class="modal-campo"><label>Nova Senha</label><input type="password" id="nova-senha" placeholder="Digite a nova senha"></div>
+            <div class="modal-campo"><label>Confirmar Nova Senha</label><input type="password" id="confirma-nova-senha" placeholder="Confirme a nova senha"></div>
+            <button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="salvarNovaSenha()"><i class="fas fa-save"></i> Salvar Alterações</button>
+        </div>
     </div>
  
     <nav class="tab-bar">
@@ -255,10 +266,15 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
-    // --- LÓGICA DE LOGIN ---
-    // DEFINA SUA SENHA AQUI
-    const SENHA_CORRETA = "1206";
+    // --- CORREÇÃO DA ALTURA DA TELA (VIEWPORT) EM DISPOSITIVOS MÓVEIS ---
+    const setAppHeight = () => {
+        const doc = document.documentElement;
+        doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+    };
+    window.addEventListener('resize', setAppHeight);
+    document.addEventListener('DOMContentLoaded', setAppHeight);
 
+    // --- LÓGICA DE LOGIN ---
     function checkLogin() {
         if (localStorage.getItem('isLoggedIn') === 'true') {
             document.getElementById('app-container').style.display = 'flex';
@@ -273,8 +289,9 @@
         const passwordInput = document.getElementById('password-input');
         const errorMessage = document.getElementById('error-message');
         const loginIcon = document.getElementById('login-icon');
+        const senhaCorreta = localStorage.getItem('userPassword') || '1206'; // Padrão 1206
         
-        if (passwordInput.value === SENHA_CORRETA) {
+        if (passwordInput.value === senhaCorreta) {
             localStorage.setItem('isLoggedIn', 'true');
             errorMessage.textContent = '';
             loginIcon.classList.replace('fa-lock', 'fa-unlock');
@@ -282,7 +299,7 @@
             
             setTimeout(() => {
                 checkLogin();
-            }, 500); // Espera um pouco para a animação ser vista
+            }, 500);
         } else {
             errorMessage.textContent = 'Senha incorreta.';
             passwordInput.classList.add('shake');
@@ -292,6 +309,26 @@
             }, 820);
         }
     }
+
+    function salvarNovaSenha() {
+        const novaSenha = document.getElementById('nova-senha');
+        const confirmaSenha = document.getElementById('confirma-nova-senha');
+
+        if (novaSenha.value.trim() === '') {
+            toast('Por favor, digite uma nova senha.');
+            return;
+        }
+        if (novaSenha.value !== confirmaSenha.value) {
+            toast('As senhas não correspondem.');
+            return;
+        }
+        localStorage.setItem('userPassword', novaSenha.value);
+        toast('✓ Senha alterada com sucesso!');
+        novaSenha.value = '';
+        confirmaSenha.value = '';
+        closeModal('login-modal');
+    }
+
     document.getElementById('password-input').addEventListener('keyup', function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
@@ -300,7 +337,6 @@
     });
 
     // --- FIM DA LÓGICA DE LOGIN ---
-
 
     const firebaseConfig = { apiKey: "AIzaSyAwcvJNJhLZ4Wqcw4Wz44XJ9kIdtqKJeJg", authDomain: "relacaonf.firebaseapp.com", projectId: "relacaonf", storageBucket: "relacaonf.appspot.com", messagingSenderId: "773864981925", appId: "1:773864981925:web:a4dadc51ec0a856832144c" };
     firebase.initializeApp(firebaseConfig);
@@ -355,63 +391,60 @@
     async function sincronizarManualmente(button) {
         const icon = button.querySelector('i');
         const allSyncButtons = document.querySelectorAll('.header-action[id^="sync-btn-"]');
-        allSyncButtons.forEach(btn => {
-            btn.disabled = true;
-            btn.querySelector('i').classList.add('fa-spin');
-        });
+        allSyncButtons.forEach(btn => { btn.disabled = true; btn.querySelector('i').classList.add('fa-spin'); });
         toast("Sincronizando...");
 
         try {
-            await Promise.all([
-                (async () => {
-                    const notasSnapshot = await notasCollection.orderBy('dataCriacao', 'desc').get();
-                    notasPendentes = notasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    rebuildNotasPendentesList();
-                    DOM.saida.value = buildSaidaText();
-                })(),
-                (async () => {
-                    const historicoSnapshot = await historicoCollection.orderBy('dataHistorico', 'desc').get();
-                    historicoNotas = historicoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    popularListaHistorico();
-                })(),
-                carregarConfiguracoesRemotas()
-            ]);
-            toast("✓ Sincronização concluída!");
+            // As coletas principais (notas/histórico) já têm listeners, então forçar uma nova busca não é estritamente necessário
+            // Mas podemos forçar uma busca de configurações para garantir que está 100% atual
+            const doc = await settingsDocRef.get();
+            if (doc.exists) {
+                const data = doc.data();
+                fornecedoresSugeridos = data.fornecedores || [];
+                pedidosRecursos = data.pedidosRecursos || {};
+                popularDatalist();
+                popularListaPedidos();
+            }
+            // Espera um tempo para o usuário ler a mensagem de "Sincronizando"
+            setTimeout(() => {
+                toast("Sincronização feita com sucesso!");
+            }, 1500);
+
         } catch (error) {
             console.error("Erro na sincronização manual:", error);
-            toast("✕ Falha ao sincronizar.");
+            setTimeout(() => {
+               toast("✕ Falha ao sincronizar.");
+            }, 1500);
         } finally {
             setTimeout(() => {
                 allSyncButtons.forEach(btn => {
                     btn.disabled = false;
                     btn.querySelector('i').classList.remove('fa-spin');
                 });
-            }, 500);
+            }, 2000); // Aumenta o tempo para o ícone parar de girar
         }
     }
 
-    async function carregarConfiguracoesRemotas() {
-        try {
-            const doc = await settingsDocRef.get();
+    function iniciarListenerConfiguracoes() {
+        settingsDocRef.onSnapshot(doc => {
             if (doc.exists) {
                 const data = doc.data();
                 fornecedoresSugeridos = data.fornecedores || [];
                 pedidosRecursos = data.pedidosRecursos || {};
-            } else {
+            } else { // Documento não existe, usar valores padrão
                 fornecedoresSugeridos = [];
                 pedidosRecursos = {};
             }
-        } catch (error) {
-            console.error("Erro ao carregar configurações:", error);
-            fornecedoresSugeridos = [];
-            pedidosRecursos = {};
-        }
-        popularDatalist();
-        popularListaPedidos();
+            popularDatalist();
+            popularListaPedidos();
+        }, error => {
+            console.error("Erro ao ouvir configurações:", error);
+            toast("Erro ao carregar configurações de Pedidos/Fornecedores.");
+        });
     }
 
     async function carregarEstado() {
-        await carregarConfiguracoesRemotas();
+        iniciarListenerConfiguracoes(); // Inicia o listener em tempo real
         
         observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); 
         if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun'); document.getElementById('theme-label').textContent = 'Modo Claro'; }
@@ -507,18 +540,14 @@
     async function adicionarFornecedor(forn, noToast = false) {
         const f = forn.trim().toUpperCase();
         if (f && !fornecedoresSugeridos.includes(f)) {
-            fornecedoresSugeridos.push(f);
             await settingsDocRef.set({ fornecedores: firebase.firestore.FieldValue.arrayUnion(f) }, { merge: true });
-            popularDatalist();
             if (!noToast) toast(`Fornecedor ${f} adicionado!`);
         }
     }
     async function adicionarFornecedorManage() { const f = DOM.fornManageInput.value.trim(); if (f) { await adicionarFornecedor(f); DOM.fornManageInput.value = ''; } }
     async function deletarFornecedor(f) {
         if (confirm(`Excluir o fornecedor ${f}?`)) {
-            fornecedoresSugeridos = fornecedoresSugeridos.filter(i => i !== f);
             await settingsDocRef.update({ fornecedores: firebase.firestore.FieldValue.arrayRemove(f) });
-            popularDatalist();
             toast(`Fornecedor ${f} excluído.`);
         }
     }
@@ -533,11 +562,9 @@
     async function adicionarPedido() {
         const pNum = DOM.pedidoNumInput.value.trim(), r = DOM.pedidoRecursoSelect.value;
         if (pNum && r) {
-            pedidosRecursos[pNum] = r;
             const updateData = {};
             updateData[`pedidosRecursos.${pNum}`] = r;
             await settingsDocRef.set(updateData, { merge: true });
-            popularListaPedidos();
             DOM.pedidoNumInput.value = ''; DOM.pedidoRecursoSelect.value = '';
             toast(`Pedido ${pNum} adicionado!`);
         } else {
@@ -546,11 +573,9 @@
     }
     async function deletarPedido(p) {
         if (confirm(`Excluir o pedido ${p}?`)) {
-            delete pedidosRecursos[p];
             const updateData = {};
             updateData[`pedidosRecursos.${p}`] = firebase.firestore.FieldValue.delete();
             await settingsDocRef.update(updateData);
-            popularListaPedidos();
             toast(`Pedido ${p} excluído.`);
         }
     }
