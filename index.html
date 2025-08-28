@@ -218,7 +218,7 @@
                     <li><a onclick="openModal('observacoes-modal')"><i class="icon fas fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fas fa-chevron-right"></i></a></li>
                 </ul>
                 <ul class="settings-list-group">
-                    <li><a onclick="openModal('login-modal')"><i class="icon fas fa-key" style="background-color: #4cd964;"></i> Senha e Login <i class="fas fa-chevron-right"></i></a></li>
+                    <li><a onclick="abrirModalSenhaComVerificacao()"><i class="icon fas fa-key" style="background-color: #4cd964;"></i> Senha e Login <i class="fas fa-chevron-right"></i></a></li>
                     <li><div id="theme-toggle" onclick="toggleTheme()"><i class="icon fas fa-moon" style="background-color: #5856d6;"></i><span id="theme-label">Modo Escuro</span></div></li>
                 </ul>
             </div>
@@ -310,6 +310,21 @@
         }
     }
 
+    function abrirModalSenhaComVerificacao() {
+        const senhaAtual = localStorage.getItem('userPassword') || '1206';
+        const senhaDigitada = prompt("Para sua segurança, digite a senha atual:");
+
+        if (senhaDigitada === null) { // Usuário clicou em "Cancelar"
+            return;
+        }
+
+        if (senhaDigitada === senhaAtual) {
+            openModal('login-modal');
+        } else {
+            toast("Senha incorreta.");
+        }
+    }
+
     function salvarNovaSenha() {
         const novaSenha = document.getElementById('nova-senha');
         const confirmaSenha = document.getElementById('confirma-nova-senha');
@@ -395,8 +410,6 @@
         toast("Sincronizando...");
 
         try {
-            // As coletas principais (notas/histórico) já têm listeners, então forçar uma nova busca não é estritamente necessário
-            // Mas podemos forçar uma busca de configurações para garantir que está 100% atual
             const doc = await settingsDocRef.get();
             if (doc.exists) {
                 const data = doc.data();
@@ -405,7 +418,6 @@
                 popularDatalist();
                 popularListaPedidos();
             }
-            // Espera um tempo para o usuário ler a mensagem de "Sincronizando"
             setTimeout(() => {
                 toast("Sincronização feita com sucesso!");
             }, 1500);
@@ -421,7 +433,7 @@
                     btn.disabled = false;
                     btn.querySelector('i').classList.remove('fa-spin');
                 });
-            }, 2000); // Aumenta o tempo para o ícone parar de girar
+            }, 2000);
         }
     }
 
@@ -431,7 +443,7 @@
                 const data = doc.data();
                 fornecedoresSugeridos = data.fornecedores || [];
                 pedidosRecursos = data.pedidosRecursos || {};
-            } else { // Documento não existe, usar valores padrão
+            } else {
                 fornecedoresSugeridos = [];
                 pedidosRecursos = {};
             }
@@ -444,7 +456,7 @@
     }
 
     async function carregarEstado() {
-        iniciarListenerConfiguracoes(); // Inicia o listener em tempo real
+        iniciarListenerConfiguracoes();
         
         observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); 
         if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun'); document.getElementById('theme-label').textContent = 'Modo Claro'; }
@@ -565,7 +577,13 @@
             const updateData = {};
             updateData[`pedidosRecursos.${pNum}`] = r;
             await settingsDocRef.set(updateData, { merge: true });
-            DOM.pedidoNumInput.value = ''; DOM.pedidoRecursoSelect.value = '';
+
+            // Atualização local para feedback instantâneo
+            pedidosRecursos[pNum] = r;
+            popularListaPedidos();
+
+            DOM.pedidoNumInput.value = ''; 
+            DOM.pedidoRecursoSelect.value = '';
             toast(`Pedido ${pNum} adicionado!`);
         } else {
             toast('Preencha o pedido e o recurso.');
@@ -576,6 +594,8 @@
             const updateData = {};
             updateData[`pedidosRecursos.${p}`] = firebase.firestore.FieldValue.delete();
             await settingsDocRef.update(updateData);
+            
+            // A atualização via listener do Firebase vai remover o item da tela
             toast(`Pedido ${p} excluído.`);
         }
     }
