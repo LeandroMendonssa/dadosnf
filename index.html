@@ -23,6 +23,7 @@
       --button-secondary: #95a5a6;
       --button-success: #2ecc71;
       --button-danger: #e74c4c;
+      --button-whatsapp: #25D366; /* Cor do WhatsApp */
       --shadow: rgba(0, 0, 0, 0.1);
       --radius: 12px;
       --transition: all 0.3s ease;
@@ -153,6 +154,11 @@
       box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
       outline: 0;
     }
+    
+    input:disabled, button:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
 
     #forn, #fornEdit {
       text-transform: uppercase;
@@ -223,6 +229,28 @@
       position: relative;
       display: inline-block;
     }
+    
+    .miniatura-wrapper .not-found {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        border: 1px dashed var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--text-light);
+        text-align: center;
+        padding: 4px;
+        background: var(--bg-primary);
+    }
+    
+    .miniatura-wrapper .not-found i {
+        font-size: 18px;
+        margin-bottom: 4px;
+        color: var(--text-light);
+    }
 
     #miniaturas-container img, .miniaturas-container-edit img {
       width: 64px;
@@ -268,7 +296,7 @@
     
     .actions {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       gap: 12px;
       margin-top: 8px;
     }
@@ -289,26 +317,22 @@
       letter-spacing: -0.01em;
       color: #fff;
     }
-
-    .actions button.center {
-        grid-column: 1 / -1;
-    }
     
     #salvarBtn {
       background: var(--button-save); 
       color: #fff;
     }
 
-    #salvarBtn:hover {
+    #salvarBtn:hover:not(:disabled) {
       opacity: 0.9;
     }
 
-    #exportBtn {
+    #exportBtn, #shareListBtn {
       background: var(--button-copy);
       color: #fff;
     }
 
-    #exportBtn:hover {
+    #exportBtn:hover, #shareListBtn:hover {
       opacity: 0.9;
     }
     
@@ -355,7 +379,6 @@
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
-      /* Ajuste da cor da seta para maior visibilidade */
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(44, 62, 80)" d="M7 10l5 5 5-5z"/></svg>');
       background-repeat: no-repeat;
       background-position: right 12px center;
@@ -363,7 +386,6 @@
     }
     
     body.dark-mode select {
-        /* Ajuste da cor da seta para maior visibilidade no modo escuro */
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(224, 224, 224)" d="M7 10l5 5 5-5z"/></svg>');
     }
     
@@ -419,7 +441,6 @@
         cursor: pointer;
     }
 
-    /* Correção para o botão de fechar */
     .close-popup, .modal-preview-fechar {
         -webkit-appearance: none;
         -moz-appearance: none;
@@ -524,7 +545,7 @@
     }
     
     .actions-item .whatsapp-btn {
-      background: #25D366;
+      background: var(--button-whatsapp);
       color: #fff;
       border: none;
     }
@@ -542,8 +563,8 @@
     }
 
     .actions-item .sent-btn {
-      background: var(--button-success); /* Fundo verde */
-      color: #fff; /* Ícone branco */
+      background: var(--button-success);
+      color: #fff;
       border: none;
       font-weight: bold;
       width: 38px;
@@ -708,8 +729,12 @@
         width: auto;
     }
 
-    .top-header #theme-toggle i {
-      transition: color 0.3s ease;
+    .top-header #theme-toggle i, .top-header #sync-btn i {
+      transition: color 0.3s ease, transform 0.5s ease;
+    }
+
+    .top-header #sync-btn.syncing i {
+        animation: fa-spin 1.5s linear infinite;
     }
     
     body.dark-mode .top-header button {
@@ -909,1623 +934,425 @@
         margin: 8px 0;
     }
     
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideInTop {
-      from { transform: translateY(-30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    @keyframes toastIn {
-      from { opacity: 0; transform: translate(-50%, 20px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideInTop { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* Novo estilo para o status de fotos no menu de edição */
-    .fotos-edit-status {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .fotos-edit-status .hint {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--button-success);
-      margin: 0;
-      padding: 8px 12px;
-      background: rgba(46, 204, 113, 0.1);
-      border-radius: 8px;
-    }
-    
-    /* Novo estilo para a notificação de sucesso */
-    .fotos-enviadas-status {
-        background: var(--sent-notification-bg);
-        color: var(--sent-notification-text);
-        font-weight: 600;
-        text-align: center;
-        padding: 12px 20px;
-        border-radius: var(--radius);
-        margin-top: 10px;
-    }
+    .fotos-enviadas-status { background: var(--sent-notification-bg); color: var(--sent-notification-text); font-weight: 600; text-align: center; padding: 12px 20px; border-radius: var(--radius); margin-top: 10px; }
 
     @media (max-width: 734px) {
-      body {
-        padding: 16px;
-        font-size: 16px;
-      }
-      
-      .wrap {
-        max-width: 100%;
-        padding-top: 54px;
-      }
-      
-      h1 {
-        font-size: 24px;
-        margin-bottom: 22px;
-      }
-      
-      .card {
-        padding: 20px;
-      }
-      
-      .actions {
-        grid-template-columns: 1fr;
-      }
-
-      .actions button {
-        width: 100%;
-      }
-      
-      .popup-content {
-        margin: 50px 0 0 0;
-        padding: 16px;
-        width: 100%;
-        height: calc(100vh - 50px);
-      }
-      
-      .edit-fields-row {
-        flex-direction: column;
-        gap: 0;
-      }
-      
-      .edit-fields-row .campo {
-        min-width: 100%;
-      }
-      
-      input, select, textarea {
-        padding: 16px;
-      }
-      
-      .actions-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-      
-      .actions-item {
-        width: 100%;
-        justify-content: flex-end;
-      }
-      
-      .btn-list {
-        padding: 15px 0;
-      }
-      
-      .top-header {
-        padding: 0 8px;
-        height: 50px;
-        gap: 8px;
-      }
-
-      .top-header .left-icons, .top-header .right-icons {
-        gap: 4px;
-        flex-grow: 1;
-        justify-content: flex-start;
-      }
-
-      .top-header .right-icons {
-        justify-content: flex-end;
-      }
-      
-      .top-header button {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
-        padding: 6px;
-      }
+      body { padding: 16px; font-size: 16px; } .wrap { max-width: 100%; padding-top: 54px; } h1 { font-size: 24px; margin-bottom: 22px; } .card { padding: 20px; } 
+      .actions { grid-template-columns: 1fr; } 
+      .actions button { width: 100%; } .popup-content { margin: 50px 0 0 0; padding: 16px; width: 100%; height: calc(100vh - 50px); } .edit-fields-row { flex-direction: column; gap: 0; }
+      .edit-fields-row .campo { min-width: 100%; } input, select, textarea { padding: 16px; } .actions-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .actions-item { width: 100%; justify-content: flex-end; } .btn-list { padding: 15px 0; } .top-header { padding: 0 8px; height: 50px; gap: 8px; }
+      .top-header .left-icons, .top-header .right-icons { gap: 4px; flex-grow: 1; justify-content: flex-start; } .top-header .right-icons { justify-content: flex-end; }
+      .top-header button { width: 32px; height: 32px; font-size: 16px; padding: 6px; }
     }
 
-    .fornecedor-input-group, .observacoes-input-group {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .fornecedor-input-group input, .observacoes-input-group input {
-        flex: 1;
-    }
-
-    .manage-section-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 15px;
-        padding: 0;
-        color: var(--text-dark);
-    }
-    
-    #lista-fornecedores-manage, #lista-observacoes-manage {
-        margin-top: 20px;
-        padding-top: 10px;
-        border-top: 1px solid var(--border-color);
-    }
-    
-    #lista-fornecedores-manage li, #lista-observacoes-manage li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
-        background: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--text-dark);
-        transition: background 0.2s ease;
-    }
-    
-    #lista-fornecedores-manage li:hover, #lista-observacoes-manage li:hover {
-        background: var(--border-color);
-    }
-
-    #lista-fornecedores-manage button, #lista-observacoes-manage button {
-        background: none;
-        border: none;
-        color: var(--button-danger);
-        font-size: 16px;
-        cursor: pointer;
-        padding: 0;
-    }
-    
+    .fornecedor-input-group, .observacoes-input-group { display: flex; gap: 10px; align-items: center; }
+    .fornecedor-input-group input, .observacoes-input-group input { flex: 1; } .manage-section-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; padding: 0; color: var(--text-dark); }
+    #lista-fornecedores-manage, #lista-observacoes-manage { margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--border-color); }
+    #lista-fornecedores-manage li, #lista-observacoes-manage li { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 8px; font-size: 14px; font-weight: 500; color: var(--text-dark); transition: background 0.2s ease; }
+    #lista-fornecedores-manage li:hover, #lista-observacoes-manage li:hover { background: var(--border-color); }
+    #lista-fornecedores-manage button, #lista-observacoes-manage button { background: none; border: none; color: var(--button-danger); font-size: 16px; cursor: pointer; padding: 0; }
   </style>
 </head>
 <body>
   
   <header class="top-header">
     <div class="left-icons">
-      <button id="fornecedores-btn" onclick="togglePopup('fornecedores-popup')" title="Fornecedores"><i class="fas fa-truck"></i></button>
-      <button id="pedidos-btn" onclick="togglePopup('pedidos-popup')" title="Pedidos"><i class="fas fa-box"></i></button>
-      <button id="observacoes-btn" onclick="togglePopup('observacoes-popup')" title="Observações"><i class="fas fa-comment-dots"></i></button>
-      <button id="gerenciar-btn-top" onclick="togglePopup('gerenciar-notas-popup')" title="Gerenciar Notas"><i class="fas fa-list-check"></i></button>
-      <button id="historico-btn" onclick="togglePopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
+      <button onclick="togglePopup('fornecedores-popup')" title="Fornecedores"><i class="fas fa-truck"></i></button> <button onclick="togglePopup('pedidos-popup')" title="Pedidos"><i class="fas fa-box"></i></button> <button onclick="togglePopup('observacoes-popup')" title="Observações"><i class="fas fa-comment-dots"></i></button> <button onclick="togglePopup('gerenciar-notas-popup')" title="Gerenciar Notas"><i class="fas fa-list-check"></i></button> <button onclick="togglePopup('historico-popup')" title="Histórico"><i class="fas fa-history"></i></button>
     </div>
-    <div class="right-icons">
-      <button id="theme-toggle" onclick="toggleTheme()" title="Alternar tema"><i class="fas fa-moon"></i></button>
-    </div>
+    <div class="right-icons"> <button id="sync-btn" onclick="sincronizarManualmente()" title="Sincronizar notas"><i class="fas fa-sync-alt"></i></button> <button id="theme-toggle" onclick="toggleTheme()" title="Alternar tema"><i class="fas fa-moon"></i></button> </div>
   </header>
   
   <div class="wrap">
     <h1>Relação de Notas Fiscais</h1>
 
     <div class="card">
-      <div class="campo">
-        <label for="data">Data</label>
-        <div class="data-container">
-          <input type="text" id="data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" />
-        </div>
-      </div>
-
-      <div class="campo">
-        <label for="nf">NF</label>
-        <input type="text" id="nf" inputmode="numeric" placeholder="Número da Nota Fiscal" autocomplete="off" />
-      </div>
-
-      <div class="campo">
-        <label for="venc">Vencimento</label>
-        <div class="data-container">
-          <input type="text" id="venc" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" />
-        </div>
-      </div>
-
-      <div class="campo">
-        <label for="valor">Valor Total</label>
-        <div class="valor-container">
-          <input id="valor" type="text" inputmode="decimal" pattern="[0-9.,]*" placeholder="Ex.: 1200,50" />
-        </div>
-      </div>
-
-      <div class="campo">
-        <label for="forn">Nome do Fornecedor</label>
-        <input type="text" id="forn" placeholder="Nome do fornecedor" autocomplete="off" list="fornecedores-sugeridos" />
-        <datalist id="fornecedores-sugeridos"></datalist>
-      </div>
-
-      <div class="campo">
-        <label for="obs">Observações</label>
-        <select id="obs">
-        </select>
-      </div>
-      
+      <div class="campo"> <label for="data">Data</label> <input type="text" id="data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" /> </div>
+      <div class="campo"> <label for="nf">NF</label> <input type="text" id="nf" inputmode="numeric" placeholder="Número da Nota Fiscal" autocomplete="off" /> </div>
+      <div class="campo"> <label for="venc">Vencimento</label> <input type="text" id="venc" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" /> </div>
+      <div class="campo"> <label for="valor">Valor Total</label> <input id="valor" type="text" inputmode="decimal" placeholder="Ex.: 1200,50" /> </div>
+      <div class="campo"> <label for="forn">Nome do Fornecedor</label> <input type="text" id="forn" placeholder="Nome do fornecedor" autocomplete="off" list="fornecedores-sugeridos" /> <datalist id="fornecedores-sugeridos"></datalist> </div>
+      <div class="campo"> <label for="obs">Observações</label> <select id="obs"></select> </div>
       <div id="fotos-container" class="campo">
-        <label for="fotos">Anexar Imagens</label>
-        <label for="fotos" class="file-input-label">
-          <i class="fas fa-camera"></i> Selecionar Imagens
-        </label>
-        <input type="file" id="fotos" multiple accept="image/*" />
-        <div class="status-container">
-            <span class="hint" id="fileCountHint">Nenhuma imagem acumulada.</span>
-        </div>
-        <div id="miniaturas-container"></div>
+        <label for="fotos">Anexar Imagens</label> <label for="fotos" class="file-input-label"><i class="fas fa-camera"></i> Selecionar Imagens</label> <input type="file" id="fotos" multiple accept="image/*" />
+        <div class="status-container"> <span class="hint" id="fileCountHint">Nenhuma imagem acumulada.</span> </div> <div id="miniaturas-container"></div>
       </div>
-
       <div class="actions">
-        <button id="salvarBtn" class="center" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button>
+        <button id="salvarBtn" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button>
         <button id="exportBtn" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar</button>
+        <button id="shareListBtn" onclick="compartilharLista()"><i class="fas fa-share-alt"></i> Compartilhar</button>
         <button id="limparBtn" onclick="limpar()"><i class="fas fa-trash"></i> Limpar</button>
-        <button id="gerenciarBtn" class="full-width" onclick="togglePopup('gerenciar-notas-popup')"><i class="fas fa-list-check"></i> Gerenciar Notas</button>
+        <button id="gerenciarBtn" onclick="togglePopup('gerenciar-notas-popup')"><i class="fas fa-list-check"></i> Gerenciar Notas</button>
       </div>
-
-      <textarea id="saida" readonly placeholder="O texto para sua planilha aparecerá aqui..."></textarea>
+      <textarea id="saida" readonly placeholder="O texto das notas salvas aparecerá aqui..."></textarea>
     </div>
-
-    <footer>
-      <span>— Desenvolvido por <b>Leandro Mendonça</b> —</span>
-    </footer>
+    <footer> <span>— Desenvolvido por <b>Leandro Mendonça</b> —</span> </footer>
   </div>
   
   <div id="gerenciar-notas-popup" class="popup-modal">
-    <div class="popup-content">
-      <div class="popup-header">
-        <h2>Gerenciar Notas</h2>
-        <span class="close-popup" onclick="closePopup('gerenciar-notas-popup')">&times;</span>
-      </div>
-      <div class="menu-section">
-        <ul id="lista-notas-pendentes"></ul>
-        <div class="paginacao" id="paginacao-notas"></div>
-      </div>
-    </div>
+    <div class="popup-content"> <div class="popup-header"> <h2>Gerenciar Notas</h2> <span class="close-popup" onclick="closePopup('gerenciar-notas-popup')">&times;</span> </div> <div class="menu-section"> <ul id="lista-notas-pendentes"></ul> <div class="paginacao" id="paginacao-notas"></div> </div> </div>
   </div>
-
   <div id="historico-popup" class="popup-modal">
-    <div class="popup-content">
-      <div class="popup-header">
-        <h2>Histórico</h2>
-        <span class="close-popup" onclick="closePopup('historico-popup')">&times;</span>
-      </div>
-      <div class="menu-section">
-        <ul id="lista-historico"></ul>
-        <div class="btn-list">
-          <button class="destructive" onclick="limparHistorico()">
-            <i class="fas fa-trash"></i> Limpar Histórico
-          </button>
-        </div>
-      </div>
-    </div>
+    <div class="popup-content"> <div class="popup-header"> <h2>Histórico</h2> <span class="close-popup" onclick="closePopup('historico-popup')">&times;</span> </div> <div class="menu-section"> <ul id="lista-historico"></ul> <div class="btn-list"> <button class="destructive" onclick="limparHistorico()"><i class="fas fa-trash"></i> Limpar Histórico</button> </div> </div> </div>
   </div>
-
   <div id="pedidos-popup" class="popup-modal">
     <div class="popup-content">
-      <div class="popup-header">
-        <h2>Pedidos & Recursos</h2>
-        <span class="close-popup" onclick="closePopup('pedidos-popup')">&times;</span>
-      </div>
+      <div class="popup-header"> <h2>Pedidos & Recursos</h2> <span class="close-popup" onclick="closePopup('pedidos-popup')">&times;</span> </div>
       <div class="menu-section">
         <div class="pedido-container">
           <input type="text" id="pedido-num" placeholder="Nº do Pedido" autocomplete="off">
-          <select id="pedido-recurso">
-            <option value="">Recurso...</option>
-            <option value="Santa Casa">Santa Casa</option>
-            <option value="CTI">CTI</option>
-          </select>
+          <select id="pedido-recurso"> <option value="">Recurso...</option> <option value="Santa Casa">Santa Casa</option> <option value="CTI">CTI</option> </select>
         </div>
         <button class="actions-button" style="background: var(--button-primary); color: white; width: 100%; border: none; padding: 12px; border-radius: var(--radius);" onclick="adicionarPedido()"><i class="fas fa-plus"></i> Adicionar Pedido</button>
         <ul id="lista-pedidos"></ul>
       </div>
     </div>
   </div>
-  
   <div id="fornecedores-popup" class="popup-modal">
     <div class="popup-content">
-      <div class="popup-header">
-        <h2>Fornecedores</h2>
-        <span class="close-popup" onclick="closePopup('fornecedores-popup')">&times;</span>
-      </div>
+      <div class="popup-header"> <h2>Fornecedores</h2> <span class="close-popup" onclick="closePopup('fornecedores-popup')">&times;</span> </div>
       <div class="menu-section">
         <h3 class="manage-section-title">Adicionar Novo Fornecedor</h3>
-        <div class="fornecedor-input-group">
-          <input type="text" id="forn-manage" placeholder="Nome do fornecedor">
-          <button class="actions-button" style="background: var(--button-primary); color: white; border: none; padding: 10px 15px; border-radius: 8px;" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i></button>
-        </div>
+        <div class="fornecedor-input-group"> <input type="text" id="forn-manage" placeholder="Nome do fornecedor"> <button class="actions-button" style="background: var(--button-primary); color: white; border: none; padding: 10px 15px; border-radius: 8px;" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i></button> </div>
         <ul id="lista-fornecedores-manage"></ul>
       </div>
     </div>
   </div>
-
   <div id="observacoes-popup" class="popup-modal">
     <div class="popup-content">
-      <div class="popup-header">
-        <h2>Observações e Recursos</h2>
-        <span class="close-popup" onclick="closePopup('observacoes-popup')">&times;</span>
-      </div>
+      <div class="popup-header"> <h2>Observações e Recursos</h2> <span class="close-popup" onclick="closePopup('observacoes-popup')">&times;</span> </div>
       <div class="menu-section">
         <h3 class="manage-section-title">Adicionar Nova Observação</h3>
-        <div class="observacoes-input-group">
-          <input type="text" id="obs-manage" placeholder="Ex: C/C UPA">
-          <button class="actions-button" style="background: var(--button-primary); color: white; border: none; padding: 10px 15px; border-radius: 8px;" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i></button>
-        </div>
+        <div class="observacoes-input-group"> <input type="text" id="obs-manage" placeholder="Ex: C/C UPA"> <button class="actions-button" style="background: var(--button-primary); color: white; border: none; padding: 10px 15px; border-radius: 8px;" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i></button> </div>
         <ul id="lista-observacoes-manage"></ul>
       </div>
     </div>
   </div>
-
   <div id="modalPreview" class="modal-preview">
-    <span class="modal-preview-fechar" onclick="fecharPreview()">&times;</span>
-    <img class="modal-preview-conteudo" id="imgPreview">
-    <div class="modal-preview-nav">
-        <button id="prevBtn" onclick="navegarFotos(-1)"><i class="fas fa-chevron-left"></i></button>
-        <button id="nextBtn" onclick="navegarFotos(1)"><i class="fas fa-chevron-right"></i></button>
-    </div>
-    <div class="modal-preview-bottom">
-      <button class="modal-preview-save" onclick="salvarFotoPreview()">
-          <i class="fas fa-download"></i> Salvar Imagem
-      </button>
-      <button class="modal-preview-delete" onclick="excluirFotoPreview()">
-          <i class="fas fa-trash-alt"></i> Excluir
-      </button>
-    </div>
+    <span class="modal-preview-fechar" onclick="fecharPreview()">&times;</span> <img class="modal-preview-conteudo" id="imgPreview">
+    <div class="modal-preview-nav"> <button id="prevBtn" onclick="navegarFotos(-1)"><i class="fas fa-chevron-left"></i></button> <button id="nextBtn" onclick="navegarFotos(1)"><i class="fas fa-chevron-right"></i></button> </div>
+    <div class="modal-preview-bottom"> <button class="modal-preview-save" onclick="salvarFotoPreview()"><i class="fas fa-download"></i> Salvar Imagem</button> <button class="modal-preview-delete" onclick="excluirFotoPreview()"><i class="fas fa-trash-alt"></i> Excluir</button> </div>
   </div>
+  <div id="toast" class="toast"></div>
 
-  <div id="toast" class="toast">✓ Linhas copiadas! Agora é só colar no Excel.</div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
-  let notasPendentes = [];
-  let historicoNotas = [];
-  let fotosAcumuladas = [];
-  let fornecedoresSugeridos = [];
-  let observacoesSugeridas = []; // Nova variável para as observações
-  let pedidosRecursos = {};
-  let fotoAtualIndex = 0;
-  let fotoAtualFonte = 'acumulada'; // 'acumulada' ou 'nota'
-  let fotoAtualNotaIndex = null;
-  
+  const firebaseConfig = { apiKey: "AIzaSyAwcvJNJhLZ4Wqcw4Wz44XJ9kIdtqKJeJg", authDomain: "relacaonf.firebaseapp.com", projectId: "relacaonf", storageBucket: "relacaonf.appspot.com", messagingSenderId: "773864981925", appId: "1:773864981925:web:a4dadc51ec0a856832144c" };
+  firebase.initializeApp(firebaseConfig);
+  const firestore = firebase.firestore();
+  firestore.enablePersistence().catch(err => {
+      if (err.code == 'failed-precondition') console.warn('Persistência do Firebase falhou: Múltiplas abas abertas.');
+      else if (err.code == 'unimplemented') console.warn('Persistência do Firebase não suportada neste navegador.');
+  });
+  const notasCollection = firestore.collection('notas'), historicoCollection = firestore.collection('historico');
+  let notasPendentes = [], historicoNotas = [], fotosAcumuladas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {};
+  let fotoAtualIndex = 0, fotoAtualFonte = 'acumulada', fotoAtualNotaIndex = null, fotosAtuaisParaPreview = [], idPainelEdicaoAberto = null;
   const itensPorPagina = 10;
   let paginaAtualNotas = 1;
-  let paginaAtualHistorico = 1;
-  
-  const dataEl = document.getElementById('data');
-  const nfEl = document.getElementById('nf');
-  const vencEl = document.getElementById('venc');
-  const valorEl = document.getElementById('valor');
-  const fornEl = document.getElementById('forn');
-  const obsEl = document.getElementById('obs');
-  const saidaEl = document.getElementById('saida');
-  const fotosContainer = document.getElementById('fotos-container');
-  const fotosEl = document.getElementById('fotos');
-  const fileLabelEl = document.querySelector('.file-input-label');
-  const fileCountHintEl = document.getElementById('fileCountHint');
-  const miniaturasContainer = document.getElementById('miniaturas-container');
-  
-  const listaNotasPendentes = document.getElementById('lista-notas-pendentes');
-  const paginacaoNotasEl = document.getElementById('paginacao-notas');
-  const listaHistoricoEl = document.getElementById('lista-historico');
-  const fornDatalist = document.getElementById('fornecedores-sugeridos');
-  
-  const listaPedidosEl = document.getElementById('lista-pedidos');
-  const listaFornManageEl = document.getElementById('lista-fornecedores-manage');
-  const fornManageInput = document.getElementById('forn-manage');
-  const pedidoNumInput = document.getElementById('pedido-num');
-  const pedidoRecursoSelect = document.getElementById('pedido-recurso');
-  
-  const listaObservacoesManageEl = document.getElementById('lista-observacoes-manage'); // Novo elemento
-  const obsManageInput = document.getElementById('obs-manage'); // Novo input
-
-  const popups = document.querySelectorAll('.popup-modal');
-  
-  // Variáveis para o IndexedDB
-  const DB_NAME = 'notasdb';
-  const DB_VERSION = 2; // Incrementar a versão do banco de dados para o novo objeto
+  const dataEl = document.getElementById('data'), nfEl = document.getElementById('nf'), vencEl = document.getElementById('venc'), valorEl = document.getElementById('valor'), fornEl = document.getElementById('forn'), obsEl = document.getElementById('obs'), saidaEl = document.getElementById('saida'), fotosEl = document.getElementById('fotos'), fileLabelEl = document.querySelector('.file-input-label'), fileCountHintEl = document.getElementById('fileCountHint'), miniaturasContainer = document.getElementById('miniaturas-container'), listaNotasPendentes = document.getElementById('lista-notas-pendentes'), paginacaoNotasEl = document.getElementById('paginacao-notas'), listaHistoricoEl = document.getElementById('lista-historico'), fornDatalist = document.getElementById('fornecedores-sugeridos'), listaPedidosEl = document.getElementById('lista-pedidos'), listaFornManageEl = document.getElementById('lista-fornecedores-manage'), fornManageInput = document.getElementById('forn-manage'), pedidoNumInput = document.getElementById('pedido-num'), pedidoRecursoSelect = document.getElementById('pedido-recurso'), listaObservacoesManageEl = document.getElementById('lista-observacoes-manage'), obsManageInput = document.getElementById('obs-manage'), popups = document.querySelectorAll('.popup-modal');
+  const DB_NAME = 'notasdb-fotos', DB_VERSION = 1;
   let db;
 
-  // FUNÇÕES DO INDEXEDDB
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      
-      request.onupgradeneeded = event => {
-        db = event.target.result;
-        if (!db.objectStoreNames.contains('notas')) {
-          db.createObjectStore('notas', { keyPath: 'id', autoIncrement: true });
-        }
-        if (!db.objectStoreNames.contains('historico')) {
-          db.createObjectStore('historico', { keyPath: 'id', autoIncrement: true });
-        }
-      };
-      
-      request.onsuccess = event => {
-        db = event.target.result;
-        resolve(db);
-      };
-      
-      request.onerror = event => {
-        console.error("IndexedDB error:", event.target.errorCode);
-        reject(event.target.errorCode);
-      };
-    });
-  }
+  function openDB() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onupgradeneeded = e => e.target.result.createObjectStore('fotos', { keyPath: 'id' }); r.onsuccess = e => { db = e.target.result; resolve(db); }; r.onerror = e => { console.error("Erro no IndexedDB:", e.target.errorCode); reject(e.target.errorCode); }; }); }
+  function generateUniqueId() { return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; }
+  function savePhotoDB(id, file) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); const tx = db.transaction(['fotos'], 'readwrite').objectStore('fotos').put({ id, file }); tx.onsuccess = () => resolve(id); tx.onerror = e => reject(e.target.error); }); }
+  function getPhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); const r = db.transaction(['fotos'], 'readonly').objectStore('fotos').get(id); r.onsuccess = () => resolve(r.result ? r.result.file : null); r.onerror = e => { console.error(`Erro ao buscar foto ${id}:`, e.target.error); reject(e.target.error); }; }); }
+  function deletePhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); const tx = db.transaction(['fotos'], 'readwrite').objectStore('fotos').delete(id); tx.onsuccess = () => resolve(); tx.onerror = e => reject(e.target.error); }); }
 
-  function saveNoteDB(nota) {
-    return new Promise(async (resolve, reject) => {
-      if (!db) {
-        db = await openDB();
-      }
-      const transaction = db.transaction(['notas'], 'readwrite');
-      const store = transaction.objectStore('notas');
-      const request = store.put(nota);
-      
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = event => reject(event.target.error);
-    });
-  }
-  
-  function saveHistoryNoteDB(nota) {
-    return new Promise(async (resolve, reject) => {
-      if (!db) {
-        db = await openDB();
-      }
-      const transaction = db.transaction(['historico'], 'readwrite');
-      const store = transaction.objectStore('historico');
-      const request = store.add(nota);
-      
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = event => reject(event.target.error);
-    });
-  }
-
-  function getNotesDB() {
-    return new Promise(async (resolve, reject) => {
-      if (!db) {
-        db = await openDB();
-      }
-      const transaction = db.transaction(['notas'], 'readonly');
-      const store = transaction.objectStore('notas');
-      const request = store.getAll();
-      
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = event => reject(event.target.error);
-    });
-  }
-
-  function getHistoryNotesDB() {
-    return new Promise(async (resolve, reject) => {
-      if (!db) {
-        db = await openDB();
-      }
-      const transaction = db.transaction(['historico'], 'readonly');
-      const store = transaction.objectStore('historico');
-      const request = store.getAll();
-      
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = event => reject(event.target.error);
-    });
-  }
-
-  function deleteNoteDB(id) {
-    return new Promise(async (resolve, reject) => {
-      if (!db) {
-        db = await openDB();
-      }
-      const transaction = db.transaction(['notas'], 'readwrite');
-      const store = transaction.objectStore('notas');
-      const request = store.delete(id);
-      
-      request.onsuccess = () => resolve();
-      request.onerror = event => reject(event.target.error);
-    });
-  }
-  
-  function deleteAllNotesDB() {
-    return new Promise(async (resolve, reject) => {
-      if (!db) {
-        db = await openDB();
-      }
-      const transaction = db.transaction(['notas'], 'readwrite');
-      const store = transaction.objectStore('notas');
-      const request = store.clear();
-      
-      request.onsuccess = () => resolve();
-      request.onerror = event => reject(event.target.error);
-    });
-  }
-
-  function deleteAllHistoryDB() {
-      return new Promise(async (resolve, reject) => {
-        if (!db) {
-          db = await openDB();
-        }
-        const transaction = db.transaction(['historico'], 'readwrite');
-        const store = transaction.objectStore('historico');
-        const request = store.clear();
-        
-        request.onsuccess = () => resolve();
-        request.onerror = event => reject(event.target.error);
-      });
-  }
-  
   async function carregarEstado() {
-      // Carrega dados do localStorage
-      const savedForn = localStorage.getItem('fornecedores');
-      if (savedForn) fornecedoresSugeridos = JSON.parse(savedForn);
-      popularDatalist(fornDatalist);
+      fornecedoresSugeridos = JSON.parse(localStorage.getItem('fornecedores') || '[]'), popularDatalist(fornDatalist);
+      observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList();
+      pedidosRecursos = JSON.parse(localStorage.getItem('pedidosRecursos') || '{}');
+      if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>'; }
+      try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); toast("Erro ao carregar o armazenamento de fotos."); }
+      
+      notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => {
+        notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        rebuildNotasPendentesList();
+      }, error => { console.error("Erro ao carregar notas:", error); toast("Erro ao carregar dados. Verifique sua conexão."); });
 
-      const savedObs = localStorage.getItem('observacoes'); // Carrega observações
-      if (savedObs) observacoesSugeridas = JSON.parse(savedObs);
-      popularObservacoesList();
-      
-      const savedPedidos = localStorage.getItem('pedidosRecursos');
-      if (savedPedidos) pedidosRecursos = JSON.parse(savedPedidos);
-
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'dark') {
-          document.body.classList.add('dark-mode');
-          document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
-      }
-      
-      // Carrega notas e histórico do IndexedDB
-      try {
-        notasPendentes = await getNotesDB();
-        historicoNotas = await getHistoryNotesDB();
-      } catch (e) {
-        console.error("Erro ao carregar dados do IndexedDB:", e);
-        notasPendentes = [];
-        historicoNotas = [];
-      }
-      
-      rebuildNotasPendentesList();
-      popularListaHistorico();
-      rebuildSaida();
+      historicoCollection.orderBy('dataHistorico', 'desc').onSnapshot(snapshot => {
+        historicoNotas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        popularListaHistorico();
+      }, error => console.error("Erro ao carregar histórico:", error));
   }
   
-  async function salvarEstado() {
-    // Salva fornecedores, observações e pedidos no localStorage
-    localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos));
-    localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); // Salva observações
-    localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos));
-  }
-  
-  function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-    document.getElementById('theme-toggle').innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-  }
-
-  function adicionarFornecedor(forn) {
-      const fornUpper = forn.trim().toUpperCase();
-      if (fornUpper && !fornecedoresSugeridos.includes(fornUpper)) {
-          fornecedoresSugeridos.push(fornUpper);
-          salvarEstado();
-          popularDatalist(fornDatalist);
-      }
-  }
-
-  function adicionarObservacao(obs) {
-    const obsUpper = obs.trim();
-    if (obsUpper && !observacoesSugeridas.includes(obsUpper)) {
-      observacoesSugeridas.push(obsUpper);
-      salvarEstado();
-      popularObservacoesList();
-    }
-  }
-
-  function popularDatalist(datalistEl) {
-      datalistEl.innerHTML = '';
-      fornecedoresSugeridos.forEach(forn => {
-          const option = document.createElement('option');
-          option.value = forn;
-          datalistEl.appendChild(option);
-      });
-  }
+  function salvarEstado() { localStorage.setItem('fornecedores', JSON.stringify(fornecedoresSugeridos)); localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); localStorage.setItem('pedidosRecursos', JSON.stringify(pedidosRecursos)); }
+  function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); document.getElementById('theme-toggle').innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; }
+  function adicionarFornecedor(forn) { const f = forn.trim().toUpperCase(); if (f && !fornecedoresSugeridos.includes(f)) { fornecedoresSugeridos.push(f); salvarEstado(); popularDatalist(fornDatalist); } }
+  function adicionarObservacao(obs) { const o = obs.trim(); if (o && !observacoesSugeridas.includes(o)) { observacoesSugeridas.push(o); salvarEstado(); popularObservacoesList(); } }
+  function popularDatalist(datalistEl) { datalistEl.innerHTML = ''; fornecedoresSugeridos.forEach(forn => { const o = document.createElement('option'); o.value = forn; datalistEl.appendChild(o); }); }
 
   function popularObservacoesList() {
-    // Popula a lista suspensa do formulário principal
-    obsEl.innerHTML = '';
-    const placeholderOpt = document.createElement('option');
-    placeholderOpt.value = '';
-    placeholderOpt.textContent = 'Recurso a ser pago';
-    obsEl.appendChild(placeholderOpt);
-    observacoesSugeridas.forEach(obs => {
-      const option = document.createElement('option');
-      option.value = obs;
-      option.textContent = obs;
-      obsEl.appendChild(option);
-    });
-
-    // Popula a lista do modal de gerenciamento
+    obsEl.innerHTML = '<option value="">Recurso a ser pago</option>';
+    observacoesSugeridas.forEach(obs => obsEl.innerHTML += `<option value="${obs}">${obs}</option>`);
     listaObservacoesManageEl.innerHTML = '';
-    observacoesSugeridas.sort().forEach(obs => {
-      const li = document.createElement('li');
-      li.innerHTML = `${obs} <button onclick="deletarObservacao('${obs}')"><i class="fas fa-times-circle"></i></button>`;
-      listaObservacoesManageEl.appendChild(li);
-    });
+    observacoesSugeridas.sort().forEach(obs => { const li = document.createElement('li'); li.innerHTML = `${obs} <button onclick="deletarObservacao('${obs}')"><i class="fas fa-times-circle"></i></button>`; listaObservacoesManageEl.appendChild(li); });
   }
 
   function popularListaPedidos() {
     listaPedidosEl.innerHTML = '';
-    const sortedPedidos = Object.keys(pedidosRecursos).sort((a, b) => a - b);
-    sortedPedidos.forEach(pedido => {
-      const li = document.createElement('li');
-      li.innerHTML = `${pedido} - ${pedidosRecursos[pedido]} <button onclick="deletarPedido('${pedido}')"><i class="fas fa-times-circle"></i></button>`;
-      listaPedidosEl.appendChild(li);
-    });
+    Object.keys(pedidosRecursos).sort((a, b) => a - b).forEach(p => { const li = document.createElement('li'); li.innerHTML = `${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fas fa-times-circle"></i></button>`; listaPedidosEl.appendChild(li); });
   }
 
   function popularListaFornecedores() {
     listaFornManageEl.innerHTML = '';
-    fornecedoresSugeridos.sort().forEach(forn => {
-      const li = document.createElement('li');
-      li.innerHTML = `${forn} <button onclick="deletarFornecedor('${forn}')"><i class="fas fa-times-circle"></i></button>`;
-      listaFornManageEl.appendChild(li);
-    });
+    fornecedoresSugeridos.sort().forEach(f => { const li = document.createElement('li'); li.innerHTML = `${f} <button onclick="deletarFornecedor('${f}')"><i class="fas fa-times-circle"></i></button>`; listaFornManageEl.appendChild(li); });
   }
 
-  function criarPaginacao(container, totalItens, paginaAtual, tipo) {
-    container.innerHTML = '';
-    const totalPaginas = Math.ceil(totalItens / itensPorPagina);
-    
-    if (totalPaginas <= 1) return;
-    
-    if (paginaAtual > 1) {
-      const btnAnterior = document.createElement('button');
-      btnAnterior.innerHTML = '&laquo;';
-      btnAnterior.addEventListener('click', () => {
-        if (tipo === 'notas') {
-          rebuildNotasPendentesList(paginaAtual - 1);
-        } else {
-          popularListaHistorico(paginaAtual - 1);
-        }
-      });
-      container.appendChild(btnAnterior);
-    }
-    
-    for (let i = 1; i <= totalPaginas; i++) {
-      const btnPagina = document.createElement('button');
-      btnPagina.textContent = i;
-      if (i === paginaAtual) {
-        btnPagina.classList.add('ativo');
-      }
-      btnPagina.addEventListener('click', () => {
-        if (tipo === 'notas') {
-          rebuildNotasPendentesList(i);
-        } else {
-          popularListaHistorico(i);
-        }
-      });
-      container.appendChild(btnPagina);
-    }
-    
-    if (paginaAtual < totalPaginas) {
-      const btnProximo = document.createElement('button');
-      btnProximo.innerHTML = '&raquo;';
-      btnProximo.addEventListener('click', () => {
-        if (tipo === 'notas') {
-          rebuildNotasPendentesList(paginaAtual + 1);
-        } else {
-          popularListaHistorico(paginaAtual + 1);
-        }
-      });
-      container.appendChild(btnProximo);
-    }
-  }
-
-  function animateButton(btn, newText, newIconClass, originalText) {
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = `<i class="${newIconClass}"></i> ${newText}`;
-    setTimeout(() => {
-      btn.innerHTML = originalHTML;
-    }, 1500);
-  }
+  function formatarDataHora(dataISO) { if (!dataISO) return 'Data inválida'; return new Date(dataISO).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  function getLinha(nota) { let v = nota.vencimento, o = nota.obs; if (nota.obs === "REMESSA") { v = "REMESSA"; o = "Recurso Proprio Santa Casa"; } return [nota.data, nota.nf, v, nota.valor, "", nota.fornecedor, "", "", o].join("\t"); }
   
-  function getFirstWord(text) {
-    return text.trim().split(' ')[0];
-  }
+  function buildSaidaText() { return notasPendentes.map(getLinha).join("\n"); }
+  function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=> t.style.display='none', 2500); }
+  function formatarDataInput(input) { let v = input.value.replace(/\D/g, '').substring(0, 8); if (v.length > 4) v = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`; else if (v.length > 2) v = `${v.slice(0,2)}/${v.slice(2)}`; input.value = v; }
+  function formatarValorBlur(event) { const i = event.target; let v = i.value.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, ''); if (v === '' || isNaN(v)) return; i.value = parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-  function formatarDataHora(data) {
-    const d = new Date(data);
-    const dia = String(d.getDate()).padStart(2, '0');
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const ano = d.getFullYear();
-    const hora = String(d.getHours()).padStart(2, '0');
-    const minuto = String(d.getMinutes()).padStart(2, '0');
-    return `${dia}/${mes}/${ano}, ${hora}:${minuto}`;
-  }
-  
-  function formatarValor(valor) {
-    if (!valor || isNaN(parseFloat(valor.replace(',', '.')))) return 'N/A';
-    const numero = parseFloat(valor.replace(',', '.'));
-    return `R$ ${numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-
-  function fmtData(iso) {
-    if (!iso) return '';
-    return iso;
-  }
-  
-  function getLinha(nota) {
-    let vencimentoSaida = nota.vencimento;
-    let obsSaida = nota.obs;
-
-    // Lógica para a modalidade REMESSA
-    if (nota.obs === "REMESSA") {
-      vencimentoSaida = "REMESSA";
-      obsSaida = "Recurso Proprio Santa Casa";
-    }
-
-    return [
-      fmtData(nota.data), nota.nf, vencimentoSaida, nota.valor, "", nota.fornecedor, "", "", obsSaida
-    ].join("\t");
-  }
-
-  function rebuildSaida() {
-      let linhas = [];
-      notasPendentes.forEach(nota => {
-          linhas.push(getLinha(nota));
-      });
-      saidaEl.value = linhas.join("\n");
-  }
-  
-  function toast(msg){
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.display = 'block';
-    clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(()=> t.style.display='none', 2200);
-  }
-  
-  function formatarData(input) {
-    let value = input.value.replace(/\D/g, '');
-    let formattedValue = '';
-    
-    if (value.length > 0) {
-      formattedValue += value.substring(0, 2);
-    }
-    if (value.length > 2) {
-      formattedValue += '/' + value.substring(2, 4);
-    }
-    if (value.length > 4) {
-      formattedValue += '/' + value.substring(4, 8);
-    }
-    input.value = formattedValue;
-  }
-  
   function rebuildNotasPendentesList(pagina = 1) {
-    listaNotasPendentes.innerHTML = '';
-    paginaAtualNotas = pagina;
-    
-    // Inverte a lista para mostrar as notas mais novas no topo
-    const notasInvertidas = [...notasPendentes].reverse();
-    
-    const inicio = (pagina - 1) * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    const notasPagina = notasInvertidas.slice(inicio, fim);
-    
-    if (notasInvertidas.length === 0) {
-        listaNotasPendentes.innerHTML = `<li class="nota-item">Nenhuma nota salva para gerenciar.</li>`;
+    listaNotasPendentes.innerHTML = ''; paginaAtualNotas = pagina;
+    if (notasPendentes.length === 0) {
+        listaNotasPendentes.innerHTML = `<li class="nota-item">Nenhuma nota para gerenciar.</li>`;
         paginacaoNotasEl.innerHTML = '';
-        return;
+    } else {
+        const inicio = (pagina - 1) * itensPorPagina, fim = inicio + itensPorPagina;
+        notasPendentes.slice(inicio, fim).forEach((nota, index) => {
+          const gIndex = inicio + index, li = document.createElement('li');
+          li.className = `nota-item ${nota.enviada ? 'nota-enviada' : ''}`; li.dataset.noteId = nota.id;
+          let actHTML = '';
+          if (nota.enviada) actHTML = `<button class="sent-btn" title="Fotos Enviadas"><i class="fas fa-check"></i></button>`;
+          else if (nota.fotos && nota.fotos.length > 0) actHTML = `<button class="whatsapp-btn" onclick="compartilharNota(${gIndex})" title="Compartilhar"><i class="fab fa-whatsapp"></i></button>`;
+          else actHTML = `<span class="sem-fotos">SEM FOTOS</span>`;
+          li.innerHTML = `
+            <div class="nota-info"><b>${nota.fornecedor} ${nota.nf || ''}</b></div>
+            <div class="nota-data">Criada em: ${formatarDataHora(nota.dataCriacao)}</div>
+            <div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} ${nota.obs ? `| Obs: ${nota.obs}`:''}</div>
+            <div class="actions-row"><div class="actions-item">${actHTML}<button class="edit-btn" onclick="toggleEditPanel(this)" title="Editar"><i class="fas fa-pen"></i></button><button class="delete-btn" onclick="deletarNota(${gIndex})" title="Excluir"><i class="fas fa-trash"></i></button></div></div>
+            <div class="edit-panel">
+              <div class="edit-fields-row"><div class="campo"><label>Fornecedor</label><input type="text" id="fornEdit-${gIndex}" value="${nota.fornecedor||''}" oninput="this.value=this.value.toUpperCase()"></div><div class="campo"><label>NF</label><input type="text" id="nfEdit-${gIndex}" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" id="vencEdit-${gIndex}" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div></div>
+              <div class="edit-fields-row"><div class="campo" style="flex:1;"><label>Valor</label><input type="text" id="valorEdit-${gIndex}" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo" style="flex:1;"><label>Observações</label><select id="obsEdit-${gIndex}"></select></div></div>
+              <div class="campo fotos-edit-container-${gIndex}"></div>
+              <div class="actions"><button style="background:var(--button-success);color:#fff;flex:1;" onclick="salvarEdicao(${gIndex})"><i class="fas fa-save"></i> Salvar</button></div>
+            </div>`;
+          listaNotasPendentes.appendChild(li);
+          if (nota.id === idPainelEdicaoAberto) li.querySelector('.edit-panel').classList.add('show');
+          const obsSelectEdit = li.querySelector(`#obsEdit-${gIndex}`);
+          obsSelectEdit.innerHTML = '<option value="">Recurso a ser pago</option>';
+          observacoesSugeridas.forEach(obs => obsSelectEdit.innerHTML += `<option value="${obs}">${obs}</option>`);
+          obsSelectEdit.value = nota.obs || '';
+          reconstruirPainelFotosEdit(gIndex);
+        });
+        // criarPaginacao(paginacaoNotasEl, notasPendentes.length, pagina); // <-- LINHA REMOVIDA. Esta função não existe e estava causando o erro.
     }
-    
-    notasPagina.forEach((nota, index) => {
-      // Encontra o índice original da nota no array notasPendentes
-      const globalIndex = notasPendentes.findIndex(n => n.id === nota.id);
-      
-      const li = document.createElement('li');
-      li.classList.add('nota-item');
-      li.dataset.noteId = nota.id; // Adicionado para a correção
-      if (nota.enviada) li.classList.add('nota-enviada');
-      
-      let fotoStatusHTML = '';
-      if (!nota.enviada) {
-        if (nota.fotos && nota.fotos.length > 0) {
-          fotoStatusHTML = `
-            <button class="whatsapp-btn" onclick="compartilharNota(${globalIndex})" title="Compartilhar via WhatsApp">
-              <i class="fab fa-whatsapp"></i>
-            </button>
-            <button class="edit-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Editar nota">
-              <i class="fas fa-pen"></i>
-            </button>
-            <button class="delete-btn" onclick="deletarNota(${globalIndex})" title="Excluir nota">
-              <i class="fas fa-trash"></i>
-            </button>
-          `;
-        } else {
-          fotoStatusHTML = `
-            <span class="sem-fotos">SEM FOTOS</span>
-            <button class="edit-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Editar nota">
-              <i class="fas fa-pen"></i>
-            </button>
-            <button class="delete-btn" onclick="deletarNota(${globalIndex})" title="Excluir nota">
-              <i class="fas fa-trash"></i>
-            </button>
-          `;
-        }
-      } else {
-        fotoStatusHTML = `
-          <button class="sent-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Fotos Enviadas">
-            <i class="fas fa-check"></i>
-          </button>
-          <button class="edit-btn" onclick="toggleEditPanel(this, ${globalIndex})" title="Editar nota">
-              <i class="fas fa-pen"></i>
-          </button>
-          <button class="delete-btn" onclick="deletarNota(${globalIndex})" title="Excluir nota">
-              <i class="fas fa-trash"></i>
-          </button>
-        `;
-      }
-      
-      // Implementação da exibição da observação nos cards
-      const obsDisplay = nota.obs ? ` | Obs: ${nota.obs}` : '';
-
-      li.innerHTML = `
-        <div class="nota-info"><b>${nota.fornecedor} ${nota.nf || ''}</b></div>
-        <div class="nota-data">Criada em: ${formatarDataHora(nota.dataCriacao)}</div>
-        <div class="nota-detalhes">
-          Venc: ${nota.vencimento || 'N/A'} | Valor: ${nota.valor || 'N/A'}${obsDisplay}
-        </div>
-        <div class="actions-row">
-          <div class="actions-item">
-            ${fotoStatusHTML}
-          </div>
-        </div>
-        <div class="edit-panel">
-          <div class="edit-fields-row">
-            <div class="campo">
-                <label for="fornEdit-${globalIndex}">Fornecedor</label>
-                <input type="text" id="fornEdit-${globalIndex}" value="${nota.fornecedor}" oninput="this.value = this.value.toUpperCase()">
-            </div>
-            <div class="campo">
-                <label for="nfEdit-${globalIndex}">NF</label>
-                <input type="text" id="nfEdit-${globalIndex}" value="${nota.nf}">
-            </div>
-            <div class="campo">
-                <label for="vencEdit-${globalIndex}">Vencimento</label>
-                <input type="text" id="vencEdit-${globalIndex}" value="${nota.vencimento}">
-            </div>
-          </div>
-          <div class="edit-fields-row">
-            <div class="campo" style="flex:1;">
-                <label for="valorEdit-${globalIndex}">Valor</label>
-                <input type="text" id="valorEdit-${globalIndex}" value="${nota.valor}">
-            </div>
-            <div class="campo" style="flex:1;">
-                <label for="obsEdit-${globalIndex}">Observações</label>
-                <select id="obsEdit-${globalIndex}"></select>
-            </div>
-          </div>
-          <div class="campo fotos-edit-container-${globalIndex}">
-            </div>
-          <div class="actions">
-            <button style="background:var(--button-success);color:#fff; flex: 1;" onclick="salvarEdicao(${globalIndex})">
-              <i class="fas fa-save"></i> Salvar
-            </button>
-          </div>
-        </div>
-      `;
-      listaNotasPendentes.appendChild(li);
-      
-      const obsSelectEdit = li.querySelector(`#obsEdit-${globalIndex}`);
-      // Populando a lista de observações no painel de edição
-      const placeholderOpt = document.createElement('option');
-      placeholderOpt.value = '';
-      placeholderOpt.textContent = 'Recurso a ser pago';
-      obsSelectEdit.appendChild(placeholderOpt);
-      observacoesSugeridas.forEach(obs => {
-          const optEl = document.createElement('option');
-          optEl.value = obs;
-          optEl.textContent = obs;
-          obsSelectEdit.appendChild(optEl);
-      });
-      obsSelectEdit.value = nota.obs;
-
-      reconstruirPainelFotosEdit(globalIndex);
-    });
-    
-    criarPaginacao(paginacaoNotasEl, notasPendentes.length, pagina, 'notas');
+    saidaEl.value = buildSaidaText();
+    if (idPainelEdicaoAberto) idPainelEdicaoAberto = null;
   }
 
-  function reconstruirPainelFotosEdit(globalIndex) {
-      const container = document.querySelector(`.fotos-edit-container-${globalIndex}`);
-      const nota = notasPendentes[globalIndex];
-      container.innerHTML = '';
+  async function reconstruirPainelFotosEdit(gIndex) {
+      const container = document.querySelector(`.fotos-edit-container-${gIndex}`), nota = notasPendentes[gIndex];
+      if (nota.enviada) { container.innerHTML = `<div class="fotos-enviadas-status"><i class="fas fa-check-circle"></i> Fotos já enviadas!</div>`; return; }
+      container.innerHTML = `<label>Anexar/Remover Fotos</label><label for="edit-fotos-${gIndex}" class="file-input-label"><i class="fas fa-camera"></i> Adicionar Imagens</label><input type="file" id="edit-fotos-${gIndex}" class="edit-file-input" multiple accept="image/*" /><div class="miniaturas-container-edit" id="miniaturas-container-edit-${gIndex}"></div><div class="hint">${nota.fotos&&nota.fotos.length>0?`${nota.fotos.length} foto(s) anexada(s).`:'Nenhuma foto anexada.'}</div>`;
+      container.querySelector(`#edit-fotos-${gIndex}`).addEventListener('change', async e => {
+          if (e.target.files.length === 0) return;
+          idPainelEdicaoAberto = nota.id;
+          const newIds = await Promise.all(Array.from(e.target.files).map(f => savePhotoDB(generateUniqueId(), f)));
+          await notasCollection.doc(nota.id).update({ fotos: [...(nota.fotos || []), ...newIds] });
+          toast(`${e.target.files.length} foto(s) adicionada(s).`);
+      });
+      reconstruirMiniaturasEdit(gIndex);
+  }
   
-      if (nota.enviada) {
-          container.innerHTML = `
-              <div class="fotos-enviadas-status">
-                  <i class="fas fa-check-circle"></i> Fotos já enviadas!
-              </div>
-          `;
-      } else {
-          container.innerHTML = `
-              <label for="edit-fotos-${globalIndex}">Anexar Imagens</label>
-              <label for="edit-fotos-${globalIndex}" class="file-input-label">
-                <i class="fas fa-camera"></i> Selecionar Imagens
-              </label>
-              <input type="file" id="edit-fotos-${globalIndex}" class="edit-file-input" multiple accept="image/*" />
-              <div class="miniaturas-container-edit" id="miniaturas-container-edit-${globalIndex}"></div>
-              ${nota.fotos && nota.fotos.length > 0 ?
-                `<button class="actions-button" style="background: var(--button-danger); color: white; width: 100%; border: none; padding: 14px 20px; border-radius: var(--radius); margin-top: 10px; font-weight: 500; font-size: 15px;" onclick="limparFotosNota(${globalIndex})"><i class="fas fa-trash"></i> Limpar Fotos</button>` : ''}
-          `;
-          
-          const editFotosInput = container.querySelector(`#edit-fotos-${globalIndex}`);
-          editFotosInput.addEventListener('change', async (e) => {
-              const files = Array.from(e.target.files);
-              notasPendentes[globalIndex].fotos = notasPendentes[globalIndex].fotos.concat(files);
-              await saveNoteDB(notasPendentes[globalIndex]);
-              reconstruirMiniaturasEdit(globalIndex);
-              rebuildNotasPendentesList(paginaAtualNotas);
-          });
-          
-          reconstruirMiniaturasEdit(globalIndex);
-      }
+  async function reconstruirMiniaturasEdit(gIndex) {
+    const container = document.getElementById(`miniaturas-container-edit-${gIndex}`), nota = notasPendentes[gIndex];
+    if (!container || !nota.fotos || nota.fotos.length === 0) { if(container) container.innerHTML = ''; return; }
+    container.innerHTML = '';
+    const files = await Promise.all(nota.fotos.map(id => getPhotoDB(id).catch(() => null)));
+    nota.fotos.forEach((photoId, i) => {
+        const file = files[i], wrapper = document.createElement('div');
+        wrapper.className = 'miniatura-wrapper';
+        if (file) {
+            const img = document.createElement('img'), btn = document.createElement('button');
+            img.src = URL.createObjectURL(file); img.onload = () => URL.revokeObjectURL(img.src);
+            img.onclick = () => { const validFiles = files.filter(f=>f); abrirPreview(validFiles, validFiles.indexOf(file), gIndex); };
+            btn.className = 'remove-foto'; btn.innerHTML = '×';
+            btn.onclick = e => { e.stopPropagation(); removerFotoEdit(gIndex, i); };
+            wrapper.append(img, btn);
+        } else { wrapper.innerHTML = `<div class="not-found"><i class="fas fa-cloud"></i>Por aí…</div>`; }
+        container.appendChild(wrapper);
+    });
   }
 
   function popularListaHistorico() {
     listaHistoricoEl.innerHTML = '';
-    if (historicoNotas.length === 0) {
-        listaHistoricoEl.innerHTML = `<li class="nota-item">O histórico está vazio.</li>`;
-        return;
-    }
-    
-    const historicoInvertido = [...historicoNotas].reverse();
-    
-    historicoInvertido.forEach(nota => {
-      const li = document.createElement('li');
-      li.classList.add('nota-item');
-      li.innerHTML = `
-        <div class="nota-info"><b>${getFirstWord(nota.fornecedor)} - ${nota.nf || 'N/A'}</b></div>
-        <div class="historico-detalhes">
-          Movido para histórico em: ${nota.dataHistorico}
-        </div>
-      `;
-      listaHistoricoEl.appendChild(li);
-    });
+    if (historicoNotas.length === 0) { listaHistoricoEl.innerHTML = `<li class="nota-item">O histórico está vazio.</li>`; return; }
+    historicoNotas.forEach(nota => { const li = document.createElement('li'); li.classList.add('nota-item'); li.innerHTML = `<div class="nota-info"><b>${nota.fornecedor} - ${nota.nf||'N/A'}</b></div><div class="historico-detalhes">Movido para histórico em: ${nota.dataHistorico}</div>`; listaHistoricoEl.appendChild(li); });
   }
 
-  async function limparHistorico() {
-    if (confirm("Tem certeza que deseja apagar todo o histórico de notas? Essa ação é irreversível.")) {
-      await deleteAllHistoryDB();
-      historicoNotas = [];
-      popularListaHistorico();
-      toast("Histórico limpo com sucesso!");
-    }
+  async function limparHistorico() { if (historicoNotas.length === 0) return toast("Histórico já está vazio."); if (confirm("Tem certeza que deseja apagar todo o histórico de notas? Essa ação é irreversível.")) { const batch = firestore.batch(); historicoNotas.forEach(n => batch.delete(historicoCollection.doc(n.id))); await batch.commit(); toast("Histórico limpo com sucesso!"); } }
+  async function removerFotoEdit(gIndex, fIndex) { if (!confirm("Remover esta imagem da nota?")) return; const nota = notasPendentes[gIndex]; idPainelEdicaoAberto = nota.id; const photoId = nota.fotos[fIndex], updatedIds = nota.fotos.filter((_, i) => i !== fIndex); await notasCollection.doc(nota.id).update({ fotos: updatedIds }); await deletePhotoDB(photoId); toast("Imagem removida."); }
+  function togglePopup(id) { const p = document.getElementById(id); if (p.style.display === 'flex') closePopup(id); else openPopup(id); }
+  function openPopup(id) { document.body.classList.add('popup-open'); popups.forEach(p => p.style.display = 'none'); document.getElementById(id).style.display = 'flex'; if (id === 'fornecedores-popup') popularListaFornecedores(); else if (id === 'pedidos-popup') popularListaPedidos(); else if (id === 'observacoes-popup') popularObservacoesList(); }
+  function closePopup(id) { document.getElementById(id).style.display = 'none'; document.body.classList.remove('popup-open'); }
+  function toggleEditPanel(btn) { btn.closest('.nota-item').querySelector('.edit-panel').classList.toggle('show'); }
+
+  async function salvarEdicao(gIndex) {
+    const nota = notasPendentes[gIndex];
+    const data = { fornecedor: document.getElementById(`fornEdit-${gIndex}`).value.trim().toUpperCase(), nf: document.getElementById(`nfEdit-${gIndex}`).value.trim(), vencimento: document.getElementById(`vencEdit-${gIndex}`).value.trim(), valor: document.getElementById(`valorEdit-${gIndex}`).value.trim(), obs: document.getElementById(`obsEdit-${gIndex}`).value.trim() };
+    await notasCollection.doc(nota.id).update(data);
+    adicionarFornecedor(data.fornecedor); toast('✓ Nota editada e salva!');
+    toggleEditPanel(document.querySelector(`li[data-note-id="${nota.id}"] .edit-btn`));
   }
+
+  async function deletarNota(index) { if (confirm("Tem certeza que deseja excluir esta nota?")) { const nota = notasPendentes[index]; await notasCollection.doc(nota.id).delete(); if (nota.fotos && nota.fotos.length > 0) await Promise.all(nota.fotos.map(id => deletePhotoDB(id))); toast("🗑️ Nota excluída!"); } }
   
-  function reconstruirMiniaturasEdit(globalIndex) {
-      const container = document.getElementById(`miniaturas-container-edit-${globalIndex}`);
-      const nota = notasPendentes[globalIndex];
-      container.innerHTML = '';
-
-      if (!nota.fotos || nota.fotos.length === 0) {
-          const p = document.createElement('p');
-          p.textContent = "Nenhuma foto anexada.";
-          p.style.fontSize = '12px';
-          p.style.color = 'var(--text-light)';
-          container.appendChild(p);
-          return;
-      }
-      
-      nota.fotos.forEach((file, i) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'miniatura-wrapper';
-          
-          const reader = new FileReader();
-          reader.onload = (event) => {
-              const img = document.createElement('img');
-              img.src = event.target.result;
-              img.onclick = () => abrirPreview(nota.fotos, i, globalIndex);
-              
-              if (!nota.enviada) {
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-foto';
-                removeBtn.innerHTML = '×';
-                removeBtn.onclick = async (e) => {
-                    e.stopPropagation();
-                    await removerFotoEdit(globalIndex, i);
-                };
-                wrapper.appendChild(removeBtn);
-              }
-              
-              wrapper.appendChild(img);
-              container.appendChild(wrapper);
-          };
-          reader.readAsDataURL(file);
-      });
-  }
-
-  async function removerFotoEdit(globalIndex, fotoIndex) {
-      if (confirm("Remover esta imagem da nota?")) {
-          const nota = notasPendentes[globalIndex];
-          nota.fotos.splice(fotoIndex, 1);
-          await saveNoteDB(nota);
-          reconstruirMiniaturasEdit(globalIndex);
-          rebuildNotasPendentesList(paginaAtualNotas);
-          toast("Imagem removida da nota.");
-      }
-  }
-  
-  async function limparFotosNota(index) {
-      if (confirm("Tem certeza que deseja limpar todas as fotos desta nota?")) {
-          const nota = notasPendentes[index];
-          nota.fotos = [];
-          await saveNoteDB(nota);
-          rebuildNotasPendentesList(paginaAtualNotas);
-          toast("Imagens da nota limpas!");
-      }
-  }
-
-  function togglePopup(idPopup) {
-      const popup = document.getElementById(idPopup);
-      if (popup.style.display === 'flex') {
-          closePopup(idPopup);
-      } else {
-          openPopup(idPopup);
-      }
-  }
-
-  function openPopup(idPopup) {
-    const popup = document.getElementById(idPopup);
-    if (popup) {
-      document.body.classList.add('popup-open');
-      popups.forEach(p => p.style.display = 'none');
-      popup.style.display = 'flex';
-      
-      if (idPopup === 'gerenciar-notas-popup') {
-        rebuildNotasPendentesList(1);
-      } else if (idPopup === 'pedidos-popup') {
-        popularListaPedidos();
-      } else if (idPopup === 'fornecedores-popup') {
-        popularListaFornecedores();
-      } else if (idPopup === 'historico-popup') {
-        popularListaHistorico();
-      } else if (idPopup === 'observacoes-popup') {
-        popularObservacoesList();
-      }
-    }
-  }
-
-  function closePopup(idPopup) {
-    const popup = document.getElementById(idPopup);
-    if (popup) {
-      popup.style.display = 'none';
-      document.body.classList.remove('popup-open');
-    }
-  }
-
-  function toggleEditPanel(btn, index) {
-      const li = btn.closest('.nota-item');
-      const panel = li.querySelector('.edit-panel');
-      const allPanels = document.querySelectorAll('.edit-panel');
-      
-      allPanels.forEach(p => {
-        if (p !== panel && p.classList.contains('show')) {
-          p.classList.remove('show');
-        }
-      });
-      panel.classList.toggle('show');
-  }
-
-  async function salvarEdicao(globalIndex) {
-      const nota = notasPendentes[globalIndex];
-      const panel = document.querySelector(`#gerenciar-notas-popup #lista-notas-pendentes li[data-note-id="${nota.id}"] .edit-panel`);
-      
-      if (!panel) {
-          toast('Erro ao encontrar o painel de edição.');
-          return;
-      }
-
-      nota.fornecedor = panel.querySelector(`#fornEdit-${globalIndex}`).value.trim().toUpperCase();
-      nota.nf = panel.querySelector(`#nfEdit-${globalIndex}`).value.trim();
-      
-      const vencimentoEditado = panel.querySelector(`#vencEdit-${globalIndex}`).value.trim();
-      nota.vencimento = vencimentoEditado;
-
-      nota.valor = panel.querySelector(`#valorEdit-${globalIndex}`).value.trim();
-      nota.obs = panel.querySelector(`#obsEdit-${globalIndex}`).value.trim();
-      
-      adicionarFornecedor(nota.fornecedor);
-
-      await saveNoteDB(nota);
-      rebuildSaida();
-      rebuildNotasPendentesList(paginaAtualNotas);
-      toast('✓ Nota editada e salva!');
-  }
-
-
-  async function deletarNota(index) {
-    if (confirm("Tem certeza que deseja excluir esta nota?")) {
-      const idToDelete = notasPendentes[index].id;
-      await deleteNoteDB(idToDelete);
-      
-      notasPendentes.splice(index, 1);
-      rebuildSaida();
-      rebuildNotasPendentesList(paginaAtualNotas);
-      toast("🗑️ Nota excluída!");
-    }
-  }
-
   async function exportar() {
-    let linhas = [];
-    notasPendentes.forEach(nota => {
-        linhas.push(getLinha(nota));
-    });
-    
-    if (linhas.length === 0) {
-        toast("Nada para copiar.");
-        return;
-    }
-    
-    const textoSaida = linhas.join("\n");
-    saidaEl.value = textoSaida;
-    
-    try {
-      await navigator.clipboard.writeText(textoSaida);
-      toast("✓ Linhas copiadas! Agora é só colar no Excel.");
-      const exportBtn = document.getElementById('exportBtn');
-      animateButton(exportBtn, 'Copiado', 'fas fa-check', '<i class="fas fa-clipboard"></i> Copiar Texto');
-    } catch {
-      saidaEl.select();
-      document.execCommand("copy");
-      toast("✓ Linhas copiadas! Agora é só colar no Excel.");
-    }
+    if (saidaEl.value === "") return toast("Nada para copiar. A lista está vazia.");
+    await navigator.clipboard.writeText(saidaEl.value);
+    toast("✓ Linhas copiadas! Agora é só colar no Excel.");
   }
 
   async function limpar() {
+    if (notasPendentes.length === 0) return toast("Nenhuma nota para limpar.");
+    if (!confirm(`Mover ${notasPendentes.length} nota(s) para o histórico? As fotos serão excluídas.`)) return;
+    const batch = firestore.batch();
     for (const nota of notasPendentes) {
-        const notaHistorico = {
-            fornecedor: nota.fornecedor,
-            nf: nota.nf,
-            dataHistorico: formatarDataHora(new Date())
-        };
-        await saveHistoryNoteDB(notaHistorico);
+        batch.set(historicoCollection.doc(), { fornecedor: nota.fornecedor, nf: nota.nf, dataHistorico: formatarDataHora(new Date().toISOString()) });
+        batch.delete(notasCollection.doc(nota.id));
+        if (nota.fotos && nota.fotos.length > 0) await Promise.all(nota.fotos.map(id => deletePhotoDB(id)));
     }
-    
-    await deleteAllNotesDB();
-    notasPendentes = [];
-    historicoNotas = await getHistoryNotesDB();
-    fotosAcumuladas = [];
-    
-    rebuildSaida();
-    
-    nfEl.value = "";
-    vencEl.value = "";
-    valorEl.value = "";
-    fornEl.value = "";
-    obsEl.value = "";
-    
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    dataEl.value = `${day}/${month}/${year}`;
-
-    fotosContainer.style.display = 'block';
-    fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
-    fileLabelEl.classList.remove('active', 'disabled');
-    fileLabelEl.style.cursor = 'pointer';
-    fotosEl.disabled = false;
-    miniaturasContainer.innerHTML = '';
-    rebuildNotasPendentesList(1);
-    
-    toast("Conteúdo limpo e notas movidas para o histórico.");
-
-    nfEl.focus(); // Coloca o cursor no campo NF
+    await batch.commit();
+    limparFormularioPrincipal();
+    toast("Notas movidas para o histórico.");
   }
 
-  async function gerarImagemSeparadora(fornecedor, nf) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const width = 600;
-      const height = 150;
-      canvas.width = width;
-      canvas.height = height;
-
-      ctx.fillStyle = '#34495e';
-      ctx.fillRect(0, 0, width, height);
-      
-      ctx.fillStyle = '#ecf0f1';
-      ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif';
-      ctx.textAlign = 'center';
-      
-      const texto = `${fornecedor} ${nf}`;
-      const marcador = `↓`;
-      
-      ctx.fillText(texto, width / 2, height / 2 - 10);
-      
-      ctx.font = '50px sans-serif';
-      ctx.fillText(marcador, width / 2, height / 2 + 50);
-
-      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-  }
-
+  async function gerarImagemSeparadora(fornecedor, nf) { const c = document.createElement('canvas'); c.width=600; c.height=150; const ctx=c.getContext('2d'); ctx.fillStyle='#34495e'; ctx.fillRect(0,0,600,150); ctx.fillStyle='#ecf0f1'; ctx.font='bold 30px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif'; ctx.textAlign='center'; ctx.fillText(`${fornecedor} ${nf}`,300,70); ctx.font='50px sans-serif'; ctx.fillText(`↓`,300,130); return new Promise(r=>c.toBlob(r,'image/png')); }
   async function compartilharNota(index) {
+    const nota = notasPendentes[index];
+    if (nota.enviada) return toast("Esta nota já foi enviada.");
+    if (!navigator.share) return toast("Compartilhamento não suportado.");
     try {
-      if (!navigator.share) {
-        toast("O compartilhamento de arquivos não é suportado pelo seu navegador.");
-        return;
-      }
-      
-      const nota = notasPendentes[index];
-      const imagemSeparadora = await gerarImagemSeparadora(nota.fornecedor, nota.nf);
-      const arquivosParaCompartilhar = [];
-      
-      arquivosParaCompartilhar.push(new File([imagemSeparadora], 'separador.png', { type: 'image/png' }));
-      
-      for (const foto of nota.fotos) {
-        arquivosParaCompartilhar.push(foto);
-      }
-      
-      const textoCompartilhar = `${nota.fornecedor} ${nota.nf || ''}`;
-      
-      if (navigator.canShare({ files: arquivosParaCompartilhar, text: textoCompartilhar })) {
-        await navigator.share({
-          files: arquivosParaCompartilhar,
-          text: textoCompartilhar
-        });
-        
-        nota.enviada = true;
-        nota.fotos = [];
-        await saveNoteDB(nota);
-        rebuildNotasPendentesList(paginaAtualNotas);
-        toast("✓ Conteúdo enviado com sucesso!");
-      } else {
-        toast("O compartilhamento de múltiplas fotos não é suportado pelo seu navegador.");
-      }
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast("Erro ao compartilhar. Tente novamente.");
-      } else {
-        console.log("Compartilhamento cancelado pelo usuário.");
-      }
-    }
+        toast("Preparando fotos...");
+        const files = await Promise.all((nota.fotos || []).map(id => getPhotoDB(id)));
+        const validFiles = files.filter(f => f), separador = await gerarImagemSeparadora(nota.fornecedor, nota.nf);
+        const filesToShare = [new File([separador], 'separador.png', { type: 'image/png' }), ...validFiles];
+        await navigator.share({ files: filesToShare, text: `${nota.fornecedor} ${nota.nf || ''}` });
+        await Promise.all((nota.fotos || []).map(id => deletePhotoDB(id)));
+        await notasCollection.doc(nota.id).update({ enviada: true, fotos: [] });
+        toast("✓ Nota compartilhada e fotos locais removidas!");
+    } catch (error) { if (error.name !== 'AbortError') { console.error('Erro ao compartilhar:', error); toast("Erro ao compartilhar."); } }
   }
 
-  function adicionarPedido() {
-    const pedidoNum = pedidoNumInput.value.trim();
-    const recurso = pedidoRecursoSelect.value;
-    if (pedidoNum && recurso) {
-        pedidosRecursos[pedidoNum] = recurso;
-        salvarEstado();
-        popularListaPedidos();
-        pedidoNumInput.value = '';
-        pedidoRecursoSelect.value = '';
-        toast(`Pedido ${pedidoNum} associado a ${recurso}!`);
-    } else {
-        toast('Preencha o número do pedido e selecione um recurso.');
-    }
+  async function compartilharLista() {
+    const texto = saidaEl.value;
+    if (!texto.trim()) return toast("Nada para compartilhar.");
+    if (navigator.share) {
+        try { await navigator.share({ title: 'Relação de Notas Fiscais', text: texto }); toast("Lista compartilhada!"); }
+        catch (err) { if (err.name !== 'AbortError') toast("Erro ao compartilhar."); }
+    } else { await navigator.clipboard.writeText(texto); toast("Compartilhamento não suportado. Lista copiada!"); }
   }
 
-  function deletarPedido(pedido) {
-    if (confirm(`Tem certeza que deseja excluir o pedido ${pedido}?`)) {
-      delete pedidosRecursos[pedido];
-      salvarEstado();
-      popularListaPedidos();
-      toast(`Pedido ${pedido} excluído.`);
-    }
-  }
+  function adicionarPedido() { const pNum = pedidoNumInput.value.trim(), r = pedidoRecursoSelect.value; if (pNum && r) { pedidosRecursos[pNum] = r; salvarEstado(); popularListaPedidos(); pedidoNumInput.value = ''; pedidoRecursoSelect.value = ''; toast(`Pedido ${pNum} associado a ${r}!`); } else { toast('Preencha o pedido e o recurso.'); } }
+  function deletarPedido(p) { if (confirm(`Excluir o pedido ${p}?`)) { delete pedidosRecursos[p]; salvarEstado(); popularListaPedidos(); toast(`Pedido ${p} excluído.`); } }
+  function adicionarFornecedorManage() { const f = fornManageInput.value.trim(); if (f) { adicionarFornecedor(f); popularListaFornecedores(); fornManageInput.value = ''; toast(`Fornecedor ${f.toUpperCase()} adicionado!`); } }
+  function deletarFornecedor(f) { if (confirm(`Excluir o fornecedor ${f}?`)) { fornecedoresSugeridos = fornecedoresSugeridos.filter(i => i !== f); salvarEstado(); popularDatalist(fornDatalist); popularListaFornecedores(); toast(`Fornecedor ${f} excluído.`); } }
+  function adicionarObservacaoManage() { const o = obsManageInput.value.trim(); if (o) { adicionarObservacao(o); obsManageInput.value = ''; toast(`Observação "${o}" adicionada!`); } }
+  function deletarObservacao(o) { if (confirm(`Excluir a observação "${o}"?`)) { observacoesSugeridas = observacoesSugeridas.filter(i => i !== o); salvarEstado(); popularObservacoesList(); toast(`Observação "${o}" excluída.`); } }
 
-  function adicionarFornecedorManage() {
-    const fornecedor = fornManageInput.value.trim();
-    if (fornecedor) {
-      adicionarFornecedor(fornecedor);
-      popularListaFornecedores();
-      fornManageInput.value = '';
-      toast(`Fornecedor ${fornecedor.toUpperCase()} adicionado!`);
-    } else {
-      toast('Digite o nome do fornecedor.');
-    }
-  }
-
-  function deletarFornecedor(forn) {
-    if (confirm(`Tem certeza que deseja excluir o fornecedor ${forn}?`)) {
-      fornecedoresSugeridos = fornecedoresSugeridos.filter(f => f !== forn);
-      salvarEstado();
-      popularDatalist(fornDatalist);
-      popularListaFornecedores();
-      toast(`Fornecedor ${forn} excluído.`);
-    }
-  }
-
-  // FUNÇÕES PARA ADICIONAR/DELETAR OBSERVAÇÕES
-  function adicionarObservacaoManage() {
-      const obs = obsManageInput.value.trim();
-      if (obs) {
-          adicionarObservacao(obs);
-          obsManageInput.value = '';
-          toast(`Observação "${obs}" adicionada!`);
-      } else {
-          toast('Digite o nome da observação.');
-      }
-  }
-
-  function deletarObservacao(obs) {
-      if (confirm(`Tem certeza que deseja excluir a observação "${obs}"?`)) {
-          observacoesSugeridas = observacoesSugeridas.filter(o => o !== obs);
-          salvarEstado();
-          popularObservacoesList();
-          toast(`Observação "${obs}" excluída.`);
-      }
-  }
-
-  function removerFoto(index) {
-    if (confirm("Remover esta imagem?")) {
-      fotosAcumuladas.splice(index, 1);
-      fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
-      
-      reconstruirMiniaturas();
-      
-      if (fotosAcumuladas.length === 0) {
-        fileLabelEl.classList.remove('active');
-      }
-    }
-  }
-  
-  function reconstruirMiniaturas() {
-      miniaturasContainer.innerHTML = '';
+  function removerFotoAcumulada(index) { fotosAcumuladas.splice(index, 1); reconstruirMiniaturasAcumuladas(); }
+  function reconstruirMiniaturasAcumuladas() {
+      miniaturasContainer.innerHTML = ''; fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
+      fileLabelEl.classList.toggle('active', fotosAcumuladas.length > 0);
       fotosAcumuladas.forEach((file, i) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'miniatura-wrapper';
-        
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = document.createElement('img');
-          img.src = event.target.result;
-          img.onclick = () => abrirPreview(fotosAcumuladas, i, null);
-          
-          const removeBtn = document.createElement('button');
-          removeBtn.className = 'remove-foto';
-          removeBtn.innerHTML = '×';
-          removeBtn.onclick = (e) => {
-            e.stopPropagation();
-            removerFoto(i);
-          };
-          
-          wrapper.appendChild(img);
-          wrapper.appendChild(removeBtn);
-          miniaturasContainer.appendChild(wrapper);
-        };
-        reader.readAsDataURL(file);
+        const w = document.createElement('div'), img = document.createElement('img'), btn = document.createElement('button');
+        w.className = 'miniatura-wrapper'; img.src = URL.createObjectURL(file); img.onload = () => URL.revokeObjectURL(img.src);
+        img.onclick = () => abrirPreview(fotosAcumuladas, i, null); btn.className = 'remove-foto'; btn.innerHTML = '×';
+        btn.onclick = e => { e.stopPropagation(); removerFotoAcumulada(i); };
+        w.append(img, btn); miniaturasContainer.appendChild(w);
       });
   }
 
   function abrirPreview(fotos, index, notaIndex) {
-    const modal = document.getElementById('modalPreview');
-    const imgPreview = document.getElementById('imgPreview');
-    fotoAtualIndex = index;
-    fotoAtualNotaIndex = notaIndex;
-    fotoAtualFonte = notaIndex !== null ? 'nota' : 'acumulada';
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        imgPreview.src = event.target.result;
-        modal.style.display = 'flex';
-    };
-    reader.readAsDataURL(fotos[index]);
-
+    const modal = document.getElementById('modalPreview'), imgPreview = document.getElementById('imgPreview');
+    fotoAtualIndex = index; fotoAtualNotaIndex = notaIndex;
+    fotoAtualFonte = notaIndex !== null ? 'nota' : 'acumulada'; fotosAtuaisParaPreview = fotos;
+    imgPreview.src = URL.createObjectURL(fotos[index]); imgPreview.onload = () => URL.revokeObjectURL(imgPreview.src);
+    modal.style.display = 'flex';
     document.getElementById('prevBtn').style.display = index > 0 ? 'block' : 'none';
     document.getElementById('nextBtn').style.display = index < fotos.length - 1 ? 'block' : 'none';
   }
 
-  function fecharPreview() {
-    const modal = document.getElementById('modalPreview');
-    modal.style.display = 'none';
-  }
-
-  function navegarFotos(direcao) {
-      const fotosAtivas = fotoAtualFonte === 'acumulada' ? fotosAcumuladas : notasPendentes[fotoAtualNotaIndex].fotos;
-      let novoIndex = fotoAtualIndex + direcao;
-
-      if (novoIndex >= 0 && novoIndex < fotosAtivas.length) {
-          abrirPreview(fotosAtivas, novoIndex, fotoAtualNotaIndex);
-      }
-  }
-
-  function salvarFotoPreview() {
-      const img = document.getElementById('imgPreview');
-      if (!img.src) {
-          toast("Nenhuma imagem para salvar.");
-          return;
-      }
-      
-      const link = document.createElement('a');
-      link.href = img.src;
-      link.download = `nota_fiscal_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast("Imagem salva com sucesso!");
-  }
+  function fecharPreview() { document.getElementById('modalPreview').style.display = 'none'; fotosAtuaisParaPreview = []; }
+  function navegarFotos(dir) { const i = fotoAtualIndex + dir; if (i >= 0 && i < fotosAtuaisParaPreview.length) abrirPreview(fotosAtuaisParaPreview, i, fotoAtualNotaIndex); }
+  function salvarFotoPreview() { const l = document.createElement('a'); l.href = document.getElementById('imgPreview').src; l.download = `nota_fiscal_${Date.now()}.png`; l.click(); toast("Imagem salva!"); }
 
   async function excluirFotoPreview() {
-      if (confirm("Tem certeza que deseja excluir esta imagem?")) {
-          if (fotoAtualFonte === 'acumulada') {
-              fotosAcumuladas.splice(fotoAtualIndex, 1);
-              fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
-              reconstruirMiniaturas();
-              if (fotosAcumuladas.length === 0) {
-                  fecharPreview();
-              } else {
-                  let novoIndex = fotoAtualIndex >= fotosAcumuladas.length ? fotosAcumuladas.length - 1 : fotoAtualIndex;
-                  abrirPreview(fotosAcumuladas, novoIndex, null);
-              }
-          } else if (fotoAtualFonte === 'nota') {
-              const nota = notasPendentes[fotoAtualNotaIndex];
-              nota.fotos.splice(fotoAtualIndex, 1);
-              await saveNoteDB(nota);
-              rebuildNotasPendentesList(paginaAtualNotas);
-              if (nota.fotos.length === 0) {
-                  fecharPreview();
-              } else {
-                  let novoIndex = fotoAtualIndex >= nota.fotos.length ? nota.fotos.length - 1 : fotoAtualIndex;
-                  abrirPreview(nota.fotos, novoIndex, fotoAtualNotaIndex);
-              }
-          }
-          toast("Imagem excluída.");
+      if (!confirm("Excluir esta imagem?")) return;
+      if (fotoAtualFonte === 'acumulada') removerFotoAcumulada(fotoAtualIndex);
+      else if (fotoAtualFonte === 'nota') {
+          const nota = notasPendentes[fotoAtualNotaIndex]; const fIndex = nota.fotos.findIndex(id => id === fotosAtuaisParaPreview[fotoAtualIndex].id);
+          await removerFotoEdit(fotoAtualNotaIndex, fIndex);
       }
+      toast("Imagem excluída."); fecharPreview();
   }
 
   async function salvarNota() {
-      const nota = {
-          data: dataEl.value.trim(),
-          nf: nfEl.value.trim(),
-          vencimento: vencEl.value.trim(),
-          valor: valorEl.value.trim(),
-          fornecedor: fornEl.value.trim().toUpperCase(),
-          obs: obsEl.value.trim(),
-          fotos: fotosAcumuladas,
-          enviada: false,
-          dataCriacao: new Date().toISOString()
-      };
-
-      if (!nota.fornecedor) {
-          toast("O campo 'Nome do Fornecedor' é obrigatório.");
-          return;
-      }
-
-      toast("✓ Salvando nota...");
-      
+      const fornecedor = fornEl.value.trim().toUpperCase();
+      if (!fornecedor) return toast("O campo 'Nome do Fornecedor' é obrigatório.");
+      const salvarBtn = document.getElementById('salvarBtn');
+      salvarBtn.disabled = true; salvarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
       try {
-        const savedId = await saveNoteDB(nota);
-        nota.id = savedId;
-        notasPendentes.push(nota);
-        rebuildSaida();
-        rebuildNotasPendentesList(paginaAtualNotas);
-        limparFormularioPrincipal();
-        adicionarFornecedor(nota.fornecedor);
-        toast("✓ Nota salva!");
-      } catch (e) {
-        console.error("Erro ao salvar nota:", e);
-        toast("✕ Erro ao salvar a nota. Tente novamente.");
-      }
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+          const photoIds = await Promise.all(fotosAcumuladas.map(file => savePhotoDB(generateUniqueId(), file)));
+          await notasCollection.add({ data: dataEl.value.trim(), nf: nfEl.value.trim(), vencimento: vencEl.value.trim(), valor: valorEl.value.trim(), fornecedor, obs: obsEl.value.trim(), fotos: photoIds, enviada: false, dataCriacao: new Date().toISOString() });
+          adicionarFornecedor(fornecedor); limparFormularioPrincipal();
+          toast("✓ Nota salva!"); window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) { console.error("Erro ao salvar nota:", e); toast("✕ Erro ao salvar a nota."); } 
+      finally { salvarBtn.disabled = false; salvarBtn.innerHTML = '<i class="fas fa-check"></i> Salvar'; }
   }
 
   function limparFormularioPrincipal() {
-    nfEl.value = "";
-    vencEl.value = "";
-    valorEl.value = "";
-    fornEl.value = "";
-    obsEl.value = "";
-    
     const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    dataEl.value = `${day}/${month}/${year}`;
-    
-    fotosAcumuladas = [];
-    fotosContainer.style.display = 'block';
-    fileCountHintEl.textContent = 'Nenhuma imagem acumulada.';
-    fileLabelEl.classList.remove('active', 'disabled');
-    fileLabelEl.style.cursor = 'pointer';
-    fotosEl.disabled = false;
-    miniaturasContainer.innerHTML = '';
-    
-    fotosEl.value = null;
-
-    nfEl.focus();
+    dataEl.value = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    [nfEl, vencEl, valorEl, fornEl, obsEl].forEach(el => el.value = "");
+    fotosAcumuladas = []; reconstruirMiniaturasAcumuladas(); fotosEl.value = null; nfEl.focus();
+  }
+  
+  function sincronizarManualmente() {
+    const btn = document.getElementById('sync-btn');
+    btn.classList.add('syncing'); btn.disabled = true;
+    toast("Sincronizando com a nuvem...");
+    setTimeout(() => { btn.classList.remove('syncing'); btn.disabled = false; toast("Sincronização concluída."); }, 1500);
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-      await openDB();
-      await carregarEstado();
-      const today = new Date();
-      const day = String(today.getDate()).padStart(2, '0');
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const year = today.getFullYear();
-      dataEl.value = `${day}/${month}/${year}`;
-      
-      document.getElementById('modalPreview').addEventListener('click', (e) => {
-        if (e.target.id === 'modalPreview' || e.target.classList.contains('modal-preview-conteudo')) {
-          fecharPreview();
-        }
-      });
-      
-      popups.forEach(popup => {
-          popup.addEventListener('click', (e) => {
-              if (e.target.classList.contains('popup-modal')) {
-                  closePopup(popup.id);
-              }
-          });
-      });
-
-      // Configurar o menu suspenso de observações com as opções salvas
-      const defaultObs = ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"];
-      defaultObs.forEach(obs => adicionarObservacao(obs)); // Adiciona as opções padrão se não existirem
-      popularObservacoesList();
-
+  document.addEventListener('DOMContentLoaded', () => {
+      carregarEstado(); limparFormularioPrincipal();
+      document.getElementById('modalPreview').addEventListener('click', e => { if (e.target.id === 'modalPreview') fecharPreview(); });
+      popups.forEach(p => p.addEventListener('click', e => { if (e.target.classList.contains('popup-modal')) closePopup(p.id); }));
+      ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"].forEach(obs => adicionarObservacao(obs));
       nfEl.focus();
+      dataEl.addEventListener('input', () => formatarDataInput(dataEl));
+      vencEl.addEventListener('input', () => formatarDataInput(vencEl));
+      valorEl.addEventListener('blur', formatarValorBlur);
   });
 
-  dataEl.addEventListener('input', (e) => {
-    formatarData(e.target);
-  });
+  [fornEl, fornManageInput].forEach(el => el.addEventListener('input', () => el.value = el.value.toUpperCase()));
+  fornManageInput.addEventListener('keydown', e => e.key === 'Enter' && adicionarFornecedorManage());
+  obsManageInput.addEventListener('keydown', e => e.key === 'Enter' && adicionarObservacaoManage());
 
-  vencEl.addEventListener('input', (e) => {
-    formatarData(e.target);
-  });
-  
-  // Event listener para o campo de valor removido para permitir vírgula
-  
-  fornEl.addEventListener('input', (e) => {
-    e.target.value = e.target.value.toUpperCase();
-  });
-  
-  fornManageInput.addEventListener('input', (e) => {
-    e.target.value = e.target.value.toUpperCase();
-  });
+  fotosEl.addEventListener('change', e => { fotosAcumuladas.push(...Array.from(e.target.files)); reconstruirMiniaturasAcumuladas(); e.target.value = null; });
 
-  fornManageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      adicionarFornecedorManage();
-    }
-  });
-
-  obsManageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      adicionarObservacaoManage();
-    }
-  });
-
-  fotosEl.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      fotosAcumuladas = fotosAcumuladas.concat(newFiles);
-      fileCountHintEl.textContent = `${fotosAcumuladas.length} imagem(ns) acumulada(s).`;
-      fileLabelEl.classList.add('active');
-      reconstruirMiniaturas();
-      
-      e.target.value = null;
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
       e.preventDefault();
       const ordem = [dataEl, nfEl, vencEl, valorEl, fornEl, obsEl];
       const idx = ordem.indexOf(e.target);
       if (idx > -1 && idx < ordem.length - 1) {
-        if (e.target === dataEl) {
-          const dataCopiada = dataEl.value;
-          vencEl.value = dataCopiada;
-        }
+        if (e.target === dataEl) vencEl.value = dataEl.value;
         ordem[idx + 1].focus();
       } else if (e.target === obsEl) {
         salvarNota();
