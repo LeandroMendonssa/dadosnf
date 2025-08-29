@@ -1,4 +1,4 @@
-<html lang="pt-BR"><head>
+<html lang="pt-BR" style="--app-height: 675px;"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
@@ -7,7 +7,7 @@
     <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
- 
+  
     <style>
         :root {
             --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-tertiary: #ffffff;
@@ -24,7 +24,7 @@
         }
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-primary); color: var(--text-dark); -webkit-user-select: none; user-select: none; }
-         
+          
         /* --- ESTILOS DAS TELAS DE LOGIN, VERIFICAÇÃO E ALTERAÇÃO DE SENHA --- */
         #login-screen, #password-change-screen, #security-check-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -44,11 +44,11 @@
         .login-box .error-message { color: var(--button-danger); font-size: 14px; height: 20px; margin-top: 8px; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
         .shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
-
-
+ 
+ 
         .app-container { position: relative; width: 100%; height: var(--app-height); max-width: 680px; margin: 0 auto; background-color: var(--bg-primary); overflow: hidden; display: none; flex-direction: column; }
         .main-content { flex-grow: 1; position: relative; overflow: hidden; }
- 
+  
         .app-screen, .modal-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-primary); visibility: hidden;
@@ -61,21 +61,21 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .modal-screen { z-index: 1000; position: fixed; max-width: 680px; margin: 0 auto; }
-         
+          
         .screen-content { padding: 24px; overflow-y: auto; flex-grow: 1; padding-bottom: 40px; }
         .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 1px 2px var(--shadow); }
         .header-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin: 0; }
         .header-action { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 8px; display: flex; align-items: center; gap: 8px; }
- 
+  
         .modal-screen .header-title { font-size: 18px; font-weight: 600; }
         .modal-screen .close-modal { font-size: 28px; font-weight: 400; color: var(--text-light); }
- 
+  
         .tab-bar { z-index: 1001; display: flex; justify-content: space-around; align-items: center; background-color: rgba(255, 255, 255, 0.85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); padding: 8px 0; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
         body.dark-mode .tab-bar { background-color: rgba(28, 28, 30, 0.85); border-top-color: var(--border-color); }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-light); font-size: 11px; font-weight: 500; cursor: pointer; border: none; background: none; padding: 4px 12px; flex: 1; }
         .tab-item i { font-size: 22px; }
         .tab-item.active { color: var(--accent-color); }
-         
+          
         .card { background: var(--bg-secondary); border-radius: var(--radius); padding: 24px; border: 1px solid var(--border-color); }
         .campo, .modal-campo { margin-bottom: 18px; }
         label { display: block; font-size: 13px; color: var(--text-light); margin: 0 0 8px; font-weight: 500; }
@@ -90,7 +90,7 @@
         .miniatura-wrapper img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; }
         .miniatura-wrapper .not-found { width: 64px; height: 64px; border-radius: 8px; border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--text-light); background: var(--bg-primary); }
         .remove-foto { position: absolute; top: -8px; right: -8px; background: var(--button-danger); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; }
-         
+          
         .nota-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
         .nota-item { background-color: var(--bg-secondary); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border-color); }
         .nota-item.nota-enviada .nota-info { color: var(--button-success); }
@@ -104,17 +104,17 @@
         .actions-row .sent-btn { background: var(--button-success); }
         .actions-row .edit-btn { color: var(--accent-color); } .actions-row .delete-btn { color: var(--button-danger); }
         .sem-fotos { font-size: 12px; color: var(--text-light); padding: 4px 8px; background: var(--bg-primary); border-radius: 6px; font-weight: 500; }
- 
+  
         .edit-panel, .checklist-container { display: none; padding: 16px; background-color: var(--bg-primary); border-radius: var(--radius); margin-top: 16px; animation: fadeIn 0.3s; border-top: 1px solid var(--border-color); }
         .edit-panel.show, .checklist-container.show { display: block; }
         .fotos-enviadas-status { text-align: center; color: var(--button-success); font-weight: 500; padding: 10px; background-color: var(--bg-secondary); border-radius: var(--radius); }
-         
+          
         .progress-bar-container { width: 100%; background-color: var(--bg-primary); border-radius: 4px; height: 8px; margin-top: 8px; overflow: hidden; }
         .progress-bar { height: 100%; background-color: var(--button-success); width: 0%; transition: width 0.5s ease; }
         .checklist-item { display: flex; align-items: center; margin-bottom: 12px; font-size: 14px; }
         .checklist-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; accent-color: var(--accent-color); }
         .checklist-item label { margin: 0; font-weight: 400; color: var(--text-dark); cursor: pointer; }
- 
+  
         .settings-list-group {
             list-style: none; padding: 0; margin: 0 0 24px 0;
             background-color: var(--bg-secondary);
@@ -144,14 +144,14 @@
         #theme-toggle { width: 100%; }
         #theme-label { margin-right: auto; }
         .manage-list { margin-top: 24px; }
- 
+  
         #saida { width: 100%; height: 35vh; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; border: 2px dashed var(--border-color); border-radius: var(--radius); padding: 16px; background: var(--bg-secondary); color: var(--text-dark); font-size: 13px; line-height: 1.4; margin-bottom: 24px; }
         .actions-button { padding: 14px 20px; border: 0; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 16px; transition: var(--transition-swift); display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; color: #fff; width: 100%; }
         .actions { display: grid; gap: 12px; margin-top: 18px; }
-         
+          
         .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); color: #fff; padding: 14px 22px; border-radius: 12px; display: none; font-size: 14px; z-index: 10000; animation: toastIn 0.3s ease; text-align: center; }
         .empty-state { text-align: center; color: var(--text-light); padding: 40px 0; }
-         
+          
         .modal-preview { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; }
         .modal-preview-conteudo { max-width: 90%; max-height: 80%; object-fit: contain; }
         .modal-preview-fechar { position: fixed; top: 20px; right: 20px; color: white; font-size: 36px; background: rgba(0,0,0,0.5); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; border: none; }
@@ -160,7 +160,7 @@
         .modal-preview-bottom { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; }
         .modal-preview-action { background: var(--accent-color); color: white; border: none; padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: var(--radius); display: flex; align-items: center; gap: 8px; }
         .modal-preview-action.delete { background: var(--button-danger); }
- 
+  
         @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
         @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .fa-spin { animation: fa-spin 1s infinite linear; }
@@ -170,8 +170,8 @@
     </style>
 </head>
 <body>
-
-  <div id="login-screen">
+ 
+  <div id="login-screen" style="display: none;">
       <div class="login-box">
           <div class="icon"><i id="login-icon" class="fas fa-lock"></i></div>
           <h1>Acesso Restrito</h1>
@@ -181,7 +181,7 @@
           <button id="login-button" class="actions-button" onclick="handleLogin()">Entrar</button>
       </div>
   </div>
-  
+   
   <div id="security-check-screen" style="display: none;">
       <div class="login-box">
           <div class="icon"><i class="fas fa-shield-alt"></i></div>
@@ -195,7 +195,7 @@
           </div>
       </div>
   </div>
-  
+   
   <div id="password-change-screen" style="display: none;">
       <div class="login-box">
           <div class="icon"><i class="fas fa-key"></i></div>
@@ -210,9 +210,9 @@
           </div>
       </div>
   </div>
-
-
-  <div class="app-container" id="app-container">
+ 
+ 
+  <div class="app-container" id="app-container" style="display: flex;">
     <div class="main-content">
         <div class="app-screen active" id="screen-add">
             <header class="header"><h1 class="header-title">Adicionar Nota</h1><button class="header-action" id="sync-btn-1" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
@@ -221,15 +221,15 @@
                 <div class="campo"><label for="nf">NF</label><input type="text" id="nf" placeholder="Número da Nota Fiscal"></div>
                 <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" placeholder="dd/mm/aaaa"></div>
                 <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" placeholder="Ex: 1200,50"></div>
-                <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" placeholder="Nome do fornecedor" list="fornecedores-sugeridos"><datalist id="fornecedores-sugeridos"></datalist></div>
-                <div class="campo"><label for="obs">Observações</label><select id="obs"><option value="">Recurso a ser pago</option></select></div>
+                <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" placeholder="Nome do fornecedor" list="fornecedores-sugeridos"><datalist id="fornecedores-sugeridos"><option value="AMGS"></option><option value="DISTRILAF"></option><option value="MINAS SUL"></option><option value="REAL"></option><option value="RIOCLARENSE"></option><option value="SUPERMED"></option><option value="TESTE"></option></datalist></div>
+                <div class="campo"><label for="obs">Observações</label><select id="obs"><option value="">Recurso a ser pago</option><option value="C/C CTI">C/C CTI</option><option value="C/C SANTA CASA">C/C SANTA CASA</option><option value="PAGO">PAGO</option><option value="REMESSA">REMESSA</option><option value="Recurso Proprio CTI">Recurso Proprio CTI</option><option value="Recurso Proprio Santa Casa">Recurso Proprio Santa Casa</option></select></div>
                 <div class="campo"><label>Anexar Imagens</label><div class="anexo-actions"><label for="fotos" class="file-input-label"><i class="fas fa-photo-video"></i> Selecionar</label><label for="cameraInput" class="file-input-label"><i class="fas fa-camera"></i> Câmera</label></div><input type="file" id="fotos" multiple="" accept="image/*"><input type="file" id="cameraInput" accept="image/*" capture="environment"><div id="miniaturas-container"></div></div>
                 <div class="actions"><button id="salvarBtn" class="actions-button" style="background-color: var(--accent-color);" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button></div>
             </div></div>
         </div>
         <div class="app-screen" id="screen-manage">
             <header class="header"><h1 class="header-title">Gerenciar</h1><button class="header-action" id="sync-btn-2" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
-            <div class="screen-content"><ul id="lista-notas-pendentes" class="nota-list"></ul></div>
+            <div class="screen-content"><ul id="lista-notas-pendentes" class="nota-list"><li class="nota-item highlight-update" data-note-id="7teIk7RvB1A7CrRdVyNx"><div class="nota-info">REAL 235526</div><div class="nota-data">Criada em: 29/08/2025, 15:02:50</div><div class="nota-detalhes">Venc: 05/09/2026 | Valor: 307,10</div><div class="progress-bar-container"><div class="progress-bar" style="width: 22.22222222222222%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '7teIk7RvB1A7CrRdVyNx')">Progresso: 2/9</button></div><div class="actions-group"><span class="sem-fotos">SEM FOTOS</span><button class="edit-btn icon-only" onclick="toggleEditPanel(this, '7teIk7RvB1A7CrRdVyNx')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('7teIk7RvB1A7CrRdVyNx')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="checklist-item"><input type="checkbox" id="check-tirarFoto-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'tirarFoto', this.checked)"><label for="check-tirarFoto-7teIk7RvB1A7CrRdVyNx">Tirar Foto</label></div><div class="checklist-item"><input type="checkbox" id="check-entradaSistema-7teIk7RvB1A7CrRdVyNx" checked="" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'entradaSistema', this.checked)"><label for="check-entradaSistema-7teIk7RvB1A7CrRdVyNx">Entrada no sistema</label></div><div class="checklist-item"><input type="checkbox" id="check-produtosTransferidos-7teIk7RvB1A7CrRdVyNx" checked="" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'produtosTransferidos', this.checked)"><label for="check-produtosTransferidos-7teIk7RvB1A7CrRdVyNx">Produtos transferidos</label></div><div class="checklist-item"><input type="checkbox" id="check-fotosNoServidor-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'fotosNoServidor', this.checked)"><label for="check-fotosNoServidor-7teIk7RvB1A7CrRdVyNx">Fotos no servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoNoServidor-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'cotacaoNoServidor', this.checked)"><label for="check-cotacaoNoServidor-7teIk7RvB1A7CrRdVyNx">Cotação no Servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-notaEscaneada-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'notaEscaneada', this.checked)"><label for="check-notaEscaneada-7teIk7RvB1A7CrRdVyNx">Nota Escaneada</label></div><div class="checklist-item"><input type="checkbox" id="check-estaNaPlanilha-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'estaNaPlanilha', this.checked)"><label for="check-estaNaPlanilha-7teIk7RvB1A7CrRdVyNx">Está na planilha</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoAnexada-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'cotacaoAnexada', this.checked)"><label for="check-cotacaoAnexada-7teIk7RvB1A7CrRdVyNx">Cotação Anexada</label></div><div class="checklist-item"><input type="checkbox" id="check-notaCarimbada-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'notaCarimbada', this.checked)"><label for="check-notaCarimbada-7teIk7RvB1A7CrRdVyNx">Nota Carimbada</label></div></div></li><li class="nota-item highlight-update" data-note-id="7pT4PduDN5VKgu2Eyywg"><div class="nota-info">AMGS 1550967</div><div class="nota-data">Criada em: 29/08/2025, 14:53:56</div><div class="nota-detalhes">Venc: N/A | Valor: 392,22</div><div class="progress-bar-container"><div class="progress-bar" style="width: 88.88888888888889%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '7pT4PduDN5VKgu2Eyywg')">Progresso: 8/9</button></div><div class="actions-group"><span class="sem-fotos">SEM FOTOS</span><button class="edit-btn icon-only" onclick="toggleEditPanel(this, '7pT4PduDN5VKgu2Eyywg')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('7pT4PduDN5VKgu2Eyywg')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="checklist-item"><input type="checkbox" id="check-tirarFoto-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'tirarFoto', this.checked)"><label for="check-tirarFoto-7pT4PduDN5VKgu2Eyywg">Tirar Foto</label></div><div class="checklist-item"><input type="checkbox" id="check-entradaSistema-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'entradaSistema', this.checked)"><label for="check-entradaSistema-7pT4PduDN5VKgu2Eyywg">Entrada no sistema</label></div><div class="checklist-item"><input type="checkbox" id="check-produtosTransferidos-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'produtosTransferidos', this.checked)"><label for="check-produtosTransferidos-7pT4PduDN5VKgu2Eyywg">Produtos transferidos</label></div><div class="checklist-item"><input type="checkbox" id="check-fotosNoServidor-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'fotosNoServidor', this.checked)"><label for="check-fotosNoServidor-7pT4PduDN5VKgu2Eyywg">Fotos no servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoNoServidor-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'cotacaoNoServidor', this.checked)"><label for="check-cotacaoNoServidor-7pT4PduDN5VKgu2Eyywg">Cotação no Servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-notaEscaneada-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'notaEscaneada', this.checked)"><label for="check-notaEscaneada-7pT4PduDN5VKgu2Eyywg">Nota Escaneada</label></div><div class="checklist-item"><input type="checkbox" id="check-estaNaPlanilha-7pT4PduDN5VKgu2Eyywg" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'estaNaPlanilha', this.checked)"><label for="check-estaNaPlanilha-7pT4PduDN5VKgu2Eyywg">Está na planilha</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoAnexada-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'cotacaoAnexada', this.checked)"><label for="check-cotacaoAnexada-7pT4PduDN5VKgu2Eyywg">Cotação Anexada</label></div><div class="checklist-item"><input type="checkbox" id="check-notaCarimbada-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'notaCarimbada', this.checked)"><label for="check-notaCarimbada-7pT4PduDN5VKgu2Eyywg">Nota Carimbada</label></div></div></li><li class="nota-item nota-enviada highlight-update" data-note-id="g4XpAvp9FSC2w2funHEL"><div class="nota-info">RIOCLARENSE 876403</div><div class="nota-data">Criada em: 29/08/2025, 13:21:21</div><div class="nota-detalhes">Venc: 25/09/2025 | Valor: 1.320,00</div><div class="progress-bar-container"><div class="progress-bar" style="width: 88.88888888888889%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, 'g4XpAvp9FSC2w2funHEL')">Progresso: 8/9</button></div><div class="actions-group"><button class="sent-btn icon-only" title="Enviada"><i class="fas fa-check"></i></button><button class="edit-btn icon-only" onclick="toggleEditPanel(this, 'g4XpAvp9FSC2w2funHEL')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('g4XpAvp9FSC2w2funHEL')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="checklist-item"><input type="checkbox" id="check-tirarFoto-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'tirarFoto', this.checked)"><label for="check-tirarFoto-g4XpAvp9FSC2w2funHEL">Tirar Foto</label></div><div class="checklist-item"><input type="checkbox" id="check-entradaSistema-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'entradaSistema', this.checked)"><label for="check-entradaSistema-g4XpAvp9FSC2w2funHEL">Entrada no sistema</label></div><div class="checklist-item"><input type="checkbox" id="check-produtosTransferidos-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'produtosTransferidos', this.checked)"><label for="check-produtosTransferidos-g4XpAvp9FSC2w2funHEL">Produtos transferidos</label></div><div class="checklist-item"><input type="checkbox" id="check-fotosNoServidor-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'fotosNoServidor', this.checked)"><label for="check-fotosNoServidor-g4XpAvp9FSC2w2funHEL">Fotos no servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoNoServidor-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'cotacaoNoServidor', this.checked)"><label for="check-cotacaoNoServidor-g4XpAvp9FSC2w2funHEL">Cotação no Servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-notaEscaneada-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'notaEscaneada', this.checked)"><label for="check-notaEscaneada-g4XpAvp9FSC2w2funHEL">Nota Escaneada</label></div><div class="checklist-item"><input type="checkbox" id="check-estaNaPlanilha-g4XpAvp9FSC2w2funHEL" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'estaNaPlanilha', this.checked)"><label for="check-estaNaPlanilha-g4XpAvp9FSC2w2funHEL">Está na planilha</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoAnexada-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'cotacaoAnexada', this.checked)"><label for="check-cotacaoAnexada-g4XpAvp9FSC2w2funHEL">Cotação Anexada</label></div><div class="checklist-item"><input type="checkbox" id="check-notaCarimbada-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'notaCarimbada', this.checked)"><label for="check-notaCarimbada-g4XpAvp9FSC2w2funHEL">Nota Carimbada</label></div></div></li></ul></div>
         </div>
         <div class="app-screen" id="screen-export">
             <header class="header"><h1 class="header-title">Exportar</h1><button class="header-action" id="sync-btn-3" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
@@ -237,7 +237,7 @@
         </div>
         <div class="app-screen" id="screen-history">
             <header class="header"><h1 class="header-title">Histórico</h1><button class="header-action" id="sync-btn-4" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
-            <div class="screen-content"><ul id="lista-historico" class="nota-list"></ul><div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button" style="background-color: var(--button-danger);" onclick="limparHistorico()"><i class="fas fa-trash"></i> Limpar Histórico</button></div></div>
+            <div class="screen-content"><ul id="lista-historico" class="nota-list"><li class="empty-state">O histórico está vazio.</li></ul><div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button" style="background-color: var(--button-danger);" onclick="limparHistorico()"><i class="fas fa-trash"></i> Limpar Histórico</button></div></div>
         </div>
         <div class="app-screen" id="screen-settings">
             <header class="header"><h1 class="header-title">Ajustes</h1></header>
@@ -254,20 +254,20 @@
             </div>
         </div>
     </div>
- 
+  
     <div id="fornecedores-modal" class="modal-screen">
         <header class="header"><h1 class="header-title">Fornecedores</h1><button class="header-action close-modal" onclick="closeModal('fornecedores-modal')">×</button></header>
-        <div class="screen-content"><div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i> Adicionar Fornecedor</button><ul id="lista-fornecedores-manage" class="manage-list"></ul></div>
+        <div class="screen-content"><div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i> Adicionar Fornecedor</button><ul id="lista-fornecedores-manage" class="manage-list"><li>AMGS <button onclick="deletarFornecedor('AMGS')"><i class="fas fa-times-circle"></i></button></li><li>DISTRILAF <button onclick="deletarFornecedor('DISTRILAF')"><i class="fas fa-times-circle"></i></button></li><li>MINAS SUL <button onclick="deletarFornecedor('MINAS SUL')"><i class="fas fa-times-circle"></i></button></li><li>REAL <button onclick="deletarFornecedor('REAL')"><i class="fas fa-times-circle"></i></button></li><li>RIOCLARENSE <button onclick="deletarFornecedor('RIOCLARENSE')"><i class="fas fa-times-circle"></i></button></li><li>SUPERMED <button onclick="deletarFornecedor('SUPERMED')"><i class="fas fa-times-circle"></i></button></li><li>TESTE <button onclick="deletarFornecedor('TESTE')"><i class="fas fa-times-circle"></i></button></li></ul></div>
     </div>
     <div id="pedidos-modal" class="modal-screen">
         <header class="header"><h1 class="header-title">Pedidos e Recursos</h1><button class="header-action close-modal" onclick="closeModal('pedidos-modal')">×</button></header>
-        <div class="screen-content"><div class="modal-campo"><label>Nº do Pedido</label><input type="text" id="pedido-num" placeholder="Digite o número do pedido"></div><div class="modal-campo"><label>Recurso</label><select id="pedido-recurso"><option value="">Selecione...</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div><button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="adicionarPedido()"><i class="fas fa-plus"></i> Adicionar</button><ul id="lista-pedidos" class="manage-list"></ul></div>
+        <div class="screen-content"><div class="modal-campo"><label>Nº do Pedido</label><input type="text" id="pedido-num" placeholder="Digite o número do pedido"></div><div class="modal-campo"><label>Recurso</label><select id="pedido-recurso"><option value="">Selecione...</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div><button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="adicionarPedido()"><i class="fas fa-plus"></i> Adicionar</button><ul id="lista-pedidos" class="manage-list"><li>1453 - Santa Casa <button onclick="deletarPedido('1453')"><i class="fas fa-times-circle"></i></button></li><li>1455 - Santa Casa <button onclick="deletarPedido('1455')"><i class="fas fa-times-circle"></i></button></li><li>1457 - Santa Casa <button onclick="deletarPedido('1457')"><i class="fas fa-times-circle"></i></button></li></ul></div>
     </div>
     <div id="observacoes-modal" class="modal-screen">
         <header class="header"><h1 class="header-title">Observações</h1><button class="header-action close-modal" onclick="closeModal('observacoes-modal')">×</button></header>
-        <div class="screen-content"><div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i> Adicionar Observação</button><ul id="lista-observacoes-manage" class="manage-list"></ul></div>
+        <div class="screen-content"><div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i> Adicionar Observação</button><ul id="lista-observacoes-manage" class="manage-list"><li>C/C CTI <button onclick="deletarObservacao('C/C CTI')"><i class="fas fa-times-circle"></i></button></li><li>C/C SANTA CASA <button onclick="deletarObservacao('C/C SANTA CASA')"><i class="fas fa-times-circle"></i></button></li><li>PAGO <button onclick="deletarObservacao('PAGO')"><i class="fas fa-times-circle"></i></button></li><li>REMESSA <button onclick="deletarObservacao('REMESSA')"><i class="fas fa-times-circle"></i></button></li><li>Recurso Proprio CTI <button onclick="deletarObservacao('Recurso Proprio CTI')"><i class="fas fa-times-circle"></i></button></li><li>Recurso Proprio Santa Casa <button onclick="deletarObservacao('Recurso Proprio Santa Casa')"><i class="fas fa-times-circle"></i></button></li></ul></div>
     </div>
- 
+  
     <nav class="tab-bar">
         <button class="tab-item active" data-screen="screen-add" data-index="0"><i class="fas fa-plus-circle"></i><span>Adicionar</span></button>
         <button class="tab-item" data-screen="screen-manage" data-index="1"><i class="fas fa-list-alt"></i><span>Gerenciar</span></button>
@@ -276,14 +276,14 @@
         <button class="tab-item" data-screen="screen-settings" data-index="4"><i class="fas fa-cog"></i><span>Ajustes</span></button>
     </nav>
   </div>
-   
+    
   <div id="modalPreview" class="modal-preview">
     <button class="modal-preview-fechar" onclick="fecharPreview()">×</button><img class="modal-preview-conteudo" id="imgPreview">
     <div class="modal-preview-nav"><button id="prevBtn" onclick="navegarFotos(-1)"><i class="fas fa-chevron-left"></i></button><button id="nextBtn" onclick="navegarFotos(1)"><i class="fas fa-chevron-right"></i></button></div>
     <div class="modal-preview-bottom"><button class="modal-preview-action" onclick="salvarFotoPreview()"><i class="fas fa-download"></i> Salvar</button><button class="modal-preview-action delete" onclick="excluirFotoPreview()"><i class="fas fa-trash-alt"></i> Excluir</button></div>
   </div>
   <div id="toast" class="toast" style="display: none;"></div>
- 
+  
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
@@ -294,7 +294,7 @@
     };
     window.addEventListener('resize', setAppHeight);
     document.addEventListener('DOMContentLoaded', setAppHeight);
-
+ 
     function checkLogin() {
         if (localStorage.getItem('isLoggedIn') === 'true') {
             document.getElementById('app-container').style.display = 'flex';
@@ -304,13 +304,13 @@
             document.getElementById('login-screen').style.display = 'flex';
         }
     }
-
+ 
     function handleLogin() {
         const passwordInput = document.getElementById('password-input');
         const errorMessage = document.getElementById('error-message');
         const loginIcon = document.getElementById('login-icon');
         const senhaCorreta = localStorage.getItem('userPassword') || '1206';
-        
+         
         if (passwordInput.value === senhaCorreta) {
             localStorage.setItem('isLoggedIn', 'true');
             errorMessage.textContent = '';
@@ -326,18 +326,18 @@
             }, 820);
         }
     }
-    
+     
     // [NOVO] Funções para o fluxo de verificação e alteração de senha
     function abrirModalSenhaComVerificacao() {
         document.getElementById('security-check-screen').style.display = 'flex';
         setTimeout(() => document.getElementById('security-check-password-input').focus(), 50);
     }
-    
+     
     function handleSecurityCheck() {
         const input = document.getElementById('security-check-password-input');
         const errorMessage = document.getElementById('security-check-error-message');
         const senhaCorreta = localStorage.getItem('userPassword') || '1206';
-
+ 
         if (input.value === senhaCorreta) {
             document.getElementById('security-check-screen').style.display = 'none';
             input.value = '';
@@ -353,14 +353,14 @@
             }, 820);
         }
     }
-    
+     
     function cancelSecurityCheck() {
         const screen = document.getElementById('security-check-screen');
         screen.style.display = 'none';
         document.getElementById('security-check-password-input').value = '';
         document.getElementById('security-check-error-message').textContent = '';
     }
-    
+     
     function closePasswordChangeScreen() {
         const screen = document.getElementById('password-change-screen');
         screen.style.display = 'none';
@@ -368,12 +368,12 @@
         document.getElementById('confirm-password-input').value = '';
         document.getElementById('password-error-message').textContent = '';
     }
-    
+     
     function handleSaveNewPassword() {
         const novaSenhaInput = document.getElementById('new-password-input');
         const confirmaSenhaInput = document.getElementById('confirm-password-input');
         const errorMessage = document.getElementById('password-error-message');
-
+ 
         if (novaSenhaInput.value.trim().length < 4) {
             errorMessage.textContent = 'A senha deve ter no mínimo 4 dígitos.';
             return;
@@ -384,12 +384,12 @@
             setTimeout(() => confirmaSenhaInput.classList.remove('shake'), 820);
             return;
         }
-        
+         
         localStorage.setItem('userPassword', novaSenhaInput.value);
         toast('✓ Senha alterada com sucesso!');
         closePasswordChangeScreen();
     }
-
+ 
     // Event listeners para a tecla Enter
     document.getElementById('password-input').addEventListener('keyup', (event) => {
         if (event.key === "Enter") {
@@ -403,9 +403,9 @@
             handleSecurityCheck();
         }
     });
-
+ 
     // --- FIM DA LÓGICA DE LOGIN E SENHA ---
-
+ 
     // ... (O restante do código JavaScript permanece o mesmo)
     const firebaseConfig = { apiKey: "AIzaSyAwcvJNJhLZ4Wqcw4Wz44XJ9kIdtqKJeJg", authDomain: "relacaonf.firebaseapp.com", projectId: "relacaonf", storageBucket: "relacaonf.appspot.com", messagingSenderId: "773864981925", appId: "1:773864981925:web:a4dadc51ec0a856832144c" };
     firebase.initializeApp(firebaseConfig);
@@ -424,12 +424,40 @@
     function savePhotoDB(id, file) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos'], 'readwrite').objectStore('fotos').put({ id, file }).onsuccess = () => resolve(id); }); }
     function getPhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos']).objectStore('fotos').get(id).onsuccess = e => resolve(e.target.result ? e.target.result.file : null); }); }
     function deletePhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos'], 'readwrite').objectStore('fotos').delete(id).onsuccess = () => resolve(); }); }
-    document.addEventListener('DOMContentLoaded', () => {checkLogin(); const tabItems = document.querySelectorAll('.tab-item[data-screen]');tabItems.forEach(tab => {tab.addEventListener('click', () => {closeAllModals();const currentActive = document.querySelector('.app-screen.active');if (currentActive && currentActive.id === tab.dataset.screen) return;if (currentActive) currentActive.classList.remove('active');document.getElementById(tab.dataset.screen).classList.add('active');tabItems.forEach(item => item.classList.remove('active'));tab.classList.add('active');});});carregarEstado(); limparFormularioPrincipal(false);["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"].forEach(obs => adicionarObservacao(obs, true));DOM.data.addEventListener('input', () => formatarDataInput(DOM.data)); DOM.venc.addEventListener('input', () => formatarDataInput(DOM.venc)); DOM.valor.addEventListener('blur', formatarValorBlur);[DOM.forn, DOM.fornManageInput].forEach(el => el.addEventListener('input', () => el.value = el.value.toUpperCase()));const handleFiles = e => { fotosAcumuladas.push(...Array.from(e.target.files)); reconstruirMiniaturasAcumuladas(); e.target.value = null; };DOM.fotos.addEventListener('change', handleFiles); DOM.cameraInput.addEventListener('change', handleFiles);});
+    document.addEventListener('DOMContentLoaded', () => {checkLogin(); const tabItems = document.querySelectorAll('.tab-item[data-screen]');tabItems.forEach(tab => {tab.addEventListener('click', () => {closeAllModals();const currentActive = document.querySelector('.app-screen.active');if (currentActive && currentActive.id === tab.dataset.screen) return;if (currentActive) currentActive.classList.remove('active');document.getElementById(tab.dataset.screen).classList.add('active');tabItems.forEach(item => item.classList.remove('active'));tab.classList.add('active');});});carregarEstado(); limparFormularioPrincipal(false);["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"].forEach(obs => adicionarObservacao(obs, true));DOM.data.addEventListener('input', () => formatarDataInput(DOM.data)); DOM.venc.addEventListener('input', () => formatarDataInput(DOM.venc)); DOM.valor.addEventListener('blur', formatarValorBlur);[DOM.forn, DOM.fornManageInput].forEach(el => el.addEventListener('input', () => el.value = el.value.toUpperCase()));const formFields = Array.from(
+            document.querySelectorAll('#screen-add .card input, #screen-add .card select')
+        );
+ 
+        formFields.forEach(field => {
+            field.addEventListener('keydown', (event) => {
+                // 1. Verifica se a tecla pressionada foi "Enter"
+                if (event.key === 'Enter') {
+                    // 2. Impede a ação padrão do Enter (que seria enviar o formulário)
+                    event.preventDefault();
+ 
+                    // 3. Encontra a posição (índice) do campo atual na lista de campos
+                    const currentIndex = formFields.indexOf(event.target);
+                     
+                    // 4. Calcula qual é o próximo campo
+                    const nextIndex = currentIndex + 1;
+ 
+                    // 5. Verifica se existe um próximo campo na lista
+                    if (nextIndex < formFields.length) {
+                        // Se existir, move o foco para ele
+                        formFields[nextIndex].focus();
+                    } else {
+                        // 6. Se estiver no último campo, "clica" no botão Salvar
+                        document.getElementById('salvarBtn').click();
+                    }
+                }
+            });
+        });
+const handleFiles = e => { fotosAcumuladas.push(...Array.from(e.target.files)); reconstruirMiniaturasAcumuladas(); e.target.value = null; };DOM.fotos.addEventListener('change', handleFiles); DOM.cameraInput.addEventListener('change', handleFiles);});
     function openModal(id) { document.getElementById(id)?.classList.add('active'); }
     function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
     function closeAllModals() { document.querySelectorAll('.modal-screen.active').forEach(modal => modal.classList.remove('active')); }
     function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=> t.style.display='none', 1350); }
-    function sincronizarManualmente(button) {const allSyncButtons = document.querySelectorAll('.header-action[id^="sync-btn-"]');allSyncButtons.forEach(btn => { btn.disabled = true; btn.querySelector('i').classList.add('fa-spin'); });toast("Sincronizando...");setTimeout(() => {toast("✓ Dados atualizados!");allSyncButtons.forEach(btn => {btn.disabled = false;btn.querySelector('i').classList.remove('fa-spin');});}, 1250);}
+    function sincronizarManualmente(button) {const allSyncButtons = document.querySelectorAll('.header-action[id^="sync-btn-"]');allSyncButtons.forEach(btn => { btn.disabled = true; btn.querySelector('i').classList.add('fa-spin'); });toast("Sincronizando...");setTimeout(() => {toast("✓ Dados atualizados com sucesso.");allSyncButtons.forEach(btn => {btn.disabled = false;btn.querySelector('i').classList.remove('fa-spin');});}, 1250);}
     function iniciarListenerConfiguracoes() {settingsDocRef.onSnapshot(doc => {console.log("Listener de configurações disparado.");if (doc.exists) {const data = doc.data();fornecedoresSugeridos = data.fornecedores || [];pedidosRecursos = data.pedidosRecursos || {};} else {fornecedoresSugeridos = [];pedidosRecursos = {};}popularDatalist();popularListaPedidos();}, error => {console.error("Erro no listener de configurações:", error);toast("Erro ao carregar configurações.");});}
     async function carregarEstado() {iniciarListenerConfiguracoes();observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun'); document.getElementById('theme-label').textContent = 'Modo Claro'; }try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); }notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => { if (snapshot.metadata.hasPendingWrites && isChecklistUpdate) { isChecklistUpdate = false; notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); return; } handleSnapshotChanges(snapshot); }, error => toast("Erro ao carregar dados."));historicoCollection.orderBy('dataHistorico', 'desc').onSnapshot(snapshot => { historicoNotas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); popularListaHistorico(); }, error => console.error("Erro ao carregar histórico:", error));}
     function salvarObservacoesLocal() { localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); }
@@ -462,7 +490,7 @@
     function adicionarObservacaoManage() { const o = DOM.obsManageInput.value.trim(); if (o) { adicionarObservacao(o); DOM.obsManageInput.value = ''; } }
     function deletarObservacao(o) { if (confirm(`Excluir a observação "${o}"?`)) { observacoesSugeridas = observacoesSugeridas.filter(i => i !== o); salvarObservacoesLocal(); popularObservacoesList(); toast(`Observação "${o}" excluída.`); } }
     function popularObservacoesList() { DOM.obs.innerHTML = '<option value="">Recurso a ser pago</option>'; observacoesSugeridas.sort().forEach(o => DOM.obs.innerHTML += `<option value="${o}">${o}</option>`); DOM.listaObsManage.innerHTML = ''; observacoesSugeridas.sort().forEach(o => DOM.listaObsManage.innerHTML += `<li>${o} <button onclick="deletarObservacao('${o}')"><i class="fas fa-times-circle"></i></button></li>`); }
-    
+     
     // [FINAL] Lógica de Pedidos corrigida com 'update'
     async function adicionarPedido() {
         const pNum = DOM.pedidoNumInput.value.trim();
@@ -507,7 +535,7 @@
             DOM.listaPedidos.innerHTML += `<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fas fa-times-circle"></i></button></li>`;
         });
     }
-    
+     
     function formatarDataInput(input){let v=input.value.replace(/\D/g,'').substring(0,8);if(v.length>4)v=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>2)v=`${v.slice(0,2)}/${v.slice(2)}`;input.value=v}
     function formatarValorBlur(event){let v=event.target.value.replace(/\./g,'').replace(',','.').replace(/[^\d.]/g,'');if(v)event.target.value=parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
     function getLinha(nota){let v=nota.vencimento,o=nota.obs;if(nota.obs==="REMESSA"){v="REMESSA";o="Recurso Proprio Santa Casa"}return[nota.data,nota.nf,v,nota.valor,"",nota.fornecedor,"","",o].join("\t")}
@@ -521,5 +549,5 @@
     function salvarFotoPreview(){const a=document.createElement('a');a.href=document.getElementById('imgPreview').src;a.download=`nota_fiscal_${Date.now()}.png`;a.click();toast("Imagem salva!")}
     async function excluirFotoPreview(){if(!confirm("Excluir esta imagem?"))return;if(fotoAtualContexto.type==='nova'){fotosAcumuladas.splice(fotoAtualIndex,1);reconstruirMiniaturasAcumuladas()}else if(fotoAtualContexto.type==='nota'){const nota=notasPendentes.find(n=>n.id===fotoAtualContexto.id);const photoIndexInNota=nota.fotos.indexOf(fotoAtualContexto.photoId);if(photoIndexInNota>-1)await removerFotoEdit(fotoAtualContexto.id,photoIndexInNota)}toast("Imagem excluída.");if(fotosAtuaisParaPreview.length<=1){fecharPreview()}else{const newIndex=Math.max(0,fotoAtualIndex-1);fotosAtuaisParaPreview.splice(fotoAtualIndex,1);abrirPreview(fotosAtuaisParaPreview,newIndex,fotoAtualContexto)}}
 </script>
- 
+  
 </body></html>
