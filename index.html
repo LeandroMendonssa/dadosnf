@@ -25,7 +25,6 @@
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-primary); color: var(--text-dark); -webkit-user-select: none; user-select: none; }
           
-        /* --- ESTILOS DAS TELAS DE LOGIN, VERIFICAÇÃO E ALTERAÇÃO DE SENHA --- */
         #login-screen, #password-change-screen, #security-check-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-primary);
@@ -47,28 +46,52 @@
  
  
         .app-container { position: relative; width: 100%; height: var(--app-height); max-width: 680px; margin: 0 auto; background-color: var(--bg-primary); overflow: hidden; display: none; flex-direction: column; }
-        .main-content { flex-grow: 1; position: relative; overflow: hidden; }
+        .main-content { flex-grow: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
   
-        .app-screen, .modal-screen {
+        .screen-wrapper {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .app-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-primary); visibility: hidden;
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.35s;
-            z-index: 1; display: flex; flex-direction: column; opacity: 0;
-            transform: translateY(15px);
+            z-index: 1; display: flex; flex-direction: column; 
+            transform: translateY(20px);
+            padding: 24px; overflow-y: auto; 
         }
-        .app-screen.active, .modal-screen.active {
-            visibility: visible; z-index: 2; transform: translateY(0); opacity: 1;
+        .app-screen.active {
+            visibility: visible; z-index: 2; transform: translateY(0);
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .modal-screen { z-index: 1000; position: fixed; max-width: 680px; margin: 0 auto; }
-          
-        .screen-content { padding: 24px; overflow-y: auto; flex-grow: 1; padding-bottom: 40px; }
-        .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 1px 2px var(--shadow); }
-        .header-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin: 0; }
+        
+        .modal-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000; display: none; 
+            align-items: center; justify-content: center;
+            background-color: rgba(0,0,0,0.4);
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+        }
+        .modal-screen.active { display: flex; }
+        .modal-content {
+            background-color: var(--bg-secondary);
+            display: flex; flex-direction: column;
+            border-radius: var(--radius);
+            width: 100%; max-width: 680px; height: 100%;
+            transform: translateY(20px);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-screen.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 1px 2px var(--shadow); position: relative; z-index: 10; }
+        .header-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin: 0; opacity: 1; transform: translateY(0); transition: all 0.2s ease-in-out; }
+        .header-title.title-changing { opacity: 0; transform: translateY(-5px); } 
         .header-action { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 8px; display: flex; align-items: center; gap: 8px; }
-  
-        .modal-screen .header-title { font-size: 18px; font-weight: 600; }
-        .modal-screen .close-modal { font-size: 28px; font-weight: 400; color: var(--text-light); }
+        @keyframes sync-success { 0% { color: var(--text-light); } 50% { color: var(--button-success); transform: scale(1.2); } 100% { color: var(--text-light); transform: scale(1); } }
+        .sync-success { animation: sync-success 0.8s ease-in-out; }
   
         .tab-bar { z-index: 1001; display: flex; justify-content: space-around; align-items: center; background-color: rgba(255, 255, 255, 0.85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); padding: 8px 0; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
         body.dark-mode .tab-bar { background-color: rgba(28, 28, 30, 0.85); border-top-color: var(--border-color); }
@@ -85,14 +108,14 @@
         .anexo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .file-input-label { display: flex; align-items: center; justify-content: center; padding: 14px; border: 1px dashed var(--border-color); border-radius: var(--radius); background: var(--bg-tertiary); cursor: pointer; color: var(--text-light); text-align: center; gap: 8px; }
         #fotos, #cameraInput, .edit-file-input { display: none; }
-        #miniaturas-container, .miniaturas-container-edit { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        #miniaturas-container, .miniaturas-container-edit { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
         .miniatura-wrapper { position: relative; }
         .miniatura-wrapper img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; }
         .miniatura-wrapper .not-found { width: 64px; height: 64px; border-radius: 8px; border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--text-light); background: var(--bg-primary); }
         .remove-foto { position: absolute; top: -8px; right: -8px; background: var(--button-danger); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; }
           
-        .nota-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
-        .nota-item { background-color: var(--bg-secondary); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border-color); }
+        .nota-list { list-style: none; padding: 0; margin: 0; }
+        .nota-item { background-color: var(--bg-secondary); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border-color); margin-bottom: 16px; }
         .nota-item.nota-enviada .nota-info { color: var(--button-success); }
         .nota-info { font-weight: 600; font-size: 16px; color: var(--text-dark); margin-bottom: 4px; transition: color 0.3s ease; }
         .nota-data, .nota-detalhes { font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
@@ -105,8 +128,19 @@
         .actions-row .edit-btn { color: var(--accent-color); } .actions-row .delete-btn { color: var(--button-danger); }
         .sem-fotos { font-size: 12px; color: var(--text-light); padding: 4px 8px; background: var(--bg-primary); border-radius: 6px; font-weight: 500; }
   
-        .edit-panel, .checklist-container { display: none; padding: 16px; background-color: var(--bg-primary); border-radius: var(--radius); margin-top: 16px; animation: fadeIn 0.3s; border-top: 1px solid var(--border-color); }
-        .edit-panel.show, .checklist-container.show { display: block; }
+        .edit-panel, .checklist-container { 
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.4s ease-in-out, padding-top 0.4s ease-in-out, margin-top 0.4s ease-in-out;
+            padding-top: 0; margin-top: 0;
+        }
+        .edit-panel.show, .checklist-container.show {
+             max-height: 1000px;
+             padding-top: 16px; margin-top: 16px;
+        }
+        .panel-content {
+             padding: 16px; background-color: var(--bg-primary); border-radius: var(--radius); border-top: 1px solid var(--border-color);
+        }
         .fotos-enviadas-status { text-align: center; color: var(--button-success); font-weight: 500; padding: 10px; background-color: var(--bg-secondary); border-radius: var(--radius); }
           
         .progress-bar-container { width: 100%; background-color: var(--bg-primary); border-radius: 4px; height: 8px; margin-top: 8px; overflow: hidden; }
@@ -115,31 +149,14 @@
         .checklist-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; accent-color: var(--accent-color); }
         .checklist-item label { margin: 0; font-weight: 400; color: var(--text-dark); cursor: pointer; }
   
-        .settings-list-group {
-            list-style: none; padding: 0; margin: 0 0 24px 0;
-            background-color: var(--bg-secondary);
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-        }
-        .settings-list-group li {
-            border-bottom: 1px solid var(--border-color);
-        }
-        .settings-list-group li:last-child {
-            border-bottom: none;
-        }
-        .settings-list-group a, #theme-toggle {
-            display: flex; align-items: center; padding: 14px 16px;
-            text-decoration: none; color: var(--text-dark);
-            font-weight: 500; cursor: pointer; transition: background-color 0.2s;
-        }
+        .settings-list-group { list-style: none; padding: 0; margin: 0; background-color: var(--bg-secondary); border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden; }
+        .settings-list-group:not(:first-child) { margin-top: 32px; }
+        .settings-list-group li { border-bottom: 1px solid var(--border-color); }
+        .settings-list-group li:last-child { border-bottom: none; }
+        .settings-list-group a, #theme-toggle { display: flex; align-items: center; padding: 14px 16px; text-decoration: none; color: var(--text-dark); font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
         .settings-list-group a:active { background-color: rgba(0,0,0,0.05); }
         body.dark-mode .settings-list-group a:active { background-color: rgba(255,255,255,0.05); }
-        .settings-list-group .icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: inline-flex; align-items: center; justify-content: center;
-            color: white; font-size: 16px; margin-right: 16px; flex-shrink: 0;
-        }
+        .settings-list-group .icon { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 16px; margin-right: 16px; flex-shrink: 0; }
         .settings-list-group .fa-chevron-right { margin-left: auto; color: var(--text-light); opacity: 0.5; }
         #theme-toggle { width: 100%; }
         #theme-label { margin-right: auto; }
@@ -161,6 +178,11 @@
         .modal-preview-action { background: var(--accent-color); color: white; border: none; padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: var(--radius); display: flex; align-items: center; gap: 8px; }
         .modal-preview-action.delete { background: var(--button-danger); }
   
+        #confirm-modal .modal-content { max-width: 380px; height: auto; padding: 24px; text-align: center; }
+        #confirm-title { font-size: 20px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
+        #confirm-message { color: var(--text-light); margin-bottom: 24px; line-height: 1.5; }
+        .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
         @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
         @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .fa-spin { animation: fa-spin 1s infinite linear; }
@@ -168,61 +190,105 @@
         @keyframes highlight-fade { from { background-color: rgba(0, 122, 255, 0.2); } to { background-color: transparent; } }
         .highlight-update { animation: highlight-fade 1.5s ease; }
 
+        .sidebar { display: none; }
+
+        /* ================================================================== */
+        /* --- LAYOUT DE SITE PARA DESKTOP (A PARTIR DE 900px) --- */
+        /* ================================================================== */
         
-        // =======================================================
-        // >>> CÓDIGO RESPONSIVO INSERIDO AQUI <<<
-        // =======================================================
-        /* --- ESTILOS RESPONSIVOS PARA TELAS MAIORES (TABLET E DESKTOP) --- */
-        @media (min-width: 768px) {
-
-            /* 1. Faz o contêiner principal do app crescer em telas maiores */
+        @media (min-width: 900px) {
+            html, body {
+                overflow: hidden; 
+            }
             .app-container {
-                max-width: 95%; /* Permite que o app ocupe mais espaço na tela */
-                max-width: 1400px; /* Limite máximo para não ficar largo demais */
-                margin: 2vh auto; /* Adiciona uma margem vertical para 'flutuar' na tela */
-                border-radius: var(--radius);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                height: 96vh; /* Um pouco menor que a altura total da tela */
+                max-width: 100%;
+                height: 100vh;
+                display: flex;
+                flex-direction: row;
             }
-
-            /* 2. Transforma o formulário 'Adicionar Nota' em um grid de 2 colunas */
-            #screen-add .card {
-                display: grid;
-                grid-template-columns: 1fr 1fr; /* Cria duas colunas de tamanho igual */
-                gap: 20px 24px; /* Espaçamento vertical e horizontal entre os campos */
-            }
-
-            /* Faz com que estes itens específicos ocupem as 2 colunas */
-            #screen-add .card .campo:has(#forn),
-            #screen-add .card .campo:has(#obs),
-            #screen-add .card .campo:has(.anexo-actions),
-            #screen-add .card .actions {
-                grid-column: 1 / -1; /* Ocupa do início ao fim do grid */
-            }
-            
-            /* 3. Transforma as listas de notas em um grid de cartões */
-            .nota-list {
-                /* Cria colunas que se ajustam automaticamente ao espaço disponível */
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            }
-
-            /* 4. Otimiza a tela de Jogos (se existir) para Desktop */
-            .game-area {
-                /* Garante que o painel de info fique ao lado do jogo */
-                flex-wrap: nowrap; 
-                align-items: center;
-            }
-            .game-controls {
-                /* Esconde os botões de toque na tela, pois no desktop usamos o teclado */
+            .tab-bar {
                 display: none;
             }
-            .actions-button {
-                /* Botões podem ser um pouco menores em telas grandes */
-                max-width: 400px;
-                margin: 0 auto;
+            .sidebar {
+                display: flex;
+                flex-direction: column;
+                width: 250px;
+                flex-shrink: 0;
+                background-color: var(--bg-secondary);
+                border-right: 1px solid var(--border-color);
+            }
+            .sidebar-header {
+                display: flex;
+                align-items: center;
+                height: 70px;
+                min-height: 70px;
+                padding: 0 24px;
+                font-size: 22px;
+                font-weight: 700;
+                border-bottom: 1px solid var(--border-color);
+                color: var(--text-dark);
+            }
+            .sidebar-nav {
+                list-style: none;
+                padding: 0;
+                margin: 16px 0;
+            }
+            .sidebar-item {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 14px 24px;
+                text-decoration: none;
+                color: var(--text-light);
+                font-weight: 600;
+                cursor: pointer;
+                border-left: 4px solid transparent;
+                transition: all 0.2s ease-in-out;
+            }
+            .sidebar-item:hover {
+                background-color: var(--bg-primary);
+                color: var(--text-dark);
+            }
+            .sidebar-item.active {
+                color: var(--accent-color);
+                border-left-color: var(--accent-color);
+                background-color: var(--bg-primary);
+            }
+            .sidebar-item i {
+                font-size: 20px;
+                width: 24px;
+                text-align: center;
+            }
+
+            .main-content .header {
+                min-height: 70px;
+            }
+            .main-content .header-title {
+                font-size: 22px;
+            }
+            
+            .app-screen {
+                padding: 24px 32px;
+            }
+            
+            #screen-add .card {
+                max-width: none;
+                margin: 0;
+            }
+             .nota-list {
+                display: block; /* Volta ao fluxo normal de lista vertical */
+            }
+            .nota-item {
+                margin-bottom: 16px; /* Mantém o espaçamento vertical */
+            }
+            
+            .modal-content {
+                max-width: 580px;
+                height: auto;
+                max-height: 90vh;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             }
         }
-
     </style>
 </head>
 <body>
@@ -269,72 +335,106 @@
  
  
   <div class="app-container" id="app-container" style="display: flex;">
+    <nav class="sidebar">
+        <div class="sidebar-header">Minhas Notas</div>
+        <ul class="sidebar-nav">
+            <li><a class="sidebar-item active" data-screen="screen-add" data-title="Adicionar Nota"><i class="fas fa-plus-circle"></i><span>Adicionar</span></a></li>
+            <li><a class="sidebar-item" data-screen="screen-manage" data-title="Gerenciar"><i class="fas fa-list-alt"></i><span>Gerenciar</span></a></li>
+            <li><a class="sidebar-item" data-screen="screen-export" data-title="Exportar"><i class="fas fa-file-export"></i><span>Exportar</span></a></li>
+            <li><a class="sidebar-item" data-screen="screen-history" data-title="Histórico"><i class="fas fa-history"></i><span>Histórico</span></a></li>
+            <li><a class="sidebar-item" data-screen="screen-settings" data-title="Ajustes"><i class="fas fa-cog"></i><span>Ajustes</span></a></li>
+        </ul>
+    </nav>
+    
     <div class="main-content">
-        <div class="app-screen active" id="screen-add">
-            <header class="header"><h1 class="header-title">Adicionar Nota</h1><button class="header-action" id="sync-btn-1" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
-            <div class="screen-content"><div class="card">
-                <div class="campo"><label for="data">Data</label><input type="text" id="data" placeholder="dd/mm/aaaa" value="29/08/2025"></div>
-                <div class="campo"><label for="nf">NF</label><input type="text" id="nf" placeholder="Número da Nota Fiscal"></div>
-                <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" placeholder="dd/mm/aaaa"></div>
-                <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" placeholder="Ex: 1200,50"></div>
-                <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" placeholder="Nome do fornecedor" list="fornecedores-sugeridos" value=""><datalist id="fornecedores-sugeridos"><option value="AMGS"></option><option value="DISTRILAF"></option><option value="MINAS SUL"></option><option value="REAL"></option><option value="RIOCLARENSE"></option><option value="SUPERMED"></option><option value="TESTE"></option></datalist></div>
-                <div class="campo"><label for="obs">Observações</label><select id="obs"><option value="">Recurso a ser pago</option><option value="C/C CTI">C/C CTI</option><option value="C/C SANTA CASA">C/C SANTA CASA</option><option value="PAGO">PAGO</option><option value="REMESSA">REMESSA</option><option value="Recurso Proprio CTI">Recurso Proprio CTI</option><option value="Recurso Proprio Santa Casa">Recurso Proprio Santa Casa</option></select></div>
-                <div class="campo"><label>Anexar Imagens</label><div class="anexo-actions"><label for="fotos" class="file-input-label"><i class="fas fa-photo-video"></i> Selecionar</label><label for="cameraInput" class="file-input-label"><i class="fas fa-camera"></i> Câmera</label></div><input type="file" id="fotos" multiple="" accept="image/*"><input type="file" id="cameraInput" accept="image/*" capture="environment"><div id="miniaturas-container"></div></div>
-                <div class="actions"><button id="salvarBtn" class="actions-button" style="background-color: var(--accent-color);" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button></div>
-            </div></div>
-        </div>
-        <div class="app-screen" id="screen-manage">
-            <header class="header"><h1 class="header-title">Gerenciar</h1><button class="header-action" id="sync-btn-2" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
-            <div class="screen-content"><ul id="lista-notas-pendentes" class="nota-list"><li class="nota-item highlight-update" data-note-id="7teIk7RvB1A7CrRdVyNx"><div class="nota-info">REAL 235526</div><div class="nota-data">Criada em: 29/08/2025, 15:02:50</div><div class="nota-detalhes">Venc: 05/09/2026 | Valor: 307,10</div><div class="progress-bar-container"><div class="progress-bar" style="width: 22.22222222222222%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '7teIk7RvB1A7CrRdVyNx')">Progresso: 2/9</button></div><div class="actions-group"><span class="sem-fotos">SEM FOTOS</span><button class="edit-btn icon-only" onclick="toggleEditPanel(this, '7teIk7RvB1A7CrRdVyNx')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('7teIk7RvB1A7CrRdVyNx')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="checklist-item"><input type="checkbox" id="check-tirarFoto-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'tirarFoto', this.checked)"><label for="check-tirarFoto-7teIk7RvB1A7CrRdVyNx">Tirar Foto</label></div><div class="checklist-item"><input type="checkbox" id="check-entradaSistema-7teIk7RvB1A7CrRdVyNx" checked="" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'entradaSistema', this.checked)"><label for="check-entradaSistema-7teIk7RvB1A7CrRdVyNx">Entrada no sistema</label></div><div class="checklist-item"><input type="checkbox" id="check-produtosTransferidos-7teIk7RvB1A7CrRdVyNx" checked="" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'produtosTransferidos', this.checked)"><label for="check-produtosTransferidos-7teIk7RvB1A7CrRdVyNx">Produtos transferidos</label></div><div class="checklist-item"><input type="checkbox" id="check-fotosNoServidor-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'fotosNoServidor', this.checked)"><label for="check-fotosNoServidor-7teIk7RvB1A7CrRdVyNx">Fotos no servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoNoServidor-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'cotacaoNoServidor', this.checked)"><label for="check-cotacaoNoServidor-7teIk7RvB1A7CrRdVyNx">Cotação no Servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-notaEscaneada-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'notaEscaneada', this.checked)"><label for="check-notaEscaneada-7teIk7RvB1A7CrRdVyNx">Nota Escaneada</label></div><div class="checklist-item"><input type="checkbox" id="check-estaNaPlanilha-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'estaNaPlanilha', this.checked)"><label for="check-estaNaPlanilha-7teIk7RvB1A7CrRdVyNx">Está na planilha</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoAnexada-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'cotacaoAnexada', this.checked)"><label for="check-cotacaoAnexada-7teIk7RvB1A7CrRdVyNx">Cotação Anexada</label></div><div class="checklist-item"><input type="checkbox" id="check-notaCarimbada-7teIk7RvB1A7CrRdVyNx" onchange="atualizarChecklist('7teIk7RvB1A7CrRdVyNx', 'notaCarimbada', this.checked)"><label for="check-notaCarimbada-7teIk7RvB1A7CrRdVyNx">Nota Carimbada</label></div></div></li><li class="nota-item highlight-update" data-note-id="7pT4PduDN5VKgu2Eyywg"><div class="nota-info">AMGS 1550967</div><div class="nota-data">Criada em: 29/08/2025, 14:53:56</div><div class="nota-detalhes">Venc: N/A | Valor: 392,22</div><div class="progress-bar-container"><div class="progress-bar" style="width: 88.88888888888889%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '7pT4PduDN5VKgu2Eyywg')">Progresso: 8/9</button></div><div class="actions-group"><span class="sem-fotos">SEM FOTOS</span><button class="edit-btn icon-only" onclick="toggleEditPanel(this, '7pT4PduDN5VKgu2Eyywg')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('7pT4PduDN5VKgu2Eyywg')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="checklist-item"><input type="checkbox" id="check-tirarFoto-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'tirarFoto', this.checked)"><label for="check-tirarFoto-7pT4PduDN5VKgu2Eyywg">Tirar Foto</label></div><div class="checklist-item"><input type="checkbox" id="check-entradaSistema-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'entradaSistema', this.checked)"><label for="check-entradaSistema-7pT4PduDN5VKgu2Eyywg">Entrada no sistema</label></div><div class="checklist-item"><input type="checkbox" id="check-produtosTransferidos-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'produtosTransferidos', this.checked)"><label for="check-produtosTransferidos-7pT4PduDN5VKgu2Eyywg">Produtos transferidos</label></div><div class="checklist-item"><input type="checkbox" id="check-fotosNoServidor-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'fotosNoServidor', this.checked)"><label for="check-fotosNoServidor-7pT4PduDN5VKgu2Eyywg">Fotos no servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoNoServidor-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'cotacaoNoServidor', this.checked)"><label for="check-cotacaoNoServidor-7pT4PduDN5VKgu2Eyywg">Cotação no Servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-notaEscaneada-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'notaEscaneada', this.checked)"><label for="check-notaEscaneada-7pT4PduDN5VKgu2Eyywg">Nota Escaneada</label></div><div class="checklist-item"><input type="checkbox" id="check-estaNaPlanilha-7pT4PduDN5VKgu2Eyywg" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'estaNaPlanilha', this.checked)"><label for="check-estaNaPlanilha-7pT4PduDN5VKgu2Eyywg">Está na planilha</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoAnexada-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'cotacaoAnexada', this.checked)"><label for="check-cotacaoAnexada-7pT4PduDN5VKgu2Eyywg">Cotação Anexada</label></div><div class="checklist-item"><input type="checkbox" id="check-notaCarimbada-7pT4PduDN5VKgu2Eyywg" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'notaCarimbada', this.checked)"><label for="check-notaCarimbada-7pT4PduDN5VKgu2Eyywg">Nota Carimbada</label></div></div></li><li class="nota-item nota-enviada highlight-update" data-note-id="g4XpAvp9FSC2w2funHEL"><div class="nota-info">RIOCLARENSE 876403</div><div class="nota-data">Criada em: 29/08/2025, 13:21:21</div><div class="nota-detalhes">Venc: 25/09/2025 | Valor: 1.320,00</div><div class="progress-bar-container"><div class="progress-bar" style="width: 88.88888888888889%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, 'g4XpAvp9FSC2w2funHEL')">Progresso: 8/9</button></div><div class="actions-group"><button class="sent-btn icon-only" title="Enviada"><i class="fas fa-check"></i></button><button class="edit-btn icon-only" onclick="toggleEditPanel(this, 'g4XpAvp9FSC2w2funHEL')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('g4XpAvp9FSC2w2funHEL')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="checklist-item"><input type="checkbox" id="check-tirarFoto-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('g4XpAvp9FSC2w2funHEL', 'tirarFoto', this.checked)"><label for="check-tirarFoto-g4XpAvp9FSC2w2funHEL">Tirar Foto</label></div><div class="checklist-item"><input type="checkbox" id="check-entradaSistema-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'entradaSistema', this.checked)"><label for="check-entradaSistema-g4XpAvp9FSC2w2funHEL">Entrada no sistema</label></div><div class="checklist-item"><input type="checkbox" id="check-produtosTransferidos-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'produtosTransferidos', this.checked)"><label for="check-produtosTransferidos-g4XpAvp9FSC2w2funHEL">Produtos transferidos</label></div><div class="checklist-item"><input type="checkbox" id="check-fotosNoServidor-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'fotosNoServidor', this.checked)"><label for="check-fotosNoServidor-g4XpAvp9FSC2w2funHEL">Fotos no servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoNoServidor-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'cotacaoNoServidor', this.checked)"><label for="check-cotacaoNoServidor-g4XpAvp9FSC2w2funHEL">Cotação no Servidor</label></div><div class="checklist-item"><input type="checkbox" id="check-notaEscaneada-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'notaEscaneada', this.checked)"><label for="check-notaEscaneada-g4XpAvp9FSC2w2funHEL">Nota Escaneada</label></div><div class="checklist-item"><input type="checkbox" id="check-estaNaPlanilha-g4XpAvp9FSC2w2funHEL" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'estaNaPlanilha', this.checked)"><label for="check-estaNaPlanilha-g4XpAvp9FSC2w2funHEL">Está na planilha</label></div><div class="checklist-item"><input type="checkbox" id="check-cotacaoAnexada-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'cotacaoAnexada', this.checked)"><label for="check-cotacaoAnexada-g4XpAvp9FSC2w2funHEL">Cotação Anexada</label></div><div class="checklist-item"><input type="checkbox" id="check-notaCarimbada-g4XpAvp9FSC2w2funHEL" checked="" onchange="atualizarChecklist('7pT4PduDN5VKgu2Eyywg', 'notaCarimbada', this.checked)"><label for="check-notaCarimbada-g4XpAvp9FSC2w2funHEL">Nota Carimbada</label></div></div></li></ul></div>
-        </div>
-        <div class="app-screen" id="screen-export">
-            <header class="header"><h1 class="header-title">Exportar</h1><button class="header-action" id="sync-btn-3" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
-            <div class="screen-content"><textarea id="saida" readonly="" placeholder="O texto das notas pendentes aparecerá aqui...">29/08/2025	235526	05/09/2026	307,10		REAL			Recurso Proprio Santa Casa
-29/08/2025	1550967		392,22		AMGS			Recurso Proprio CTI
-28/08/2025	876403	25/09/2025	1.320,00		RIOCLARENSE			Recurso Proprio CTI</textarea><div class="actions"><button class="actions-button" style="background-color: var(--accent-color);" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar</button><button class="actions-button" style="background-color: var(--button-whatsapp);" onclick="compartilharLista()"><i class="fas fa-share-alt"></i> Compartilhar</button><button class="actions-button" style="background-color: var(--text-light);" onclick="limpar()"><i class="fas fa-archive"></i> Arquivar Tudo</button></div></div>
-        </div>
-        <div class="app-screen" id="screen-history">
-            <header class="header"><h1 class="header-title">Histórico</h1><button class="header-action" id="sync-btn-4" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button></header>
-            <div class="screen-content"><ul id="lista-historico" class="nota-list"><li class="empty-state">O histórico está vazio.</li></ul><div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button" style="background-color: var(--button-danger);" onclick="limparHistorico()"><i class="fas fa-trash"></i> Limpar Histórico</button></div></div>
-        </div>
-        <div class="app-screen" id="screen-settings">
-            <header class="header"><h1 class="header-title">Ajustes</h1></header>
-            <div class="screen-content">
+        <header class="header">
+            <h1 id="main-header-title" class="header-title">Adicionar Nota</h1>
+            <div class="header-actions">
+                <button class="header-action" id="sync-btn" onclick="sincronizarManualmente(this)"><i class="fas fa-sync-alt"></i></button>
+                <button class="header-action" id="close-btn" style="display: none;"><i class="fas fa-times"></i></button>
+            </div>
+        </header>
+
+        <div class="screen-wrapper">
+            <div class="app-screen active" id="screen-add">
+                <div class="card">
+                    <div class="campo"><label for="data">Data</label><input type="text" id="data" placeholder="dd/mm/aaaa"></div>
+                    <div class="campo"><label for="nf">NF</label><input type="text" id="nf" placeholder="Número da Nota Fiscal"></div>
+                    <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" placeholder="dd/mm/aaaa"></div>
+                    <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" placeholder="Ex: 1200,50"></div>
+                    <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" placeholder="Nome do fornecedor" list="fornecedores-sugeridos" value=""><datalist id="fornecedores-sugeridos"></datalist></div>
+                    <div class="campo"><label for="obs">Observações</label><select id="obs"><option value="">Recurso a ser pago</option></select></div>
+                    <div class="campo"><label>Anexar Imagens</label><div class="anexo-actions"><label for="fotos" class="file-input-label"><i class="fas fa-photo-video"></i> Selecionar</label><label for="cameraInput" class="file-input-label"><i class="fas fa-camera"></i> Câmera</label></div><input type="file" id="fotos" multiple="" accept="image/*"><input type="file" id="cameraInput" accept="image/*" capture="environment"><div id="miniaturas-container"></div></div>
+                    <div class="actions"><button id="salvarBtn" class="actions-button" style="background-color: var(--accent-color);" onclick="salvarNota()"><i class="fas fa-check"></i> Salvar</button></div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-manage">
+                <div id="lista-notas-pendentes" class="nota-list"></div>
+            </div>
+            <div class="app-screen" id="screen-export">
+                <textarea id="saida" readonly="" placeholder="O texto das notas pendentes aparecerá aqui..."></textarea>
+                <div class="actions"><button class="actions-button" style="background-color: var(--accent-color);" onclick="exportar()"><i class="fas fa-clipboard"></i> Copiar</button><button class="actions-button" style="background-color: var(--button-whatsapp);" onclick="compartilharLista()"><i class="fas fa-share-alt"></i> Compartilhar</button><button class="actions-button" style="background-color: var(--text-light);" onclick="limpar()"><i class="fas fa-archive"></i> Arquivar Tudo</button></div>
+            </div>
+            <div class="app-screen" id="screen-history">
+                <div id="lista-historico" class="nota-list"></div>
+                <div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button" style="background-color: var(--button-danger);" onclick="limparHistorico()"><i class="fas fa-trash"></i> Limpar Histórico</button></div>
+            </div>
+            <div class="app-screen" id="screen-settings">
                 <ul class="settings-list-group">
-                    <li><a onclick="openModal('fornecedores-modal')"><i class="icon fas fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fas fa-chevron-right"></i></a></li>
-                    <li><a onclick="openModal('pedidos-modal')"><i class="icon fas fa-box" style="background-color: #bd10e0;"></i> Pedidos e Recursos <i class="fas fa-chevron-right"></i></a></li>
-                    <li><a onclick="openModal('observacoes-modal')"><i class="icon fas fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fas fa-chevron-right"></i></a></li>
+                        <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fas fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fas fa-chevron-right"></i></a></li>
+                        <li><a data-screen="screen-pedidos" data-title="Pedidos e Recursos"><i class="icon fas fa-box" style="background-color: #bd10e0;"></i> Pedidos e Recursos <i class="fas fa-chevron-right"></i></a></li>
+                        <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fas fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fas fa-chevron-right"></i></a></li>
                 </ul>
                 <ul class="settings-list-group">
                     <li><a onclick="abrirModalSenhaComVerificacao()"><i class="icon fas fa-key" style="background-color: #4cd964;"></i> Senha e Login <i class="fas fa-chevron-right"></i></a></li>
                     <li><div id="theme-toggle" onclick="toggleTheme()"><i class="icon fas fa-moon" style="background-color: #5856d6;"></i><span id="theme-label">Modo Escuro</span></div></li>
                 </ul>
             </div>
+            <div class="app-screen" id="screen-fornecedores">
+                <div class="card">
+                    <div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div>
+                    <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i> Adicionar Fornecedor</button>
+                    <ul id="lista-fornecedores-manage" class="manage-list"></ul>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pedidos">
+                <div class="card">
+                    <div class="modal-campo"><label>Nº do Pedido</label><input type="text" id="pedido-num" placeholder="Digite o número do pedido"></div>
+                    <div class="modal-campo"><label>Recurso</label><select id="pedido-recurso"><option value="">Selecione...</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div>
+                    <button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="adicionarPedido()"><i class="fas fa-plus"></i> Adicionar</button>
+                    <ul id="lista-pedidos" class="manage-list"></ul>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-observacoes">
+                <div class="card">
+                     <div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div>
+                     <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i> Adicionar Observação</button>
+                     <ul id="lista-observacoes-manage" class="manage-list"></ul>
+                </div>
+            </div>
         </div>
     </div>
   
-    <div id="fornecedores-modal" class="modal-screen">
-        <header class="header"><h1 class="header-title">Fornecedores</h1><button class="header-action close-modal" onclick="closeModal('fornecedores-modal')">×</button></header>
-        <div class="screen-content"><div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><i class="fas fa-plus"></i> Adicionar Fornecedor</button><ul id="lista-fornecedores-manage" class="manage-list"><li>AMGS <button onclick="deletarFornecedor('AMGS')"><i class="fas fa-times-circle"></i></button></li><li>DISTRILAF <button onclick="deletarFornecedor('DISTRILAF')"><i class="fas fa-times-circle"></i></button></li><li>MINAS SUL <button onclick="deletarFornecedor('MINAS SUL')"><i class="fas fa-times-circle"></i></button></li><li>REAL <button onclick="deletarFornecedor('REAL')"><i class="fas fa-times-circle"></i></button></li><li>RIOCLARENSE <button onclick="deletarFornecedor('RIOCLARENSE')"><i class="fas fa-times-circle"></i></button></li><li>SUPERMED <button onclick="deletarFornecedor('SUPERMED')"><i class="fas fa-times-circle"></i></button></li><li>TESTE <button onclick="deletarFornecedor('TESTE')"><i class="fas fa-times-circle"></i></button></li></ul></div>
-    </div>
-    <div id="pedidos-modal" class="modal-screen">
-        <header class="header"><h1 class="header-title">Pedidos e Recursos</h1><button class="header-action close-modal" onclick="closeModal('pedidos-modal')">×</button></header>
-        <div class="screen-content"><div class="modal-campo"><label>Nº do Pedido</label><input type="text" id="pedido-num" placeholder="Digite o número do pedido"></div><div class="modal-campo"><label>Recurso</label><select id="pedido-recurso"><option value="">Selecione...</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div><button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="adicionarPedido()"><i class="fas fa-plus"></i> Adicionar</button><ul id="lista-pedidos" class="manage-list"><li>1453 - Santa Casa <button onclick="deletarPedido('1453')"><i class="fas fa-times-circle"></i></button></li><li>1455 - Santa Casa <button onclick="deletarPedido('1455')"><i class="fas fa-times-circle"></i></button></li><li>1457 - Santa Casa <button onclick="deletarPedido('1457')"><i class="fas fa-times-circle"></i></button></li></ul></div>
-    </div>
-    <div id="observacoes-modal" class="modal-screen">
-        <header class="header"><h1 class="header-title">Observações</h1><button class="header-action close-modal" onclick="closeModal('observacoes-modal')">×</button></header>
-        <div class="screen-content"><div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div><button class="actions-button" style="background: var(--accent-color);" onclick="adicionarObservacaoManage()"><i class="fas fa-plus"></i> Adicionar Observação</button><ul id="lista-observacoes-manage" class="manage-list"><li>C/C CTI <button onclick="deletarObservacao('C/C CTI')"><i class="fas fa-times-circle"></i></button></li><li>C/C SANTA CASA <button onclick="deletarObservacao('C/C SANTA CASA')"><i class="fas fa-times-circle"></i></button></li><li>PAGO <button onclick="deletarObservacao('PAGO')"><i class="fas fa-times-circle"></i></button></li><li>REMESSA <button onclick="deletarObservacao('REMESSA')"><i class="fas fa-times-circle"></i></button></li><li>Recurso Proprio CTI <button onclick="deletarObservacao('Recurso Proprio CTI')"><i class="fas fa-times-circle"></i></button></li><li>Recurso Proprio Santa Casa <button onclick="deletarObservacao('Recurso Proprio Santa Casa')"><i class="fas fa-times-circle"></i></button></li></ul></div>
-    </div>
-  
     <nav class="tab-bar">
-        <button class="tab-item active" data-screen="screen-add" data-index="0"><i class="fas fa-plus-circle"></i><span>Adicionar</span></button>
-        <button class="tab-item" data-screen="screen-manage" data-index="1"><i class="fas fa-list-alt"></i><span>Gerenciar</span></button>
-        <button class="tab-item" data-screen="screen-export" data-index="2"><i class="fas fa-file-export"></i><span>Exportar</span></button>
-        <button class="tab-item" data-screen="screen-history" data-index="3"><i class="fas fa-history"></i><span>Histórico</span></button>
-        <button class="tab-item" data-screen="screen-settings" data-index="4"><i class="fas fa-cog"></i><span>Ajustes</span></button>
+        <button class="tab-item active" data-screen="screen-add" data-title="Adicionar Nota"><i class="fas fa-plus-circle"></i><span>Adicionar</span></button>
+        <button class="tab-item" data-screen="screen-manage" data-title="Gerenciar"><i class="fas fa-list-alt"></i><span>Gerenciar</span></button>
+        <button class="tab-item" data-screen="screen-export" data-title="Exportar"><i class="fas fa-file-export"></i><span>Exportar</span></button>
+        <button class="tab-item" data-screen="screen-history" data-title="Histórico"><i class="fas fa-history"></i><span>Histórico</span></button>
+        <button class="tab-item" data-screen="screen-settings" data-title="Ajustes"><i class="fas fa-cog"></i><span>Ajustes</span></button>
     </nav>
   </div>
     
+  <div id="confirm-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2 id="confirm-title"></h2>
+          <p id="confirm-message"></p>
+          <div class="confirm-actions">
+              <button id="cancel-btn" class="actions-button" style="background-color: var(--text-light);">Cancelar</button>
+              <button id="confirm-btn" class="actions-button">Confirmar</button>
+          </div>
+      </div>
+  </div>
+
   <div id="modalPreview" class="modal-preview">
     <button class="modal-preview-fechar" onclick="fecharPreview()">×</button><img class="modal-preview-conteudo" id="imgPreview">
     <div class="modal-preview-nav"><button id="prevBtn" onclick="navegarFotos(-1)"><i class="fas fa-chevron-left"></i></button><button id="nextBtn" onclick="navegarFotos(1)"><i class="fas fa-chevron-right"></i></button></div>
@@ -346,121 +446,19 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
     // --- LÓGICA DE LOGIN E SENHA ---
-    const setAppHeight = () => {
-        const doc = document.documentElement;
-        doc.style.setProperty('--app-height', `${window.innerHeight}px`);
-    };
+    const setAppHeight = () => { document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`); };
     window.addEventListener('resize', setAppHeight);
     document.addEventListener('DOMContentLoaded', setAppHeight);
  
-    function checkLogin() {
-        if (localStorage.getItem('isLoggedIn') === 'true') {
-            document.getElementById('app-container').style.display = 'flex';
-            document.getElementById('login-screen').style.display = 'none';
-        } else {
-            document.getElementById('app-container').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'flex';
-        }
-    }
- 
-    function handleLogin() {
-        const passwordInput = document.getElementById('password-input');
-        const errorMessage = document.getElementById('error-message');
-        const loginIcon = document.getElementById('login-icon');
-        const senhaCorreta = localStorage.getItem('userPassword') || '1206';
-         
-        if (passwordInput.value === senhaCorreta) {
-            localStorage.setItem('isLoggedIn', 'true');
-            errorMessage.textContent = '';
-            loginIcon.classList.replace('fa-lock', 'fa-unlock');
-            loginIcon.parentElement.classList.add('unlocked');
-            setTimeout(checkLogin, 500);
-        } else {
-            errorMessage.textContent = 'Senha incorreta.';
-            passwordInput.classList.add('shake');
-            setTimeout(() => {
-                passwordInput.classList.remove('shake');
-                passwordInput.value = '';
-            }, 820);
-        }
-    }
-     
-    function abrirModalSenhaComVerificacao() {
-        document.getElementById('security-check-screen').style.display = 'flex';
-        setTimeout(() => document.getElementById('security-check-password-input').focus(), 50);
-    }
-     
-    function handleSecurityCheck() {
-        const input = document.getElementById('security-check-password-input');
-        const errorMessage = document.getElementById('security-check-error-message');
-        const senhaCorreta = localStorage.getItem('userPassword') || '1206';
- 
-        if (input.value === senhaCorreta) {
-            document.getElementById('security-check-screen').style.display = 'none';
-            input.value = '';
-            errorMessage.textContent = '';
-            document.getElementById('password-change-screen').style.display = 'flex';
-            setTimeout(() => document.getElementById('new-password-input').focus(), 50);
-        } else {
-            errorMessage.textContent = 'Senha incorreta.';
-            input.classList.add('shake');
-            setTimeout(() => {
-                input.classList.remove('shake');
-                input.value = '';
-            }, 820);
-        }
-    }
-     
-    function cancelSecurityCheck() {
-        const screen = document.getElementById('security-check-screen');
-        screen.style.display = 'none';
-        document.getElementById('security-check-password-input').value = '';
-        document.getElementById('security-check-error-message').textContent = '';
-    }
-     
-    function closePasswordChangeScreen() {
-        const screen = document.getElementById('password-change-screen');
-        screen.style.display = 'none';
-        document.getElementById('new-password-input').value = '';
-        document.getElementById('confirm-password-input').value = '';
-        document.getElementById('password-error-message').textContent = '';
-    }
-     
-    function handleSaveNewPassword() {
-        const novaSenhaInput = document.getElementById('new-password-input');
-        const confirmaSenhaInput = document.getElementById('confirm-password-input');
-        const errorMessage = document.getElementById('password-error-message');
- 
-        if (novaSenhaInput.value.trim().length < 4) {
-            errorMessage.textContent = 'A senha deve ter no mínimo 4 dígitos.';
-            return;
-        }
-        if (novaSenhaInput.value !== confirmaSenhaInput.value) {
-            errorMessage.textContent = 'As senhas não correspondem.';
-            confirmaSenhaInput.classList.add('shake');
-            setTimeout(() => confirmaSenhaInput.classList.remove('shake'), 820);
-            return;
-        }
-         
-        localStorage.setItem('userPassword', novaSenhaInput.value);
-        toast('✓ Senha alterada com sucesso!');
-        closePasswordChangeScreen();
-    }
- 
-    document.getElementById('password-input').addEventListener('keyup', (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            handleLogin();
-        }
-    });
-    document.getElementById('security-check-password-input').addEventListener('keyup', (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            handleSecurityCheck();
-        }
-    });
- 
-    // --- FIM DA LÓGICA DE LOGIN E SENHA ---
+    function checkLogin() { if (localStorage.getItem('isLoggedIn') === 'true') { document.getElementById('app-container').style.display = 'flex'; document.getElementById('login-screen').style.display = 'none'; } else { document.getElementById('app-container').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex'; } }
+    function handleLogin() { const passwordInput = document.getElementById('password-input'); const errorMessage = document.getElementById('error-message'); const loginIcon = document.getElementById('login-icon'); const senhaCorreta = localStorage.getItem('userPassword') || '1206'; if (passwordInput.value === senhaCorreta) { localStorage.setItem('isLoggedIn', 'true'); errorMessage.textContent = ''; loginIcon.classList.replace('fa-lock', 'fa-unlock'); loginIcon.parentElement.classList.add('unlocked'); setTimeout(checkLogin, 500); } else { errorMessage.textContent = 'Senha incorreta.'; passwordInput.classList.add('shake'); setTimeout(() => { passwordInput.classList.remove('shake'); passwordInput.value = ''; }, 820); } }
+    function abrirModalSenhaComVerificacao() { document.getElementById('security-check-screen').style.display = 'flex'; setTimeout(() => document.getElementById('security-check-password-input').focus(), 50); }
+    function handleSecurityCheck() { const input = document.getElementById('security-check-password-input'); const errorMessage = document.getElementById('security-check-error-message'); const senhaCorreta = localStorage.getItem('userPassword') || '1206'; if (input.value === senhaCorreta) { document.getElementById('security-check-screen').style.display = 'none'; input.value = ''; errorMessage.textContent = ''; document.getElementById('password-change-screen').style.display = 'flex'; setTimeout(() => document.getElementById('new-password-input').focus(), 50); } else { errorMessage.textContent = 'Senha incorreta.'; input.classList.add('shake'); setTimeout(() => { input.classList.remove('shake'); input.value = ''; }, 820); } }
+    function cancelSecurityCheck() { const screen = document.getElementById('security-check-screen'); screen.style.display = 'none'; document.getElementById('security-check-password-input').value = ''; document.getElementById('security-check-error-message').textContent = ''; }
+    function closePasswordChangeScreen() { const screen = document.getElementById('password-change-screen'); screen.style.display = 'none'; document.getElementById('new-password-input').value = ''; document.getElementById('confirm-password-input').value = ''; document.getElementById('password-error-message').textContent = ''; }
+    function handleSaveNewPassword() { const novaSenhaInput = document.getElementById('new-password-input'); const confirmaSenhaInput = document.getElementById('confirm-password-input'); const errorMessage = document.getElementById('password-error-message'); if (novaSenhaInput.value.trim().length < 4) { errorMessage.textContent = 'A senha deve ter no mínimo 4 dígitos.'; return; } if (novaSenhaInput.value !== confirmaSenhaInput.value) { errorMessage.textContent = 'As senhas não correspondem.'; confirmaSenhaInput.classList.add('shake'); setTimeout(() => confirmaSenhaInput.classList.remove('shake'), 820); return; } localStorage.setItem('userPassword', novaSenhaInput.value); toast('✓ Senha alterada com sucesso!'); closePasswordChangeScreen(); }
+    document.getElementById('password-input').addEventListener('keyup', (event) => { if (event.key === "Enter") { event.preventDefault(); handleLogin(); } });
+    document.getElementById('security-check-password-input').addEventListener('keyup', (event) => { if (event.key === "Enter") { event.preventDefault(); handleSecurityCheck(); } });
  
     const firebaseConfig = { apiKey: "AIzaSyAwcvJNJhLZ4Wqcw4Wz44XJ9kIdtqKJeJg", authDomain: "relacaonf.firebaseapp.com", projectId: "relacaonf", storageBucket: "relacaonf.appspot.com", messagingSenderId: "773864981925", appId: "1:773864981925:web:a4dadc51ec0a856832144c" };
     firebase.initializeApp(firebaseConfig);
@@ -471,6 +469,115 @@
     let notasPendentes = [], historicoNotas = [], fotosAcumuladas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {};
     let openChecklistIds = new Set(), isChecklistUpdate = false;
     let fotoAtualIndex = 0, fotosAtuaisParaPreview = [], fotoAtualContexto = {};
+    
+    // --- LÓGICA DE NAVEGAÇÃO E ANIMAÇÃO REFINADA ---
+    function switchToScreen(screenId, title) {
+        if (document.getElementById(screenId)?.classList.contains('active')) return;
+        closeAllModals();
+        const headerTitle = document.getElementById('main-header-title');
+        const syncBtn = document.getElementById('sync-btn');
+        const closeBtn = document.getElementById('close-btn');
+        const subMenuScreens = ['screen-fornecedores', 'screen-pedidos', 'screen-observacoes'];
+        if (subMenuScreens.includes(screenId)) {
+            syncBtn.style.display = 'none';
+            closeBtn.style.display = 'flex';
+        } else {
+            syncBtn.style.display = 'flex';
+            closeBtn.style.display = 'none';
+        }
+        headerTitle.classList.add('title-changing');
+        setTimeout(() => {
+            headerTitle.textContent = title;
+            headerTitle.classList.remove('title-changing');
+        }, 175);
+        document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId)?.classList.add('active');
+        const navItems = document.querySelectorAll('.tab-item, .sidebar-item');
+        navItems.forEach(item => { item.classList.toggle('active', item.dataset.screen === screenId); });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkLogin(); 
+        const navLinks = document.querySelectorAll('.tab-item, .sidebar-item, .settings-list-group a[data-screen]');
+        navLinks.forEach(link => { 
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchToScreen(link.dataset.screen, link.dataset.title)
+            });
+        });
+        document.getElementById('close-btn').addEventListener('click', () => switchToScreen('screen-settings', 'Ajustes'));
+        carregarEstado(); 
+        limparFormularioPrincipal(false);
+        const handleFiles = e => { fotosAcumuladas.push(...Array.from(e.target.files)); reconstruirMiniaturasAcumuladas(); e.target.value = null; };
+        DOM.fotos.addEventListener('change', handleFiles); DOM.cameraInput.addEventListener('change', handleFiles);
+        const formFields = Array.from(document.querySelectorAll('#screen-add .card input, #screen-add .card select'));
+        formFields.forEach((field, index) => {
+            field.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const nextField = formFields[index + 1];
+                    if (nextField) { nextField.focus(); } 
+                    else { document.getElementById('salvarBtn').click(); }
+                }
+            });
+        });
+    });
+
+    function openModal(id) { 
+        closeAllModals(); 
+        document.getElementById(id)?.classList.add('active'); 
+    }
+    function closeAllModals() { 
+        document.querySelectorAll('.modal-screen.active').forEach(modal => modal.classList.remove('active')); 
+    }
+    function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=> t.style.display='none', 1350); }
+    function sincronizarManualmente(button) {const syncButton = document.getElementById('sync-btn'); if(syncButton.disabled) return; syncButton.disabled = true; syncButton.querySelector('i').classList.add('fa-spin'); toast("Sincronizando...");setTimeout(() => {toast("✓ Dados atualizados com sucesso."); syncButton.disabled = false; syncButton.querySelector('i').classList.remove('fa-spin'); syncButton.querySelector('i').classList.add('sync-success'); setTimeout(() => syncButton.querySelector('i').classList.remove('sync-success'), 800);}, 1250);}
+    
+    // --- MODAL DE CONFIRMAÇÃO CUSTOMIZADO ---
+    function showConfirmModal({ title, message, confirmText = "Confirmar", confirmClass = "danger", onConfirm }) {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-message').textContent = message;
+        const confirmBtn = document.getElementById('confirm-btn');
+        confirmBtn.textContent = confirmText;
+        confirmBtn.style.backgroundColor = confirmClass === 'danger' ? 'var(--button-danger)' : 'var(--button-success)';
+        const cancelBtn = document.getElementById('cancel-btn');
+        const confirmHandler = () => { onConfirm(); closeAllModals(); cleanup(); };
+        const cancelHandler = () => { closeAllModals(); cleanup(); };
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', confirmHandler);
+            cancelBtn.removeEventListener('click', cancelHandler);
+        };
+        confirmBtn.addEventListener('click', confirmHandler);
+        cancelBtn.addEventListener('click', cancelHandler);
+        modal.classList.add('active');
+    }
+
+    // --- LÓGICA DE EDIÇÃO (PAINEL EXPANSÍVEL) ---
+    function toggleEditPanel(btn, notaId) {
+        const notaItem = btn.closest('.nota-item');
+        const editPanel = notaItem.querySelector('.edit-panel');
+        document.querySelectorAll('.edit-panel.show').forEach(p => { if (p !== editPanel) p.classList.remove('show'); });
+        const isVisible = editPanel.classList.toggle('show');
+        if (isVisible && editPanel.innerHTML === '') {
+            reconstruirPainelFotosEdit(notaId);
+        }
+    }
+    async function salvarEdicao(id) {
+        const notaItem = document.querySelector(`div[data-note-id="${id}"]`);
+        const data = {
+            fornecedor: notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),
+            nf: notaItem.querySelector(`.nfEdit`).value.trim(),
+            vencimento: notaItem.querySelector(`.vencEdit`).value.trim(),
+            valor: notaItem.querySelector(`.valorEdit`).value.trim(),
+            obs: notaItem.querySelector(`.obsEdit`).value.trim()
+        };
+        await notasCollection.doc(id).update(data);
+        await adicionarFornecedor(data.fornecedor, true);
+        toast('✓ Nota editada e salva!');
+        notaItem.querySelector('.edit-panel').classList.remove('show');
+    }
+
     const DOM = {data:document.getElementById('data'),nf:document.getElementById('nf'),venc:document.getElementById('venc'),valor:document.getElementById('valor'),forn:document.getElementById('forn'),obs:document.getElementById('obs'),saida:document.getElementById('saida'),fotos:document.getElementById('fotos'),cameraInput:document.getElementById('cameraInput'),miniaturas:document.getElementById('miniaturas-container'),listaNotas:document.getElementById('lista-notas-pendentes'),listaHistorico:document.getElementById('lista-historico'),fornDatalist:document.getElementById('fornecedores-sugeridos'),listaPedidos:document.getElementById('lista-pedidos'),listaFornManage:document.getElementById('lista-fornecedores-manage'),fornManageInput:document.getElementById('forn-manage'),pedidoNumInput:document.getElementById('pedido-num'),pedidoRecursoSelect:document.getElementById('pedido-recurso'),listaObsManage:document.getElementById('lista-observacoes-manage'),obsManageInput:document.getElementById('obs-manage'),historicoActions:document.getElementById('historico-actions')};
     const checklistDefinition = { tirarFoto: "Tirar Foto", entradaSistema: "Entrada no sistema", produtosTransferidos: "Produtos transferidos", fotosNoServidor: "Fotos no servidor", cotacaoNoServidor: "Cotação no Servidor", notaEscaneada: "Nota Escaneada", estaNaPlanilha: "Está na planilha", cotacaoAnexada: "Cotação Anexada", notaCarimbada: "Nota Carimbada" };
     const DB_NAME = 'notasdb-fotos', DB_VERSION = 1; let db;
@@ -479,119 +586,51 @@
     function savePhotoDB(id, file) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos'], 'readwrite').objectStore('fotos').put({ id, file }).onsuccess = () => resolve(id); }); }
     function getPhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos']).objectStore('fotos').get(id).onsuccess = e => resolve(e.target.result ? e.target.result.file : null); }); }
     function deletePhotoDB(id) { return new Promise(async (resolve, reject) => { if (!db) await openDB(); db.transaction(['fotos'], 'readwrite').objectStore('fotos').delete(id).onsuccess = () => resolve(); }); }
-    document.addEventListener('DOMContentLoaded', () => {checkLogin(); const tabItems = document.querySelectorAll('.tab-item[data-screen]');tabItems.forEach(tab => {tab.addEventListener('click', () => {closeAllModals();const currentActive = document.querySelector('.app-screen.active');if (currentActive && currentActive.id === tab.dataset.screen) return;if (currentActive) currentActive.classList.remove('active');document.getElementById(tab.dataset.screen).classList.add('active');tabItems.forEach(item => item.classList.remove('active'));tab.classList.add('active');});});carregarEstado(); limparFormularioPrincipal(false);["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"].forEach(obs => adicionarObservacao(obs, true));DOM.data.addEventListener('input', () => formatarDataInput(DOM.data)); DOM.venc.addEventListener('input', () => formatarDataInput(DOM.venc)); DOM.valor.addEventListener('blur', formatarValorBlur);[DOM.forn, DOM.fornManageInput].forEach(el => el.addEventListener('input', () => el.value = el.value.toUpperCase()));const formFields = Array.from(
-            document.querySelectorAll('#screen-add .card input, #screen-add .card select')
-        );
- 
-        formFields.forEach(field => {
-            field.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    const currentIndex = formFields.indexOf(event.target);
-                    const nextIndex = currentIndex + 1;
-                    if (nextIndex < formFields.length) {
-                        formFields[nextIndex].focus();
-                    } else {
-                        document.getElementById('salvarBtn').click();
-                    }
-                }
-            });
-        });
-const handleFiles = e => { fotosAcumuladas.push(...Array.from(e.target.files)); reconstruirMiniaturasAcumuladas(); e.target.value = null; };DOM.fotos.addEventListener('change', handleFiles); DOM.cameraInput.addEventListener('change', handleFiles);});
-    function openModal(id) { document.getElementById(id)?.classList.add('active'); }
-    function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
-    function closeAllModals() { document.querySelectorAll('.modal-screen.active').forEach(modal => modal.classList.remove('active')); }
-    function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=> t.style.display='none', 1350); }
-    function sincronizarManualmente(button) {const allSyncButtons = document.querySelectorAll('.header-action[id^="sync-btn-"]');allSyncButtons.forEach(btn => { btn.disabled = true; btn.querySelector('i').classList.add('fa-spin'); });toast("Sincronizando...");setTimeout(() => {toast("✓ Dados atualizados com sucesso.");allSyncButtons.forEach(btn => {btn.disabled = false;btn.querySelector('i').classList.remove('fa-spin');});}, 1250);}
-    function iniciarListenerConfiguracoes() {settingsDocRef.onSnapshot(doc => {console.log("Listener de configurações disparado.");if (doc.exists) {const data = doc.data();fornecedoresSugeridos = data.fornecedores || [];pedidosRecursos = data.pedidosRecursos || {};} else {fornecedoresSugeridos = [];pedidosRecursos = {};}popularDatalist();popularListaPedidos();}, error => {console.error("Erro no listener de configurações:", error);toast("Erro ao carregar configurações.");});}
-    async function carregarEstado() {iniciarListenerConfiguracoes();observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun'); document.getElementById('theme-label').textContent = 'Modo Claro'; }try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); }notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => { if (snapshot.metadata.hasPendingWrites && isChecklistUpdate) { isChecklistUpdate = false; notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); return; } handleSnapshotChanges(snapshot); }, error => toast("Erro ao carregar dados."));historicoCollection.orderBy('dataHistorico', 'desc').onSnapshot(snapshot => { historicoNotas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); popularListaHistorico(); }, error => console.error("Erro ao carregar histórico:", error));}
+    function iniciarListenerConfiguracoes() {settingsDocRef.onSnapshot(doc => {if (doc.exists) {const data = doc.data();fornecedoresSugeridos = data.fornecedores || [];pedidosRecursos = data.pedidosRecursos || {};} else {fornecedoresSugeridos = [];pedidosRecursos = {};}popularDatalist();popularListaPedidos();}, error => {console.error("Erro no listener de configurações:", error);toast("Erro ao carregar configurações.");});}
+    async function carregarEstado() {iniciarListenerConfiguracoes();observacoesSugeridas = JSON.parse(localStorage.getItem('observacoes') || '[]'), popularObservacoesList(); if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun'); document.getElementById('theme-label').textContent = 'Modo Claro'; }try { await openDB(); } catch(e) { console.error("Não foi possível iniciar o DB de fotos.", e); }notasCollection.orderBy('dataCriacao', 'desc').onSnapshot(snapshot => { if (snapshot.metadata.hasPendingWrites && (isChecklistUpdate || snapshot.docChanges().some(c => c.type === 'modified'))) { isChecklistUpdate = false; notasPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); return; } handleSnapshotChanges(snapshot); }, error => toast("Erro ao carregar dados."));historicoCollection.orderBy('dataHistorico', 'desc').onSnapshot(snapshot => { historicoNotas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); popularListaHistorico(); }, error => console.error("Erro ao carregar histórico:", error));}
     function salvarObservacoesLocal() { localStorage.setItem('observacoes', JSON.stringify(observacoesSugeridas)); }
     function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); const themeToggle = document.getElementById('theme-toggle'); themeToggle.querySelector('i').classList.toggle('fa-moon', !isDark); themeToggle.querySelector('i').classList.toggle('fa-sun', isDark); document.getElementById('theme-label').textContent = isDark ? 'Modo Claro' : 'Modo Escuro'; }
     async function salvarNota(){const fornecedor=DOM.forn.value.trim().toUpperCase();if(!fornecedor)return toast("O campo 'Fornecedor' é obrigatório.");const salvarBtn=document.getElementById('salvarBtn');salvarBtn.disabled=!0;salvarBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Salvando...';try{const photoIds=await Promise.all(fotosAcumuladas.map(file=>savePhotoDB(generateUniqueId(),file)));const checklistInicial=Object.keys(checklistDefinition).reduce((acc,key)=>({...acc,[key]:!1}),{});checklistInicial.tirarFoto=photoIds.length>0;await notasCollection.add({data:DOM.data.value.trim(),nf:DOM.nf.value.trim(),vencimento:DOM.venc.value.trim(),valor:DOM.valor.value.trim(),fornecedor,obs:DOM.obs.value.trim(),fotos:photoIds,enviada:!1,dataCriacao:(new Date).toISOString(),checklist:checklistInicial});await adicionarFornecedor(fornecedor,!0);limparFormularioPrincipal(!0);toast("✓ Nota salva com sucesso!")}catch(e){console.error("Erro ao salvar nota:",e);toast("✕ Erro ao salvar a nota.")}finally{salvarBtn.disabled=!1;salvarBtn.innerHTML='<i class="fas fa-check"></i> Salvar'}}
-    async function deletarNota(id){if(!confirm("Tem certeza que deseja excluir esta nota?"))return;const nota=notasPendentes.find(n=>n.id===id);if(nota?.fotos?.length>0)await Promise.all(nota.fotos.map(id=>deletePhotoDB(id)));await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")}
-    async function limpar(){if(notasPendentes.length===0)return toast("Nenhuma nota para arquivar.");if(!confirm(`Arquivar ${notasPendentes.length} nota(s) no histórico? As fotos serão excluídas.`))return;const batch=firestore.batch();for(const nota of notasPendentes){const{id,...notaData}=nota;notaData.dataHistorico=(new Date).toLocaleString('pt-BR');batch.set(historicoCollection.doc(),notaData);batch.delete(notasCollection.doc(id));if(nota.fotos?.length>0)await Promise.all(nota.fotos.map(photoId=>deletePhotoDB(photoId)))}await batch.commit();toast("Notas arquivadas no histórico.")}
-    async function limparHistorico(){if(historicoNotas.length===0||!confirm("Tem certeza que deseja apagar TODO o histórico? Esta ação é irreversível."))return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo com sucesso!")}
-    function toggleEditPanel(btn,notaId){const notaItem=btn.closest('.nota-item');const editPanel=notaItem.querySelector('.edit-panel');if(openChecklistIds.has(notaId)){toggleChecklist(btn,notaId)}const isVisible=editPanel.classList.contains('show');document.querySelectorAll('.edit-panel.show').forEach(p=>p.classList.remove('show'));if(!isVisible){editPanel.classList.add('show');reconstruirPainelFotosEdit(notaId)}}
-    async function salvarEdicao(id){const notaItem=document.querySelector(`li[data-note-id="${id}"]`);const data={fornecedor:notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),nf:notaItem.querySelector(`.nfEdit`).value.trim(),vencimento:notaItem.querySelector(`.vencEdit`).value.trim(),valor:notaItem.querySelector(`.valorEdit`).value.trim(),obs:notaItem.querySelector(`.obsEdit`).value.trim()};await notasCollection.doc(id).update(data);await adicionarFornecedor(data.fornecedor,!0);toast('✓ Nota editada e salva!');notaItem.querySelector('.edit-panel').classList.remove('show')}
+    async function deletarNota(id){showConfirmModal({ title: "Confirmar Exclusão", message: "Tem certeza que deseja excluir esta nota permanentemente? Esta ação não pode ser desfeita.", onConfirm: async () => {const nota=notasPendentes.find(n=>n.id===id);if(nota?.fotos?.length>0)await Promise.all(nota.fotos.map(id=>deletePhotoDB(id)));await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")} });}
+    async function limpar(){showConfirmModal({ title: "Confirmar Arquivamento", message: `Arquivar ${notasPendentes.length} nota(s) no histórico? As fotos serão excluídas permanentemente.`, confirmText: "Arquivar", confirmClass: "success", onConfirm: async () => { if(notasPendentes.length===0)return toast("Nenhuma nota para arquivar."); const batch=firestore.batch();for(const nota of notasPendentes){const{id,...notaData}=nota;notaData.dataHistorico=(new Date).toLocaleString('pt-BR');batch.set(historicoCollection.doc(),notaData);batch.delete(notasCollection.doc(id));if(nota.fotos?.length>0)await Promise.all(nota.fotos.map(photoId=>deletePhotoDB(photoId)))}await batch.commit();toast("Notas arquivadas no histórico.")} });}
+    async function limparHistorico(){showConfirmModal({ title: "Limpar TODO o Histórico?", message: "Esta ação é irreversível e apagará todos os registros do histórico. Deseja continuar?", onConfirm: async () => {if(historicoNotas.length===0)return; const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo com sucesso!")} });}
     async function gerarImagemSeparadora(fornecedor,nf){const c=document.createElement('canvas');c.width=600;c.height=150;const ctx=c.getContext('2d');ctx.fillStyle='#34495e';ctx.fillRect(0,0,600,150);ctx.fillStyle='#ecf0f1';ctx.font='bold 30px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif';ctx.textAlign='center';ctx.fillText(`${fornecedor} ${nf}`,300,70);ctx.font='50px sans-serif';ctx.fillText(`↓`,300,130);return new Promise(r=>c.toBlob(r,'image/png'))}
     async function compartilharNota(id){const nota=notasPendentes.find(n=>n.id===id);if(nota.enviada)return toast("Esta nota já foi enviada.");try{toast("Preparando fotos...");const files=await Promise.all((nota.fotos||[]).map(id=>getPhotoDB(id)));const validFiles=files.filter(f=>f),separador=await gerarImagemSeparadora(nota.fornecedor,nota.nf);const filesToShare=[new File([separador],'separador.png',{type:'image/png'}),...validFiles];if(navigator.share)await navigator.share({files:filesToShare,text:`${nota.fornecedor} ${nota.nf||''}`});else return toast("Compartilhamento não suportado.");await Promise.all((nota.fotos||[]).map(id=>deletePhotoDB(id)));await notasCollection.doc(id).update({enviada:!0,fotos:[]});toast("✓ Nota compartilhada e fotos locais removidas!")}catch(error){if(error.name!=='AbortError')toast("Erro ao compartilhar.")}}
-    function toggleChecklist(btn,notaId){const notaItem=btn.closest('.nota-item');const checklistContainer=notaItem.querySelector('.checklist-container');if(notaItem.querySelector('.edit-panel.show')){toggleEditPanel(btn,notaId)}if(openChecklistIds.has(notaId)){openChecklistIds.delete(notaId);checklistContainer.classList.remove('show')}else{openChecklistIds.add(notaId);checklistContainer.classList.add('show')}}
+    function toggleChecklist(btn,notaId){const notaItem=btn.closest('.nota-item');const checklistContainer=notaItem.querySelector('.checklist-container');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show, .checklist-container.show').forEach(p=>{if(p!==checklistContainer)p.classList.remove('show')});if(editPanel.classList.contains('show'))editPanel.classList.remove('show');checklistContainer.classList.toggle('show');}
     function gerarHtmlChecklist(nota){let html='';const checklistData=nota.checklist||{};for(const key in checklistDefinition){const isChecked=checklistData[key]?'checked':'';html+=`<div class="checklist-item"><input type="checkbox" id="check-${key}-${nota.id}" ${isChecked} onchange="atualizarChecklist('${nota.id}', '${key}', this.checked)"><label for="check-${key}-${nota.id}">${checklistDefinition[key]}</label></div>`}return html}
-    function atualizarChecklist(notaId,tarefa,isChecked){isChecklistUpdate=!0;const updateData={};updateData[`checklist.${tarefa}`]=isChecked;notasCollection.doc(notaId).update(updateData).catch(error=>toast("Erro ao salvar progresso."));const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;if(!nota.checklist)nota.checklist={};nota.checklist[tarefa]=isChecked;const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=Object.values(nota.checklist).filter(Boolean).length;const progressPercent=(completedTasks/totalTasks)*100;const notaItemEl=document.querySelector(`li[data-note-id="${notaId}"]`);if(notaItemEl){const progressBar=notaItemEl.querySelector('.progress-bar');const progressButton=notaItemEl.querySelector('.progress-btn');if(progressBar)progressBar.style.width=`${progressPercent}%`;if(progressButton)progressButton.textContent=`Progresso: ${completedTasks}/${totalTasks}`}}
+    function atualizarChecklist(notaId,tarefa,isChecked){isChecklistUpdate=!0;const updateData={};updateData[`checklist.${tarefa}`]=isChecked;notasCollection.doc(notaId).update(updateData).catch(error=>toast("Erro ao salvar progresso."));const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;if(!nota.checklist)nota.checklist={};nota.checklist[tarefa]=isChecked;const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=Object.values(nota.checklist).filter(Boolean).length;const progressPercent=(completedTasks/totalTasks)*100;const notaItemEl=document.querySelector(`div[data-note-id="${notaId}"]`);if(notaItemEl){const progressBar=notaItemEl.querySelector('.progress-bar');const progressButton=notaItemEl.querySelector('.progress-btn');if(progressBar)progressBar.style.width=`${progressPercent}%`;if(progressButton)progressButton.textContent=`Progresso: ${completedTasks}/${totalTasks}`}}
     function handleSnapshotChanges(snapshot){const newNotas=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));notasPendentes=newNotas;rebuildNotasPendentesList();DOM.saida.value=buildSaidaText()}
-    function rebuildNotasPendentesList(){if(!DOM.listaNotas)return;const createNotaHTML=nota=>{let shareBtnHTML;if(nota.enviada){shareBtnHTML=`<button class="sent-btn icon-only" title="Enviada"><i class="fas fa-check"></i></button>`}else if(nota.fotos?.length>0){shareBtnHTML=`<button class="whatsapp-btn icon-only" onclick="compartilharNota('${nota.id}')"><i class="fab fa-whatsapp"></i></button>`}else{shareBtnHTML=`<span class="sem-fotos">SEM FOTOS</span>`}const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=nota.checklist?Object.values(nota.checklist).filter(Boolean).length:0;const progressPercent=totalTasks>0?(completedTasks/totalTasks)*100:0;return`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}</div><div class="progress-bar-container"><div class="progress-bar" style="width: ${progressPercent}%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '${nota.id}')">Progresso: ${completedTasks}/${totalTasks}</button></div><div class="actions-group">${shareBtnHTML}<button class="edit-btn icon-only" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('${nota.id}')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container">${gerarHtmlChecklist(nota)}</div>`};if(notasPendentes.length===0){DOM.listaNotas.innerHTML=`<li class="empty-state">Nenhuma nota pendente.</li>`;return}const domNoteIds=new Set(Array.from(DOM.listaNotas.children).map(li=>li.dataset.noteId));const newNoteIds=new Set(notasPendentes.map(n=>n.id));for(const id of domNoteIds){if(!newNoteIds.has(id)){const el=DOM.listaNotas.querySelector(`li[data-note-id="${id}"]`);if(el)el.remove()}}
-    notasPendentes.forEach((nota,index)=>{const existingEl=DOM.listaNotas.querySelector(`li[data-note-id="${nota.id}"]`);const newHTML=createNotaHTML(nota);if(existingEl){if(existingEl.innerHTML!==newHTML){existingEl.innerHTML=newHTML;existingEl.className=`nota-item ${nota.enviada?'nota-enviada':''}`;existingEl.classList.add('highlight-update')}}else{const li=document.createElement('li');li.className=`nota-item ${nota.enviada?'nota-enviada':''}`;li.dataset.noteId=nota.id;li.innerHTML=newHTML;const referenceNode=DOM.listaNotas.children[index];DOM.listaNotas.insertBefore(li,referenceNode||null);li.classList.add('highlight-update')}})}
-    function popularListaHistorico(){DOM.listaHistorico.innerHTML='';if(historicoNotas.length===0){DOM.listaHistorico.innerHTML=`<li class="empty-state">O histórico está vazio.</li>`;DOM.historicoActions.style.display='none'}else{DOM.historicoActions.style.display='grid';historicoNotas.forEach(nota=>{const li=document.createElement('li');li.classList.add('nota-item');li.innerHTML=`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} | Obs: ${nota.obs||'N/A'}</div><div class="nota-data">Arquivado em: ${nota.dataHistorico}</div>`;DOM.listaHistorico.appendChild(li)})}}
+    function rebuildNotasPendentesList(){if(!DOM.listaNotas)return;const createNotaHTML=nota=>{let shareBtnHTML;if(nota.enviada){shareBtnHTML=`<button class="sent-btn icon-only" title="Enviada"><i class="fas fa-check"></i></button>`}else if(nota.fotos?.length>0){shareBtnHTML=`<button class="whatsapp-btn icon-only" onclick="compartilharNota('${nota.id}')"><i class="fab fa-whatsapp"></i></button>`}else{shareBtnHTML=`<span class="sem-fotos">SEM FOTOS</span>`}const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=nota.checklist?Object.values(nota.checklist).filter(Boolean).length:0;const progressPercent=totalTasks>0?(completedTasks/totalTasks)*100:0;return`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}</div><div class="progress-bar-container"><div class="progress-bar" style="width: ${progressPercent}%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '${nota.id}')">Progresso: ${completedTasks}/${totalTasks}</button></div><div class="actions-group">${shareBtnHTML}<button class="edit-btn icon-only" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fas fa-pen"></i></button><button class="delete-btn icon-only" onclick="deletarNota('${nota.id}')"><i class="fas fa-trash"></i></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="panel-content">${gerarHtmlChecklist(nota)}</div></div>`};if(notasPendentes.length===0){DOM.listaNotas.innerHTML=`<div class="empty-state">Nenhuma nota pendente.</div>`;return}const domNoteIds=new Set(Array.from(DOM.listaNotas.children).map(li=>li.dataset.noteId));const newNoteIds=new Set(notasPendentes.map(n=>n.id));for(const id of domNoteIds){if(!newNoteIds.has(id)){const el=DOM.listaNotas.querySelector(`div[data-note-id="${id}"]`);if(el)el.remove()}}
+    notasPendentes.forEach((nota,index)=>{const existingEl=DOM.listaNotas.querySelector(`div[data-note-id="${nota.id}"]`);const newHTML=createNotaHTML(nota);if(existingEl){if(existingEl.innerHTML!==newHTML){existingEl.innerHTML=newHTML;existingEl.className=`nota-item ${nota.enviada?'nota-enviada':''}`;if(!document.hidden) existingEl.classList.add('highlight-update')}}else{const div=document.createElement('div');div.className=`nota-item`;div.dataset.noteId=nota.id;div.innerHTML=newHTML;const referenceNode=DOM.listaNotas.children[index];DOM.listaNotas.insertBefore(div,referenceNode||null);if(!document.hidden) div.classList.add('highlight-update')}})}
+    function popularListaHistorico(){DOM.listaHistorico.innerHTML='';if(historicoNotas.length===0){DOM.listaHistorico.innerHTML=`<div class="empty-state">O histórico está vazio.</div>`;DOM.historicoActions.style.display='none'}else{historicoNotas.forEach(nota=>{const div=document.createElement('div');div.classList.add('nota-item');div.innerHTML=`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} | Obs: ${nota.obs||'N/A'}</div><div class="nota-data">Arquivado em: ${nota.dataHistorico}</div>`;DOM.listaHistorico.appendChild(div)})}}
     function reconstruirMiniaturasAcumuladas(){DOM.miniaturas.innerHTML='';fotosAcumuladas.forEach((file,i)=>{const w=document.createElement('div'),img=document.createElement('img'),btn=document.createElement('button');w.className='miniatura-wrapper';img.src=URL.createObjectURL(file);img.onload=()=>URL.revokeObjectURL(img.src);img.onclick=()=>abrirPreview(fotosAcumuladas,i,{type:'nova'});btn.className='remove-foto';btn.innerHTML='×';btn.onclick=e=>{e.stopPropagation();fotosAcumuladas.splice(i,1);reconstruirMiniaturasAcumuladas()};w.append(img,btn);DOM.miniaturas.appendChild(w)})}
-    async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`li[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="campo fotos-edit-container"></div><div class="actions"><button class="actions-button" style="background:var(--button-success);" onclick="salvarEdicao('${nota.id}')"><i class="fas fa-save"></i> Salvar</button></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';const container=painelEdicao.querySelector('.fotos-edit-container');if(nota.enviada){container.innerHTML=`<label>Anexos</label><div class="fotos-enviadas-status"><i class="fas fa-check-circle"></i> Fotos já enviadas!</div>`}else{container.innerHTML=`<label>Anexar/Remover Fotos</label><div class="anexo-actions"><label for="edit-fotos-${notaId}" class="file-input-label"><i class="fas fa-photo-video"></i> Selecionar</label><label for="edit-camera-${notaId}" class="file-input-label"><i class="fas fa-camera"></i> Câmera</label></div><input type="file" id="edit-fotos-${notaId}" class="edit-file-input" multiple accept="image/*" /><input type="file" id="edit-camera-${notaId}" class="edit-file-input" accept="image/*" capture="environment" /><div class="miniaturas-container-edit"></div>`;const handleEditFiles=async e=>{const newIds=await Promise.all(Array.from(e.target.files).map(f=>savePhotoDB(generateUniqueId(),f)));await notasCollection.doc(nota.id).update({fotos:[...(nota.fotos||[]),...newIds]});toast(`${e.target.files.length} foto(s) adicionada(s).`)};container.querySelector(`#edit-fotos-${notaId}`).addEventListener('change',handleEditFiles);container.querySelector(`#edit-camera-${notaId}`).addEventListener('change',handleEditFiles);reconstruirMiniaturasEdit(notaId)}}
-    async function reconstruirMiniaturasEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota||!nota.fotos)return;const container=document.querySelector(`li[data-note-id="${notaId}"] .miniaturas-container-edit`);if(!container)return;container.innerHTML='';const files=await Promise.all(nota.fotos.map(id=>getPhotoDB(id).catch(()=>null)));nota.fotos.forEach((photoId,i)=>{const file=files[i],wrapper=document.createElement('div');wrapper.className='miniatura-wrapper';if(file){const img=document.createElement('img'),btn=document.createElement('button');img.src=URL.createObjectURL(file);const fileIndexInThumbnails=files.filter(f=>f).indexOf(file);img.onclick=()=>abrirPreview(files.filter(f=>f),fileIndexInThumbnails,{type:'nota',id:notaId,photoId:photoId});btn.className='remove-foto';btn.innerHTML='×';btn.onclick=e=>{e.stopPropagation();removerFotoEdit(notaId,i)};wrapper.append(img,btn)}else{wrapper.innerHTML=`<div class="not-found"><i class="fas fa-ghost"></i></div>`}container.appendChild(wrapper)})}
-    async function removerFotoEdit(notaId,fIndex){if(!confirm("Remover esta imagem da nota?"))return;const nota=notasPendentes.find(n=>n.id===notaId);const photoId=nota.fotos[fIndex],updatedIds=nota.fotos.filter((_,i)=>i!==fIndex);await notasCollection.doc(nota.id).update({fotos:updatedIds});await deletePhotoDB(photoId);toast("Imagem removida.")}
+    async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="campo fotos-edit-container"></div><div class="actions"><button class="actions-button" style="background:var(--button-success);" onclick="salvarEdicao('${nota.id}')"><i class="fas fa-save"></i> Salvar</button></div></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';const container=painelEdicao.querySelector('.fotos-edit-container');if(nota.enviada){container.innerHTML=`<label>Anexos</label><div class="fotos-enviadas-status"><i class="fas fa-check-circle"></i> Fotos já enviadas!</div>`}else{container.innerHTML=`<label>Anexar/Remover Fotos</label><div class="anexo-actions"><label for="edit-fotos-${notaId}" class="file-input-label"><i class="fas fa-photo-video"></i> Selecionar</label><label for="edit-camera-${notaId}" class="file-input-label"><i class="fas fa-camera"></i> Câmera</label></div><input type="file" id="edit-fotos-${notaId}" class="edit-file-input" multiple accept="image/*" /><input type="file" id="edit-camera-${notaId}" class="edit-file-input" accept="image/*" capture="environment" /><div class="miniaturas-container-edit"></div>`;const handleEditFiles=async e=>{const files=e.target.files;const newIds=await Promise.all(Array.from(files).map(f=>savePhotoDB(generateUniqueId(),f)));const currentNota=notasPendentes.find(n=>n.id===notaId);await notasCollection.doc(notaId).update({fotos:[...(currentNota.fotos||[]),...newIds]});toast(`${files.length} foto(s) adicionada(s).`);e.target.value=null;};container.querySelector(`#edit-fotos-${notaId}`).addEventListener('change',handleEditFiles);container.querySelector(`#edit-camera-${notaId}`).addEventListener('change',handleEditFiles);reconstruirMiniaturasEdit(notaId)}}
+    async function reconstruirMiniaturasEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota||!nota.fotos)return;const container=document.querySelector(`div[data-note-id="${notaId}"] .miniaturas-container-edit`);if(!container)return;container.innerHTML='';const files=await Promise.all(nota.fotos.map(id=>getPhotoDB(id).catch(()=>null)));nota.fotos.forEach((photoId,i)=>{const file=files[i],wrapper=document.createElement('div');wrapper.className='miniatura-wrapper';if(file){const img=document.createElement('img'),btn=document.createElement('button');img.src=URL.createObjectURL(file);img.onload=()=>URL.revokeObjectURL(img.src);const fileIndexInThumbnails=files.filter(f=>f).indexOf(file);img.onclick=()=>abrirPreview(files.filter(f=>f),fileIndexInThumbnails,{type:'nota',id:notaId,photoId:photoId});btn.className='remove-foto';btn.innerHTML='×';btn.onclick=e=>{e.stopPropagation();removerFotoEdit(notaId,i)};wrapper.append(img,btn)}else{wrapper.innerHTML=`<div class="not-found"><i class="fas fa-ghost"></i></div>`}container.appendChild(wrapper)})}
+    async function removerFotoEdit(notaId,fIndex){showConfirmModal({title:"Remover Imagem?",message:"Deseja remover esta imagem da nota?",onConfirm:async()=>{const nota=notasPendentes.find(n=>n.id===notaId);const photoId=nota.fotos[fIndex],updatedIds=nota.fotos.filter((_,i)=>i!==fIndex);await notasCollection.doc(nota.id).update({fotos:updatedIds});await deletePhotoDB(photoId);toast("Imagem removida.")}})}
     async function adicionarFornecedor(forn, noToast = false) {const f = forn.trim().toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {try {await settingsDocRef.update({ fornecedores: firebase.firestore.FieldValue.arrayUnion(f) });} catch (error) {if (error.code === 'not-found') {await settingsDocRef.set({ fornecedores: [f] });}}if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
     async function adicionarFornecedorManage() { const f = DOM.fornManageInput.value.trim(); if (f) { await adicionarFornecedor(f); DOM.fornManageInput.value = ''; } }
-    async function deletarFornecedor(f) {if (confirm(`Excluir o fornecedor ${f}?`)) {await settingsDocRef.update({ fornecedores: firebase.firestore.FieldValue.arrayRemove(f) });toast(`Fornecedor ${f} excluído.`);}}
+    async function deletarFornecedor(f) {showConfirmModal({ title: "Excluir Fornecedor", message: `Tem certeza que deseja excluir o fornecedor "${f}"?`, onConfirm: async () => {await settingsDocRef.update({ fornecedores: firebase.firestore.FieldValue.arrayRemove(f) });toast(`Fornecedor ${f} excluído.`);}});}
     function popularDatalist() { DOM.fornDatalist.innerHTML = ''; fornecedoresSugeridos.sort().forEach(f => DOM.fornDatalist.innerHTML += `<option value="${f}"></option>`); popularListaFornecedores(); }
     function popularListaFornecedores() { DOM.listaFornManage.innerHTML = ''; fornecedoresSugeridos.sort().forEach(f => DOM.listaFornManage.innerHTML += `<li>${f} <button onclick="deletarFornecedor('${f}')"><i class="fas fa-times-circle"></i></button></li>`); }
     function adicionarObservacao(obs, noToast = false) { const o = obs.trim(); if (o && !observacoesSugeridas.includes(o)) { observacoesSugeridas.push(o); salvarObservacoesLocal(); popularObservacoesList(); if (!noToast) toast(`Observação "${o}" adicionada!`); } }
     function adicionarObservacaoManage() { const o = DOM.obsManageInput.value.trim(); if (o) { adicionarObservacao(o); DOM.obsManageInput.value = ''; } }
-    function deletarObservacao(o) { if (confirm(`Excluir a observação "${o}"?`)) { observacoesSugeridas = observacoesSugeridas.filter(i => i !== o); salvarObservacoesLocal(); popularObservacoesList(); toast(`Observação "${o}" excluída.`); } }
+    function deletarObservacao(o) { showConfirmModal({ title: "Excluir Observação", message: `Tem certeza que deseja excluir a observação "${o}"?`, onConfirm: () => {observacoesSugeridas = observacoesSugeridas.filter(i => i !== o); salvarObservacoesLocal(); popularObservacoesList(); toast(`Observação "${o}" excluída.`);}});}
     function popularObservacoesList() { DOM.obs.innerHTML = '<option value="">Recurso a ser pago</option>'; observacoesSugeridas.sort().forEach(o => DOM.obs.innerHTML += `<option value="${o}">${o}</option>`); DOM.listaObsManage.innerHTML = ''; observacoesSugeridas.sort().forEach(o => DOM.listaObsManage.innerHTML += `<li>${o} <button onclick="deletarObservacao('${o}')"><i class="fas fa-times-circle"></i></button></li>`); }
-     
-    async function adicionarPedido() {
-        const pNum = DOM.pedidoNumInput.value.trim();
-        const r = DOM.pedidoRecursoSelect.value;
-        if (!pNum || !r) {
-            return toast('Preencha o pedido e o recurso.');
-        }
-        const updateData = {};
-        updateData[`pedidosRecursos.${pNum}`] = r;
-        DOM.pedidoNumInput.value = '';
-        DOM.pedidoRecursoSelect.value = '';
-        try {
-            await settingsDocRef.update(updateData);
-            toast(`✓ Pedido ${pNum} adicionado!`);
-        } catch (error) {
-            if (error.code === 'not-found') {
-                await settingsDocRef.set({ pedidosRecursos: { [pNum]: r } }, { merge: true });
-                toast(`✓ Pedido ${pNum} adicionado!`);
-            } else {
-                console.error("Erro ao adicionar pedido:", error);
-                toast(`✕ Falha ao adicionar o pedido ${pNum}.`);
-            }
-        }
-    }
-    async function deletarPedido(p) {
-        if (confirm(`Excluir o pedido ${p}?`)) {
-            const updateData = {};
-            updateData[`pedidosRecursos.${p}`] = firebase.firestore.FieldValue.delete();
-            try {
-                await settingsDocRef.update(updateData);
-                toast(`Pedido ${p} excluído.`);
-            } catch (error) {
-                console.error("Erro ao deletar pedido:", error);
-                toast(`✕ Falha ao excluir o pedido ${p}.`);
-            }
-        }
-    }
-    function popularListaPedidos() {
-        DOM.listaPedidos.innerHTML = '';
-        const pedidosOrdenados = Object.keys(pedidosRecursos).sort((a, b) => Number(a) - Number(b));
-        pedidosOrdenados.forEach(p => {
-            DOM.listaPedidos.innerHTML += `<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fas fa-times-circle"></i></button></li>`;
-        });
-    }
-     
+    async function adicionarPedido() { const pNum = DOM.pedidoNumInput.value.trim(); const r = DOM.pedidoRecursoSelect.value; if (!pNum || !r) { return toast('Preencha o pedido e o recurso.'); } const updateData = {}; updateData[`pedidosRecursos.${pNum}`] = r; DOM.pedidoNumInput.value = ''; DOM.pedidoRecursoSelect.value = ''; try { await settingsDocRef.update(updateData); toast(`✓ Pedido ${pNum} adicionado!`); } catch (error) { if (error.code === 'not-found') { await settingsDocRef.set({ pedidosRecursos: { [pNum]: r } }, { merge: true }); toast(`✓ Pedido ${pNum} adicionado!`); } else { console.error("Erro ao adicionar pedido:", error); toast(`✕ Falha ao adicionar o pedido ${pNum}.`); } } }
+    async function deletarPedido(p) { showConfirmModal({ title: "Excluir Pedido", message: `Tem certeza que deseja excluir o pedido "${p}"?`, onConfirm: async () => { const updateData = {}; updateData[`pedidosRecursos.${p}`] = firebase.firestore.FieldValue.delete(); try { await settingsDocRef.update(updateData); toast(`Pedido ${p} excluído.`); } catch (error) { console.error("Erro ao deletar pedido:", error); toast(`✕ Falha ao excluir o pedido ${p}.`); } } }); }
+    function popularListaPedidos() { DOM.listaPedidos.innerHTML = ''; const pedidosOrdenados = Object.keys(pedidosRecursos).sort((a, b) => Number(a) - Number(b)); pedidosOrdenados.forEach(p => { DOM.listaPedidos.innerHTML += `<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fas fa-times-circle"></i></button></li>`; }); }
     function formatarDataInput(input){let v=input.value.replace(/\D/g,'').substring(0,8);if(v.length>4)v=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>2)v=`${v.slice(0,2)}/${v.slice(2)}`;input.value=v}
     function formatarValorBlur(event){let v=event.target.value.replace(/\./g,'').replace(',','.').replace(/[^\d.]/g,'');if(v)event.target.value=parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
     function getLinha(nota){let v=nota.vencimento,o=nota.obs;if(nota.obs==="REMESSA"){v="REMESSA";o="Recurso Proprio Santa Casa"}return[nota.data,nota.nf,v,nota.valor,"",nota.fornecedor,"","",o].join("\t")}
     function buildSaidaText(){return notasPendentes.map(getLinha).join("\n")}
     async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
     async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())return toast("Nada para compartilhar.");if(navigator.share){await navigator.share({title:'Relação de Notas Fiscais',text:texto})}else{await navigator.clipboard.writeText(texto);toast("Compartilhamento não suportado. Lista copiada!")}}
-    function limparFormularioPrincipal(comFoco=!0){document.querySelector('#screen-add .screen-content').scrollTo({top:0,behavior:'smooth'});const today=new Date;DOM.data.value=`${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;[DOM.nf,DOM.venc,DOM.valor,DOM.forn,DOM.obs].forEach(el=>el.value="");fotosAcumuladas=[];reconstruirMiniaturasAcumuladas();if(comFoco)setTimeout(()=>DOM.nf.focus(),350)}
+    function limparFormularioPrincipal(comFoco=!0){document.querySelector('#screen-add').scrollTo({top:0,behavior:'smooth'});const today=new Date;DOM.data.value=`${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;[DOM.nf,DOM.venc,DOM.valor,DOM.forn,DOM.obs].forEach(el=>el.value="");fotosAcumuladas=[];reconstruirMiniaturasAcumuladas();if(comFoco)setTimeout(()=>DOM.nf.focus(),350)}
     async function abrirPreview(fotos,index,contexto){const modal=document.getElementById('modalPreview'),imgPreview=document.getElementById('imgPreview');fotosAtuaisParaPreview=fotos;fotoAtualIndex=index;fotoAtualContexto=contexto;const file=fotos[index];if(file)imgPreview.src=URL.createObjectURL(file);modal.style.display='flex';document.getElementById('prevBtn').style.display=index>0?'block':'none';document.getElementById('nextBtn').style.display=index<fotos.length-1?'block':'none'}
     function fecharPreview(){document.getElementById('modalPreview').style.display='none';URL.revokeObjectURL(document.getElementById('imgPreview').src)}
     function navegarFotos(dir){const novoIndex=fotoAtualIndex+dir;if(novoIndex>=0&&novoIndex<fotosAtuaisParaPreview.length){abrirPreview(fotosAtuaisParaPreview,novoIndex,fotoAtualContexto)}}
     function salvarFotoPreview(){const a=document.createElement('a');a.href=document.getElementById('imgPreview').src;a.download=`nota_fiscal_${Date.now()}.png`;a.click();toast("Imagem salva!")}
-    async function excluirFotoPreview(){if(!confirm("Excluir esta imagem?"))return;if(fotoAtualContexto.type==='nova'){fotosAcumuladas.splice(fotoAtualIndex,1);reconstruirMiniaturasAcumuladas()}else if(fotoAtualContexto.type==='nota'){const nota=notasPendentes.find(n=>n.id===fotoAtualContexto.id);const photoIndexInNota=nota.fotos.indexOf(fotoAtualContexto.photoId);if(photoIndexInNota>-1)await removerFotoEdit(fotoAtualContexto.id,photoIndexInNota)}toast("Imagem excluída.");if(fotosAtuaisParaPreview.length<=1){fecharPreview()}else{const newIndex=Math.max(0,fotoAtualIndex-1);fotosAtuaisParaPreview.splice(fotoAtualIndex,1);abrirPreview(fotosAtuaisParaPreview,newIndex,fotoAtualContexto)}}
+    async function excluirFotoPreview(){showConfirmModal({ title: "Excluir Imagem?", message: "Tem certeza que deseja excluir esta imagem?", onConfirm: async () => { if(fotoAtualContexto.type==='nova'){fotosAcumuladas.splice(fotoAtualIndex,1);reconstruirMiniaturasAcumuladas()}else if(fotoAtualContexto.type==='nota'){const nota=notasPendentes.find(n=>n.id===fotoAtualContexto.id);const photoIndexInNota=nota.fotos.indexOf(fotoAtualContexto.photoId);if(photoIndexInNota>-1)await removerFotoEdit(fotoAtualContexto.id,photoIndexInNota)}toast("Imagem excluída.");if(fotosAtuaisParaPreview.length<=1){fecharPreview()}else{const newIndex=Math.max(0,fotoAtualIndex-1);fotosAtuaisParaPreview.splice(fotoAtualIndex,1);abrirPreview(fotosAtuaisParaPreview,newIndex,fotoAtualContexto)} } });}
 </script>
   
  
