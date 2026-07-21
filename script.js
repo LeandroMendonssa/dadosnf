@@ -20,7 +20,7 @@ const historicoCollection = firestore.collection('historico');
 const settingsDocRef = firestore.collection('config').doc('appSettings');
 
 // --- ESTADO GLOBAL ---
-let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {};
+let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {}, apelidosFornecedores = {};
 let isChecklistUpdate = false;
 let isInitialLoad = true;
 
@@ -82,7 +82,7 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-pedidos': 'screen-settings', 'screen-observacoes': 'screen-settings' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-pedidos': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -339,6 +339,7 @@ function iniciarListenerConfiguracoes() {
             fornecedoresSugeridos = data.fornecedores || []; 
             observacoesSugeridas = data.observacoes || appConfig.observacoes; 
             pedidosRecursos = data.pedidosRecursos || {}; 
+            apelidosFornecedores = data.apelidosFornecedores || {}; 
             
             // Lógica de merge das configurações salvas
             appConfig = { 
@@ -362,6 +363,7 @@ function iniciarListenerConfiguracoes() {
         popularDatalist(); 
         popularObservacoesList(); 
         popularListaPedidos(); 
+        popularListaApelidos(); 
         
         const anotacoesTextarea = document.getElementById('anotacoes-textarea'); 
         if(anotacoesTextarea.value !== appConfig.anotacoes) { 
@@ -372,11 +374,16 @@ function iniciarListenerConfiguracoes() {
         
         if (isInitialLoad) { 
             document.body.classList.remove('is-loading'); 
+            const appLoader = document.getElementById('app-loader'); 
+            if (appLoader) appLoader.classList.add('app-loader-hidden'); 
             isInitialLoad = false; 
         } 
     }, error => { 
         console.error("Erro config:", error); 
         toast("Erro ao carregar configurações."); 
+        document.body.classList.remove('is-loading'); 
+        const appLoader = document.getElementById('app-loader'); 
+        if (appLoader) appLoader.classList.add('app-loader-hidden'); 
     }); 
 }
 
@@ -571,6 +578,105 @@ async function adicionarFornecedorManage(){const f=DOM.fornManageInput.value.tri
 async function deletarFornecedor(f){showConfirmModal({title:"Excluir Fornecedor",message:`Excluir "${f}"?`,onConfirm:async()=>{fornecedoresSugeridos = fornecedoresSugeridos.filter(item => item !== f);await settingsDocRef.update({fornecedores:firebase.firestore.FieldValue.arrayRemove(f)});toast(`Fornecedor ${f} excluído.`)}})}
 function popularDatalist(){DOM.fornDatalist.innerHTML='';fornecedoresSugeridos.sort().forEach(f=>DOM.fornDatalist.innerHTML+=`<option value="${f}"></option>`);popularListaFornecedores()}
 function popularListaFornecedores(){DOM.listaFornManage.innerHTML='';fornecedoresSugeridos.sort().forEach(f=>DOM.listaFornManage.innerHTML+=`<li>${f} <button onclick="deletarFornecedor('${f}')"><i class="fa-solid fa-times-circle"></i></button></li>`)}
+
+// --- APELIDOS DE FORNECEDORES ---
+// Mapeia o nome completo/legal do fornecedor (como aparece no ERP/nota) para o
+// apelido curto que o usuário prefere usar (ex: "COMERCIAL CIRURGICA
+// RIOCLARENSE" -> "RIOCLARENSE", "MINAS SUL EMPREENDIMENTOS LTDA" -> "MINAS SUL").
+// Usado principalmente na importação do relatório do ERP, para preencher o
+// campo Fornecedor já com o nome curto certo, sem precisar editar toda vez.
+
+async function adicionarApelidoFornecedor() {
+    const nomeCompletoInput = document.getElementById('alias-nome-completo');
+    const apelidoInput = document.getElementById('alias-apelido');
+    const nomeCompleto = nomeCompletoInput.value.trim().toUpperCase();
+    const apelido = apelidoInput.value.trim().toUpperCase();
+
+    if (!nomeCompleto || !apelido) {
+        return toast('Preencha o nome completo e o apelido.');
+    }
+
+    apelidosFornecedores[nomeCompleto] = apelido;
+    const updateData = {};
+    updateData[`apelidosFornecedores.${nomeCompleto}`] = apelido;
+    try {
+        await settingsDocRef.update(updateData);
+    } catch (error) {
+        if (error.code === 'not-found') {
+            await settingsDocRef.set({ apelidosFornecedores: { [nomeCompleto]: apelido } }, { merge: true });
+        } else {
+            return toast('Falha ao salvar o apelido.');
+        }
+    }
+
+    await adicionarFornecedor(apelido, true);
+
+    nomeCompletoInput.value = '';
+    apelidoInput.value = '';
+    toast(`Apelido "${apelido}" cadastrado!`);
+}
+
+async function deletarApelidoFornecedor(nomeCompleto) {
+    showConfirmModal({
+        title: 'Excluir Apelido',
+        message: `Excluir o apelido para "${nomeCompleto}"?`,
+        onConfirm: async () => {
+            delete apelidosFornecedores[nomeCompleto];
+            const updateData = {};
+            updateData[`apelidosFornecedores.${nomeCompleto}`] = firebase.firestore.FieldValue.delete();
+            try {
+                await settingsDocRef.update(updateData);
+                toast('Apelido excluído.');
+            } catch (error) {
+                toast('Falha ao excluir.');
+            }
+        }
+    });
+}
+
+function popularListaApelidos() {
+    const lista = document.getElementById('lista-apelidos-manage');
+    if (!lista) return;
+    lista.innerHTML = '';
+    const nomesCompletos = Object.keys(apelidosFornecedores).sort();
+    if (nomesCompletos.length === 0) {
+        lista.innerHTML = `<li style="justify-content:center; color: var(--text-light);">Nenhum apelido cadastrado ainda.</li>`;
+        return;
+    }
+    nomesCompletos.forEach(nomeCompleto => {
+        const apelido = apelidosFornecedores[nomeCompleto];
+        lista.innerHTML += `<li><div><strong>${apelido}</strong><div style="font-size:12px; color:var(--text-light);">${nomeCompleto}</div></div> <button onclick="deletarApelidoFornecedor('${nomeCompleto.replace(/'/g, "\\'")}')"><i class="fa-solid fa-times-circle"></i></button></li>`;
+    });
+}
+
+// Procura um apelido cadastrado para um nome de fornecedor vindo do ERP.
+// O nome do ERP costuma vir truncado (ex: "COMERCIAL CIRURGICA RIOCLARENS"),
+// por isso o match considera prefixo em qualquer direção, além do match exato.
+function encontrarApelidoFornecedor(nomeOrigem) {
+    const nome = (nomeOrigem || '').trim().toUpperCase();
+    if (!nome) return null;
+
+    if (apelidosFornecedores[nome]) return apelidosFornecedores[nome];
+
+    for (const chave in apelidosFornecedores) {
+        if (chave.startsWith(nome) || nome.startsWith(chave)) {
+            return apelidosFornecedores[chave];
+        }
+    }
+    return null;
+}
+
+// Aplica o apelido cadastrado automaticamente quando o usuário digita/cola o
+// nome completo do fornecedor no formulário de adicionar nota manualmente.
+function aplicarApelidoNoCampo(input) {
+    const valor = input.value.trim();
+    if (!valor) return;
+    const apelido = encontrarApelidoFornecedor(valor);
+    if (apelido && apelido.toUpperCase() !== valor.toUpperCase()) {
+        input.value = apelido;
+        toast(`Apelido aplicado: ${apelido}`);
+    }
+}
 async function adicionarObservacao(obs,noToast=false){const o=obs.trim();if(o&&!observacoesSugeridas.includes(o)){observacoesSugeridas.push(o);await settingsDocRef.set({ observacoes: observacoesSugeridas }, { merge: true });if(!noToast)toast(`Obs "${o}" adicionada!`)}}
 function adicionarObservacaoManage(){const o=DOM.obsManageInput.value.trim();if(o){adicionarObservacao(o);DOM.obsManageInput.value=''}}
 async function deletarObservacao(o){showConfirmModal({title:"Excluir Observação",message:`Excluir "${o}"?`,onConfirm:async()=>{observacoesSugeridas=observacoesSugeridas.filter(i=>i!==o);await settingsDocRef.update({observacoes:firebase.firestore.FieldValue.arrayRemove(o)});toast(`Obs "${o}" excluída.`)}})}
@@ -599,3 +705,341 @@ function popularListaHistorico(){DOM.listaHistorico.innerHTML='';if(historicoNot
 async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="actions"><button class="actions-button" style="background:var(--button-success);" onclick="salvarEdicao('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button></div></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';}
 async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())return toast("Nada para compartilhar.");if(navigator.share){await navigator.share({title:'Relação de Notas Fiscais',text:texto})}else{await navigator.clipboard.writeText(texto);toast("Copiado!")}}
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
+
+// ===================================================================
+// --- IMPORTAÇÃO DE RELATÓRIO DO ERP (Relação de Notas Fiscais) ---
+// ===================================================================
+// Formato de origem: relatório TXT tipo "Sistema de Gestao Hospitalar -
+// Controle de Estoque - Relacao de notas fiscais". Cada nota fiscal vem
+// em um bloco com cabeçalho "Nota fiscal: NNNN Documento: NN", seguido
+// dos itens, do resumo financeiro (Frete/Total da nota) e de uma tabela
+// "Seq. Vencimento Valor" com uma ou mais parcelas.
+//
+// Regras de reconhecimento:
+// 1) Vencimento usado = data da 1ª parcela (Seq 1) da tabela de vencimentos.
+// 2) Data da nota = "Data de emissão" quando existir no relatório; quando
+//    não houver (caso deste formato, que só traz "lançada em"), usa-se a
+//    data de lançamento como substituta.
+// 3) Valor total = soma de todas as parcelas do quadro de vencimentos, já
+//    que esse valor reflete frete e ajustes (ex.: um caso real do relatório
+//    tem "Total da nota" sem o frete, mas o quadro de vencimentos já soma
+//    o frete). Se a soma das parcelas ficar MENOR que o "Total da nota"
+//    declarado, é sinal de que a tabela de vencimentos foi cortada por uma
+//    quebra de página (também observado no relatório real) — nesse caso
+//    usa-se o "Total da nota" e a nota é marcada com aviso para revisão.
+
+let notasImportadasPreview = [];
+
+function parseValorBR(str) {
+    if (!str) return 0;
+    const limpo = String(str).trim().replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(limpo);
+    return isNaN(n) ? 0 : n;
+}
+
+function formatValorBR(num) {
+    return (num || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseRelatorioERP(textoOriginal) {
+    const t = String(textoOriginal || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    // Localiza todos os cabeçalhos de bloco "Nota fiscal: NNN Documento: NN"
+    const blockStartRe = /\|\s*Nota fiscal:\s*(\d+)\s+Documento:\s*(\d+)/g;
+    const starts = [];
+    let m;
+    while ((m = blockStartRe.exec(t)) !== null) {
+        starts.push({ pos: m.index, nf: m[1], doc: m[2] });
+    }
+    if (starts.length === 0) return [];
+    starts.push({ pos: t.length, nf: null, doc: null });
+
+    // Agrupa blocos repetidos (o mesmo NF+Documento aparece de novo quando
+    // o relatório quebra de página no meio de uma nota)
+    const blocks = [];
+    let i = 0;
+    while (i < starts.length - 1) {
+        const atual = starts[i];
+        let j = i + 1;
+        let end = starts[j].pos;
+        while (j < starts.length - 1 && starts[j].nf === atual.nf && starts[j].doc === atual.doc) {
+            j++;
+            end = starts[j].pos;
+        }
+        blocks.push({ nf: atual.nf, doc: atual.doc, texto: t.slice(atual.pos, end) });
+        i = j;
+    }
+
+    return blocks.map(({ nf, doc, texto: bloco }) => {
+        const avisos = [];
+
+        const fornMatch = bloco.match(/Fornecedor:\s*\d+\s+(.+?)\s+Qtde\.\s*lan[cç]amentos/i);
+        const fornecedor = fornMatch ? fornMatch[1].trim().toUpperCase().replace(/\s+/g, ' ') : '';
+        if (!fornecedor) avisos.push('Não foi possível identificar o fornecedor — confira manualmente.');
+
+        // Data da nota: usa "Data de emissão" se existir; senão, "lançada em"
+        let data = '';
+        const emissaoMatch = bloco.match(/Data\s*de\s*Emiss[aã]o\s*[:.]*\s*(\d{2}\/\d{2}\/\d{4})/i) || bloco.match(/Emiss[aã]o\s*[:.]*\s*(\d{2}\/\d{2}\/\d{4})/i);
+        const lancadaMatch = bloco.match(/lan[cç]ada em\s+(\d{2}\/\d{2}\/\d{4})/i);
+        if (emissaoMatch) {
+            data = emissaoMatch[1];
+        } else if (lancadaMatch) {
+            data = lancadaMatch[1];
+        } else {
+            avisos.push('Data de emissão/lançamento não encontrada — preencha manualmente.');
+        }
+
+        // Quadro "Seq. Vencimento Valor"
+        const vencRe = /^\s*(\d{1,3})\s+(\d{2}\/\d{2}\/\d{4})\s+([\d.]+,\d{2})/gm;
+        const parcelas = [];
+        let vm;
+        while ((vm = vencRe.exec(bloco)) !== null) {
+            parcelas.push({ seq: parseInt(vm[1], 10), data: vm[2], valor: parseValorBR(vm[3]) });
+        }
+        parcelas.sort((a, b) => a.seq - b.seq);
+
+        const totalNotaMatch = bloco.match(/Total da nota\.*:\s*([\d.]+,\d{2})/i);
+        const freteMatch = bloco.match(/Frete\.*:\s*([\d.]+,\d{2})/i);
+        const totalNota = totalNotaMatch ? parseValorBR(totalNotaMatch[1]) : null;
+        const frete = freteMatch ? parseValorBR(freteMatch[1]) : 0;
+
+        let vencimento = '';
+        let valorTotalNum = 0;
+
+        if (parcelas.length > 0) {
+            vencimento = parcelas[0].data;
+            const somaParcelas = parcelas.reduce((s, p) => s + p.valor, 0);
+
+            if (totalNota !== null && somaParcelas < totalNota - 0.01) {
+                // Soma das parcelas não cobre o total da nota: provável quebra
+                // de página cortando o quadro de vencimentos no meio.
+                valorTotalNum = totalNota;
+                avisos.push(`Quadro de vencimentos parece incompleto (soma das parcelas R$ ${formatValorBR(somaParcelas)} é menor que o total da nota R$ ${formatValorBR(totalNota)}). Foi usado o total da nota — confira as datas de vencimento.`);
+            } else {
+                valorTotalNum = somaParcelas;
+            }
+            if (parcelas.length > 1) {
+                avisos.push(`Nota parcelada em ${parcelas.length}x. Foi usado o vencimento da 1ª parcela (${vencimento}) e o valor total soma todas as parcelas.`);
+            }
+        } else {
+            avisos.push('Quadro de vencimentos não encontrado — usada a data de lançamento e o total da nota. Confira o vencimento manualmente.');
+            vencimento = data;
+            valorTotalNum = (totalNota !== null ? totalNota : 0) + frete;
+        }
+
+        return {
+            nf: (nf || '').trim(),
+            documento: doc,
+            fornecedor,
+            data,
+            vencimento,
+            valor: formatValorBR(valorTotalNum),
+            parcelas: parcelas.length,
+            avisos
+        };
+    });
+}
+
+async function colarRelatorioImportacao() {
+    const textarea = document.getElementById('import-textarea');
+    try {
+        const texto = await navigator.clipboard.readText();
+        textarea.value = texto;
+        toast('Texto colado!');
+    } catch (err) {
+        toast('Permissão negada ou não suportada. Cole manualmente (Ctrl+V).');
+    }
+}
+
+// Lê o arquivo TXT enviado pelo usuário. Relatórios desse tipo de ERP costumam
+// vir salvos em ISO-8859-1/Windows-1252 (por causa de acentos), então
+// detectamos automaticamente: tentamos ler como UTF-8 primeiro e, se aparecer
+// muito caractere de substituição (sinal de acentuação quebrada), lemos de
+// novo como ISO-8859-1.
+function decodificarArquivoTexto(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let textoUtf8 = '';
+    try {
+        textoUtf8 = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+    } catch (e) {
+        textoUtf8 = '';
+    }
+    const caracteresQuebrados = (textoUtf8.match(/\uFFFD/g) || []).length;
+    if (caracteresQuebrados > 3) {
+        return new TextDecoder('iso-8859-1').decode(bytes);
+    }
+    return textoUtf8;
+}
+
+function handleImportFileUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.txt') && file.type && !file.type.startsWith('text/')) {
+        toast('Selecione um arquivo .txt do relatório.');
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const texto = decodificarArquivoTexto(e.target.result);
+        document.getElementById('import-textarea').value = texto;
+        toast('Arquivo carregado! Clique em "Processar Relatório".');
+    };
+    reader.onerror = () => toast('Erro ao ler o arquivo.');
+    reader.readAsArrayBuffer(file);
+
+    event.target.value = ''; // permite selecionar o mesmo arquivo de novo depois
+}
+
+function processarRelatorioImportacao() {
+    const textarea = document.getElementById('import-textarea');
+    const texto = textarea.value;
+
+    if (!texto || !texto.trim()) {
+        return toast('Cole o texto do relatório antes de processar.');
+    }
+
+    const notas = parseRelatorioERP(texto);
+
+    if (notas.length === 0) {
+        document.getElementById('import-preview-container').innerHTML = `<div class="empty-state">Nenhuma nota fiscal foi reconhecida neste texto. Verifique se o conteúdo colado é o relatório correto.</div>`;
+        return;
+    }
+
+    notasImportadasPreview = notas;
+    renderPreviewImportacao();
+    toast(`${notas.length} nota(s) encontrada(s)!`);
+}
+
+function renderPreviewImportacao() {
+    const container = document.getElementById('import-preview-container');
+    if (!container) return;
+
+    if (notasImportadasPreview.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const itensHTML = notasImportadasPreview.map((nota, idx) => {
+        const apelidoEncontrado = encontrarApelidoFornecedor(nota.fornecedor);
+        const fornecedorExibido = apelidoEncontrado || nota.fornecedor;
+        const duplicata = verificarDuplicidade(fornecedorExibido, nota.nf);
+        const avisosHTML = nota.avisos.length
+            ? `<div class="import-avisos">${nota.avisos.map(a => `<div class="import-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${a}</div>`).join('')}</div>`
+            : '';
+        const badgeDup = duplicata ? `<div class="import-badge"><i class="fa-solid fa-triangle-exclamation"></i> Já existe uma nota pendente com este fornecedor + NF</div>` : '';
+        const badgeApelido = apelidoEncontrado ? `<div class="import-badge import-badge-info"><i class="fa-solid fa-wand-magic-sparkles"></i> Apelido aplicado automaticamente (nome no relatório: "${nota.fornecedor}")</div>` : '';
+
+        return `
+        <div class="nota-item import-item" data-import-idx="${idx}">
+            <label class="import-checkbox-row">
+                <input type="checkbox" class="import-check" data-idx="${idx}" ${duplicata ? '' : 'checked'} onchange="atualizarContadorImportacao()">
+                <span>Importar esta nota${nota.parcelas > 1 ? ` (parcelada ${nota.parcelas}x)` : ''}</span>
+            </label>
+            ${badgeDup}
+            ${badgeApelido}
+            <div class="campo"><label>Fornecedor</label><input type="text" class="form-field import-field-forn" data-idx="${idx}" value="${fornecedorExibido}"></div>
+            <div class="campo"><label>NF</label><input type="text" class="form-field import-field-nf" data-idx="${idx}" value="${nota.nf}"></div>
+            <div class="campo"><label>Data</label><input type="text" class="form-field import-field-data" data-idx="${idx}" value="${nota.data}" oninput="formatarDataInput(this)"></div>
+            <div class="campo"><label>Vencimento</label><input type="text" class="form-field import-field-venc" data-idx="${idx}" value="${nota.vencimento}" oninput="formatarDataInput(this)"></div>
+            <div class="campo"><label>Valor Total</label><input type="text" class="form-field import-field-valor" data-idx="${idx}" value="${nota.valor}" onblur="formatarValorBlur(event)"></div>
+            ${avisosHTML}
+        </div>`;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="card import-summary">
+            <strong>${notasImportadasPreview.length}</strong> nota(s) fiscal(is) encontrada(s). Revise os campos abaixo (notas com aviso ⚠️ merecem atenção extra) e confirme a importação.
+            <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+                <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
+                <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(true)">Marcar Todas</button>
+            </div>
+        </div>
+        ${itensHTML}
+        <div class="actions" style="margin-top: 8px;">
+            <button class="actions-button" style="background-color: var(--button-success);" onclick="confirmarImportacaoLote()">
+                <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span>
+                Importar Selecionadas (<span id="import-count-selected">${notasImportadasPreview.length}</span>)
+            </button>
+        </div>`;
+
+    atualizarContadorImportacao();
+}
+
+function selecionarTodasImportacao(marcar) {
+    document.querySelectorAll('.import-check').forEach(chk => { chk.checked = marcar; });
+    atualizarContadorImportacao();
+}
+
+function atualizarContadorImportacao() {
+    const total = document.querySelectorAll('.import-check:checked').length;
+    const span = document.getElementById('import-count-selected');
+    if (span) span.textContent = total;
+}
+
+async function confirmarImportacaoLote() {
+    const checks = Array.from(document.querySelectorAll('.import-check'));
+    const selecionadas = checks.filter(c => c.checked);
+
+    if (selecionadas.length === 0) {
+        return toast('Nenhuma nota selecionada para importar.');
+    }
+
+    showConfirmModal({
+        title: 'Confirmar Importação',
+        message: `Importar ${selecionadas.length} nota(s) fiscal(is) para a lista de notas pendentes?`,
+        confirmText: 'Sim, Importar',
+        confirmClass: 'success',
+        onConfirm: async () => {
+            try {
+                const batch = firestore.batch();
+                const fornecedoresNovos = new Set();
+                const checklistInicial = Object.keys(checklistDefinition).reduce((acc, key) => ({ ...acc, [key]: false }), {});
+                checklistInicial.tirarFoto = false;
+
+                selecionadas.forEach(chk => {
+                    const idx = chk.dataset.idx;
+                    const fornecedor = document.querySelector(`.import-field-forn[data-idx="${idx}"]`).value.trim().toUpperCase();
+                    const nf = document.querySelector(`.import-field-nf[data-idx="${idx}"]`).value.trim();
+                    const data = document.querySelector(`.import-field-data[data-idx="${idx}"]`).value.trim();
+                    const vencimento = document.querySelector(`.import-field-venc[data-idx="${idx}"]`).value.trim();
+                    const valor = document.querySelector(`.import-field-valor[data-idx="${idx}"]`).value.trim();
+
+                    if (!fornecedor) return;
+
+                    const novaNotaRef = notasCollection.doc();
+                    batch.set(novaNotaRef, {
+                        data,
+                        nf,
+                        vencimento,
+                        valor,
+                        fornecedor,
+                        obs: '',
+                        enviada: false,
+                        dataCriacao: (new Date).toISOString(),
+                        checklist: checklistInicial
+                    });
+
+                    if (fornecedor) fornecedoresNovos.add(fornecedor);
+                });
+
+                await batch.commit();
+
+                for (const f of fornecedoresNovos) {
+                    await adicionarFornecedor(f, true);
+                }
+
+                toast(`✓ ${selecionadas.length} nota(s) importada(s) com sucesso!`);
+
+                notasImportadasPreview = [];
+                document.getElementById('import-preview-container').innerHTML = '';
+                document.getElementById('import-textarea').value = '';
+            } catch (e) {
+                console.error('Erro ao importar notas:', e);
+                toast('✕ Erro ao importar as notas.');
+            }
+        }
+    });
+}
