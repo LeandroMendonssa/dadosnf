@@ -21,6 +21,13 @@ const settingsDocRef = firestore.collection('config').doc('appSettings');
 
 // --- ESTADO GLOBAL ---
 let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {}, apelidosFornecedores = {};
+
+// --- SELEÇÃO EM LOTE (notas e fornecedores) ---
+let selectionModeNotas = false;
+let notasSelecionadas = new Set();
+let selectionModeFornecedores = false;
+let fornecedoresSelecionados = new Set();
+let filtroFornecedoresTexto = '';
 let isChecklistUpdate = false;
 let isInitialLoad = true;
 
@@ -88,8 +95,25 @@ const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
 
 // --- FUNÇÕES DE SETUP (LAYOUT) ---
-const setAppHeight = () => { document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`); };
+// window.innerHeight pode reportar um valor errado/desatualizado logo na
+// abertura da página (ex: navegador em tela dividida/snap do Windows, barras
+// de endereço móveis que ainda estão animando), cortando o rodapé do app até
+// algum evento de resize "de verdade" acontecer depois. Por isso: preferimos
+// visualViewport.height quando disponível (mais confiável), e recalculamos em
+// vários momentos-gatilho, não só uma vez.
+const setAppHeight = () => {
+    const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${h}px`);
+};
 window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 150));
+window.addEventListener('load', setAppHeight);
+if (window.visualViewport) { window.visualViewport.addEventListener('resize', setAppHeight); }
+// Rede de segurança: reforça o cálculo pouco depois da carga inicial, pra
+// cobrir casos em que o navegador ainda está terminando de ajustar o layout
+// da janela (comum em tela dividida) quando o app já rodou o cálculo inicial.
+setTimeout(setAppHeight, 300);
+setTimeout(setAppHeight, 1000);
 
 const setupKeyboardListener = () => {
     if (!('visualViewport' in window)) return;
@@ -261,7 +285,7 @@ function limparFormularioPrincipal(comFoco=true){
 
 function atualizarContadorExportacao() {
     if(DOM.totalNotasExport) {
-        DOM.totalNotasExport.textContent = notasPendentes.length;
+        DOM.totalNotasExport.textContent = notasPendentes.filter(n => !n.emEspera).length;
     }
 }
 
@@ -334,9 +358,13 @@ function atualizarRelatorios() {
 // --- LISTENERS DE DADOS ---
 function iniciarListenerConfiguracoes() { 
     settingsDocRef.onSnapshot(doc => { 
+      try {
         if (doc.exists) { 
             const data = doc.data(); 
-            fornecedoresSugeridos = data.fornecedores || []; 
+            // Sanitiza: remove entradas que não sejam texto (ex: null/undefined que
+            // possam ter ficado na lista por algum motivo), pra nunca travar a tela
+            // de carregamento por causa de um item inválido na lista de fornecedores.
+            fornecedoresSugeridos = (Array.isArray(data.fornecedores) ? data.fornecedores : []).filter(f => typeof f === 'string' && f.trim() !== '');
             observacoesSugeridas = data.observacoes || appConfig.observacoes; 
             pedidosRecursos = data.pedidosRecursos || {}; 
             apelidosFornecedores = data.apelidosFornecedores || {}; 
@@ -371,13 +399,19 @@ function iniciarListenerConfiguracoes() {
         } 
         
         aplicarPersonalizacoes(); 
-        
+      } catch (e) {
+        // Nunca deixa a tela de carregamento travada por causa de um erro
+        // inesperado aqui — loga o erro pra investigar, mas libera a tela.
+        console.error('Erro ao processar configurações:', e);
+        toast('Algumas configurações não carregaram corretamente.');
+      } finally {
         if (isInitialLoad) { 
             document.body.classList.remove('is-loading'); 
             const appLoader = document.getElementById('app-loader'); 
             if (appLoader) appLoader.classList.add('app-loader-hidden'); 
             isInitialLoad = false; 
         } 
+      }
     }, error => { 
         console.error("Erro config:", error); 
         toast("Erro ao carregar configurações."); 
@@ -410,8 +444,9 @@ function handleSnapshotChanges(snapshot){
     notasPendentes = newNotas;
     rebuildNotasPendentesList();
     
-    // Atualiza funcionalidades dependentes
-    DOM.saida.value = buildSaidaText(notasPendentes);
+    // Atualiza funcionalidades dependentes. Notas marcadas como "pendente" (em
+    // espera) ficam de fora do texto de exportação.
+    DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
     atualizarContadorExportacao();
     atualizarRelatorios();
 }
@@ -419,13 +454,18 @@ function handleSnapshotChanges(snapshot){
 // --- OUTRAS FUNÇÕES AUXILIARES ---
 function rebuildNotasPendentesList(){
     if(!DOM.listaNotas) return;
+
+    DOM.listaNotas.classList.toggle('selection-mode', selectionModeNotas);
+    atualizarContadorGerenciar();
     
     const createNotaHTML = nota => {
-        const shareBtnHTML=`<button class="whatsapp-btn icon-only" onclick="compartilharNota('${nota.id}')"><i class="fab fa-whatsapp"></i></button>`;
         const totalTasks=Object.keys(checklistDefinition).length;
         const completedTasks=nota.checklist?Object.values(nota.checklist).filter(Boolean).length:0;
-        const progressPercent=totalTasks>0?(completedTasks/totalTasks)*100:0;
-        return`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}</div><div class="progress-bar-container"><div class="progress-bar" style="width: ${progressPercent}%"></div></div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '${nota.id}')">Progresso: ${completedTasks}/${totalTasks}</button></div><div class="actions-group">${shareBtnHTML}<button class="edit-btn icon-only" onclick="toggleEditPanel(this, '${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i><span class="material-icons">edit</span></span></button><button class="delete-btn icon-only" onclick="deletarNota('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete</span></span></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="panel-content">${gerarHtmlChecklist(nota)}</div></div>`;
+        const holdBadgeHTML = nota.emEspera ? `<span class="badge-pendente"><i class="fa-solid fa-hourglass-half"></i> Pendente</span>` : '';
+        const holdBtnHTML = `<button class="hold-btn icon-only ${nota.emEspera ? 'active' : ''}" onclick="toggleEmEspera('${nota.id}')" title="${nota.emEspera ? 'Remover da pendência (volta a aparecer na exportação)' : 'Marcar como pendente (não aparece na exportação)'}"><span class="icon-wrapper"><i class="fa-solid fa-hourglass-half"></i></span></button>`;
+        const recursoHTML = nota.obs ? ` | Recurso: ${nota.obs}` : '';
+        const checked = notasSelecionadas.has(nota.id) ? 'checked' : '';
+        return`<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${checked} onchange="toggleNotaSelecionada('${nota.id}')"></label><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '${nota.id}')">Progresso: ${completedTasks}/${totalTasks}</button></div><div class="actions-group">${holdBtnHTML}<button class="edit-btn icon-only" onclick="toggleEditPanel(this, '${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i><span class="material-icons">edit</span></span></button><button class="delete-btn icon-only" onclick="deletarNota('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete</span></span></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="panel-content">${gerarHtmlChecklist(nota)}</div></div>`;
     };
 
     if(notasPendentes.length===0){
@@ -437,18 +477,19 @@ function rebuildNotasPendentesList(){
     const domNoteIds = new Set(Array.from(DOM.listaNotas.children).map(li=>li.dataset.noteId));
     const newNoteIds = new Set(notasPendentes.map(n=>n.id));
     for(const id of domNoteIds){ if(!newNoteIds.has(id)){ const el=DOM.listaNotas.querySelector(`div[data-note-id="${id}"]`); if(el)el.remove(); } }
+    const getNotaClassName = (nota) => `nota-item ${nota.enviada?'nota-enviada':''} ${nota.emEspera?'nota-pendente':''}`.trim();
     notasPendentes.forEach((nota,index)=>{
         const existingEl = DOM.listaNotas.querySelector(`div[data-note-id="${nota.id}"]`);
         const newHTML = createNotaHTML(nota);
         if(existingEl){
             if(existingEl.innerHTML!==newHTML){
                 existingEl.innerHTML=newHTML;
-                existingEl.className=`nota-item ${nota.enviada?'nota-enviada':''}`;
+                existingEl.className=getNotaClassName(nota);
                 if(!document.hidden) existingEl.classList.add('highlight-update');
             }
         } else {
             const div=document.createElement('div');
-            div.className=`nota-item`;
+            div.className=getNotaClassName(nota);
             div.dataset.noteId=nota.id;
             div.innerHTML=newHTML;
             const referenceNode=DOM.listaNotas.children[index];
@@ -456,6 +497,153 @@ function rebuildNotasPendentesList(){
             if(!document.hidden) div.classList.add('highlight-update');
         }
     });
+}
+
+// --- SELEÇÃO EM LOTE DE NOTAS (Gerenciar) ---
+
+function atualizarContadorGerenciar() {
+    const counterEl = document.getElementById('manage-counter');
+    if (!counterEl) return;
+    const total = notasPendentes.length;
+    const pendentesCount = notasPendentes.filter(n => n.emEspera).length;
+    counterEl.textContent = `${total} nota${total === 1 ? '' : 's'}${pendentesCount > 0 ? ` · ${pendentesCount} pendente${pendentesCount === 1 ? '' : 's'}` : ''}`;
+}
+
+function toggleSelectionModeNotas() {
+    selectionModeNotas = !selectionModeNotas;
+    if (!selectionModeNotas) notasSelecionadas.clear();
+    const btn = document.getElementById('select-mode-btn');
+    if (btn) btn.classList.toggle('active', selectionModeNotas);
+    const toolbarBtn = document.getElementById('bulk-select-all-notas');
+    if (toolbarBtn) toolbarBtn.style.display = selectionModeNotas ? 'inline-flex' : 'none';
+    rebuildNotasPendentesList();
+    atualizarBulkBarNotas();
+}
+
+function toggleNotaSelecionada(id) {
+    if (notasSelecionadas.has(id)) notasSelecionadas.delete(id);
+    else notasSelecionadas.add(id);
+    atualizarBulkBarNotas();
+    const el = document.querySelector(`div[data-note-id="${id}"]`);
+    if (el) el.classList.toggle('nota-selected', notasSelecionadas.has(id));
+}
+
+function selecionarTodasNotasToggle() {
+    if (notasSelecionadas.size === notasPendentes.length) {
+        notasSelecionadas.clear();
+    } else {
+        notasSelecionadas = new Set(notasPendentes.map(n => n.id));
+    }
+    rebuildNotasPendentesList();
+    atualizarBulkBarNotas();
+}
+
+function atualizarBulkBarNotas() {
+    const bar = document.getElementById('bulk-action-bar-notas');
+    if (!bar) return;
+    bar.classList.toggle('active', selectionModeNotas);
+    const count = notasSelecionadas.size;
+    const countEl = document.getElementById('bulk-count-notas');
+    if (countEl) countEl.textContent = `${count} selecionada${count === 1 ? '' : 's'}`;
+    const selectAllBtn = document.getElementById('bulk-select-all-notas');
+    if (selectAllBtn) selectAllBtn.textContent = (count === notasPendentes.length && count > 0) ? 'Nenhuma' : 'Todas';
+    document.querySelectorAll('#bulk-action-bar-notas .bulk-buttons button').forEach(b => b.disabled = count === 0);
+}
+
+async function bulkMarcarPendente(valor) {
+    const ids = Array.from(notasSelecionadas);
+    if (ids.length === 0) return;
+    try {
+        const batch = firestore.batch();
+        ids.forEach(id => {
+            const nota = notasPendentes.find(n => n.id === id);
+            if (nota) nota.emEspera = valor;
+            batch.update(notasCollection.doc(id), { emEspera: valor });
+        });
+        rebuildNotasPendentesList();
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+        atualizarContadorExportacao();
+        await batch.commit();
+        toast(valor ? `⏳ ${ids.length} nota(s) marcada(s) como pendente.` : `✓ ${ids.length} nota(s) removida(s) da pendência.`);
+    } catch (e) {
+        console.error('Erro ao atualizar notas em lote:', e);
+        toast('✕ Erro ao atualizar as notas selecionadas.');
+    }
+}
+
+function bulkExcluirNotas() {
+    const ids = Array.from(notasSelecionadas);
+    if (ids.length === 0) return;
+    showConfirmModal({
+        title: 'Excluir Notas Selecionadas',
+        message: `Deseja excluir ${ids.length} nota(s) permanentemente? Essa ação não pode ser desfeita.`,
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                const batch = firestore.batch();
+                ids.forEach(id => batch.delete(notasCollection.doc(id)));
+                await batch.commit();
+                notasSelecionadas.clear();
+                toggleSelectionModeNotas();
+                toast(`🗑️ ${ids.length} nota(s) excluída(s).`);
+            } catch (e) {
+                console.error('Erro ao excluir notas em lote:', e);
+                toast('✕ Erro ao excluir as notas selecionadas.');
+            }
+        }
+    });
+}
+
+function abrirEdicaoEmLoteNotas() {
+    if (notasSelecionadas.size === 0) return;
+    document.getElementById('bulk-edit-count').textContent = notasSelecionadas.size;
+    document.getElementById('bulk-edit-forn').value = '';
+    document.getElementById('bulk-edit-venc').value = '';
+    document.getElementById('bulk-edit-obs').innerHTML = DOM.obs.innerHTML;
+    document.getElementById('bulk-edit-obs').value = '';
+    document.getElementById('bulk-edit-notas-modal').classList.add('active');
+}
+
+function fecharEdicaoEmLoteNotas() {
+    document.getElementById('bulk-edit-notas-modal').classList.remove('active');
+}
+
+async function salvarEdicaoEmLoteNotas() {
+    const ids = Array.from(notasSelecionadas);
+    if (ids.length === 0) return fecharEdicaoEmLoteNotas();
+
+    const forn = document.getElementById('bulk-edit-forn').value.trim().toUpperCase();
+    const venc = document.getElementById('bulk-edit-venc').value.trim();
+    const obs = document.getElementById('bulk-edit-obs').value;
+
+    const updateData = {};
+    if (forn) updateData.fornecedor = forn;
+    if (venc) updateData.vencimento = venc;
+    if (obs) updateData.obs = obs;
+
+    if (Object.keys(updateData).length === 0) {
+        toast('Preencha ao menos um campo para alterar.');
+        return;
+    }
+
+    try {
+        const batch = firestore.batch();
+        ids.forEach(id => {
+            const nota = notasPendentes.find(n => n.id === id);
+            if (nota) Object.assign(nota, updateData);
+            batch.update(notasCollection.doc(id), updateData);
+        });
+        await batch.commit();
+        if (forn) await adicionarFornecedor(forn, true);
+        rebuildNotasPendentesList();
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+        fecharEdicaoEmLoteNotas();
+        toast(`✓ ${ids.length} nota(s) atualizada(s).`);
+    } catch (e) {
+        console.error('Erro ao editar notas em lote:', e);
+        toast('✕ Erro ao editar as notas selecionadas.');
+    }
 }
 
 // --- FUNÇÕES DE EXPORTAÇÃO E ORDENAÇÃO ---
@@ -468,8 +656,9 @@ function getLinha(nota){
 function buildSaidaText(notas){ return notas.map(getLinha).join("\n"); }
 
 function ordenarExportacao() {
-    if (notasPendentes.length === 0) return toast("Nada para ordenar.");
-    const notasOrdenadas = [...notasPendentes].sort((a, b) => {
+    const notasParaExportar = notasPendentes.filter(n => !n.emEspera);
+    if (notasParaExportar.length === 0) return toast("Nada para ordenar.");
+    const notasOrdenadas = [...notasParaExportar].sort((a, b) => {
         const recursoA = (a.obs || '').toUpperCase();
         const recursoB = (b.obs || '').toUpperCase();
         if (recursoA < recursoB) return -1;
@@ -573,11 +762,102 @@ function copiarAnotacoes() { const b = document.getElementById('anotacoes-copiar
 function limparAnotacoes() { showConfirmModal({ title: "Limpar Anotações?", message: "Apagar todo o conteúdo?", confirmText: "Limpar", onConfirm: () => { document.getElementById('anotacoes-textarea').value = ''; salvarAnotacoesAutomatico(); toast("Anotações limpas."); } }); }
 
 // Funções de Gerenciamento (Fornecedores/Pedidos/Obs)
-async function adicionarFornecedor(forn, noToast = false) {const f = forn.trim().toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {fornecedoresSugeridos.push(f);await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
+async function adicionarFornecedor(forn, noToast = false) {const f = String(forn || '').trim().toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {fornecedoresSugeridos.push(f);await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
 async function adicionarFornecedorManage(){const f=DOM.fornManageInput.value.trim();if(f){await adicionarFornecedor(f);DOM.fornManageInput.value=''}}
 async function deletarFornecedor(f){showConfirmModal({title:"Excluir Fornecedor",message:`Excluir "${f}"?`,onConfirm:async()=>{fornecedoresSugeridos = fornecedoresSugeridos.filter(item => item !== f);await settingsDocRef.update({fornecedores:firebase.firestore.FieldValue.arrayRemove(f)});toast(`Fornecedor ${f} excluído.`)}})}
 function popularDatalist(){DOM.fornDatalist.innerHTML='';fornecedoresSugeridos.sort().forEach(f=>DOM.fornDatalist.innerHTML+=`<option value="${f}"></option>`);popularListaFornecedores()}
-function popularListaFornecedores(){DOM.listaFornManage.innerHTML='';fornecedoresSugeridos.sort().forEach(f=>DOM.listaFornManage.innerHTML+=`<li>${f} <button onclick="deletarFornecedor('${f}')"><i class="fa-solid fa-times-circle"></i></button></li>`)}
+
+function popularListaFornecedores(){
+    DOM.listaFornManage.classList.toggle('selection-mode', selectionModeFornecedores);
+    const termo = filtroFornecedoresTexto.trim().toUpperCase();
+    const lista = fornecedoresSugeridos.slice().sort().filter(f => !termo || String(f).toUpperCase().includes(termo));
+
+    const counterEl = document.getElementById('forn-counter');
+    if (counterEl) counterEl.textContent = `${lista.length} de ${fornecedoresSugeridos.length} fornecedor${fornecedoresSugeridos.length === 1 ? '' : 'es'}`;
+
+    if (lista.length === 0) {
+        DOM.listaFornManage.innerHTML = `<li style="justify-content:center; color: var(--text-light);">Nenhum fornecedor encontrado.</li>`;
+        atualizarBulkBarFornecedores();
+        return;
+    }
+
+    DOM.listaFornManage.innerHTML = lista.map(f => {
+        const fEsc = String(f).replace(/'/g, "\\'");
+        const checked = fornecedoresSelecionados.has(f) ? 'checked' : '';
+        return `<li class="${fornecedoresSelecionados.has(f) ? 'forn-selected' : ''}"><label class="forn-select-checkbox"><input type="checkbox" ${checked} onchange="toggleFornecedorSelecionado('${fEsc}')"></label><span class="forn-nome">${f}</span> <button onclick="deletarFornecedor('${fEsc}')"><i class="fa-solid fa-times-circle"></i></button></li>`;
+    }).join('');
+
+    atualizarBulkBarFornecedores();
+}
+
+// --- SELEÇÃO EM LOTE E FILTRO DE FORNECEDORES ---
+
+function filtrarFornecedores(texto) {
+    filtroFornecedoresTexto = texto;
+    popularListaFornecedores();
+}
+
+function toggleSelectionModeFornecedores() {
+    selectionModeFornecedores = !selectionModeFornecedores;
+    if (!selectionModeFornecedores) fornecedoresSelecionados.clear();
+    const btn = document.getElementById('forn-select-mode-btn');
+    if (btn) btn.textContent = selectionModeFornecedores ? 'Cancelar Seleção' : 'Selecionar Múltiplos';
+    const toolbarBtn = document.getElementById('bulk-select-all-fornecedores');
+    if (toolbarBtn) toolbarBtn.style.display = selectionModeFornecedores ? 'inline-flex' : 'none';
+    popularListaFornecedores();
+}
+
+function toggleFornecedorSelecionado(nome) {
+    if (fornecedoresSelecionados.has(nome)) fornecedoresSelecionados.delete(nome);
+    else fornecedoresSelecionados.add(nome);
+    atualizarBulkBarFornecedores();
+    document.querySelectorAll('#lista-fornecedores-manage li').forEach(li => {
+        const span = li.querySelector('.forn-nome');
+        if (span && span.textContent === nome) li.classList.toggle('forn-selected', fornecedoresSelecionados.has(nome));
+    });
+}
+
+function selecionarTodosFornecedoresVisiveisToggle() {
+    const termo = filtroFornecedoresTexto.trim().toUpperCase();
+    const visiveis = fornecedoresSugeridos.filter(f => !termo || String(f).toUpperCase().includes(termo));
+    const todosSelecionados = visiveis.length > 0 && visiveis.every(f => fornecedoresSelecionados.has(f));
+    if (todosSelecionados) visiveis.forEach(f => fornecedoresSelecionados.delete(f));
+    else visiveis.forEach(f => fornecedoresSelecionados.add(f));
+    popularListaFornecedores();
+}
+
+function atualizarBulkBarFornecedores() {
+    const bar = document.getElementById('bulk-action-bar-fornecedores');
+    if (!bar) return;
+    bar.classList.toggle('active', selectionModeFornecedores);
+    const count = fornecedoresSelecionados.size;
+    const countEl = document.getElementById('bulk-count-fornecedores');
+    if (countEl) countEl.textContent = `${count} selecionado${count === 1 ? '' : 's'}`;
+    const excluirBtn = document.getElementById('bulk-excluir-fornecedores-btn');
+    if (excluirBtn) excluirBtn.disabled = count === 0;
+}
+
+async function bulkExcluirFornecedores() {
+    const nomes = Array.from(fornecedoresSelecionados);
+    if (nomes.length === 0) return;
+    showConfirmModal({
+        title: 'Excluir Fornecedores',
+        message: `Excluir ${nomes.length} fornecedor(es) selecionado(s) da lista? Isso não afeta notas já cadastradas com esse nome.`,
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                fornecedoresSugeridos = fornecedoresSugeridos.filter(f => !fornecedoresSelecionados.has(f));
+                await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });
+                toast(`🗑️ ${nomes.length} fornecedor(es) excluído(s).`);
+                toggleSelectionModeFornecedores();
+            } catch (e) {
+                console.error('Erro ao excluir fornecedores em lote:', e);
+                toast('✕ Erro ao excluir fornecedores.');
+            }
+        }
+    });
+}
 
 // --- APELIDOS DE FORNECEDORES ---
 // Mapeia o nome completo/legal do fornecedor (como aparece no ERP/nota) para o
@@ -649,20 +929,142 @@ function popularListaApelidos() {
     });
 }
 
+// --- IMPORTAÇÃO EM MASSA DE FORNECEDORES ---
+// Permite colar/subir uma lista (ex: exportada da planilha mestre de repasse de
+// notas) com um fornecedor por linha, e adicionar todos de uma vez só — em vez
+// de precisar cadastrar um por um.
+
+let listaFornecedoresParaImportar = [];
+
+async function colarListaFornecedores() {
+    const textarea = document.getElementById('import-forn-textarea');
+    try {
+        const texto = await navigator.clipboard.readText();
+        textarea.value = texto;
+        toast('Texto colado!');
+    } catch (err) {
+        toast('Permissão negada ou não suportada. Cole manualmente (Ctrl+V).');
+    }
+}
+
+function handleFornecedoresFileUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const texto = decodificarArquivoTexto(e.target.result);
+        document.getElementById('import-forn-textarea').value = texto;
+        toast('Arquivo carregado! Clique em "Processar Lista".');
+    };
+    reader.onerror = () => toast('Erro ao ler o arquivo.');
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+}
+
+function processarListaFornecedores() {
+    try {
+        const textareaEl = document.getElementById('import-forn-textarea');
+        if (!textareaEl) return toast('Erro interno: campo de texto não encontrado. Atualize a página (Ctrl+Shift+R) e tente de novo.');
+        const texto = textareaEl.value;
+        if (!texto || !texto.trim()) {
+            return toast('Cole ou envie a lista antes de processar.');
+        }
+
+        // Aceita um nome por linha (ou separados por vírgula/ponto e vírgula, caso
+        // venha de uma célula só).
+        const nomesBrutos = texto.split(/[\n,;]+/).map(n => n.trim().toUpperCase()).filter(Boolean);
+        const nomesUnicos = [...new Set(nomesBrutos)];
+
+        const existentes = new Set((fornecedoresSugeridos || []).map(f => f.toUpperCase()));
+        const novos = nomesUnicos.filter(n => !existentes.has(n));
+        const jaExistiam = nomesUnicos.length - novos.length;
+
+        listaFornecedoresParaImportar = novos;
+        const container = document.getElementById('import-forn-preview');
+
+        if (novos.length === 0) {
+            container.innerHTML = `<div class="empty-state">Nenhum fornecedor novo encontrado${jaExistiam > 0 ? ` (${jaExistiam} já estavam cadastrados)` : ''}.</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+        <div class="card import-summary">
+            <strong>${novos.length}</strong> fornecedor(es) novo(s) serão adicionados${jaExistiam > 0 ? ` (${jaExistiam} já existiam e foram ignorados)` : ''}.
+            <div style="max-height:220px; overflow-y:auto; margin-top:12px; padding:12px; background:var(--bg-primary); border-radius:10px; font-size:13px; color:var(--text-dark); line-height:1.7;">
+                ${novos.map(n => `<div>• ${n}</div>`).join('')}
+            </div>
+            <div class="actions" style="margin-top:16px;">
+                <button class="actions-button" style="background-color: var(--button-success);" onclick="confirmarImportacaoFornecedores()">
+                    <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span> Importar ${novos.length} Fornecedor(es)
+                </button>
+            </div>
+        </div>`;
+    } catch (e) {
+        console.error('Erro ao processar lista de fornecedores:', e);
+        toast('✕ Erro ao processar a lista. Veja o console para detalhes.');
+    }
+}
+
+async function confirmarImportacaoFornecedores() {
+    if (listaFornecedoresParaImportar.length === 0) return;
+
+    showConfirmModal({
+        title: 'Confirmar Importação',
+        message: `Adicionar ${listaFornecedoresParaImportar.length} fornecedor(es) à lista?`,
+        confirmText: 'Sim, Importar',
+        confirmClass: 'success',
+        onConfirm: async () => {
+            try {
+                const novaLista = [...fornecedoresSugeridos, ...listaFornecedoresParaImportar];
+                await settingsDocRef.set({ fornecedores: novaLista }, { merge: true });
+                toast(`✓ ${listaFornecedoresParaImportar.length} fornecedor(es) importado(s)!`);
+                listaFornecedoresParaImportar = [];
+                document.getElementById('import-forn-preview').innerHTML = '';
+                document.getElementById('import-forn-textarea').value = '';
+            } catch (e) {
+                console.error('Erro ao importar fornecedores:', e);
+                toast('✕ Erro ao importar fornecedores.');
+            }
+        }
+    });
+}
+
 // Procura um apelido cadastrado para um nome de fornecedor vindo do ERP.
 // O nome do ERP costuma vir truncado (ex: "COMERCIAL CIRURGICA RIOCLARENS"),
 // por isso o match considera prefixo em qualquer direção, além do match exato.
+function escapeRegex(str) {
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function encontrarApelidoFornecedor(nomeOrigem) {
     const nome = (nomeOrigem || '').trim().toUpperCase();
     if (!nome) return null;
 
+    // 1) Alias explícito cadastrado (nome completo -> apelido), com match de prefixo
+    //    (cobre nomes truncados pelo ERP no final, ex: "...RIOCLARENS" -> "...RIOCLARENSE")
     if (apelidosFornecedores[nome]) return apelidosFornecedores[nome];
-
     for (const chave in apelidosFornecedores) {
         if (chave.startsWith(nome) || nome.startsWith(chave)) {
             return apelidosFornecedores[chave];
         }
     }
+
+    // 2) Fornecedores já cadastrados na lista (nomes curtos conhecidos). Procura
+    //    se algum deles aparece como PALAVRA em qualquer posição do nome que veio
+    //    do ERP — não só no começo. É assim que "COMERCIAL CIRURGICA RIOCLARENSE"
+    //    casa com o fornecedor "RIOCLARENSE" já cadastrado, mesmo sendo a última
+    //    palavra. Em caso de mais de um bater, usa o nome conhecido mais longo
+    //    (mais específico).
+    const candidatos = fornecedoresSugeridos.filter(f => {
+        if (!f || typeof f !== 'string' || f.length < 3) return false; // evita siglas de 1-2 letras darem falso positivo
+        const regex = new RegExp('\\b' + escapeRegex(f) + '\\b');
+        return regex.test(nome);
+    });
+    if (candidatos.length > 0) {
+        candidatos.sort((a, b) => b.length - a.length);
+        return candidatos[0];
+    }
+
     return null;
 }
 
@@ -686,7 +1088,7 @@ async function deletarPedido(p) { showConfirmModal({ title: "Excluir Pedido", me
 function popularListaPedidos(){DOM.listaPedidos.innerHTML='';const pedidosOrdenados=Object.keys(pedidosRecursos).sort((a,b)=>Number(a)-Number(b));pedidosOrdenados.forEach(p=>{DOM.listaPedidos.innerHTML+=`<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fa-solid fa-times-circle"></i></button></li>`})}
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = ['screen-fornecedores', 'screen-pedidos', 'screen-observacoes', 'screen-personalizacao']; document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = ['screen-fornecedores', 'screen-pedidos', 'screen-observacoes', 'screen-personalizacao']; document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
@@ -695,9 +1097,40 @@ function toggleEditPanel(btn,notaId){const notaItem=btn.closest('.nota-item');co
 async function salvarEdicao(id){const notaItem=document.querySelector(`div[data-note-id="${id}"]`);const data={fornecedor:notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),nf:notaItem.querySelector(`.nfEdit`).value.trim(),vencimento:notaItem.querySelector(`.vencEdit`).value.trim(),valor:notaItem.querySelector(`.valorEdit`).value.trim(),obs:notaItem.querySelector(`.obsEdit`).value.trim()};await notasCollection.doc(id).update(data);await adicionarFornecedor(data.fornecedor,true);toast('✓ Nota editada!');notaItem.querySelector('.edit-panel').classList.remove('show')}
 function generateUniqueId(){return`${Date.now()}-${Math.random().toString(36).substr(2,9)}`}
 async function deletarNota(id){showConfirmModal({title:"Confirmar Exclusão",message:"Deseja excluir esta nota permanentemente?",onConfirm:async()=>{await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")}})}
+
+// Marca/desmarca uma nota como "pendente" (em espera). Notas pendentes continuam
+// aparecendo na aba Gerenciar, mas ficam de fora do texto gerado na aba Exportar,
+// até serem desmarcadas de novo.
+async function toggleEmEspera(id) {
+    const nota = notasPendentes.find(n => n.id === id);
+    if (!nota) return;
+    const novoValor = !nota.emEspera;
+
+    // Atualiza a tela imediatamente (badge, borda e texto de exportação), sem
+    // depender do listener do Firestore: ele tem uma otimização (pensada
+    // originalmente só pro checklist) que pula o re-render quando detecta uma
+    // escrita ainda pendente de confirmação — o que fazia esse toggle parecer
+    // que "não funcionava" até o listener eventualmente sincronizar.
+    nota.emEspera = novoValor;
+    rebuildNotasPendentesList();
+    DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+    atualizarContadorExportacao();
+
+    try {
+        await notasCollection.doc(id).update({ emEspera: novoValor });
+        toast(novoValor ? '⏳ Nota marcada como pendente (fora da exportação).' : '✓ Nota removida da pendência (volta a aparecer na exportação).');
+    } catch (e) {
+        // Escrita falhou: desfaz a mudança local pra não ficar dessincronizado.
+        nota.emEspera = !novoValor;
+        rebuildNotasPendentesList();
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+        atualizarContadorExportacao();
+        console.error('Erro ao marcar nota como pendente:', e);
+        toast('✕ Erro ao atualizar a nota.');
+    }
+}
 async function limpar(){showConfirmModal({title:"Confirmar Arquivamento",message:`Arquivar ${notasPendentes.length} nota(s)?`,confirmText:"Arquivar",confirmClass:"success",onConfirm:async()=>{if(notasPendentes.length===0)return toast("Nada para arquivar.");const batch=firestore.batch();for(const nota of notasPendentes){const{id,...notaData}=nota;notaData.dataHistorico=(new Date).toLocaleString('pt-BR');batch.set(historicoCollection.doc(),notaData);batch.delete(notasCollection.doc(id));}await batch.commit();toast("Notas arquivadas.")}})}
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-async function compartilharNota(id){const nota=notasPendentes.find(n=>n.id===id);const textToShare = `${nota.fornecedor} ${nota.nf||''}`;if(navigator.share){try {await navigator.share({text: textToShare});toast("✓ Compartilhado!");} catch (error) {if(error.name!=='AbortError') toast("Erro.");}} else {try {await navigator.clipboard.writeText(textToShare);toast("Copiado!");} catch (err) {toast("Erro ao copiar.");}}}
 function toggleChecklist(btn,notaId){const notaItem=btn.closest('.nota-item');const checklistContainer=notaItem.querySelector('.checklist-container');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show, .checklist-container.show').forEach(p=>{if(p!==checklistContainer)p.classList.remove('show')});if(editPanel.classList.contains('show'))editPanel.classList.remove('show');checklistContainer.classList.toggle('show')}
 function gerarHtmlChecklist(nota){let html='';const checklistData=nota.checklist||{};for(const key in checklistDefinition){const isChecked=checklistData[key]?'checked':'';html+=`<div class="checklist-item"><input type="checkbox" id="check-${key}-${nota.id}" ${isChecked} onchange="atualizarChecklist('${nota.id}', '${key}', this.checked)"><label for="check-${key}-${nota.id}">${checklistDefinition[key]}</label></div>`}return html}
 function atualizarChecklist(notaId,tarefa,isChecked){isChecklistUpdate=!0;const updateData={};updateData[`checklist.${tarefa}`]=isChecked;notasCollection.doc(notaId).update(updateData).catch(error=>toast("Erro ao salvar progresso."));const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;if(!nota.checklist)nota.checklist={};nota.checklist[tarefa]=isChecked;const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=Object.values(nota.checklist).filter(Boolean).length;const progressPercent=(completedTasks/totalTasks)*100;const notaItemEl=document.querySelector(`div[data-note-id="${notaId}"]`);if(notaItemEl){const progressBar=notaItemEl.querySelector('.progress-bar');const progressButton=notaItemEl.querySelector('.progress-btn');if(progressBar)progressBar.style.width=`${progressPercent}%`;if(progressButton)progressButton.textContent=`Progresso: ${completedTasks}/${totalTasks}`}}
@@ -894,23 +1327,29 @@ function handleImportFileUpload(event) {
 }
 
 function processarRelatorioImportacao() {
-    const textarea = document.getElementById('import-textarea');
-    const texto = textarea.value;
+    try {
+        const textarea = document.getElementById('import-textarea');
+        if (!textarea) return toast('Erro interno: campo de texto não encontrado. Atualize a página (Ctrl+Shift+R) e tente de novo.');
+        const texto = textarea.value;
 
-    if (!texto || !texto.trim()) {
-        return toast('Cole o texto do relatório antes de processar.');
+        if (!texto || !texto.trim()) {
+            return toast('Cole o texto do relatório antes de processar.');
+        }
+
+        const notas = parseRelatorioERP(texto);
+
+        if (notas.length === 0) {
+            document.getElementById('import-preview-container').innerHTML = `<div class="empty-state">Nenhuma nota fiscal foi reconhecida neste texto. Verifique se o conteúdo colado é o relatório correto.</div>`;
+            return;
+        }
+
+        notasImportadasPreview = notas;
+        renderPreviewImportacao();
+        toast(`${notas.length} nota(s) encontrada(s)!`);
+    } catch (e) {
+        console.error('Erro ao processar relatório:', e);
+        toast('✕ Erro ao processar o relatório. Veja o console para detalhes.');
     }
-
-    const notas = parseRelatorioERP(texto);
-
-    if (notas.length === 0) {
-        document.getElementById('import-preview-container').innerHTML = `<div class="empty-state">Nenhuma nota fiscal foi reconhecida neste texto. Verifique se o conteúdo colado é o relatório correto.</div>`;
-        return;
-    }
-
-    notasImportadasPreview = notas;
-    renderPreviewImportacao();
-    toast(`${notas.length} nota(s) encontrada(s)!`);
 }
 
 function renderPreviewImportacao() {

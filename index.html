@@ -20,9 +20,12 @@
 
   <div id="app-loader">
       <div class="app-loader-content">
-          <div class="app-loader-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-          <div class="app-loader-title">Minhas Notas</div>
-          <div class="app-loader-spinner"></div>
+          <div class="apple-spinner">
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+          </div>
+          <div class="app-loader-title">Carregando</div>
       </div>
   </div>
     
@@ -82,6 +85,11 @@
                         <i class="fa-solid fa-sync-alt"></i><span class="material-icons">sync</span>
                     </span>
                 </button>
+                <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;">
+                    <span class="icon-wrapper">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                </button>
                 <button class="header-action" id="close-btn" style="display: none;">
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-times"></i><span class="material-icons">close</span>
@@ -110,6 +118,10 @@
             </div>
             
             <div class="app-screen" id="screen-manage"> 
+                <div class="manage-toolbar">
+                    <span id="manage-counter" class="manage-counter">0 notas</span>
+                    <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
+                </div>
                 <div id="lista-notas-pendentes" class="nota-list"></div> 
             </div>
             
@@ -183,11 +195,33 @@
                 <div class="card">
                     <div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div>
                     <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Fornecedor</button>
+                    <div class="manage-toolbar" style="margin-top: 20px;">
+                        <input type="text" id="forn-filter" class="form-field" placeholder="Filtrar fornecedores..." oninput="filtrarFornecedores(this.value)" style="max-width: 220px;">
+                        <button id="forn-select-mode-btn" class="manage-toolbar-btn" onclick="toggleSelectionModeFornecedores()">Selecionar Múltiplos</button>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; align-items:center; margin: 8px 2px 0;">
+                        <span id="forn-counter" class="manage-counter" style="padding:0;">0 fornecedores</span>
+                        <button id="bulk-select-all-fornecedores" class="manage-toolbar-btn" onclick="selecionarTodosFornecedoresVisiveisToggle()" style="display: none;">Todos Visíveis</button>
+                    </div>
                     <ul id="lista-fornecedores-manage" class="manage-list"></ul>
                 </div>
                 <div class="card" style="margin-top: 16px;">
+                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Importar Lista de Fornecedores</h3>
+                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie um arquivo com um fornecedor por linha (ex: exportado da sua planilha mestre). Os que já existem na lista são identificados e ignorados automaticamente.</p>
+                    <textarea id="import-forn-textarea" class="form-field import-textarea" placeholder="Um fornecedor por linha..."></textarea>
+                    <input type="file" id="import-forn-file-input" accept=".txt,.csv,text/plain" style="display:none;" onchange="handleFornecedoresFileUpload(event)">
+                    <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="actions-button" style="background-color: var(--text-light);" onclick="document.getElementById('import-forn-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
+                        <button class="actions-button" style="background-color: var(--text-light);" onclick="colarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                    </div>
+                    <div class="actions">
+                        <button class="actions-button" style="background-color: var(--accent-color);" onclick="processarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Lista</button>
+                    </div>
+                    <div id="import-forn-preview"></div>
+                </div>
+                <div class="card" style="margin-top: 16px;">
                     <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Apelidos de Fornecedores</h3>
-                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cadastre o nome completo (como aparece na nota/ERP) e o apelido curto que você prefere usar. Ao importar notas, o apelido é preenchido automaticamente.</p>
+                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Use isso apenas para casos específicos que a importação de lista não resolveu. Na maioria das vezes, basta ter o fornecedor cadastrado na lista acima — o app já encontra o nome curto dentro do nome completo automaticamente.</p>
                     <div class="modal-campo"><label>Nome Completo (como está na nota)</label><input type="text" id="alias-nome-completo" placeholder="Ex: COMERCIAL CIRURGICA RIOCLARENSE"></div>
                     <div class="modal-campo"><label>Apelido (nome curto a usar)</label><input type="text" id="alias-apelido" placeholder="Ex: RIOCLARENSE"></div>
                     <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarApelidoFornecedor()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Apelido</button>
@@ -229,8 +263,47 @@
                 </div>
             </div>
         </div>
+
+        <div id="bulk-action-bar-notas" class="bulk-action-bar">
+            <div class="bulk-action-bar-inner">
+                <div class="bulk-select-info">
+                    <span id="bulk-count-notas">0 selecionadas</span>
+                </div>
+                <div class="bulk-buttons">
+                    <button onclick="bulkMarcarPendente(true)" title="Marcar como pendente" disabled><i class="fa-solid fa-hourglass-half"></i></button>
+                    <button onclick="bulkMarcarPendente(false)" title="Remover pendência" disabled><i class="fa-solid fa-hourglass-end"></i></button>
+                    <button onclick="abrirEdicaoEmLoteNotas()" title="Editar em lote" disabled><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="bulkExcluirNotas()" class="danger" title="Excluir selecionadas" disabled><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="bulk-action-bar-fornecedores" class="bulk-action-bar">
+            <div class="bulk-action-bar-inner">
+                <div class="bulk-select-info">
+                    <span id="bulk-count-fornecedores">0 selecionados</span>
+                </div>
+                <div class="bulk-buttons">
+                    <button id="bulk-excluir-fornecedores-btn" onclick="bulkExcluirFornecedores()" class="danger" title="Excluir selecionados" disabled><i class="fa-solid fa-trash"></i> Excluir</button>
+                </div>
+            </div>
+        </div>
     </div>
-    
+
+    <div id="bulk-edit-notas-modal" class="modal-screen">
+        <div class="modal-content" style="max-width: 480px;">
+            <h3 style="margin: 0 0 4px; color: var(--text-dark);">Editar em Lote</h3>
+            <p style="margin: 0 0 20px; font-size: 13px; color: var(--text-light);">Alterando <strong id="bulk-edit-count">0</strong> nota(s). Deixe em branco os campos que não quer alterar.</p>
+            <div class="campo"><label>Fornecedor</label><input type="text" id="bulk-edit-forn" placeholder="Não alterar" list="fornecedores-sugeridos"></div>
+            <div class="campo"><label>Vencimento</label><input type="text" id="bulk-edit-venc" placeholder="Não alterar (dd/mm/aaaa)" oninput="formatarDataInput(this)"></div>
+            <div class="campo"><label>Recurso</label><select id="bulk-edit-obs"><option value="">Não alterar</option></select></div>
+            <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button class="actions-button" style="background-color: var(--text-light);" onclick="fecharEdicaoEmLoteNotas()">Cancelar</button>
+                <button class="actions-button" style="background-color: var(--button-success);" onclick="salvarEdicaoEmLoteNotas()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <nav id="tab-bar" class="tab-bar"></nav>
   </div>
   
