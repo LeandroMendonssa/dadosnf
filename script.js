@@ -176,17 +176,24 @@ function verificarDuplicidade(novoForn, novaNF) {
     const nfNormalizada = normalize(novaNF);
     const fornNormalizado = normalize(novoForn);
 
-    return notasPendentes.find(nota => {
+    const bate = (nota) => {
         const notaNF = normalize(nota.nf);
         const notaForn = normalize(nota.fornecedor);
-        
         // Regra: Mesmo fornecedor E (mesma NF ou NF parecida)
         // Aqui usamos igualdade estrita na normalização, o que pega "123.456" igual a "123456"
-        const mesmoFornecedor = notaForn === fornNormalizado;
-        const mesmaNF = notaNF === nfNormalizada;
-        
-        return mesmoFornecedor && mesmaNF;
-    });
+        return notaForn === fornNormalizado && notaNF === nfNormalizada;
+    };
+
+    const pendente = notasPendentes.find(bate);
+    if (pendente) return { nota: pendente, origem: 'pendente' };
+
+    // Também verifica notas já arquivadas no Histórico — evita reimportar uma
+    // NF de um relatório do ERP que já foi processada e arquivada antes (o
+    // problema de "esquecer qual foi a última NF importada").
+    const arquivada = historicoNotas.find(bate);
+    if (arquivada) return { nota: arquivada, origem: 'historico' };
+
+    return null;
 }
 
 async function salvarNota(){
@@ -210,9 +217,13 @@ async function salvarNota(){
             DOM.forn.classList.remove('input-error');
         }, 1000);
 
+        const mensagemOrigem = duplicata.origem === 'historico'
+            ? `Já existe uma nota ARQUIVADA (histórico) para o fornecedor "${fornecedor}" com a NF "${nf}".`
+            : `Já existe uma nota PENDENTE para o fornecedor "${fornecedor}" com a NF "${nf}".`;
+
         showConfirmModal({
             title: "Nota Duplicada",
-            message: `Já existe uma nota para o fornecedor "${fornecedor}" com a NF "${nf}". Deseja salvar mesmo assim?`,
+            message: `${mensagemOrigem} Deseja salvar mesmo assim?`,
             confirmText: "Sim, Salvar",
             confirmClass: "warning",
             onConfirm: () => executaSalvamento(fornecedor, nf)
@@ -1368,7 +1379,11 @@ function renderPreviewImportacao() {
         const avisosHTML = nota.avisos.length
             ? `<div class="import-avisos">${nota.avisos.map(a => `<div class="import-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${a}</div>`).join('')}</div>`
             : '';
-        const badgeDup = duplicata ? `<div class="import-badge"><i class="fa-solid fa-triangle-exclamation"></i> Já existe uma nota pendente com este fornecedor + NF</div>` : '';
+        const badgeDup = !duplicata ? '' : (
+            duplicata.origem === 'historico'
+                ? `<div class="import-badge import-badge-historico"><i class="fa-solid fa-box-archive"></i> Já foi arquivada antes${duplicata.nota.dataHistorico ? ` (em ${duplicata.nota.dataHistorico})` : ''}</div>`
+                : `<div class="import-badge"><i class="fa-solid fa-triangle-exclamation"></i> Já existe uma nota pendente com este fornecedor + NF</div>`
+        );
         const badgeApelido = apelidoEncontrado ? `<div class="import-badge import-badge-info"><i class="fa-solid fa-wand-magic-sparkles"></i> Apelido aplicado automaticamente (nome no relatório: "${nota.fornecedor}")</div>` : '';
 
         return `
@@ -1379,11 +1394,12 @@ function renderPreviewImportacao() {
             </label>
             ${badgeDup}
             ${badgeApelido}
-            <div class="campo"><label>Fornecedor</label><input type="text" class="form-field import-field-forn" data-idx="${idx}" value="${fornecedorExibido}"></div>
+            <div class="campo"><label>Fornecedor</label><input type="text" class="form-field import-field-forn" data-idx="${idx}" data-original="${nota.fornecedor}" value="${fornecedorExibido}" onblur="handleEdicaoFornecedorImportacao(this)"></div>
             <div class="campo"><label>NF</label><input type="text" class="form-field import-field-nf" data-idx="${idx}" value="${nota.nf}"></div>
             <div class="campo"><label>Data</label><input type="text" class="form-field import-field-data" data-idx="${idx}" value="${nota.data}" oninput="formatarDataInput(this)"></div>
             <div class="campo"><label>Vencimento</label><input type="text" class="form-field import-field-venc" data-idx="${idx}" value="${nota.vencimento}" oninput="formatarDataInput(this)"></div>
             <div class="campo"><label>Valor Total</label><input type="text" class="form-field import-field-valor" data-idx="${idx}" value="${nota.valor}" onblur="formatarValorBlur(event)"></div>
+            <div class="campo"><label>Recurso</label><select class="import-field-obs" data-idx="${idx}">${DOM.obs.innerHTML}</select></div>
             ${avisosHTML}
         </div>`;
     }).join('');
@@ -1391,9 +1407,14 @@ function renderPreviewImportacao() {
     container.innerHTML = `
         <div class="card import-summary">
             <strong>${notasImportadasPreview.length}</strong> nota(s) fiscal(is) encontrada(s). Revise os campos abaixo (notas com aviso ⚠️ merecem atenção extra) e confirme a importação.
-            <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+            <div class="campo" style="margin-top:16px;"><input type="text" id="import-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarPreviewImportacao(this.value)"></div>
+            <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
                 <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
                 <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(true)">Marcar Todas</button>
+            </div>
+            <div class="import-bulk-recurso">
+                <select id="import-bulk-recurso-select">${DOM.obs.innerHTML}</select>
+                <button class="actions-button" style="background-color: var(--accent-color);" onclick="aplicarRecursoEmLoteImportacao()">Aplicar Recurso às Marcadas</button>
             </div>
         </div>
         ${itensHTML}
@@ -1405,6 +1426,76 @@ function renderPreviewImportacao() {
         </div>`;
 
     atualizarContadorImportacao();
+}
+
+// Busca dentro da pré-visualização (por NF ou nome do fornecedor já editado em
+// tela) — só esconde/mostra linhas, sem re-renderizar, pra não perder nenhuma
+// edição que o usuário já tenha feito nos campos.
+function filtrarPreviewImportacao(texto) {
+    const termo = texto.trim().toUpperCase();
+    document.querySelectorAll('.import-item').forEach(item => {
+        if (!termo) { item.style.display = ''; return; }
+        const nf = item.querySelector('.import-field-nf')?.value || '';
+        const forn = item.querySelector('.import-field-forn')?.value || '';
+        const bate = nf.toUpperCase().includes(termo) || forn.toUpperCase().includes(termo);
+        item.style.display = bate ? '' : 'none';
+    });
+}
+
+// Aplica o Recurso escolhido a todas as notas atualmente marcadas (checkbox
+// "Importar esta nota") — útil depois de buscar por um grupo de NFs e marcar
+// só elas.
+function aplicarRecursoEmLoteImportacao() {
+    const recurso = document.getElementById('import-bulk-recurso-select').value;
+    if (!recurso) return toast('Escolha um recurso antes de aplicar.');
+    const marcadas = document.querySelectorAll('.import-check:checked');
+    if (marcadas.length === 0) return toast('Nenhuma nota marcada para importar.');
+    marcadas.forEach(chk => {
+        const idx = chk.dataset.idx;
+        const select = document.querySelector(`.import-field-obs[data-idx="${idx}"]`);
+        if (select) select.value = recurso;
+    });
+    toast(`✓ Recurso aplicado a ${marcadas.length} nota(s) marcada(s).`);
+}
+
+// Aprendizado automático de apelido: quando o usuário corrige o nome do
+// fornecedor de uma linha (ex: de "COMERCIAL CIRURGICA RIOCLARENS" pra
+// "RIOCLARENSE"), o app salva essa correspondência como apelido permanente
+// (pra já vir certo em relatórios futuros) e aplica a mesma correção nas
+// outras linhas dessa mesma importação que ainda estejam com o nome original.
+async function handleEdicaoFornecedorImportacao(input) {
+    const original = input.dataset.original;
+    const novo = input.value.trim().toUpperCase();
+    input.value = novo;
+
+    if (!original || !novo || novo.toUpperCase() === original.toUpperCase()) return;
+    if (apelidosFornecedores[original] === novo) return; // já estava salvo, nada a fazer
+
+    apelidosFornecedores[original] = novo;
+    try {
+        await settingsDocRef.update({ [`apelidosFornecedores.${original}`]: novo });
+    } catch (e) {
+        try {
+            await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
+        } catch (e2) {
+            console.error('Erro ao salvar apelido automático:', e2);
+        }
+    }
+    await adicionarFornecedor(novo, true);
+    popularListaApelidos();
+
+    let outrasAfetadas = 0;
+    document.querySelectorAll('.import-field-forn').forEach(el => {
+        if (el === input) return;
+        if (el.dataset.original === original && el.value.trim().toUpperCase() === original.toUpperCase()) {
+            el.value = novo;
+            outrasAfetadas++;
+        }
+    });
+
+    toast(outrasAfetadas > 0
+        ? `✓ Apelido "${novo}" salvo e aplicado a mais ${outrasAfetadas} nota(s) com "${original}".`
+        : `✓ Apelido "${novo}" salvo para "${original}" — próximos relatórios já vêm certo.`);
 }
 
 function selecionarTodasImportacao(marcar) {
@@ -1445,6 +1536,8 @@ async function confirmarImportacaoLote() {
                     const data = document.querySelector(`.import-field-data[data-idx="${idx}"]`).value.trim();
                     const vencimento = document.querySelector(`.import-field-venc[data-idx="${idx}"]`).value.trim();
                     const valor = document.querySelector(`.import-field-valor[data-idx="${idx}"]`).value.trim();
+                    const obsEl = document.querySelector(`.import-field-obs[data-idx="${idx}"]`);
+                    const obs = obsEl ? obsEl.value : '';
 
                     if (!fornecedor) return;
 
@@ -1455,7 +1548,7 @@ async function confirmarImportacaoLote() {
                         vencimento,
                         valor,
                         fornecedor,
-                        obs: '',
+                        obs,
                         enviada: false,
                         dataCriacao: (new Date).toISOString(),
                         checklist: checklistInicial

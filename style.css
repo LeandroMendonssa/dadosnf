@@ -77,6 +77,10 @@ body.is-loading .app-container, body.is-loading #login-screen, body.is-loading #
 @keyframes apple-spinner-fade{0%{opacity:1}100%{opacity:.15}}
 
 .import-badge-info{background:color-mix(in srgb, var(--accent-color) 12%, transparent);border-color:var(--accent-color);color:var(--text-dark);font-weight:500}
+.import-badge-historico{background:color-mix(in srgb, var(--text-light) 18%, transparent);border-color:var(--text-light);color:var(--text-dark);font-weight:600}
+.import-bulk-recurso{display:flex;gap:10px;margin-top:12px}
+.import-bulk-recurso select{flex:1}
+.import-bulk-recurso .actions-button{width:auto;white-space:nowrap;padding:0 16px}
 #lista-apelidos-manage li{align-items:center}
 html, body { height: 100%; margin: 0; overflow: hidden; background-color: var(--bg-primary); color: var(--text-dark); -webkit-user-select: none; user-select: none; }
 body { transition: opacity 0.3s, background-color var(--transition-duration), color var(--transition-duration); }
