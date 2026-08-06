@@ -26,6 +26,7 @@ let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observ
 let selectionModeNotas = false;
 let notasSelecionadas = new Set();
 let selectionModeFornecedores = false;
+let fornecedoresIgnorados = new Set();
 let fornecedoresSelecionados = new Set();
 let filtroFornecedoresTexto = '';
 let isChecklistUpdate = false;
@@ -379,6 +380,7 @@ function iniciarListenerConfiguracoes() {
             observacoesSugeridas = data.observacoes || appConfig.observacoes; 
             pedidosRecursos = data.pedidosRecursos || {}; 
             apelidosFornecedores = data.apelidosFornecedores || {}; 
+            fornecedoresIgnorados = new Set((Array.isArray(data.fornecedoresIgnorados) ? data.fornecedoresIgnorados : []).filter(f => typeof f === 'string' && f.trim() !== ''));
             
             // Lógica de merge das configurações salvas
             appConfig = { 
@@ -792,11 +794,26 @@ function popularListaFornecedores(){
         return;
     }
 
-    DOM.listaFornManage.innerHTML = lista.map(f => {
-        const fEsc = String(f).replace(/'/g, "\\'");
+    let html = '';
+    let letraAtual = '';
+    lista.forEach(f => {
+        const fStr = String(f);
+        const letra = fStr.charAt(0).toUpperCase();
+        if (letra !== letraAtual) {
+            letraAtual = letra;
+            html += `<li class="manage-list-header">${letra}</li>`;
+        }
+        const fEsc = fStr.replace(/'/g, "\\'");
         const checked = fornecedoresSelecionados.has(f) ? 'checked' : '';
-        return `<li class="${fornecedoresSelecionados.has(f) ? 'forn-selected' : ''}"><label class="forn-select-checkbox"><input type="checkbox" ${checked} onchange="toggleFornecedorSelecionado('${fEsc}')"></label><span class="forn-nome">${f}</span> <button onclick="deletarFornecedor('${fEsc}')"><i class="fa-solid fa-times-circle"></i></button></li>`;
-    }).join('');
+        const ignorado = fornecedoresIgnorados.has(f);
+        html += `<li class="${fornecedoresSelecionados.has(f) ? 'forn-selected' : ''} ${ignorado ? 'forn-ignorado' : ''}">
+            <label class="forn-select-checkbox"><input type="checkbox" ${checked} onchange="toggleFornecedorSelecionado('${fEsc}')"></label>
+            <span class="forn-nome">${fStr}${ignorado ? '<span class="badge-ignorado">Ignorado no ERP</span>' : ''}</span>
+            <button class="forn-ignore-btn ${ignorado ? 'active' : ''}" onclick="toggleFornecedorIgnorado('${fEsc}')" title="${ignorado ? 'Voltar a considerar na importação do ERP' : 'Ignorar este fornecedor na importação do ERP'}"><i class="fa-solid fa-ban"></i></button>
+            <button onclick="deletarFornecedor('${fEsc}')"><i class="fa-solid fa-times-circle"></i></button>
+        </li>`;
+    });
+    DOM.listaFornManage.innerHTML = html;
 
     atualizarBulkBarFornecedores();
 }
@@ -844,8 +861,45 @@ function atualizarBulkBarFornecedores() {
     const count = fornecedoresSelecionados.size;
     const countEl = document.getElementById('bulk-count-fornecedores');
     if (countEl) countEl.textContent = `${count} selecionado${count === 1 ? '' : 's'}`;
-    const excluirBtn = document.getElementById('bulk-excluir-fornecedores-btn');
-    if (excluirBtn) excluirBtn.disabled = count === 0;
+    document.querySelectorAll('#bulk-action-bar-fornecedores .bulk-buttons button').forEach(b => b.disabled = count === 0);
+}
+
+// --- FORNECEDORES IGNORADOS NA IMPORTAÇÃO DO ERP ---
+// Fornecedores marcados aqui continuam na lista normalmente (autocomplete,
+// notas manuais, etc.) mas são automaticamente excluídos da pré-visualização
+// ao importar o relatório do ERP — pra quem não precisa acompanhar certos
+// fornecedores por esse fluxo.
+
+async function toggleFornecedorIgnorado(nome) {
+    const ignorarAgora = !fornecedoresIgnorados.has(nome);
+    if (ignorarAgora) fornecedoresIgnorados.add(nome);
+    else fornecedoresIgnorados.delete(nome);
+
+    popularListaFornecedores();
+
+    try {
+        await settingsDocRef.set({ fornecedoresIgnorados: Array.from(fornecedoresIgnorados) }, { merge: true });
+        toast(ignorarAgora ? `🚫 "${nome}" não entrará mais nas importações do ERP.` : `✓ "${nome}" volta a ser considerado nas importações.`);
+    } catch (e) {
+        console.error('Erro ao atualizar fornecedores ignorados:', e);
+        toast('✕ Erro ao salvar. Tente de novo.');
+    }
+}
+
+async function bulkIgnorarFornecedores(valor) {
+    const nomes = Array.from(fornecedoresSelecionados);
+    if (nomes.length === 0) return;
+    nomes.forEach(nome => { if (valor) fornecedoresIgnorados.add(nome); else fornecedoresIgnorados.delete(nome); });
+
+    popularListaFornecedores();
+
+    try {
+        await settingsDocRef.set({ fornecedoresIgnorados: Array.from(fornecedoresIgnorados) }, { merge: true });
+        toast(valor ? `🚫 ${nomes.length} fornecedor(es) marcado(s) como ignorado(s) no ERP.` : `✓ ${nomes.length} fornecedor(es) voltaram a ser considerados.`);
+    } catch (e) {
+        console.error('Erro ao atualizar fornecedores ignorados em lote:', e);
+        toast('✕ Erro ao salvar. Tente de novo.');
+    }
 }
 
 async function bulkExcluirFornecedores() {
@@ -1173,6 +1227,7 @@ async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar
 //    usa-se o "Total da nota" e a nota é marcada com aviso para revisão.
 
 let notasImportadasPreview = [];
+let mostrarApenasNovasImportacao = true;
 
 function parseValorBR(str) {
     if (!str) return 0;
@@ -1355,6 +1410,7 @@ function processarRelatorioImportacao() {
         }
 
         notasImportadasPreview = notas;
+        mostrarApenasNovasImportacao = true;
         renderPreviewImportacao();
         toast(`${notas.length} nota(s) encontrada(s)!`);
     } catch (e) {
@@ -1372,13 +1428,27 @@ function renderPreviewImportacao() {
         return;
     }
 
-    const itensHTML = notasImportadasPreview.map((nota, idx) => {
+    const linhas = notasImportadasPreview.map((nota, idx) => {
         const apelidoEncontrado = encontrarApelidoFornecedor(nota.fornecedor);
         const fornecedorExibido = apelidoEncontrado || nota.fornecedor;
         const duplicata = verificarDuplicidade(fornecedorExibido, nota.nf);
+        const ignorado = fornecedoresIgnorados.has(fornecedorExibido) || fornecedoresIgnorados.has(nota.fornecedor);
+
+        let status = 'novo';
+        if (ignorado) status = 'ignorado';
+        else if (duplicata) status = 'duplicata';
+
+        return { nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, ignorado, status };
+    });
+
+    const totalNovas = linhas.filter(l => l.status === 'novo').length;
+    const totalProcessadas = linhas.length - totalNovas;
+
+    const itensHTML = linhas.map(({ nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, ignorado, status }) => {
         const avisosHTML = nota.avisos.length
             ? `<div class="import-avisos">${nota.avisos.map(a => `<div class="import-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${a}</div>`).join('')}</div>`
             : '';
+        const badgeIgnorado = ignorado ? `<div class="import-badge import-badge-ignorado"><i class="fa-solid fa-ban"></i> Fornecedor ignorado — não entra na importação</div>` : '';
         const badgeDup = !duplicata ? '' : (
             duplicata.origem === 'historico'
                 ? `<div class="import-badge import-badge-historico"><i class="fa-solid fa-box-archive"></i> Já foi arquivada antes${duplicata.nota.dataHistorico ? ` (em ${duplicata.nota.dataHistorico})` : ''}</div>`
@@ -1387,11 +1457,12 @@ function renderPreviewImportacao() {
         const badgeApelido = apelidoEncontrado ? `<div class="import-badge import-badge-info"><i class="fa-solid fa-wand-magic-sparkles"></i> Apelido aplicado automaticamente (nome no relatório: "${nota.fornecedor}")</div>` : '';
 
         return `
-        <div class="nota-item import-item" data-import-idx="${idx}">
+        <div class="nota-item import-item" data-import-idx="${idx}" data-status="${status}">
             <label class="import-checkbox-row">
-                <input type="checkbox" class="import-check" data-idx="${idx}" ${duplicata ? '' : 'checked'} onchange="atualizarContadorImportacao()">
+                <input type="checkbox" class="import-check" data-idx="${idx}" ${status === 'novo' ? 'checked' : ''} onchange="atualizarContadorImportacao()">
                 <span>Importar esta nota${nota.parcelas > 1 ? ` (parcelada ${nota.parcelas}x)` : ''}</span>
             </label>
+            ${badgeIgnorado}
             ${badgeDup}
             ${badgeApelido}
             <div class="campo"><label>Fornecedor</label><input type="text" class="form-field import-field-forn" data-idx="${idx}" data-original="${nota.fornecedor}" value="${fornecedorExibido}" onblur="handleEdicaoFornecedorImportacao(this)"></div>
@@ -1407,7 +1478,11 @@ function renderPreviewImportacao() {
     container.innerHTML = `
         <div class="card import-summary">
             <strong>${notasImportadasPreview.length}</strong> nota(s) fiscal(is) encontrada(s). Revise os campos abaixo (notas com aviso ⚠️ merecem atenção extra) e confirme a importação.
-            <div class="campo" style="margin-top:16px;"><input type="text" id="import-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarPreviewImportacao(this.value)"></div>
+            <div class="import-toggle-novas">
+                <div class="import-toggle-info"><strong>${totalNovas}</strong> nova${totalNovas === 1 ? '' : 's'} · <span>${totalProcessadas} já processada${totalProcessadas === 1 ? '' : 's'}</span></div>
+                <button id="import-toggle-novas-btn" class="manage-toolbar-btn" onclick="toggleMostrarApenasNovasImportacao()">${mostrarApenasNovasImportacao ? `Mostrar Todas (${notasImportadasPreview.length})` : 'Mostrar Apenas Novas'}</button>
+            </div>
+            <div class="campo" style="margin-top:12px;"><input type="text" id="import-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarPreviewImportacao(this.value)"></div>
             <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
                 <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
                 <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(true)">Marcar Todas</button>
@@ -1421,25 +1496,40 @@ function renderPreviewImportacao() {
         <div class="actions" style="margin-top: 8px;">
             <button class="actions-button" style="background-color: var(--button-success);" onclick="confirmarImportacaoLote()">
                 <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span>
-                Importar Selecionadas (<span id="import-count-selected">${notasImportadasPreview.length}</span>)
+                Importar Selecionadas (<span id="import-count-selected">${totalNovas}</span>)
             </button>
         </div>`;
 
+    aplicarFiltrosPreviewImportacao();
     atualizarContadorImportacao();
 }
 
-// Busca dentro da pré-visualização (por NF ou nome do fornecedor já editado em
-// tela) — só esconde/mostra linhas, sem re-renderizar, pra não perder nenhuma
-// edição que o usuário já tenha feito nos campos.
-function filtrarPreviewImportacao(texto) {
-    const termo = texto.trim().toUpperCase();
+// Aplica em conjunto o filtro de busca (NF/fornecedor) e o filtro de status
+// ("mostrar apenas novas"), sem re-renderizar — preserva qualquer edição que
+// o usuário já tenha feito nos campos.
+function aplicarFiltrosPreviewImportacao() {
+    const termo = (document.getElementById('import-search')?.value || '').trim().toUpperCase();
     document.querySelectorAll('.import-item').forEach(item => {
-        if (!termo) { item.style.display = ''; return; }
-        const nf = item.querySelector('.import-field-nf')?.value || '';
-        const forn = item.querySelector('.import-field-forn')?.value || '';
-        const bate = nf.toUpperCase().includes(termo) || forn.toUpperCase().includes(termo);
-        item.style.display = bate ? '' : 'none';
+        const passaStatus = !mostrarApenasNovasImportacao || item.dataset.status === 'novo';
+        let passaBusca = true;
+        if (termo) {
+            const nf = item.querySelector('.import-field-nf')?.value || '';
+            const forn = item.querySelector('.import-field-forn')?.value || '';
+            passaBusca = nf.toUpperCase().includes(termo) || forn.toUpperCase().includes(termo);
+        }
+        item.style.display = (passaStatus && passaBusca) ? '' : 'none';
     });
+}
+
+function filtrarPreviewImportacao() {
+    aplicarFiltrosPreviewImportacao();
+}
+
+function toggleMostrarApenasNovasImportacao() {
+    mostrarApenasNovasImportacao = !mostrarApenasNovasImportacao;
+    const btn = document.getElementById('import-toggle-novas-btn');
+    if (btn) btn.textContent = mostrarApenasNovasImportacao ? `Mostrar Todas (${notasImportadasPreview.length})` : 'Mostrar Apenas Novas';
+    aplicarFiltrosPreviewImportacao();
 }
 
 // Aplica o Recurso escolhido a todas as notas atualmente marcadas (checkbox
@@ -1499,7 +1589,11 @@ async function handleEdicaoFornecedorImportacao(input) {
 }
 
 function selecionarTodasImportacao(marcar) {
-    document.querySelectorAll('.import-check').forEach(chk => { chk.checked = marcar; });
+    document.querySelectorAll('.import-item').forEach(item => {
+        if (item.style.display === 'none') return;
+        const chk = item.querySelector('.import-check');
+        if (chk) chk.checked = marcar;
+    });
     atualizarContadorImportacao();
 }
 
