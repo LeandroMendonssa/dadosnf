@@ -472,13 +472,13 @@ function rebuildNotasPendentesList(){
     atualizarContadorGerenciar();
     
     const createNotaHTML = nota => {
-        const totalTasks=Object.keys(checklistDefinition).length;
-        const completedTasks=nota.checklist?Object.values(nota.checklist).filter(Boolean).length:0;
         const holdBadgeHTML = nota.emEspera ? `<span class="badge-pendente"><i class="fa-solid fa-hourglass-half"></i> Pendente</span>` : '';
-        const holdBtnHTML = `<button class="hold-btn icon-only ${nota.emEspera ? 'active' : ''}" onclick="toggleEmEspera('${nota.id}')" title="${nota.emEspera ? 'Remover da pendência (volta a aparecer na exportação)' : 'Marcar como pendente (não aparece na exportação)'}"><span class="icon-wrapper"><i class="fa-solid fa-hourglass-half"></i></span></button>`;
+        const holdLinkHTML = nota.emEspera
+            ? `<span class="action-link hold-link active" onclick="toggleEmEspera('${nota.id}')">Retomar</span>`
+            : `<span class="action-link hold-link" onclick="toggleEmEspera('${nota.id}')">Pendente</span>`;
         const recursoHTML = nota.obs ? ` | Recurso: ${nota.obs}` : '';
         const checked = notasSelecionadas.has(nota.id) ? 'checked' : '';
-        return`<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${checked} onchange="toggleNotaSelecionada('${nota.id}')"></label><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="actions-row"><div class="actions-group"><button class="progress-btn" onclick="toggleChecklist(this, '${nota.id}')">Progresso: ${completedTasks}/${totalTasks}</button></div><div class="actions-group">${holdBtnHTML}<button class="edit-btn icon-only" onclick="toggleEditPanel(this, '${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i><span class="material-icons">edit</span></span></button><button class="delete-btn icon-only" onclick="deletarNota('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete</span></span></button></div></div><div class="edit-panel"></div><div class="checklist-container"><div class="panel-content">${gerarHtmlChecklist(nota)}</div></div>`;
+        return`<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${checked} onchange="toggleNotaSelecionada('${nota.id}')"></label><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="actions-row"><span class="action-link edit-link" onclick="toggleEditPanel(this, '${nota.id}')">Editar</span>${holdLinkHTML}<span class="action-link delete-link" onclick="deletarNota('${nota.id}')">Excluir</span></div><div class="edit-panel"></div>`;
     };
 
     if(notasPendentes.length===0){
@@ -510,9 +510,32 @@ function rebuildNotasPendentesList(){
             if(!document.hidden) div.classList.add('highlight-update');
         }
     });
+    aplicarFiltroGerenciar();
 }
 
 // --- SELEÇÃO EM LOTE DE NOTAS (Gerenciar) ---
+
+let filtroGerenciarTexto = '';
+
+// Busca por NF ou fornecedor na tela Gerenciar. Só esconde/mostra os cards já
+// renderizados (não re-renderiza), pra não perder painéis abertos/edições em
+// andamento. Reaplicada automaticamente a cada atualização da lista.
+function filtrarNotasGerenciar(texto) {
+    filtroGerenciarTexto = texto;
+    aplicarFiltroGerenciar();
+}
+
+function aplicarFiltroGerenciar() {
+    const termo = filtroGerenciarTexto.trim().toUpperCase();
+    document.querySelectorAll('#lista-notas-pendentes .nota-item').forEach(el => {
+        if (!termo) { el.style.display = ''; return; }
+        const nota = notasPendentes.find(n => n.id === el.dataset.noteId);
+        if (!nota) { el.style.display = ''; return; }
+        const nf = (nota.nf || '').toUpperCase();
+        const forn = (nota.fornecedor || '').toUpperCase();
+        el.style.display = (nf.includes(termo) || forn.includes(termo)) ? '' : 'none';
+    });
+}
 
 function atualizarContadorGerenciar() {
     const counterEl = document.getElementById('manage-counter');

@@ -122,6 +122,7 @@
                     <span id="manage-counter" class="manage-counter">0 notas</span>
                     <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
                 </div>
+                <div class="campo" style="margin-bottom: 16px;"><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarNotasGerenciar(this.value)"></div>
                 <div id="lista-notas-pendentes" class="nota-list"></div> 
             </div>
             
@@ -264,6 +265,8 @@
             </div>
         </div>
 
+        <nav id="tab-bar" class="tab-bar"></nav>
+
         <div id="bulk-action-bar-notas" class="bulk-action-bar">
             <div class="bulk-action-bar-inner">
                 <div class="bulk-select-info">
@@ -306,7 +309,6 @@
         </div>
     </div>
 
-    <nav id="tab-bar" class="tab-bar"></nav>
   </div>
   
   <div id="confirm-modal" class="modal-screen"> 
