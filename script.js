@@ -35,7 +35,7 @@ let isInitialLoad = true;
 // Configuração Padrão
 let appConfig = {
     personalizacao: { 
-        theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, 
+        theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, transicaoTela: 'fade', densidade: 'confortavel', mostrarIconesAbas: 'on',
         menuOrder: ['screen-add', 'screen-manage', 'screen-reports', 'screen-export', 'screen-history', 'screen-anotacoes', 'screen-settings'] 
     },
     anotacoes: '', pedidosRecursos: {}, fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"]
@@ -132,13 +132,53 @@ const setupKeyboardListener = () => {
     });
 };
 
+function escolherTransicaoTela(tipo) {
+    appConfig.personalizacao.transicaoTela = tipo;
+    document.body.setAttribute('data-transition', tipo);
+    atualizarSelecaoTransicao(tipo);
+    salvarPersonalizacao();
+}
+
+function atualizarSelecaoTransicao(tipo) {
+    document.querySelectorAll('.transition-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === tipo);
+    });
+}
+
+let transicaoDemoAlternada = false;
+function testarTransicaoTela() {
+    const a = document.getElementById('transition-demo-a');
+    const b = document.getElementById('transition-demo-b');
+    transicaoDemoAlternada = !transicaoDemoAlternada;
+    a.classList.toggle('active', !transicaoDemoAlternada);
+    b.classList.toggle('active', transicaoDemoAlternada);
+}
+
+function alterarDensidade(valor) {
+    appConfig.personalizacao.densidade = valor;
+    document.body.setAttribute('data-density', valor);
+    salvarPersonalizacao();
+}
+
+function alterarIconesAbas(valor) {
+    appConfig.personalizacao.mostrarIconesAbas = valor;
+    document.body.setAttribute('data-tab-icons', valor);
+    salvarPersonalizacao();
+}
+
 function aplicarPersonalizacoes() {
-    const { theme, iconTheme, font, animationSpeed, menuOrder } = appConfig.personalizacao;
+    const { theme, iconTheme, font, animationSpeed, menuOrder, transicaoTela, densidade, mostrarIconesAbas } = appConfig.personalizacao;
     document.documentElement.setAttribute('data-font', font); document.body.setAttribute('data-theme', theme); document.body.setAttribute('data-icon-theme', iconTheme);
+    document.body.setAttribute('data-transition', transicaoTela || 'fade');
+    document.body.setAttribute('data-density', densidade || 'confortavel');
+    document.body.setAttribute('data-tab-icons', mostrarIconesAbas || 'on');
     document.documentElement.style.setProperty('--transition-duration', speedValueMap[animationSpeed]);
     document.querySelector('#theme-select').value = theme; document.querySelector('#icon-theme-select').value = iconTheme; document.querySelector('#font-select').value = font;
     document.querySelector('#animation-speed-slider').value = animationSpeed;
     document.getElementById('animation-speed-value').textContent = speedTextMap[animationSpeed];
+    atualizarSelecaoTransicao(transicaoTela || 'fade');
+    document.querySelector('#density-select').value = densidade || 'confortavel';
+    document.querySelector('#tab-icons-select').value = mostrarIconesAbas || 'on';
     reordenarMenusDOM(menuOrder || Object.keys(menuDetails)); popularListaReordenar();
     const currentActiveScreen = document.querySelector('.app-screen.active');
     if (currentActiveScreen) { const screenId = currentActiveScreen.id;
@@ -472,13 +512,13 @@ function rebuildNotasPendentesList(){
     atualizarContadorGerenciar();
     
     const createNotaHTML = nota => {
-        const holdBadgeHTML = nota.emEspera ? `<span class="badge-pendente"><i class="fa-solid fa-hourglass-half"></i> Pendente</span>` : '';
-        const holdLinkHTML = nota.emEspera
-            ? `<span class="action-link hold-link active" onclick="toggleEmEspera('${nota.id}')">Retomar</span>`
-            : `<span class="action-link hold-link" onclick="toggleEmEspera('${nota.id}')">Pendente</span>`;
+        const holdBadgeHTML = nota.emEspera ? `<span class="badge-pendente"><i class="fa-solid fa-clock"></i> Pendente</span>` : '';
+        const holdChipHTML = nota.emEspera
+            ? `<button class="action-chip hold-chip active" onclick="toggleEmEspera('${nota.id}')"><i class="fa-solid fa-rotate-left"></i> Retomar</button>`
+            : `<button class="action-chip hold-chip" onclick="toggleEmEspera('${nota.id}')"><i class="fa-solid fa-clock"></i> Pendente</button>`;
         const recursoHTML = nota.obs ? ` | Recurso: ${nota.obs}` : '';
         const checked = notasSelecionadas.has(nota.id) ? 'checked' : '';
-        return`<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${checked} onchange="toggleNotaSelecionada('${nota.id}')"></label><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="actions-row"><span class="action-link edit-link" onclick="toggleEditPanel(this, '${nota.id}')">Editar</span>${holdLinkHTML}<span class="action-link delete-link" onclick="deletarNota('${nota.id}')">Excluir</span></div><div class="edit-panel"></div>`;
+        return`<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${checked} onchange="toggleNotaSelecionada('${nota.id}')"></label><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
     };
 
     if(notasPendentes.length===0){
@@ -1176,7 +1216,7 @@ async function deletarPedido(p) { showConfirmModal({ title: "Excluir Pedido", me
 function popularListaPedidos(){DOM.listaPedidos.innerHTML='';const pedidosOrdenados=Object.keys(pedidosRecursos).sort((a,b)=>Number(a)-Number(b));pedidosOrdenados.forEach(p=>{DOM.listaPedidos.innerHTML+=`<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fa-solid fa-times-circle"></i></button></li>`})}
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = ['screen-fornecedores', 'screen-pedidos', 'screen-observacoes', 'screen-personalizacao']; document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = ['screen-fornecedores', 'screen-pedidos', 'screen-observacoes', 'screen-personalizacao']; document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }

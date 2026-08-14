@@ -80,6 +80,8 @@
         <header class="header">
             <h1 id="main-header-title" class="header-title">Adicionar</h1>
             <div class="header-actions">
+                <span id="manage-counter" class="manage-counter header-counter" style="display: none;">0 notas</span>
+                <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
                 <button class="header-action" id="sync-btn" onclick="sincronizarManualmente(this)" style="display: flex;">
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-sync-alt"></i><span class="material-icons">sync</span>
@@ -118,10 +120,6 @@
             </div>
             
             <div class="app-screen" id="screen-manage"> 
-                <div class="manage-toolbar">
-                    <span id="manage-counter" class="manage-counter">0 notas</span>
-                    <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
-                </div>
                 <div class="campo" style="margin-bottom: 16px;"><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarNotasGerenciar(this.value)"></div>
                 <div id="lista-notas-pendentes" class="nota-list"></div> 
             </div>
@@ -250,6 +248,26 @@
                     <div class="campo"> <label for="icon-theme-select">Estilo dos Ícones</label> <select id="icon-theme-select"> <option value="solid">Sólido (Padrão)</option> <option value="material">Material (Google)</option> <option value="outline">Contorno (Leve)</option> <option value="duotone">Duplo Tom</option> </select> </div>
                     <div class="campo"> <label for="font-select">Fonte do Aplicativo</label> <select id="font-select"> <option value="sans">Padrão (Inter)</option> <option value="serif">Serif (Roboto Slab)</option> <option value="mono">Mono (Source Code)</option> <option value="montserrat">Montserrat</option> </select> </div>
                     <div class="campo"> <label id="animation-speed-label" for="animation-speed-slider"> <span>Velocidade das Animações</span> <span id="animation-speed-value">Normal</span> </label> <input type="range" id="animation-speed-slider" min="0" max="3" step="1" value="2"> </div>
+                    <div class="campo">
+                        <label>Transição entre Telas</label>
+                        <div class="transition-options" id="transition-options">
+                            <button class="transition-option" data-value="fade" onclick="escolherTransicaoTela('fade')">Esmaecer</button>
+                            <button class="transition-option" data-value="slide" onclick="escolherTransicaoTela('slide')">Deslizar</button>
+                            <button class="transition-option" data-value="slide-up" onclick="escolherTransicaoTela('slide-up')">Subir</button>
+                            <button class="transition-option" data-value="zoom" onclick="escolherTransicaoTela('zoom')">Zoom</button>
+                            <button class="transition-option" data-value="none" onclick="escolherTransicaoTela('none')" style="grid-column: span 2;">Instantâneo (sem animação)</button>
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Pré-visualizar Transição</label>
+                        <div class="transition-demo-stage">
+                            <div class="app-screen transition-demo-screen active" id="transition-demo-a">Tela A</div>
+                            <div class="app-screen transition-demo-screen" id="transition-demo-b">Tela B</div>
+                        </div>
+                        <button class="actions-button" style="background-color: var(--accent-color); margin-top: 10px;" onclick="testarTransicaoTela()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Agora</button>
+                    </div>
+                    <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
+                    <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
                     <div class="campo"> <label>Ordem dos Menus</label> <div id="menu-reorder-list" class="reorder-list"></div> </div>
                 </div>
             </div>
@@ -273,8 +291,8 @@
                     <span id="bulk-count-notas">0 selecionadas</span>
                 </div>
                 <div class="bulk-buttons">
-                    <button onclick="bulkMarcarPendente(true)" title="Marcar como pendente" disabled><i class="fa-solid fa-hourglass-half"></i></button>
-                    <button onclick="bulkMarcarPendente(false)" title="Remover pendência" disabled><i class="fa-solid fa-hourglass-end"></i></button>
+                    <button onclick="bulkMarcarPendente(true)" title="Marcar como pendente" disabled><i class="fa-solid fa-clock"></i></button>
+                    <button onclick="bulkMarcarPendente(false)" title="Remover pendência" disabled><i class="fa-solid fa-rotate-left"></i></button>
                     <button onclick="abrirEdicaoEmLoteNotas()" title="Editar em lote" disabled><i class="fa-solid fa-pen"></i></button>
                     <button onclick="bulkExcluirNotas()" class="danger" title="Excluir selecionadas" disabled><i class="fa-solid fa-trash"></i></button>
                 </div>
