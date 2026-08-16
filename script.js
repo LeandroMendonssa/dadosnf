@@ -17,16 +17,23 @@ const firestore = firebase.firestore();
 // --- REFERÊNCIAS ---
 const notasCollection = firestore.collection('notas');
 const historicoCollection = firestore.collection('historico');
+const anotacoesTextoCollection = firestore.collection('anotacoesTexto');
 const settingsDocRef = firestore.collection('config').doc('appSettings');
 
 // --- ESTADO GLOBAL ---
-let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], pedidosRecursos = {}, apelidosFornecedores = {};
+let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], apelidosFornecedores = {};
 
 // --- SELEÇÃO EM LOTE (notas e fornecedores) ---
 let selectionModeNotas = false;
 let notasSelecionadas = new Set();
 let selectionModeFornecedores = false;
 let fornecedoresIgnorados = new Set();
+
+// --- ANOTAÇÕES (múltiplas notas com texto rico) ---
+let listaAnotacoes = [];
+let anotacaoAtualId = null;
+let filtroAnotacoesTexto = '';
+let migracaoAnotacoesAntigasFeita = false;
 let fornecedoresSelecionados = new Set();
 let filtroFornecedoresTexto = '';
 let isChecklistUpdate = false;
@@ -38,7 +45,7 @@ let appConfig = {
         theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, transicaoTela: 'fade', densidade: 'confortavel', mostrarIconesAbas: 'on',
         menuOrder: ['screen-add', 'screen-manage', 'screen-reports', 'screen-export', 'screen-history', 'screen-anotacoes', 'screen-settings'] 
     },
-    anotacoes: '', pedidosRecursos: {}, fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"]
+    anotacoes: '', fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"]
 };
 
 // --- ELEMENTOS DOM CACHEADOS ---
@@ -55,11 +62,8 @@ const DOM = {
     listaRelatorios: document.getElementById('lista-relatorios'),
     totalNotasExport: document.getElementById('total-notas-export'),
     fornDatalist: document.getElementById('fornecedores-sugeridos'),
-    listaPedidos: document.getElementById('lista-pedidos'),
     listaFornManage: document.getElementById('lista-fornecedores-manage'),
     fornManageInput: document.getElementById('forn-manage'),
-    pedidoNumInput: document.getElementById('pedido-num'),
-    pedidoRecursoSelect: document.getElementById('pedido-recurso'),
     listaObsManage: document.getElementById('lista-observacoes-manage'),
     obsManageInput: document.getElementById('obs-manage'),
     historicoActions: document.getElementById('historico-actions')
@@ -90,7 +94,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-pedidos': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -109,25 +114,44 @@ const setAppHeight = () => {
 window.addEventListener('resize', setAppHeight);
 window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 150));
 window.addEventListener('load', setAppHeight);
-if (window.visualViewport) { window.visualViewport.addEventListener('resize', setAppHeight); }
 // Rede de segurança: reforça o cálculo pouco depois da carga inicial, pra
 // cobrir casos em que o navegador ainda está terminando de ajustar o layout
 // da janela (comum em tela dividida) quando o app já rodou o cálculo inicial.
 setTimeout(setAppHeight, 300);
 setTimeout(setAppHeight, 1000);
 
+// O visualViewport encolhe tanto quando o teclado abre quanto em ajustes reais
+// de layout (ex: barra de endereço do navegador recolhendo). Só nos interessa
+// tratar isso como "abriu o app-height" no segundo caso — quando o teclado
+// abre, NÃO recalculamos --app-height (senão a tab-bar, que é filha do
+// container com essa altura, sobe junto e fica flutuando por cima do
+// teclado). Em vez disso, só escondemos a tab-bar via classe no body, o que
+// libera o espaço que ela ocupava sem mover mais nada.
+const KEYBOARD_HEIGHT_THRESHOLD = 120;
+
 const setupKeyboardListener = () => {
     if (!('visualViewport' in window)) return;
     const notesScreen = document.getElementById('screen-anotacoes');
     window.visualViewport.addEventListener('resize', () => {
-        if (!notesScreen.classList.contains('active')) return;
         const keyboardHeight = window.innerHeight - window.visualViewport.height;
-        const bottomPadding = 24; 
-        if (keyboardHeight > 100) { 
-            notesScreen.style.paddingBottom = `${keyboardHeight + bottomPadding}px`;
-            setTimeout(() => notesScreen.scrollTop = notesScreen.scrollHeight, 100);
-        } else { 
-            notesScreen.style.paddingBottom = ''; 
+        const isKeyboardOpen = keyboardHeight > KEYBOARD_HEIGHT_THRESHOLD;
+
+        document.body.classList.toggle('keyboard-open', isKeyboardOpen);
+
+        if (isKeyboardOpen) {
+            // Teclado aberto: mantém --app-height como estava (tela cheia) em vez
+            // de encolher para caber acima do teclado — a tab-bar some (via CSS)
+            // e o espaço dela fica disponível para o conteúdo.
+            if (notesScreen.classList.contains('active')) {
+                const bottomPadding = 24;
+                notesScreen.style.paddingBottom = `${keyboardHeight + bottomPadding}px`;
+                setTimeout(() => notesScreen.scrollTop = notesScreen.scrollHeight, 100);
+            }
+        } else {
+            // Teclado fechado: volta ao comportamento normal (recalcula a altura
+            // real, cobrindo os casos legítimos de resize do navegador).
+            notesScreen.style.paddingBottom = '';
+            setAppHeight();
         }
     });
 };
@@ -409,7 +433,7 @@ function atualizarRelatorios() {
 
 // --- LISTENERS DE DADOS ---
 function iniciarListenerConfiguracoes() { 
-    settingsDocRef.onSnapshot(doc => { 
+    return settingsDocRef.onSnapshot(doc => { 
       try {
         if (doc.exists) { 
             const data = doc.data(); 
@@ -418,7 +442,6 @@ function iniciarListenerConfiguracoes() {
             // de carregamento por causa de um item inválido na lista de fornecedores.
             fornecedoresSugeridos = (Array.isArray(data.fornecedores) ? data.fornecedores : []).filter(f => typeof f === 'string' && f.trim() !== '');
             observacoesSugeridas = data.observacoes || appConfig.observacoes; 
-            pedidosRecursos = data.pedidosRecursos || {}; 
             apelidosFornecedores = data.apelidosFornecedores || {}; 
             fornecedoresIgnorados = new Set((Array.isArray(data.fornecedoresIgnorados) ? data.fornecedoresIgnorados : []).filter(f => typeof f === 'string' && f.trim() !== ''));
             
@@ -443,13 +466,8 @@ function iniciarListenerConfiguracoes() {
         
         popularDatalist(); 
         popularObservacoesList(); 
-        popularListaPedidos(); 
         popularListaApelidos(); 
         
-        const anotacoesTextarea = document.getElementById('anotacoes-textarea'); 
-        if(anotacoesTextarea.value !== appConfig.anotacoes) { 
-            anotacoesTextarea.value = appConfig.anotacoes || ''; 
-        } 
         
         aplicarPersonalizacoes(); 
       } catch (e) {
@@ -459,37 +477,78 @@ function iniciarListenerConfiguracoes() {
         toast('Algumas configurações não carregaram corretamente.');
       } finally {
         if (isInitialLoad) { 
-            document.body.classList.remove('is-loading'); 
-            const appLoader = document.getElementById('app-loader'); 
-            if (appLoader) appLoader.classList.add('app-loader-hidden'); 
+            mostrarLoaderApp(false);
             isInitialLoad = false; 
         } 
       }
     }, error => { 
         console.error("Erro config:", error); 
         toast("Erro ao carregar configurações."); 
-        document.body.classList.remove('is-loading'); 
-        const appLoader = document.getElementById('app-loader'); 
-        if (appLoader) appLoader.classList.add('app-loader-hidden'); 
+        mostrarLoaderApp(false);
     }); 
 }
 
+// Guarda as funções de "desinscrever" de cada listener do Firestore, pra poder
+// parar tudo no logout e reinscrever do zero no próximo login (senão os
+// listeners continuam tentando ler dados sem permissão, ou ficam "mortos" e
+// não voltam a funcionar mesmo depois de logar de novo).
+let dataUnsubscribers = [];
+let dadosAppInscritos = false;
+
+function iniciarDadosAppSeNecessario() {
+    if (dadosAppInscritos) return;
+    dadosAppInscritos = true;
+    carregarEstado();
+}
+
+function pararDadosApp() {
+    dadosAppInscritos = false;
+    dataUnsubscribers.forEach(unsub => { try { unsub(); } catch (e) {} });
+    dataUnsubscribers = [];
+    isInitialLoad = true;
+}
+
 async function carregarEstado(){
-    iniciarListenerConfiguracoes();
+    dataUnsubscribers.push(iniciarListenerConfiguracoes());
     
-    notasCollection.orderBy('dataCriacao','desc').onSnapshot(snapshot => {
+    dataUnsubscribers.push(notasCollection.orderBy('dataCriacao','desc').onSnapshot(snapshot => {
         if(snapshot.metadata.hasPendingWrites && (isChecklistUpdate || snapshot.docChanges().some(c => c.type === 'modified'))){
             isChecklistUpdate = false;
             notasPendentes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
             return;
         }
         handleSnapshotChanges(snapshot);
-    }, error => toast("Erro ao carregar dados."));
+    }, error => toast("Erro ao carregar dados.")));
     
-    historicoCollection.orderBy('dataHistorico','desc').onSnapshot(snapshot => {
+    dataUnsubscribers.push(historicoCollection.orderBy('dataHistorico','desc').onSnapshot(snapshot => {
         historicoNotas = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
         popularListaHistorico();
-    }, error => console.error("Erro ao carregar histórico:", error));
+    }, error => console.error("Erro ao carregar histórico:", error)));
+
+    dataUnsubscribers.push(anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
+        listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
+
+        // Migração única: se não existe nenhuma anotação nova ainda, mas havia
+        // texto no campo antigo (uma anotação só), traz ele pra cá como a
+        // primeira anotação, pra não perder o que já estava escrito.
+        if (!migracaoAnotacoesAntigasFeita) {
+            migracaoAnotacoesAntigasFeita = true;
+            if (listaAnotacoes.length === 0 && appConfig.anotacoes && appConfig.anotacoes.trim()) {
+                const conteudoMigrado = appConfig.anotacoes.trim().split('\n').map(l => `<div>${l || '<br>'}</div>`).join('');
+                try {
+                    await anotacoesTextoCollection.add({
+                        titulo: 'Anotação',
+                        conteudo: conteudoMigrado,
+                        criadoEm: new Date().toISOString(),
+                        atualizadoEm: new Date().toISOString()
+                    });
+                } catch (e) { console.error('Erro ao migrar anotação antiga:', e); }
+                return; // o próprio snapshot vai disparar de novo com a nota migrada
+            }
+        }
+
+        renderListaAnotacoes();
+    }, error => console.error("Erro ao carregar anotações:", error)));
 }
 
 function handleSnapshotChanges(snapshot){
@@ -747,10 +806,20 @@ function ordenarExportacao() {
 
 // --- SETUP GERAL (Event Listeners) ---
 document.addEventListener('DOMContentLoaded', () => {
-    setAppHeight(); setupKeyboardListener(); checkLogin(); 
+    setAppHeight(); setupKeyboardListener();
     
     document.querySelectorAll('.settings-list-group a[data-screen]').forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(link.dataset.screen, link.dataset.title); }); });
-    document.getElementById('close-btn').addEventListener('click', () => switchToScreen('screen-settings', 'Ajustes'));
+    document.getElementById('close-btn').addEventListener('click', () => {
+        const activeScreen = document.querySelector('.app-screen.active');
+        const activeId = activeScreen ? activeScreen.id : null;
+        if (activeId === 'screen-anotacoes-editor') {
+            voltarParaListaAnotacoes();
+            return;
+        }
+        const voltarPara = closeBtnBackScreen[activeId] || 'screen-settings';
+        const tituloVoltar = (menuDetails[voltarPara] && menuDetails[voltarPara].title) || 'Ajustes';
+        switchToScreen(voltarPara, tituloVoltar);
+    });
     
     document.getElementById('theme-select').addEventListener('change', (e) => { appConfig.personalizacao.theme = e.target.value; salvarPersonalizacao(); });
     document.getElementById('icon-theme-select').addEventListener('change', (e) => { appConfig.personalizacao.iconTheme = e.target.value; salvarPersonalizacao(); });
@@ -760,9 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
     speedSlider.addEventListener('input', (e) => { document.getElementById('animation-speed-value').textContent = speedTextMap[e.target.value]; });
     speedSlider.addEventListener('change', (e) => { appConfig.personalizacao.animationSpeed = parseInt(e.target.value, 10); salvarPersonalizacao(); });
     
-    document.getElementById('anotacoes-textarea').addEventListener('input', debounce(salvarAnotacoesAutomatico, 1000));
       
-    carregarEstado(); 
     limparFormularioPrincipal(false);
 
     const formFields = document.querySelectorAll('#screen-add .form-field');
@@ -792,7 +859,25 @@ function formatarValorBlur(event){
 // --- FUNÇÕES DE UI / MODAIS ---
 function openModal(id){closeAllModals();document.getElementById(id)?.classList.add('active')}
 function closeAllModals(){document.querySelectorAll('.modal-screen.active').forEach(modal=>modal.classList.remove('active'))}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.style.display='none',2000)}
+function personalizarMensagem(texto, ehSucesso){
+    const nome = primeiroNomeUsuario();
+    if (!nome || !ehSucesso) return texto;
+    return `${texto.replace(/[.!]+$/, '')}, ${nome}!`;
+}
+function toast(msg){
+    const t = document.getElementById('toast');
+    const iconEl = document.getElementById('toast-icon');
+    const textEl = document.getElementById('toast-text');
+    const ehSucesso = msg.startsWith('✓');
+    const ehErro = msg.startsWith('✕');
+    const texto = (ehSucesso || ehErro) ? msg.slice(1).trim() : msg;
+    iconEl.className = 'toast-icon' + (ehSucesso ? ' success' : ehErro ? ' error' : '');
+    iconEl.innerHTML = ehSucesso ? '<i class="fa-solid fa-circle-check"></i>' : ehErro ? '<i class="fa-solid fa-circle-exclamation"></i>' : '';
+    textEl.textContent = personalizarMensagem(texto, ehSucesso);
+    t.style.display = 'flex';
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => t.style.display = 'none', 2000);
+}
 
 function showConfirmModal({title,message,confirmText="Confirmar",confirmClass="danger",onConfirm}){
     const modal=document.getElementById('confirm-modal');
@@ -801,11 +886,11 @@ function showConfirmModal({title,message,confirmText="Confirmar",confirmClass="d
     const confirmBtn=document.getElementById('confirm-btn');
     confirmBtn.textContent=confirmText;
     
-    // Ajuste de classes do botão
-    confirmBtn.style.backgroundColor = '';
-    if(confirmClass === 'danger') confirmBtn.style.backgroundColor = 'var(--button-danger)';
-    else if(confirmClass === 'success') confirmBtn.style.backgroundColor = 'var(--button-success)';
-    else if(confirmClass === 'warning') confirmBtn.style.backgroundColor = 'var(--button-warning)';
+    // Ajuste de classe do botão (cor do texto/borda — botão nunca é preenchido)
+    confirmBtn.classList.remove('is-danger', 'is-success', 'is-warning');
+    if(confirmClass === 'danger') confirmBtn.classList.add('is-danger');
+    else if(confirmClass === 'success') confirmBtn.classList.add('is-success');
+    else if(confirmClass === 'warning') confirmBtn.classList.add('is-warning');
     
     const cancelBtn=document.getElementById('cancel-btn');
     const confirmHandler=()=>{onConfirm();closeAllModals();cleanup()};
@@ -816,26 +901,329 @@ function showConfirmModal({title,message,confirmText="Confirmar",confirmClass="d
     modal.classList.add('active');
 }
 
-// --- FUNÇÕES DE SEGURANÇA E LOGIN ---
+// --- FUNÇÕES DE SEGURANÇA E LOGIN (Firebase Authentication) ---
+const auth = firebase.auth();
 const checkmarkSVG = `<svg class="check-svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>`;
-function checkLogin() { if (localStorage.getItem('isLoggedIn') === 'true') { document.getElementById('app-container').style.display = 'flex'; document.getElementById('login-screen').style.display = 'none'; } else { document.getElementById('app-container').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex'; } }
-function handleLogin() { const passwordInput = document.getElementById('password-input'); const errorMessage = document.getElementById('error-message'); const loginIcon = document.getElementById('login-icon'); const senhaCorreta = localStorage.getItem('userPassword') || '1206'; if (passwordInput.value === senhaCorreta) { localStorage.setItem('isLoggedIn', 'true'); errorMessage.textContent = ''; loginIcon.classList.replace('fa-lock', 'fa-unlock'); loginIcon.parentElement.classList.add('unlocked'); setTimeout(checkLogin, 500); } else { errorMessage.textContent = 'Senha incorreta.'; passwordInput.classList.add('shake'); setTimeout(() => { passwordInput.classList.remove('shake'); passwordInput.value = ''; }, 820); } }
-document.getElementById('password-input').addEventListener('keyup', (event) => { if (event.key === "Enter") { event.preventDefault(); handleLogin(); } });
-function abrirModalSenhaComVerificacao() { document.getElementById('security-check-screen').style.display = 'flex'; setTimeout(() => document.getElementById('security-check-password-input').focus(), 50); }
-function handleSecurityCheck() { const input = document.getElementById('security-check-password-input'); const errorMessage = document.getElementById('security-check-error-message'); const senhaCorreta = localStorage.getItem('userPassword') || '1206'; if (input.value === senhaCorreta) { document.getElementById('security-check-screen').style.display = 'none'; input.value = ''; errorMessage.textContent = ''; document.getElementById('password-change-screen').style.display = 'flex'; setTimeout(() => document.getElementById('new-password-input').focus(), 50); } else { errorMessage.textContent = 'Senha incorreta.'; input.classList.add('shake'); setTimeout(() => { input.classList.remove('shake'); input.value = ''; }, 820); } }
+
+let confirmationResultTelefone = null;
+let recaptchaVerifier = null;
+
+// Traduz os códigos de erro mais comuns do Firebase Auth para mensagens em
+// português. O código original vai entre parênteses pra facilitar diagnóstico
+// (o Google/telefone estão dando erro — isso ajuda a identificar qual é).
+function traduzErroAuth(error) {
+    const mapa = {
+        'auth/invalid-email': 'E-mail inválido.',
+        'auth/user-disabled': 'Esta conta foi desativada.',
+        'auth/user-not-found': 'E-mail ou senha incorretos.',
+        'auth/wrong-password': 'E-mail ou senha incorretos.',
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/too-many-requests': 'Muitas tentativas. Tente novamente em alguns minutos.',
+        'auth/network-request-failed': 'Falha de conexão. Verifique sua internet.',
+        'auth/popup-closed-by-user': 'Login cancelado.',
+        'auth/popup-blocked': 'O navegador bloqueou a janela de login. Tentando de outro jeito...',
+        'auth/operation-not-supported-in-this-environment': 'Este navegador não suporta esse tipo de login aqui.',
+        'auth/unauthorized-domain': 'Este domínio não está autorizado no Firebase (Authentication → Settings → Authorized domains).',
+        'auth/invalid-phone-number': 'Número de telefone inválido. Use o formato +55 11 91234-5678.',
+        'auth/invalid-verification-code': 'Código incorreto.',
+        'auth/code-expired': 'Código expirado. Envie um novo.',
+        'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+        'auth/requires-recent-login': 'Por segurança, verifique sua senha novamente.',
+        'auth/captcha-check-failed': 'A verificação do reCAPTCHA falhou. Tente novamente.',
+        'auth/argument-error': 'Configuração inválida para este tipo de login.',
+    };
+    console.error('Erro Auth:', error.code, error.message);
+    const base = mapa[error.code] || 'Ocorreu um erro ao entrar.';
+    return `${base} (${error.code || 'sem código'})`;
+}
+
+function mostrarLoaderApp(mostrar) {
+    const appLoader = document.getElementById('app-loader');
+    if (!appLoader) return;
+    appLoader.classList.toggle('app-loader-hidden', !mostrar);
+    document.body.classList.toggle('is-loading', mostrar);
+}
+
+// Coleção onde ficam registradas as contas que entraram via Google/telefone
+// (autocadastro). Contas de e-mail/senha são criadas manualmente por você no
+// Console do Firebase, então essas já contam como aprovadas por definição.
+// Google/telefone criam um pedido de acesso aqui, com aprovado:false, e você
+// aprova mudando esse campo para true direto no Firestore (Console → Firestore
+// Database → acessosAutorizados → o documento da pessoa → aprovado: true).
+async function verificarAprovacaoAcesso(user) {
+    const provedores = user.providerData.map(p => p.providerId);
+    if (provedores.includes('password')) return true;
+    try {
+        const ref = firestore.collection('acessosAutorizados').doc(user.uid);
+        const snap = await ref.get();
+        if (!snap.exists) {
+            await ref.set({
+                email: user.email || null,
+                telefone: user.phoneNumber || null,
+                nome: user.displayName || '',
+                aprovado: false,
+                criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await auth.signOut();
+            document.getElementById('login-error-message').textContent = 'Seu acesso foi solicitado e está aguardando aprovação.';
+            return false;
+        }
+        if (snap.data().aprovado !== true) {
+            await auth.signOut();
+            document.getElementById('login-error-message').textContent = 'Sua conta ainda não foi aprovada.';
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error('Erro ao verificar aprovação:', e);
+        await auth.signOut();
+        document.getElementById('login-error-message').textContent = 'Não foi possível verificar seu acesso. Tente novamente.';
+        return false;
+    }
+}
+
+// onAuthStateChanged é a fonte da verdade sobre o login — dispara na carga inicial
+// e sempre que o usuário entra/sai, em qualquer aba/dispositivo com a sessão ativa.
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        mostrarLoaderApp(true);
+        const permitido = await verificarAprovacaoAcesso(user);
+        if (!permitido) return; // signOut() já disparou onAuthStateChanged de novo com user=null
+
+        document.getElementById('app-container').style.display = 'flex';
+        document.getElementById('login-screen').style.display = 'none';
+        atualizarTelaConta(user);
+        atualizarPainelAprovacoes(user);
+        iniciarDadosAppSeNecessario();
+    } else {
+        pararDadosApp();
+        atualizarPainelAprovacoes(null);
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        mostrarLoaderApp(false);
+    }
+});
+
+function atualizarTelaConta(user) {
+    const emailEl = document.getElementById('conta-email');
+    const providerEl = document.getElementById('conta-provider');
+    if (!emailEl || !providerEl) return;
+    const provedores = user.providerData.map(p => p.providerId);
+    const usaSenha = provedores.includes('password');
+    emailEl.textContent = user.email || user.phoneNumber || 'Conta';
+    providerEl.textContent = usaSenha ? 'Login por e-mail e senha'
+        : provedores.includes('google.com') ? 'Login pelo Google'
+        : provedores.includes('phone') ? 'Login por telefone'
+        : 'Conta';
+    document.getElementById('conta-senha-card').style.display = usaSenha ? 'block' : 'none';
+    document.getElementById('conta-senha-indisponivel').style.display = usaSenha ? 'none' : 'block';
+    const nomeInput = document.getElementById('conta-nome-input');
+    if (nomeInput) nomeInput.value = user.displayName || '';
+}
+
+// --- Contas com "acesso especial": podem aprovar/revogar outras contas
+// direto pelo app, sem precisar entrar no Console do Firebase. ---
+const ADMIN_EMAILS = ['aseleandro@gmail.com', 'leandromendoncadesign@gmail.com'];
+function isContaAdmin(user) { return !!user && !!user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()); }
+
+let unsubAprovacoes = null;
+function atualizarPainelAprovacoes(user) {
+    const menuItem = document.getElementById('menu-aprovacoes');
+    if (!isContaAdmin(user)) {
+        if (menuItem) menuItem.style.display = 'none';
+        if (unsubAprovacoes) { unsubAprovacoes(); unsubAprovacoes = null; }
+        return;
+    }
+    if (menuItem) menuItem.style.display = '';
+    if (unsubAprovacoes) return; // já inscrito, não duplica o listener
+    unsubAprovacoes = firestore.collection('acessosAutorizados').orderBy('criadoEm', 'desc').onSnapshot(snapshot => {
+        renderListaAprovacoes(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, error => console.error('Erro ao carregar aprovações:', error));
+}
+function renderListaAprovacoes(lista) {
+    const container = document.getElementById('lista-aprovacoes');
+    if (!container) return;
+    if (lista.length === 0) { container.innerHTML = '<li class="empty-state">Nenhum pedido de acesso ainda.</li>'; return; }
+    container.innerHTML = lista.map(item => {
+        const identificacao = item.email || item.telefone || item.id;
+        const aprovado = item.aprovado === true;
+        return `<li>
+            <div>
+                <div style="font-weight:600;color:var(--text-dark);">${identificacao}</div>
+                <div style="font-size:12px;color:var(--text-light);">${aprovado ? '✓ Aprovado' : 'Pendente'}${item.nome ? ' · ' + item.nome : ''}</div>
+            </div>
+            <button class="action-chip ${aprovado ? 'delete-chip' : 'edit-chip'}" onclick="alternarAprovacaoAcesso('${item.id}', ${!aprovado})">${aprovado ? 'Revogar' : 'Aprovar'}</button>
+        </li>`;
+    }).join('');
+}
+function alternarAprovacaoAcesso(uid, novoValor) {
+    firestore.collection('acessosAutorizados').doc(uid).update({ aprovado: novoValor })
+        .then(() => toast(novoValor ? '✓ Acesso aprovado!' : '✓ Acesso revogado.'))
+        .catch(() => toast('✕ Não foi possível atualizar.'));
+}
+
+// --- Login por e-mail/senha ---
+function handleLoginEmail() {
+    const emailInput = document.getElementById('login-email-input');
+    const passwordInput = document.getElementById('login-password-input');
+    const errorMessage = document.getElementById('login-error-message');
+    errorMessage.textContent = '';
+    if (!emailInput.value.trim() || !passwordInput.value) { errorMessage.textContent = 'Preencha e-mail e senha.'; return; }
+    auth.signInWithEmailAndPassword(emailInput.value.trim(), passwordInput.value)
+        .then(() => { passwordInput.value = ''; })
+        .catch(error => {
+            errorMessage.textContent = traduzErroAuth(error);
+            passwordInput.classList.add('shake');
+            setTimeout(() => passwordInput.classList.remove('shake'), 820);
+        });
+}
+document.getElementById('login-password-input').addEventListener('keyup', (event) => { if (event.key === "Enter") { event.preventDefault(); handleLoginEmail(); } });
+
+function handleForgotPassword() {
+    const emailInput = document.getElementById('login-email-input');
+    const errorMessage = document.getElementById('login-error-message');
+    if (!emailInput.value.trim()) { errorMessage.textContent = 'Digite seu e-mail acima para recuperar a senha.'; return; }
+    auth.sendPasswordResetEmail(emailInput.value.trim())
+        .then(() => toast('✓ E-mail de redefinição enviado!'))
+        .catch(error => { errorMessage.textContent = traduzErroAuth(error); });
+}
+
+// --- Login com Google ---
+async function handleLoginGoogle() {
+    const errorEl = document.getElementById('login-error-message');
+    errorEl.textContent = '';
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+        await auth.signInWithPopup(provider);
+    } catch (error) {
+        const precisaFallback = ['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/cancelled-popup-request'].includes(error.code);
+        if (precisaFallback) {
+            try { await auth.signInWithRedirect(provider); } catch (error2) { errorEl.textContent = traduzErroAuth(error2); }
+            return;
+        }
+        errorEl.textContent = traduzErroAuth(error);
+    }
+}
+// Se o login com Google caiu no fallback de redirect (fora de popup), o
+// resultado chega aqui quando a página recarrega depois do redirect.
+auth.getRedirectResult().catch(error => {
+    if (error && error.code) {
+        const errorEl = document.getElementById('login-error-message');
+        if (errorEl) errorEl.textContent = traduzErroAuth(error);
+    }
+});
+
+// --- Login por telefone (SMS) ---
+function mostrarEtapaTelefone() {
+    document.getElementById('login-email-step').style.display = 'none';
+    document.getElementById('login-phone-step').style.display = 'block';
+    document.getElementById('login-phone-code-step').style.display = 'none';
+    if (!recaptchaVerifier) {
+        recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'normal' });
+        recaptchaVerifier.render();
+    }
+}
+function voltarParaEmailStep() {
+    document.getElementById('login-email-step').style.display = 'block';
+    document.getElementById('login-phone-step').style.display = 'none';
+    document.getElementById('login-phone-code-step').style.display = 'none';
+}
+function enviarCodigoTelefone() {
+    const phoneInput = document.getElementById('login-phone-input');
+    const errorMessage = document.getElementById('login-phone-error-message');
+    errorMessage.textContent = '';
+    if (!phoneInput.value.trim()) { errorMessage.textContent = 'Digite seu telefone com DDI (ex: +55 11 91234-5678).'; return; }
+    auth.signInWithPhoneNumber(phoneInput.value.trim(), recaptchaVerifier)
+        .then(result => {
+            confirmationResultTelefone = result;
+            document.getElementById('login-phone-step').style.display = 'none';
+            document.getElementById('login-phone-code-step').style.display = 'block';
+            setTimeout(() => document.getElementById('login-phone-code-input').focus(), 50);
+        })
+        .catch(error => {
+            errorMessage.textContent = traduzErroAuth(error);
+            if (recaptchaVerifier) recaptchaVerifier.render().then(widgetId => grecaptcha.reset(widgetId));
+        });
+}
+function confirmarCodigoTelefone() {
+    const codeInput = document.getElementById('login-phone-code-input');
+    const errorMessage = document.getElementById('login-phone-code-error-message');
+    if (!confirmationResultTelefone) return;
+    confirmationResultTelefone.confirm(codeInput.value.trim())
+        .catch(error => {
+            errorMessage.textContent = traduzErroAuth(error);
+            codeInput.classList.add('shake');
+            setTimeout(() => codeInput.classList.remove('shake'), 820);
+        });
+}
+
+// --- Logout ---
+function handleLogout() {
+    showConfirmModal({
+        title: 'Sair da Conta',
+        message: 'Você precisará entrar novamente para acessar suas notas.',
+        confirmText: 'Sair',
+        confirmClass: 'danger',
+        onConfirm: () => auth.signOut()
+    });
+}
+
+// --- Alterar senha (reautenticação + updatePassword real no Firebase) ---
+function abrirModalSenhaComVerificacao() {
+    document.getElementById('security-check-screen').style.display = 'flex';
+    setTimeout(() => document.getElementById('security-check-password-input').focus(), 50);
+}
+function handleSecurityCheck() {
+    const input = document.getElementById('security-check-password-input');
+    const errorMessage = document.getElementById('security-check-error-message');
+    const user = auth.currentUser;
+    if (!user || !user.email) { errorMessage.textContent = 'Não foi possível verificar a conta.'; return; }
+    const credential = firebase.auth.EmailAuthProvider.credential(user.email, input.value);
+    user.reauthenticateWithCredential(credential)
+        .then(() => {
+            document.getElementById('security-check-screen').style.display = 'none';
+            input.value = '';
+            errorMessage.textContent = '';
+            document.getElementById('password-change-screen').style.display = 'flex';
+            setTimeout(() => document.getElementById('new-password-input').focus(), 50);
+        })
+        .catch(error => {
+            errorMessage.textContent = traduzErroAuth(error);
+            input.classList.add('shake');
+            setTimeout(() => { input.classList.remove('shake'); input.value = ''; }, 820);
+        });
+}
 function cancelSecurityCheck() { document.getElementById('security-check-screen').style.display = 'none'; document.getElementById('security-check-password-input').value = ''; }
 function closePasswordChangeScreen() { document.getElementById('password-change-screen').style.display = 'none'; document.getElementById('new-password-input').value = ''; document.getElementById('confirm-password-input').value = ''; }
-function handleSaveNewPassword() { const n = document.getElementById('new-password-input'); const c = document.getElementById('confirm-password-input'); const e = document.getElementById('password-error-message'); if (n.value.trim().length < 4) { e.textContent = 'Mínimo 4 dígitos.'; return; } if (n.value !== c.value) { e.textContent = 'Senhas não conferem.'; c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 820); return; } localStorage.setItem('userPassword', n.value); toast('✓ Senha alterada!'); closePasswordChangeScreen(); }
+function handleSaveNewPassword() {
+    const n = document.getElementById('new-password-input');
+    const c = document.getElementById('confirm-password-input');
+    const e = document.getElementById('password-error-message');
+    if (n.value.length < 6) { e.textContent = 'Mínimo 6 caracteres.'; return; }
+    if (n.value !== c.value) { e.textContent = 'Senhas não conferem.'; c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 820); return; }
+    const user = auth.currentUser;
+    user.updatePassword(n.value)
+        .then(() => { toast('✓ Senha alterada!'); closePasswordChangeScreen(); })
+        .catch(error => { e.textContent = traduzErroAuth(error); });
+}
+
+// --- Nome de exibição (usado pra personalizar as mensagens do app) ---
+function primeiroNomeUsuario() {
+    const nome = (auth.currentUser && auth.currentUser.displayName) ? auth.currentUser.displayName.trim() : '';
+    return nome ? nome.split(' ')[0] : '';
+}
+function salvarNomeConta() {
+    const input = document.getElementById('conta-nome-input');
+    const user = auth.currentUser;
+    if (!user || !input) return;
+    const nome = input.value.trim();
+    user.updateProfile({ displayName: nome })
+        .then(() => toast(nome ? '✓ Nome salvo!' : '✓ Nome removido.'))
+        .catch(error => toast('✕ Não foi possível salvar o nome.'));
+}
 
 // --- MANAGE E CONFIGURAÇÕES ---
 const debounce = (func, delay) => { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); }; };
-const salvarAnotacoesAutomatico = () => { appConfig.anotacoes = document.getElementById('anotacoes-textarea').value; settingsDocRef.set({ anotacoes: appConfig.anotacoes }, { merge: true }).catch(error => { console.error("Erro no salvamento automático:", error); }); };
-const salvarAnotacoesManual = () => { const saveButton = document.getElementById('anotacoes-salvar-btn'); const originalContent = saveButton.innerHTML; saveButton.disabled = true; saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; appConfig.anotacoes = document.getElementById('anotacoes-textarea').value; settingsDocRef.set({ anotacoes: appConfig.anotacoes }, { merge: true }).then(() => { saveButton.innerHTML = `${checkmarkSVG} Salvo!`; setTimeout(() => { saveButton.innerHTML = originalContent; saveButton.disabled = false; }, 1500); }).catch(error => { toast('Erro ao salvar.'); saveButton.innerHTML = originalContent; saveButton.disabled = false; }); };
-
-// Funções de Anotações (Copiar/Colar/Limpar)
-async function colarAnotacoes() { try { const text = await navigator.clipboard.readText(); const textarea = document.getElementById('anotacoes-textarea'); const start = textarea.selectionStart; const end = textarea.selectionEnd; const val = textarea.value; textarea.value = val.substring(0, start) + text + val.substring(end); textarea.selectionStart = textarea.selectionEnd = start + text.length; textarea.focus(); salvarAnotacoesAutomatico(); toast("Texto colado!"); } catch (err) { toast("Permissão negada ou não suportada."); } }
-function copiarAnotacoes() { const b = document.getElementById('anotacoes-copiar-btn'); const o = b.innerHTML; const t = document.getElementById('anotacoes-textarea').value; if (!t.trim()) { toast("Nada para copiar."); return; } b.disabled = true; navigator.clipboard.writeText(t).then(() => { b.innerHTML = `${checkmarkSVG} Copiado!`; setTimeout(() => { b.innerHTML = o; b.disabled = false; }, 1500); }).catch(() => { toast('Erro ao copiar.'); b.innerHTML = o; b.disabled = false; }); }
-function limparAnotacoes() { showConfirmModal({ title: "Limpar Anotações?", message: "Apagar todo o conteúdo?", confirmText: "Limpar", onConfirm: () => { document.getElementById('anotacoes-textarea').value = ''; salvarAnotacoesAutomatico(); toast("Anotações limpas."); } }); }
 
 // Funções de Gerenciamento (Fornecedores/Pedidos/Obs)
 async function adicionarFornecedor(forn, noToast = false) {const f = String(forn || '').trim().toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {fornecedoresSugeridos.push(f);await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
@@ -1211,12 +1599,10 @@ async function adicionarObservacao(obs,noToast=false){const o=obs.trim();if(o&&!
 function adicionarObservacaoManage(){const o=DOM.obsManageInput.value.trim();if(o){adicionarObservacao(o);DOM.obsManageInput.value=''}}
 async function deletarObservacao(o){showConfirmModal({title:"Excluir Observação",message:`Excluir "${o}"?`,onConfirm:async()=>{observacoesSugeridas=observacoesSugeridas.filter(i=>i!==o);await settingsDocRef.update({observacoes:firebase.firestore.FieldValue.arrayRemove(o)});toast(`Obs "${o}" excluída.`)}})}
 function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a ser pago</option>';observacoesSugeridas.sort().forEach(o=>DOM.obs.innerHTML+=`<option value="${o}">${o}</option>`);DOM.listaObsManage.innerHTML='';observacoesSugeridas.sort().forEach(o=>DOM.listaObsManage.innerHTML+=`<li>${o} <button onclick="deletarObservacao('${o}')"><i class="fa-solid fa-times-circle"></i></button></li>`)}
-async function adicionarPedido() { const pNum = DOM.pedidoNumInput.value.trim(); const r = DOM.pedidoRecursoSelect.value; if (!pNum || !r) { return toast('Preencha o pedido e o recurso.'); } const updateData = {}; updateData[`pedidosRecursos.${pNum}`] = r; DOM.pedidoNumInput.value = ''; DOM.pedidoRecursoSelect.value = ''; try { await settingsDocRef.update(updateData); toast(`Pedido ${pNum} adicionado!`); } catch (error) { if (error.code === 'not-found') { await settingsDocRef.set({ pedidosRecursos: { [pNum]: r } }, { merge: true }); toast(`Pedido ${pNum} adicionado!`); } else { toast(`Falha ao adicionar.`); } } }
-async function deletarPedido(p) { showConfirmModal({ title: "Excluir Pedido", message: `Excluir pedido "${p}"?`, onConfirm: async () => { const updateData = {}; updateData[`pedidosRecursos.${p}`] = firebase.firestore.FieldValue.delete(); try { await settingsDocRef.update(updateData); toast(`Pedido ${p} excluído.`); } catch (error) { toast(`Falha ao excluir.`); } } }); }
-function popularListaPedidos(){DOM.listaPedidos.innerHTML='';const pedidosOrdenados=Object.keys(pedidosRecursos).sort((a,b)=>Number(a)-Number(b));pedidosOrdenados.forEach(p=>{DOM.listaPedidos.innerHTML+=`<li>${p} - ${pedidosRecursos[p]} <button onclick="deletarPedido('${p}')"><i class="fa-solid fa-times-circle"></i></button></li>`})}
+
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = ['screen-fornecedores', 'screen-pedidos', 'screen-observacoes', 'screen-personalizacao']; document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
@@ -1262,6 +1648,213 @@ async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",me
 function toggleChecklist(btn,notaId){const notaItem=btn.closest('.nota-item');const checklistContainer=notaItem.querySelector('.checklist-container');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show, .checklist-container.show').forEach(p=>{if(p!==checklistContainer)p.classList.remove('show')});if(editPanel.classList.contains('show'))editPanel.classList.remove('show');checklistContainer.classList.toggle('show')}
 function gerarHtmlChecklist(nota){let html='';const checklistData=nota.checklist||{};for(const key in checklistDefinition){const isChecked=checklistData[key]?'checked':'';html+=`<div class="checklist-item"><input type="checkbox" id="check-${key}-${nota.id}" ${isChecked} onchange="atualizarChecklist('${nota.id}', '${key}', this.checked)"><label for="check-${key}-${nota.id}">${checklistDefinition[key]}</label></div>`}return html}
 function atualizarChecklist(notaId,tarefa,isChecked){isChecklistUpdate=!0;const updateData={};updateData[`checklist.${tarefa}`]=isChecked;notasCollection.doc(notaId).update(updateData).catch(error=>toast("Erro ao salvar progresso."));const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;if(!nota.checklist)nota.checklist={};nota.checklist[tarefa]=isChecked;const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=Object.values(nota.checklist).filter(Boolean).length;const progressPercent=(completedTasks/totalTasks)*100;const notaItemEl=document.querySelector(`div[data-note-id="${notaId}"]`);if(notaItemEl){const progressBar=notaItemEl.querySelector('.progress-bar');const progressButton=notaItemEl.querySelector('.progress-btn');if(progressBar)progressBar.style.width=`${progressPercent}%`;if(progressButton)progressButton.textContent=`Progresso: ${completedTasks}/${totalTasks}`}}
+// --- SISTEMA DE ANOTAÇÕES (múltiplas notas, texto rico, tabelas) ---
+
+function stripHtmlAnotacao(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return (tmp.textContent || tmp.innerText || '').trim();
+}
+
+function renderListaAnotacoes() {
+    const container = document.getElementById('lista-anotacoes-container');
+    if (!container) return;
+
+    const termo = filtroAnotacoesTexto.trim().toUpperCase();
+    const lista = listaAnotacoes.filter(a => {
+        if (!termo) return true;
+        const titulo = (a.titulo || '').toUpperCase();
+        const texto = stripHtmlAnotacao(a.conteudo).toUpperCase();
+        return titulo.includes(termo) || texto.includes(termo);
+    });
+
+    if (lista.length === 0) {
+        container.innerHTML = `<div class="empty-state">${listaAnotacoes.length === 0 ? 'Nenhuma anotação ainda. Toque em "Nova Anotação" para começar.' : 'Nenhuma anotação encontrada.'}</div>`;
+        return;
+    }
+
+    container.innerHTML = lista.map(a => {
+        const snippet = stripHtmlAnotacao(a.conteudo).slice(0, 90) || 'Sem conteúdo ainda...';
+        const data = a.atualizadoEm ? new Date(a.atualizadoEm).toLocaleString('pt-BR') : '';
+        return `<div class="nota-item anotacao-item" onclick="abrirAnotacao('${a.id}')">
+            <div class="nota-info">${a.titulo || 'Sem título'}</div>
+            <div class="nota-detalhes">${snippet}${snippet.length >= 90 ? '…' : ''}</div>
+            <div class="nota-data">Atualizado em: ${data}</div>
+        </div>`;
+    }).join('');
+}
+
+function filtrarAnotacoes(texto) {
+    filtroAnotacoesTexto = texto;
+    renderListaAnotacoes();
+}
+
+function abrirNovaAnotacao() {
+    anotacaoAtualId = null;
+    document.getElementById('anotacao-titulo').value = '';
+    document.getElementById('anotacao-corpo').innerHTML = '';
+    switchToScreen('screen-anotacoes-editor', 'Nova Anotação');
+    setTimeout(() => document.getElementById('anotacao-titulo').focus(), 300);
+}
+
+function abrirAnotacao(id) {
+    const nota = listaAnotacoes.find(a => a.id === id);
+    if (!nota) return;
+    anotacaoAtualId = id;
+    document.getElementById('anotacao-titulo').value = nota.titulo || '';
+    document.getElementById('anotacao-corpo').innerHTML = nota.conteudo || '';
+    switchToScreen('screen-anotacoes-editor', nota.titulo || 'Anotação');
+}
+
+function voltarParaListaAnotacoes() {
+    switchToScreen('screen-anotacoes', 'Anotações');
+}
+
+let autoSaveAnotacaoTimeout = null;
+function agendarAutoSaveAnotacao() {
+    clearTimeout(autoSaveAnotacaoTimeout);
+    autoSaveAnotacaoTimeout = setTimeout(() => salvarAnotacaoAtual(false), 1200);
+}
+
+async function salvarAnotacaoAtual(mostrarToast) {
+    const tituloEl = document.getElementById('anotacao-titulo');
+    const corpoEl = document.getElementById('anotacao-corpo');
+    if (!tituloEl || !corpoEl) return;
+
+    const titulo = tituloEl.value.trim();
+    const conteudo = corpoEl.innerHTML;
+
+    // Nada digitado ainda numa anotação nova: não cria lixo no banco.
+    if (!anotacaoAtualId && !titulo && !stripHtmlAnotacao(conteudo)) {
+        if (mostrarToast) toast('Nada para salvar.');
+        return;
+    }
+
+    const dados = {
+        titulo: titulo || 'Sem título',
+        conteudo,
+        atualizadoEm: new Date().toISOString()
+    };
+
+    try {
+        if (anotacaoAtualId) {
+            await anotacoesTextoCollection.doc(anotacaoAtualId).update(dados);
+        } else {
+            dados.criadoEm = dados.atualizadoEm;
+            const ref = await anotacoesTextoCollection.add(dados);
+            anotacaoAtualId = ref.id;
+        }
+        if (mostrarToast) toast('✓ Anotação salva!');
+    } catch (e) {
+        console.error('Erro ao salvar anotação:', e);
+        if (mostrarToast) toast('✕ Erro ao salvar anotação.');
+    }
+}
+
+async function copiarTextoAnotacao() {
+    const corpoEl = document.getElementById('anotacao-corpo');
+    const texto = corpoEl ? corpoEl.innerText.trim() : '';
+    if (!texto) return toast('Nada para copiar.');
+    await navigator.clipboard.writeText(texto);
+    toast('✓ Texto copiado!');
+}
+
+async function colarTextoAnotacao() {
+    const corpoEl = document.getElementById('anotacao-corpo');
+    if (!corpoEl) return;
+    try {
+        const texto = await navigator.clipboard.readText();
+        if (!texto) return toast('Área de transferência vazia.');
+        corpoEl.focus();
+        document.execCommand('insertText', false, texto);
+        agendarAutoSaveAnotacao();
+        toast('✓ Texto colado!');
+    } catch (e) {
+        console.error('Erro ao colar:', e);
+        toast('✕ Não foi possível colar. Verifique a permissão de área de transferência.');
+    }
+}
+
+function limparTextoAnotacao() {
+    const corpoEl = document.getElementById('anotacao-corpo');
+    if (!corpoEl || !stripHtmlAnotacao(corpoEl.innerHTML)) return toast('Já está vazio.');
+    showConfirmModal({
+        title: 'Limpar Texto',
+        message: 'Isso vai apagar todo o texto desta anotação. O título é mantido.',
+        confirmText: 'Limpar',
+        confirmClass: 'danger',
+        onConfirm: () => {
+            corpoEl.innerHTML = '';
+            agendarAutoSaveAnotacao();
+            toast('✓ Texto limpo.');
+        }
+    });
+}
+
+function excluirAnotacaoAtual() {
+    if (!anotacaoAtualId) {
+        // anotação nova, ainda não salva - só descarta e volta pra lista sem criar nada
+        clearTimeout(autoSaveAnotacaoTimeout);
+        document.getElementById('anotacao-titulo').value = '';
+        document.getElementById('anotacao-corpo').innerHTML = '';
+        switchToScreen('screen-anotacoes', 'Anotações');
+        return;
+    }
+    showConfirmModal({
+        title: 'Excluir Anotação',
+        message: 'Deseja excluir esta anotação permanentemente?',
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                clearTimeout(autoSaveAnotacaoTimeout);
+                await anotacoesTextoCollection.doc(anotacaoAtualId).delete();
+                anotacaoAtualId = null;
+                document.getElementById('anotacao-titulo').value = '';
+                document.getElementById('anotacao-corpo').innerHTML = '';
+                toast('🗑️ Anotação excluída.');
+                switchToScreen('screen-anotacoes', 'Anotações');
+            } catch (e) {
+                console.error('Erro ao excluir anotação:', e);
+                toast('✕ Erro ao excluir.');
+            }
+        }
+    });
+}
+
+// Formatação de texto rico (negrito, itálico, títulos, listas). execCommand
+// ainda funciona bem pra esses comandos básicos em todos os navegadores atuais,
+// apesar de "deprecated" — é a forma mais simples de dar edição tipo
+// Word/Notion sem precisar de uma biblioteca externa pesada.
+function formatarTextoAnotacao(comando, valor) {
+    document.getElementById('anotacao-corpo').focus();
+    document.execCommand(comando, false, valor || null);
+    agendarAutoSaveAnotacao();
+}
+
+// Insere uma tabela editável no ponto do cursor — permite montar ou colar um
+// pedaço de planilha (ao copiar células do Excel/Google Sheets e colar aqui
+// dentro, o navegador já preserva a tabela automaticamente também).
+function inserirTabelaAnotacao() {
+    const linhas = parseInt(prompt('Quantas linhas?', '3'), 10);
+    const colunas = parseInt(prompt('Quantas colunas?', '3'), 10);
+    if (!linhas || !colunas || linhas < 1 || colunas < 1) return;
+
+    let html = '<table class="anotacao-tabela"><tbody>';
+    for (let i = 0; i < linhas; i++) {
+        html += '<tr>';
+        for (let j = 0; j < colunas; j++) {
+            html += '<td>&nbsp;</td>';
+        }
+        html += '</tr>';
+    }
+    html += '</tbody></table><p><br></p>';
+
+    document.getElementById('anotacao-corpo').focus();
+    document.execCommand('insertHTML', false, html);
+    agendarAutoSaveAnotacao();
+}
+
 function popularListaHistorico(){DOM.listaHistorico.innerHTML='';if(historicoNotas.length===0){DOM.listaHistorico.innerHTML=`<div class="empty-state">O histórico está vazio.</div>`;DOM.historicoActions.style.display='none'}else{DOM.historicoActions.style.display='grid';historicoNotas.forEach(nota=>{const div=document.createElement('div');div.classList.add('nota-item');div.innerHTML=`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} | Obs: ${nota.obs||'N/A'}</div><div class="nota-data">Arquivado em: ${nota.dataHistorico}</div>`;DOM.listaHistorico.appendChild(div)})}}
 async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="actions"><button class="actions-button" style="background:var(--button-success);" onclick="salvarEdicao('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button></div></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';}
 async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())return toast("Nada para compartilhar.");if(navigator.share){await navigator.share({title:'Relação de Notas Fiscais',text:texto})}else{await navigator.clipboard.writeText(texto);toast("Copiado!")}}

@@ -30,13 +30,39 @@
   </div>
     
   <div id="login-screen" style="display: none;"> 
-      <div class="login-box"> 
-          <div class="icon"><i class="fas fa-lock" id="login-icon"></i></div> 
-          <h1>Acesso Restrito</h1> 
-          <p>Por favor, insira a senha para continuar.</p> 
-          <input type="password" id="password-input" placeholder="••••••••"> 
-          <div id="error-message" class="error-message"></div> 
-          <button id="login-button" class="actions-button" onclick="handleLogin()">Entrar</button> 
+      <div class="login-box">
+          <div class="icon"><i class="fas fa-lock" id="login-icon"></i></div>
+          <h1>Entrar</h1>
+          <p>Acesse sua conta para continuar.</p>
+
+          <div id="login-email-step">
+              <input type="email" id="login-email-input" placeholder="E-mail" autocomplete="username">
+              <input type="password" id="login-password-input" placeholder="Senha" autocomplete="current-password" style="margin-top: 12px;">
+              <div id="login-error-message" class="error-message"></div>
+              <button id="login-button" class="actions-button" style="width:100%;margin-top:16px;" onclick="handleLoginEmail()">Entrar</button>
+              <a class="login-link" onclick="handleForgotPassword()">Esqueci minha senha</a>
+
+              <div class="login-divider"><span>ou</span></div>
+
+              <button class="actions-button" style="width:100%;" onclick="handleLoginGoogle()"><span class="icon-wrapper"><i class="fa-brands fa-google"></i></span> Continuar com Google</button>
+              <button class="actions-button" style="width:100%;margin-top:10px;" onclick="mostrarEtapaTelefone()"><span class="icon-wrapper"><i class="fa-solid fa-phone"></i></span> Continuar com telefone</button>
+          </div>
+
+          <div id="login-phone-step" style="display:none;">
+              <input type="tel" id="login-phone-input" placeholder="+55 11 91234-5678" autocomplete="tel">
+              <div id="login-phone-error-message" class="error-message"></div>
+              <div id="recaptcha-container" style="display:flex;justify-content:center;margin-top:12px;"></div>
+              <button class="actions-button" style="width:100%;margin-top:16px;" onclick="enviarCodigoTelefone()">Enviar código</button>
+              <a class="login-link" onclick="voltarParaEmailStep()">Voltar</a>
+          </div>
+
+          <div id="login-phone-code-step" style="display:none;">
+              <p style="margin-top:0;">Digite o código de 6 dígitos enviado por SMS.</p>
+              <input type="tel" id="login-phone-code-input" placeholder="000000" maxlength="6" inputmode="numeric">
+              <div id="login-phone-code-error-message" class="error-message"></div>
+              <button class="actions-button" style="width:100%;margin-top:16px;" onclick="confirmarCodigoTelefone()">Confirmar</button>
+              <a class="login-link" onclick="voltarParaEmailStep()">Cancelar</a>
+          </div>
       </div> 
   </div>
 
@@ -47,9 +73,9 @@
           <p>Por favor, digite sua senha atual para prosseguir.</p> 
           <input type="password" id="security-check-password-input" placeholder="••••••••"> 
           <div id="security-check-error-message" class="error-message"></div> 
-          <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;"> 
-              <button class="actions-button" style="background-color: var(--text-light);" onclick="cancelSecurityCheck()">Cancelar</button> 
-              <button class="actions-button" style="background-color: var(--accent-color);" onclick="handleSecurityCheck()">Verificar</button> 
+          <div class="actions" style="margin-top: 24px;"> 
+              <button class="actions-button is-neutral" onclick="cancelSecurityCheck()">Cancelar</button> 
+              <button class="actions-button" onclick="handleSecurityCheck()">Verificar</button> 
           </div> 
       </div> 
   </div>
@@ -59,12 +85,12 @@
           <div class="icon"><i class="fas fa-key"></i></div> 
           <h1>Alterar Senha</h1> 
           <p>Crie uma nova senha para sua conta.</p> 
-          <input type="password" id="new-password-input" placeholder="Nova Senha"> 
+          <input type="password" id="new-password-input" placeholder="Nova Senha (mín. 6 caracteres)"> 
           <input type="password" id="confirm-password-input" placeholder="Confirmar Senha" style="margin-top: 16px;"> 
           <div id="password-error-message" class="error-message"></div> 
-          <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;"> 
-              <button class="actions-button" style="background-color: var(--text-light);" onclick="closePasswordChangeScreen()">Cancelar</button> 
-              <button class="actions-button" style="background-color: var(--accent-color);" onclick="handleSaveNewPassword()">Salvar</button> 
+          <div class="actions" style="margin-top: 24px;"> 
+              <button class="actions-button is-neutral" onclick="closePasswordChangeScreen()">Cancelar</button> 
+              <button class="actions-button" onclick="handleSaveNewPassword()">Salvar</button> 
           </div> 
       </div> 
   </div>
@@ -84,7 +110,7 @@
                 <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
                 <button class="header-action" id="sync-btn" onclick="sincronizarManualmente(this)" style="display: flex;">
                     <span class="icon-wrapper">
-                        <i class="fa-solid fa-sync-alt"></i><span class="material-icons">sync</span>
+                        <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
                     </span>
                 </button>
                 <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;">
@@ -92,10 +118,10 @@
                         <i class="fa-solid fa-list-check"></i>
                     </span>
                 </button>
-                <button class="header-action" id="close-btn" style="display: none;">
+                <button class="header-action back-button" id="close-btn" style="display: none;">
                     <span class="icon-wrapper">
-                        <i class="fa-solid fa-times"></i><span class="material-icons">close</span>
-                    </span>
+                        <i class="fa-solid fa-chevron-left"></i><span class="material-icons">chevron_left</span>
+                    </span> Voltar
                 </button>
             </div>
         </header>
@@ -112,7 +138,7 @@
                     <div class="campo"><label for="obs">Observações</label><select id="obs" class="form-field"><option value="">Recurso a ser pago</option></select></div>
                     
                     <div class="actions">
-                        <button id="salvarBtn" class="actions-button" style="background-color: var(--button-success);" onclick="salvarNota()">
+                        <button id="salvarBtn" class="actions-button is-success" onclick="salvarNota()">
                             <span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar
                         </button>
                     </div>
@@ -132,10 +158,10 @@
 
                 <textarea id="saida" readonly="" placeholder="O texto das notas pendentes aparecerá aqui..."></textarea>
                 <div class="actions">
-                    <button class="actions-button" style="background-color: var(--accent-color);" onclick="ordenarExportacao()"><span class="icon-wrapper"><i class="fa-solid fa-sort-alpha-down"></i><span class="material-icons">sort_by_alpha</span></span> Ordenar por Recurso</button>
-                    <button class="actions-button" style="background-color: var(--accent-color);" onclick="exportar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
-                    <button class="actions-button" style="background-color: var(--button-whatsapp);" onclick="compartilharLista()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i><span class="material-icons">share</span></span> Compartilhar</button>
-                    <button class="actions-button" style="background-color: var(--text-light);" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button>
+                    <button class="actions-button" onclick="ordenarExportacao()"><span class="icon-wrapper"><i class="fa-solid fa-sort-alpha-down"></i><span class="material-icons">sort_by_alpha</span></span> Ordenar por Recurso</button>
+                    <button class="actions-button" onclick="exportar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
+                    <button class="actions-button is-whatsapp" onclick="compartilharLista()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i><span class="material-icons">share</span></span> Compartilhar</button>
+                    <button class="actions-button is-neutral" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button>
                 </div>
             </div>
 
@@ -156,19 +182,22 @@
 
             <div class="app-screen" id="screen-history">
                 <div id="lista-historico" class="nota-list"><div class="empty-state">O histórico está vazio.</div></div>
-                <div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button" style="background-color: var(--button-danger);" onclick="limparHistorico()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete_sweep</span></span> Limpar Histórico</button></div>
+                <div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button is-danger" onclick="limparHistorico()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete_sweep</span></span> Limpar Histórico</button></div>
             </div>
 
             <div class="app-screen" id="screen-settings">
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-import" data-title="Importar Relatório (ERP)"><i class="icon fa-solid fa-file-import" style="background-color: #007aff;"></i> Importar Relatório (ERP) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a data-screen="screen-pedidos" data-title="Pedidos e Recursos"><i class="icon fa-solid fa-box" style="background-color: #bd10e0;"></i> Pedidos e Recursos <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                 </ul>
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a onclick="abrirModalSenhaComVerificacao()"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Senha e Login <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
+                </ul>
+                <ul class="settings-list-group">
+                    <li><a class="settings-action-danger" onclick="handleLogout()">Sair</a></li>
                 </ul>
             </div>
             
@@ -179,12 +208,12 @@
                         <textarea id="import-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do arquivo TXT exportado pelo ERP, ou use os botões abaixo..."></textarea>
                     </div>
                     <input type="file" id="import-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleImportFileUpload(event)">
-                    <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <button class="actions-button" style="background-color: var(--text-light);" onclick="document.getElementById('import-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo TXT</button>
-                        <button class="actions-button" style="background-color: var(--text-light);" onclick="colarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                    <div class="actions" style="gap: 10px;">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('import-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo TXT</button>
+                        <button class="actions-button is-neutral" onclick="colarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
                     </div>
                     <div class="actions">
-                        <button class="actions-button" style="background-color: var(--accent-color);" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
+                        <button class="actions-button" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
                     </div>
                 </div>
                 <div id="import-preview-container"></div>
@@ -193,7 +222,7 @@
             <div class="app-screen" id="screen-fornecedores">
                 <div class="card">
                     <div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div>
-                    <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarFornecedorManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Fornecedor</button>
+                    <button class="actions-button" onclick="adicionarFornecedorManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Fornecedor</button>
                     <div class="manage-toolbar" style="margin-top: 20px;">
                         <input type="text" id="forn-filter" class="form-field" placeholder="Filtrar fornecedores..." oninput="filtrarFornecedores(this.value)" style="max-width: 220px;">
                         <button id="forn-select-mode-btn" class="manage-toolbar-btn" onclick="toggleSelectionModeFornecedores()">Selecionar Múltiplos</button>
@@ -209,12 +238,12 @@
                     <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie um arquivo com um fornecedor por linha (ex: exportado da sua planilha mestre). Os que já existem na lista são identificados e ignorados automaticamente.</p>
                     <textarea id="import-forn-textarea" class="form-field import-textarea" placeholder="Um fornecedor por linha..."></textarea>
                     <input type="file" id="import-forn-file-input" accept=".txt,.csv,text/plain" style="display:none;" onchange="handleFornecedoresFileUpload(event)">
-                    <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <button class="actions-button" style="background-color: var(--text-light);" onclick="document.getElementById('import-forn-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
-                        <button class="actions-button" style="background-color: var(--text-light);" onclick="colarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                    <div class="actions" style="gap: 10px;">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('import-forn-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
+                        <button class="actions-button is-neutral" onclick="colarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
                     </div>
                     <div class="actions">
-                        <button class="actions-button" style="background-color: var(--accent-color);" onclick="processarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Lista</button>
+                        <button class="actions-button" onclick="processarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Lista</button>
                     </div>
                     <div id="import-forn-preview"></div>
                 </div>
@@ -223,22 +252,46 @@
                     <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Use isso apenas para casos específicos que a importação de lista não resolveu. Na maioria das vezes, basta ter o fornecedor cadastrado na lista acima — o app já encontra o nome curto dentro do nome completo automaticamente.</p>
                     <div class="modal-campo"><label>Nome Completo (como está na nota)</label><input type="text" id="alias-nome-completo" placeholder="Ex: COMERCIAL CIRURGICA RIOCLARENSE"></div>
                     <div class="modal-campo"><label>Apelido (nome curto a usar)</label><input type="text" id="alias-apelido" placeholder="Ex: RIOCLARENSE"></div>
-                    <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarApelidoFornecedor()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Apelido</button>
+                    <button class="actions-button" onclick="adicionarApelidoFornecedor()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Apelido</button>
                     <ul id="lista-apelidos-manage" class="manage-list"></ul>
                 </div>
             </div>
-            <div class="app-screen" id="screen-pedidos">
+            <div class="app-screen" id="screen-conta">
                 <div class="card">
-                    <div class="modal-campo"><label>Nº do Pedido</label><input type="text" id="pedido-num" placeholder="Digite o número do pedido"></div>
-                    <div class="modal-campo"><label>Recurso</label><select id="pedido-recurso"><option value="">Selecione...</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div>
-                    <button class="actions-button" style="background: var(--accent-color); margin-top: 8px;" onclick="adicionarPedido()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar</button>
-                    <ul id="lista-pedidos" class="manage-list"></ul>
+                    <div class="conta-info">
+                        <div class="conta-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <div class="conta-email" id="conta-email">—</div>
+                            <div class="conta-provider" id="conta-provider">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 16px;">
+                    <div class="campo">
+                        <label for="conta-nome-input">Nome</label>
+                        <input type="text" id="conta-nome-input" placeholder="Como podemos te chamar?">
+                    </div>
+                    <p style="color:var(--text-light);font-size:13px;margin:-4px 0 14px;">Usado só pra personalizar as mensagens do app. Deixe em branco se preferir.</p>
+                    <button class="actions-button" onclick="salvarNomeConta()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Nome</button>
+                </div>
+                <div class="card" id="conta-senha-card" style="margin-top: 16px;">
+                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Sua conta usa login por e-mail e senha. Você pode alterar sua senha a qualquer momento.</p>
+                    <button class="actions-button" onclick="abrirModalSenhaComVerificacao()"><span class="icon-wrapper"><i class="fa-solid fa-key"></i></span> Alterar Senha</button>
+                </div>
+                <div class="card" id="conta-senha-indisponivel" style="display:none;margin-top: 16px;">
+                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Sua conta usa login pelo Google ou telefone — a senha é gerenciada por eles, não há senha para alterar aqui.</p>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-aprovacoes">
+                <div class="card">
+                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Pessoas que entraram pelo Google ou telefone aparecem aqui. Aprove para liberar o acesso delas ao app.</p>
+                    <ul id="lista-aprovacoes" class="manage-list"><li class="empty-state">Carregando...</li></ul>
                 </div>
             </div>
             <div class="app-screen" id="screen-observacoes">
                 <div class="card">
                      <div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div>
-                     <button class="actions-button" style="background: var(--accent-color);" onclick="adicionarObservacaoManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Observação</button>
+                     <button class="actions-button" onclick="adicionarObservacaoManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Observação</button>
                      <ul id="lista-observacoes-manage" class="manage-list"></ul>
                 </div>
             </div>
@@ -264,7 +317,7 @@
                             <div class="app-screen transition-demo-screen active" id="transition-demo-a">Tela A</div>
                             <div class="app-screen transition-demo-screen" id="transition-demo-b">Tela B</div>
                         </div>
-                        <button class="actions-button" style="background-color: var(--accent-color); margin-top: 10px;" onclick="testarTransicaoTela()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Agora</button>
+                        <button class="actions-button" style="margin-top: 10px;" onclick="testarTransicaoTela()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Agora</button>
                     </div>
                     <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
                     <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
@@ -273,12 +326,35 @@
             </div>
             
             <div class="app-screen" id="screen-anotacoes" style="">
-                <textarea id="anotacoes-textarea" placeholder="Digite suas anotações aqui..."></textarea>
-                <div class="anotacoes-actions">
-                    <button id="anotacoes-salvar-btn" class="actions-button" style="background-color: var(--button-success);" onclick="salvarAnotacoesManual()"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button>
-                    <button id="anotacoes-colar-btn" class="actions-button" style="background-color: var(--text-light);" onclick="colarAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i><span class="material-icons">content_paste</span></span> Colar</button>
-                    <button id="anotacoes-copiar-btn" class="actions-button" style="background-color: var(--accent-color);" onclick="copiarAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
-                    <button class="actions-button" style="background-color: var(--button-danger);" onclick="limparAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete</span></span> Limpar</button>
+                <div class="campo" style="margin-bottom: 12px;"><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
+                <button class="actions-button" style="margin-bottom: 16px;" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
+                <div id="lista-anotacoes-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-anotacoes-editor">
+                <div class="campo">
+                    <input type="text" id="anotacao-titulo" class="form-field" placeholder="Título da anotação" style="font-size: 18px; font-weight: 700;" oninput="agendarAutoSaveAnotacao()">
+                </div>
+                <div class="rte-toolbar">
+                    <button type="button" title="Negrito" onclick="formatarTextoAnotacao('bold')"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" title="Itálico" onclick="formatarTextoAnotacao('italic')"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" title="Sublinhado" onclick="formatarTextoAnotacao('underline')"><i class="fa-solid fa-underline"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" title="Título" onclick="formatarTextoAnotacao('formatBlock', 'H2')"><i class="fa-solid fa-heading"></i></button>
+                    <button type="button" title="Texto normal" onclick="formatarTextoAnotacao('formatBlock', 'P')"><i class="fa-solid fa-paragraph"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" title="Lista" onclick="formatarTextoAnotacao('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" title="Lista Numerada" onclick="formatarTextoAnotacao('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" title="Inserir Tabela" onclick="inserirTabelaAnotacao()"><i class="fa-solid fa-table"></i></button>
+                </div>
+                <div id="anotacao-corpo" class="rte-editor" contenteditable="true" oninput="agendarAutoSaveAnotacao()" onpaste="setTimeout(agendarAutoSaveAnotacao, 50)"></div>
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="actions-button" onclick="copiarTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar Tudo</button>
+                    <button class="actions-button" onclick="colarTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                    <button class="actions-button is-neutral" onclick="limparTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-eraser"></i></span> Limpar Texto</button>
+                    <button class="actions-button is-danger" onclick="excluirAnotacaoAtual()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir</button>
+                    <button class="actions-button is-success" onclick="salvarAnotacaoAtual(true)"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
                 </div>
             </div>
         </div>
@@ -320,9 +396,9 @@
             <div class="campo"><label>Fornecedor</label><input type="text" id="bulk-edit-forn" placeholder="Não alterar" list="fornecedores-sugeridos"></div>
             <div class="campo"><label>Vencimento</label><input type="text" id="bulk-edit-venc" placeholder="Não alterar (dd/mm/aaaa)" oninput="formatarDataInput(this)"></div>
             <div class="campo"><label>Recurso</label><select id="bulk-edit-obs"><option value="">Não alterar</option></select></div>
-            <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px;">
-                <button class="actions-button" style="background-color: var(--text-light);" onclick="fecharEdicaoEmLoteNotas()">Cancelar</button>
-                <button class="actions-button" style="background-color: var(--button-success);" onclick="salvarEdicaoEmLoteNotas()">Salvar</button>
+            <div class="actions" style="gap: 10px;">
+                <button class="actions-button is-neutral" onclick="fecharEdicaoEmLoteNotas()">Cancelar</button>
+                <button class="actions-button is-success" onclick="salvarEdicaoEmLoteNotas()">Salvar</button>
             </div>
         </div>
     </div>
@@ -334,16 +410,20 @@
           <h2 id="confirm-title"></h2> 
           <p id="confirm-message"></p> 
           <div class="confirm-actions"> 
-              <button id="cancel-btn" class="actions-button" style="background-color: var(--text-light);">Cancelar</button> 
+              <button id="cancel-btn" class="actions-button is-neutral">Cancelar</button> 
               <button id="confirm-btn" class="actions-button">Confirmar</button> 
           </div> 
       </div> 
   </div>
   
-  <div id="toast" class="toast" style="display: none;">✓ Nota salva com sucesso!</div>
+  <div id="toast" class="toast" style="display: none;">
+      <span id="toast-icon" class="toast-icon"></span>
+      <span id="toast-text" class="toast-text">Nota salva com sucesso!</span>
+  </div>
       
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" crossorigin="anonymous"></script>
   
   <script src="script.js"></script>
 
