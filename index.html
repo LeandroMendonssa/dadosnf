@@ -32,9 +32,11 @@
     
   <div id="login-screen" style="display: none;"> 
       <div class="login-box">
-          <div class="icon"><i class="fas fa-lock" id="login-icon"></i></div>
-          <h1>Entrar</h1>
-          <p>Acesse sua conta para continuar.</p>
+          <div id="login-intro">
+              <div class="icon"><i class="fas fa-lock" id="login-icon"></i></div>
+              <h1>Entrar</h1>
+              <p>Acesse sua conta para continuar.</p>
+          </div>
 
           <div id="login-email-step">
               <form id="login-email-form" onsubmit="event.preventDefault(); handleLoginEmail();">
@@ -69,6 +71,13 @@
                   <button type="submit" class="actions-button" style="width:100%;margin-top:16px;">Confirmar</button>
               </form>
               <a class="login-link" onclick="voltarParaEmailStep()">Cancelar</a>
+          </div>
+
+          <div id="login-pending-step" style="display:none;">
+              <div class="icon" style="color:#ff9f0a;"><i class="fa-solid fa-hourglass-half"></i></div>
+              <h1>Acesso Solicitado</h1>
+              <p id="login-pending-message">Seu acesso está aguardando aprovação.</p>
+              <button class="actions-button" style="width:100%;" onclick="voltarParaEmailStep()">Entendi</button>
           </div>
       </div> 
   </div>
@@ -204,6 +213,7 @@
                 </ul>
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
                 </ul>
@@ -267,6 +277,16 @@
                     <ul id="lista-apelidos-manage" class="manage-list"></ul>
                 </div>
             </div>
+            <div class="app-screen" id="screen-backup">
+                <div class="card">
+                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Baixa um arquivo com todas as suas notas pendentes, histórico, anotações, fornecedores e configurações — uma cópia de segurança que fica salva no seu dispositivo, independente do Firebase.</p>
+                    <button class="actions-button" onclick="baixarBackupCompleto()"><span class="icon-wrapper"><i class="fa-solid fa-cloud-arrow-down"></i></span> Baixar Backup (JSON)</button>
+                    <div id="backup-status" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
+                </div>
+            </div>
             <div class="app-screen" id="screen-conta">
                 <div class="card">
                     <div class="conta-info">
@@ -296,7 +316,7 @@
             <div class="app-screen" id="screen-aprovacoes">
                 <div class="card">
                     <p style="margin-top:0;color:var(--text-light);font-size:14px;">Pessoas que entraram pelo Google ou telefone aparecem aqui. Aprove para liberar o acesso delas ao app.</p>
-                    <ul id="lista-aprovacoes" class="manage-list"><li class="empty-state">Carregando...</li></ul>
+                    <ul id="lista-aprovacoes" class="approval-list"><li class="empty-state">Carregando...</li></ul>
                 </div>
             </div>
             <div class="app-screen" id="screen-observacoes">
@@ -347,17 +367,51 @@
                     <input type="text" id="anotacao-titulo" class="form-field" placeholder="Título da anotação" style="font-size: 18px; font-weight: 700;" oninput="agendarAutoSaveAnotacao()">
                 </div>
                 <div class="rte-toolbar">
-                    <button type="button" title="Negrito" onclick="formatarTextoAnotacao('bold')"><i class="fa-solid fa-bold"></i></button>
-                    <button type="button" title="Itálico" onclick="formatarTextoAnotacao('italic')"><i class="fa-solid fa-italic"></i></button>
-                    <button type="button" title="Sublinhado" onclick="formatarTextoAnotacao('underline')"><i class="fa-solid fa-underline"></i></button>
+                    <button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('bold')"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" title="Itálico" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('italic')"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" title="Sublinhado" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('underline')"><i class="fa-solid fa-underline"></i></button>
                     <span class="rte-toolbar-divider"></span>
-                    <button type="button" title="Título" onclick="formatarTextoAnotacao('formatBlock', 'H2')"><i class="fa-solid fa-heading"></i></button>
-                    <button type="button" title="Texto normal" onclick="formatarTextoAnotacao('formatBlock', 'P')"><i class="fa-solid fa-paragraph"></i></button>
+                    <button type="button" title="Título" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'H2')"><i class="fa-solid fa-heading"></i></button>
+                    <button type="button" title="Texto normal" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'P')"><i class="fa-solid fa-paragraph"></i></button>
                     <span class="rte-toolbar-divider"></span>
-                    <button type="button" title="Lista" onclick="formatarTextoAnotacao('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
-                    <button type="button" title="Lista Numerada" onclick="formatarTextoAnotacao('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
+                    <button type="button" title="Lista" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" title="Lista Numerada" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
                     <span class="rte-toolbar-divider"></span>
-                    <button type="button" title="Inserir Tabela" onclick="inserirTabelaAnotacao()"><i class="fa-solid fa-table"></i></button>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Cor do Texto" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-color-popover')"><i class="fa-solid fa-palette"></i></button>
+                        <div id="rte-color-popover" class="rte-popover" style="display:none;">
+                            <div class="rte-color-grid">
+                                <button type="button" class="rte-color-swatch" style="background:#1c1c1e" title="Preto" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#1c1c1e')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#ff3b30" title="Vermelho" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#ff3b30')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#ff9500" title="Laranja" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#ff9500')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#ffcc00" title="Amarelo" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#ffcc00')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#34c759" title="Verde" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#34c759')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#007aff" title="Azul" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#007aff')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#5856d6" title="Roxo" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#5856d6')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#af52de" title="Violeta" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#af52de')"></button>
+                            </div>
+                            <button type="button" class="rte-popover-reset" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('')">Remover cor</button>
+                        </div>
+                    </div>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Tamanho do Texto" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-size-popover')"><i class="fa-solid fa-text-height"></i></button>
+                        <div id="rte-size-popover" class="rte-popover" style="display:none;">
+                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(12)">12px</button>
+                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(14)">14px</button>
+                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(16)">16px (padrão)</button>
+                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(18)">18px</button>
+                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(22)">22px</button>
+                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(28)">28px</button>
+                        </div>
+                    </div>
+                    <span class="rte-toolbar-divider"></span>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Inserir Tabela" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-table-popover')"><i class="fa-solid fa-table"></i></button>
+                        <div id="rte-table-popover" class="rte-popover" style="display:none;">
+                            <div id="rte-table-grid" class="rte-table-grid"></div>
+                            <div id="rte-table-grid-label" class="rte-table-grid-label">Selecione o tamanho</div>
+                        </div>
+                    </div>
                 </div>
                 <div id="anotacao-corpo" class="rte-editor" contenteditable="true" oninput="agendarAutoSaveAnotacao()" onpaste="setTimeout(agendarAutoSaveAnotacao, 50)"></div>
                 <div class="actions" style="margin-top: 16px;">

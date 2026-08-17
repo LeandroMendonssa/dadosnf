@@ -94,8 +94,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -965,12 +965,12 @@ async function verificarAprovacaoAcesso(user) {
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp()
             });
             await auth.signOut();
-            document.getElementById('login-error-message').textContent = 'Seu acesso foi solicitado e está aguardando aprovação.';
+            mostrarEtapaPendente('Seu acesso foi solicitado e está aguardando aprovação. Assim que for liberado, você poderá entrar normalmente.');
             return false;
         }
         if (snap.data().aprovado !== true) {
             await auth.signOut();
-            document.getElementById('login-error-message').textContent = 'Sua conta ainda não foi aprovada.';
+            mostrarEtapaPendente('Sua conta ainda não foi aprovada. Peça para o administrador liberar seu acesso.');
             return false;
         }
         return true;
@@ -1047,10 +1047,10 @@ function renderListaAprovacoes(lista) {
     container.innerHTML = lista.map(item => {
         const identificacao = item.email || item.telefone || item.id;
         const aprovado = item.aprovado === true;
-        return `<li>
-            <div>
-                <div style="font-weight:600;color:var(--text-dark);">${identificacao}</div>
-                <div style="font-size:12px;color:var(--text-light);">${aprovado ? '✓ Aprovado' : 'Pendente'}${item.nome ? ' · ' + item.nome : ''}</div>
+        return `<li class="approval-item">
+            <div class="approval-item-info">
+                <div class="approval-item-email">${identificacao}</div>
+                <div class="approval-item-status${aprovado ? ' aprovado' : ''}">${aprovado ? '✓ Aprovado' : 'Pendente'}${item.nome ? ' · ' + item.nome : ''}</div>
             </div>
             <button class="action-chip ${aprovado ? 'delete-chip' : 'edit-chip'}" onclick="alternarAprovacaoAcesso('${item.id}', ${!aprovado})">${aprovado ? 'Revogar' : 'Aprovar'}</button>
         </li>`;
@@ -1114,18 +1114,30 @@ auth.getRedirectResult().catch(error => {
 
 // --- Login por telefone (SMS) ---
 function mostrarEtapaTelefone() {
+    document.getElementById('login-intro').style.display = 'block';
     document.getElementById('login-email-step').style.display = 'none';
     document.getElementById('login-phone-step').style.display = 'block';
     document.getElementById('login-phone-code-step').style.display = 'none';
+    document.getElementById('login-pending-step').style.display = 'none';
     if (!recaptchaVerifier) {
         recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'normal' });
         recaptchaVerifier.render();
     }
 }
 function voltarParaEmailStep() {
+    document.getElementById('login-intro').style.display = 'block';
     document.getElementById('login-email-step').style.display = 'block';
     document.getElementById('login-phone-step').style.display = 'none';
     document.getElementById('login-phone-code-step').style.display = 'none';
+    document.getElementById('login-pending-step').style.display = 'none';
+}
+function mostrarEtapaPendente(mensagem) {
+    document.getElementById('login-intro').style.display = 'none';
+    document.getElementById('login-email-step').style.display = 'none';
+    document.getElementById('login-phone-step').style.display = 'none';
+    document.getElementById('login-phone-code-step').style.display = 'none';
+    document.getElementById('login-pending-step').style.display = 'block';
+    document.getElementById('login-pending-message').textContent = mensagem;
 }
 function enviarCodigoTelefone() {
     const phoneInput = document.getElementById('login-phone-input');
@@ -1219,6 +1231,61 @@ function salvarNomeConta() {
     user.updateProfile({ displayName: nome })
         .then(() => toast(nome ? '✓ Nome salvo!' : '✓ Nome removido.'))
         .catch(error => toast('✕ Não foi possível salvar o nome.'));
+}
+
+// --- Backup completo dos dados (JSON) ---
+// Busca tudo direto do Firestore (não confia só no que já está em memória, pra
+// garantir que o backup reflita o estado real e completo do banco) e gera um
+// arquivo .json pra download local — não depende do Firebase pra existir.
+async function baixarBackupCompleto() {
+    const statusEl = document.getElementById('backup-status');
+    statusEl.textContent = 'Preparando backup...';
+    try {
+        const [notasSnap, historicoSnap, anotacoesSnap, configSnap] = await Promise.all([
+            notasCollection.get(),
+            historicoCollection.get(),
+            anotacoesTextoCollection.get(),
+            settingsDocRef.get()
+        ]);
+
+        // Timestamps do Firestore não viram JSON puro sozinhos — convertemos pra
+        // string ISO aqui, senão o campo simplesmente some no JSON.stringify.
+        const serializar = (data) => {
+            const out = { ...data };
+            Object.keys(out).forEach(k => {
+                if (out[k] && typeof out[k].toDate === 'function') out[k] = out[k].toDate().toISOString();
+            });
+            return out;
+        };
+
+        const backup = {
+            geradoEm: new Date().toISOString(),
+            versaoApp: 'notas-fiscais-backup-v1',
+            notasPendentes: notasSnap.docs.map(d => ({ id: d.id, ...serializar(d.data()) })),
+            historico: historicoSnap.docs.map(d => ({ id: d.id, ...serializar(d.data()) })),
+            anotacoes: anotacoesSnap.docs.map(d => ({ id: d.id, ...serializar(d.data()) })),
+            configuracoes: configSnap.exists ? serializar(configSnap.data()) : {}
+        };
+
+        const nomeArquivo = `backup-notas-fiscais-${new Date().toISOString().slice(0, 10)}.json`;
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        const total = backup.notasPendentes.length + backup.historico.length + backup.anotacoes.length;
+        statusEl.textContent = `✓ Backup baixado — ${total} registro(s) no total.`;
+        toast('✓ Backup baixado!');
+    } catch (e) {
+        console.error('Erro ao gerar backup:', e);
+        statusEl.textContent = 'Não foi possível gerar o backup. Tente novamente.';
+        toast('✕ Erro ao gerar backup.');
+    }
 }
 
 // --- MANAGE E CONFIGURAÇÕES ---
@@ -1509,7 +1576,7 @@ function processarListaFornecedores() {
                 ${novos.map(n => `<div>• ${n}</div>`).join('')}
             </div>
             <div class="actions" style="margin-top:16px;">
-                <button class="actions-button" style="background-color: var(--button-success);" onclick="confirmarImportacaoFornecedores()">
+                <button class="actions-button is-success" onclick="confirmarImportacaoFornecedores()">
                     <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span> Importar ${novos.length} Fornecedor(es)
                 </button>
             </div>
@@ -1831,13 +1898,104 @@ function formatarTextoAnotacao(comando, valor) {
     agendarAutoSaveAnotacao();
 }
 
+// --- Popovers da barra de ferramentas (cor, tamanho, grade de tabela) ---
+// Guarda a seleção de texto feita no editor antes de abrir um popover — clicar
+// num botão da toolbar tiraria o foco do editor e perderia a seleção, então
+// salvamos o Range aqui (o onmousedown com preventDefault nos botões evita que
+// o navegador desfaça a seleção antes mesmo do clique acontecer).
+let rteSelecaoSalva = null;
+function salvarSelecaoRte() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && document.getElementById('anotacao-corpo').contains(sel.anchorNode)) {
+        rteSelecaoSalva = sel.getRangeAt(0).cloneRange();
+    }
+}
+function restaurarSelecaoRte() {
+    const editor = document.getElementById('anotacao-corpo');
+    editor.focus();
+    if (rteSelecaoSalva) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(rteSelecaoSalva);
+    }
+}
+function fecharPopoversRte() {
+    document.querySelectorAll('.rte-popover').forEach(p => p.style.display = 'none');
+}
+function toggleRtePopover(id) {
+    salvarSelecaoRte();
+    const pop = document.getElementById(id);
+    const estavaAberto = pop.style.display === 'block';
+    fecharPopoversRte();
+    pop.style.display = estavaAberto ? 'none' : 'block';
+    if (id === 'rte-table-popover') montarGradeTabela();
+}
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.rte-popover-wrap')) fecharPopoversRte();
+});
+
+// --- Cor do texto ---
+function aplicarCorTextoAnotacao(cor) {
+    restaurarSelecaoRte();
+    document.execCommand('foreColor', false, cor || 'inherit');
+    fecharPopoversRte();
+    agendarAutoSaveAnotacao();
+}
+
+// --- Tamanho do texto (em px) ---
+// execCommand('fontSize') só aceita valores de 1 a 7 (sem controle em px), então
+// envolvemos a seleção manualmente num <span style="font-size:Npx">.
+function aplicarTamanhoTextoAnotacao(px) {
+    restaurarSelecaoRte();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { fecharPopoversRte(); return; }
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.fontSize = px + 'px';
+    try {
+        range.surroundContents(span);
+    } catch (e) {
+        // Seleção atravessa múltiplos elementos (ex: parte de duas linhas) —
+        // nesse caso, extrai o conteúdo e envolve manualmente.
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+    }
+    sel.removeAllRanges();
+    fecharPopoversRte();
+    agendarAutoSaveAnotacao();
+}
+
+// --- Tabela: grade visual estilo Word/Google Docs, em vez de prompt() ---
+function montarGradeTabela() {
+    const grid = document.getElementById('rte-table-grid');
+    const label = document.getElementById('rte-table-grid-label');
+    if (grid.childElementCount > 0) return; // já montada, só reaproveita
+    for (let l = 1; l <= 6; l++) {
+        for (let c = 1; c <= 6; c++) {
+            const cell = document.createElement('div');
+            cell.dataset.linhas = l;
+            cell.dataset.colunas = c;
+            cell.onmouseenter = () => destacarGradeTabela(l, c);
+            cell.onclick = () => { inserirTabelaAnotacao(l, c); };
+            grid.appendChild(cell);
+        }
+    }
+    grid.onmouseleave = () => { label.textContent = 'Selecione o tamanho'; destacarGradeTabela(0, 0); };
+}
+function destacarGradeTabela(linhas, colunas) {
+    document.getElementById('rte-table-grid-label').textContent = linhas && colunas ? `${linhas} x ${colunas}` : 'Selecione o tamanho';
+    document.querySelectorAll('#rte-table-grid div').forEach(cell => {
+        const l = parseInt(cell.dataset.linhas), c = parseInt(cell.dataset.colunas);
+        cell.classList.toggle('rte-cell-hover', l <= linhas && c <= colunas);
+    });
+}
+
 // Insere uma tabela editável no ponto do cursor — permite montar ou colar um
 // pedaço de planilha (ao copiar células do Excel/Google Sheets e colar aqui
 // dentro, o navegador já preserva a tabela automaticamente também).
-function inserirTabelaAnotacao() {
-    const linhas = parseInt(prompt('Quantas linhas?', '3'), 10);
-    const colunas = parseInt(prompt('Quantas colunas?', '3'), 10);
-    if (!linhas || !colunas || linhas < 1 || colunas < 1) return;
+function inserirTabelaAnotacao(linhas, colunas) {
+    if (!linhas || !colunas) return;
+    restaurarSelecaoRte();
 
     let html = '<table class="anotacao-tabela"><tbody>';
     for (let i = 0; i < linhas; i++) {
@@ -1849,13 +2007,13 @@ function inserirTabelaAnotacao() {
     }
     html += '</tbody></table><p><br></p>';
 
-    document.getElementById('anotacao-corpo').focus();
     document.execCommand('insertHTML', false, html);
+    fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
 
 function popularListaHistorico(){DOM.listaHistorico.innerHTML='';if(historicoNotas.length===0){DOM.listaHistorico.innerHTML=`<div class="empty-state">O histórico está vazio.</div>`;DOM.historicoActions.style.display='none'}else{DOM.historicoActions.style.display='grid';historicoNotas.forEach(nota=>{const div=document.createElement('div');div.classList.add('nota-item');div.innerHTML=`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} | Obs: ${nota.obs||'N/A'}</div><div class="nota-data">Arquivado em: ${nota.dataHistorico}</div>`;DOM.listaHistorico.appendChild(div)})}}
-async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="actions"><button class="actions-button" style="background:var(--button-success);" onclick="salvarEdicao('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button></div></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';}
+async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="actions"><button class="actions-button is-success" onclick="salvarEdicao('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button></div></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';}
 async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())return toast("Nada para compartilhar.");if(navigator.share){await navigator.share({title:'Relação de Notas Fiscais',text:texto})}else{await navigator.clipboard.writeText(texto);toast("Copiado!")}}
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
@@ -2138,18 +2296,18 @@ function renderPreviewImportacao() {
                 <button id="import-toggle-novas-btn" class="manage-toolbar-btn" onclick="toggleMostrarApenasNovasImportacao()">${mostrarApenasNovasImportacao ? `Mostrar Todas (${notasImportadasPreview.length})` : 'Mostrar Apenas Novas'}</button>
             </div>
             <div class="campo" style="margin-top:12px;"><input type="text" id="import-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarPreviewImportacao(this.value)"></div>
-            <div class="actions" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
-                <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
-                <button class="actions-button" style="background-color: var(--text-light);" onclick="selecionarTodasImportacao(true)">Marcar Todas</button>
+            <div class="actions" style="gap: 10px; margin-top: 8px;">
+                <button class="actions-button is-neutral" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
+                <button class="actions-button is-neutral" onclick="selecionarTodasImportacao(true)">Marcar Todas</button>
             </div>
             <div class="import-bulk-recurso">
                 <select id="import-bulk-recurso-select">${DOM.obs.innerHTML}</select>
-                <button class="actions-button" style="background-color: var(--accent-color);" onclick="aplicarRecursoEmLoteImportacao()">Aplicar Recurso às Marcadas</button>
+                <button class="actions-button" onclick="aplicarRecursoEmLoteImportacao()">Aplicar Recurso às Marcadas</button>
             </div>
         </div>
         ${itensHTML}
         <div class="actions" style="margin-top: 8px;">
-            <button class="actions-button" style="background-color: var(--button-success);" onclick="confirmarImportacaoLote()">
+            <button class="actions-button is-success" onclick="confirmarImportacaoLote()">
                 <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span>
                 Importar Selecionadas (<span id="import-count-selected">${totalNovas}</span>)
             </button>
