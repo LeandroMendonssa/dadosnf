@@ -1077,7 +1077,6 @@ function handleLoginEmail() {
             setTimeout(() => passwordInput.classList.remove('shake'), 820);
         });
 }
-document.getElementById('login-password-input').addEventListener('keyup', (event) => { if (event.key === "Enter") { event.preventDefault(); handleLoginEmail(); } });
 
 function handleForgotPassword() {
     const emailInput = document.getElementById('login-email-input');

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Minhas Notas">
     <link rel="apple-touch-icon" href="favicon.png">
@@ -36,10 +37,12 @@
           <p>Acesse sua conta para continuar.</p>
 
           <div id="login-email-step">
-              <input type="email" id="login-email-input" placeholder="E-mail" autocomplete="username">
-              <input type="password" id="login-password-input" placeholder="Senha" autocomplete="current-password" style="margin-top: 12px;">
-              <div id="login-error-message" class="error-message"></div>
-              <button id="login-button" class="actions-button" style="width:100%;margin-top:16px;" onclick="handleLoginEmail()">Entrar</button>
+              <form id="login-email-form" onsubmit="event.preventDefault(); handleLoginEmail();">
+                  <input type="email" id="login-email-input" placeholder="E-mail" autocomplete="username">
+                  <input type="password" id="login-password-input" placeholder="Senha" autocomplete="current-password" style="margin-top: 12px;">
+                  <div id="login-error-message" class="error-message"></div>
+                  <button type="submit" id="login-button" class="actions-button" style="width:100%;margin-top:16px;">Entrar</button>
+              </form>
               <a class="login-link" onclick="handleForgotPassword()">Esqueci minha senha</a>
 
               <div class="login-divider"><span>ou</span></div>
@@ -49,18 +52,22 @@
           </div>
 
           <div id="login-phone-step" style="display:none;">
-              <input type="tel" id="login-phone-input" placeholder="+55 11 91234-5678" autocomplete="tel">
-              <div id="login-phone-error-message" class="error-message"></div>
-              <div id="recaptcha-container" style="display:flex;justify-content:center;margin-top:12px;"></div>
-              <button class="actions-button" style="width:100%;margin-top:16px;" onclick="enviarCodigoTelefone()">Enviar código</button>
+              <form onsubmit="event.preventDefault(); enviarCodigoTelefone();">
+                  <input type="tel" id="login-phone-input" placeholder="+55 11 91234-5678" autocomplete="tel">
+                  <div id="login-phone-error-message" class="error-message"></div>
+                  <div id="recaptcha-container" style="display:flex;justify-content:center;margin-top:12px;"></div>
+                  <button type="submit" class="actions-button" style="width:100%;margin-top:16px;">Enviar código</button>
+              </form>
               <a class="login-link" onclick="voltarParaEmailStep()">Voltar</a>
           </div>
 
           <div id="login-phone-code-step" style="display:none;">
               <p style="margin-top:0;">Digite o código de 6 dígitos enviado por SMS.</p>
-              <input type="tel" id="login-phone-code-input" placeholder="000000" maxlength="6" inputmode="numeric">
-              <div id="login-phone-code-error-message" class="error-message"></div>
-              <button class="actions-button" style="width:100%;margin-top:16px;" onclick="confirmarCodigoTelefone()">Confirmar</button>
+              <form onsubmit="event.preventDefault(); confirmarCodigoTelefone();">
+                  <input type="tel" id="login-phone-code-input" placeholder="000000" maxlength="6" inputmode="numeric">
+                  <div id="login-phone-code-error-message" class="error-message"></div>
+                  <button type="submit" class="actions-button" style="width:100%;margin-top:16px;">Confirmar</button>
+              </form>
               <a class="login-link" onclick="voltarParaEmailStep()">Cancelar</a>
           </div>
       </div> 
@@ -71,12 +78,14 @@
           <div class="icon"><i class="fas fa-shield-alt"></i></div> 
           <h1>Verificação de Segurança</h1> 
           <p>Por favor, digite sua senha atual para prosseguir.</p> 
-          <input type="password" id="security-check-password-input" placeholder="••••••••"> 
-          <div id="security-check-error-message" class="error-message"></div> 
-          <div class="actions" style="margin-top: 24px;"> 
-              <button class="actions-button is-neutral" onclick="cancelSecurityCheck()">Cancelar</button> 
-              <button class="actions-button" onclick="handleSecurityCheck()">Verificar</button> 
-          </div> 
+          <form onsubmit="event.preventDefault(); handleSecurityCheck();">
+              <input type="password" id="security-check-password-input" placeholder="••••••••" autocomplete="current-password"> 
+              <div id="security-check-error-message" class="error-message"></div> 
+              <div class="actions" style="margin-top: 24px;"> 
+                  <button type="button" class="actions-button is-neutral" onclick="cancelSecurityCheck()">Cancelar</button> 
+                  <button type="submit" class="actions-button">Verificar</button> 
+              </div> 
+          </form>
       </div> 
   </div>
 
@@ -85,13 +94,15 @@
           <div class="icon"><i class="fas fa-key"></i></div> 
           <h1>Alterar Senha</h1> 
           <p>Crie uma nova senha para sua conta.</p> 
-          <input type="password" id="new-password-input" placeholder="Nova Senha (mín. 6 caracteres)"> 
-          <input type="password" id="confirm-password-input" placeholder="Confirmar Senha" style="margin-top: 16px;"> 
-          <div id="password-error-message" class="error-message"></div> 
-          <div class="actions" style="margin-top: 24px;"> 
-              <button class="actions-button is-neutral" onclick="closePasswordChangeScreen()">Cancelar</button> 
-              <button class="actions-button" onclick="handleSaveNewPassword()">Salvar</button> 
-          </div> 
+          <form onsubmit="event.preventDefault(); handleSaveNewPassword();">
+              <input type="password" id="new-password-input" placeholder="Nova Senha (mín. 6 caracteres)" autocomplete="new-password"> 
+              <input type="password" id="confirm-password-input" placeholder="Confirmar Senha" autocomplete="new-password" style="margin-top: 16px;"> 
+              <div id="password-error-message" class="error-message"></div> 
+              <div class="actions" style="margin-top: 24px;"> 
+                  <button type="button" class="actions-button is-neutral" onclick="closePasswordChangeScreen()">Cancelar</button> 
+                  <button type="submit" class="actions-button">Salvar</button> 
+              </div> 
+          </form>
       </div> 
   </div>
     
