@@ -40,12 +40,29 @@ let isChecklistUpdate = false;
 let isInitialLoad = true;
 
 // Configuração Padrão
+// Textos padrão do módulo de Auditoria (usado como valor inicial e para o
+// botão "Restaurar Padrão"). Definido antes do appConfig pra poder reutilizar.
+const AUDITORIA_TEXTOS_DEFAULT = {
+    saudacao: '{DESTINATARIO}, boa tarde!\n\nRecebemos do fornecedor {FORNECEDOR} os materiais referentes à NF {NF}, do pedido do SmartCompras número {PEDIDO}.',
+    avariado: 'Ao conferir os materiais, foram encontradas avarias em alguns itens, dentre eles:',
+    quantidade_diferente: 'Identificamos também divergência de quantidade nos seguintes itens:',
+    valor_diferente: 'Houve também divergência de valor nos seguintes itens:',
+    produto_diferente: 'Alguns produtos vieram diferentes do que foi pedido:',
+    nao_faturado: 'Os seguintes itens não foram faturados:',
+    nao_entregue: 'Os seguintes itens não foram entregues:',
+    faltante: 'Os seguintes itens vieram faltantes:',
+    desacordo_especificacao: 'Os seguintes itens vieram em desacordo com a especificação pedida:',
+    fotosAnexo: 'Seguem em anexo as fotos para comprovação.',
+    fechamento: 'Atenciosamente,'
+};
+
 let appConfig = {
     personalizacao: { 
         theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, transicaoTela: 'fade', densidade: 'confortavel', mostrarIconesAbas: 'on',
         menuOrder: ['screen-add', 'screen-manage', 'screen-reports', 'screen-export', 'screen-history', 'screen-anotacoes', 'screen-settings'] 
     },
-    anotacoes: '', fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"]
+    anotacoes: '', fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"],
+    auditoriaTextos: { ...AUDITORIA_TEXTOS_DEFAULT }
 };
 
 // --- ELEMENTOS DOM CACHEADOS ---
@@ -94,8 +111,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -131,28 +148,42 @@ const KEYBOARD_HEIGHT_THRESHOLD = 120;
 
 const setupKeyboardListener = () => {
     if (!('visualViewport' in window)) return;
-    const notesScreen = document.getElementById('screen-anotacoes');
-    window.visualViewport.addEventListener('resize', () => {
-        const keyboardHeight = window.innerHeight - window.visualViewport.height;
-        const isKeyboardOpen = keyboardHeight > KEYBOARD_HEIGHT_THRESHOLD;
 
+    const aplicarEstadoTeclado = (isKeyboardOpen, keyboardHeight) => {
         document.body.classList.toggle('keyboard-open', isKeyboardOpen);
-
         if (isKeyboardOpen) {
-            // Teclado aberto: mantém --app-height como estava (tela cheia) em vez
-            // de encolher para caber acima do teclado — a tab-bar some (via CSS)
-            // e o espaço dela fica disponível para o conteúdo.
-            if (notesScreen.classList.contains('active')) {
-                const bottomPadding = 24;
-                notesScreen.style.paddingBottom = `${keyboardHeight + bottomPadding}px`;
-                setTimeout(() => notesScreen.scrollTop = notesScreen.scrollHeight, 100);
+            // Aplica o padding extra na tela ativa no momento (qualquer uma —
+            // Anotações, Auditoria, Adicionar etc.), não só numa tela fixa.
+            const telaAtiva = document.querySelector('.app-screen.active');
+            if (telaAtiva) {
+                telaAtiva.style.paddingBottom = `${keyboardHeight + 24}px`;
+                const focado = document.activeElement;
+                if (focado && telaAtiva.contains(focado) && typeof focado.scrollIntoView === 'function') {
+                    setTimeout(() => focado.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
+                }
             }
         } else {
-            // Teclado fechado: volta ao comportamento normal (recalcula a altura
-            // real, cobrindo os casos legítimos de resize do navegador).
-            notesScreen.style.paddingBottom = '';
+            document.querySelectorAll('.app-screen').forEach(s => s.style.paddingBottom = '');
             setAppHeight();
         }
+    };
+
+    window.visualViewport.addEventListener('resize', () => {
+        const keyboardHeight = window.innerHeight - window.visualViewport.height;
+        aplicarEstadoTeclado(keyboardHeight > KEYBOARD_HEIGHT_THRESHOLD, keyboardHeight);
+    });
+
+    // Rede de segurança: se o campo perder o foco e nada mais assumir o foco
+    // logo em seguida, força fechar o estado de "teclado aberto". Cobre os
+    // casos em que o navegador não dispara o resize do visualViewport de
+    // forma confiável ao fechar o teclado — é isso que fazia a barra de
+    // navegação ficar "travada" escondida mesmo depois do teclado sumir.
+    document.addEventListener('focusout', () => {
+        setTimeout(() => {
+            const ativo = document.activeElement;
+            const aindaEditando = ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA' || ativo.tagName === 'SELECT' || ativo.isContentEditable);
+            if (!aindaEditando) aplicarEstadoTeclado(false, 0);
+        }, 250);
     });
 };
 
@@ -2010,6 +2041,336 @@ function inserirTabelaAnotacao(linhas, colunas) {
     document.execCommand('insertHTML', false, html);
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
+}
+
+// ============================================================
+// MÓDULO DE AUDITORIA — formulário estruturado de divergências de
+// materiais recebidos. Gera automaticamente Anotação, WhatsApp e E-mail
+// a partir dos mesmos dados, sem repetição de digitação.
+// Reaproveita: anotacoesTextoCollection, appConfig/settingsDocRef, toast(),
+// switchToScreen(), showConfirmModal(). Não altera nenhuma dessas funções.
+// ============================================================
+
+let divergenciasAuditoria = [];
+let contadorDivergenciaId = 0;
+let saidaAuditoriaAtiva = 'anotacao';
+
+// Definição dos tipos de divergência e seus campos dinâmicos. Pra adicionar um
+// tipo novo no futuro, basta acrescentar uma entrada aqui — o formulário e a
+// geração de texto se adaptam sozinhos.
+const TIPOS_DIVERGENCIA_AUDITORIA = {
+    'produto_diferente': { label: 'Produto diferente do pedido', campos: [
+        { key: 'produtoPedido', label: 'Produto Pedido', maiusculo: true },
+        { key: 'produtoFaturado', label: 'Produto Faturado', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'valor_diferente': { label: 'Valor diferente do pedido', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' },
+        { key: 'valorCotado', label: 'Valor Cotado' },
+        { key: 'valorFaturado', label: 'Valor Faturado' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'quantidade_diferente': { label: 'Quantidade diferente do pedido', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidadePedida', label: 'Quantidade Pedida' },
+        { key: 'quantidadeFaturada', label: 'Quantidade Faturada' },
+        { key: 'observacao', label: 'Ação / Observação', textarea: true }
+    ]},
+    'nao_faturado': { label: 'Produto não faturado', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'nao_entregue': { label: 'Produto não entregue', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'avariado': { label: 'Material avariado', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' },
+        { key: 'descricaoAvaria', label: 'Descrição da Avaria', placeholder: 'ex: quebrada, amassada...' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'faltante': { label: 'Material faltante', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'desacordo_especificacao': { label: 'Produto em desacordo com a especificação', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'especificacaoEsperada', label: 'Especificação Pedida' },
+        { key: 'especificacaoRecebida', label: 'Especificação Recebida' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'outro': { label: 'Outro', campos: [
+        { key: 'produto', label: 'Produto (opcional)', maiusculo: true },
+        { key: 'observacao', label: 'Descreva a ocorrência', textarea: true }
+    ]}
+};
+
+function upAud(s) { return (s || '').toString().toUpperCase(); }
+
+function abrirNovaAuditoria() {
+    divergenciasAuditoria = [];
+    contadorDivergenciaId = 0;
+    ['aud-pedido', 'aud-nf', 'aud-obs-geral'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('aud-fornecedor').value = '';
+    document.getElementById('aud-destinatario').value = 'Marisa';
+    document.getElementById('aud-data').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('card-resultado-auditoria').style.display = 'none';
+    document.getElementById('config-textos-body').style.display = 'none';
+    document.getElementById('config-chevron').style.transform = 'rotate(0)';
+    renderDivergenciasAuditoria();
+    switchToScreen('screen-auditoria-nova', 'Nova Auditoria');
+}
+
+// --- Divergências (cards em acordeão) ---
+function adicionarDivergencia() {
+    divergenciasAuditoria.forEach(d => d.aberto = false);
+    divergenciasAuditoria.push({ id: ++contadorDivergenciaId, tipo: '', aberto: true, campos: {} });
+    renderDivergenciasAuditoria();
+}
+function removerDivergencia(id) {
+    divergenciasAuditoria = divergenciasAuditoria.filter(d => d.id !== id);
+    renderDivergenciasAuditoria();
+}
+function toggleDivergencia(id) {
+    const d = divergenciasAuditoria.find(d => d.id === id);
+    d.aberto = !d.aberto;
+    renderDivergenciasAuditoria();
+}
+function mudarTipoDivergencia(id, tipo) {
+    const d = divergenciasAuditoria.find(d => d.id === id);
+    d.tipo = tipo;
+    d.campos = {};
+    renderDivergenciasAuditoria();
+}
+function atualizarCampoDivergencia(id, key, valor, maiusculo) {
+    const d = divergenciasAuditoria.find(d => d.id === id);
+    d.campos[key] = maiusculo ? upAud(valor) : valor;
+}
+function renderDivergenciasAuditoria() {
+    const container = document.getElementById('lista-divergencias');
+    if (divergenciasAuditoria.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nenhuma divergência adicionada ainda.</div>';
+        return;
+    }
+    container.innerHTML = divergenciasAuditoria.map((d, idx) => {
+        const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+        const tituloTexto = def
+            ? `${def.label}${d.campos.produto || d.campos.produtoFaturado ? ' — ' + upAud(d.campos.produto || d.campos.produtoFaturado) : ''}`
+            : '<span style="color:var(--text-light);font-weight:400;">Selecione o tipo...</span>';
+        const opcoesTipo = Object.entries(TIPOS_DIVERGENCIA_AUDITORIA).map(([key, val]) =>
+            `<option value="${key}" ${d.tipo === key ? 'selected' : ''}>${val.label}</option>`).join('');
+        const camposHTML = def ? def.campos.map(c => {
+            const valor = d.campos[c.key] || '';
+            if (c.textarea) {
+                return `<div class="campo"><label>${c.label}</label><textarea class="form-field" onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, false)">${valor}</textarea></div>`;
+            }
+            return `<div class="campo"><label>${c.label}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}" onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, ${!!c.maiusculo})"></div>`;
+        }).join('') : '';
+        return `
+        <div class="divergencia ${d.aberto ? 'open' : ''}">
+            <div class="divergencia-header" onclick="toggleDivergencia(${d.id})">
+                <div class="divergencia-num">${idx + 1}</div>
+                <div class="divergencia-titulo">${tituloTexto}</div>
+                <i class="fa-solid fa-chevron-down divergencia-chevron"></i>
+                <button type="button" class="divergencia-del" onclick="event.stopPropagation(); removerDivergencia(${d.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="divergencia-body">
+                <div class="divergencia-body-inner">
+                    <div class="campo">
+                        <label>Tipo de Divergência</label>
+                        <select class="form-field" onchange="mudarTipoDivergencia(${d.id}, this.value)" onclick="event.stopPropagation()">
+                            <option value="">Selecione...</option>${opcoesTipo}
+                        </select>
+                    </div>
+                    ${camposHTML}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// --- Configuração dos textos padrão (persistida no Firestore, igual às
+// outras personalizações do app — settingsDocRef já mescla qualquer campo
+// novo automaticamente em appConfig, então não precisou mexer nesse listener). ---
+function toggleConfigTextos() {
+    const body = document.getElementById('config-textos-body');
+    const chevron = document.getElementById('config-chevron');
+    const abrindo = body.style.display === 'none';
+    body.style.display = abrindo ? 'block' : 'none';
+    chevron.style.transform = abrindo ? 'rotate(180deg)' : 'rotate(0)';
+    if (abrindo) preencherCamposConfigTextos();
+}
+function preencherCamposConfigTextos() {
+    Object.keys(appConfig.auditoriaTextos).forEach(key => {
+        const el = document.getElementById('cfg-' + key);
+        if (el) el.value = appConfig.auditoriaTextos[key];
+    });
+}
+function salvarCamposConfigTextos() {
+    const novo = { ...appConfig.auditoriaTextos };
+    Object.keys(novo).forEach(key => {
+        const el = document.getElementById('cfg-' + key);
+        if (el) novo[key] = el.value;
+    });
+    appConfig.auditoriaTextos = novo;
+    settingsDocRef.set({ auditoriaTextos: novo }, { merge: true }).catch(e => console.error('Erro ao salvar textos da auditoria:', e));
+}
+function restaurarTextosPadrao() {
+    appConfig.auditoriaTextos = { ...AUDITORIA_TEXTOS_DEFAULT };
+    settingsDocRef.set({ auditoriaTextos: appConfig.auditoriaTextos }, { merge: true }).catch(e => console.error('Erro ao restaurar textos:', e));
+    preencherCamposConfigTextos();
+    toast('✓ Textos restaurados ao padrão.');
+}
+
+// --- Geração de texto — determinística, sem IA, baseada nos campos
+// preenchidos e no tipo de cada divergência. ---
+function linhaCurtaDivergencia(d) {
+    const c = d.campos;
+    switch (d.tipo) {
+        case 'valor_diferente':
+            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — Cotado a ${c.valorCotado || '?'} total, faturado a ${c.valorFaturado || '?'}.`;
+        case 'quantidade_diferente':
+            return `${upAud(c.produto)}\tQtd: ${c.quantidadePedida || ''} — faturou ${c.quantidadeFaturada || '?'}${c.observacao ? ', ' + c.observacao : ''}.`;
+        case 'produto_diferente':
+            return `Pedido: ${upAud(c.produtoPedido)} / Faturado: ${upAud(c.produtoFaturado)}\tQtd: ${c.quantidade || ''}${c.observacao ? ' — ' + c.observacao : ''}.`;
+        case 'nao_faturado':
+            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — não faturado.${c.observacao ? ' ' + c.observacao : ''}`;
+        case 'nao_entregue':
+            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — não entregue.${c.observacao ? ' ' + c.observacao : ''}`;
+        case 'avariado':
+            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — avariado${c.descricaoAvaria ? ' (' + c.descricaoAvaria + ')' : ''}.${c.observacao ? ' ' + c.observacao : ''}`;
+        case 'faltante':
+            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — faltante.${c.observacao ? ' ' + c.observacao : ''}`;
+        case 'desacordo_especificacao':
+            return `${upAud(c.produto)}\tespecificação recebida diverge da pedida (recebido "${c.especificacaoRecebida || ''}", pedido "${c.especificacaoEsperada || ''}").${c.observacao ? ' ' + c.observacao : ''}`;
+        case 'outro':
+            return `${c.produto ? upAud(c.produto) + '\t' : ''}${c.observacao || ''}`;
+        default:
+            return '';
+    }
+}
+function gerarCabecalhoAuditoria() {
+    const fornecedor = upAud(document.getElementById('aud-fornecedor').value);
+    const pedido = document.getElementById('aud-pedido').value.trim();
+    return fornecedor + (pedido ? ` Ped. ${pedido}` : '');
+}
+function gerarAnotacaoOuWhatsappAuditoria() {
+    const linhas = divergenciasAuditoria.filter(d => d.tipo).map(linhaCurtaDivergencia).filter(Boolean);
+    const obsGeral = document.getElementById('aud-obs-geral').value.trim();
+    let texto = gerarCabecalhoAuditoria() + '\n\n' + linhas.join('\n\n');
+    if (obsGeral) texto += (linhas.length ? '\n\n' : '') + obsGeral;
+    return texto.trim();
+}
+function agruparDivergenciasPorTipo() {
+    const grupos = {};
+    divergenciasAuditoria.filter(d => d.tipo).forEach(d => {
+        (grupos[d.tipo] = grupos[d.tipo] || []).push(d.campos);
+    });
+    return grupos;
+}
+function gerarEmailAuditoria() {
+    const t = appConfig.auditoriaTextos;
+    const destinatario = document.getElementById('aud-destinatario').value.trim() || 'Marisa';
+    const fornecedor = upAud(document.getElementById('aud-fornecedor').value) || '[FORNECEDOR]';
+    const nf = document.getElementById('aud-nf').value.trim() || '[NF]';
+    const pedido = document.getElementById('aud-pedido').value.trim() || '[PEDIDO]';
+    const obsGeral = document.getElementById('aud-obs-geral').value.trim();
+
+    let partes = [t.saudacao.replace(/{DESTINATARIO}/g, destinatario).replace(/{FORNECEDOR}/g, fornecedor).replace(/{NF}/g, nf).replace(/{PEDIDO}/g, pedido)];
+    if (obsGeral) partes.push(obsGeral);
+
+    const grupos = agruparDivergenciasPorTipo();
+    let temAvaria = false;
+
+    const paragrafo = (tipoKey, montarLinha) => {
+        if (!grupos[tipoKey]) return;
+        if (tipoKey === 'avariado') temAvaria = true;
+        const itens = grupos[tipoKey].map(montarLinha);
+        partes.push(`${t[tipoKey]}\n${itens.join('\n')}`);
+    };
+    paragrafo('avariado', c => `- ${c.quantidade || ''} ${upAud(c.produto)}${c.descricaoAvaria ? ', ' + c.descricaoAvaria : ''}`);
+    paragrafo('quantidade_diferente', c => `- ${upAud(c.produto)}: pedido ${c.quantidadePedida || '?'}, faturado ${c.quantidadeFaturada || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
+    paragrafo('valor_diferente', c => `- ${upAud(c.produto)}: cotado a ${c.valorCotado || '?'}, faturado a ${c.valorFaturado || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
+    paragrafo('produto_diferente', c => `- Pedido: ${upAud(c.produtoPedido)} / Recebido: ${upAud(c.produtoFaturado)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
+    paragrafo('nao_faturado', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
+    paragrafo('nao_entregue', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
+    paragrafo('faltante', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
+    paragrafo('desacordo_especificacao', c => `- ${upAud(c.produto)}: pedido "${c.especificacaoEsperada || ''}", recebido "${c.especificacaoRecebida || ''}"${c.observacao ? ' — ' + c.observacao : ''}`);
+    if (grupos['outro']) partes.push(grupos['outro'].map(c => `- ${c.produto ? upAud(c.produto) + ': ' : ''}${c.observacao || ''}`).join('\n'));
+
+    if (temAvaria) partes.push(t.fotosAnexo);
+    partes.push(t.fechamento);
+    return partes.join('\n\n');
+}
+
+function gerarSaidasAuditoria() {
+    if (!document.getElementById('aud-fornecedor').value.trim()) { toast('✕ Preencha ao menos o Fornecedor.'); return; }
+    salvarCamposConfigTextos();
+    document.getElementById('output-anotacao').textContent = gerarAnotacaoOuWhatsappAuditoria();
+    document.getElementById('output-whatsapp').textContent = gerarAnotacaoOuWhatsappAuditoria();
+    document.getElementById('output-email').textContent = gerarEmailAuditoria();
+    document.getElementById('card-resultado-auditoria').style.display = 'block';
+    document.getElementById('card-resultado-auditoria').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast('✓ Textos gerados!');
+}
+function mostrarSaidaAuditoria(qual, btnEl) {
+    saidaAuditoriaAtiva = qual;
+    document.querySelectorAll('#card-resultado-auditoria .output-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#card-resultado-auditoria .output-block').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    document.getElementById('output-' + qual).classList.add('active');
+}
+async function copiarSaidaAuditoriaAtual() {
+    const texto = document.getElementById('output-' + saidaAuditoriaAtiva).textContent;
+    await navigator.clipboard.writeText(texto);
+    toast('✓ Copiado!');
+}
+
+// --- Salvar: cria a anotação automaticamente, com os dados estruturados da
+// auditoria preservados junto (não só o texto final), pra permitir filtros e
+// relatórios no futuro sem redigitação. Não mexe em salvarAnotacaoAtual(). ---
+async function salvarAuditoriaComoAnotacao() {
+    // Título da página = só o número do pedido, como pedido — tudo (todas as
+    // divergências) fica numa única anotação, uma página só, nunca uma por
+    // divergência.
+    const pedido = document.getElementById('aud-pedido').value.trim();
+    const titulo = pedido || 'Auditoria';
+    const conteudoTexto = gerarAnotacaoOuWhatsappAuditoria();
+    const conteudoHTML = conteudoTexto.split('\n\n').map(bloco =>
+        '<p>' + bloco.split('\n').map(l => l.replace(/</g, '&lt;')).join('<br>') + '</p>'
+    ).join('');
+
+    const dados = {
+        titulo,
+        conteudo: conteudoHTML,
+        tipo: 'auditoria',
+        pedido,
+        notaFiscal: document.getElementById('aud-nf').value.trim(),
+        fornecedor: upAud(document.getElementById('aud-fornecedor').value),
+        data: document.getElementById('aud-data').value,
+        observacaoGeral: document.getElementById('aud-obs-geral').value.trim(),
+        divergencias: divergenciasAuditoria.filter(d => d.tipo).map(d => ({ tipo: d.tipo, ...d.campos })),
+        atualizadoEm: new Date().toISOString()
+    };
+    dados.criadoEm = dados.atualizadoEm;
+
+    try {
+        const ref = await anotacoesTextoCollection.add(dados);
+        toast('✓ Auditoria salva como anotação!');
+        anotacaoAtualId = ref.id;
+        document.getElementById('anotacao-titulo').value = dados.titulo;
+        document.getElementById('anotacao-corpo').innerHTML = dados.conteudo;
+        switchToScreen('screen-anotacoes-editor', dados.titulo);
+    } catch (e) {
+        console.error('Erro ao salvar auditoria:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+    }
 }
 
 function popularListaHistorico(){DOM.listaHistorico.innerHTML='';if(historicoNotas.length===0){DOM.listaHistorico.innerHTML=`<div class="empty-state">O histórico está vazio.</div>`;DOM.historicoActions.style.display='none'}else{DOM.historicoActions.style.display='grid';historicoNotas.forEach(nota=>{const div=document.createElement('div');div.classList.add('nota-item');div.innerHTML=`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} | Obs: ${nota.obs||'N/A'}</div><div class="nota-data">Arquivado em: ${nota.dataHistorico}</div>`;DOM.listaHistorico.appendChild(div)})}}

@@ -358,8 +358,73 @@
             
             <div class="app-screen" id="screen-anotacoes" style="">
                 <div class="campo" style="margin-bottom: 12px;"><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
-                <button class="actions-button" style="margin-bottom: 16px;" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
+                <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
+                    <button class="actions-button" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
+                    <button class="actions-button is-neutral" onclick="abrirNovaAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                </div>
                 <div id="lista-anotacoes-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-auditoria-nova">
+                <div class="card">
+                    <h3 style="margin:0 0 16px;font-size:16px;">Dados da Auditoria</h3>
+                    <div class="campo"><label>Pedido SmartCompras (Cotação)</label><input type="text" id="aud-pedido" class="form-field" placeholder="1690"></div>
+                    <div class="campo"><label>Nota Fiscal</label><input type="text" id="aud-nf" class="form-field" placeholder="374609"></div>
+                    <div class="campo"><label>Fornecedor</label><input type="text" id="aud-fornecedor" class="form-field uppercase-field" placeholder="DISKMED"></div>
+                    <div class="campo"><label>Data da Auditoria</label><input type="date" id="aud-data" class="form-field"></div>
+                    <div class="campo"><label>Destinatário do E-mail</label><input type="text" id="aud-destinatario" class="form-field" value="Marisa" placeholder="Marisa"></div>
+                    <div class="campo"><label>Observação Geral</label><textarea id="aud-obs-geral" class="form-field" placeholder="Ex: inicialmente havia faltado um volume, mas foi encontrado depois..."></textarea></div>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="margin:0 0 16px;font-size:16px;">Divergências</h3>
+                    <div id="lista-divergencias"><div class="empty-state" id="divergencias-vazio">Nenhuma divergência adicionada ainda.</div></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="adicionarDivergencia()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Divergência</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleConfigTextos()">
+                        <h3 style="margin:0;font-size:16px;">⚙️ Configurar Textos Padrão</h3>
+                        <i class="fa-solid fa-chevron-down" id="config-chevron" style="color:var(--text-light);transition:transform .25s var(--ease-out);"></i>
+                    </div>
+                    <div id="config-textos-body" style="display:none;margin-top:16px;">
+                        <p style="color:var(--text-light);font-size:12px;margin-top:0;">Ajuste o tom das frases usadas na geração. Use {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} na abertura — são substituídas automaticamente.</p>
+                        <div class="campo"><label>Abertura do E-mail</label><textarea id="cfg-saudacao" class="form-field"></textarea></div>
+                        <div class="campo"><label>Frase — Material Avariado</label><input type="text" id="cfg-avariado" class="form-field"></div>
+                        <div class="campo"><label>Frase — Quantidade Diferente</label><input type="text" id="cfg-quantidade_diferente" class="form-field"></div>
+                        <div class="campo"><label>Frase — Valor Diferente</label><input type="text" id="cfg-valor_diferente" class="form-field"></div>
+                        <div class="campo"><label>Frase — Produto Diferente</label><input type="text" id="cfg-produto_diferente" class="form-field"></div>
+                        <div class="campo"><label>Frase — Não Faturado</label><input type="text" id="cfg-nao_faturado" class="form-field"></div>
+                        <div class="campo"><label>Frase — Não Entregue</label><input type="text" id="cfg-nao_entregue" class="form-field"></div>
+                        <div class="campo"><label>Frase — Material Faltante</label><input type="text" id="cfg-faltante" class="form-field"></div>
+                        <div class="campo"><label>Frase — Desacordo de Especificação</label><input type="text" id="cfg-desacordo_especificacao" class="form-field"></div>
+                        <div class="campo"><label>Frase — Fotos em Anexo</label><input type="text" id="cfg-fotosAnexo" class="form-field"></div>
+                        <div class="campo"><label>Fechamento do E-mail</label><input type="text" id="cfg-fechamento" class="form-field"></div>
+                        <div class="actions-row"><button class="actions-button is-neutral" onclick="restaurarTextosPadrao()">Restaurar Padrão</button></div>
+                    </div>
+                </div>
+
+                <div class="actions-row" style="margin: 20px 0;">
+                    <button class="actions-button is-success" onclick="gerarSaidasAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar Auditoria</button>
+                </div>
+
+                <div class="card" id="card-resultado-auditoria" style="display:none;">
+                    <h3 style="margin:0 0 16px;font-size:16px;">Resultado</h3>
+                    <div class="output-tabs">
+                        <button class="output-tab active" onclick="mostrarSaidaAuditoria('anotacao', this)">Anotação</button>
+                        <button class="output-tab" onclick="mostrarSaidaAuditoria('whatsapp', this)">WhatsApp</button>
+                        <button class="output-tab" onclick="mostrarSaidaAuditoria('email', this)">E-mail</button>
+                    </div>
+                    <div class="output-block active" id="output-anotacao"></div>
+                    <div class="output-block" id="output-whatsapp"></div>
+                    <div class="output-block" id="output-email"></div>
+                    <div class="actions-row" style="margin-top:14px;">
+                        <button class="actions-button" id="btn-copiar-saida" onclick="copiarSaidaAuditoriaAtual()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+                        <button class="actions-button is-success" onclick="salvarAuditoriaComoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar como Anotação</button>
+                    </div>
+                </div>
             </div>
 
             <div class="app-screen" id="screen-anotacoes-editor">

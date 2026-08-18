@@ -208,12 +208,15 @@ body[data-tab-icons="off"] .tab-item{font-size:11px;padding:10px 4px}
 
 #screen-anotacoes { display: flex; flex-direction: column; gap: 16px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); transition: padding-bottom 0.2s ease-out; }
 .anotacao-item{cursor:pointer}
-.rte-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px 12px 0 0;padding:8px;border-bottom:none}
+.rte-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;background:var(--bg-primary);border:none;border-bottom:1px solid var(--border-color);border-radius:0;padding:8px 2px;position:sticky;top:0;z-index:5}
+#anotacao-titulo{background:transparent;border:none;padding:4px 2px;font-size:24px !important;font-weight:800 !important;letter-spacing:-.4px}
+#anotacao-titulo:focus{box-shadow:none;outline:none}
+#screen-anotacoes-editor{padding-left:16px;padding-right:16px}
 .rte-toolbar button{width:34px;height:34px;border:none;background:none;color:var(--text-dark);font-size:14px;border-radius:8px;cursor:pointer;transition:background-color .15s ease}
 .rte-toolbar button:active{background-color:var(--bg-primary)}
 .rte-toolbar-divider{width:1px;height:20px;background:var(--border-color);margin:0 4px}
-.rte-editor{flex-grow:1;min-height:280px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:0 0 12px 12px;padding:16px;font-size:15px;line-height:1.6;color:var(--text-dark);overflow-y:auto}
-.rte-editor:focus{outline:none;box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent)}
+.rte-editor{flex-grow:1;min-height:60vh;background:var(--bg-primary);border:none;border-radius:0;padding:20px 4px;font-size:16px;line-height:1.75;color:var(--text-dark);overflow-y:auto}
+.rte-editor:focus{outline:none;box-shadow:none}
 .rte-editor h2{font-size:19px;font-weight:700;margin:10px 0}
 .rte-editor ul,.rte-editor ol{padding-left:22px;margin:8px 0}
 .rte-editor table.anotacao-tabela{border-collapse:collapse;width:100%;margin:10px 0}
@@ -408,3 +411,22 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 @media (min-width:900px){
     html,body{overflow:hidden}.main-content .header{min-height:60px}.app-screen{padding:24px 32px}.nota-list{display:block}.nota-item{margin-bottom:16px}.modal-content{max-width:580px;height:auto;max-height:90vh;box-shadow:var(--shadow-lg)}
 }
+
+/* --- Módulo de Auditoria --- */
+.uppercase-field{text-transform:uppercase}
+.divergencia{border:1px solid var(--border-color);border-radius:14px;margin-bottom:12px;overflow:hidden;background:var(--bg-primary)}
+.divergencia:last-child{margin-bottom:0}
+.divergencia-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;background:var(--bg-tertiary)}
+.divergencia-num{width:24px;height:24px;border-radius:50%;background:var(--accent-color);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.divergencia-titulo{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--text-dark)}
+.divergencia-chevron{transition:transform .25s var(--ease-out);color:var(--text-light);font-size:13px}
+.divergencia.open .divergencia-chevron{transform:rotate(180deg)}
+.divergencia-del{background:none;border:none;color:var(--button-danger);font-size:15px;cursor:pointer;padding:4px 6px;flex-shrink:0}
+.divergencia-body{max-height:0;overflow:hidden;transition:max-height .3s var(--ease-out)}
+.divergencia-body-inner{padding:16px}
+.divergencia.open .divergencia-body{max-height:900px}
+.output-tabs{display:flex;gap:8px;margin-bottom:14px}
+.output-tab{flex:1;padding:10px;text-align:center;border-radius:980px;border:1.5px solid var(--border-color);background:transparent;color:var(--text-light);font-size:13px;font-weight:600;cursor:pointer}
+.output-tab.active{border-color:var(--accent-color);color:var(--accent-color);background:color-mix(in srgb, var(--accent-color) 8%, transparent)}
+.output-block{display:none;white-space:pre-wrap;background:var(--bg-tertiary);border-radius:12px;padding:16px;font-size:13px;line-height:1.7;color:var(--text-dark);font-family:ui-monospace,'SF Mono',Menlo,monospace;max-height:400px;overflow-y:auto}
+.output-block.active{display:block}
