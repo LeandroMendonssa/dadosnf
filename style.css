@@ -430,3 +430,19 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 .output-tab.active{border-color:var(--accent-color);color:var(--accent-color);background:color-mix(in srgb, var(--accent-color) 8%, transparent)}
 .output-block{display:none;white-space:pre-wrap;background:var(--bg-tertiary);border-radius:12px;padding:16px;font-size:13px;line-height:1.7;color:var(--text-dark);font-family:ui-monospace,'SF Mono',Menlo,monospace;max-height:400px;overflow-y:auto}
 .output-block.active{display:block}
+
+/* --- Editor de XML (NF-e) --- */
+.xml-dropzone{border:2px dashed var(--border-color);border-radius:14px;padding:26px 16px;text-align:center;color:var(--text-light);cursor:pointer;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.xml-dropzone.drag{border-color:var(--accent-color);background:color-mix(in srgb, var(--accent-color) 6%, transparent)}
+.xml-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+.xml-table th{text-align:left;padding:8px 6px;color:var(--text-light);font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border-color)}
+.xml-table td{padding:8px 6px;border-bottom:1px solid var(--border-color);vertical-align:top}
+.xml-table tr:last-child td{border-bottom:none}
+.xml-produto-nome{font-weight:600;color:var(--text-dark);max-width:220px}
+.fator-input{width:56px;padding:6px;text-align:center;font-weight:700;border-radius:8px;border:1px solid transparent;background:var(--bg-tertiary);color:var(--text-dark)}
+.fator-input.suspeito{background:color-mix(in srgb, var(--button-warning) 22%, var(--bg-tertiary));color:#8a6d00}
+.cprod-input{width:90px;padding:6px;font-size:11px;border-radius:8px;border:1px solid transparent;background:var(--bg-tertiary);color:var(--text-dark)}
+.badge-excecao{display:inline-block;padding:2px 8px;border-radius:980px;font-size:10px;font-weight:700;margin-top:3px;background:color-mix(in srgb, var(--accent-color) 15%, transparent);color:var(--accent-color)}
+.xml-preview-linha{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--text-dark)}
+.xml-preview-linha b{color:var(--button-success)}
+.xml-resumo{font-size:12px;color:var(--text-light);margin-top:10px;text-align:center}

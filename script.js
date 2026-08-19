@@ -19,6 +19,7 @@ const notasCollection = firestore.collection('notas');
 const historicoCollection = firestore.collection('historico');
 const anotacoesTextoCollection = firestore.collection('anotacoesTexto');
 const settingsDocRef = firestore.collection('config').doc('appSettings');
+const xmlExcecoesCollection = firestore.collection('xmlExcecoes');
 
 // --- ESTADO GLOBAL ---
 let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], apelidosFornecedores = {};
@@ -111,8 +112,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -556,6 +557,11 @@ async function carregarEstado(){
         popularListaHistorico();
     }, error => console.error("Erro ao carregar histórico:", error)));
 
+    dataUnsubscribers.push(xmlExcecoesCollection.onSnapshot(snapshot => {
+        bancoExcecoesXml = {};
+        snapshot.docs.forEach(doc => { bancoExcecoesXml[doc.id] = doc.data().fator; });
+    }, error => console.error("Erro ao carregar exceções de XML:", error)));
+
     dataUnsubscribers.push(anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
         listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
 
@@ -838,6 +844,18 @@ function ordenarExportacao() {
 // --- SETUP GERAL (Event Listeners) ---
 document.addEventListener('DOMContentLoaded', () => {
     setAppHeight(); setupKeyboardListener();
+
+    // Arrastar-e-soltar no editor de XML
+    const xmlDropzone = document.getElementById('xml-dropzone');
+    if (xmlDropzone) {
+        xmlDropzone.addEventListener('dragover', e => { e.preventDefault(); xmlDropzone.classList.add('drag'); });
+        xmlDropzone.addEventListener('dragleave', () => xmlDropzone.classList.remove('drag'));
+        xmlDropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            xmlDropzone.classList.remove('drag');
+            if (e.dataTransfer.files[0]) handleArquivoXml(e.dataTransfer.files[0]);
+        });
+    }
     
     document.querySelectorAll('.settings-list-group a[data-screen]').forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(link.dataset.screen, link.dataset.title); }); });
     document.getElementById('close-btn').addEventListener('click', () => {
@@ -2041,6 +2059,204 @@ function inserirTabelaAnotacao(linhas, colunas) {
     document.execCommand('insertHTML', false, html);
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
+}
+
+// ============================================================
+// MÓDULO DE EDITOR DE XML (NF-e) — converte quantidades de caixa/pacote
+// pra unidade de dispensação, ajustando qCom/vUnCom/qTrib/vUnTrib e os
+// lotes (<rastro>) automaticamente, preservando os valores fiscais
+// (impostos, totais, chave de autorização) intocados. O fator de conversão
+// vem do texto do produto (regex) ou do banco de exceções salvo por
+// fornecedor+produto (Firestore, coleção xmlExcecoes), pra não precisar
+// adivinhar de novo na próxima nota do mesmo item.
+// Validado item a item contra uma NF-e real antes de entrar no app.
+// ============================================================
+
+let xmlDocAtual = null;
+let nomeArquivoXmlOriginal = 'nfe-corrigida.xml';
+let itensXmlDetectados = [];
+let bancoExcecoesXml = {};
+
+function detectarFatorXml(xProd) {
+    const texto = xProd.toUpperCase();
+    const matchFD = texto.match(/\bFD\s?(\d+)\b/);
+    const matchC = texto.match(/C\/\s?(\d+)/); // exige dígito logo após "C/" — não confunde com "C/VASO" etc.
+    const matchCX = !matchC ? texto.match(/\bCX\s?(\d+)\b/) : null;
+
+    let fator = 1, suspeito = false;
+    if (matchFD && matchC) fator = parseInt(matchFD[1], 10) * parseInt(matchC[1], 10);
+    else if (matchC) fator = parseInt(matchC[1], 10);
+    else if (matchCX) fator = parseInt(matchCX[1], 10);
+    else suspeito = true;
+    return { fator: fator || 1, suspeito };
+}
+
+function chaveExcecaoXml(cnpjEmit, item) {
+    return `${cnpjEmit}::${item.cEAN || item.cProd}`.replace(/\//g, '_');
+}
+
+function handleArquivoXml(file) {
+    if (!file) return;
+    nomeArquivoXmlOriginal = file.name;
+    document.getElementById('xml-nome-arquivo').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => processarXmlTexto(e.target.result);
+    reader.readAsText(file, 'UTF-8');
+}
+
+function processarXmlTexto(texto) {
+    const parser = new DOMParser();
+    xmlDocAtual = parser.parseFromString(texto, 'application/xml');
+    if (xmlDocAtual.querySelector('parsererror')) {
+        toast('✕ Esse arquivo não é um XML válido.');
+        xmlDocAtual = null;
+        return;
+    }
+
+    const cnpjEmit = xmlDocAtual.querySelector('emit CNPJ')?.textContent || '';
+    const dets = Array.from(xmlDocAtual.getElementsByTagName('det'));
+
+    itensXmlDetectados = dets.map(detEl => {
+        const prod = detEl.getElementsByTagName('prod')[0];
+        const get = (tag) => prod.getElementsByTagName(tag)[0]?.textContent || '';
+        const xProd = get('xProd');
+        const item = {
+            prod,
+            xProd,
+            cProd: get('cProd'),
+            cEAN: get('cEAN'),
+            qComEl: prod.getElementsByTagName('qCom')[0],
+            vUnComEl: prod.getElementsByTagName('vUnCom')[0],
+            qTribEl: prod.getElementsByTagName('qTrib')[0],
+            vUnTribEl: prod.getElementsByTagName('vUnTrib')[0],
+            uComEl: prod.getElementsByTagName('uCom')[0],
+            uTribEl: prod.getElementsByTagName('uTrib')[0],
+            qComOriginal: parseFloat(prod.getElementsByTagName('qCom')[0]?.textContent || '0'),
+            vUnComOriginal: parseFloat(prod.getElementsByTagName('vUnCom')[0]?.textContent || '0'),
+            qTribOriginal: parseFloat(prod.getElementsByTagName('qTrib')[0]?.textContent || '0'),
+            vUnTribOriginal: parseFloat(prod.getElementsByTagName('vUnTrib')[0]?.textContent || '0'),
+            rastros: Array.from(prod.getElementsByTagName('rastro')).map(r => ({
+                qLoteEl: r.getElementsByTagName('qLote')[0],
+                qLoteOriginal: parseFloat(r.getElementsByTagName('qLote')[0]?.textContent || '0')
+            }))
+        };
+        const chave = chaveExcecaoXml(cnpjEmit, item);
+        item.chaveExcecao = chave;
+        if (bancoExcecoesXml[chave] !== undefined) {
+            item.fator = bancoExcecoesXml[chave];
+            item.deExcecao = true;
+        } else {
+            const det = detectarFatorXml(xProd);
+            item.fator = det.fator;
+            item.suspeito = det.suspeito;
+        }
+        return item;
+    });
+
+    document.getElementById('xml-card-itens').style.display = 'block';
+    document.getElementById('xml-acoes-finais').style.display = 'flex';
+    renderTabelaItensXml();
+}
+
+function formatarPreviewXml(item) {
+    if (item.fator === 1) return `Sem conversão de qtd. (fator 1)`;
+    const novaQtd = (item.qComOriginal * item.fator).toFixed(4);
+    const novoValor = (item.vUnComOriginal / item.fator).toFixed(7);
+    return `${item.qComOriginal} ${item.uComEl.textContent} → <b>${novaQtd} ${document.getElementById('xml-unidade-destino').value}</b> a R$ ${novoValor}`;
+}
+
+function renderTabelaItensXml() {
+    const tbody = document.getElementById('xml-tbody-itens');
+    tbody.innerHTML = itensXmlDetectados.map((item, idx) => `
+        <tr>
+            <td>
+                <div class="xml-produto-nome">${item.xProd}</div>
+                ${item.deExcecao ? '<span class="badge-excecao">lembrado</span>' : ''}
+            </td>
+            <td><input type="number" min="1" class="fator-input ${item.suspeito ? 'suspeito' : ''}" value="${item.fator}" onchange="atualizarFatorXml(${idx}, this.value)"></td>
+            <td><input type="text" class="cprod-input" value="${item.cProd}" onchange="atualizarCProdXml(${idx}, this.value)"></td>
+            <td class="xml-preview-linha">${formatarPreviewXml(item)}</td>
+        </tr>
+    `).join('');
+
+    const totalConvertidos = itensXmlDetectados.filter(i => i.fator !== 1).length;
+    const totalSuspeitos = itensXmlDetectados.filter(i => i.suspeito).length;
+    document.getElementById('xml-resumo').textContent =
+        `${itensXmlDetectados.length} item(ns) — ${totalConvertidos} serão convertidos` +
+        (totalSuspeitos ? `, ${totalSuspeitos} sem padrão detectado (confira o fator manualmente)` : '');
+}
+
+function atualizarFatorXml(idx, valor) {
+    const fator = parseInt(valor, 10) || 1;
+    itensXmlDetectados[idx].fator = fator;
+    itensXmlDetectados[idx].suspeito = false;
+    itensXmlDetectados[idx].deExcecao = false;
+    renderTabelaItensXml();
+}
+function atualizarCProdXml(idx, valor) {
+    itensXmlDetectados[idx].cProdNovo = valor.trim();
+}
+function limparBancoExcecoesXml() {
+    showConfirmModal({
+        title: 'Limpar Banco de Exceções',
+        message: 'Isso apaga todas as correções de fator lembradas por fornecedor/produto. Você vai precisar corrigir de novo na próxima vez que aparecerem.',
+        confirmText: 'Limpar',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            const snapshot = await xmlExcecoesCollection.get();
+            const batch = firestore.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            toast('✓ Banco de exceções limpo.');
+            if (xmlDocAtual) renderTabelaItensXml();
+        }
+    });
+}
+
+async function baixarXmlConvertido() {
+    if (!xmlDocAtual) return;
+    const unidadeDestino = document.getElementById('xml-unidade-destino').value.trim() || 'UN';
+    const excecoesParaSalvar = {};
+
+    itensXmlDetectados.forEach(item => {
+        const fator = item.fator;
+        if (item.cProdNovo && item.cProdNovo !== item.cProd) {
+            const cProdEl = item.prod.getElementsByTagName('cProd')[0];
+            if (cProdEl) cProdEl.textContent = item.cProdNovo;
+        }
+        if (fator !== 1) {
+            item.qComEl.textContent = (item.qComOriginal * fator).toFixed(4);
+            item.vUnComEl.textContent = (item.vUnComOriginal / fator).toFixed(7);
+            item.qTribEl.textContent = (item.qTribOriginal * fator).toFixed(4);
+            item.vUnTribEl.textContent = (item.vUnTribOriginal / fator).toFixed(7);
+            item.rastros.forEach(r => { r.qLoteEl.textContent = (r.qLoteOriginal * fator).toFixed(3); });
+            excecoesParaSalvar[item.chaveExcecao] = fator;
+        }
+        item.uComEl.textContent = unidadeDestino;
+        item.uTribEl.textContent = unidadeDestino;
+    });
+
+    // Lembra as correções pra próxima nota do mesmo fornecedor/produto.
+    try {
+        await Promise.all(Object.entries(excecoesParaSalvar).map(([chave, fator]) =>
+            xmlExcecoesCollection.doc(chave).set({ fator, atualizadoEm: new Date().toISOString() }, { merge: true })
+        ));
+    } catch (e) { console.error('Erro ao salvar exceções de XML:', e); }
+
+    const serializer = new XMLSerializer();
+    let xmlString = serializer.serializeToString(xmlDocAtual);
+    if (!xmlString.startsWith('<?xml')) xmlString = '<?xml version="1.0" encoding="UTF-8"?>' + xmlString;
+
+    const blob = new Blob([xmlString], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomeArquivoXmlOriginal.replace(/\.xml$/i, '') + '-corrigido.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✓ XML corrigido baixado!');
 }
 
 // ============================================================

@@ -214,6 +214,7 @@
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-xml-editor" data-title="Editor de XML (NF-e)"><i class="icon fa-solid fa-file-code" style="background-color: #ff9500;"></i> Editor de XML (NF-e) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
                 </ul>
@@ -287,6 +288,38 @@
                     <p style="margin-top:0;color:var(--text-light);font-size:13px;">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
                 </div>
             </div>
+            <div class="app-screen" id="screen-xml-editor">
+                <div class="card">
+                    <h3 style="margin:0 0 12px;font-size:16px;">Editor de XML (NF-e)</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Converte quantidades de caixa/pacote pra unidade de dispensação, ajustando lotes e valores automaticamente antes de importar no ERP.</p>
+                    <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
+                        <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
+                        <div>Toque para escolher o arquivo .xml da NF-e</div>
+                        <div id="xml-nome-arquivo" style="font-size:12px;color:var(--accent-color);font-weight:600;"></div>
+                    </div>
+                    <input type="file" id="xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXml(this.files[0])">
+                    <div class="campo" style="margin-top:16px;">
+                        <label>Unidade de Dispensação (destino)</label>
+                        <input type="text" id="xml-unidade-destino" class="form-field" value="UN">
+                    </div>
+                </div>
+
+                <div class="card" id="xml-card-itens" style="display:none;margin-top:16px;">
+                    <h3 style="margin:0 0 6px;font-size:16px;">Revise o fator de conversão</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">O fator vem da descrição do produto (ex: "C/10" = 10). Edite se estiver errado — sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
+                    <table class="xml-table">
+                        <thead><tr><th>Produto</th><th>Fator</th><th>Cód. (cProd)</th><th>Prévia</th></tr></thead>
+                        <tbody id="xml-tbody-itens"></tbody>
+                    </table>
+                    <div class="xml-resumo" id="xml-resumo"></div>
+                </div>
+
+                <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
+                    <button class="actions-button is-success" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
+                    <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
+                </div>
+            </div>
+
             <div class="app-screen" id="screen-conta">
                 <div class="card">
                     <div class="conta-info">
