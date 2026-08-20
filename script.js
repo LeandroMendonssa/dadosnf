@@ -1919,8 +1919,9 @@ function abrirNovaAnotacao() {
     anotacaoAtualId = null;
     document.getElementById('anotacao-titulo').value = '';
     document.getElementById('anotacao-corpo').innerHTML = '';
+    aplicarEstadoEspacamentoEditor('', false);
     switchToScreen('screen-anotacoes-editor', 'Nova Anotação');
-    setTimeout(() => document.getElementById('anotacao-titulo').focus(), 300);
+    setTimeout(() => { document.getElementById('anotacao-titulo').focus(); atualizarEstadoToolbarAnotacao(); }, 300);
 }
 
 function abrirAnotacao(id) {
@@ -1929,7 +1930,9 @@ function abrirAnotacao(id) {
     anotacaoAtualId = id;
     document.getElementById('anotacao-titulo').value = nota.titulo || '';
     document.getElementById('anotacao-corpo').innerHTML = nota.conteudo || '';
+    aplicarEstadoEspacamentoEditor(nota.espacamentoLinha || '', !!nota.paragrafoCompacto);
     switchToScreen('screen-anotacoes-editor', nota.titulo || 'Anotação');
+    setTimeout(atualizarEstadoToolbarAnotacao, 300);
 }
 
 function voltarParaListaAnotacoes() {
@@ -1938,6 +1941,7 @@ function voltarParaListaAnotacoes() {
 
 let autoSaveAnotacaoTimeout = null;
 function agendarAutoSaveAnotacao() {
+    atualizarEstadoToolbarAnotacao();
     clearTimeout(autoSaveAnotacaoTimeout);
     autoSaveAnotacaoTimeout = setTimeout(() => salvarAnotacaoAtual(false), 1200);
 }
@@ -1959,6 +1963,8 @@ async function salvarAnotacaoAtual(mostrarToast) {
     const dados = {
         titulo: titulo || 'Sem título',
         conteudo,
+        espacamentoLinha: editorEspacamentoLinhaAtual,
+        paragrafoCompacto: editorParagrafoCompactoAtual,
         atualizadoEm: new Date().toISOString()
     };
 
@@ -2056,7 +2062,42 @@ function formatarTextoAnotacao(comando, valor) {
     document.getElementById('anotacao-corpo').focus();
     document.execCommand(comando, false, valor || null);
     agendarAutoSaveAnotacao();
+    atualizarEstadoToolbarAnotacao();
 }
+
+// --- Estado visual da toolbar (negrito/itálico/sublinhado/bloco ativos, e
+// undo/redo habilitados) — precisa refletir o estado REAL do cursor/seleção
+// a cada momento, não um valor fixo marcado uma vez. Atualiza via
+// selectionchange (filtrado pro editor de anotações), a cada digitação, e
+// logo depois de qualquer comando de formatação disparado pelos botões.
+function atualizarEstadoToolbarAnotacao() {
+    const editor = document.getElementById('anotacao-corpo');
+    if (!editor) return;
+    ['bold', 'italic', 'underline'].forEach(cmd => {
+        const btn = document.querySelector(`.rte-toolbar button[data-cmd="${cmd}"]`);
+        if (!btn) return;
+        try { btn.classList.toggle('active', document.queryCommandState(cmd)); } catch (e) {}
+    });
+    let blocoAtual = '';
+    try { blocoAtual = (document.queryCommandValue('formatBlock') || '').toUpperCase(); } catch (e) {}
+    document.querySelectorAll('.rte-toolbar button[data-block]').forEach(btn => {
+        const alvo = btn.dataset.block;
+        const ehParagrafoPadrao = alvo === 'P' && (blocoAtual === '' || blocoAtual === 'DIV' || blocoAtual === 'P');
+        btn.classList.toggle('active', blocoAtual === alvo || ehParagrafoPadrao);
+    });
+    ['undo', 'redo'].forEach(cmd => {
+        const btn = document.querySelector(`.rte-toolbar button[data-cmd="${cmd}"]`);
+        if (!btn) return;
+        try { btn.disabled = !document.queryCommandEnabled(cmd); } catch (e) { /* navegador sem suporte — deixa habilitado */ }
+    });
+}
+document.addEventListener('selectionchange', () => {
+    const editor = document.getElementById('anotacao-corpo');
+    if (!editor) return;
+    const sel = window.getSelection();
+    if (!sel || !sel.anchorNode || !editor.contains(sel.anchorNode)) return;
+    atualizarEstadoToolbarAnotacao();
+});
 
 // --- Popovers da barra de ferramentas (cor, tamanho, grade de tabela) ---
 // Guarda a seleção de texto feita no editor antes de abrir um popover — clicar
@@ -2089,6 +2130,8 @@ function toggleRtePopover(id) {
     fecharPopoversRte();
     pop.style.display = estavaAberto ? 'none' : 'block';
     if (id === 'rte-table-popover') montarGradeTabela();
+    if (id === 'rte-size-popover') atualizarSizePopoverAtivo();
+    if (id === 'rte-spacing-popover') atualizarPopoverEspacamentoAtivo();
 }
 document.addEventListener('click', (event) => {
     if (!event.target.closest('.rte-popover-wrap')) fecharPopoversRte();
@@ -2123,6 +2166,72 @@ function aplicarTamanhoTextoAnotacao(px) {
     sel.removeAllRanges();
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
+}
+
+// Detecta o tamanho de fonte no ponto do cursor/seleção, subindo pela árvore
+// do DOM até achar um <span style="font-size:...">. Usado só pra marcar a
+// opção certa com um check quando o popover abre — não é fixo, reflete o
+// estado real.
+function obterTamanhoFonteAtual() {
+    const editor = document.getElementById('anotacao-corpo');
+    const sel = window.getSelection();
+    if (!editor || !sel || !sel.rangeCount) return 16;
+    let node = sel.anchorNode;
+    if (node && node.nodeType !== 1) node = node.parentNode;
+    while (node && node !== editor && editor.contains(node)) {
+        if (node.style && node.style.fontSize) {
+            const px = parseInt(node.style.fontSize, 10);
+            if (!isNaN(px)) return px;
+        }
+        node = node.parentNode;
+    }
+    return 16;
+}
+function atualizarSizePopoverAtivo() {
+    const atual = obterTamanhoFonteAtual();
+    document.querySelectorAll('.rte-size-option[data-size]').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.size, 10) === atual);
+    });
+}
+
+// --- Espaçamento entre linhas / parágrafos ---
+// Aplicado ao documento inteiro (não por parágrafo — mantém a implementação
+// simples, como pedido), e persistido como campo próprio da anotação, então
+// volta a aparecer do jeito que foi deixado da próxima vez que a nota abrir.
+const ESPACAMENTOS_LINHA_ANOTACAO = { simples: '1.35', '115': '1.55', '15': '1.9', duplo: '2.3' };
+let editorEspacamentoLinhaAtual = '';
+let editorParagrafoCompactoAtual = false;
+function aplicarEstadoEspacamentoEditor(valorLineHeight, compacto) {
+    const editor = document.getElementById('anotacao-corpo');
+    if (!editor) return;
+    editor.style.lineHeight = valorLineHeight || '';
+    editor.classList.toggle('rte-compacto', !!compacto);
+    editorEspacamentoLinhaAtual = valorLineHeight || '';
+    editorParagrafoCompactoAtual = !!compacto;
+}
+function aplicarEspacamentoLinhaAnotacao(chave) {
+    const valor = ESPACAMENTOS_LINHA_ANOTACAO[chave] || '';
+    const editor = document.getElementById('anotacao-corpo');
+    if (editor) editor.style.lineHeight = valor;
+    editorEspacamentoLinhaAtual = valor;
+    atualizarPopoverEspacamentoAtivo();
+    fecharPopoversRte();
+    agendarAutoSaveAnotacao();
+}
+function alternarParagrafoCompactoAnotacao() {
+    const editor = document.getElementById('anotacao-corpo');
+    if (!editor) return;
+    editorParagrafoCompactoAtual = !editorParagrafoCompactoAtual;
+    editor.classList.toggle('rte-compacto', editorParagrafoCompactoAtual);
+    atualizarPopoverEspacamentoAtivo();
+    agendarAutoSaveAnotacao();
+}
+function atualizarPopoverEspacamentoAtivo() {
+    document.querySelectorAll('.rte-size-option[data-spacing]').forEach(btn => {
+        btn.classList.toggle('active', (ESPACAMENTOS_LINHA_ANOTACAO[btn.dataset.spacing] || '') === editorEspacamentoLinhaAtual);
+    });
+    const btnCompacto = document.getElementById('rte-btn-compacto');
+    if (btnCompacto) btnCompacto.classList.toggle('active', editorParagrafoCompactoAtual);
 }
 
 // --- Tabela: grade visual estilo Word/Google Docs, em vez de prompt() ---

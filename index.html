@@ -206,20 +206,22 @@
             </div>
 
             <div class="app-screen" id="screen-settings">
+                <div class="settings-group-label">Dados e Cadastros</div>
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-import" data-title="Importar Relatório (ERP)"><i class="icon fa-solid fa-file-import" style="background-color: #007aff;"></i> Importar Relatório (ERP) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-cotacoes" data-title="Cotações" onclick="renderListaCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #5ac8fa;"></i> Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-xml-editor" data-title="Editor de XML (NF-e)"><i class="icon fa-solid fa-file-code" style="background-color: #ff9500;"></i> Editor de XML (NF-e) <i class="fa-solid fa-chevron-right"></i></a></li>
                 </ul>
+                <div class="settings-group-label">Aplicativo e Conta</div>
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a data-screen="screen-xml-editor" data-title="Editor de XML (NF-e)"><i class="icon fa-solid fa-file-code" style="background-color: #ff9500;"></i> Editor de XML (NF-e) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
                 </ul>
-                <ul class="settings-list-group">
+                <ul class="settings-list-group" style="margin-top:28px;">
                     <li><a class="settings-action-danger" onclick="handleLogout()">Sair</a></li>
                 </ul>
             </div>
@@ -530,12 +532,15 @@
                     <input type="text" id="anotacao-titulo" class="form-field" placeholder="Título da anotação" style="font-size: 18px; font-weight: 700;" oninput="agendarAutoSaveAnotacao()">
                 </div>
                 <div class="rte-toolbar">
-                    <button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('bold')"><i class="fa-solid fa-bold"></i></button>
-                    <button type="button" title="Itálico" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('italic')"><i class="fa-solid fa-italic"></i></button>
-                    <button type="button" title="Sublinhado" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('underline')"><i class="fa-solid fa-underline"></i></button>
+                    <button type="button" data-cmd="undo" title="Desfazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('undo')"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" data-cmd="redo" title="Refazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('redo')"><i class="fa-solid fa-rotate-right"></i></button>
                     <span class="rte-toolbar-divider"></span>
-                    <button type="button" title="Título" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'H2')"><i class="fa-solid fa-heading"></i></button>
-                    <button type="button" title="Texto normal" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'P')"><i class="fa-solid fa-paragraph"></i></button>
+                    <button type="button" data-cmd="bold" title="Negrito" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('bold')"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" data-cmd="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('italic')"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" data-cmd="underline" title="Sublinhado" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('underline')"><i class="fa-solid fa-underline"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" data-block="H2" title="Título" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'H2')"><i class="fa-solid fa-heading"></i></button>
+                    <button type="button" data-block="P" title="Texto normal" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'P')"><i class="fa-solid fa-paragraph"></i></button>
                     <span class="rte-toolbar-divider"></span>
                     <button type="button" title="Lista" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
                     <button type="button" title="Lista Numerada" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
@@ -558,19 +563,30 @@
                     </div>
                     <div class="rte-popover-wrap">
                         <button type="button" title="Tamanho do Texto" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-size-popover')"><i class="fa-solid fa-text-height"></i></button>
-                        <div id="rte-size-popover" class="rte-popover" style="display:none;">
-                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(12)">12px</button>
-                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(14)">14px</button>
-                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(16)">16px (padrão)</button>
-                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(18)">18px</button>
-                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(22)">22px</button>
-                            <button type="button" class="rte-size-option" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(28)">28px</button>
+                        <div id="rte-size-popover" class="rte-popover rte-popover-list" style="display:none;">
+                            <button type="button" class="rte-size-option" data-size="12" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(12)"><span>12px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="14" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(14)"><span>14px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="16" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(16)"><span>16px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="18" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(18)"><span>18px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="22" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(22)"><span>22px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="28" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(28)"><span>28px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                        </div>
+                    </div>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Espaçamento entre Linhas" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-spacing-popover')"><i class="fa-solid fa-grip-lines"></i></button>
+                        <div id="rte-spacing-popover" class="rte-popover rte-popover-list" style="display:none;">
+                            <button type="button" class="rte-size-option" data-spacing="simples" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('simples')"><span>Simples</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-spacing="115" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('115')"><span>1,15</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-spacing="15" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('15')"><span>1,5</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-spacing="duplo" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('duplo')"><span>Duplo</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <div class="rte-popover-divider"></div>
+                            <button type="button" class="rte-size-option" id="rte-btn-compacto" onmousedown="event.preventDefault()" onclick="alternarParagrafoCompactoAnotacao()"><span>Compactar parágrafos</span><i class="fa-solid fa-check rte-option-check"></i></button>
                         </div>
                     </div>
                     <span class="rte-toolbar-divider"></span>
                     <div class="rte-popover-wrap">
                         <button type="button" title="Inserir Tabela" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-table-popover')"><i class="fa-solid fa-table"></i></button>
-                        <div id="rte-table-popover" class="rte-popover" style="display:none;">
+                        <div id="rte-table-popover" class="rte-popover rte-popover-table" style="display:none;">
                             <div id="rte-table-grid" class="rte-table-grid"></div>
                             <div id="rte-table-grid-label" class="rte-table-grid-label">Selecione o tamanho</div>
                         </div>
