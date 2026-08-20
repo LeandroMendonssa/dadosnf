@@ -221,6 +221,7 @@ body[data-tab-icons="off"] .tab-item{font-size:11px;padding:10px 4px}
 .rte-editor ul,.rte-editor ol{padding-left:22px;margin:8px 0}
 .rte-editor table.anotacao-tabela{border-collapse:collapse;width:100%;margin:10px 0}
 .rte-editor table.anotacao-tabela td{border:1px solid var(--border-color);padding:8px 10px;font-size:13px;min-width:50px}
+.rte-editor hr{border:none;border-top:1px solid var(--border-color);margin:16px 0}
 .rte-popover-wrap{position:relative;display:inline-flex}
 .rte-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;box-shadow:var(--shadow-lg);padding:10px;min-width:170px}
 .rte-color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -446,3 +447,41 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 .xml-preview-linha{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--text-dark)}
 .xml-preview-linha b{color:var(--button-success)}
 .xml-resumo{font-size:12px;color:var(--text-light);margin-top:10px;text-align:center}
+/* Checkbox dentro dos campos dinâmicos de divergência (ex: "Solicitar carta
+   de correção"). Reaproveita .campo, só adiciona o layout do label+input. */
+.campo-checkbox { display: flex; align-items: center; }
+.campo-checkbox .checkbox-label { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; font-size: 14px; }
+.campo-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; }
+
+/* Anotações — ações rápidas no card (sinalizar / concluir / excluir), estado
+   concluída, e barra de seleção múltipla pra exportar relatório WhatsApp. */
+.anotacao-card-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); }
+.anotacao-icon-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-light); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; transition: all .15s var(--ease-out); }
+.anotacao-icon-btn:active { transform: scale(0.92); }
+.anotacao-icon-btn.is-flagged { color: var(--button-danger); border-color: var(--button-danger); }
+.anotacao-icon-btn.is-done { color: var(--button-success); border-color: var(--button-success); }
+.anotacao-icon-btn.is-delete:active { color: var(--button-danger); border-color: var(--button-danger); }
+.anotacao-concluida { opacity: 0.6; }
+.anotacao-concluida .nota-info { text-decoration: line-through; }
+.badge-concluida { font-size: 10px; font-weight: 600; color: var(--button-success); border: 1px solid var(--button-success); border-radius: 6px; padding: 1px 6px; margin-left: 6px; text-decoration: none; display: inline-block; vertical-align: middle; }
+.anotacoes-bulk-bar { align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.anotacoes-selecao-contador { font-size: 13px; color: var(--text-light); }
+
+/* Cotações — linha de fornecedor dinâmica (razão social + CNPJ + excluir),
+   reaproveitando o mesmo botão de lixeira dos cards de divergência. */
+.fornecedor-cotacao-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color); }
+.fornecedor-cotacao-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.fornecedor-cotacao-row .campo { flex: 1; margin-bottom: 0; }
+.fornecedor-cotacao-row .divergencia-del { flex-shrink: 0; margin-bottom: 2px; }
+
+/* Prévia de importação do XML SmartCompras — resumo (pedido/fornecedores/
+   itens/versão) + lista de diferenças em relação à versão anterior. */
+.xml-resumo-linha { font-size: 13px; color: var(--text-dark); padding: 4px 0; }
+.xml-diff-titulo { font-size: 12px; font-weight: 600; color: var(--text-light); margin: 14px 0 6px; }
+.xml-diff-lista { margin: 0; padding-left: 18px; font-size: 12px; color: var(--text-dark); line-height: 1.6; }
+.xml-diff-lista li { margin-bottom: 4px; }
+
+/* Faixa de aviso na Nova Auditoria quando o pedido digitado bate com uma
+   cotação cadastrada — confirma pro usuário que fornecedor/produtos serão
+   sugeridos automaticamente (via datalist) nos campos abaixo. */
+.aud-cotacao-info { background: var(--bg-tertiary); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: var(--button-success); font-weight: 600; margin: -8px 0 14px; }

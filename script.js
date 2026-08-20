@@ -20,6 +20,7 @@ const historicoCollection = firestore.collection('historico');
 const anotacoesTextoCollection = firestore.collection('anotacoesTexto');
 const settingsDocRef = firestore.collection('config').doc('appSettings');
 const xmlExcecoesCollection = firestore.collection('xmlExcecoes');
+const cotacoesCollection = firestore.collection('cotacoes');
 
 // --- ESTADO GLOBAL ---
 let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], apelidosFornecedores = {};
@@ -34,6 +35,13 @@ let fornecedoresIgnorados = new Set();
 let listaAnotacoes = [];
 let anotacaoAtualId = null;
 let filtroAnotacoesTexto = '';
+let selecaoAnotacoesAtiva = false;
+let anotacoesSelecionadas = new Set();
+let listaCotacoes = [];
+let cotacaoEmEdicaoPedido = null; // null = nova cotação; string = editando cotação existente (doc id = pedido)
+let fornecedoresCotacaoAtual = []; // rascunho em memória enquanto o formulário está aberto
+let contadorFornecedorCotacaoId = 0;
+let cotacaoEncontradaAuditoria = null; // cotação associada ao pedido digitado na Nova Auditoria, se existir
 let migracaoAnotacoesAntigasFeita = false;
 let fornecedoresSelecionados = new Set();
 let filtroFornecedoresTexto = '';
@@ -47,6 +55,9 @@ const AUDITORIA_TEXTOS_DEFAULT = {
     saudacao: '{DESTINATARIO}, boa tarde!\n\nRecebemos do fornecedor {FORNECEDOR} os materiais referentes à NF {NF}, do pedido do SmartCompras número {PEDIDO}.',
     avariado: 'Ao conferir os materiais, foram encontradas avarias em alguns itens, dentre eles:',
     quantidade_diferente: 'Identificamos também divergência de quantidade nos seguintes itens:',
+    quantidade_fisica_divergente: 'Houve também divergência entre a quantidade faturada e a quantidade recebida no físico nos seguintes itens:',
+    solicitar_carta_correcao: 'Solicitamos carta de correção referente a lote/validade dos seguintes itens:',
+    fornecedor_nao_entregou: 'O(s) seguinte(s) fornecedor(es) ainda não entregou(aram) o pedido:',
     valor_diferente: 'Houve também divergência de valor nos seguintes itens:',
     produto_diferente: 'Alguns produtos vieram diferentes do que foi pedido:',
     nao_faturado: 'Os seguintes itens não foram faturados:',
@@ -112,8 +123,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -561,6 +572,11 @@ async function carregarEstado(){
         bancoExcecoesXml = {};
         snapshot.docs.forEach(doc => { bancoExcecoesXml[doc.id] = doc.data().fator; });
     }, error => console.error("Erro ao carregar exceções de XML:", error)));
+
+    dataUnsubscribers.push(cotacoesCollection.orderBy('atualizadoEm', 'desc').onSnapshot(snapshot => {
+        listaCotacoes = snapshot.docs.map(doc => ({ pedido: doc.id, ...doc.data() }));
+        if (document.getElementById('lista-cotacoes-container')) renderListaCotacoes();
+    }, error => console.error("Erro ao carregar cotações:", error)));
 
     dataUnsubscribers.push(anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
         listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
@@ -1768,7 +1784,14 @@ function atualizarChecklist(notaId,tarefa,isChecked){isChecklistUpdate=!0;const 
 function stripHtmlAnotacao(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html || '';
-    return (tmp.textContent || tmp.innerText || '').trim();
+    // textContent concatena blocos (<p>, <div>, <li>...) sem nenhum espaço
+    // entre eles — "RIOCLARENSE Ped. 1698" + "Pedido: SERINGA..." virava
+    // "RIOCLARENSE Ped. 1698Pedido: SERINGA..." colado. Insere um espaço no
+    // fim de cada bloco antes de extrair o texto, sem criar quebra de linha.
+    tmp.querySelectorAll('p, div, li, h1, h2, h3, h4, br').forEach(el => {
+        el.insertAdjacentText('afterend', ' ');
+    });
+    return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
 }
 
 function renderListaAnotacoes() {
@@ -1791,17 +1814,105 @@ function renderListaAnotacoes() {
     container.innerHTML = lista.map(a => {
         const snippet = stripHtmlAnotacao(a.conteudo).slice(0, 90) || 'Sem conteúdo ainda...';
         const data = a.atualizadoEm ? new Date(a.atualizadoEm).toLocaleString('pt-BR') : '';
-        return `<div class="nota-item anotacao-item" onclick="abrirAnotacao('${a.id}')">
-            <div class="nota-info">${a.titulo || 'Sem título'}</div>
+        const concluida = a.status === 'concluido';
+        const sinalizada = !!a.sinalizada;
+        const selecionada = selecaoAnotacoesAtiva && anotacoesSelecionadas.has(a.id);
+        return `<div class="nota-item anotacao-item ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : `abrirAnotacao('${a.id}')`}">
+            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
             <div class="nota-detalhes">${snippet}${snippet.length >= 90 ? '…' : ''}</div>
             <div class="nota-data">Atualizado em: ${data}</div>
+            ${!selecaoAnotacoesAtiva ? `<div class="anotacao-card-actions">
+                <button type="button" class="anotacao-icon-btn ${sinalizada ? 'is-flagged' : ''}" title="Sinalizar" onclick="event.stopPropagation(); toggleFlagAnotacao('${a.id}')"><i class="fa-solid fa-flag"></i></button>
+                <button type="button" class="anotacao-icon-btn ${concluida ? 'is-done' : ''}" title="${concluida ? 'Reabrir' : 'Concluir'}" onclick="event.stopPropagation(); toggleConcluidaAnotacao('${a.id}')"><i class="fa-solid fa-check"></i></button>
+                <button type="button" class="anotacao-icon-btn is-delete" title="Excluir" onclick="event.stopPropagation(); excluirAnotacaoRapida('${a.id}')"><i class="fa-solid fa-trash"></i></button>
+            </div>` : ''}
         </div>`;
     }).join('');
+}
+
+function toggleFlagAnotacao(id) {
+    const nota = listaAnotacoes.find(a => a.id === id);
+    if (!nota) return;
+    const novoValor = !nota.sinalizada;
+    anotacoesTextoCollection.doc(id).update({ sinalizada: novoValor })
+        .catch(e => { console.error('Erro ao sinalizar anotação:', e); toast('✕ Erro ao sinalizar.'); });
+}
+
+function toggleConcluidaAnotacao(id) {
+    const nota = listaAnotacoes.find(a => a.id === id);
+    if (!nota) return;
+    const novoStatus = nota.status === 'concluido' ? null : 'concluido';
+    anotacoesTextoCollection.doc(id).update({ status: novoStatus })
+        .then(() => toast(novoStatus ? '✓ Marcada como concluída.' : 'Reaberta.'))
+        .catch(e => { console.error('Erro ao concluir anotação:', e); toast('✕ Erro ao atualizar.'); });
+}
+
+function excluirAnotacaoRapida(id) {
+    const nota = listaAnotacoes.find(a => a.id === id);
+    showConfirmModal({
+        title: 'Excluir Anotação',
+        message: `Deseja excluir "${nota ? (nota.titulo || 'Sem título') : 'esta anotação'}" permanentemente?`,
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                await anotacoesTextoCollection.doc(id).delete();
+                toast('🗑️ Anotação excluída.');
+            } catch (e) {
+                console.error('Erro ao excluir anotação:', e);
+                toast('✕ Erro ao excluir.');
+            }
+        }
+    });
 }
 
 function filtrarAnotacoes(texto) {
     filtroAnotacoesTexto = texto;
     renderListaAnotacoes();
+}
+
+// --- Seleção múltipla para exportar relatório consolidado pro WhatsApp
+// (vários pedidos diferentes numa mensagem só, sem redigitar). ---
+function toggleModoSelecaoAnotacoes() {
+    selecaoAnotacoesAtiva = !selecaoAnotacoesAtiva;
+    anotacoesSelecionadas.clear();
+    const btn = document.getElementById('btn-selecionar-anotacoes');
+    const barra = document.getElementById('anotacoes-bulk-bar');
+    if (btn) btn.classList.toggle('active', selecaoAnotacoesAtiva);
+    if (barra) barra.style.display = selecaoAnotacoesAtiva ? 'flex' : 'none';
+    atualizarContadorSelecaoAnotacoes();
+    renderListaAnotacoes();
+}
+function toggleSelecaoAnotacao(id) {
+    if (anotacoesSelecionadas.has(id)) anotacoesSelecionadas.delete(id);
+    else anotacoesSelecionadas.add(id);
+    atualizarContadorSelecaoAnotacoes();
+    renderListaAnotacoes();
+}
+function atualizarContadorSelecaoAnotacoes() {
+    const el = document.getElementById('anotacoes-selecao-contador');
+    if (el) el.textContent = anotacoesSelecionadas.size > 0 ? `${anotacoesSelecionadas.size} selecionada(s)` : 'Toque nas anotações para selecionar';
+}
+async function exportarAnotacoesWhatsapp() {
+    if (anotacoesSelecionadas.size === 0) return toast('Selecione ao menos uma anotação.');
+    const selecionadas = listaAnotacoes.filter(a => anotacoesSelecionadas.has(a.id));
+    // Mantém a ordem em que aparecem na lista (mais recentes primeiro), não a
+    // ordem de clique.
+    const blocos = selecionadas.map(a => {
+        const texto = stripHtmlAnotacao(a.conteudo).trim();
+        return `*${a.titulo || 'Sem título'}*${texto ? '\n' + texto : ''}`;
+    });
+    const relatorio = blocos.join('\n\n———\n\n');
+    if (navigator.share) {
+        try {
+            await navigator.share({ title: 'Relatório de Anotações', text: relatorio });
+        } catch (e) {
+            // usuário cancelou o share sheet — não é erro
+        }
+    } else {
+        await navigator.clipboard.writeText(relatorio);
+        toast('✓ Relatório copiado! Cole no WhatsApp.');
+    }
 }
 
 function abrirNovaAnotacao() {
@@ -2294,6 +2405,21 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
         { key: 'quantidadeFaturada', label: 'Quantidade Faturada' },
         { key: 'observacao', label: 'Ação / Observação', textarea: true }
     ]},
+    'quantidade_fisica_divergente': { label: 'Quantidade física divergente', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidadePedida', label: 'Quantidade Pedida' },
+        { key: 'quantidadeFaturada', label: 'Quantidade Faturada' },
+        { key: 'quantidadeFisica', label: 'Quantidade Física Recebida' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'solicitar_carta_correcao': { label: 'Solicitar carta de correção — lote/validade', campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'loteInformado', label: 'Lote Informado (na NF)' },
+        { key: 'loteRecebido', label: 'Lote Recebido (físico)' },
+        { key: 'validadeInformada', label: 'Validade Informada (na NF)' },
+        { key: 'validadeRecebida', label: 'Validade Recebida (físico)' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
     'nao_faturado': { label: 'Produto não faturado', campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' },
@@ -2302,6 +2428,11 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
     'nao_entregue': { label: 'Produto não entregue', campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
+    'fornecedor_nao_entregou': { label: 'Fornecedor não entregou o pedido', campos: [
+        { key: 'fornecedorNome', label: 'Fornecedor (se diferente do informado acima)', maiusculo: true },
+        { key: 'diasEmAberto', label: 'Dias em aberto sem entrega' },
         { key: 'observacao', label: 'Observação', textarea: true }
     ]},
     'avariado': { label: 'Material avariado', campos: [
@@ -2339,8 +2470,56 @@ function abrirNovaAuditoria() {
     document.getElementById('card-resultado-auditoria').style.display = 'none';
     document.getElementById('config-textos-body').style.display = 'none';
     document.getElementById('config-chevron').style.transform = 'rotate(0)';
+    cotacaoEncontradaAuditoria = null;
+    atualizarInfoCotacaoAuditoria();
     renderDivergenciasAuditoria();
     switchToScreen('screen-auditoria-nova', 'Nova Auditoria');
+}
+
+// Ao digitar/sair do campo Pedido, procura a cotação cadastrada (manual ou
+// importada via XML) pra esse pedido. Se achar, sugere o fornecedor (via
+// datalist — o usuário ainda pode digitar outro nome livremente) e os
+// produtos daquele fornecedor nos campos de divergência, pra reduzir
+// digitação durante a conferência.
+function buscarCotacaoParaAuditoria() {
+    const pedido = document.getElementById('aud-pedido').value.trim();
+    cotacaoEncontradaAuditoria = pedido ? (listaCotacoes.find(c => c.pedido === pedido) || null) : null;
+    atualizarInfoCotacaoAuditoria();
+    atualizarDatalistFornecedoresAuditoria();
+    atualizarDatalistProdutosAuditoria();
+}
+
+function atualizarInfoCotacaoAuditoria() {
+    const info = document.getElementById('aud-cotacao-info');
+    if (!info) return;
+    if (!cotacaoEncontradaAuditoria) { info.style.display = 'none'; info.textContent = ''; return; }
+    const c = cotacaoEncontradaAuditoria;
+    const qtdForn = (c.fornecedores || []).length;
+    const qtdItens = (c.itens || []).length;
+    info.textContent = `✓ Cotação encontrada${c.origem ? ' — ' + c.origem : ''} · ${qtdForn} fornecedor${qtdForn === 1 ? '' : 'es'} · ${qtdItens} ${qtdItens === 1 ? 'item' : 'itens'} cadastrado${qtdItens === 1 ? '' : 's'}`;
+    info.style.display = 'block';
+}
+
+function atualizarDatalistFornecedoresAuditoria() {
+    const datalist = document.getElementById('datalist-fornecedores-cotacao');
+    if (!datalist) return;
+    const fornecedores = cotacaoEncontradaAuditoria ? (cotacaoEncontradaAuditoria.fornecedores || []) : [];
+    datalist.innerHTML = fornecedores.map(f => `<option value="${f.razaoSocial}">`).join('');
+}
+
+// Datalist de produtos filtrada pelo fornecedor já digitado no campo
+// Fornecedor (se bater com algum da cotação) — senão mostra todos os
+// produtos da cotação, já que o usuário pode digitar o fornecedor depois.
+function atualizarDatalistProdutosAuditoria() {
+    const datalist = document.getElementById('datalist-produtos-cotacao');
+    if (!datalist) return;
+    if (!cotacaoEncontradaAuditoria) { datalist.innerHTML = ''; return; }
+    const nomeFornecedorDigitado = upAud(document.getElementById('aud-fornecedor').value.trim());
+    const fornMatch = (cotacaoEncontradaAuditoria.fornecedores || []).find(f => f.razaoSocial === nomeFornecedorDigitado);
+    const itens = cotacaoEncontradaAuditoria.itens || [];
+    const itensFiltrados = fornMatch ? itens.filter(it => it.cnpjFornecedor === fornMatch.cnpj) : itens;
+    const nomesUnicos = [...new Set(itensFiltrados.map(it => it.descricao).filter(Boolean))];
+    datalist.innerHTML = nomesUnicos.map(nome => `<option value="${nome}">`).join('');
 }
 
 // --- Divergências (cards em acordeão) ---
@@ -2368,6 +2547,10 @@ function atualizarCampoDivergencia(id, key, valor, maiusculo) {
     const d = divergenciasAuditoria.find(d => d.id === id);
     d.campos[key] = maiusculo ? upAud(valor) : valor;
 }
+function atualizarCampoDivergenciaCheckbox(id, key, checked) {
+    const d = divergenciasAuditoria.find(d => d.id === id);
+    d.campos[key] = checked;
+}
 function renderDivergenciasAuditoria() {
     const container = document.getElementById('lista-divergencias');
     if (divergenciasAuditoria.length === 0) {
@@ -2383,10 +2566,15 @@ function renderDivergenciasAuditoria() {
             `<option value="${key}" ${d.tipo === key ? 'selected' : ''}>${val.label}</option>`).join('');
         const camposHTML = def ? def.campos.map(c => {
             const valor = d.campos[c.key] || '';
+            if (c.checkbox) {
+                const checked = d.campos[c.key] === true;
+                return `<div class="campo campo-checkbox"><label class="checkbox-label"><input type="checkbox" ${checked ? 'checked' : ''} onchange="atualizarCampoDivergenciaCheckbox(${d.id}, '${c.key}', this.checked)"> ${c.label}</label></div>`;
+            }
             if (c.textarea) {
                 return `<div class="campo"><label>${c.label}</label><textarea class="form-field" onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, false)">${valor}</textarea></div>`;
             }
-            return `<div class="campo"><label>${c.label}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}" onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, ${!!c.maiusculo})"></div>`;
+            const listaAttr = (c.key === 'produto' || c.key === 'produtoPedido' || c.key === 'produtoFaturado') ? ' list="datalist-produtos-cotacao"' : '';
+            return `<div class="campo"><label>${c.label}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}"${listaAttr} onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, ${!!c.maiusculo})"></div>`;
         }).join('') : '';
         return `
         <div class="divergencia ${d.aberto ? 'open' : ''}">
@@ -2409,6 +2597,387 @@ function renderDivergenciasAuditoria() {
             </div>
         </div>`;
     }).join('');
+}
+
+// ============================================================
+// COTAÇÕES — Fase 3: cadastro manual (Pedido, Origem, datas e
+// fornecedores). Doc id no Firestore = o próprio número do pedido, pra
+// permitir buscar por pedido sem query (útil na Fase 5, quando a Auditoria
+// vai consultar isso automaticamente). O array `itens` fica reservado —
+// ainda vazio nesta fase — pra ser populado pela importação do XML do
+// SmartCompras na Fase 4, sem precisar migrar o formato do documento.
+// ============================================================
+
+const ORIGENS_COTACAO = ['Santa Casa', 'CTI'];
+
+function renderListaCotacoes() {
+    const container = document.getElementById('lista-cotacoes-container');
+    if (!container) return;
+    if (listaCotacoes.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nenhuma cotação cadastrada ainda.</div>';
+        return;
+    }
+    container.innerHTML = listaCotacoes.map(c => {
+        const qtdFornecedores = (c.fornecedores || []).length;
+        const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
+        return `<div class="nota-item" onclick="abrirCotacaoParaEdicao('${c.pedido}')">
+            <div class="nota-info">${c.pedido}${c.origem ? ' - ' + c.origem : ''}</div>
+            <div class="nota-detalhes">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · Limite: ' + dataLimite : ''}</div>
+        </div>`;
+    }).join('');
+}
+
+function formatarDataBRSimples(iso) {
+    if (!iso) return '';
+    const partes = iso.split('-');
+    return partes.length === 3 ? `${partes[2]}/${partes[1]}` : iso;
+}
+
+function abrirNovaCotacao() {
+    cotacaoEmEdicaoPedido = null;
+    fornecedoresCotacaoAtual = [];
+    contadorFornecedorCotacaoId = 0;
+    document.getElementById('cot-pedido').value = '';
+    document.getElementById('cot-pedido').disabled = false;
+    document.getElementById('cot-origem').value = '';
+    document.getElementById('cot-data-pedido').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('cot-data-limite').value = '';
+    document.getElementById('cot-observacao').value = '';
+    document.getElementById('btn-excluir-cotacao').style.display = 'none';
+    renderFornecedoresCotacao();
+    switchToScreen('screen-cotacao-editor', 'Nova Cotação');
+}
+
+async function abrirCotacaoParaEdicao(pedido) {
+    let c = listaCotacoes.find(c => c.pedido === pedido);
+    if (!c) {
+        // Fallback pra quando o listener em tempo real ainda não refletiu uma
+        // escrita que acabou de acontecer (ex: logo após importar um XML) —
+        // busca direto no Firestore em vez de falhar silenciosamente.
+        try {
+            const doc = await cotacoesCollection.doc(pedido).get();
+            if (doc.exists) c = { pedido, ...doc.data() };
+        } catch (e) {
+            console.error('Erro ao buscar cotação:', e);
+        }
+    }
+    if (!c) return;
+    cotacaoEmEdicaoPedido = pedido;
+    contadorFornecedorCotacaoId = 0;
+    // Mantém TODOS os campos originais do fornecedor (não só razaoSocial/cnpj)
+    // — um fornecedor importado do XML carrega prazoEntrega, validadeProposta
+    // etc, e não pode perder isso só porque o usuário abriu a tela manual e
+    // salvou de novo sem mexer nesses campos.
+    fornecedoresCotacaoAtual = (c.fornecedores || []).map(f => ({ id: ++contadorFornecedorCotacaoId, ...f }));
+    document.getElementById('cot-pedido').value = c.pedido;
+    document.getElementById('cot-pedido').disabled = true; // pedido é o id do documento — não dá pra editar depois de criado
+    document.getElementById('cot-origem').value = c.origem || '';
+    document.getElementById('cot-data-pedido').value = c.dataPedido || '';
+    document.getElementById('cot-data-limite').value = c.dataLimite || '';
+    document.getElementById('cot-observacao').value = c.observacao || '';
+    document.getElementById('btn-excluir-cotacao').style.display = '';
+    renderFornecedoresCotacao();
+    switchToScreen('screen-cotacao-editor', `Cotação ${pedido}`);
+}
+
+function adicionarFornecedorCotacao() {
+    fornecedoresCotacaoAtual.push({ id: ++contadorFornecedorCotacaoId, razaoSocial: '', cnpj: '' });
+    renderFornecedoresCotacao();
+}
+function removerFornecedorCotacao(id) {
+    fornecedoresCotacaoAtual = fornecedoresCotacaoAtual.filter(f => f.id !== id);
+    renderFornecedoresCotacao();
+}
+function atualizarFornecedorCotacaoCampo(id, key, valor) {
+    const f = fornecedoresCotacaoAtual.find(f => f.id === id);
+    if (f) f[key] = key === 'razaoSocial' ? upAud(valor) : valor;
+}
+function renderFornecedoresCotacao() {
+    const container = document.getElementById('lista-fornecedores-cotacao');
+    if (!container) return;
+    if (fornecedoresCotacaoAtual.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nenhum fornecedor adicionado ainda.</div>';
+        return;
+    }
+    container.innerHTML = fornecedoresCotacaoAtual.map(f => `
+        <div class="fornecedor-cotacao-row">
+            <div class="campo"><label>Razão Social</label><input type="text" class="form-field uppercase-field" value="${f.razaoSocial}" placeholder="COMERCIAL CIRÚRGICA RIOCLARENSE" onblur="atualizarFornecedorCotacaoCampo(${f.id}, 'razaoSocial', this.value)"></div>
+            <div class="campo"><label>CNPJ</label><input type="text" class="form-field" value="${f.cnpj}" placeholder="67.729.178/0002-20" onblur="atualizarFornecedorCotacaoCampo(${f.id}, 'cnpj', this.value)"></div>
+            <button type="button" class="divergencia-del" onclick="removerFornecedorCotacao(${f.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>`).join('');
+}
+
+async function salvarCotacao() {
+    const pedido = document.getElementById('cot-pedido').value.trim();
+    if (!pedido) return toast('Informe o número do pedido.');
+
+    // Doc id = pedido, então um pedido já cadastrado nunca deve ser
+    // sobrescrito silenciosamente ao tentar "criar" de novo — só editando.
+    if (!cotacaoEmEdicaoPedido && listaCotacoes.some(c => c.pedido === pedido)) {
+        return toast(`Já existe uma cotação para o pedido ${pedido}. Abra ela pra editar.`);
+    }
+
+    const agora = new Date().toISOString();
+    const dados = {
+        origem: document.getElementById('cot-origem').value,
+        dataPedido: document.getElementById('cot-data-pedido').value,
+        dataLimite: document.getElementById('cot-data-limite').value,
+        observacao: document.getElementById('cot-observacao').value.trim(),
+        fornecedores: fornecedoresCotacaoAtual.filter(f => f.razaoSocial.trim() || f.cnpj.trim()).map(f => {
+            const { id, ...resto } = f;
+            return { ...resto, razaoSocial: f.razaoSocial.trim(), cnpj: f.cnpj.trim() };
+        }),
+        atualizadoEm: agora
+    };
+
+    try {
+        if (cotacaoEmEdicaoPedido) {
+            await cotacoesCollection.doc(pedido).set(dados, { merge: true });
+            toast('✓ Cotação atualizada!');
+        } else {
+            dados.itens = []; // reservado para a importação do XML (Fase 4)
+            dados.versaoAtual = 1;
+            dados.origemDado = 'manual';
+            dados.criadoEm = agora;
+            await cotacoesCollection.doc(pedido).set(dados);
+            toast('✓ Cotação cadastrada!');
+        }
+        switchToScreen('screen-cotacoes', 'Cotações');
+    } catch (e) {
+        console.error('Erro ao salvar cotação:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
+
+function excluirCotacao() {
+    if (!cotacaoEmEdicaoPedido) return;
+    const pedido = cotacaoEmEdicaoPedido;
+    showConfirmModal({
+        title: 'Excluir Cotação',
+        message: `Deseja excluir a cotação do pedido ${pedido} permanentemente?`,
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                await cotacoesCollection.doc(pedido).delete();
+                toast('🗑️ Cotação excluída.');
+                switchToScreen('screen-cotacoes', 'Cotações');
+            } catch (e) {
+                console.error('Erro ao excluir cotação:', e);
+                toast('✕ Erro ao excluir.');
+            }
+        }
+    });
+}
+
+// ============================================================
+// IMPORTAÇÃO DO XML DO SMARTCOMPRAS — Fase 4
+// O XML é tratado como uma fotografia da cotação no momento da importação
+// (nunca sobrescreve silenciosamente): pedido novo cria a cotação; pedido já
+// cadastrado gera uma NOVA VERSÃO com o snapshot anterior preservado numa
+// subcoleção, e mostra um diff antes de confirmar.
+// ============================================================
+
+let importacaoXmlPendente = null; // { parsed, cotacaoExistente, diff }
+
+function textoTag(el, tag) {
+    const node = el.querySelector(tag);
+    return node && node.textContent ? node.textContent.trim() : '';
+}
+
+function parseXmlSmartCompras(xmlTexto) {
+    const doc = new DOMParser().parseFromString(xmlTexto, 'application/xml');
+    if (doc.querySelector('parsererror')) throw new Error('XML inválido ou corrompido.');
+
+    const cabecalho = doc.querySelector('Cabecalho');
+    const pedido = cabecalho ? textoTag(cabecalho, 'PDC') : '';
+    if (!pedido) throw new Error('Não foi possível identificar o número do pedido (PDC) no XML.');
+
+    const fornecedores = Array.from(doc.querySelectorAll('Fornecedores > Fornecedor')).map(f => ({
+        cnpj: textoTag(f, 'CNPJ'),
+        razaoSocial: upAud(textoTag(f, 'Razao_Social')),
+        faturamentoMinimo: textoTag(f, 'Faturamento_Minimo'),
+        prazoEntrega: textoTag(f, 'Prazo_Entrega'),
+        validadeProposta: textoTag(f, 'Validade_Proposta'),
+        formaPagamento: textoTag(f, 'Id_Forma_Pagamento'),
+        frete: textoTag(f, 'Frete'),
+        dataConfirmacao: textoTag(f, 'Data_Confirmacao')
+    })).filter(f => f.cnpj);
+
+    const itens = Array.from(doc.querySelectorAll('Itens > Item')).map(item => {
+        const resposta = item.querySelector('Resposta');
+        const progEntrega = item.querySelector('Programacao_Entrega');
+        return {
+            codProduto: textoTag(item, 'Cod_Produto'),
+            quantidade: textoTag(item, 'Quantidade'),
+            dataProgramada: progEntrega ? textoTag(progEntrega, 'Data') : '',
+            qtdProgramada: progEntrega ? textoTag(progEntrega, 'Quantidade') : '',
+            cnpjFornecedor: resposta ? textoTag(resposta, 'CNPJ') : '',
+            fabricante: resposta ? textoTag(resposta, 'Fabricante') : '',
+            embalagem: resposta ? textoTag(resposta, 'Embalagem') : '',
+            precoUnitario: resposta ? textoTag(resposta, 'Preco_Unitario') : '',
+            precoTotal: resposta ? textoTag(resposta, 'Preco_Total') : '',
+            descricao: upAud(resposta ? textoTag(resposta, 'Comentario') : '')
+        };
+    }).filter(it => it.codProduto);
+
+    return {
+        pedido,
+        dataVencimento: cabecalho ? textoTag(cabecalho, 'Data_Vencimento') : '',
+        horaVencimento: cabecalho ? textoTag(cabecalho, 'Hora_Vencimento') : '',
+        fornecedores,
+        itens
+    };
+}
+
+// Data limite sugerida = a mais tardia entre as datas programadas de entrega
+// dos itens (é quando TODO o pedido deveria estar entregue). Só uma sugestão
+// — nunca substitui uma data limite que o usuário já tenha definido na mão.
+function sugerirDataLimiteXml(itens) {
+    const datas = itens.map(it => it.dataProgramada).filter(Boolean).map(d => {
+        const [dia, mes, ano] = d.split('/');
+        return ano && mes && dia ? `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}` : null;
+    }).filter(Boolean);
+    if (datas.length === 0) return '';
+    return datas.sort().pop();
+}
+
+function calcularDiffCotacao(antiga, nova) {
+    const diffs = [];
+    const fornAntigos = new Map((antiga.fornecedores || []).map(f => [f.cnpj, f]));
+    const fornNovos = new Map((nova.fornecedores || []).map(f => [f.cnpj, f]));
+    fornNovos.forEach((f, cnpj) => { if (!fornAntigos.has(cnpj)) diffs.push(`+ Fornecedor adicionado: ${f.razaoSocial}`); });
+    fornAntigos.forEach((f, cnpj) => { if (!fornNovos.has(cnpj)) diffs.push(`− Fornecedor removido: ${f.razaoSocial}`); });
+
+    const itensAntigos = new Map((antiga.itens || []).map(it => [it.codProduto, it]));
+    const itensNovos = new Map((nova.itens || []).map(it => [it.codProduto, it]));
+    itensNovos.forEach((novo, cod) => {
+        const velho = itensAntigos.get(cod);
+        if (!velho) { diffs.push(`+ Item novo: ${novo.descricao || cod}`); return; }
+        if (velho.quantidade !== novo.quantidade) diffs.push(`↕ ${novo.descricao || cod}: quantidade alterada de ${velho.quantidade} para ${novo.quantidade}`);
+        if (velho.cnpjFornecedor !== novo.cnpjFornecedor) {
+            const nomeAntigo = (antiga.fornecedores || []).find(f => f.cnpj === velho.cnpjFornecedor)?.razaoSocial || velho.cnpjFornecedor || '?';
+            const nomeNovo = (nova.fornecedores || []).find(f => f.cnpj === novo.cnpjFornecedor)?.razaoSocial || novo.cnpjFornecedor || '?';
+            diffs.push(`↕ ${novo.descricao || cod}: fornecedor alterado de ${nomeAntigo} para ${nomeNovo}`);
+        }
+        if (velho.precoUnitario !== novo.precoUnitario) diffs.push(`↕ ${novo.descricao || cod}: preço alterado de ${velho.precoUnitario} para ${novo.precoUnitario}`);
+        if (velho.descricao !== novo.descricao) diffs.push(`↕ Produto alterado: "${velho.descricao}" → "${novo.descricao}"`);
+        if (velho.dataProgramada !== novo.dataProgramada) diffs.push(`↕ ${novo.descricao || cod}: data de entrega alterada de ${velho.dataProgramada} para ${novo.dataProgramada}`);
+    });
+    itensAntigos.forEach((velho, cod) => { if (!itensNovos.has(cod)) diffs.push(`− Item removido: ${velho.descricao || cod}`); });
+
+    return diffs;
+}
+
+function handleArquivoXmlSmartCompras(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const parsed = parseXmlSmartCompras(e.target.result);
+            const existente = listaCotacoes.find(c => c.pedido === parsed.pedido) || null;
+            const diff = existente ? calcularDiffCotacao(existente, parsed) : [];
+            importacaoXmlPendente = { parsed, existente, diff };
+            renderPreviewImportacaoXml();
+        } catch (err) {
+            console.error('Erro ao importar XML SmartCompras:', err);
+            toast('✕ ' + (err.message || 'Erro ao ler o XML.'));
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+    document.getElementById('cotacao-xml-file-input').value = '';
+}
+
+function renderPreviewImportacaoXml() {
+    const { parsed, existente, diff } = importacaoXmlPendente;
+    // O card de prévia mora em screen-cotacoes — se o import foi disparado a
+    // partir do editor de uma cotação específica ("Atualizar via XML"),
+    // muda pra lá antes de mostrar, senão o usuário não veria a prévia.
+    switchToScreen('screen-cotacoes', 'Cotações');
+    const card = document.getElementById('card-preview-importacao-xml');
+    const resumoEl = document.getElementById('resumo-importacao-xml');
+    const diffEl = document.getElementById('diff-importacao-xml');
+
+    const proximaVersao = existente ? (existente.versaoAtual || 1) + 1 : 1;
+    resumoEl.innerHTML = `
+        <div class="xml-resumo-linha"><strong>Pedido:</strong> ${parsed.pedido}</div>
+        <div class="xml-resumo-linha"><strong>Vencimento da cotação:</strong> ${parsed.dataVencimento || '—'} ${parsed.horaVencimento || ''}</div>
+        <div class="xml-resumo-linha"><strong>Fornecedores:</strong> ${parsed.fornecedores.length}</div>
+        <div class="xml-resumo-linha"><strong>Itens:</strong> ${parsed.itens.length}</div>
+        <div class="xml-resumo-linha"><strong>${existente ? `Versão ${proximaVersao} (atual: v${existente.versaoAtual || 1})` : 'Nova cotação (versão 1)'}</strong></div>
+    `;
+
+    if (existente && diff.length > 0) {
+        diffEl.innerHTML = `<div class="xml-diff-titulo">O que mudou desde a última importação:</div><ul class="xml-diff-lista">${diff.map(l => `<li>${l.replace(/</g, '&lt;')}</li>`).join('')}</ul>`;
+    } else if (existente) {
+        diffEl.innerHTML = `<div class="xml-diff-titulo">Nenhuma mudança detectada em relação à versão atual.</div>`;
+    } else {
+        diffEl.innerHTML = '';
+    }
+
+    card.style.display = 'block';
+}
+
+function cancelarImportacaoXml() {
+    importacaoXmlPendente = null;
+    document.getElementById('card-preview-importacao-xml').style.display = 'none';
+}
+
+async function confirmarImportacaoXmlSmartCompras() {
+    if (!importacaoXmlPendente) return;
+    const { parsed, existente, diff } = importacaoXmlPendente;
+    const agora = new Date().toISOString();
+    const proximaVersao = existente ? (existente.versaoAtual || 1) + 1 : 1;
+    const dataLimiteSugerida = sugerirDataLimiteXml(parsed.itens);
+
+    try {
+        // Snapshot imutável desta importação — nunca sobrescrito, mesmo que
+        // o pedido seja reimportado depois.
+        await cotacoesCollection.doc(parsed.pedido).collection('versoes').doc(String(proximaVersao)).set({
+            importadoEm: agora,
+            fornecedores: parsed.fornecedores,
+            itens: parsed.itens,
+            dataVencimento: parsed.dataVencimento,
+            horaVencimento: parsed.horaVencimento,
+            diffDaAnterior: diff
+        });
+
+        const dadosPrincipal = {
+            fornecedores: parsed.fornecedores,
+            itens: parsed.itens,
+            dataVencimento: parsed.dataVencimento,
+            horaVencimento: parsed.horaVencimento,
+            versaoAtual: proximaVersao,
+            origemDado: 'xml',
+            atualizadoEm: agora
+        };
+
+        if (existente) {
+            // Nunca mexe em origem/dataLimite/observação já preenchidas pelo
+            // usuário — só os campos que vêm do XML são atualizados.
+            await cotacoesCollection.doc(parsed.pedido).set(dadosPrincipal, { merge: true });
+            toast(`✓ Pedido ${parsed.pedido} atualizado para a versão ${proximaVersao}!`);
+        } else {
+            dadosPrincipal.origem = '';
+            dadosPrincipal.dataPedido = new Date().toISOString().slice(0, 10);
+            dadosPrincipal.dataLimite = ''; // sugestão mostrada à parte, não aplicada automaticamente
+            dadosPrincipal.observacao = '';
+            dadosPrincipal.criadoEm = agora;
+            await cotacoesCollection.doc(parsed.pedido).set(dadosPrincipal);
+            toast(`✓ Pedido ${parsed.pedido} importado! Defina a Origem (Santa Casa/CTI) e confirme a data limite.`);
+        }
+
+        if (dataLimiteSugerida) {
+            toast(`Sugestão de data limite de entrega: ${dataLimiteSugerida.split('-').reverse().join('/')} (baseada no XML — confirme manualmente).`);
+        }
+
+        cancelarImportacaoXml();
+        switchToScreen('screen-cotacoes', 'Cotações');
+        await abrirCotacaoParaEdicao(parsed.pedido);
+    } catch (e) {
+        console.error('Erro ao importar cotação:', e);
+        toast('✕ Erro ao importar. Tente novamente.');
+    }
 }
 
 // --- Configuração dos textos padrão (persistida no Firestore, igual às
@@ -2453,8 +3022,24 @@ function linhaCurtaDivergencia(d) {
             return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — Cotado a ${c.valorCotado || '?'} total, faturado a ${c.valorFaturado || '?'}.`;
         case 'quantidade_diferente':
             return `${upAud(c.produto)}\tQtd: ${c.quantidadePedida || ''} — faturou ${c.quantidadeFaturada || '?'}${c.observacao ? ', ' + c.observacao : ''}.`;
+        case 'quantidade_fisica_divergente': {
+            // Diferença calculada automaticamente entre faturado e físico —
+            // o usuário não deve ter que subtrair na mão.
+            const fat = parseFloat(c.quantidadeFaturada);
+            const fis = parseFloat(c.quantidadeFisica);
+            let diffTexto = '';
+            if (!isNaN(fat) && !isNaN(fis)) {
+                const diff = fis - fat;
+                diffTexto = ` (diferença: ${diff > 0 ? '+' : ''}${diff})`;
+            }
+            return `${upAud(c.produto)}\tPedido: ${c.quantidadePedida || '?'} — Faturado: ${c.quantidadeFaturada || '?'} — Físico: ${c.quantidadeFisica || '?'}${diffTexto}.${c.observacao ? ' ' + c.observacao : ''}`;
+        }
+        case 'solicitar_carta_correcao':
+            return `${upAud(c.produto)}\tsolicitar carta de correção — Lote informado: ${c.loteInformado || '?'}, recebido: ${c.loteRecebido || '?'} | Validade informada: ${c.validadeInformada || '?'}, recebida: ${c.validadeRecebida || '?'}.${c.observacao ? ' ' + c.observacao : ''}`;
+        case 'fornecedor_nao_entregou':
+            return `${c.fornecedorNome ? upAud(c.fornecedorNome) + '\t' : ''}Fornecedor não entregou o pedido${c.diasEmAberto ? ' (' + c.diasEmAberto + ' dias em aberto)' : ''}.${c.observacao ? ' ' + c.observacao : ''}`;
         case 'produto_diferente':
-            return `Pedido: ${upAud(c.produtoPedido)} / Faturado: ${upAud(c.produtoFaturado)}\tQtd: ${c.quantidade || ''}${c.observacao ? ' — ' + c.observacao : ''}.`;
+            return `Foi pedido ${upAud(c.produtoPedido)}, QTD: ${c.quantidade || ''}, porém foi faturado ${upAud(c.produtoFaturado)}, Qtd: ${c.quantidade || ''}.${c.observacao ? ' ' + c.observacao : ''}`;
         case 'nao_faturado':
             return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — não faturado.${c.observacao ? ' ' + c.observacao : ''}`;
         case 'nao_entregue':
@@ -2473,8 +3058,12 @@ function linhaCurtaDivergencia(d) {
 }
 function gerarCabecalhoAuditoria() {
     const fornecedor = upAud(document.getElementById('aud-fornecedor').value);
+    const nf = document.getElementById('aud-nf').value.trim();
     const pedido = document.getElementById('aud-pedido').value.trim();
-    return fornecedor + (pedido ? ` Ped. ${pedido}` : '');
+    // NF sempre aparece quando preenchida — antes só o pedido (cotação) entrava
+    // no cabeçalho, então uma auditoria sem cotação ficava sem nenhum número
+    // de referência no texto gerado.
+    return fornecedor + (nf ? ` NF ${nf}` : '') + (pedido ? ` Ped. ${pedido}` : '');
 }
 function gerarAnotacaoOuWhatsappAuditoria() {
     const linhas = divergenciasAuditoria.filter(d => d.tipo).map(linhaCurtaDivergencia).filter(Boolean);
@@ -2512,8 +3101,15 @@ function gerarEmailAuditoria() {
     };
     paragrafo('avariado', c => `- ${c.quantidade || ''} ${upAud(c.produto)}${c.descricaoAvaria ? ', ' + c.descricaoAvaria : ''}`);
     paragrafo('quantidade_diferente', c => `- ${upAud(c.produto)}: pedido ${c.quantidadePedida || '?'}, faturado ${c.quantidadeFaturada || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
+    paragrafo('quantidade_fisica_divergente', c => {
+        const fat = parseFloat(c.quantidadeFaturada), fis = parseFloat(c.quantidadeFisica);
+        const diff = (!isNaN(fat) && !isNaN(fis)) ? ` (diferença: ${fis - fat > 0 ? '+' : ''}${fis - fat})` : '';
+        return `- ${upAud(c.produto)}: pedido ${c.quantidadePedida || '?'}, faturado ${c.quantidadeFaturada || '?'}, físico ${c.quantidadeFisica || '?'}${diff}${c.observacao ? ' (' + c.observacao + ')' : ''}`;
+    });
+    paragrafo('solicitar_carta_correcao', c => `- ${upAud(c.produto)}: Lote informado ${c.loteInformado || '?'} / recebido ${c.loteRecebido || '?'}; Validade informada ${c.validadeInformada || '?'} / recebida ${c.validadeRecebida || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
+    paragrafo('fornecedor_nao_entregou', c => `- ${c.fornecedorNome ? upAud(c.fornecedorNome) : 'Fornecedor'}${c.diasEmAberto ? ': ' + c.diasEmAberto + ' dias em aberto' : ': ainda não entregou'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
     paragrafo('valor_diferente', c => `- ${upAud(c.produto)}: cotado a ${c.valorCotado || '?'}, faturado a ${c.valorFaturado || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
-    paragrafo('produto_diferente', c => `- Pedido: ${upAud(c.produtoPedido)} / Recebido: ${upAud(c.produtoFaturado)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
+    paragrafo('produto_diferente', c => `- Foi pedido ${upAud(c.produtoPedido)}, QTD: ${c.quantidade || '?'}, porém foi faturado ${upAud(c.produtoFaturado)}, Qtd: ${c.quantidade || '?'}${c.observacao ? ' — ' + c.observacao : ''}`);
     paragrafo('nao_faturado', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
     paragrafo('nao_entregue', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
     paragrafo('faltante', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
@@ -2552,37 +3148,71 @@ async function copiarSaidaAuditoriaAtual() {
 // auditoria preservados junto (não só o texto final), pra permitir filtros e
 // relatórios no futuro sem redigitação. Não mexe em salvarAnotacaoAtual(). ---
 async function salvarAuditoriaComoAnotacao() {
-    // Título da página = só o número do pedido, como pedido — tudo (todas as
-    // divergências) fica numa única anotação, uma página só, nunca uma por
-    // divergência.
     const pedido = document.getElementById('aud-pedido').value.trim();
-    const titulo = pedido || 'Auditoria';
+    const nfCampo = document.getElementById('aud-nf').value.trim();
+    const fornecedor = upAud(document.getElementById('aud-fornecedor').value);
+    const dataAud = document.getElementById('aud-data').value;
+    const observacaoGeral = document.getElementById('aud-obs-geral').value.trim();
+    const divergenciasAtuais = divergenciasAuditoria.filter(d => d.tipo).map(d => ({ tipo: d.tipo, campos: { ...d.campos } }));
+
+    if (divergenciasAtuais.length === 0 && !observacaoGeral) {
+        return toast('Adicione ao menos uma divergência ou observação antes de salvar.');
+    }
+
+    const agora = new Date().toISOString();
+    const novaOcorrencia = { notaFiscal: nfCampo, fornecedor, data: dataAud, observacaoGeral, divergencias: divergenciasAtuais, criadoEm: agora };
+
+    // Bloco HTML dessa ocorrência específica — reaproveita a mesma função que
+    // gera o texto da Anotação/WhatsApp, então o conteúdo salvo é idêntico ao
+    // que o usuário já revisou nas abas de resultado.
     const conteudoTexto = gerarAnotacaoOuWhatsappAuditoria();
-    const conteudoHTML = conteudoTexto.split('\n\n').map(bloco =>
+    const blocoHTML = conteudoTexto.split('\n\n').map(bloco =>
         '<p>' + bloco.split('\n').map(l => l.replace(/</g, '&lt;')).join('<br>') + '</p>'
     ).join('');
 
-    const dados = {
-        titulo,
-        conteudo: conteudoHTML,
-        tipo: 'auditoria',
-        pedido,
-        notaFiscal: document.getElementById('aud-nf').value.trim(),
-        fornecedor: upAud(document.getElementById('aud-fornecedor').value),
-        data: document.getElementById('aud-data').value,
-        observacaoGeral: document.getElementById('aud-obs-geral').value.trim(),
-        divergencias: divergenciasAuditoria.filter(d => d.tipo).map(d => ({ tipo: d.tipo, ...d.campos })),
-        atualizadoEm: new Date().toISOString()
-    };
-    dados.criadoEm = dados.atualizadoEm;
+    // Upsert por pedido: se já existe uma anotação de auditoria pra esse
+    // mesmo pedido, a nova ocorrência é ANEXADA ao conteúdo existente (sem
+    // apagar nada, inclusive edições manuais que o usuário tenha feito no
+    // editor) em vez de criar uma anotação nova. O pedido vira um documento
+    // vivo, sem fragmentar em várias páginas pra cada NF/fornecedor conferido.
+    // Auditorias sem pedido preenchido continuam criando uma anotação nova
+    // por vez (não há chave de agrupamento confiável nesse caso).
+    const existente = pedido ? listaAnotacoes.find(a => a.tipo === 'auditoria' && a.pedido === pedido) : null;
 
     try {
-        const ref = await anotacoesTextoCollection.add(dados);
-        toast('✓ Auditoria salva como anotação!');
-        anotacaoAtualId = ref.id;
-        document.getElementById('anotacao-titulo').value = dados.titulo;
-        document.getElementById('anotacao-corpo').innerHTML = dados.conteudo;
-        switchToScreen('screen-anotacoes-editor', dados.titulo);
+        if (existente) {
+            const conteudoAtualizado = (existente.conteudo || '') + '<p>&nbsp;</p><hr>' + blocoHTML;
+            const ocorrencias = [...(existente.ocorrencias || []), novaOcorrencia];
+            await anotacoesTextoCollection.doc(existente.id).update({
+                conteudo: conteudoAtualizado,
+                ocorrencias,
+                notaFiscal: nfCampo || existente.notaFiscal,
+                fornecedor: fornecedor || existente.fornecedor,
+                atualizadoEm: agora
+            });
+            toast(`✓ Ocorrência adicionada à auditoria do pedido ${pedido}!`);
+        } else {
+            const titulo = pedido || (nfCampo ? `NF ${nfCampo}` : 'Auditoria');
+            const dados = {
+                titulo,
+                conteudo: blocoHTML,
+                tipo: 'auditoria',
+                pedido,
+                notaFiscal: nfCampo,
+                fornecedor,
+                data: dataAud,
+                observacaoGeral,
+                ocorrencias: [novaOcorrencia],
+                atualizadoEm: agora,
+                criadoEm: agora
+            };
+            await anotacoesTextoCollection.add(dados);
+            toast('✓ Auditoria salva como anotação!');
+        }
+        // Fica na própria tela de Auditoria, pronta pra registrar a próxima —
+        // pulava direto pro editor de anotação, o que atrapalhava quando
+        // havia vários pedidos/fornecedores pra auditar em sequência.
+        abrirNovaAuditoria();
     } catch (e) {
         console.error('Erro ao salvar auditoria:', e);
         toast('✕ Erro ao salvar. Tente novamente.');

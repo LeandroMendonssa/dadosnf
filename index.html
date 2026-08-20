@@ -209,6 +209,7 @@
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-import" data-title="Importar Relatório (ERP)"><i class="icon fa-solid fa-file-import" style="background-color: #007aff;"></i> Importar Relatório (ERP) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-cotacoes" data-title="Cotações" onclick="renderListaCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #5ac8fa;"></i> Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                 </ul>
                 <ul class="settings-list-group">
@@ -320,6 +321,59 @@
                 </div>
             </div>
 
+            <div class="app-screen" id="screen-cotacoes">
+                <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
+                    <button class="actions-button" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Cotação</button>
+                    <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Importar XML SmartCompras</button>
+                </div>
+                <input type="file" id="cotacao-xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
+
+                <div class="card" id="card-preview-importacao-xml" style="display:none; margin-bottom:16px;">
+                    <h3 style="margin:0 0 12px;font-size:16px;">Prévia da Importação</h3>
+                    <div id="resumo-importacao-xml"></div>
+                    <div id="diff-importacao-xml"></div>
+                    <div class="actions-row" style="margin-top:16px;">
+                        <button class="actions-button is-success" onclick="confirmarImportacaoXmlSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
+                        <button class="actions-button is-neutral" onclick="cancelarImportacaoXml()">Cancelar</button>
+                    </div>
+                </div>
+
+                <div id="lista-cotacoes-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-cotacao-editor">
+                <div class="card">
+                    <h3 style="margin:0 0 16px;font-size:16px;">Dados do Pedido</h3>
+                    <div class="campo"><label>Pedido SmartCompras</label><input type="text" id="cot-pedido" class="form-field" placeholder="1698"></div>
+                    <div class="campo"><label>Origem</label>
+                        <select id="cot-origem" class="form-field">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
+                    </div>
+                    <div class="campo"><label>Data do Pedido</label><input type="date" id="cot-data-pedido" class="form-field"></div>
+                    <div class="campo"><label>Data Limite de Entrega</label><input type="date" id="cot-data-limite" class="form-field"></div>
+                    <div class="campo"><label>Observação</label><textarea id="cot-observacao" class="form-field"></textarea></div>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="margin:0 0 16px;font-size:16px;">Fornecedores</h3>
+                    <div id="lista-fornecedores-cotacao"><div class="empty-state">Nenhum fornecedor adicionado ainda.</div></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="adicionarFornecedorCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Fornecedor</button>
+                        <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Atualizar via XML</button>
+                    </div>
+                </div>
+
+                <div class="actions-row" style="margin: 20px 0;">
+                    <button class="actions-button is-success" onclick="salvarCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Cotação</button>
+                </div>
+                <div class="actions-row" style="margin: 20px 0;" id="btn-excluir-cotacao">
+                    <button class="actions-button is-danger" onclick="excluirCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir Cotação</button>
+                </div>
+            </div>
+
             <div class="app-screen" id="screen-conta">
                 <div class="card">
                     <div class="conta-info">
@@ -394,6 +448,11 @@
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
                     <button class="actions-button" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
                     <button class="actions-button is-neutral" onclick="abrirNovaAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                    <button class="actions-button" id="btn-selecionar-anotacoes" onclick="toggleModoSelecaoAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
+                </div>
+                <div class="actions-row anotacoes-bulk-bar" id="anotacoes-bulk-bar" style="display:none;">
+                    <span id="anotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas anotações para selecionar</span>
+                    <button class="actions-button is-whatsapp" onclick="exportarAnotacoesWhatsapp()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i></span> Exportar Relatório</button>
                 </div>
                 <div id="lista-anotacoes-container"></div>
             </div>
@@ -401,9 +460,12 @@
             <div class="app-screen" id="screen-auditoria-nova">
                 <div class="card">
                     <h3 style="margin:0 0 16px;font-size:16px;">Dados da Auditoria</h3>
-                    <div class="campo"><label>Pedido SmartCompras (Cotação)</label><input type="text" id="aud-pedido" class="form-field" placeholder="1690"></div>
+                    <div class="campo"><label>Pedido SmartCompras (Cotação)</label><input type="text" id="aud-pedido" class="form-field" placeholder="1690" oninput="buscarCotacaoParaAuditoria()"></div>
+                    <div class="aud-cotacao-info" id="aud-cotacao-info" style="display:none;"></div>
                     <div class="campo"><label>Nota Fiscal</label><input type="text" id="aud-nf" class="form-field" placeholder="374609"></div>
-                    <div class="campo"><label>Fornecedor</label><input type="text" id="aud-fornecedor" class="form-field uppercase-field" placeholder="DISKMED"></div>
+                    <div class="campo"><label>Fornecedor</label><input type="text" id="aud-fornecedor" class="form-field uppercase-field" placeholder="DISKMED" list="datalist-fornecedores-cotacao" oninput="atualizarDatalistProdutosAuditoria()"></div>
+                    <datalist id="datalist-fornecedores-cotacao"></datalist>
+                    <datalist id="datalist-produtos-cotacao"></datalist>
                     <div class="campo"><label>Data da Auditoria</label><input type="date" id="aud-data" class="form-field"></div>
                     <div class="campo"><label>Destinatário do E-mail</label><input type="text" id="aud-destinatario" class="form-field" value="Marisa" placeholder="Marisa"></div>
                     <div class="campo"><label>Observação Geral</label><textarea id="aud-obs-geral" class="form-field" placeholder="Ex: inicialmente havia faltado um volume, mas foi encontrado depois..."></textarea></div>
@@ -427,6 +489,9 @@
                         <div class="campo"><label>Abertura do E-mail</label><textarea id="cfg-saudacao" class="form-field"></textarea></div>
                         <div class="campo"><label>Frase — Material Avariado</label><input type="text" id="cfg-avariado" class="form-field"></div>
                         <div class="campo"><label>Frase — Quantidade Diferente</label><input type="text" id="cfg-quantidade_diferente" class="form-field"></div>
+                        <div class="campo"><label>Frase — Quantidade Física Divergente</label><input type="text" id="cfg-quantidade_fisica_divergente" class="form-field"></div>
+                        <div class="campo"><label>Frase — Solicitar Carta de Correção</label><input type="text" id="cfg-solicitar_carta_correcao" class="form-field"></div>
+                        <div class="campo"><label>Frase — Fornecedor Não Entregou</label><input type="text" id="cfg-fornecedor_nao_entregou" class="form-field"></div>
                         <div class="campo"><label>Frase — Valor Diferente</label><input type="text" id="cfg-valor_diferente" class="form-field"></div>
                         <div class="campo"><label>Frase — Produto Diferente</label><input type="text" id="cfg-produto_diferente" class="form-field"></div>
                         <div class="campo"><label>Frase — Não Faturado</label><input type="text" id="cfg-nao_faturado" class="form-field"></div>
