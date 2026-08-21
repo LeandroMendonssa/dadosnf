@@ -51,19 +51,12 @@ let isInitialLoad = true;
 // Configuração Padrão
 // Textos padrão do módulo de Auditoria (usado como valor inicial e para o
 // botão "Restaurar Padrão"). Definido antes do appConfig pra poder reutilizar.
+// Simplificado: os textos por tipo de divergência (avariado, quantidade_diferente
+// etc) foram removidos porque o e-mail agora reaproveita os mesmos blocos de
+// texto natural da mensagem/anotação (gerarCorpoAuditoria), em vez de ter sua
+// própria lógica de agrupamento por tipo com um cabeçalho fixo por grupo.
 const AUDITORIA_TEXTOS_DEFAULT = {
     saudacao: '{DESTINATARIO}, boa tarde!\n\nRecebemos do fornecedor {FORNECEDOR} os materiais referentes à NF {NF}, do pedido do SmartCompras número {PEDIDO}.',
-    avariado: 'Ao conferir os materiais, foram encontradas avarias em alguns itens, dentre eles:',
-    quantidade_diferente: 'Identificamos também divergência de quantidade nos seguintes itens:',
-    quantidade_fisica_divergente: 'Houve também divergência entre a quantidade faturada e a quantidade recebida no físico nos seguintes itens:',
-    solicitar_carta_correcao: 'Solicitamos carta de correção referente a lote/validade dos seguintes itens:',
-    fornecedor_nao_entregou: 'O(s) seguinte(s) fornecedor(es) ainda não entregou(aram) o pedido:',
-    valor_diferente: 'Houve também divergência de valor nos seguintes itens:',
-    produto_diferente: 'Alguns produtos vieram diferentes do que foi pedido:',
-    nao_faturado: 'Os seguintes itens não foram faturados:',
-    nao_entregue: 'Os seguintes itens não foram entregues:',
-    faltante: 'Os seguintes itens vieram faltantes:',
-    desacordo_especificacao: 'Os seguintes itens vieram em desacordo com a especificação pedida:',
     fotosAnexo: 'Seguem em anexo as fotos para comprovação.',
     fechamento: 'Atenciosamente,'
 };
@@ -493,6 +486,14 @@ function iniciarListenerConfiguracoes() {
                 ...appConfig, 
                 ...data, 
                 personalizacao: { ...appConfig.personalizacao, ...(data.personalizacao || {}) }, 
+                // BUG CORRIGIDO: auditoriaTextos não tinha merge profundo com os
+                // padrões (diferente de personalizacao, que já tinha). Se o Firestore
+                // guardava um objeto parcial (ex: só a chave alterada uma vez, antes
+                // de "salvarCamposConfigTextos" existir preencher tudo), as chaves
+                // ausentes ficavam undefined pra sempre, e só "Restaurar Padrão"
+                // (que substitui o objeto inteiro) resolvia — daí o e-mail aparecer
+                // vazio até isso ser clicado.
+                auditoriaTextos: { ...AUDITORIA_TEXTOS_DEFAULT, ...(data.auditoriaTextos || {}) },
             }; 
 
             // --- CORREÇÃO: FORÇA A INCLUSÃO DA NOVA ABA 'RELATÓRIOS' ---
@@ -896,17 +897,32 @@ document.addEventListener('DOMContentLoaded', () => {
     
       
     limparFormularioPrincipal(false);
+});
 
-    const formFields = document.querySelectorAll('#screen-add .form-field');
-    formFields.forEach((field, index) => { 
-        field.addEventListener('keydown', (event) => { 
-            if (event.key === 'Enter' && field.tagName !== 'TEXTAREA') { 
-                event.preventDefault(); 
-                const nextField = formFields[index + 1]; 
-                if (nextField) { nextField.focus(); } else { document.getElementById('salvarBtn').click(); } 
-            } 
-        }); 
-    });
+// Enter avança pro próximo campo do formulário — comportamento que já
+// existia só na tela "Adicionar Nota", agora generalizado via delegação de
+// evento pra funcionar em qualquer tela, inclusive campos renderizados
+// dinamicamente (divergências da Auditoria, fornecedores da Cotação). Nunca
+// interfere em <textarea> nem no editor de texto rico, onde Enter precisa
+// continuar criando uma nova linha.
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const el = event.target;
+    if (!el || el.tagName === 'TEXTAREA') return;
+    if (el.closest && el.closest('#anotacao-corpo, .rte-editor, [contenteditable="true"]')) return;
+    if (el.tagName !== 'INPUT' && el.tagName !== 'SELECT') return;
+    if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
+    const screen = el.closest('.app-screen');
+    if (!screen) return;
+    const camposFocaveis = Array.from(screen.querySelectorAll('input.form-field, select.form-field, textarea.form-field'))
+        .filter(f => !f.disabled && f.offsetParent !== null);
+    const idx = camposFocaveis.indexOf(el);
+    if (idx === -1) return;
+    event.preventDefault();
+    const proximo = camposFocaveis[idx + 1];
+    if (proximo) { proximo.focus(); if (typeof proximo.select === 'function' && proximo.tagName === 'INPUT') proximo.select(); }
+    else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
+    else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && screen.id === 'screen-add') salvarBtn.click(); }
 });
 
 // --- MANIPULAÇÃO DE STRINGS E FORMATAÇÃO ---
@@ -2121,7 +2137,7 @@ function restaurarSelecaoRte() {
     }
 }
 function fecharPopoversRte() {
-    document.querySelectorAll('.rte-popover').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.rte-popover').forEach(p => { p.style.display = 'none'; p.style.left = ''; p.style.right = ''; });
 }
 function toggleRtePopover(id) {
     salvarSelecaoRte();
@@ -2132,6 +2148,32 @@ function toggleRtePopover(id) {
     if (id === 'rte-table-popover') montarGradeTabela();
     if (id === 'rte-size-popover') atualizarSizePopoverAtivo();
     if (id === 'rte-spacing-popover') atualizarPopoverEspacamentoAtivo();
+    if (!estavaAberto) posicionarPopoverDentroDaTela(pop);
+}
+// Os botões de tamanho/espaçamento/tabela ficam perto da borda direita da
+// toolbar (ela tem 2 fileiras de ícones, muitos botões). O popover sempre
+// abria alinhado à esquerda do próprio botão (left:0) sem checar se cabia na
+// tela — perto da borda direita ele estourava pra fora e ficava flutuando
+// sobre o conteúdo, cortado. Agora mede a posição real antes de mostrar e
+// alinha pela direita quando não há espaço suficiente à esquerda.
+function posicionarPopoverDentroDaTela(pop) {
+    pop.style.left = '';
+    pop.style.right = '';
+    const rect = pop.getBoundingClientRect();
+    const margem = 8;
+    if (rect.right > window.innerWidth - margem) {
+        pop.style.left = 'auto';
+        pop.style.right = '0';
+    }
+    // Reavalia depois de trocar de lado — se ainda estourar pela esquerda
+    // (popover mais largo que o espaço disponível), prende na borda da tela.
+    const rect2 = pop.getBoundingClientRect();
+    if (rect2.left < margem) {
+        const wrap = pop.closest('.rte-popover-wrap');
+        const wrapRect = wrap.getBoundingClientRect();
+        pop.style.right = 'auto';
+        pop.style.left = (margem - wrapRect.left) + 'px';
+    }
 }
 document.addEventListener('click', (event) => {
     if (!event.target.closest('.rte-popover-wrap')) fecharPopoversRte();
@@ -2489,79 +2531,71 @@ async function baixarXmlConvertido() {
 
 let divergenciasAuditoria = [];
 let contadorDivergenciaId = 0;
-let saidaAuditoriaAtiva = 'anotacao';
+let saidaAuditoriaAtiva = 'mensagem';
 
 // Definição dos tipos de divergência e seus campos dinâmicos. Pra adicionar um
 // tipo novo no futuro, basta acrescentar uma entrada aqui — o formulário e a
 // geração de texto se adaptam sozinhos.
+// Três tipos-pilares fixos (item 13 da rodada de correção), definidos pela
+// combinação exata de onde o produto aparece ou não: cotação / NF / físico.
+// Os demais tipos (produto diferente, avaria, carta de correção, valor,
+// especificação) continuam existindo por não serem redundantes com esses
+// três — descrevem problemas de natureza diferente (identidade do produto,
+// condição física, preço), não disponibilidade/quantidade.
+// Cada tipo com multiMaterial:true permite adicionar VÁRIOS materiais dentro
+// da MESMA ocorrência (mesmo pedido/NF/fornecedor) — não precisa mais criar
+// uma auditoria separada por material.
 const TIPOS_DIVERGENCIA_AUDITORIA = {
-    'produto_diferente': { label: 'Produto diferente do pedido', campos: [
+    'nao_faturado': { label: 'Não faturado', multiMaterial: true, campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' }
+    ]},
+    'nao_entregue': { label: 'Não entregue', multiMaterial: true, campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' }
+    ]},
+    'nao_cotado': { label: 'Não foi cotado', multiMaterial: true, campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade' }
+    ]},
+    'produto_diferente': { label: 'Produto diferente do pedido', multiMaterial: true, campos: [
         { key: 'produtoPedido', label: 'Produto Pedido', maiusculo: true },
         { key: 'produtoFaturado', label: 'Produto Faturado', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' },
-        { key: 'observacao', label: 'Observação', textarea: true }
+        { key: 'unidade', label: 'Unidade', placeholder: 'frascos' }
     ]},
-    'valor_diferente': { label: 'Valor diferente do pedido', campos: [
+    'avariado': { label: 'Material avariado', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' },
-        { key: 'valorCotado', label: 'Valor Cotado' },
-        { key: 'valorFaturado', label: 'Valor Faturado' },
-        { key: 'observacao', label: 'Observação', textarea: true }
+        { key: 'unidade', label: 'Unidade', placeholder: 'ampolas' },
+        { key: 'tipoDano', label: 'Tipo de Avaria', placeholder: 'quebradas' },
+        { key: 'lote', label: 'Lote', obrigatorio: true },
+        { key: 'validade', label: 'Validade', obrigatorio: true }
     ]},
-    'quantidade_diferente': { label: 'Quantidade diferente do pedido', campos: [
-        { key: 'produto', label: 'Produto', maiusculo: true },
-        { key: 'quantidadePedida', label: 'Quantidade Pedida' },
-        { key: 'quantidadeFaturada', label: 'Quantidade Faturada' },
-        { key: 'observacao', label: 'Ação / Observação', textarea: true }
-    ]},
-    'quantidade_fisica_divergente': { label: 'Quantidade física divergente', campos: [
-        { key: 'produto', label: 'Produto', maiusculo: true },
-        { key: 'quantidadePedida', label: 'Quantidade Pedida' },
-        { key: 'quantidadeFaturada', label: 'Quantidade Faturada' },
-        { key: 'quantidadeFisica', label: 'Quantidade Física Recebida' },
-        { key: 'observacao', label: 'Observação', textarea: true }
-    ]},
-    'solicitar_carta_correcao': { label: 'Solicitar carta de correção — lote/validade', campos: [
+    'solicitar_carta_correcao': { label: 'Solicitar carta de correção — lote/validade', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'loteInformado', label: 'Lote Informado (na NF)' },
         { key: 'loteRecebido', label: 'Lote Recebido (físico)' },
         { key: 'validadeInformada', label: 'Validade Informada (na NF)' },
-        { key: 'validadeRecebida', label: 'Validade Recebida (físico)' },
-        { key: 'observacao', label: 'Observação', textarea: true }
+        { key: 'validadeRecebida', label: 'Validade Recebida (físico)' }
     ]},
-    'nao_faturado': { label: 'Produto não faturado', campos: [
+    'valor_diferente': { label: 'Valor diferente do pedido', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' },
-        { key: 'observacao', label: 'Observação', textarea: true }
+        { key: 'valorCotado', label: 'Valor Cotado' },
+        { key: 'valorFaturado', label: 'Valor Faturado' }
     ]},
-    'nao_entregue': { label: 'Produto não entregue', campos: [
+    'desacordo_especificacao': { label: 'Produto em desacordo com a especificação', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
-        { key: 'quantidade', label: 'Quantidade' },
-        { key: 'observacao', label: 'Observação', textarea: true }
+        { key: 'especificacaoEsperada', label: 'Especificação Pedida' },
+        { key: 'especificacaoRecebida', label: 'Especificação Recebida' }
     ]},
-    'fornecedor_nao_entregou': { label: 'Fornecedor não entregou o pedido', campos: [
+    'fornecedor_nao_entregou': { label: 'Fornecedor não entregou o pedido', multiMaterial: false, campos: [
         { key: 'fornecedorNome', label: 'Fornecedor (se diferente do informado acima)', maiusculo: true },
         { key: 'diasEmAberto', label: 'Dias em aberto sem entrega' },
         { key: 'observacao', label: 'Observação', textarea: true }
     ]},
-    'avariado': { label: 'Material avariado', campos: [
-        { key: 'produto', label: 'Produto', maiusculo: true },
-        { key: 'quantidade', label: 'Quantidade' },
-        { key: 'descricaoAvaria', label: 'Descrição da Avaria', placeholder: 'ex: quebrada, amassada...' },
-        { key: 'observacao', label: 'Observação', textarea: true }
-    ]},
-    'faltante': { label: 'Material faltante', campos: [
-        { key: 'produto', label: 'Produto', maiusculo: true },
-        { key: 'quantidade', label: 'Quantidade' },
-        { key: 'observacao', label: 'Observação', textarea: true }
-    ]},
-    'desacordo_especificacao': { label: 'Produto em desacordo com a especificação', campos: [
-        { key: 'produto', label: 'Produto', maiusculo: true },
-        { key: 'especificacaoEsperada', label: 'Especificação Pedida' },
-        { key: 'especificacaoRecebida', label: 'Especificação Recebida' },
-        { key: 'observacao', label: 'Observação', textarea: true }
-    ]},
-    'outro': { label: 'Outro', campos: [
+    'outro': { label: 'Outro', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto (opcional)', maiusculo: true },
         { key: 'observacao', label: 'Descreva a ocorrência', textarea: true }
     ]}
@@ -2570,19 +2604,30 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
 function upAud(s) { return (s || '').toString().toUpperCase(); }
 
 function abrirNovaAuditoria() {
+    limparFormularioAuditoria();
+    document.getElementById('card-resultado-auditoria').style.display = 'none';
+    document.getElementById('config-textos-body').style.display = 'none';
+    document.getElementById('config-chevron').style.transform = 'rotate(0)';
+    switchToScreen('screen-auditoria-nova', 'Nova Auditoria');
+}
+
+// Limpa só os campos de ENTRADA (pedido/nf/fornecedor/divergências) — usada
+// tanto por abrirNovaAuditoria() (abre a tela do zero, esconde resultado
+// anterior) quanto por finalizarAposSalvarAuditoria() (fica na tela, mas
+// MANTÉM o resultado gerado visível e editável — ver item 8).
+function limparFormularioAuditoria() {
     divergenciasAuditoria = [];
     contadorDivergenciaId = 0;
     ['aud-pedido', 'aud-nf', 'aud-obs-geral'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('aud-fornecedor').value = '';
     document.getElementById('aud-destinatario').value = 'Marisa';
     document.getElementById('aud-data').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('card-resultado-auditoria').style.display = 'none';
-    document.getElementById('config-textos-body').style.display = 'none';
-    document.getElementById('config-chevron').style.transform = 'rotate(0)';
     cotacaoEncontradaAuditoria = null;
     atualizarInfoCotacaoAuditoria();
     renderDivergenciasAuditoria();
-    switchToScreen('screen-auditoria-nova', 'Nova Auditoria');
+}
+function finalizarAposSalvarAuditoria() {
+    limparFormularioAuditoria();
 }
 
 // Ao digitar/sair do campo Pedido, procura a cotação cadastrada (manual ou
@@ -2613,7 +2658,9 @@ function atualizarDatalistFornecedoresAuditoria() {
     const datalist = document.getElementById('datalist-fornecedores-cotacao');
     if (!datalist) return;
     const fornecedores = cotacaoEncontradaAuditoria ? (cotacaoEncontradaAuditoria.fornecedores || []) : [];
-    datalist.innerHTML = fornecedores.map(f => `<option value="${f.razaoSocial}">`).join('');
+    // Sugere o apelido cadastrado (mesmo cadastro usado na importação do ERP)
+    // em vez do nome completo/burocrático vindo do XML, quando existir um.
+    datalist.innerHTML = fornecedores.map(f => `<option value="${nomeExibicaoFornecedor(f.razaoSocial)}">`).join('');
 }
 
 // Datalist de produtos filtrada pelo fornecedor já digitado no campo
@@ -2624,7 +2671,11 @@ function atualizarDatalistProdutosAuditoria() {
     if (!datalist) return;
     if (!cotacaoEncontradaAuditoria) { datalist.innerHTML = ''; return; }
     const nomeFornecedorDigitado = upAud(document.getElementById('aud-fornecedor').value.trim());
-    const fornMatch = (cotacaoEncontradaAuditoria.fornecedores || []).find(f => f.razaoSocial === nomeFornecedorDigitado);
+    // Compara tanto com o nome completo quanto com o apelido, já que o campo
+    // Fornecedor agora pode ter sido preenchido com qualquer um dos dois.
+    const fornMatch = (cotacaoEncontradaAuditoria.fornecedores || []).find(f =>
+        upAud(f.razaoSocial) === nomeFornecedorDigitado || upAud(nomeExibicaoFornecedor(f.razaoSocial)) === nomeFornecedorDigitado
+    );
     const itens = cotacaoEncontradaAuditoria.itens || [];
     const itensFiltrados = fornMatch ? itens.filter(it => it.cnpjFornecedor === fornMatch.cnpj) : itens;
     const nomesUnicos = [...new Set(itensFiltrados.map(it => it.descricao).filter(Boolean))];
@@ -2632,9 +2683,10 @@ function atualizarDatalistProdutosAuditoria() {
 }
 
 // --- Divergências (cards em acordeão) ---
+let contadorMaterialId = 0;
 function adicionarDivergencia() {
     divergenciasAuditoria.forEach(d => d.aberto = false);
-    divergenciasAuditoria.push({ id: ++contadorDivergenciaId, tipo: '', aberto: true, campos: {} });
+    divergenciasAuditoria.push({ id: ++contadorDivergenciaId, tipo: '', aberto: true, materiais: [], observacao: '', campos: {} });
     renderDivergenciasAuditoria();
 }
 function removerDivergencia(id) {
@@ -2650,8 +2702,13 @@ function mudarTipoDivergencia(id, tipo) {
     const d = divergenciasAuditoria.find(d => d.id === id);
     d.tipo = tipo;
     d.campos = {};
+    d.observacao = '';
+    const def = TIPOS_DIVERGENCIA_AUDITORIA[tipo];
+    d.materiais = (def && def.multiMaterial) ? [{ id: ++contadorMaterialId, campos: {} }] : [];
     renderDivergenciasAuditoria();
 }
+// Campos de ocorrência única (só usado por tipos com multiMaterial:false,
+// ex: "Fornecedor não entregou o pedido" — não faz sentido por material).
 function atualizarCampoDivergencia(id, key, valor, maiusculo) {
     const d = divergenciasAuditoria.find(d => d.id === id);
     d.campos[key] = maiusculo ? upAud(valor) : valor;
@@ -2659,6 +2716,46 @@ function atualizarCampoDivergencia(id, key, valor, maiusculo) {
 function atualizarCampoDivergenciaCheckbox(id, key, checked) {
     const d = divergenciasAuditoria.find(d => d.id === id);
     d.campos[key] = checked;
+}
+function atualizarObservacaoOcorrencia(id, valor) {
+    const d = divergenciasAuditoria.find(d => d.id === id);
+    d.observacao = valor;
+}
+
+// --- Materiais dentro de uma mesma ocorrência de divergência ---
+function adicionarMaterialDivergencia(divergenciaId) {
+    const d = divergenciasAuditoria.find(d => d.id === divergenciaId);
+    if (!d) return;
+    d.materiais.push({ id: ++contadorMaterialId, campos: {} });
+    renderDivergenciasAuditoria();
+}
+function removerMaterialDivergencia(divergenciaId, materialId) {
+    const d = divergenciasAuditoria.find(d => d.id === divergenciaId);
+    if (!d) return;
+    d.materiais = d.materiais.filter(m => m.id !== materialId);
+    renderDivergenciasAuditoria();
+}
+function atualizarCampoMaterial(divergenciaId, materialId, key, valor, maiusculo) {
+    const d = divergenciasAuditoria.find(d => d.id === divergenciaId);
+    if (!d) return;
+    const m = d.materiais.find(m => m.id === materialId);
+    if (!m) return;
+    m.campos[key] = maiusculo ? upAud(valor) : valor;
+
+    // Item 12: se o produto digitado bate com um item da cotação encontrada
+    // pro pedido, preenche a quantidade automaticamente — só se o campo
+    // ainda estiver vazio, pra nunca sobrescrever uma correção manual.
+    if (key === 'produto' || key === 'produtoPedido') {
+        preencherQuantidadeDaCotacao(m, valor);
+        renderDivergenciasAuditoria();
+    }
+}
+function preencherQuantidadeDaCotacao(material, nomeProduto) {
+    if (!cotacaoEncontradaAuditoria || material.campos.quantidade) return;
+    const alvo = upAud(nomeProduto).trim();
+    if (!alvo) return;
+    const item = (cotacaoEncontradaAuditoria.itens || []).find(it => upAud(it.descricao) === alvo);
+    if (item && item.quantidade) material.campos.quantidade = item.quantidade;
 }
 function renderDivergenciasAuditoria() {
     const container = document.getElementById('lista-divergencias');
@@ -2668,23 +2765,50 @@ function renderDivergenciasAuditoria() {
     }
     container.innerHTML = divergenciasAuditoria.map((d, idx) => {
         const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+        const primeiroProduto = def && d.materiais && d.materiais[0] ? (d.materiais[0].campos.produto || d.materiais[0].campos.produtoFaturado) : (d.campos && (d.campos.produto || d.campos.fornecedorNome));
+        const sufixoQtd = def && d.materiais && d.materiais.length > 1 ? ` (+${d.materiais.length - 1})` : '';
         const tituloTexto = def
-            ? `${def.label}${d.campos.produto || d.campos.produtoFaturado ? ' — ' + upAud(d.campos.produto || d.campos.produtoFaturado) : ''}`
+            ? `${def.label}${primeiroProduto ? ' — ' + upAud(primeiroProduto) + sufixoQtd : ''}`
             : '<span style="color:var(--text-light);font-weight:400;">Selecione o tipo...</span>';
         const opcoesTipo = Object.entries(TIPOS_DIVERGENCIA_AUDITORIA).map(([key, val]) =>
             `<option value="${key}" ${d.tipo === key ? 'selected' : ''}>${val.label}</option>`).join('');
-        const camposHTML = def ? def.campos.map(c => {
-            const valor = d.campos[c.key] || '';
-            if (c.checkbox) {
-                const checked = d.campos[c.key] === true;
-                return `<div class="campo campo-checkbox"><label class="checkbox-label"><input type="checkbox" ${checked ? 'checked' : ''} onchange="atualizarCampoDivergenciaCheckbox(${d.id}, '${c.key}', this.checked)"> ${c.label}</label></div>`;
-            }
-            if (c.textarea) {
-                return `<div class="campo"><label>${c.label}</label><textarea class="form-field" onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, false)">${valor}</textarea></div>`;
-            }
+
+        const renderCampo = (c, valor, onBlurAttr) => {
             const listaAttr = (c.key === 'produto' || c.key === 'produtoPedido' || c.key === 'produtoFaturado') ? ' list="datalist-produtos-cotacao"' : '';
-            return `<div class="campo"><label>${c.label}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}"${listaAttr} onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, ${!!c.maiusculo})"></div>`;
-        }).join('') : '';
+            const labelTexto = c.obrigatorio ? `${c.label} *` : c.label;
+            if (c.textarea) {
+                return `<div class="campo"><label>${labelTexto}</label><textarea class="form-field" ${onBlurAttr}>${valor}</textarea></div>`;
+            }
+            return `<div class="campo"><label>${labelTexto}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}"${listaAttr} ${onBlurAttr}></div>`;
+        };
+
+        let corpoCampos = '';
+        if (def && def.multiMaterial) {
+            const materiaisHTML = (d.materiais || []).map((m, midx) => {
+                const camposMaterial = def.campos.map(c => {
+                    const valor = m.campos[c.key] || '';
+                    const onBlurAttr = `onblur="atualizarCampoMaterial(${d.id}, ${m.id}, '${c.key}', this.value, ${!!c.maiusculo})"`;
+                    return renderCampo(c, valor, onBlurAttr);
+                }).join('');
+                return `<div class="material-divergencia">
+                    <div class="material-divergencia-header">
+                        <span>Material ${midx + 1}</span>
+                        ${d.materiais.length > 1 ? `<button type="button" class="divergencia-del" onclick="removerMaterialDivergencia(${d.id}, ${m.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </div>
+                    ${camposMaterial}
+                </div>`;
+            }).join('');
+            corpoCampos = `${materiaisHTML}
+                <div class="actions-row"><button type="button" class="actions-button is-neutral" onclick="adicionarMaterialDivergencia(${d.id})"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Material</button></div>
+                <div class="campo"><label>Observação da Ocorrência (opcional)</label><textarea class="form-field" onblur="atualizarObservacaoOcorrencia(${d.id}, this.value)">${d.observacao || ''}</textarea></div>`;
+        } else if (def) {
+            corpoCampos = def.campos.map(c => {
+                const valor = d.campos[c.key] || '';
+                const onBlurAttr = `onblur="atualizarCampoDivergencia(${d.id}, '${c.key}', this.value, ${!!c.maiusculo})"`;
+                return renderCampo(c, valor, onBlurAttr);
+            }).join('');
+        }
+
         return `
         <div class="divergencia ${d.aberto ? 'open' : ''}">
             <div class="divergencia-header" onclick="toggleDivergencia(${d.id})">
@@ -2701,7 +2825,7 @@ function renderDivergenciasAuditoria() {
                             <option value="">Selecione...</option>${opcoesTipo}
                         </select>
                     </div>
-                    ${camposHTML}
+                    ${corpoCampos}
                 </div>
             </div>
         </div>`;
@@ -2719,14 +2843,44 @@ function renderDivergenciasAuditoria() {
 
 const ORIGENS_COTACAO = ['Santa Casa', 'CTI'];
 
+let filtroCotacoesTexto = '';
+let ordenacaoCotacoes = 'entrada'; // 'entrada' (padrão, mais recente primeiro) ou 'pedido' (numérico)
+
+function filtrarCotacoes(texto) {
+    filtroCotacoesTexto = texto;
+    renderListaCotacoes();
+}
+function alternarOrdenacaoCotacoes(valor) {
+    ordenacaoCotacoes = valor;
+    renderListaCotacoes();
+}
+
 function renderListaCotacoes() {
     const container = document.getElementById('lista-cotacoes-container');
     if (!container) return;
-    if (listaCotacoes.length === 0) {
-        container.innerHTML = '<div class="empty-state">Nenhuma cotação cadastrada ainda.</div>';
+
+    const termo = filtroCotacoesTexto.trim().toUpperCase();
+    let lista = listaCotacoes.filter(c => {
+        if (!termo) return true;
+        const nomesFornecedores = (c.fornecedores || []).map(f => (f.razaoSocial || '').toUpperCase()).join(' ');
+        return c.pedido.toUpperCase().includes(termo) || (c.origem || '').toUpperCase().includes(termo) || nomesFornecedores.includes(termo);
+    });
+
+    // 'entrada' já vem nessa ordem da query (orderBy atualizadoEm desc, ver
+    // listener); só precisa reordenar explicitamente pro modo 'pedido'.
+    if (ordenacaoCotacoes === 'pedido') {
+        lista = [...lista].sort((a, b) => {
+            const na = parseInt(a.pedido, 10), nb = parseInt(b.pedido, 10);
+            if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+            return a.pedido.localeCompare(b.pedido);
+        });
+    }
+
+    if (lista.length === 0) {
+        container.innerHTML = `<div class="empty-state">${listaCotacoes.length === 0 ? 'Nenhuma cotação cadastrada ainda.' : 'Nenhuma cotação encontrada.'}</div>`;
         return;
     }
-    container.innerHTML = listaCotacoes.map(c => {
+    container.innerHTML = lista.map(c => {
         const qtdFornecedores = (c.fornecedores || []).length;
         const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
         return `<div class="nota-item" onclick="abrirCotacaoParaEdicao('${c.pedido}')">
@@ -2808,12 +2962,15 @@ function renderFornecedoresCotacao() {
         container.innerHTML = '<div class="empty-state">Nenhum fornecedor adicionado ainda.</div>';
         return;
     }
-    container.innerHTML = fornecedoresCotacaoAtual.map(f => `
+    container.innerHTML = fornecedoresCotacaoAtual.map(f => {
+        const apelido = encontrarApelidoFornecedor(f.razaoSocial);
+        return `
         <div class="fornecedor-cotacao-row">
-            <div class="campo"><label>Razão Social</label><input type="text" class="form-field uppercase-field" value="${f.razaoSocial}" placeholder="COMERCIAL CIRÚRGICA RIOCLARENSE" onblur="atualizarFornecedorCotacaoCampo(${f.id}, 'razaoSocial', this.value)"></div>
+            <div class="campo"><label>Razão Social${apelido ? ` (apelido: ${apelido})` : ''}</label><input type="text" class="form-field uppercase-field" value="${f.razaoSocial}" placeholder="COMERCIAL CIRÚRGICA RIOCLARENSE" onblur="atualizarFornecedorCotacaoCampo(${f.id}, 'razaoSocial', this.value)"></div>
             <div class="campo"><label>CNPJ</label><input type="text" class="form-field" value="${f.cnpj}" placeholder="67.729.178/0002-20" onblur="atualizarFornecedorCotacaoCampo(${f.id}, 'cnpj', this.value)"></div>
             <button type="button" class="divergencia-del" onclick="removerFornecedorCotacao(${f.id})"><i class="fa-solid fa-trash"></i></button>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 async function salvarCotacao() {
@@ -2851,10 +3008,68 @@ async function salvarCotacao() {
             await cotacoesCollection.doc(pedido).set(dados);
             toast('✓ Cotação cadastrada!');
         }
+        await criarOuAtualizarAnotacaoDaCotacao(pedido, dados.origem, dados.dataPedido, dados.dataLimite, dados.fornecedores);
         switchToScreen('screen-cotacoes', 'Cotações');
     } catch (e) {
         console.error('Erro ao salvar cotação:', e);
         toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
+
+// Nome de exibição de um fornecedor: reaproveita o MESMO cadastro de apelidos
+// já usado na importação do relatório de NFs do ERP (apelidosFornecedores /
+// encontrarApelidoFornecedor) — não é um cadastro paralelo. Preferência por
+// CNPJ fica registrada como limitação: o cadastro de apelidos hoje é indexado
+// por nome (não por CNPJ), então o match continua sendo por nome/prefixo.
+function nomeExibicaoFornecedor(razaoSocial) {
+    if (!razaoSocial) return '';
+    return encontrarApelidoFornecedor(razaoSocial) || razaoSocial;
+}
+
+// Anotação "resumo vivo" do pedido — criada automaticamente na primeira
+// importação da cotação (título "PEDIDO - ORIGEM", cabeçalho com datas e
+// fornecedores). A MESMA anotação (casada por número de pedido, sem filtrar
+// por tipo) é reaproveitada depois pela Auditoria (salvarAuditoriaComoAnotacao
+// já faz upsert por pedido, ver Fase 2) — evita criar uma anotação separada
+// pra cada acontecimento do pedido.
+function montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores) {
+    const linhas = [];
+    if (dataPedido) linhas.push(`DATA DO PEDIDO: ${formatarDataBRSimples(dataPedido)}`);
+    if (dataLimite) linhas.push(`LIMITE: ${formatarDataBRSimples(dataLimite)}`);
+    linhas.push('FORNECEDORES:');
+    (fornecedores || []).forEach(f => linhas.push(nomeExibicaoFornecedor(f.razaoSocial)));
+    return '<p>' + linhas.map(l => l.replace(/</g, '&lt;')).join('<br>') + '</p>';
+}
+
+async function criarOuAtualizarAnotacaoDaCotacao(pedido, origem, dataPedido, dataLimite, fornecedores) {
+    if (!pedido) return;
+    const titulo = origem ? `${pedido} - ${origem}` : pedido;
+    const existente = listaAnotacoes.find(a => a.pedido === pedido);
+    try {
+        if (!existente) {
+            await anotacoesTextoCollection.add({
+                titulo,
+                conteudo: montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores),
+                tipo: 'cotacao',
+                pedido,
+                atualizadoEm: new Date().toISOString(),
+                criadoEm: new Date().toISOString()
+            });
+        } else {
+            // Só re-escreve o cabeçalho se ainda não houver nenhuma ocorrência de
+            // auditoria registrada nessa anotação — depois que a Auditoria começa
+            // a anexar conteúdo, mexer no bloco de cabeçalho fica arriscado demais
+            // (o conteúdo já não é mais só o header, é um documento vivo com
+            // histórico). O título (pedido - origem) sempre pode ser atualizado,
+            // já que é só metadado, não mexe no corpo salvo.
+            const dadosUpdate = { titulo };
+            if (!existente.ocorrencias || existente.ocorrencias.length === 0) {
+                dadosUpdate.conteudo = montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores);
+            }
+            await anotacoesTextoCollection.doc(existente.id).update(dadosUpdate);
+        }
+    } catch (e) {
+        console.error('Erro ao criar/atualizar anotação da cotação:', e);
     }
 }
 
@@ -2949,6 +3164,19 @@ function sugerirDataLimiteXml(itens) {
     }).filter(Boolean);
     if (datas.length === 0) return '';
     return datas.sort().pop();
+}
+
+// dd/mm/aaaa (formato do XML SmartCompras) -> aaaa-mm-dd (formato do <input type=date>)
+function converterDataBRparaISO(dataBR) {
+    if (!dataBR) return '';
+    const [dia, mes, ano] = dataBR.split('/');
+    return (dia && mes && ano) ? `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}` : '';
+}
+function somarDiasISO(dataISO, dias) {
+    if (!dataISO) return '';
+    const d = new Date(dataISO + 'T00:00:00');
+    d.setDate(d.getDate() + dias);
+    return d.toISOString().slice(0, 10);
 }
 
 function calcularDiffCotacao(antiga, nova) {
@@ -3067,16 +3295,25 @@ async function confirmarImportacaoXmlSmartCompras() {
             await cotacoesCollection.doc(parsed.pedido).set(dadosPrincipal, { merge: true });
             toast(`✓ Pedido ${parsed.pedido} atualizado para a versão ${proximaVersao}!`);
         } else {
+            // Data do Pedido = data de finalização do pedido no XML (Data_Vencimento
+            // do Cabeçalho) — antes ficava com a data do dia da importação, que não
+            // tem relação com quando o pedido de fato fechou. Data Limite sugerida =
+            // Data do Pedido + 5 dias (prazo padrão), sempre editável manualmente.
+            const dataPedidoDoXml = converterDataBRparaISO(parsed.dataVencimento);
             dadosPrincipal.origem = '';
-            dadosPrincipal.dataPedido = new Date().toISOString().slice(0, 10);
-            dadosPrincipal.dataLimite = ''; // sugestão mostrada à parte, não aplicada automaticamente
+            dadosPrincipal.dataPedido = dataPedidoDoXml || new Date().toISOString().slice(0, 10);
+            dadosPrincipal.dataLimite = dataPedidoDoXml ? somarDiasISO(dataPedidoDoXml, 5) : '';
             dadosPrincipal.observacao = '';
             dadosPrincipal.criadoEm = agora;
             await cotacoesCollection.doc(parsed.pedido).set(dadosPrincipal);
-            toast(`✓ Pedido ${parsed.pedido} importado! Defina a Origem (Santa Casa/CTI) e confirme a data limite.`);
+            toast(`✓ Pedido ${parsed.pedido} importado! Defina a Origem (Santa Casa/CTI) — datas já sugeridas a partir do XML.`);
+            // Anotação "resumo vivo" do pedido, criada automaticamente na primeira
+            // importação — só nesse branch (cotação nova), nunca no de reimportação/
+            // atualização, que não deve ser alterado.
+            await criarOuAtualizarAnotacaoDaCotacao(parsed.pedido, '', dadosPrincipal.dataPedido, dadosPrincipal.dataLimite, dadosPrincipal.fornecedores);
         }
 
-        if (dataLimiteSugerida) {
+        if (dataLimiteSugerida && existente) {
             toast(`Sugestão de data limite de entrega: ${dataLimiteSugerida.split('-').reverse().join('/')} (baseada no XML — confirme manualmente).`);
         }
 
@@ -3092,6 +3329,7 @@ async function confirmarImportacaoXmlSmartCompras() {
 // --- Configuração dos textos padrão (persistida no Firestore, igual às
 // outras personalizações do app — settingsDocRef já mescla qualquer campo
 // novo automaticamente em appConfig, então não precisou mexer nesse listener). ---
+let configTextosCarregados = false;
 function toggleConfigTextos() {
     const body = document.getElementById('config-textos-body');
     const chevron = document.getElementById('config-chevron');
@@ -3101,12 +3339,22 @@ function toggleConfigTextos() {
     if (abrindo) preencherCamposConfigTextos();
 }
 function preencherCamposConfigTextos() {
+    configTextosCarregados = true;
     Object.keys(appConfig.auditoriaTextos).forEach(key => {
         const el = document.getElementById('cfg-' + key);
         if (el) el.value = appConfig.auditoriaTextos[key];
     });
 }
 function salvarCamposConfigTextos() {
+    // CAUSA RAIZ DO BUG (item 7): esta função lia os campos cfg-* às cegas,
+    // mesmo quando o painel "Configurar Textos Padrão" nunca tinha sido
+    // aberto — nesse caso os <textarea>/<input> continuam vazios (nunca
+    // populados por preencherCamposConfigTextos), e a leitura sobrescrevia o
+    // texto padrão de verdade com string vazia toda vez que "Gerar
+    // Auditoria" rodava. Só "Restaurar Padrão" resolvia porque ele é quem
+    // populava os campos pela primeira vez. Agora só lê do DOM se o painel
+    // já foi aberto/preenchido nesta sessão.
+    if (!configTextosCarregados) return;
     const novo = { ...appConfig.auditoriaTextos };
     Object.keys(novo).forEach(key => {
         const el = document.getElementById('cfg-' + key);
@@ -3124,118 +3372,149 @@ function restaurarTextosPadrao() {
 
 // --- Geração de texto — determinística, sem IA, baseada nos campos
 // preenchidos e no tipo de cada divergência. ---
-function linhaCurtaDivergencia(d) {
-    const c = d.campos;
-    switch (d.tipo) {
-        case 'valor_diferente':
-            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — Cotado a ${c.valorCotado || '?'} total, faturado a ${c.valorFaturado || '?'}.`;
-        case 'quantidade_diferente':
-            return `${upAud(c.produto)}\tQtd: ${c.quantidadePedida || ''} — faturou ${c.quantidadeFaturada || '?'}${c.observacao ? ', ' + c.observacao : ''}.`;
-        case 'quantidade_fisica_divergente': {
-            // Diferença calculada automaticamente entre faturado e físico —
-            // o usuário não deve ter que subtrair na mão.
-            const fat = parseFloat(c.quantidadeFaturada);
-            const fis = parseFloat(c.quantidadeFisica);
-            let diffTexto = '';
-            if (!isNaN(fat) && !isNaN(fis)) {
-                const diff = fis - fat;
-                diffTexto = ` (diferença: ${diff > 0 ? '+' : ''}${diff})`;
-            }
-            return `${upAud(c.produto)}\tPedido: ${c.quantidadePedida || '?'} — Faturado: ${c.quantidadeFaturada || '?'} — Físico: ${c.quantidadeFisica || '?'}${diffTexto}.${c.observacao ? ' ' + c.observacao : ''}`;
-        }
-        case 'solicitar_carta_correcao':
-            return `${upAud(c.produto)}\tsolicitar carta de correção — Lote informado: ${c.loteInformado || '?'}, recebido: ${c.loteRecebido || '?'} | Validade informada: ${c.validadeInformada || '?'}, recebida: ${c.validadeRecebida || '?'}.${c.observacao ? ' ' + c.observacao : ''}`;
-        case 'fornecedor_nao_entregou':
-            return `${c.fornecedorNome ? upAud(c.fornecedorNome) + '\t' : ''}Fornecedor não entregou o pedido${c.diasEmAberto ? ' (' + c.diasEmAberto + ' dias em aberto)' : ''}.${c.observacao ? ' ' + c.observacao : ''}`;
-        case 'produto_diferente':
-            return `Foi pedido ${upAud(c.produtoPedido)}, QTD: ${c.quantidade || ''}, porém foi faturado ${upAud(c.produtoFaturado)}, Qtd: ${c.quantidade || ''}.${c.observacao ? ' ' + c.observacao : ''}`;
+// Linha natural por MATERIAL (não mais por ocorrência inteira) — cada tipo
+// define sua própria frase, seguindo o padrão pedido: sem aspas, sem
+// parênteses artificiais, como uma mensagem real de trabalho.
+function linhaMaterial(tipo, m) {
+    switch (tipo) {
         case 'nao_faturado':
-            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — não faturado.${c.observacao ? ' ' + c.observacao : ''}`;
+            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}, não foi faturado.`;
         case 'nao_entregue':
-            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — não entregue.${c.observacao ? ' ' + c.observacao : ''}`;
-        case 'avariado':
-            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — avariado${c.descricaoAvaria ? ' (' + c.descricaoAvaria + ')' : ''}.${c.observacao ? ' ' + c.observacao : ''}`;
-        case 'faltante':
-            return `${upAud(c.produto)}\tQtd: ${c.quantidade || ''} — faltante.${c.observacao ? ' ' + c.observacao : ''}`;
+            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}, não foi entregue.`;
+        case 'nao_cotado':
+            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}, não constava na cotação.`;
+        case 'produto_diferente':
+            return `Solicitamos ${upAud(m.produtoPedido)}${m.quantidade ? ', ' + m.quantidade + (m.unidade ? ' ' + m.unidade : '') : ''}, porém foi faturado ${upAud(m.produtoFaturado)}.`;
+        case 'solicitar_carta_correcao':
+            return `${upAud(m.produto)}: solicitamos carta de correção, lote informado ${m.loteInformado || '?'} e recebido ${m.loteRecebido || '?'}, validade informada ${m.validadeInformada || '?'} e recebida ${m.validadeRecebida || '?'}.`;
+        case 'valor_diferente':
+            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}: cotado a ${m.valorCotado || '?'}, faturado a ${m.valorFaturado || '?'}.`;
         case 'desacordo_especificacao':
-            return `${upAud(c.produto)}\tespecificação recebida diverge da pedida (recebido "${c.especificacaoRecebida || ''}", pedido "${c.especificacaoEsperada || ''}").${c.observacao ? ' ' + c.observacao : ''}`;
+            return `${upAud(m.produto)}: pedimos especificação ${m.especificacaoEsperada || '?'}, porém recebemos ${m.especificacaoRecebida || '?'}.`;
         case 'outro':
-            return `${c.produto ? upAud(c.produto) + '\t' : ''}${c.observacao || ''}`;
+            return `${m.produto ? upAud(m.produto) + ': ' : ''}${m.observacao || ''}`;
         default:
             return '';
     }
 }
+
+// Avaria gera um PARÁGRAFO PRÓPRIO por material (não uma linha de lista),
+// seguindo exatamente o modelo de referência fornecido — não o formato
+// genérico de bullet usado pelos outros tipos.
+function paragrafoAvaria(m, ctx) {
+    const dataFmt = ctx.data ? formatarDataBRSimples(ctx.data) : '[DATA]';
+    const unidade = m.unidade || 'unidades';
+    const tipoDano = m.tipoDano || 'avariadas';
+    let texto = `Gostaria de informar que, no dia ${dataFmt}, após recebermos os materiais do fornecedor ${ctx.fornecedor || '[FORNECEDOR]'} foram identificadas ${m.quantidade || '?'} ${unidade} danificadas (${tipoDano}) do medicamento ${upAud(m.produto)}, referente ao Pedido nº ${ctx.pedido || '[PEDIDO]'}, N.F. ${ctx.nf || '[NF]'}.`;
+    if (m.lote || m.validade) {
+        texto += `\n\nAs ${unidade} pertencem ao lote ${m.lote || '?'}, com validade para ${m.validade || '?'}.`;
+    }
+    texto += '\n\nSegue em anexo o registro fotográfico das unidades avariadas.';
+    return texto;
+}
+
+function contextoAuditoriaAtual() {
+    return {
+        fornecedor: upAud(document.getElementById('aud-fornecedor').value),
+        nf: document.getElementById('aud-nf').value.trim(),
+        pedido: document.getElementById('aud-pedido').value.trim(),
+        data: document.getElementById('aud-data').value
+    };
+}
+
+// FORNECEDOR — N.F. — PEDIDO: primeira linha da mensagem, sempre em negrito
+// (item 9/17) — a NF aparece mesmo sem cotação/pedido preenchido.
 function gerarCabecalhoAuditoria() {
-    const fornecedor = upAud(document.getElementById('aud-fornecedor').value);
-    const nf = document.getElementById('aud-nf').value.trim();
-    const pedido = document.getElementById('aud-pedido').value.trim();
-    // NF sempre aparece quando preenchida — antes só o pedido (cotação) entrava
-    // no cabeçalho, então uma auditoria sem cotação ficava sem nenhum número
-    // de referência no texto gerado.
-    return fornecedor + (nf ? ` NF ${nf}` : '') + (pedido ? ` Ped. ${pedido}` : '');
+    const ctx = contextoAuditoriaAtual();
+    return ctx.fornecedor + (ctx.nf ? ` — N.F. ${ctx.nf}` : '') + (ctx.pedido ? ` — Pedido ${ctx.pedido}` : '');
 }
-function gerarAnotacaoOuWhatsappAuditoria() {
-    const linhas = divergenciasAuditoria.filter(d => d.tipo).map(linhaCurtaDivergencia).filter(Boolean);
-    const obsGeral = document.getElementById('aud-obs-geral').value.trim();
-    let texto = gerarCabecalhoAuditoria() + '\n\n' + linhas.join('\n\n');
-    if (obsGeral) texto += (linhas.length ? '\n\n' : '') + obsGeral;
-    return texto.trim();
-}
-function agruparDivergenciasPorTipo() {
-    const grupos = {};
+
+// Corpo da mensagem (usada tanto pra salvar como anotação quanto pra
+// compartilhar) — os tipos "normais" viram linhas por material, avaria vira
+// parágrafos próprios, cada um separado por linha em branco.
+function gerarCorpoAuditoria() {
+    const ctx = contextoAuditoriaAtual();
+    const blocos = [];
     divergenciasAuditoria.filter(d => d.tipo).forEach(d => {
-        (grupos[d.tipo] = grupos[d.tipo] || []).push(d.campos);
+        const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+        if (!def) return;
+        if (!def.multiMaterial) {
+            const c = d.campos;
+            if (d.tipo === 'fornecedor_nao_entregou') {
+                const texto = `${c.fornecedorNome ? upAud(c.fornecedorNome) + ': ' : ''}ainda não entregou o pedido${c.diasEmAberto ? ', já são ' + c.diasEmAberto + ' dias em aberto' : ''}.${c.observacao ? ' ' + c.observacao : ''}`;
+                blocos.push(texto);
+            }
+            return;
+        }
+        (d.materiais || []).forEach(m => {
+            if (d.tipo === 'avariado') { blocos.push(paragrafoAvaria(m.campos, ctx)); return; }
+            const linha = linhaMaterial(d.tipo, m.campos);
+            if (linha) blocos.push(linha);
+        });
+        if (d.observacao) blocos.push(d.observacao);
     });
-    return grupos;
+    return blocos;
+}
+
+function gerarAnotacaoOuWhatsappAuditoria() {
+    const blocos = gerarCorpoAuditoria();
+    const obsGeral = document.getElementById('aud-obs-geral').value.trim();
+    let texto = gerarCabecalhoAuditoria() + '\n\n' + blocos.join('\n\n');
+    if (obsGeral) texto += (blocos.length ? '\n\n' : '') + obsGeral;
+    return texto.trim();
 }
 function gerarEmailAuditoria() {
     const t = appConfig.auditoriaTextos;
     const destinatario = document.getElementById('aud-destinatario').value.trim() || 'Marisa';
-    const fornecedor = upAud(document.getElementById('aud-fornecedor').value) || '[FORNECEDOR]';
-    const nf = document.getElementById('aud-nf').value.trim() || '[NF]';
-    const pedido = document.getElementById('aud-pedido').value.trim() || '[PEDIDO]';
+    const ctx = contextoAuditoriaAtual();
     const obsGeral = document.getElementById('aud-obs-geral').value.trim();
 
-    let partes = [t.saudacao.replace(/{DESTINATARIO}/g, destinatario).replace(/{FORNECEDOR}/g, fornecedor).replace(/{NF}/g, nf).replace(/{PEDIDO}/g, pedido)];
+    // Reaproveita exatamente os mesmos blocos de texto da mensagem/anotação
+    // (gerarCorpoAuditoria) — antes o e-mail tinha sua própria lógica de
+    // agrupamento por tipo, duplicando praticamente o mesmo conteúdo com uma
+    // formatação diferente. Agora o e-mail é: saudação + os mesmos blocos +
+    // anexo de fotos (se houver avaria) + fechamento.
+    let partes = [t.saudacao.replace(/{DESTINATARIO}/g, destinatario).replace(/{FORNECEDOR}/g, ctx.fornecedor || '[FORNECEDOR]').replace(/{NF}/g, ctx.nf || '[NF]').replace(/{PEDIDO}/g, ctx.pedido || '[PEDIDO]')];
     if (obsGeral) partes.push(obsGeral);
 
-    const grupos = agruparDivergenciasPorTipo();
-    let temAvaria = false;
+    partes.push(...gerarCorpoAuditoria());
 
-    const paragrafo = (tipoKey, montarLinha) => {
-        if (!grupos[tipoKey]) return;
-        if (tipoKey === 'avariado') temAvaria = true;
-        const itens = grupos[tipoKey].map(montarLinha);
-        partes.push(`${t[tipoKey]}\n${itens.join('\n')}`);
-    };
-    paragrafo('avariado', c => `- ${c.quantidade || ''} ${upAud(c.produto)}${c.descricaoAvaria ? ', ' + c.descricaoAvaria : ''}`);
-    paragrafo('quantidade_diferente', c => `- ${upAud(c.produto)}: pedido ${c.quantidadePedida || '?'}, faturado ${c.quantidadeFaturada || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
-    paragrafo('quantidade_fisica_divergente', c => {
-        const fat = parseFloat(c.quantidadeFaturada), fis = parseFloat(c.quantidadeFisica);
-        const diff = (!isNaN(fat) && !isNaN(fis)) ? ` (diferença: ${fis - fat > 0 ? '+' : ''}${fis - fat})` : '';
-        return `- ${upAud(c.produto)}: pedido ${c.quantidadePedida || '?'}, faturado ${c.quantidadeFaturada || '?'}, físico ${c.quantidadeFisica || '?'}${diff}${c.observacao ? ' (' + c.observacao + ')' : ''}`;
-    });
-    paragrafo('solicitar_carta_correcao', c => `- ${upAud(c.produto)}: Lote informado ${c.loteInformado || '?'} / recebido ${c.loteRecebido || '?'}; Validade informada ${c.validadeInformada || '?'} / recebida ${c.validadeRecebida || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
-    paragrafo('fornecedor_nao_entregou', c => `- ${c.fornecedorNome ? upAud(c.fornecedorNome) : 'Fornecedor'}${c.diasEmAberto ? ': ' + c.diasEmAberto + ' dias em aberto' : ': ainda não entregou'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
-    paragrafo('valor_diferente', c => `- ${upAud(c.produto)}: cotado a ${c.valorCotado || '?'}, faturado a ${c.valorFaturado || '?'}${c.observacao ? ' (' + c.observacao + ')' : ''}`);
-    paragrafo('produto_diferente', c => `- Foi pedido ${upAud(c.produtoPedido)}, QTD: ${c.quantidade || '?'}, porém foi faturado ${upAud(c.produtoFaturado)}, Qtd: ${c.quantidade || '?'}${c.observacao ? ' — ' + c.observacao : ''}`);
-    paragrafo('nao_faturado', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
-    paragrafo('nao_entregue', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
-    paragrafo('faltante', c => `- ${upAud(c.produto)} (Qtd: ${c.quantidade || '?'})${c.observacao ? ' — ' + c.observacao : ''}`);
-    paragrafo('desacordo_especificacao', c => `- ${upAud(c.produto)}: pedido "${c.especificacaoEsperada || ''}", recebido "${c.especificacaoRecebida || ''}"${c.observacao ? ' — ' + c.observacao : ''}`);
-    if (grupos['outro']) partes.push(grupos['outro'].map(c => `- ${c.produto ? upAud(c.produto) + ': ' : ''}${c.observacao || ''}`).join('\n'));
-
+    const temAvaria = divergenciasAuditoria.some(d => d.tipo === 'avariado' && (d.materiais || []).length > 0);
     if (temAvaria) partes.push(t.fotosAnexo);
     partes.push(t.fechamento);
     return partes.join('\n\n');
 }
 
+// Constrói o HTML exibido nos blocos editáveis — primeira linha (cabeçalho
+// FORNECEDOR — N.F. — PEDIDO) sempre em negrito de verdade via <strong>,
+// resto do texto normal. white-space:pre-wrap (CSS já existente) preserva as
+// quebras de linha do restante mesmo sem <br>.
+function montarHtmlComPrimeiraLinhaNegrito(texto) {
+    const [primeiraLinha, ...resto] = texto.split('\n\n');
+    const restoTexto = resto.join('\n\n');
+    return `<strong>${primeiraLinha.replace(/</g, '&lt;')}</strong>${restoTexto ? '\n\n' + restoTexto.replace(/</g, '&lt;') : ''}`;
+}
+// Mesma lógica, mas gerando blocos <p> com <br> (formato usado dentro da
+// anotação no editor de texto rico, que não tem white-space:pre-wrap) — a
+// primeira linha também vem em <strong>, igual ao bloco exibido na tela.
+function textoParaBlocoHtmlAnotacao(textoPlano) {
+    const blocos = textoPlano.split('\n\n');
+    return blocos.map((bloco, i) => {
+        const linhasHtml = bloco.split('\n').map(l => l.replace(/</g, '&lt;')).join('<br>');
+        return i === 0 ? `<p><strong>${linhasHtml}</strong></p>` : `<p>${linhasHtml}</p>`;
+    }).join('');
+}
+
 function gerarSaidasAuditoria() {
     if (!document.getElementById('aud-fornecedor').value.trim()) { toast('✕ Preencha ao menos o Fornecedor.'); return; }
+    // Lote e validade são obrigatórios pra avaria (item 15) — a saída padrão
+    // depende diretamente desses dois dados pra fazer sentido como mensagem.
+    const avariaSemLoteOuValidade = divergenciasAuditoria.some(d => d.tipo === 'avariado' &&
+        (d.materiais || []).some(m => !m.campos.lote || !m.campos.validade));
+    if (avariaSemLoteOuValidade) { toast('✕ Preencha Lote e Validade em todos os materiais avariados.'); return; }
     salvarCamposConfigTextos();
-    document.getElementById('output-anotacao').textContent = gerarAnotacaoOuWhatsappAuditoria();
-    document.getElementById('output-whatsapp').textContent = gerarAnotacaoOuWhatsappAuditoria();
-    document.getElementById('output-email').textContent = gerarEmailAuditoria();
+    document.getElementById('output-mensagem').innerHTML = montarHtmlComPrimeiraLinhaNegrito(gerarAnotacaoOuWhatsappAuditoria());
+    document.getElementById('output-email').innerHTML = gerarEmailAuditoria().replace(/</g, '&lt;');
     document.getElementById('card-resultado-auditoria').style.display = 'block';
     document.getElementById('card-resultado-auditoria').scrollIntoView({ behavior: 'smooth', block: 'start' });
     toast('✓ Textos gerados!');
@@ -3247,10 +3526,30 @@ function mostrarSaidaAuditoria(qual, btnEl) {
     if (btnEl) btnEl.classList.add('active');
     document.getElementById('output-' + qual).classList.add('active');
 }
+// Sempre lê o conteúdo AO VIVO do bloco editável (innerText), nunca uma
+// string regenerada — o usuário pode ter revisado/editado o texto depois de
+// gerado (item 8), e essa edição precisa ser respeitada em copiar, salvar e
+// compartilhar.
+function textoAtualSaidaAuditoria() {
+    return document.getElementById('output-' + saidaAuditoriaAtiva).innerText.trim();
+}
 async function copiarSaidaAuditoriaAtual() {
-    const texto = document.getElementById('output-' + saidaAuditoriaAtiva).textContent;
-    await navigator.clipboard.writeText(texto);
+    await navigator.clipboard.writeText(textoAtualSaidaAuditoria());
     toast('✓ Copiado!');
+}
+// Compartilhar usa o mecanismo nativo do dispositivo (WhatsApp, Mensagens,
+// e-mail etc — o usuário escolhe), no lugar da antiga saída "WhatsApp"
+// separada, que tinha exatamente o mesmo conteúdo da anotação.
+async function compartilharSaidaAuditoriaAtual() {
+    const texto = textoAtualSaidaAuditoria();
+    if (!texto) return toast('Nada para compartilhar.');
+    if (navigator.share) {
+        try { await navigator.share({ text: texto }); }
+        catch (e) { /* usuário cancelou o share sheet — não é erro */ }
+    } else {
+        await navigator.clipboard.writeText(texto);
+        toast('✓ Copiado! Cole onde quiser compartilhar.');
+    }
 }
 
 // --- Salvar: cria a anotação automaticamente, com os dados estruturados da
@@ -3271,22 +3570,26 @@ async function salvarAuditoriaComoAnotacao() {
     const agora = new Date().toISOString();
     const novaOcorrencia = { notaFiscal: nfCampo, fornecedor, data: dataAud, observacaoGeral, divergencias: divergenciasAtuais, criadoEm: agora };
 
-    // Bloco HTML dessa ocorrência específica — reaproveita a mesma função que
-    // gera o texto da Anotação/WhatsApp, então o conteúdo salvo é idêntico ao
-    // que o usuário já revisou nas abas de resultado.
-    const conteudoTexto = gerarAnotacaoOuWhatsappAuditoria();
-    const blocoHTML = conteudoTexto.split('\n\n').map(bloco =>
-        '<p>' + bloco.split('\n').map(l => l.replace(/</g, '&lt;')).join('<br>') + '</p>'
-    ).join('');
+    // Lê o texto JÁ REVISADO no bloco "Mensagem" (o usuário pode ter editado
+    // ou formatado depois de gerar, item 8) em vez de regenerar do zero —
+    // respeita qualquer ajuste manual feito antes de salvar. Só recorre a
+    // gerarAnotacaoOuWhatsappAuditoria() como fallback se por algum motivo o
+    // bloco ainda não foi gerado.
+    const elMensagem = document.getElementById('output-mensagem');
+    const conteudoTexto = (elMensagem && elMensagem.innerText.trim()) ? elMensagem.innerText.trim() : gerarAnotacaoOuWhatsappAuditoria();
+    const blocoHTML = textoParaBlocoHtmlAnotacao(conteudoTexto);
 
-    // Upsert por pedido: se já existe uma anotação de auditoria pra esse
-    // mesmo pedido, a nova ocorrência é ANEXADA ao conteúdo existente (sem
-    // apagar nada, inclusive edições manuais que o usuário tenha feito no
-    // editor) em vez de criar uma anotação nova. O pedido vira um documento
-    // vivo, sem fragmentar em várias páginas pra cada NF/fornecedor conferido.
+    // Upsert por pedido: se já existe uma anotação pra esse mesmo pedido —
+    // seja uma auditoria anterior OU a anotação "resumo vivo" criada
+    // automaticamente na importação da cotação (tipo:'cotacao') — a nova
+    // ocorrência é ANEXADA ao conteúdo existente (sem apagar nada, inclusive
+    // o cabeçalho da cotação ou edições manuais) em vez de criar uma anotação
+    // nova. O pedido vira um documento vivo só, sem fragmentar em várias
+    // páginas pra cada NF/fornecedor conferido nem duplicar a anotação que a
+    // cotação já criou.
     // Auditorias sem pedido preenchido continuam criando uma anotação nova
     // por vez (não há chave de agrupamento confiável nesse caso).
-    const existente = pedido ? listaAnotacoes.find(a => a.tipo === 'auditoria' && a.pedido === pedido) : null;
+    const existente = pedido ? listaAnotacoes.find(a => a.pedido === pedido) : null;
 
     try {
         if (existente) {
@@ -3318,10 +3621,11 @@ async function salvarAuditoriaComoAnotacao() {
             await anotacoesTextoCollection.add(dados);
             toast('✓ Auditoria salva como anotação!');
         }
-        // Fica na própria tela de Auditoria, pronta pra registrar a próxima —
-        // pulava direto pro editor de anotação, o que atrapalhava quando
-        // havia vários pedidos/fornecedores pra auditar em sequência.
-        abrirNovaAuditoria();
+        // Limpa só o FORMULÁRIO (pronto pra registrar a próxima ocorrência),
+        // mas mantém o card de resultado visível e editável — salvar não deve
+        // encerrar a chance de revisar/formatar/compartilhar o e-mail ou a
+        // mensagem que acabaram de ser gerados (item 8).
+        finalizarAposSalvarAuditoria();
     } catch (e) {
         console.error('Erro ao salvar auditoria:', e);
         toast('✕ Erro ao salvar. Tente novamente.');

@@ -206,22 +206,16 @@
             </div>
 
             <div class="app-screen" id="screen-settings">
-                <div class="settings-group-label">Dados e Cadastros</div>
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-import" data-title="Importar Relatório (ERP)"><i class="icon fa-solid fa-file-import" style="background-color: #007aff;"></i> Importar Relatório (ERP) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-cotacoes" data-title="Cotações" onclick="renderListaCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #5ac8fa;"></i> Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-xml-editor" data-title="Editor de XML (NF-e)"><i class="icon fa-solid fa-file-code" style="background-color: #ff9500;"></i> Editor de XML (NF-e) <i class="fa-solid fa-chevron-right"></i></a></li>
-                </ul>
-                <div class="settings-group-label">Aplicativo e Conta</div>
-                <ul class="settings-list-group">
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
-                </ul>
-                <ul class="settings-list-group" style="margin-top:28px;">
                     <li><a class="settings-action-danger" onclick="handleLogout()">Sair</a></li>
                 </ul>
             </div>
@@ -324,6 +318,13 @@
             </div>
 
             <div class="app-screen" id="screen-cotacoes">
+                <div class="campo" style="margin-bottom: 12px;"><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
+                <div class="campo" style="margin-bottom: 12px;">
+                    <select id="cotacoes-ordenacao" class="form-field" onchange="alternarOrdenacaoCotacoes(this.value)">
+                        <option value="entrada">Ordenar por: mais recentes primeiro</option>
+                        <option value="pedido">Ordenar por: número do pedido</option>
+                    </select>
+                </div>
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
                     <button class="actions-button" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Cotação</button>
                     <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Importar XML SmartCompras</button>
@@ -489,17 +490,6 @@
                     <div id="config-textos-body" style="display:none;margin-top:16px;">
                         <p style="color:var(--text-light);font-size:12px;margin-top:0;">Ajuste o tom das frases usadas na geração. Use {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} na abertura — são substituídas automaticamente.</p>
                         <div class="campo"><label>Abertura do E-mail</label><textarea id="cfg-saudacao" class="form-field"></textarea></div>
-                        <div class="campo"><label>Frase — Material Avariado</label><input type="text" id="cfg-avariado" class="form-field"></div>
-                        <div class="campo"><label>Frase — Quantidade Diferente</label><input type="text" id="cfg-quantidade_diferente" class="form-field"></div>
-                        <div class="campo"><label>Frase — Quantidade Física Divergente</label><input type="text" id="cfg-quantidade_fisica_divergente" class="form-field"></div>
-                        <div class="campo"><label>Frase — Solicitar Carta de Correção</label><input type="text" id="cfg-solicitar_carta_correcao" class="form-field"></div>
-                        <div class="campo"><label>Frase — Fornecedor Não Entregou</label><input type="text" id="cfg-fornecedor_nao_entregou" class="form-field"></div>
-                        <div class="campo"><label>Frase — Valor Diferente</label><input type="text" id="cfg-valor_diferente" class="form-field"></div>
-                        <div class="campo"><label>Frase — Produto Diferente</label><input type="text" id="cfg-produto_diferente" class="form-field"></div>
-                        <div class="campo"><label>Frase — Não Faturado</label><input type="text" id="cfg-nao_faturado" class="form-field"></div>
-                        <div class="campo"><label>Frase — Não Entregue</label><input type="text" id="cfg-nao_entregue" class="form-field"></div>
-                        <div class="campo"><label>Frase — Material Faltante</label><input type="text" id="cfg-faltante" class="form-field"></div>
-                        <div class="campo"><label>Frase — Desacordo de Especificação</label><input type="text" id="cfg-desacordo_especificacao" class="form-field"></div>
                         <div class="campo"><label>Frase — Fotos em Anexo</label><input type="text" id="cfg-fotosAnexo" class="form-field"></div>
                         <div class="campo"><label>Fechamento do E-mail</label><input type="text" id="cfg-fechamento" class="form-field"></div>
                         <div class="actions-row"><button class="actions-button is-neutral" onclick="restaurarTextosPadrao()">Restaurar Padrão</button></div>
@@ -513,15 +503,14 @@
                 <div class="card" id="card-resultado-auditoria" style="display:none;">
                     <h3 style="margin:0 0 16px;font-size:16px;">Resultado</h3>
                     <div class="output-tabs">
-                        <button class="output-tab active" onclick="mostrarSaidaAuditoria('anotacao', this)">Anotação</button>
-                        <button class="output-tab" onclick="mostrarSaidaAuditoria('whatsapp', this)">WhatsApp</button>
+                        <button class="output-tab active" onclick="mostrarSaidaAuditoria('mensagem', this)">Mensagem</button>
                         <button class="output-tab" onclick="mostrarSaidaAuditoria('email', this)">E-mail</button>
                     </div>
-                    <div class="output-block active" id="output-anotacao"></div>
-                    <div class="output-block" id="output-whatsapp"></div>
-                    <div class="output-block" id="output-email"></div>
+                    <div class="output-block active" id="output-mensagem" contenteditable="true"></div>
+                    <div class="output-block" id="output-email" contenteditable="true"></div>
                     <div class="actions-row" style="margin-top:14px;">
                         <button class="actions-button" id="btn-copiar-saida" onclick="copiarSaidaAuditoriaAtual()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+                        <button class="actions-button is-whatsapp" onclick="compartilharSaidaAuditoriaAtual()"><span class="icon-wrapper"><i class="fa-solid fa-share-nodes"></i></span> Compartilhar</button>
                         <button class="actions-button is-success" onclick="salvarAuditoriaComoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar como Anotação</button>
                     </div>
                 </div>
