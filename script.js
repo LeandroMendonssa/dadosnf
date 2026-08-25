@@ -116,8 +116,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -881,6 +881,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeId === 'screen-anotacoes-editor') {
             voltarParaListaAnotacoes();
             return;
+        }
+        if (activeId === 'screen-cotacao-editor') {
+            const alvo = origemTelaCotacaoEditor === 'screen-central-pedido' && centralPedidoAtual ? null : origemTelaCotacaoEditor;
+            if (alvo === 'screen-cotacoes') { switchToScreen('screen-cotacoes', 'Cotações'); return; }
+            if (centralPedidoAtual) { abrirCentralPedido(centralPedidoAtual); return; }
         }
         const voltarPara = closeBtnBackScreen[activeId] || 'screen-settings';
         const tituloVoltar = (menuDetails[voltarPara] && menuDetails[voltarPara].title) || 'Ajustes';
@@ -1833,8 +1838,7 @@ function renderListaAnotacoes() {
         const concluida = a.status === 'concluido';
         const sinalizada = !!a.sinalizada;
         const selecionada = selecaoAnotacoesAtiva && anotacoesSelecionadas.has(a.id);
-        return `<div class="nota-item anotacao-item ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : `abrirAnotacao('${a.id}')`}">
-            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
+        return `<div class="nota-item anotacao-item ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : (a.pedido ? `abrirCentralPedido('${a.pedido}')` : `abrirAnotacao('${a.id}')`)}">            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
             <div class="nota-detalhes">${snippet}${snippet.length >= 90 ? '…' : ''}</div>
             <div class="nota-data">Atualizado em: ${data}</div>
             ${!selecaoAnotacoesAtiva ? `<div class="anotacao-card-actions">
@@ -1932,6 +1936,7 @@ async function exportarAnotacoesWhatsapp() {
 }
 
 function abrirNovaAnotacao() {
+    voltarAnotacaoEditorParaCentral = null; // reseta — só a Central religa essa flag explicitamente
     anotacaoAtualId = null;
     document.getElementById('anotacao-titulo').value = '';
     document.getElementById('anotacao-corpo').innerHTML = '';
@@ -1940,9 +1945,10 @@ function abrirNovaAnotacao() {
     setTimeout(() => { document.getElementById('anotacao-titulo').focus(); atualizarEstadoToolbarAnotacao(); }, 300);
 }
 
-function abrirAnotacao(id) {
+function abrirAnotacao(id, viaCentral) {
     const nota = listaAnotacoes.find(a => a.id === id);
     if (!nota) return;
+    if (!viaCentral) voltarAnotacaoEditorParaCentral = null; // reseta se aberta direto da lista, não da Central
     anotacaoAtualId = id;
     document.getElementById('anotacao-titulo').value = nota.titulo || '';
     document.getElementById('anotacao-corpo').innerHTML = nota.conteudo || '';
@@ -1951,7 +1957,319 @@ function abrirAnotacao(id) {
     setTimeout(atualizarEstadoToolbarAnotacao, 300);
 }
 
+// ============================================================
+// CENTRAL DO PEDIDO — tela própria (não mais um painel dentro do editor de
+// anotação). cotacoes/{pedido} continua sendo a única fonte da cotação;
+// anotacoesTexto continua sendo a única fonte de ocorrências/divergências/
+// status/histórico. Esta tela só JUNTA as duas na apresentação — nenhum
+// dado é copiado de um lado pro outro.
+//
+// STATUS de uma divergência: 'pendente' (padrão, inclusive pra ocorrências
+// antigas sem esse campo — nunca migramos histórico antigo só pra
+// adicionar o campo), 'resolvida' (problema corrigido de fato) ou
+// 'encerrada' (caso finalizado sem necessariamente ter sido corrigido).
+// HISTÓRICO é append-only: uma mudança de status NUNCA apaga ou reescreve
+// uma entrada anterior, só acrescenta uma nova. O texto que foi gerado e
+// salvo no momento da identificação nunca muda retroativamente.
+// ============================================================
+let centralPedidoAtual = null;
+let centralFornecedoresAbertos = new Set();
+let centralStatusFormAberto = new Set();
+let voltarAnotacaoEditorParaCentral = null; // guarda o pedido, se o editor de texto foi aberto a partir da Central
+
+const ROTULOS_HISTORICO = { identificacao: 'Identificado', resolucao: 'Resolvido', encerramento: 'Encerrado', reabertura: 'Reaberto' };
+
+function abrirCentralPedido(pedido) {
+    if (!pedido) return;
+    centralPedidoAtual = pedido;
+    centralFornecedoresAbertos = new Set();
+    centralStatusFormAberto = new Set();
+    switchToScreen('screen-central-pedido', pedido);
+    renderCentralPedidoCompleto(pedido);
+}
+
+// Linhas de texto (uma por material) de UMA divergência — reaproveita
+// linhaMaterial()/paragrafoAvaria(), já usados na geração de texto da
+// Auditoria (mesma lógica, não duplicada).
+function linhasDeMateriais(d) {
+    const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+    if (!def) return [];
+    if (def.multiMaterial) return (d.materiais || []).map(m => d.tipo === 'avariado' ? `${upAud(m.produto)} — material avariado` : linhaMaterial(d.tipo, m)).filter(Boolean);
+    if (d.tipo === 'fornecedor_nao_entregou') {
+        const c = d.campos || {};
+        return [`ainda não entregou o pedido${c.diasEmAberto ? ', já são ' + c.diasEmAberto + ' dias em aberto' : ''}.${c.observacao ? ' ' + c.observacao : ''}`];
+    }
+    return [];
+}
+
+// Bloco de UMA divergência: linhas de material + status + histórico +
+// controle pra mudar o status. ocIdx/divIdx são os índices reais dentro de
+// nota.ocorrencias[ocIdx].divergencias[divIdx] — é como alterarStatusDivergenciaCentral
+// sabe exatamente o que atualizar no Firestore.
+function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
+    const status = d.status || 'pendente'; // ocorrências antigas sem status viram "pendente" só na exibição
+    const linhas = linhasDeMateriais(d);
+    if (linhas.length === 0) return '';
+    const linhasHTML = linhas.map(l => `<div class="central-item-linha">${l.replace(/</g, '&lt;')}</div>`).join('');
+
+    const historico = d.historico || [];
+    const historicoHTML = historico.length ? `<div class="central-historico">
+        ${historico.map(h => `<div class="central-historico-item">${formatarDataBRSimples(h.data)} — ${ROTULOS_HISTORICO[h.tipo] || h.tipo}${h.observacao ? ': ' + h.observacao.replace(/</g, '&lt;') : ''}</div>`).join('')}
+    </div>` : '';
+
+    const key = `${ocIdx}-${divIdx}`;
+    const formAberto = centralStatusFormAberto.has(key);
+    const statusFormHTML = formAberto ? `
+        <div class="central-status-form">
+            <select id="central-status-select-${key}" class="form-field">
+                <option value="pendente" ${status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                <option value="resolvida" ${status === 'resolvida' ? 'selected' : ''}>Resolvida</option>
+                <option value="encerrada" ${status === 'encerrada' ? 'selected' : ''}>Encerrada</option>
+            </select>
+            <input type="text" id="central-status-obs-${key}" class="form-field" placeholder="Observação (opcional)">
+            <button type="button" class="actions-button is-success" onclick="confirmarAlteracaoStatusCentral('${oc._anotacaoId}', ${ocIdx}, ${divIdx})">Atualizar Status</button>
+        </div>` : '';
+
+    return `<div class="central-divergencia-bloco">
+        ${linhasHTML}
+        <div class="central-divergencia-meta">
+            <span class="central-status-badge status-${status}">${status === 'pendente' ? 'Pendente' : status === 'resolvida' ? 'Resolvida' : 'Encerrada'}</span>
+            ${oc.notaFiscal ? `<span class="central-nf-tag">NF ${oc.notaFiscal}</span>` : ''}
+            <button type="button" class="central-status-toggle" onclick="toggleCentralStatusForm('${key}')">${formAberto ? 'Cancelar' : 'Alterar status'}</button>
+        </div>
+        ${historicoHTML}
+        ${statusFormHTML}
+    </div>`;
+}
+
+function renderCentralPedidoCompleto(pedido) {
+    const cotacao = listaCotacoes.find(c => c.pedido === pedido);
+    const nota = listaAnotacoes.find(a => a.pedido === pedido);
+
+    document.getElementById('central-titulo-pedido').textContent = cotacao && cotacao.origem ? `${pedido} — ${cotacao.origem}` : pedido;
+
+    const headerCard = document.getElementById('central-header-card');
+    const semCotacao = document.getElementById('central-sem-cotacao');
+    if (cotacao) {
+        headerCard.style.display = 'block';
+        semCotacao.style.display = 'none';
+        document.getElementById('central-origem').value = cotacao.origem || '';
+        document.getElementById('central-data-pedido').value = cotacao.dataPedido || '';
+        document.getElementById('central-data-limite').value = cotacao.dataLimite || '';
+        document.getElementById('central-observacao-cotacao').value = cotacao.observacao || '';
+    } else {
+        headerCard.style.display = 'none';
+        semCotacao.style.display = 'block';
+    }
+
+    // Todas as divergências de todas as ocorrências, achatadas, guardando os
+    // índices reais (ocIdx/divIdx) pra alteração de status saber onde mexer,
+    // e o id da anotação (pra Firestore) embutido em cada ocorrência.
+    const todasDivergencias = [];
+    (nota && nota.ocorrencias ? nota.ocorrencias : []).forEach((oc, ocIdx) => {
+        const ocComId = { ...oc, _anotacaoId: nota.id };
+        (oc.divergencias || []).forEach((d, divIdx) => todasDivergencias.push({ d, oc: ocComId, ocIdx, divIdx }));
+    });
+
+    const container = document.getElementById('central-fornecedores-container');
+
+    if (cotacao) {
+        const fornecedoresHTML = (cotacao.fornecedores || []).map(f => {
+            const nomeExibicao = nomeExibicaoFornecedor(f.razaoSocial);
+            const produtos = (cotacao.itens || []).filter(it => it.cnpjFornecedor === f.cnpj);
+            const divergenciasForn = todasDivergencias.filter(x => x.oc.fornecedorCnpj === f.cnpj);
+            const aberto = centralFornecedoresAbertos.has(f.cnpj);
+
+            const produtosHTML = produtos.length
+                ? produtos.map(it => renderLinhaProduto(it, `${f.cnpj}-${it.codProduto}`)).join('')
+                : '<div class="central-item-vazio">Nenhum produto cotado registrado.</div>';
+
+            const divergenciasHTML = divergenciasForn.length
+                ? divergenciasForn.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join('')
+                : '<div class="central-item-vazio">Nenhuma divergência registrada com este fornecedor ainda.</div>';
+
+            return `<div class="central-fornecedor">
+                <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}')">
+                    <i class="fa-solid fa-chevron-${aberto ? 'down' : 'right'}"></i>
+                    <span>${nomeExibicao}</span>
+                </div>
+                <div class="central-fornecedor-body" style="display:${aberto ? 'block' : 'none'};">
+                    <div class="central-secao-titulo">Produtos Cotados</div>
+                    ${produtosHTML}
+                    <div class="central-secao-titulo">Divergências</div>
+                    ${divergenciasHTML}
+                </div>
+            </div>`;
+        }).join('');
+
+        const semFornecedor = todasDivergencias.filter(x => !x.oc.fornecedorCnpj);
+        const semFornecedorHTML = semFornecedor.length ? `<div class="central-fornecedor">
+            <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('_sem_cnpj')">
+                <i class="fa-solid fa-chevron-${centralFornecedoresAbertos.has('_sem_cnpj') ? 'down' : 'right'}"></i>
+                <span>Outras ocorrências (sem fornecedor identificado na cotação)</span>
+            </div>
+            <div class="central-fornecedor-body" style="display:${centralFornecedoresAbertos.has('_sem_cnpj') ? 'block' : 'none'};">
+                ${semFornecedor.map(x => `<div style="margin-bottom:6px;font-size:11px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')}
+            </div>
+        </div>` : '';
+
+        container.innerHTML = fornecedoresHTML + semFornecedorHTML;
+    } else if (nota) {
+        // Sem cotação cadastrada, mas já existem ocorrências registradas (ex:
+        // auditorias antigas de antes da cotação existir) — mostra tudo junto,
+        // sem agrupamento por fornecedor (não há CNPJ pra agrupar por).
+        container.innerHTML = todasDivergencias.length
+            ? todasDivergencias.map(x => `<div style="margin-bottom:6px;font-size:11px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')
+            : '<div class="central-item-vazio">Nenhuma ocorrência registrada ainda.</div>';
+    } else {
+        container.innerHTML = '';
+    }
+
+    document.getElementById('central-btn-texto-livre').style.display = nota ? '' : 'none';
+}
+
+// Produto sempre mostra o que realmente veio do XML — nunca inventa uma
+// descrição. Quando o fornecedor não preencheu o campo de descrição (existe
+// no XML real: alguns itens vêm com <Comentario></Comentario> vazio),
+// mostra isso como ausência de dado, nunca como se fosse o nome do produto,
+// e o código do fornecedor fica sempre visível (base pra associação futura
+// de código externo → interno).
+// Reconstrói a cotação com fidelidade total (regra definitiva combinada) —
+// nunca usa observação/fabricante/código como substituto do nome oficial.
+// Nome oficial só existe depois que o relatório do SmartCompras for colado
+// e cruzado (código + CNPJ); até lá, fica marcado como pendente de
+// complementação, nunca escondido nem inventado.
+let centralProdutosExpandidos = new Set();
+function renderLinhaProduto(it, chaveUnica) {
+    const nomeOficial = it.nomeOficial ? upAud(it.nomeOficial) : null;
+    const observacao = it.descricao && it.descricao !== '---' ? upAud(it.descricao) : '';
+    const marca = it.fabricante && it.fabricante !== '---' ? it.fabricante : '';
+    const expandido = centralProdutosExpandidos.has(chaveUnica);
+
+    const tituloHTML = nomeOficial
+        ? `<div class="central-item-desc-linha">${nomeOficial}</div>`
+        : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
+
+    const detalhesHTML = expandido ? `<div class="central-item-detalhes">
+        ${it.codProduto ? `<div>Código SmartCompras: ${it.codProduto}</div>` : ''}
+        ${observacao ? `<div>Observação do Fornecedor: ${observacao}</div>` : ''}
+        ${marca ? `<div>Marca: ${marca}</div>` : ''}
+        ${it.embalagem ? `<div>Embalagem: ${it.embalagem}</div>` : ''}
+        ${it.quantidade ? `<div>Quantidade: ${it.quantidade}</div>` : ''}
+        ${it.precoUnitario ? `<div>Valor Unitário: R$ ${it.precoUnitario}</div>` : ''}
+        ${it.precoTotal ? `<div>Valor Total: R$ ${it.precoTotal}</div>` : ''}
+    </div>` : '';
+
+    const resumoMeta = [it.codProduto ? `Cód. ${it.codProduto}` : '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ');
+
+    return `<div class="central-item-linha" onclick="toggleCentralProduto('${chaveUnica}')">
+        ${tituloHTML}
+        <div class="central-item-meta">${resumoMeta}<i class="fa-solid fa-chevron-${expandido ? 'up' : 'down'} central-item-chevron"></i></div>
+        ${detalhesHTML}
+    </div>`;
+}
+function toggleCentralProduto(chave) {
+    if (centralProdutosExpandidos.has(chave)) centralProdutosExpandidos.delete(chave);
+    else centralProdutosExpandidos.add(chave);
+    renderCentralPedidoCompleto(centralPedidoAtual);
+}
+
+function toggleCentralFornecedor(cnpj) {
+    if (centralFornecedoresAbertos.has(cnpj)) centralFornecedoresAbertos.delete(cnpj);
+    else centralFornecedoresAbertos.add(cnpj);
+    renderCentralPedidoCompleto(centralPedidoAtual);
+}
+function toggleCentralStatusForm(key) {
+    if (centralStatusFormAberto.has(key)) centralStatusFormAberto.delete(key);
+    else centralStatusFormAberto.add(key);
+    renderCentralPedidoCompleto(centralPedidoAtual);
+}
+
+async function confirmarAlteracaoStatusCentral(anotacaoId, ocIdx, divIdx) {
+    const key = `${ocIdx}-${divIdx}`;
+    const select = document.getElementById(`central-status-select-${key}`);
+    const obsInput = document.getElementById(`central-status-obs-${key}`);
+    const novoStatus = select.value;
+    const observacao = obsInput.value.trim();
+
+    const nota = listaAnotacoes.find(a => a.id === anotacaoId);
+    if (!nota) return;
+    // Clona profundamente antes de mexer — nunca muta o array em memória
+    // direto, só depois que o Firestore confirmar a escrita.
+    const ocorrencias = JSON.parse(JSON.stringify(nota.ocorrencias || []));
+    const oc = ocorrencias[ocIdx];
+    if (!oc || !oc.divergencias || !oc.divergencias[divIdx]) return;
+    const d = oc.divergencias[divIdx];
+    d.status = novoStatus;
+    if (!d.historico) d.historico = [];
+    // HISTÓRICO NUNCA É APAGADO — só acrescenta uma entrada nova. O texto
+    // gerado/salvo na anotação continua exatamente como estava.
+    const tipoEntrada = novoStatus === 'resolvida' ? 'resolucao' : novoStatus === 'encerrada' ? 'encerramento' : 'reabertura';
+    d.historico.push({ tipo: tipoEntrada, data: new Date().toISOString().slice(0, 10), observacao });
+
+    try {
+        await anotacoesTextoCollection.doc(anotacaoId).update({ ocorrencias, atualizadoEm: new Date().toISOString() });
+        toast('✓ Status atualizado.');
+        centralStatusFormAberto.delete(key);
+        renderCentralPedidoCompleto(centralPedidoAtual);
+    } catch (e) {
+        console.error('Erro ao atualizar status da divergência:', e);
+        toast('✕ Erro ao atualizar status.');
+    }
+}
+
+// Origem/Data do Pedido/Data Limite/Observação editáveis direto na Central
+// (igual ao Gerenciador de NF: abrir, editar, salvar, sem trocar de tela) —
+// grava só esses campos em cotacoes/{pedido}, nunca mexe em fornecedores/
+// itens (esses continuam vindo só da importação do XML ou cadastro manual).
+async function salvarCabecalhoCotacaoCentral() {
+    if (!centralPedidoAtual) return;
+    const dados = {
+        origem: document.getElementById('central-origem').value,
+        dataPedido: document.getElementById('central-data-pedido').value,
+        dataLimite: document.getElementById('central-data-limite').value,
+        observacao: document.getElementById('central-observacao-cotacao').value.trim(),
+        atualizadoEm: new Date().toISOString()
+    };
+    try {
+        await cotacoesCollection.doc(centralPedidoAtual).set(dados, { merge: true });
+        const nota = listaAnotacoes.find(a => a.pedido === centralPedidoAtual);
+        if (nota) {
+            const novoTitulo = dados.origem ? `${centralPedidoAtual} - ${dados.origem}` : centralPedidoAtual;
+            if (novoTitulo !== nota.titulo) await anotacoesTextoCollection.doc(nota.id).update({ titulo: novoTitulo });
+        }
+        toast('✓ Salvo.');
+        // Sem isso, o título/dados na tela ficavam desatualizados até a
+        // próxima ação que disparasse um re-render — o listener do Firestore
+        // não está amarrado a essa tela.
+        renderCentralPedidoCompleto(centralPedidoAtual);
+    } catch (e) {
+        console.error('Erro ao salvar dados do pedido:', e);
+        toast('✕ Erro ao salvar.');
+    }
+}
+
+function iniciarAuditoriaDoPedidoCentral() {
+    const pedido = centralPedidoAtual;
+    abrirNovaAuditoria();
+    document.getElementById('aud-pedido').value = pedido;
+    buscarCotacaoParaAuditoria();
+}
+
+function abrirTextoLivreDoPedidoCentral() {
+    const nota = listaAnotacoes.find(a => a.pedido === centralPedidoAtual);
+    if (!nota) return toast('Nenhuma anotação encontrada para este pedido ainda.');
+    voltarAnotacaoEditorParaCentral = centralPedidoAtual;
+    abrirAnotacao(nota.id, true);
+}
+
 function voltarParaListaAnotacoes() {
+    if (voltarAnotacaoEditorParaCentral) {
+        const pedido = voltarAnotacaoEditorParaCentral;
+        voltarAnotacaoEditorParaCentral = null;
+        abrirCentralPedido(pedido);
+        return;
+    }
     switchToScreen('screen-anotacoes', 'Anotações');
 }
 
@@ -2137,7 +2455,7 @@ function restaurarSelecaoRte() {
     }
 }
 function fecharPopoversRte() {
-    document.querySelectorAll('.rte-popover').forEach(p => { p.style.display = 'none'; p.style.left = ''; p.style.right = ''; });
+    document.querySelectorAll('.rte-popover').forEach(p => { p.style.display = 'none'; p.style.left = '0'; p.style.right = 'auto'; });
 }
 function toggleRtePopover(id) {
     salvarSelecaoRte();
@@ -2157,8 +2475,14 @@ function toggleRtePopover(id) {
 // sobre o conteúdo, cortado. Agora mede a posição real antes de mostrar e
 // alinha pela direita quando não há espaço suficiente à esquerda.
 function posicionarPopoverDentroDaTela(pop) {
-    pop.style.left = '';
-    pop.style.right = '';
+    // BUG: limpar left/right pra '' não remove o "left:0" que já vem do CSS
+    // base (.rte-popover{left:0}) — ao setar só "right:0" depois, os dois
+    // ficavam ativos ao mesmo tempo, e um elemento position:absolute com
+    // left E right definidos estica pra preencher o espaço inteiro entre os
+    // dois, virando a largura absurda do print. Agora sempre define os DOIS
+    // lados explicitamente (um em 'auto', nunca deixando o CSS base valer).
+    pop.style.left = '0';
+    pop.style.right = 'auto';
     const rect = pop.getBoundingClientRect();
     const margem = 8;
     if (rect.right > window.innerWidth - margem) {
@@ -2883,7 +3207,7 @@ function renderListaCotacoes() {
     container.innerHTML = lista.map(c => {
         const qtdFornecedores = (c.fornecedores || []).length;
         const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
-        return `<div class="nota-item" onclick="abrirCotacaoParaEdicao('${c.pedido}')">
+        return `<div class="nota-item" onclick="abrirCentralPedido('${c.pedido}')">
             <div class="nota-info">${c.pedido}${c.origem ? ' - ' + c.origem : ''}</div>
             <div class="nota-detalhes">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · Limite: ' + dataLimite : ''}</div>
         </div>`;
@@ -2896,7 +3220,14 @@ function formatarDataBRSimples(iso) {
     return partes.length === 3 ? `${partes[2]}/${partes[1]}` : iso;
 }
 
+let origemTelaCotacaoEditor = 'screen-cotacoes'; // pra onde "Voltar"/fechar deve levar ao sair de screen-cotacao-editor
+
 function abrirNovaCotacao() {
+    // "Nova Cotação" é acionada tanto da lista de Cotações quanto de dentro
+    // da Central (quando o pedido ainda não tem cotação cadastrada) — o
+    // botão de voltar precisa saber pra qual das duas telas retornar.
+    const telaAtiva = document.querySelector('.app-screen.active');
+    origemTelaCotacaoEditor = (telaAtiva && telaAtiva.id === 'screen-central-pedido') ? 'screen-central-pedido' : 'screen-cotacoes';
     cotacaoEmEdicaoPedido = null;
     fornecedoresCotacaoAtual = [];
     contadorFornecedorCotacaoId = 0;
@@ -2912,6 +3243,7 @@ function abrirNovaCotacao() {
 }
 
 async function abrirCotacaoParaEdicao(pedido) {
+    origemTelaCotacaoEditor = 'screen-central-pedido';
     let c = listaCotacoes.find(c => c.pedido === pedido);
     if (!c) {
         // Fallback pra quando o listener em tempo real ainda não refletiu uma
@@ -3009,7 +3341,11 @@ async function salvarCotacao() {
             toast('✓ Cotação cadastrada!');
         }
         await criarOuAtualizarAnotacaoDaCotacao(pedido, dados.origem, dados.dataPedido, dados.dataLimite, dados.fornecedores);
-        switchToScreen('screen-cotacoes', 'Cotações');
+        // Editar/criar cotação de dentro da Central deve voltar pra Central
+        // (não pra lista crua) — só volta pra lista quando "Nova Cotação" foi
+        // aberta de lá mesmo, sem nenhum pedido de contexto ainda.
+        if (origemTelaCotacaoEditor === 'screen-central-pedido') await abrirCentralPedido(pedido);
+        else switchToScreen('screen-cotacoes', 'Cotações');
     } catch (e) {
         console.error('Erro ao salvar cotação:', e);
         toast('✕ Erro ao salvar. Tente novamente.');
@@ -3318,11 +3654,190 @@ async function confirmarImportacaoXmlSmartCompras() {
         }
 
         cancelarImportacaoXml();
-        switchToScreen('screen-cotacoes', 'Cotações');
-        await abrirCotacaoParaEdicao(parsed.pedido);
+        await abrirCentralPedido(parsed.pedido);
     } catch (e) {
         console.error('Erro ao importar cotação:', e);
         toast('✕ Erro ao importar. Tente novamente.');
+    }
+}
+
+// ============================================================
+// RELATÓRIO TEXTUAL DO SMARTCOMPRAS — complementa o XML com o nome oficial
+// do produto (informação que o XML simplesmente não exporta). Entrada
+// textual determinística, colada direto do navegador — sem OCR, sem
+// reconhecimento visual, sem adivinhação.
+//
+// REGRA DEFINITIVA (várias rodadas de revisão até chegar aqui):
+// - O cruzamento confirmado (código SmartCompras + CNPJ do fornecedor,
+//   dentro do MESMO pedido) só prova que XML e relatório descrevem o mesmo
+//   ITEM DAQUELA COTAÇÃO. Isso NUNCA cria uma identidade de produto entre
+//   pedidos diferentes — essa identidade definitiva será o código do SP
+//   Data, numa fase futura ainda não implementada.
+// - Nome oficial do relatório enriquece o item (campo novo: nomeOficial),
+//   nunca substitui nem se mistura com a observação do fornecedor
+//   (campo já existente: descricao — mantido como está no banco pra não
+//   tocar no caminho de escrita do XML já testado).
+// - Nenhum número dentro de uma observação (ex: "(301982)" na observação da
+//   agulha) é extraído ou interpretado como código de fornecedor — isso é
+//   texto livre, nunca fonte de identidade.
+// - Sem correspondência exata (código+CNPJ) → item fica de fora, mostrado
+//   como pendente, nunca "no chute".
+// ============================================================
+
+function parseRelatorioSmartCompras(texto) {
+    const linhas = texto.split('\n').map(l => l.replace(/\r$/, ''));
+    const mPedido = texto.match(/pedido #(\d+)/i);
+    const pedido = mPedido ? mPedido[1] : '';
+
+    const fornecedores = [];
+    let i = 0;
+    while (i < linhas.length) {
+        const linha = linhas[i];
+        if (/^CNPJ:\s*[\d.\/-]+/.test(linha.trim())) {
+            const cnpjMatch = linha.match(/CNPJ:\s*([\d.\/-]+)/);
+            const cnpj = cnpjMatch ? cnpjMatch[1] : '';
+            let j = i - 1;
+            while (j >= 0 && linhas[j].trim() === '') j--;
+            const razaoSocial = linhas[j] ? linhas[j].trim() : '';
+
+            let k = i + 1;
+            while (k < linhas.length && !/^C[oó]digo\s*\t?Produto/i.test(linhas[k].trim())) {
+                if (/^CNPJ:\s*[\d.\/-]+/.test(linhas[k].trim())) break;
+                k++;
+            }
+            if (k >= linhas.length || !/^C[oó]digo/i.test(linhas[k].trim())) { i++; continue; }
+
+            const itens = [];
+            let linhaIdx = k + 1;
+            while (linhaIdx < linhas.length) {
+                const l = linhas[linhaIdx].trim();
+                if (l.startsWith('Total:')) break;
+                if (!l) { linhaIdx++; continue; }
+                if (l.startsWith('Observações:')) { linhaIdx++; continue; }
+
+                const partes = linhas[linhaIdx].split('\t').map(p => p.trim()).filter(p => p !== '');
+                if (partes.length >= 6) {
+                    const [codigo, produto, marca, qtd, valorUnitStr, valorTotalStr] = partes;
+                    const proxima = linhas[linhaIdx + 1] ? linhas[linhaIdx + 1].trim() : '';
+                    const observacao = proxima.startsWith('Observações:') ? proxima.replace('Observações:', '').trim() : '';
+                    itens.push({
+                        codigo,
+                        produto: upAud(produto),
+                        marca: (marca === '---') ? '' : marca,
+                        quantidade: qtd,
+                        valorUnitario: valorUnitStr.replace('R$', '').trim(),
+                        valorTotal: valorTotalStr.replace('R$', '').trim(),
+                        observacaoRelatorio: (observacao === '---' || observacao === '') ? '' : observacao
+                    });
+                    linhaIdx += proxima.startsWith('Observações:') ? 2 : 1;
+                } else {
+                    linhaIdx++;
+                }
+            }
+            fornecedores.push({ razaoSocial, cnpj, itens });
+            i = linhaIdx;
+            continue;
+        }
+        i++;
+    }
+    return { pedido, fornecedores };
+}
+
+// Cruza o relatório já parseado com a cotação já cadastrada — determinístico
+// por código SmartCompras + CNPJ, nada mais. Quantidade/valor unitário só
+// servem de checagem cruzada (avisa se não bater, nunca decide sozinho).
+function cruzarRelatorioComCotacao(cotacao, relatorio) {
+    const atualizacoes = []; // { codProduto, cnpjFornecedor, nomeOficial }
+    const semCorrespondencia = [];
+    const divergenciasDetectadas = [];
+
+    relatorio.fornecedores.forEach(fRel => {
+        fRel.itens.forEach(itRel => {
+            const itemCotacao = (cotacao.itens || []).find(it => it.codProduto === itRel.codigo && it.cnpjFornecedor === fRel.cnpj);
+            if (!itemCotacao) {
+                semCorrespondencia.push({ codigo: itRel.codigo, produto: itRel.produto, fornecedor: fRel.razaoSocial });
+                return;
+            }
+            atualizacoes.push({ codProduto: itRel.codigo, cnpjFornecedor: fRel.cnpj, nomeOficial: itRel.produto });
+
+            const qtdXml = parseFloat((itemCotacao.quantidade || '').replace(/\./g, '').replace(',', '.'));
+            const qtdRel = parseFloat((itRel.quantidade || '').replace(/\./g, '').replace(',', '.'));
+            if (!isNaN(qtdXml) && !isNaN(qtdRel) && qtdXml !== qtdRel) {
+                divergenciasDetectadas.push(`${itRel.produto}: quantidade no XML (${itemCotacao.quantidade}) difere do relatório (${itRel.quantidade})`);
+            }
+        });
+    });
+
+    return { atualizacoes, semCorrespondencia, divergenciasDetectadas };
+}
+
+let relatorioSmartComprasPendente = null;
+
+function processarRelatorioSmartComprasColado() {
+    const texto = document.getElementById('relatorio-smartcompras-texto').value.trim();
+    if (!texto) return toast('Cole o texto do relatório antes de processar.');
+    if (!centralPedidoAtual) return;
+    const cotacao = listaCotacoes.find(c => c.pedido === centralPedidoAtual);
+    if (!cotacao) return toast('Nenhuma cotação cadastrada para este pedido ainda.');
+
+    let relatorio;
+    try {
+        relatorio = parseRelatorioSmartCompras(texto);
+    } catch (e) {
+        console.error('Erro ao interpretar o relatório:', e);
+        return toast('✕ Não consegui interpretar esse texto. Confira se é o relatório de fornecedores ganhadores.');
+    }
+    if (relatorio.fornecedores.length === 0) return toast('✕ Nenhum fornecedor reconhecido nesse texto.');
+    if (relatorio.pedido && relatorio.pedido !== centralPedidoAtual) {
+        return toast(`✕ Esse relatório é do pedido ${relatorio.pedido}, mas você está na Central do pedido ${centralPedidoAtual}.`);
+    }
+
+    const cruzamento = cruzarRelatorioComCotacao(cotacao, relatorio);
+    relatorioSmartComprasPendente = { relatorio, cruzamento };
+
+    const resumoEl = document.getElementById('relatorio-smartcompras-resumo');
+    const totalItensRelatorio = relatorio.fornecedores.reduce((s, f) => s + f.itens.length, 0);
+    let html = `<div class="xml-resumo-linha"><strong>Fornecedores no relatório:</strong> ${relatorio.fornecedores.length}</div>`;
+    html += `<div class="xml-resumo-linha"><strong>Itens no relatório:</strong> ${totalItensRelatorio}</div>`;
+    html += `<div class="xml-resumo-linha"><strong>Nomes que serão complementados:</strong> ${cruzamento.atualizacoes.length}</div>`;
+    if (cruzamento.semCorrespondencia.length > 0) {
+        html += `<div class="xml-diff-titulo">Itens do relatório sem correspondência na cotação (não afetados):</div><ul class="xml-diff-lista">${cruzamento.semCorrespondencia.map(x => `<li>${x.codigo} — ${x.produto} (${x.fornecedor})</li>`).join('')}</ul>`;
+    }
+    if (cruzamento.divergenciasDetectadas.length > 0) {
+        html += `<div class="xml-diff-titulo">Possíveis divergências detectadas (revisar, não corrigidas automaticamente):</div><ul class="xml-diff-lista">${cruzamento.divergenciasDetectadas.map(l => `<li>${l}</li>`).join('')}</ul>`;
+    }
+    resumoEl.innerHTML = html;
+    document.getElementById('relatorio-smartcompras-preview').style.display = 'block';
+}
+
+function cancelarRelatorioSmartCompras() {
+    relatorioSmartComprasPendente = null;
+    document.getElementById('relatorio-smartcompras-preview').style.display = 'none';
+    document.getElementById('relatorio-smartcompras-texto').value = '';
+}
+
+async function confirmarRelatorioSmartCompras() {
+    if (!relatorioSmartComprasPendente || !centralPedidoAtual) return;
+    const cotacao = listaCotacoes.find(c => c.pedido === centralPedidoAtual);
+    if (!cotacao) return;
+
+    // Só acrescenta nomeOficial nos itens que bateram — todo o resto do item
+    // (código, observação do fornecedor, marca do XML, valores) permanece
+    // exatamente como veio do XML, intocado.
+    const { atualizacoes } = relatorioSmartComprasPendente.cruzamento;
+    const novosItens = (cotacao.itens || []).map(it => {
+        const match = atualizacoes.find(a => a.codProduto === it.codProduto && a.cnpjFornecedor === it.cnpjFornecedor);
+        return match ? { ...it, nomeOficial: match.nomeOficial } : it;
+    });
+
+    try {
+        await cotacoesCollection.doc(centralPedidoAtual).update({ itens: novosItens, atualizadoEm: new Date().toISOString() });
+        toast(`✓ ${atualizacoes.length} nome(s) de produto complementado(s).`);
+        cancelarRelatorioSmartCompras();
+        renderCentralPedidoCompleto(centralPedidoAtual);
+    } catch (e) {
+        console.error('Erro ao salvar relatório do SmartCompras:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
     }
 }
 
@@ -3561,14 +4076,43 @@ async function salvarAuditoriaComoAnotacao() {
     const fornecedor = upAud(document.getElementById('aud-fornecedor').value);
     const dataAud = document.getElementById('aud-data').value;
     const observacaoGeral = document.getElementById('aud-obs-geral').value.trim();
-    const divergenciasAtuais = divergenciasAuditoria.filter(d => d.tipo).map(d => ({ tipo: d.tipo, campos: { ...d.campos } }));
+
+    // CORREÇÃO ESTRUTURAL 1: antes só salvava d.campos, que pra tipos
+    // multiMaterial fica vazio (produto/quantidade moraram em d.materiais[]
+    // desde que passou a suportar vários materiais por ocorrência) — os
+    // dados estruturados da auditoria ficavam incompletos, só existindo de
+    // verdade no texto gerado. Agora salva materiais[] de verdade.
+    const divergenciasAtuais = divergenciasAuditoria.filter(d => d.tipo).map(d => {
+        const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+        // Toda divergência nasce com status "pendente" e uma primeira entrada
+        // de histórico ("identificação") — sem isso, a mudança de status
+        // depois não tinha o que "reabrir": faltava o fato original.
+        const statusEHistorico = {
+            status: 'pendente',
+            historico: [{ tipo: 'identificacao', data: dataAud || new Date().toISOString().slice(0, 10), observacao: '' }]
+        };
+        if (def && def.multiMaterial) {
+            return { tipo: d.tipo, materiais: (d.materiais || []).map(m => ({ ...m.campos })), observacao: d.observacao || '', ...statusEHistorico };
+        }
+        return { tipo: d.tipo, campos: { ...d.campos }, ...statusEHistorico };
+    });
 
     if (divergenciasAtuais.length === 0 && !observacaoGeral) {
         return toast('Adicione ao menos uma divergência ou observação antes de salvar.');
     }
 
+    // CORREÇÃO ESTRUTURAL 2: liga a ocorrência ao fornecedor por CNPJ (não só
+    // por nome) quando o pedido tem cotação e o fornecedor digitado bate com
+    // um dos fornecedores dela — mesma checagem já usada pra filtrar o
+    // datalist de produtos, reaproveitada aqui.
+    const nomeFornecedorDigitado = upAud(document.getElementById('aud-fornecedor').value.trim());
+    const fornMatch = cotacaoEncontradaAuditoria ? (cotacaoEncontradaAuditoria.fornecedores || []).find(f =>
+        upAud(f.razaoSocial) === nomeFornecedorDigitado || upAud(nomeExibicaoFornecedor(f.razaoSocial)) === nomeFornecedorDigitado
+    ) : null;
+    const fornecedorCnpj = fornMatch ? fornMatch.cnpj : '';
+
     const agora = new Date().toISOString();
-    const novaOcorrencia = { notaFiscal: nfCampo, fornecedor, data: dataAud, observacaoGeral, divergencias: divergenciasAtuais, criadoEm: agora };
+    const novaOcorrencia = { notaFiscal: nfCampo, fornecedor, fornecedorCnpj, data: dataAud, observacaoGeral, divergencias: divergenciasAtuais, criadoEm: agora };
 
     // Lê o texto JÁ REVISADO no bloco "Mensagem" (o usuário pode ter editado
     // ou formatado depois de gerar, item 8) em vez de regenerar do zero —
@@ -3598,8 +4142,14 @@ async function salvarAuditoriaComoAnotacao() {
             await anotacoesTextoCollection.doc(existente.id).update({
                 conteudo: conteudoAtualizado,
                 ocorrencias,
-                notaFiscal: nfCampo || existente.notaFiscal,
-                fornecedor: fornecedor || existente.fornecedor,
+                // BUG CORRIGIDO: "nfCampo || existente.notaFiscal" virava
+                // undefined quando os DOIS eram vazios/ausentes — exatamente
+                // o caso de uma anotação criada automaticamente pela cotação
+                // (que nunca teve notaFiscal/fornecedor) recebendo uma
+                // auditoria com NF em branco. Firestore rejeita undefined
+                // com invalid-argument. Agora sempre cai numa string vazia.
+                notaFiscal: nfCampo || existente.notaFiscal || '',
+                fornecedor: fornecedor || existente.fornecedor || '',
                 atualizadoEm: agora
             });
             toast(`✓ Ocorrência adicionada à auditoria do pedido ${pedido}!`);

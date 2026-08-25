@@ -377,6 +377,56 @@
                 </div>
             </div>
 
+            <div class="app-screen" id="screen-central-pedido">
+                <h3 id="central-titulo-pedido" style="margin:0 0 12px;font-size:20px;font-weight:700;"></h3>
+
+                <div class="card" id="central-header-card" style="display:none;">
+                    <div class="campo"><label>Origem</label>
+                        <select id="central-origem" class="form-field" onchange="salvarCabecalhoCotacaoCentral()">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
+                    </div>
+                    <div class="campo"><label>Data do Pedido</label><input type="date" id="central-data-pedido" class="form-field" onchange="salvarCabecalhoCotacaoCentral()"></div>
+                    <div class="campo"><label>Data Limite</label><input type="date" id="central-data-limite" class="form-field" onchange="salvarCabecalhoCotacaoCentral()"></div>
+                    <div class="campo"><label>Observação</label><textarea id="central-observacao-cotacao" class="form-field" onblur="salvarCabecalhoCotacaoCentral()"></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Atualizar via XML</button>
+                        <button class="actions-button is-neutral" onclick="abrirCotacaoParaEdicao(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-truck"></i></span> Editar Fornecedores</button>
+                    </div>
+                </div>
+
+                <div class="card" id="central-sem-cotacao" style="display:none;">
+                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma cotação cadastrada para este pedido ainda.</p>
+                    <button class="actions-button" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar Cotação</button>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="margin:0 0 10px;font-size:15px;">Complementar com Relatório do SmartCompras</h3>
+                    <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
+                    <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="processarRelatorioSmartComprasColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar Relatório</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
+                        <div id="relatorio-smartcompras-resumo"></div>
+                        <div class="actions-row" style="margin-top:10px;">
+                            <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
+                            <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="central-secao-titulo" style="margin-top:16px;">Fornecedores</div>
+                <div id="central-fornecedores-container"></div>
+
+                <div class="actions-row" style="margin:16px 0;">
+                    <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                    <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
+                </div>
+            </div>
+
             <div class="app-screen" id="screen-conta">
                 <div class="card">
                     <div class="conta-info">
@@ -520,6 +570,7 @@
                 <div class="campo">
                     <input type="text" id="anotacao-titulo" class="form-field" placeholder="Título da anotação" style="font-size: 18px; font-weight: 700;" oninput="agendarAutoSaveAnotacao()">
                 </div>
+                <div id="central-pedido-container" style="display:none;"></div>
                 <div class="rte-toolbar">
                     <button type="button" data-cmd="undo" title="Desfazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('undo')"><i class="fa-solid fa-rotate-left"></i></button>
                     <button type="button" data-cmd="redo" title="Refazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('redo')"><i class="fa-solid fa-rotate-right"></i></button>

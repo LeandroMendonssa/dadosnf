@@ -227,7 +227,7 @@ body[data-tab-icons="off"] .tab-item{font-size:11px;padding:10px 4px}
 .rte-editor hr{border:none;border-top:1px solid var(--border-color);margin:16px 0}
 .rte-editor.rte-compacto p{margin:2px 0}
 .rte-popover-wrap{position:relative;display:inline-flex}
-.rte-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;box-shadow:var(--shadow-lg);padding:10px;min-width:170px}
+.rte-popover{position:absolute;top:calc(100% + 6px);left:0;right:auto;z-index:20;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;box-shadow:var(--shadow-lg);padding:10px;min-width:170px;width:max-content}
 .rte-color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .rte-color-swatch{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border-color);cursor:pointer;padding:0}
 .rte-color-swatch:active{transform:scale(.9)}
@@ -511,3 +511,48 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 .material-divergencia{border-left:3px solid var(--accent-color);padding-left:12px;margin-bottom:16px}
 .material-divergencia-header{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
 .material-divergencia-header .divergencia-del{padding:2px 6px;font-size:13px}
+
+/* Central do Pedido — painel no topo da Anotação quando ela tem um "pedido"
+   ligado a uma cotação (cotacoes/{pedido}). Não duplica dado: só apresenta
+   junto o que já existe em cotacoes/{pedido} + as ocorrências já salvas
+   nessa própria anotação, agrupadas por fornecedor via CNPJ. */
+.central-pedido-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:14px;margin-bottom:14px}
+.central-pedido-datas{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--text-dark)}
+.central-pedido-datas strong{color:var(--text-light);font-weight:600}
+.central-pedido-obs{font-size:13px;color:var(--text-light);margin-top:8px;font-style:italic}
+.central-secao-titulo{font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 6px}
+.central-fornecedor{border:1px solid var(--border-color);border-radius:10px;margin-bottom:8px;overflow:hidden;background:var(--bg-primary)}
+.central-fornecedor-header{display:flex;align-items:center;gap:8px;padding:10px 12px;font-weight:600;font-size:13px;cursor:pointer;color:var(--text-dark)}
+.central-fornecedor-header i{font-size:11px;color:var(--text-light);width:12px}
+.central-fornecedor-body{padding:0 12px 12px}
+.central-item-linha{font-size:12.5px;color:var(--text-dark);padding:5px 0;border-bottom:1px solid var(--border-color)}
+.central-item-linha:last-child{border-bottom:none}
+.central-item-vazio{font-size:12px;color:var(--text-light);font-style:italic;padding:5px 0}
+.central-divergencia{color:var(--button-danger)}
+.central-nf-tag{display:inline-block;font-size:10px;font-weight:600;color:var(--text-light);border:1px solid var(--border-color);border-radius:6px;padding:1px 6px;margin-left:4px}
+
+/* Produto (fidelidade total ao XML — nome oficial, código, observação do
+   fornecedor, marca, embalagem, valores) — colapsado por padrão, expande ao
+   tocar pra não poluir a lista, mas nunca esconde dado nenhum. */
+.central-item-linha{cursor:pointer}
+.central-item-desc-linha{font-weight:600;color:var(--text-dark)}
+.central-item-sem-desc{font-weight:400;font-style:italic;color:var(--text-light)}
+.central-item-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:2px}
+.central-item-chevron{font-size:9px;opacity:.6}
+.central-item-detalhes{margin-top:6px;padding:8px 10px;background:var(--bg-tertiary);border-radius:8px;font-size:11.5px;color:var(--text-dark);display:flex;flex-direction:column;gap:3px}
+
+/* Divergência: linhas de material + status + histórico + controle de status */
+.central-divergencia-bloco{padding:8px 0;border-bottom:1px solid var(--border-color)}
+.central-divergencia-bloco:last-child{border-bottom:none}
+.central-divergencia-meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.central-status-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:2px 8px}
+.central-status-badge.status-pendente{background:color-mix(in srgb,var(--button-danger) 15%,transparent);color:var(--button-danger)}
+.central-status-badge.status-resolvida{background:color-mix(in srgb,var(--button-success) 15%,transparent);color:var(--button-success)}
+.central-status-badge.status-encerrada{background:color-mix(in srgb,var(--text-light) 15%,transparent);color:var(--text-light)}
+.central-status-toggle{background:none;border:none;color:var(--accent-color);font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;margin-left:auto}
+.central-historico{margin-top:6px;padding-left:10px;border-left:2px solid var(--border-color)}
+.central-historico-item{font-size:11px;color:var(--text-light);padding:2px 0}
+.central-status-form{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:10px;background:var(--bg-tertiary);border-radius:8px}
+
+/* Prévia do cruzamento do relatório do SmartCompras antes de confirmar */
+.central-relatorio-preview{margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color)}
