@@ -21,6 +21,8 @@ const anotacoesTextoCollection = firestore.collection('anotacoesTexto');
 const settingsDocRef = firestore.collection('config').doc('appSettings');
 const xmlExcecoesCollection = firestore.collection('xmlExcecoes');
 const cotacoesCollection = firestore.collection('cotacoes');
+const produtosSpDataCollection = firestore.collection('produtosSpData');
+const associacoesSpDataCollection = firestore.collection('associacoesSpData');
 
 // --- ESTADO GLOBAL ---
 let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], apelidosFornecedores = {};
@@ -38,6 +40,8 @@ let filtroAnotacoesTexto = '';
 let selecaoAnotacoesAtiva = false;
 let anotacoesSelecionadas = new Set();
 let listaCotacoes = [];
+let listaProdutosSpData = [];
+let listaAssociacoesSpData = [];
 let cotacaoEmEdicaoPedido = null; // null = nova cotação; string = editando cotação existente (doc id = pedido)
 let fornecedoresCotacaoAtual = []; // rascunho em memória enquanto o formulário está aberto
 let contadorFornecedorCotacaoId = 0;
@@ -116,8 +120,8 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -577,7 +581,17 @@ async function carregarEstado(){
     dataUnsubscribers.push(cotacoesCollection.orderBy('atualizadoEm', 'desc').onSnapshot(snapshot => {
         listaCotacoes = snapshot.docs.map(doc => ({ pedido: doc.id, ...doc.data() }));
         if (document.getElementById('lista-cotacoes-container')) renderListaCotacoes();
+        if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
     }, error => console.error("Erro ao carregar cotações:", error)));
+
+    dataUnsubscribers.push(produtosSpDataCollection.onSnapshot(snapshot => {
+        listaProdutosSpData = snapshot.docs.map(doc => ({ codigo: doc.id, ...doc.data() }));
+    }, error => console.error("Erro ao carregar produtos SP Data:", error)));
+
+    dataUnsubscribers.push(associacoesSpDataCollection.onSnapshot(snapshot => {
+        listaAssociacoesSpData = snapshot.docs.map(doc => ({ codigoSmartCompras: doc.id, ...doc.data() }));
+        if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
+    }, error => console.error("Erro ao carregar associações SP Data:", error)));
 
     dataUnsubscribers.push(anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
         listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
@@ -2140,6 +2154,56 @@ function renderCentralPedidoCompleto(pedido) {
 // e cruzado (código + CNPJ); até lá, fica marcado como pendente de
 // complementação, nunca escondido nem inventado.
 let centralProdutosExpandidos = new Set();
+let centralAssociacaoBuscaAberta = new Set();
+
+function renderAssociacaoSpDataWidget(it, chaveUnica) {
+    if (!it.codProduto) return '';
+    const chaveWidget = `assoc-${chaveUnica}`;
+    const associacao = listaAssociacoesSpData.find(a => a.codigoSmartCompras === it.codProduto);
+    const buscaAberta = centralAssociacaoBuscaAberta.has(chaveWidget);
+
+    if (associacao) {
+        const produto = listaProdutosSpData.find(p => p.codigo === associacao.spDataCodigo);
+        const linha = produto ? `${produto.codigo} — ${produto.nome} — ${produto.unidade}` : `${associacao.spDataCodigo} (produto não encontrado no cadastro atual)`;
+        return `<div class="central-spdata-linha">
+            <span><strong>SP Data:</strong> ${linha}</span>
+            <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); toggleBuscaAssociacaoSpData('${chaveWidget}')">${buscaAberta ? 'Cancelar' : 'Corrigir'}</button>
+        </div>${buscaAberta ? renderBuscaAssociacaoSpData(it, chaveWidget) : ''}`;
+    }
+
+    return `<div class="central-spdata-linha central-item-sem-desc">
+        <span>SP Data: não associado</span>
+        <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); toggleBuscaAssociacaoSpData('${chaveWidget}')">${buscaAberta ? 'Cancelar' : 'Associar'}</button>
+    </div>${buscaAberta ? renderBuscaAssociacaoSpData(it, chaveWidget) : ''}`;
+}
+function toggleBuscaAssociacaoSpData(chaveWidget) {
+    if (centralAssociacaoBuscaAberta.has(chaveWidget)) centralAssociacaoBuscaAberta.delete(chaveWidget);
+    else centralAssociacaoBuscaAberta.add(chaveWidget);
+    renderCentralPedidoCompleto(centralPedidoAtual);
+}
+// Sugestões iniciais aparecem ao abrir (baseadas no nome oficial do item, se
+// houver); busca manual atualiza só a lista de resultados via DOM direto
+// (não re-renderiza a Central inteira), senão o campo de texto perderia o
+// foco a cada letra digitada.
+function renderBuscaAssociacaoSpData(it, chaveWidget) {
+    const sugestoesIniciais = it.nomeOficial ? buscarSugestoesSpData(it.nomeOficial) : [];
+    const listaInicialHTML = sugestoesIniciais.length
+        ? sugestoesIniciais.slice(0, 8).map(p => `<div class="central-spdata-opcao" onclick="event.stopPropagation(); confirmarAssociacaoSpData('${it.codProduto}', '${p.codigo}')"><strong>${p.codigo}</strong> — ${p.nome} — ${p.unidade}</div>`).join('')
+        : '<div class="central-item-vazio">Nenhuma sugestão automática — busque manualmente pelo nome ou código.</div>';
+    return `<div class="central-spdata-busca" onclick="event.stopPropagation()">
+        <input type="text" class="form-field" placeholder="Buscar por nome ou código..." oninput="atualizarBuscaAssociacaoSpData('${chaveWidget}', '${it.codProduto}', this.value)">
+        <div class="central-spdata-opcoes" id="spdata-resultados-${chaveWidget}">${listaInicialHTML}</div>
+    </div>`;
+}
+function atualizarBuscaAssociacaoSpData(chaveWidget, codigoItem, texto) {
+    const container = document.getElementById(`spdata-resultados-${chaveWidget}`);
+    if (!container) return;
+    const candidatos = texto.trim() ? buscarSugestoesSpData(texto) : [];
+    container.innerHTML = candidatos.length
+        ? candidatos.slice(0, 8).map(p => `<div class="central-spdata-opcao" onclick="event.stopPropagation(); confirmarAssociacaoSpData('${codigoItem}', '${p.codigo}')"><strong>${p.codigo}</strong> — ${p.nome} — ${p.unidade}</div>`).join('')
+        : '<div class="central-item-vazio">Nenhum produto encontrado.</div>';
+}
+
 function renderLinhaProduto(it, chaveUnica) {
     const nomeOficial = it.nomeOficial ? upAud(it.nomeOficial) : null;
     const observacao = it.descricao && it.descricao !== '---' ? upAud(it.descricao) : '';
@@ -2150,7 +2214,7 @@ function renderLinhaProduto(it, chaveUnica) {
         ? `<div class="central-item-desc-linha">${nomeOficial}</div>`
         : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
 
-    const detalhesHTML = expandido ? `<div class="central-item-detalhes">
+    const detalhesHTML = expandido ? `<div class="central-item-detalhes" onclick="event.stopPropagation()">
         ${it.codProduto ? `<div>Código SmartCompras: ${it.codProduto}</div>` : ''}
         ${observacao ? `<div>Observação do Fornecedor: ${observacao}</div>` : ''}
         ${marca ? `<div>Marca: ${marca}</div>` : ''}
@@ -2158,6 +2222,7 @@ function renderLinhaProduto(it, chaveUnica) {
         ${it.quantidade ? `<div>Quantidade: ${it.quantidade}</div>` : ''}
         ${it.precoUnitario ? `<div>Valor Unitário: R$ ${it.precoUnitario}</div>` : ''}
         ${it.precoTotal ? `<div>Valor Total: R$ ${it.precoTotal}</div>` : ''}
+        ${renderAssociacaoSpDataWidget(it, chaveUnica)}
     </div>` : '';
 
     const resumoMeta = [it.codProduto ? `Cód. ${it.codProduto}` : '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ');
@@ -2744,11 +2809,23 @@ function processarXmlTexto(texto) {
     renderTabelaItensXml();
 }
 
+// Formata uma quantidade pra exibição: remove zeros desnecessários à direita
+// e usa vírgula decimal (padrão BR). Não afeta o valor usado internamente
+// (qCom/qTrib continuam com toFixed(4) na hora de gravar no XML) — isso é
+// só a apresentação na tela. Ex.: 2 → "2", 20 → "20", 20.5 → "20,5".
+function formatarQuantidadeXml(numero) {
+    return numero.toFixed(4).replace(/0+$/, '').replace(/\.$/, '').replace('.', ',');
+}
+
 function formatarPreviewXml(item) {
-    if (item.fator === 1) return `Sem conversão de qtd. (fator 1)`;
-    const novaQtd = (item.qComOriginal * item.fator).toFixed(4);
+    const qtdFinal = item.fator === 1 ? item.qComOriginal : (item.qComOriginal * item.fator);
+    const qtdFinalFmt = formatarQuantidadeXml(qtdFinal);
+    if (item.fator === 1) {
+        return `Sem conversão · Quantidade final: <b>${qtdFinalFmt} ${item.uComEl.textContent}</b>`;
+    }
+    const unidadeDestino = document.getElementById('xml-unidade-destino').value;
     const novoValor = (item.vUnComOriginal / item.fator).toFixed(7);
-    return `${item.qComOriginal} ${item.uComEl.textContent} → <b>${novaQtd} ${document.getElementById('xml-unidade-destino').value}</b> a R$ ${novoValor}`;
+    return `${formatarQuantidadeXml(item.qComOriginal)} ${item.uComEl.textContent} → Quantidade final: <b>${qtdFinalFmt} ${unidadeDestino}</b> a R$ ${novoValor}`;
 }
 
 function renderTabelaItensXml() {
@@ -3838,6 +3915,153 @@ async function confirmarRelatorioSmartCompras() {
     } catch (e) {
         console.error('Erro ao salvar relatório do SmartCompras:', e);
         toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
+
+// ============================================================
+// PRODUTOS SP DATA — camada de identidade padronizada, independente da
+// cotação. produtosSpData/{codigoSpData} é a fonte da verdade do cadastro;
+// associacoesSpData/{codigoSmartCompras} é a camada que liga um código
+// externo (SmartCompras) a essa identidade. Nada disso toca em
+// cotacoes/{pedido}.itens[] — a associação é resolvida ao vivo na Central,
+// nunca gravada dentro do item, pra uma correção futura refletir em todos
+// os pedidos que usam aquele código automaticamente.
+//
+// Parser já validado com o arquivo real (2.665 produtos, zero duplicidade,
+// largura de coluna confirmada pela borda do relatório, ISO-8859-1) — só
+// portado pra JS aqui, sem repetir a validação.
+// ============================================================
+
+function parseInventarioSpData(texto) {
+    const linhas = texto.split('\n');
+    const produtos = [];
+    // Posições fixas de coluna (mesmas encontradas nos '+' da borda do
+    // relatório real): Código, Nome, Unidade, Quantidade, Contagem, Preço.
+    const P = { codigo: [0, 7], nome: [7, 45], unidade: [45, 54], quantidade: [54, 67], preco: [81, 95] };
+    linhas.forEach(l => {
+        if (!/^\s*\d+\s/.test(l) || l.includes('Pag:')) return; // pula cabeçalho/rodapé/linhas de total
+        const codigo = l.slice(P.codigo[0], P.codigo[1]).trim();
+        const nome = l.slice(P.nome[0], P.nome[1]).trim();
+        const unidade = l.slice(P.unidade[0], P.unidade[1]).trim();
+        const quantidade = l.slice(P.quantidade[0], P.quantidade[1]).trim();
+        const preco = l.slice(P.preco[0], P.preco[1]).trim();
+        if (!codigo || !nome) return;
+        produtos.push({ codigo, nome: upAud(nome), unidade, quantidade, preco });
+    });
+    return produtos;
+}
+
+let inventarioSpDataPendente = null;
+
+function processarInventarioSpDataColado() {
+    const texto = document.getElementById('spdata-inventario-texto').value;
+    if (!texto.trim()) return toast('Cole o texto do relatório antes de processar.');
+    const produtos = parseInventarioSpData(texto);
+    if (produtos.length === 0) return toast('✕ Nenhum produto reconhecido nesse texto.');
+
+    const codigosExistentes = new Set(listaProdutosSpData.map(p => p.codigo));
+    const novos = produtos.filter(p => !codigosExistentes.has(p.codigo)).length;
+    const atualizados = produtos.length - novos;
+
+    inventarioSpDataPendente = produtos;
+    document.getElementById('spdata-resumo').innerHTML = `
+        <div class="xml-resumo-linha"><strong>Produtos no relatório:</strong> ${produtos.length}</div>
+        <div class="xml-resumo-linha"><strong>Novos:</strong> ${novos}</div>
+        <div class="xml-resumo-linha"><strong>Já cadastrados (serão atualizados):</strong> ${atualizados}</div>
+    `;
+    document.getElementById('spdata-preview').style.display = 'block';
+}
+
+function cancelarImportacaoSpData() {
+    inventarioSpDataPendente = null;
+    document.getElementById('spdata-preview').style.display = 'none';
+    document.getElementById('spdata-inventario-texto').value = '';
+}
+function atualizarContagemSpData() {
+    const el = document.getElementById('spdata-total-cadastrados');
+    if (el) el.textContent = `${listaProdutosSpData.length} produto(s) cadastrado(s) atualmente.`;
+}
+
+// Idempotente: reimportar o mesmo relatório não duplica nada — cada produto
+// é gravado por set() no doc cujo id é o próprio código SP Data, então
+// reimportar só reescreve os mesmos campos. importadoEm é preservado do
+// cadastro original quando o produto já existia (não fica "reimportado"
+// toda vez que o inventário é atualizado).
+async function confirmarImportacaoSpData() {
+    if (!inventarioSpDataPendente) return;
+    const produtos = inventarioSpDataPendente;
+    const agora = new Date().toISOString();
+    const porCodigo = new Map(listaProdutosSpData.map(p => [p.codigo, p]));
+    let novos = 0, atualizados = 0;
+
+    try {
+        for (let i = 0; i < produtos.length; i += 400) {
+            const lote = produtos.slice(i, i + 400);
+            const batch = firestore.batch();
+            lote.forEach(p => {
+                const existente = porCodigo.get(p.codigo);
+                const dados = {
+                    codigo: p.codigo,
+                    nome: p.nome,
+                    unidade: p.unidade,
+                    quantidadeInventario: p.quantidade,
+                    precoInventario: p.preco,
+                    importadoEm: existente ? existente.importadoEm : agora,
+                    atualizadoEm: agora
+                };
+                if (existente) atualizados++; else novos++;
+                batch.set(produtosSpDataCollection.doc(p.codigo), dados);
+            });
+            await batch.commit();
+        }
+        toast(`✓ Importação concluída: ${novos} novo(s), ${atualizados} atualizado(s).`);
+        cancelarImportacaoSpData();
+        atualizarContagemSpData();
+    } catch (e) {
+        console.error('Erro ao importar produtos SP Data:', e);
+        toast('✕ Erro ao importar. Tente novamente.');
+    }
+}
+
+// --- Sugestão de associação por nome — nunca decide sozinho, só filtra
+// candidatos. Correspondência exata primeiro; senão, todo token do nome do
+// item precisa aparecer no nome do produto SP Data (sem fuzzy matching,
+// sem IA — comparação de texto objetiva). ---
+function normalizarTextoBusca(s) {
+    return upAud(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+function buscarSugestoesSpData(nomeItem) {
+    const alvo = normalizarTextoBusca(nomeItem);
+    if (!alvo) return [];
+    const exatas = listaProdutosSpData.filter(p => normalizarTextoBusca(p.nome) === alvo);
+    if (exatas.length > 0) return exatas;
+    const tokensAlvo = alvo.split(/\s+/).filter(Boolean);
+    return listaProdutosSpData.filter(p => {
+        const nomeProd = normalizarTextoBusca(p.nome);
+        return tokensAlvo.every(t => nomeProd.includes(t));
+    });
+}
+
+// Confirma (ou corrige) uma associação. Histórico append-only: uma correção
+// nunca apaga a entrada anterior, só acrescenta uma nova e atualiza qual é
+// a atual (spDataCodigo no nível raiz do doc).
+async function confirmarAssociacaoSpData(codigoSmartCompras, spDataCodigo) {
+    if (!codigoSmartCompras || !spDataCodigo) return;
+    const agora = new Date().toISOString();
+    const existente = listaAssociacoesSpData.find(a => a.codigoSmartCompras === codigoSmartCompras);
+    const jaEraEssa = existente && existente.spDataCodigo === spDataCodigo;
+    const historico = existente ? [...(existente.historico || [])] : [];
+    if (!jaEraEssa) historico.push({ spDataCodigo, confirmadoEm: agora, tipo: existente ? 'correcao' : 'confirmacao' });
+
+    try {
+        await associacoesSpDataCollection.doc(codigoSmartCompras).set({
+            codigoSmartCompras, spDataCodigo, confirmadoEm: agora, historico
+        });
+        toast('✓ Associação confirmada.');
+        renderCentralPedidoCompleto(centralPedidoAtual);
+    } catch (e) {
+        console.error('Erro ao confirmar associação SP Data:', e);
+        toast('✕ Erro ao associar. Tente novamente.');
     }
 }
 

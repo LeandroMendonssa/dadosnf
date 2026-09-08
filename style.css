@@ -556,3 +556,12 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 
 /* Prévia do cruzamento do relatório do SmartCompras antes de confirmar */
 .central-relatorio-preview{margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color)}
+
+/* Associação Produto SP Data — mostrado dentro do produto expandido na
+   Central. Sugestões nunca aplicam sozinhas, sempre exigem toque explícito. */
+.central-spdata-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;padding-top:6px;border-top:1px dashed var(--border-color)}
+.central-spdata-busca{margin-top:8px;padding:8px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color)}
+.central-spdata-busca input{margin-bottom:6px}
+.central-spdata-opcoes{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto}
+.central-spdata-opcao{padding:6px 8px;background:var(--bg-secondary);border-radius:6px;font-size:11.5px;cursor:pointer;border:1px solid transparent}
+.central-spdata-opcao:active{border-color:var(--accent-color)}

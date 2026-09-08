@@ -212,6 +212,7 @@
                     <li><a data-screen="screen-cotacoes" data-title="Cotações" onclick="renderListaCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #5ac8fa;"></i> Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-xml-editor" data-title="Editor de XML (NF-e)"><i class="icon fa-solid fa-file-code" style="background-color: #ff9500;"></i> Editor de XML (NF-e) <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -314,6 +315,27 @@
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
                     <button class="actions-button is-success" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
                     <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-spdata">
+                <div class="card">
+                    <h3 style="margin:0 0 12px;font-size:16px;">Produtos SP Data</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Cole o texto do relatório de inventário do SP Data (Código, Nome, Unidade) — a identidade padronizada usada pra associar os itens das cotações.</p>
+                    <div class="campo"><textarea id="spdata-inventario-texto" class="form-field" style="min-height:120px;" placeholder="Cole aqui o relatório de inventário..."></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="processarInventarioSpDataColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="spdata-preview" style="display:none;">
+                        <div id="spdata-resumo"></div>
+                        <div class="actions-row" style="margin-top:10px;">
+                            <button class="actions-button is-success" onclick="confirmarImportacaoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
+                            <button class="actions-button is-neutral" onclick="cancelarImportacaoSpData()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <p style="margin:0;font-size:12px;color:var(--text-light);" id="spdata-total-cadastrados"></p>
                 </div>
             </div>
 
