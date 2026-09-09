@@ -209,9 +209,7 @@
                 <ul class="settings-list-group">
                     <li><a data-screen="screen-import" data-title="Importar Relatório (ERP)"><i class="icon fa-solid fa-file-import" style="background-color: #007aff;"></i> Importar Relatório (ERP) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a data-screen="screen-cotacoes" data-title="Cotações" onclick="renderListaCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #5ac8fa;"></i> Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a data-screen="screen-xml-editor" data-title="Editor de XML (NF-e)"><i class="icon fa-solid fa-file-code" style="background-color: #ff9500;"></i> Editor de XML (NF-e) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -288,8 +286,8 @@
             </div>
             <div class="app-screen" id="screen-xml-editor">
                 <div class="card">
-                    <h3 style="margin:0 0 12px;font-size:16px;">Editor de XML (NF-e)</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Converte quantidades de caixa/pacote pra unidade de dispensação, ajustando lotes e valores automaticamente antes de importar no ERP.</p>
+                    <h3 style="margin:0 0 12px;font-size:16px;">Entrada de NF</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
                     <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
                         <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
                         <div>Toque para escolher o arquivo .xml da NF-e</div>
@@ -302,6 +300,12 @@
                     </div>
                 </div>
 
+                <div class="card" id="xml-card-identificacao" style="display:none;margin-top:16px;">
+                    <h3 style="margin:0 0 6px;font-size:16px;">NF-e carregada</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">Confira se é o arquivo certo antes de seguir — dados extraídos direto do XML.</p>
+                    <div id="xml-identificacao-container" style="font-size:13px;line-height:1.6;"></div>
+                </div>
+
                 <div class="card" id="xml-card-itens" style="display:none;margin-top:16px;">
                     <h3 style="margin:0 0 6px;font-size:16px;">Revise o fator de conversão</h3>
                     <p style="margin-top:0;color:var(--text-light);font-size:12px;">O fator vem da descrição do produto (ex: "C/10" = 10). Edite se estiver errado — sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
@@ -310,6 +314,16 @@
                         <tbody id="xml-tbody-itens"></tbody>
                     </table>
                     <div class="xml-resumo" id="xml-resumo"></div>
+                </div>
+
+                <div class="card" id="xml-card-associacao" style="display:none;margin-top:16px;">
+                    <h3 style="margin:0 0 6px;font-size:16px;">Associação com a Cotação</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">Liga o código do fornecedor (vindo do XML da NF-e) ao item correspondente da cotação. É a base do histórico — não decide sozinho, só guarda o que você confirmar.</p>
+                    <div class="campo">
+                        <label>Pedido/Cotação correspondente</label>
+                        <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
+                    </div>
+                    <div id="xml-associacao-container" style="margin-top:12px;"></div>
                 </div>
 
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
@@ -446,6 +460,19 @@
                 <div class="actions-row" style="margin:16px 0;">
                     <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
                     <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
+                </div>
+
+                <div class="central-secao-titulo" style="margin-top:16px;">Anotação do Pedido</div>
+                <div class="card" id="central-anotacao-card" style="display:none;">
+                    <div id="central-anotacao-conteudo" class="form-field" contenteditable="true" style="min-height:100px;line-height:1.5;" oninput="agendarSalvarAnotacaoInlineCentral()"></div>
+                    <p style="margin:8px 0 0;font-size:11px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
+                    <div class="actions-row" style="margin-top:10px;">
+                        <button class="actions-button is-neutral" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-expand"></i></span> Abrir Edição Completa</button>
+                    </div>
+                </div>
+                <div class="card" id="central-anotacao-vazia" style="display:none;">
+                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma anotação para este pedido ainda.</p>
+                    <button class="actions-button" onclick="criarAnotacaoInlineCentral()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Criar Anotação</button>
                 </div>
             </div>
 

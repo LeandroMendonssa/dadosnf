@@ -23,6 +23,13 @@ const xmlExcecoesCollection = firestore.collection('xmlExcecoes');
 const cotacoesCollection = firestore.collection('cotacoes');
 const produtosSpDataCollection = firestore.collection('produtosSpData');
 const associacoesSpDataCollection = firestore.collection('associacoesSpData');
+// associacoesFornecedor/{cnpjEmit::codigoFornecedor} — 1ª etapa da cadeia
+// NF-e → código do fornecedor → item da cotação (fase 2 do roadmap). Liga o
+// código estruturado do fornecedor (cProd, vindo do XML da NF-e) ao
+// codigoSmartCompras do item correspondente na cotação. A ligação até o SP
+// Data continua sendo feita pela associacoesSpDataCollection já existente
+// (chave = codigoSmartCompras), então não precisou duplicar essa parte.
+const associacoesFornecedorCollection = firestore.collection('associacoesFornecedor');
 
 // --- ESTADO GLOBAL ---
 let notasPendentes = [], historicoNotas = [], fornecedoresSugeridos = [], observacoesSugeridas = [], apelidosFornecedores = {};
@@ -68,7 +75,7 @@ const AUDITORIA_TEXTOS_DEFAULT = {
 let appConfig = {
     personalizacao: { 
         theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, transicaoTela: 'fade', densidade: 'confortavel', mostrarIconesAbas: 'on',
-        menuOrder: ['screen-add', 'screen-manage', 'screen-reports', 'screen-export', 'screen-history', 'screen-anotacoes', 'screen-settings'] 
+        menuOrder: ['screen-cotacoes', 'screen-xml-editor', 'screen-add', 'screen-manage', 'screen-reports', 'screen-export', 'screen-history', 'screen-anotacoes', 'screen-settings'] 
     },
     anotacoes: '', fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"],
     auditoriaTextos: { ...AUDITORIA_TEXTOS_DEFAULT }
@@ -115,13 +122,19 @@ const menuDetails = {
     'screen-anotacoes': { icon: 'fa-solid fa-sticky-note', material: 'note_alt', title: 'Anotações',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M20 9h-7V2l7 7z"/><path d="M6 2h7.5L20 8.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`},
+    'screen-cotacoes': { icon: 'fa-solid fa-file-contract', material: 'request_quote', title: 'Cotações',
+        outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>`,
+        duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M9 13h6v1H9zm0 4h6v1H9z"/></svg>`},
+    'screen-xml-editor': { icon: 'fa-solid fa-file-invoice', material: 'receipt_long', title: 'Entrada de NF',
+        outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"></path><line x1="9" y1="8" x2="15" y2="8"></line><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="12" y2="16"></line></svg>`,
+        duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M16 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/><path d="M9 8h6v1H9zm0 4h6v1H9zm0 4h3v1H9z"/></svg>`},
     'screen-settings': { icon: 'fa-solid fa-cog', material: 'settings', title: 'Ajustes',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-xml-editor': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-cotacoes': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -508,6 +521,20 @@ function iniciarListenerConfiguracoes() {
             }
             // ------------------------------------------------------------
 
+            // --- CORREÇÃO: FORÇA A INCLUSÃO DE 'COTAÇÕES' E 'ENTRADA DE NF' ---
+            // Essas duas telas deixaram de ser subitens de Ajustes e viraram abas
+            // principais; quem já tinha uma ordem salva sem elas precisa recebê-las
+            // agora, senão ficam inacessíveis pelo menu principal.
+            if (appConfig.personalizacao.menuOrder) {
+                if (!appConfig.personalizacao.menuOrder.includes('screen-cotacoes')) {
+                    appConfig.personalizacao.menuOrder.unshift('screen-cotacoes');
+                }
+                if (!appConfig.personalizacao.menuOrder.includes('screen-xml-editor')) {
+                    appConfig.personalizacao.menuOrder.splice(1, 0, 'screen-xml-editor');
+                }
+            }
+            // ------------------------------------------------------------
+
         } else { 
             settingsDocRef.set({ observacoes: appConfig.observacoes }, { merge: true }); 
         } 
@@ -592,6 +619,19 @@ async function carregarEstado(){
         listaAssociacoesSpData = snapshot.docs.map(doc => ({ codigoSmartCompras: doc.id, ...doc.data() }));
         if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
     }, error => console.error("Erro ao carregar associações SP Data:", error)));
+
+    dataUnsubscribers.push(associacoesFornecedorCollection.onSnapshot(snapshot => {
+        bancoAssociacoesFornecedor = {};
+        snapshot.docs.forEach(doc => { bancoAssociacoesFornecedor[doc.id] = doc.data(); });
+        if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
+    }, error => console.error("Erro ao carregar associações de fornecedor:", error)));
+
+    // Histórico entradasErp: só carregado em memória por enquanto (sem tela
+    // própria ainda) — fica pronto pra quando a comparação com NF/cotação
+    // for implementada numa fase futura.
+    dataUnsubscribers.push(entradasErpCollection.onSnapshot(snapshot => {
+        listaEntradasErp = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }, error => console.error("Erro ao carregar histórico de entradas do ERP:", error)));
 
     dataUnsubscribers.push(anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
         listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
@@ -1768,7 +1808,7 @@ function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a 
 
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); if (screenId === 'screen-cotacoes') renderListaCotacoes(); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
@@ -2140,6 +2180,68 @@ function renderCentralPedidoCompleto(pedido) {
     }
 
     document.getElementById('central-btn-texto-livre').style.display = nota ? '' : 'none';
+
+    // Anotação embutida no próprio contexto do pedido (correção desta rodada):
+    // mesma anotação/estrutura de sempre (anotacoesTextoCollection, casada
+    // por `pedido`), só que exibida e editável aqui, sem precisar navegar pra
+    // Anotações. Guarda contra sobrescrever o que a pessoa está digitando: só
+    // substitui o conteúdo do campo se ele não estiver com foco no momento.
+    centralAnotacaoId = nota ? nota.id : null;
+    const anotCard = document.getElementById('central-anotacao-card');
+    const anotVazia = document.getElementById('central-anotacao-vazia');
+    if (anotCard && anotVazia) {
+        if (nota) {
+            anotCard.style.display = 'block';
+            anotVazia.style.display = 'none';
+            const campo = document.getElementById('central-anotacao-conteudo');
+            if (campo && document.activeElement !== campo) campo.innerHTML = nota.conteudo || '';
+        } else {
+            anotCard.style.display = 'none';
+            anotVazia.style.display = 'block';
+        }
+    }
+}
+
+let centralAnotacaoId = null;
+let autoSaveAnotacaoInlineCentralTimeout = null;
+
+function agendarSalvarAnotacaoInlineCentral() {
+    clearTimeout(autoSaveAnotacaoInlineCentralTimeout);
+    autoSaveAnotacaoInlineCentralTimeout = setTimeout(salvarAnotacaoInlineCentral, 1200);
+}
+
+async function salvarAnotacaoInlineCentral() {
+    if (!centralAnotacaoId) return;
+    const campo = document.getElementById('central-anotacao-conteudo');
+    if (!campo) return;
+    try {
+        await anotacoesTextoCollection.doc(centralAnotacaoId).update({ conteudo: campo.innerHTML, atualizadoEm: new Date().toISOString() });
+    } catch (e) {
+        console.error('Erro ao salvar anotação inline da Central:', e);
+    }
+}
+
+// Reaproveita a mesma criação usada na cotação (criarOuAtualizarAnotacaoDaCotacao)
+// — sem estrutura de dados nova. Preenche o campo na hora, sem esperar o
+// listener em tempo real, pra já aparecer editável assim que criada.
+async function criarAnotacaoInlineCentral() {
+    if (!centralPedidoAtual) return;
+    const cotacao = listaCotacoes.find(c => c.pedido === centralPedidoAtual);
+    const origem = cotacao ? cotacao.origem : '';
+    const dataPedido = cotacao ? cotacao.dataPedido : '';
+    const dataLimite = cotacao ? cotacao.dataLimite : '';
+    const fornecedores = cotacao ? cotacao.fornecedores : [];
+    try {
+        const id = await criarOuAtualizarAnotacaoDaCotacao(centralPedidoAtual, origem, dataPedido, dataLimite, fornecedores);
+        if (!id) return toast('✕ Erro ao criar anotação.');
+        centralAnotacaoId = id;
+        document.getElementById('central-anotacao-card').style.display = 'block';
+        document.getElementById('central-anotacao-vazia').style.display = 'none';
+        document.getElementById('central-anotacao-conteudo').innerHTML = montarCabecalhoAnotacaoCotacao(centralPedidoAtual, origem, dataPedido, dataLimite, fornecedores);
+    } catch (e) {
+        console.error('Erro ao criar anotação do pedido:', e);
+        toast('✕ Erro ao criar anotação.');
+    }
 }
 
 // Produto sempre mostra o que realmente veio do XML — nunca inventa uma
@@ -2205,18 +2307,29 @@ function atualizarBuscaAssociacaoSpData(chaveWidget, codigoItem, texto) {
 }
 
 function renderLinhaProduto(it, chaveUnica) {
-    const nomeOficial = it.nomeOficial ? upAud(it.nomeOficial) : null;
+    const nomeOficialSmartCompras = it.nomeOficial ? upAud(it.nomeOficial) : null;
     const observacao = it.descricao && it.descricao !== '---' ? upAud(it.descricao) : '';
     const marca = it.fabricante && it.fabricante !== '---' ? it.fabricante : '';
     const expandido = centralProdutosExpandidos.has(chaveUnica);
 
-    const tituloHTML = nomeOficial
-        ? `<div class="central-item-desc-linha">${nomeOficial}</div>`
-        : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
+    // Depois que existe associação confirmada com o SP Data, a identidade
+    // interna (SP Data) passa a ser a identificação PRINCIPAL exibida na
+    // lista — nada do SmartCompras é apagado, só deixa de ser o título e
+    // passa pros detalhes expandidos (ver detalhesHTML abaixo).
+    const associacaoSpData = it.codProduto ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === it.codProduto) : null;
+    const produtoSpData = associacaoSpData ? listaProdutosSpData.find(p => p.codigo === associacaoSpData.spDataCodigo) : null;
+
+    const tituloHTML = produtoSpData
+        ? `<div class="central-item-desc-linha">${produtoSpData.codigo} — ${produtoSpData.nome}</div>`
+        : nomeOficialSmartCompras
+            ? `<div class="central-item-desc-linha">${nomeOficialSmartCompras}</div>`
+            : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
 
     const detalhesHTML = expandido ? `<div class="central-item-detalhes" onclick="event.stopPropagation()">
+        ${produtoSpData ? `<div>SP Data: ${produtoSpData.codigo}</div><div>Nome oficial SP Data: ${produtoSpData.nome}</div>` : ''}
         ${it.codProduto ? `<div>Código SmartCompras: ${it.codProduto}</div>` : ''}
-        ${observacao ? `<div>Observação do Fornecedor: ${observacao}</div>` : ''}
+        ${nomeOficialSmartCompras ? `<div>Nome oficial SmartCompras: ${nomeOficialSmartCompras}</div>` : ''}
+        ${observacao ? `<div>Descrição/observação original SmartCompras: ${observacao}</div>` : ''}
         ${marca ? `<div>Marca: ${marca}</div>` : ''}
         ${it.embalagem ? `<div>Embalagem: ${it.embalagem}</div>` : ''}
         ${it.quantidade ? `<div>Quantidade: ${it.quantidade}</div>` : ''}
@@ -2728,6 +2841,12 @@ let nomeArquivoXmlOriginal = 'nfe-corrigida.xml';
 let itensXmlDetectados = [];
 let bancoExcecoesXml = {};
 
+// --- Associação NF-e → código do fornecedor → item da cotação (fase 2) ---
+let nfeInfoAtual = null; // { cnpjEmit, nNF } da NF-e atualmente carregada no editor
+let bancoAssociacoesFornecedor = {}; // chave (cnpjEmit::cProd) -> doc de associacoesFornecedor
+let pedidoSelecionadoXml = null; // pedido/cotação escolhido pra associar os itens desta NF-e
+let associacaoFornecedorBuscaAberta = new Set();
+
 function detectarFatorXml(xProd) {
     const texto = xProd.toUpperCase();
     const matchFD = texto.match(/\bFD\s?(\d+)\b/);
@@ -2765,7 +2884,22 @@ function processarXmlTexto(texto) {
     }
 
     const cnpjEmit = xmlDocAtual.querySelector('emit CNPJ')?.textContent || '';
+    const nNF = xmlDocAtual.querySelector('ide nNF')?.textContent || '';
     const dets = Array.from(xmlDocAtual.getElementsByTagName('det'));
+
+    // Identificação da NF (Parte 6): só dados estruturados que já existem no
+    // XML, nada inferido/adivinhado — pra confirmar visualmente, antes de
+    // qualquer processamento, que é o arquivo certo.
+    const nfeIdentificacao = {
+        fornecedor: xmlDocAtual.querySelector('emit xNome')?.textContent || '',
+        cnpjEmit,
+        nNF,
+        serie: xmlDocAtual.querySelector('ide serie')?.textContent || '',
+        emissao: xmlDocAtual.querySelector('ide dhEmi')?.textContent || xmlDocAtual.querySelector('ide dEmi')?.textContent || '',
+        vencimentos: Array.from(xmlDocAtual.querySelectorAll('cobr dup dVenc')).map(el => el.textContent).filter(Boolean),
+        valorTotal: xmlDocAtual.querySelector('total ICMSTot vNF')?.textContent || '',
+        qtdItens: dets.length
+    };
 
     itensXmlDetectados = dets.map(detEl => {
         const prod = detEl.getElementsByTagName('prod')[0];
@@ -2807,6 +2941,52 @@ function processarXmlTexto(texto) {
     document.getElementById('xml-card-itens').style.display = 'block';
     document.getElementById('xml-acoes-finais').style.display = 'flex';
     renderTabelaItensXml();
+    renderIdentificacaoXml(nfeIdentificacao);
+
+    // Base da associação com a cotação (fase 2 do roadmap): só identifica o
+    // fornecedor/NF e deixa pronto pra usuário escolher o pedido — não mexe
+    // em nada do que já estava funcionando acima.
+    nfeInfoAtual = { cnpjEmit, nNF };
+    associacaoFornecedorBuscaAberta = new Set();
+    const cotacoesDoFornecedor = listaCotacoes.filter(c => (c.fornecedores || []).some(f => f.cnpj === cnpjEmit));
+    pedidoSelecionadoXml = cotacoesDoFornecedor.length === 1 ? cotacoesDoFornecedor[0].pedido : null;
+    document.getElementById('xml-card-associacao').style.display = 'block';
+    renderAssociacaoCotacaoXml();
+}
+
+// Formata datas do XML (dhEmi vem com hora/timezone, dEmi já vem só a data) e
+// valores monetários pra exibição BR — só formatação visual, não altera o
+// dado nem participa de nenhum cálculo.
+function formatarDataCompletaBR(valor) {
+    if (!valor) return '';
+    const dataParte = valor.split('T')[0];
+    const partes = dataParte.split('-');
+    return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : valor;
+}
+function formatarValorMonetarioBR(valor) {
+    const n = parseFloat(valor);
+    if (isNaN(n)) return '';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderIdentificacaoXml(info) {
+    const card = document.getElementById('xml-card-identificacao');
+    const container = document.getElementById('xml-identificacao-container');
+    if (!card || !container) return;
+
+    const linhas = [
+        info.fornecedor ? `<div><strong>Fornecedor:</strong> ${info.fornecedor}</div>` : '',
+        info.cnpjEmit ? `<div><strong>CNPJ:</strong> ${info.cnpjEmit}</div>` : '',
+        info.nNF ? `<div><strong>NF:</strong> ${info.nNF}</div>` : '',
+        info.serie ? `<div><strong>Série:</strong> ${info.serie}</div>` : '',
+        info.emissao ? `<div><strong>Emissão:</strong> ${formatarDataCompletaBR(info.emissao)}</div>` : '',
+        info.vencimentos.length ? `<div><strong>Vencimento${info.vencimentos.length > 1 ? 's' : ''}:</strong> ${info.vencimentos.map(formatarDataCompletaBR).join(', ')}</div>` : '',
+        info.valorTotal ? `<div><strong>Valor total:</strong> R$ ${formatarValorMonetarioBR(info.valorTotal)}</div>` : '',
+        `<div><strong>Itens:</strong> ${info.qtdItens}</div>`
+    ].filter(Boolean).join('');
+
+    container.innerHTML = linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>';
+    card.style.display = 'block';
 }
 
 // Formata uma quantidade pra exibição: remove zeros desnecessários à direita
@@ -2874,6 +3054,165 @@ function limparBancoExcecoesXml() {
             if (xmlDocAtual) renderTabelaItensXml();
         }
     });
+}
+
+// ============================================================
+// ASSOCIAÇÃO NF-e → CÓDIGO DO FORNECEDOR → ITEM DA COTAÇÃO — Fase 2
+// Primeira etapa da cadeia do roadmap (NF-e → fornecedor → cotação → SP
+// Data). O código do fornecedor vem exclusivamente do campo estruturado
+// cProd do XML (nunca de observação/descrição). A ligação até o SP Data
+// continua sendo feita depois, pela tela de associação SP Data já
+// existente (Central do Pedido) — aqui só se resolve o primeiro elo.
+// Histórico append-only, mesmo padrão de confirmarAssociacaoSpData: uma
+// correção nunca apaga a associação anterior, só acrescenta e atualiza
+// qual é a atual.
+// ============================================================
+
+function chaveAssociacaoFornecedor(cnpjEmit, codigoFornecedor) {
+    return `${cnpjEmit}::${codigoFornecedor}`.replace(/\//g, '_');
+}
+
+function selecionarPedidoAssociacaoXml(pedido) {
+    pedidoSelecionadoXml = pedido || null;
+    renderAssociacaoCotacaoXml();
+}
+
+function toggleCorrecaoAssociacaoFornecedor(chave) {
+    if (associacaoFornecedorBuscaAberta.has(chave)) associacaoFornecedorBuscaAberta.delete(chave);
+    else associacaoFornecedorBuscaAberta.add(chave);
+    renderAssociacaoCotacaoXml();
+}
+
+function renderAssociacaoCotacaoXml() {
+    const container = document.getElementById('xml-associacao-container');
+    const seletorPedido = document.getElementById('xml-associacao-pedido');
+    if (!container || !seletorPedido || !nfeInfoAtual) return;
+
+    // O CNPJ da NF pode ser diferente do CNPJ cadastrado na cotação (CDs/
+    // filiais do mesmo fornecedor) — por isso o seletor sempre lista TODAS
+    // as cotações, nunca só as que têm esse CNPJ. O CNPJ ainda serve como
+    // sinal pra pré-selecionar automaticamente (só quando é o único jeito
+    // determinístico de decidir, ver processarXmlTexto), mas nunca como
+    // filtro que esconde opções — a seleção manual precisa continuar
+    // sempre disponível.
+    const pedidosOrdenados = ordenarCotacoes(listaCotacoes);
+    seletorPedido.innerHTML = '<option value="">Selecione o pedido/cotação...</option>' +
+        pedidosOrdenados.map(c => `<option value="${c.pedido}" ${pedidoSelecionadoXml === c.pedido ? 'selected' : ''}>${c.pedido}${c.origem ? ' — ' + c.origem : ''}</option>`).join('');
+
+    if (pedidosOrdenados.length === 0) {
+        container.innerHTML = '<div class="central-item-vazio">Nenhuma cotação cadastrada ainda. Cadastre a cotação correspondente pra poder associar os itens desta NF-e.</div>';
+        return;
+    }
+
+    const cotacaoAtual = listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml);
+    // Não filtra por CNPJ aqui: depois que o usuário escolheu a cotação, ele
+    // já resolveu a ambiguidade — mostrar só os itens do fornecedor "certo"
+    // por CNPJ esconderia justamente os casos de CD/filial que motivaram
+    // essa correção. Cada opção mostra o fornecedor pra escolha ficar clara.
+    const itensDaCotacao = cotacaoAtual ? (cotacaoAtual.itens || []) : [];
+
+    // Resumo do pedido escolhido (item 2/11 da fase de encadeamento): contexto
+    // fixo no topo, pra sempre ficar claro contra qual pedido a NF está sendo
+    // processada — nada novo é gravado aqui, só leitura da cotação já carregada.
+    const resumoPedidoHTML = cotacaoAtual ? `<div class="central-spdata-linha" style="background:var(--bg-tertiary);">
+        <span><strong>Pedido:</strong> ${cotacaoAtual.pedido}${cotacaoAtual.origem ? ` &nbsp; <strong>Destino:</strong> ${cotacaoAtual.origem}` : ''} &nbsp; <strong>Fornecedores:</strong> ${(cotacaoAtual.fornecedores || []).length}</span>
+    </div>` : '';
+
+    const linhasItens = itensXmlDetectados.map((item) => {
+        const chave = chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd);
+        const associacao = bancoAssociacoesFornecedor[chave];
+        const buscaAberta = associacaoFornecedorBuscaAberta.has(chave);
+
+        if (!cotacaoAtual && !associacao) {
+            return `<div class="central-spdata-linha central-item-sem-desc">
+                <span><strong>${item.xProd}</strong> (cód. fornecedor ${item.cProd}) — selecione o pedido acima para associar</span>
+            </div>`;
+        }
+
+        const opcoesHTML = itensDaCotacao.map(it => {
+            const fornecedorIt = (cotacaoAtual.fornecedores || []).find(f => f.cnpj === it.cnpjFornecedor);
+            const nomeForn = fornecedorIt ? nomeExibicaoFornecedor(fornecedorIt.razaoSocial) : (it.cnpjFornecedor || 'fornecedor não identificado');
+            return `<option value="${it.codProduto}">${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'} (${nomeForn})</option>`;
+        }).join('');
+        const buscaHTML = `<div class="central-spdata-busca" onclick="event.stopPropagation()">
+            <select class="form-field" id="assoc-forn-select-${chave}">
+                <option value="">Selecione o item da cotação...</option>
+                ${opcoesHTML}
+            </select>
+            <button type="button" class="central-status-toggle" onclick="confirmarSelecaoAssociacaoFornecedor('${chave}')">Confirmar</button>
+        </div>`;
+
+        if (associacao) {
+            const itemCotacao = itensDaCotacao.find(it => it.codProduto === associacao.codigoSmartCompras);
+            const nomeItem = itemCotacao
+                ? (itemCotacao.nomeOficial || itemCotacao.descricao || associacao.codigoSmartCompras)
+                : `${associacao.codigoSmartCompras} (item não encontrado nesta cotação)`;
+
+            // Fornecedor da cotação correspondente: SEMPRE derivado do item já
+            // associado (cnpjFornecedor do próprio item na cotação) — nenhuma
+            // associação/coleção nova, só leitura do que já existe.
+            const fornecedorCotacao = itemCotacao
+                ? (cotacaoAtual.fornecedores || []).find(f => f.cnpj === itemCotacao.cnpjFornecedor)
+                : null;
+            const nomeFornecedorCotacao = fornecedorCotacao ? nomeExibicaoFornecedor(fornecedorCotacao.razaoSocial) : '';
+
+            // Encadeamento até o SP Data: só reaproveita a associação item→SP
+            // Data já existente (associacoesSpData) — nunca cria nem sugere,
+            // só mostra quando já está confirmada.
+            const associacaoSpData = itemCotacao ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === itemCotacao.codProduto) : null;
+            const produtoSpData = associacaoSpData ? listaProdutosSpData.find(p => p.codigo === associacaoSpData.spDataCodigo) : null;
+            const spDataHTML = produtoSpData
+                ? ` → <strong>SP Data:</strong> ${produtoSpData.codigo} — ${produtoSpData.nome}`
+                : itemCotacao ? ` → SP Data: ainda não associado` : '';
+
+            return `<div class="central-spdata-linha">
+                <span><strong>${item.xProd}</strong> (cód. fornecedor ${item.cProd}) → Cotação: ${nomeItem}${nomeFornecedorCotacao ? ` (${nomeFornecedorCotacao})` : ''}${spDataHTML}</span>
+                <button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${chave}')">${buscaAberta ? 'Cancelar' : 'Corrigir'}</button>
+            </div>${buscaAberta ? buscaHTML : ''}`;
+        }
+
+        return `<div class="central-spdata-linha central-item-sem-desc">
+            <span><strong>${item.xProd}</strong> (cód. fornecedor ${item.cProd}) — não associado</span>
+            <button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${chave}')">${buscaAberta ? 'Cancelar' : 'Associar'}</button>
+        </div>${buscaAberta ? buscaHTML : ''}`;
+    }).join('');
+
+    container.innerHTML = resumoPedidoHTML + linhasItens;
+}
+
+function confirmarSelecaoAssociacaoFornecedor(chave) {
+    const select = document.getElementById(`assoc-forn-select-${chave}`);
+    const codigoSmartCompras = select ? select.value : '';
+    if (!codigoSmartCompras) return toast('✕ Selecione um item da cotação antes de confirmar.');
+    confirmarAssociacaoFornecedor(chave, codigoSmartCompras);
+}
+
+async function confirmarAssociacaoFornecedor(chave, codigoSmartCompras) {
+    if (!chave || !codigoSmartCompras || !nfeInfoAtual) return;
+    const item = itensXmlDetectados.find(i => chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, i.cProd) === chave);
+    if (!item) return;
+
+    const agora = new Date().toISOString();
+    const existente = bancoAssociacoesFornecedor[chave];
+    const jaEraEssa = existente && existente.codigoSmartCompras === codigoSmartCompras;
+    const historico = existente ? [...(existente.historico || [])] : [];
+    if (!jaEraEssa) historico.push({ codigoSmartCompras, confirmadoEm: agora, tipo: existente ? 'correcao' : 'confirmacao' });
+
+    try {
+        await associacoesFornecedorCollection.doc(chave).set({
+            cnpjFornecedor: nfeInfoAtual.cnpjEmit,
+            codigoFornecedor: item.cProd,
+            codigoSmartCompras,
+            nfNumero: nfeInfoAtual.nNF || '',
+            confirmadoEm: agora,
+            historico
+        });
+        associacaoFornecedorBuscaAberta.delete(chave);
+        toast('✓ Associação com a cotação confirmada.');
+    } catch (e) {
+        console.error('Erro ao confirmar associação de fornecedor:', e);
+        toast('✕ Erro ao associar. Tente novamente.');
+    }
 }
 
 async function baixarXmlConvertido() {
@@ -3256,40 +3595,102 @@ function alternarOrdenacaoCotacoes(valor) {
     renderListaCotacoes();
 }
 
+// Cotação "bate" na pesquisa se o termo aparecer em qualquer um dos campos
+// estruturados de identificação do produto já existentes em cotacao.itens.
+// Retorna os itens correspondentes (não só um booleano) porque o resultado
+// da pesquisa passou a mostrar o item encontrado diretamente, não só a
+// cotação. Busca 100% local em listaCotacoes — sem consulta ao Firestore a
+// cada tecla, sem fuzzy matching, só correspondência textual parcial.
+function itensCorrespondentesCotacao(cotacao, termo) {
+    return (cotacao.itens || []).filter(it =>
+        (it.nomeOficial || '').toUpperCase().includes(termo) ||
+        (it.descricao || '').toUpperCase().includes(termo) ||
+        (it.fabricante || '').toUpperCase().includes(termo) ||
+        (it.embalagem || '').toUpperCase().includes(termo) ||
+        (it.codProduto || '').toUpperCase().includes(termo)
+    );
+}
+
+function renderCardCotacao(c) {
+    const qtdFornecedores = (c.fornecedores || []).length;
+    const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
+    return `<div class="nota-item" onclick="abrirCentralPedido('${c.pedido}')">
+        <div class="nota-info">${c.pedido}${c.origem ? ' - ' + c.origem : ''}</div>
+        <div class="nota-detalhes">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · Limite: ' + dataLimite : ''}</div>
+    </div>`;
+}
+
+// Resultado de pesquisa por produto: mostra o ITEM encontrado com o contexto
+// necessário (pedido + fornecedor), não só "esta cotação contém algo" — é o
+// que permite responder direto "em quais pedidos esse produto aparece e com
+// qual fornecedor", sem abrir fornecedor por fornecedor manualmente. Se o
+// mesmo produto aparecer com mais de um fornecedor na cotação, cada um vira
+// uma linha separada (um por item correspondente).
+function renderCardResultadoItem(cotacao, item) {
+    const fornecedor = (cotacao.fornecedores || []).find(f => f.cnpj === item.cnpjFornecedor);
+    const nomeProduto = item.nomeOficial ? upAud(item.nomeOficial) : (item.descricao ? upAud(item.descricao) : 'Produto sem nome identificado');
+    const nomeFornecedor = fornecedor ? nomeExibicaoFornecedor(fornecedor.razaoSocial) : (item.cnpjFornecedor || 'Fornecedor não identificado');
+    const associacao = item.codProduto ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === item.codProduto) : null;
+    const produtoSpData = associacao ? listaProdutosSpData.find(p => p.codigo === associacao.spDataCodigo) : null;
+    const detalhes = [
+        item.codProduto ? `Cód. SmartCompras ${item.codProduto}` : '',
+        item.fabricante && item.fabricante !== '---' ? item.fabricante : '',
+        item.embalagem ? item.embalagem : '',
+        item.quantidade ? `Qtd ${item.quantidade}` : '',
+        item.precoUnitario ? `R$ ${item.precoUnitario}` : '',
+        produtoSpData ? `SP Data ${produtoSpData.codigo}` : ''
+    ].filter(Boolean).join(' · ');
+    return `<div class="nota-item" onclick="abrirCentralPedido('${cotacao.pedido}')">
+        <div class="nota-info">${nomeProduto}</div>
+        <div class="nota-detalhes">Pedido ${cotacao.pedido}${cotacao.origem ? ' - ' + cotacao.origem : ''} · ${nomeFornecedor}${detalhes ? ' · ' + detalhes : ''}</div>
+    </div>`;
+}
+
+function ordenarCotacoes(lista) {
+    // 'entrada' já vem nessa ordem da query (orderBy atualizadoEm desc, ver
+    // listener); só precisa reordenar explicitamente pro modo 'pedido'.
+    if (ordenacaoCotacoes !== 'pedido') return lista;
+    return [...lista].sort((a, b) => {
+        const na = parseInt(a.pedido, 10), nb = parseInt(b.pedido, 10);
+        if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+        return a.pedido.localeCompare(b.pedido);
+    });
+}
+
 function renderListaCotacoes() {
     const container = document.getElementById('lista-cotacoes-container');
     if (!container) return;
 
     const termo = filtroCotacoesTexto.trim().toUpperCase();
-    let lista = listaCotacoes.filter(c => {
-        if (!termo) return true;
-        const nomesFornecedores = (c.fornecedores || []).map(f => (f.razaoSocial || '').toUpperCase()).join(' ');
-        return c.pedido.toUpperCase().includes(termo) || (c.origem || '').toUpperCase().includes(termo) || nomesFornecedores.includes(termo);
-    });
+    const lista = ordenarCotacoes(listaCotacoes);
 
-    // 'entrada' já vem nessa ordem da query (orderBy atualizadoEm desc, ver
-    // listener); só precisa reordenar explicitamente pro modo 'pedido'.
-    if (ordenacaoCotacoes === 'pedido') {
-        lista = [...lista].sort((a, b) => {
-            const na = parseInt(a.pedido, 10), nb = parseInt(b.pedido, 10);
-            if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
-            return a.pedido.localeCompare(b.pedido);
-        });
-    }
-
-    if (lista.length === 0) {
-        container.innerHTML = `<div class="empty-state">${listaCotacoes.length === 0 ? 'Nenhuma cotação cadastrada ainda.' : 'Nenhuma cotação encontrada.'}</div>`;
+    if (!termo) {
+        if (lista.length === 0) {
+            container.innerHTML = '<div class="empty-state">Nenhuma cotação cadastrada ainda.</div>';
+            return;
+        }
+        container.innerHTML = lista.map(renderCardCotacao).join('');
         return;
     }
-    container.innerHTML = lista.map(c => {
-        const qtdFornecedores = (c.fornecedores || []).length;
-        const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
-        return `<div class="nota-item" onclick="abrirCentralPedido('${c.pedido}')">
-            <div class="nota-info">${c.pedido}${c.origem ? ' - ' + c.origem : ''}</div>
-            <div class="nota-detalhes">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · Limite: ' + dataLimite : ''}</div>
-        </div>`;
-    }).join('');
+
+    // Com termo preenchido: pedido/origem/fornecedor continuam mostrando a
+    // cotação inteira (como sempre foi); um match por produto mostra os
+    // itens encontrados diretamente, com pedido e fornecedor no contexto.
+    const blocos = [];
+    lista.forEach(c => {
+        const nomesFornecedores = (c.fornecedores || []).map(f => (f.razaoSocial || '').toUpperCase()).join(' ');
+        const matchDireto = c.pedido.toUpperCase().includes(termo) || (c.origem || '').toUpperCase().includes(termo) || nomesFornecedores.includes(termo);
+        const itensMatch = itensCorrespondentesCotacao(c, termo);
+        if (itensMatch.length > 0) {
+            itensMatch.forEach(it => blocos.push(renderCardResultadoItem(c, it)));
+        } else if (matchDireto) {
+            blocos.push(renderCardCotacao(c));
+        }
+    });
+
+    container.innerHTML = blocos.length ? blocos.join('') : '<div class="empty-state">Nenhuma cotação encontrada.</div>';
 }
+
 
 function formatarDataBRSimples(iso) {
     if (!iso) return '';
@@ -3455,12 +3856,12 @@ function montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, 
 }
 
 async function criarOuAtualizarAnotacaoDaCotacao(pedido, origem, dataPedido, dataLimite, fornecedores) {
-    if (!pedido) return;
+    if (!pedido) return null;
     const titulo = origem ? `${pedido} - ${origem}` : pedido;
     const existente = listaAnotacoes.find(a => a.pedido === pedido);
     try {
         if (!existente) {
-            await anotacoesTextoCollection.add({
+            const ref = await anotacoesTextoCollection.add({
                 titulo,
                 conteudo: montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores),
                 tipo: 'cotacao',
@@ -3468,6 +3869,7 @@ async function criarOuAtualizarAnotacaoDaCotacao(pedido, origem, dataPedido, dat
                 atualizadoEm: new Date().toISOString(),
                 criadoEm: new Date().toISOString()
             });
+            return ref.id;
         } else {
             // Só re-escreve o cabeçalho se ainda não houver nenhuma ocorrência de
             // auditoria registrada nessa anotação — depois que a Auditoria começa
@@ -3480,9 +3882,11 @@ async function criarOuAtualizarAnotacaoDaCotacao(pedido, origem, dataPedido, dat
                 dadosUpdate.conteudo = montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores);
             }
             await anotacoesTextoCollection.doc(existente.id).update(dadosUpdate);
+            return existente.id;
         }
     } catch (e) {
         console.error('Erro ao criar/atualizar anotação da cotação:', e);
+        return null;
     }
 }
 
@@ -3673,6 +4077,19 @@ function cancelarImportacaoXml() {
     document.getElementById('card-preview-importacao-xml').style.display = 'none';
 }
 
+// Reimportar o XML de um pedido já cadastrado sobrescreve itens com os dados
+// crus da nova versão — mas o nomeOficial de cada item NUNCA vem do XML, só
+// do relatório do SmartCompras colado depois (cruzarRelatorioComCotacao). Sem
+// isso, reimportar apagava silenciosamente o nome oficial já complementado.
+// Casa pelo mesmo par usado no cruzamento: codProduto + cnpjFornecedor.
+function preservarNomeOficialAoReimportar(itensAntigos, itensNovosXml) {
+    if (!itensAntigos || !itensAntigos.length) return itensNovosXml;
+    return itensNovosXml.map(novo => {
+        const antigo = itensAntigos.find(it => it.codProduto === novo.codProduto && it.cnpjFornecedor === novo.cnpjFornecedor);
+        return (antigo && antigo.nomeOficial) ? { ...novo, nomeOficial: antigo.nomeOficial } : novo;
+    });
+}
+
 async function confirmarImportacaoXmlSmartCompras() {
     if (!importacaoXmlPendente) return;
     const { parsed, existente, diff } = importacaoXmlPendente;
@@ -3704,7 +4121,10 @@ async function confirmarImportacaoXmlSmartCompras() {
 
         if (existente) {
             // Nunca mexe em origem/dataLimite/observação já preenchidas pelo
-            // usuário — só os campos que vêm do XML são atualizados.
+            // usuário — só os campos que vêm do XML são atualizados. E o
+            // nomeOficial (relatório do SmartCompras) é preservado item a
+            // item, já que o XML reimportado nunca traz esse campo.
+            dadosPrincipal.itens = preservarNomeOficialAoReimportar(existente.itens, parsed.itens);
             await cotacoesCollection.doc(parsed.pedido).set(dadosPrincipal, { merge: true });
             toast(`✓ Pedido ${parsed.pedido} atualizado para a versão ${proximaVersao}!`);
         } else {
@@ -4447,6 +4867,42 @@ function formatValorBR(num) {
     return (num || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Colunas de largura fixa da tabela de itens (mesmo estilo já usado no
+// importador de inventário do SP Data — ver P em confirmarImportacaoSpData).
+// Posições calculadas a partir da linha separadora "+------+----...+" do
+// próprio relatório real (0409.TXT): cada '+' marca o limite de uma coluna.
+const COLUNAS_ITEM_ERP = { codigo: [0, 7], nome: [7, 48], unidade: [48, 55], lc: [55, 58], quantidade: [58, 71], icms: [71, 82], ipi: [82, 94], desconto: [94, 105], valorUnitario: [105, 119], valorTotal: [119, 132] };
+
+// Extrai os itens de um bloco de NF já isolado por parseRelatorioERP. O
+// "Código" de cada linha É o código do produto no SP Data (produtosSpData) —
+// não precisa de nenhuma associação intermediária pra chegar lá. Usa posição
+// fixa de coluna (não regex) pra não se confundir com nomes de produto que
+// têm números/parênteses/barras. Uma linha só é aceita como item quando o
+// código é só dígitos E a unidade não é vazia nem só dígitos — isso separa
+// itens de linhas de rodapé, da tabela de vencimentos e de cabeçalhos de
+// página repetidos (quando a nota quebra em mais de uma página).
+function extrairItensBlocoErp(blocoTexto) {
+    return blocoTexto.split('\n').reduce((itens, linhaOriginal) => {
+        const linha = linhaOriginal.padEnd(132, ' ');
+        const seg = (chave) => linha.slice(COLUNAS_ITEM_ERP[chave][0], COLUNAS_ITEM_ERP[chave][1]).trim();
+        const codigo = seg('codigo');
+        const unidade = seg('unidade');
+        if (!/^\d+$/.test(codigo) || !unidade || /^\d+$/.test(unidade)) return itens;
+        itens.push({
+            codigoSpData: codigo,
+            nome: seg('nome'),
+            unidade,
+            quantidade: parseValorBR(seg('quantidade')),
+            icmsPercentual: parseValorBR(seg('icms').replace('%', '')),
+            ipiPercentual: parseValorBR(seg('ipi').replace('%', '')),
+            descontoPercentual: parseValorBR(seg('desconto').replace('%', '')),
+            valorUnitario: parseValorBR(seg('valorUnitario')),
+            valorTotal: parseValorBR(seg('valorTotal'))
+        });
+        return itens;
+    }, []);
+}
+
 function parseRelatorioERP(textoOriginal) {
     const t = String(textoOriginal || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -4479,9 +4935,16 @@ function parseRelatorioERP(textoOriginal) {
     return blocks.map(({ nf, doc, texto: bloco }) => {
         const avisos = [];
 
-        const fornMatch = bloco.match(/Fornecedor:\s*\d+\s+(.+?)\s+Qtde\.\s*lan[cç]amentos/i);
-        const fornecedor = fornMatch ? fornMatch[1].trim().toUpperCase().replace(/\s+/g, ' ') : '';
+        // Fornecedor: código de cadastro no SP Data (útil por si só, e é a
+        // chave que futuramente vai resolver o CNPJ via cadastro oficial de
+        // fornecedores) + nome, na mesma linha do relatório.
+        const fornMatch = bloco.match(/Fornecedor:\s*(\d+)\s+(.+?)\s+Qtde\.\s*lan[cç]amentos/i);
+        const codigoFornecedorSpData = fornMatch ? fornMatch[1] : '';
+        const fornecedor = fornMatch ? fornMatch[2].trim().toUpperCase().replace(/\s+/g, ' ') : '';
         if (!fornecedor) avisos.push('Não foi possível identificar o fornecedor — confira manualmente.');
+
+        const serieMatch = bloco.match(/S[eé]rie:\s*(\S+)/i);
+        const serie = serieMatch ? serieMatch[1] : '';
 
         // Data da nota: usa "Data de emissão" se existir; senão, "lançada em"
         let data = '';
@@ -4508,6 +4971,28 @@ function parseRelatorioERP(textoOriginal) {
         const freteMatch = bloco.match(/Frete\.*:\s*([\d.]+,\d{2})/i);
         const totalNota = totalNotaMatch ? parseValorBR(totalNotaMatch[1]) : null;
         const frete = freteMatch ? parseValorBR(freteMatch[1]) : 0;
+
+        // Demais campos financeiros do rodapé — só leitura/armazenamento,
+        // nenhum entra no cálculo de `valor` (mantido como já era, pra não
+        // mudar o que o fluxo de Adicionar Nota já usa).
+        const seguroMatch = bloco.match(/Seguro\.*:\s*([\d.]+,\d{2})/i);
+        const icmsValorMatch = bloco.match(/ICMS\s+de\s+[\d.,]+\s*%\.*:\s*([\d.]+,\d{2})/i);
+        const outrasDespesasMatch = bloco.match(/Outras despesas\.*:\s*([\d.]+,\d{2})/i);
+        const descontosObtidosMatch = bloco.match(/Descontos obtidos\.*:\s*([\d.]+,\d{2})/i);
+        const fatorAjustagemMatch = bloco.match(/Fator de ajustagem\.*:\s*([\d.,]+)/i);
+        const totalLancamentosMatch = bloco.match(/Total dos lan[cç]amentos\.*:\s*([\d.]+,\d{2})/i);
+        const financeiro = {
+            totalLancamentos: totalLancamentosMatch ? parseValorBR(totalLancamentosMatch[1]) : null,
+            frete,
+            seguro: seguroMatch ? parseValorBR(seguroMatch[1]) : 0,
+            icmsValor: icmsValorMatch ? parseValorBR(icmsValorMatch[1]) : 0,
+            outrasDespesas: outrasDespesasMatch ? parseValorBR(outrasDespesasMatch[1]) : 0,
+            descontosObtidos: descontosObtidosMatch ? parseValorBR(descontosObtidosMatch[1]) : 0,
+            fatorAjustagem: fatorAjustagemMatch ? fatorAjustagemMatch[1] : '',
+            totalNota
+        };
+
+        const itens = extrairItensBlocoErp(bloco);
 
         let vencimento = '';
         let valorTotalNum = 0;
@@ -4536,15 +5021,81 @@ function parseRelatorioERP(textoOriginal) {
         return {
             nf: (nf || '').trim(),
             documento: doc,
+            serie,
+            codigoFornecedorSpData,
             fornecedor,
             data,
             vencimento,
             valor: formatValorBR(valorTotalNum),
             parcelas: parcelas.length,
+            parcelasDetalhe: parcelas,
+            itens,
+            financeiro,
             avisos
         };
     });
 }
+
+// ===================================================================
+// --- HISTÓRICO DE ENTRADAS DO ERP (entradasErp) ---
+// ===================================================================
+// Fonte independente: cada bloco de NF do relatório vira um doc, tal como
+// veio do relatório (nf, série, código do fornecedor no SP Data, itens[]
+// com o código SP Data direto, financeiro{}, parcelas). Nunca escreve em
+// cotacoes/notas/associações — é só uma terceira fonte de leitura, ligada
+// às demais só por referência (nf/série), pra comparação/auditoria futura.
+//
+// codigoFornecedorSpData já vem do relatório, mas o CNPJ correspondente
+// ainda não pode ser resolvido: falta o cadastro oficial de fornecedores do
+// SP Data (código → nome → CNPJ), que ainda não foi importado. Por isso o
+// doc guarda um campo `cnpjFornecedor: null` reservado — só passa a ser
+// preenchido numa fase futura, cruzando codigoFornecedorSpData com esse
+// cadastro quando ele existir. Até lá, nenhuma associação por nome é feita.
+const entradasErpCollection = firestore.collection('entradasErp');
+let listaEntradasErp = [];
+
+function chaveEntradaErp(bloco) {
+    return bloco.serie ? `${bloco.nf}_${bloco.serie}` : bloco.nf;
+}
+
+async function salvarEntradasErp(blocosParsed) {
+    if (!blocosParsed || !blocosParsed.length) return { salvos: 0, erros: 0 };
+    const agora = new Date().toISOString();
+    let salvos = 0, erros = 0;
+    for (let i = 0; i < blocosParsed.length; i += 400) {
+        const lote = blocosParsed.slice(i, i + 400);
+        const batch = firestore.batch();
+        lote.forEach(bloco => {
+            if (!bloco.nf) { erros++; return; }
+            const chave = chaveEntradaErp(bloco);
+            batch.set(entradasErpCollection.doc(chave), {
+                nf: bloco.nf,
+                serie: bloco.serie,
+                documento: bloco.documento,
+                codigoFornecedorSpData: bloco.codigoFornecedorSpData,
+                fornecedorNomeRelatorio: bloco.fornecedor,
+                cnpjFornecedor: null, // reservado — resolvido numa fase futura via cadastro oficial de fornecedores SP Data
+                data: bloco.data,
+                vencimento: bloco.vencimento,
+                itens: bloco.itens,
+                financeiro: bloco.financeiro,
+                parcelas: bloco.parcelasDetalhe,
+                avisos: bloco.avisos,
+                atualizadoEm: agora
+            });
+            salvos++;
+        });
+        try {
+            await batch.commit();
+        } catch (e) {
+            console.error('Erro ao salvar lote de entradasErp:', e);
+            erros += lote.length;
+            salvos -= lote.length;
+        }
+    }
+    return { salvos, erros };
+}
+
 
 async function colarRelatorioImportacao() {
     const textarea = document.getElementById('import-textarea');
@@ -4864,7 +5415,20 @@ async function confirmarImportacaoLote() {
                     await adicionarFornecedor(f, true);
                 }
 
-                toast(`✓ ${selecionadas.length} nota(s) importada(s) com sucesso!`);
+                // Histórico entradasErp: salva TODOS os blocos reconhecidos no
+                // relatório colado (não só as notas marcadas pra checklist) —
+                // é uma fonte independente, isolada num try/catch próprio pra
+                // uma falha aqui nunca comprometer a importação de notas que
+                // acabou de funcionar acima.
+                let msgEntradasErp = '';
+                try {
+                    const resultado = await salvarEntradasErp(notasImportadasPreview);
+                    if (resultado.salvos > 0) msgEntradasErp = ` (+${resultado.salvos} no histórico de entradas do ERP)`;
+                } catch (e) {
+                    console.error('Erro ao salvar histórico entradasErp:', e);
+                }
+
+                toast(`✓ ${selecionadas.length} nota(s) importada(s) com sucesso!${msgEntradasErp}`);
 
                 notasImportadasPreview = [];
                 document.getElementById('import-preview-container').innerHTML = '';

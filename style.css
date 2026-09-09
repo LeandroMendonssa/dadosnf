@@ -146,6 +146,19 @@ body[data-theme] .tab-bar { background-color: color-mix(in srgb, var(--bg-second
 body[data-theme="dark"] .tab-bar { background-color: rgba(28, 28, 30, 0.85); }
 
 .tab-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--text-light); font-size: 9.5px; font-weight: 600; cursor: pointer; border: none; background: none; padding: 5px 4px; border-radius: 12px; flex: 1; max-width: 78px; transition: color .2s ease, transform .15s var(--ease-out); }
+
+/* Depois que Cotações e Entrada de NF viraram abas principais, a barra
+   ficou com itens demais pra caber espremendo tudo (flex:1) em telas
+   pequenas — texto/ícone ficavam ilegíveis ou cortados. Em vez de reduzir
+   ainda mais a fonte, a barra passa a rolar horizontalmente nesse caso:
+   cada item mantém um tamanho legível e continua tocável, e dá pra
+   arrastar pra ver os que não cabem. Não é um menu novo, é a mesma
+   .tab-bar/.tab-item só com o comportamento de estouro trocado. */
+@media (max-width: 480px) {
+    .tab-bar { justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-item { flex: 0 0 auto; width: 64px; max-width: none; }
+}
 .tab-item .icon-wrapper { display: flex; font-size: 20px; transition: transform .2s var(--ease-out); }
 .tab-item.active { color: var(--accent-color) !important; font-weight: 700; }
 .tab-item.active .icon-wrapper { transform: translateY(-1px) scale(1.08); }
