@@ -433,7 +433,7 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 .import-item.import-item{padding-top:18px}
 #confirm-modal .modal-content{max-width:380px;text-align:center}
 #confirm-title{font-size:20px;font-weight:700;color:var(--text-dark);margin-bottom:8px}
-#confirm-message{color:var(--text-light);margin-bottom:24px;line-height:1.5}.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#confirm-message{color:var(--text-light);margin-bottom:24px;line-height:1.5;white-space:pre-line}.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes fa-spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}.fa-spin{animation:fa-spin 1s infinite linear}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes highlight-fade{from{background-color:rgba(0,122,255,.2)}to{transparent}}.highlight-update{animation:highlight-fade 1.5s ease}
@@ -455,7 +455,7 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 .divergencia-del{background:none;border:none;color:var(--button-danger);font-size:15px;cursor:pointer;padding:4px 6px;flex-shrink:0}
 .divergencia-body{max-height:0;overflow:hidden;transition:max-height .3s var(--ease-out)}
 .divergencia-body-inner{padding:16px}
-.divergencia.open .divergencia-body{max-height:900px}
+.divergencia.open .divergencia-body{max-height:6000px}
 .output-tabs{display:flex;gap:8px;margin-bottom:14px}
 .output-tab{flex:1;padding:10px;text-align:center;border-radius:980px;border:1.5px solid var(--border-color);background:transparent;color:var(--text-light);font-size:13px;font-weight:600;cursor:pointer}
 .output-tab.active{border-color:var(--accent-color);color:var(--accent-color);background:color-mix(in srgb, var(--accent-color) 8%, transparent)}
@@ -576,5 +576,34 @@ body[data-theme="dark"] .actions-button.is-warning{color:var(--button-warning)}
 .central-spdata-busca{margin-top:8px;padding:8px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color)}
 .central-spdata-busca input{margin-bottom:6px}
 .central-spdata-opcoes{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto}
+
+/* Entrada de NF — item unificado (produto+conversão+cotação+SP Data numa só
+   unidade visual) e estado da NF. Pendência usa cor de alerta de propósito —
+   antes ficava discreta/cinza, mais quieta que um item resolvido, o que é o
+   oposto do que se quer destacar. */
+.xml-item-linha{border:1px solid var(--border-color);border-radius:12px;padding:10px 12px;margin-top:8px}
+.xml-item-linha.pendente{border:1px dashed var(--button-warning);background:color-mix(in srgb, var(--button-warning) 8%, var(--bg-secondary))}
+.xml-item-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.xml-item-meta{font-size:11px;color:var(--text-light);margin-top:2px;display:flex;align-items:center;gap:4px}
+.xml-item-conversao{font-size:12px;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.xml-item-cotacao{font-size:12px;margin-top:6px;color:var(--text-dark)}
+.xml-item-acao{margin-top:6px}
+.xml-item-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;flex-shrink:0}
+.xml-item-badge.pronto{background:color-mix(in srgb, var(--button-success) 20%, transparent);color:#0a5c1f}
+body[data-theme="dark"] .xml-item-badge.pronto{color:var(--button-success)}
+.xml-item-badge.pendente{background:var(--button-warning);color:#3a2e00}
+
+.xml-estado-card{border-radius:12px;padding:12px 14px;border:1px solid var(--border-color)}
+.xml-estado-card.pronto{border-color:var(--button-success);background:color-mix(in srgb, var(--button-success) 12%, var(--bg-secondary))}
+.xml-estado-card.pendente{border:1px dashed var(--button-warning);background:color-mix(in srgb, var(--button-warning) 10%, var(--bg-secondary))}
+.xml-estado-linha{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.xml-estado-lista{margin-top:6px;font-size:13px;color:var(--text-dark);line-height:1.5}
+.xml-estado-validacao{font-size:12px;color:var(--text-light);margin-top:6px}
+
+.xml-filtro-toggle{display:flex;gap:6px;margin-bottom:4px}
+.xml-filtro-btn{flex:1;padding:7px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-light);font-size:11.5px;font-weight:600;cursor:pointer}
+.xml-filtro-btn.active{background:var(--accent-color);color:#fff;border-color:var(--accent-color)}
+
 .central-spdata-opcao{padding:6px 8px;background:var(--bg-secondary);border-radius:6px;font-size:11.5px;cursor:pointer;border:1px solid transparent}
 .central-spdata-opcao:active{border-color:var(--accent-color)}
+.xml-item-badge.neutro{background:color-mix(in srgb, var(--text-light) 20%, transparent);color:var(--text-dark)}

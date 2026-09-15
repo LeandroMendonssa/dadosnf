@@ -166,6 +166,8 @@
             </div>
             
             <div class="app-screen" id="screen-manage"> 
+                <div class="central-secao-titulo" id="titulo-pre-selecao-erp" style="display:none;">Pré-seleção (NFs do relatório ERP ainda não decididas)</div>
+                <div id="lista-pre-selecao-erp" class="nota-list" style="margin-bottom:16px;"></div>
                 <div class="campo" style="margin-bottom: 16px;"><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarNotasGerenciar(this.value)"></div>
                 <div id="lista-notas-pendentes" class="nota-list"></div> 
             </div>
@@ -198,11 +200,38 @@
                 <div id="lista-relatorios" class="nota-list">
                      <div class="empty-state">Nenhuma nota próxima do vencimento.</div>
                 </div>
+
+                <div class="xml-filtro-toggle" style="margin-top:24px;">
+                    <button type="button" class="xml-filtro-btn active" id="relatorios-tab-btn-pedidos" onclick="mudarAbaRelatorios('pedidos')">Pedidos</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-notas" onclick="mudarAbaRelatorios('notas')">Notas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-divergencias" onclick="mudarAbaRelatorios('divergencias')">Divergências</button>
+                </div>
+
+                <input type="text" id="relatorios-busca" class="form-field" style="margin-top:10px;" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarRelatorios(this.value)">
+
+                <div class="xml-filtro-toggle" id="relatorios-subfiltro-notas" style="margin-top:10px;display:none;">
+                    <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-notas-pendente" onclick="filtrarStatusNotasRelatorio('pendente')">Pendentes</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-arquivada" onclick="filtrarStatusNotasRelatorio('arquivada')">Arquivadas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-todas" onclick="filtrarStatusNotasRelatorio('todas')">Todas</button>
+                </div>
+
+                <div class="xml-filtro-toggle" id="relatorios-subfiltro-divergencias" style="margin-top:10px;display:none;">
+                    <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-div-pendente" onclick="filtrarStatusDivergenciaRelatorio('pendente')">Pendentes</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-resolvida" onclick="filtrarStatusDivergenciaRelatorio('resolvida')">Resolvidas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-encerrada" onclick="filtrarStatusDivergenciaRelatorio('encerrada')">Encerradas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-todas" onclick="filtrarStatusDivergenciaRelatorio('todas')">Todas</button>
+                </div>
+
+                <p id="relatorios-resumo" style="margin:12px 0 6px;font-size:12px;color:var(--text-light);"></p>
+                <div id="relatorios-conteudo-aba" class="nota-list"></div>
             </div>
 
             <div class="app-screen" id="screen-history">
-                <div id="lista-historico" class="nota-list"><div class="empty-state">O histórico está vazio.</div></div>
-                <div id="historico-actions" class="actions" style="display: none; margin-top: 24px;"><button class="actions-button is-danger" onclick="limparHistorico()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i><span class="material-icons">delete_sweep</span></span> Limpar Histórico</button></div>
+                <input type="text" id="historico-busca" class="form-field" placeholder="Buscar por NF, fornecedor, CNPJ, pedido ou produto..." oninput="filtrarHistoricoNfs(this.value)">
+                <div id="historico-nfs-navegacao" style="margin-top:10px;"></div>
+                <div id="historico-nfs-lista" class="nota-list" style="margin-top:10px;"></div>
+                <div id="lista-historico" style="display:none;"></div>
+                <div id="historico-actions" style="display:none;"></div>
             </div>
 
             <div class="app-screen" id="screen-settings">
@@ -211,6 +240,7 @@
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -237,41 +267,44 @@
                 <div id="import-preview-container"></div>
             </div>
 
+            <div class="app-screen" id="screen-config-analise-cotacoes">
+                <div class="card">
+                    <p style="margin:0 0 12px;font-size:12px;color:var(--text-light);">Usado só pra dar um veredito de "condição atendida/verificar" na Análise de Cotações por Item (Fase 7). Deixe em branco se não quiser esse veredito — o sistema nunca assume um número por conta própria.</p>
+                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em C/C</label><input type="number" min="1" id="config-minimo-cc" class="form-field" placeholder="Ex: 3"></div>
+                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em Recurso Próprio</label><input type="number" min="1" id="config-minimo-proprio" class="form-field" placeholder="Ex: 1"></div>
+                    <button class="actions-button is-success" onclick="salvarMinimosCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                </div>
+            </div>
+
             <div class="app-screen" id="screen-fornecedores">
                 <div class="card">
-                    <div class="modal-campo"><label>Nome do Fornecedor</label><input type="text" id="forn-manage" placeholder="Digite para adicionar..."></div>
-                    <button class="actions-button" onclick="adicionarFornecedorManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Fornecedor</button>
-                    <div class="manage-toolbar" style="margin-top: 20px;">
-                        <input type="text" id="forn-filter" class="form-field" placeholder="Filtrar fornecedores..." oninput="filtrarFornecedores(this.value)" style="max-width: 220px;">
-                        <button id="forn-select-mode-btn" class="manage-toolbar-btn" onclick="toggleSelectionModeFornecedores()">Selecionar Múltiplos</button>
-                    </div>
-                    <div style="display:flex; justify-content: space-between; align-items:center; margin: 8px 2px 0;">
-                        <span id="forn-counter" class="manage-counter" style="padding:0;">0 fornecedores</span>
-                        <button id="bulk-select-all-fornecedores" class="manage-toolbar-btn" onclick="selecionarTodosFornecedoresVisiveisToggle()" style="display: none;">Todos Visíveis</button>
-                    </div>
-                    <ul id="lista-fornecedores-manage" class="manage-list"></ul>
+                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Fornecedores</h3>
+                    <p id="contador-fornecedores-spdata" style="margin: 0 0 12px; font-size: 12px; color: var(--text-light);">0 fornecedor(es) cadastrado(s)</p>
+                    <input type="text" class="form-field" placeholder="Buscar por código, razão social, apelido ou CNPJ..." oninput="filtrarCadastroFornecedoresSpData(this.value)">
+                    <div id="lista-cadastro-fornecedores-spdata" style="margin-top:10px;"></div>
                 </div>
                 <div class="card" style="margin-top: 16px;">
-                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Importar Lista de Fornecedores</h3>
-                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie um arquivo com um fornecedor por linha (ex: exportado da sua planilha mestre). Os que já existem na lista são identificados e ignorados automaticamente.</p>
-                    <textarea id="import-forn-textarea" class="form-field import-textarea" placeholder="Um fornecedor por linha..."></textarea>
-                    <input type="file" id="import-forn-file-input" accept=".txt,.csv,text/plain" style="display:none;" onchange="handleFornecedoresFileUpload(event)">
+                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Importar/Atualizar Cadastro</h3>
+                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Usado pra confirmar automaticamente a qual NF/cotação um lançamento do relatório de entrada do ERP corresponde — nunca por semelhança de nome. Atualização incremental: nunca apaga fornecedores, CNPJs ou apelidos já cadastrados.</p>
+                    <textarea id="import-fornspdata-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do relatório de cadastro de fornecedores..."></textarea>
+                    <input type="file" id="import-fornspdata-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleFornecedoresSpDataFileUpload(event)">
                     <div class="actions" style="gap: 10px;">
-                        <button class="actions-button is-neutral" onclick="document.getElementById('import-forn-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
-                        <button class="actions-button is-neutral" onclick="colarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                        <button class="actions-button is-neutral" onclick="document.getElementById('import-fornspdata-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
+                        <button class="actions-button is-neutral" onclick="colarCadastroFornecedoresSpData()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
                     </div>
                     <div class="actions">
-                        <button class="actions-button" onclick="processarListaFornecedores()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Lista</button>
+                        <button class="actions-button" onclick="processarCadastroFornecedoresSpData()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Cadastro</button>
                     </div>
-                    <div id="import-forn-preview"></div>
+                    <div id="import-fornspdata-preview"></div>
                 </div>
-                <div class="card" style="margin-top: 16px;">
-                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Apelidos de Fornecedores</h3>
-                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Use isso apenas para casos específicos que a importação de lista não resolveu. Na maioria das vezes, basta ter o fornecedor cadastrado na lista acima — o app já encontra o nome curto dentro do nome completo automaticamente.</p>
-                    <div class="modal-campo"><label>Nome Completo (como está na nota)</label><input type="text" id="alias-nome-completo" placeholder="Ex: COMERCIAL CIRURGICA RIOCLARENSE"></div>
-                    <div class="modal-campo"><label>Apelido (nome curto a usar)</label><input type="text" id="alias-apelido" placeholder="Ex: RIOCLARENSE"></div>
-                    <button class="actions-button" onclick="adicionarApelidoFornecedor()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Apelido</button>
-                    <ul id="lista-apelidos-manage" class="manage-list"></ul>
+
+                <div style="display:none;">
+                    <input type="text" id="forn-manage" placeholder="Digite para adicionar...">
+                    <input type="text" id="forn-filter" oninput="filtrarFornecedores(this.value)">
+                    <button id="forn-select-mode-btn" onclick="toggleSelectionModeFornecedores()">Selecionar Múltiplos</button>
+                    <span id="forn-counter"></span>
+                    <button id="bulk-select-all-fornecedores" onclick="selecionarTodosFornecedoresVisiveisToggle()">Todos Visíveis</button>
+                    <ul id="lista-fornecedores-manage" class="manage-list"></ul>
                 </div>
             </div>
             <div class="app-screen" id="screen-backup">
@@ -304,30 +337,33 @@
                     <h3 style="margin:0 0 6px;font-size:16px;">NF-e carregada</h3>
                     <p style="margin-top:0;color:var(--text-light);font-size:12px;">Confira se é o arquivo certo antes de seguir — dados extraídos direto do XML.</p>
                     <div id="xml-identificacao-container" style="font-size:13px;line-height:1.6;"></div>
+                    <div id="xml-identificacao-infadic" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color);">
+                        <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;"><strong>Informações adicionais da NF (só consulta — não usado pra decidir pedido/produto):</strong></div>
+                        <div class="xml-infadic-texto" style="font-size:12px;color:var(--text-light);white-space:pre-line;"></div>
+                    </div>
                 </div>
 
-                <div class="card" id="xml-card-itens" style="display:none;margin-top:16px;">
-                    <h3 style="margin:0 0 6px;font-size:16px;">Revise o fator de conversão</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">O fator vem da descrição do produto (ex: "C/10" = 10). Edite se estiver errado — sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
-                    <table class="xml-table">
-                        <thead><tr><th>Produto</th><th>Fator</th><th>Cód. (cProd)</th><th>Prévia</th></tr></thead>
-                        <tbody id="xml-tbody-itens"></tbody>
-                    </table>
-                    <div class="xml-resumo" id="xml-resumo"></div>
-                </div>
+                <div id="xml-estado-nf" style="display:none;margin-top:16px;"></div>
 
                 <div class="card" id="xml-card-associacao" style="display:none;margin-top:16px;">
-                    <h3 style="margin:0 0 6px;font-size:16px;">Associação com a Cotação</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">Liga o código do fornecedor (vindo do XML da NF-e) ao item correspondente da cotação. É a base do histórico — não decide sozinho, só guarda o que você confirmar.</p>
+                    <h3 style="margin:0 0 6px;font-size:16px;">Itens da NF</h3>
+                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
                     <div class="campo">
                         <label>Pedido/Cotação correspondente</label>
                         <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
+                        <div id="xml-pedido-caption" style="font-size:11px;color:var(--text-light);margin-top:4px;"></div>
                     </div>
+                    <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div>
                     <div id="xml-associacao-container" style="margin-top:12px;"></div>
                 </div>
 
+                <div id="xml-resultado-salvar" style="display:none;margin-top:16px;"></div>
+
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
-                    <button class="actions-button is-success" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
+                    <button class="actions-button is-success" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
+                    <button class="actions-button is-neutral" id="xml-btn-baixar" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
+                </div>
+                <div class="actions-row" style="margin:0 0 20px;">
                     <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
                 </div>
             </div>
@@ -377,6 +413,24 @@
                     </div>
                 </div>
 
+                <div class="card" style="margin-bottom:16px;">
+                    <h3 style="margin:0 0 6px;font-size:15px;">Relatório de Fornecedores Ganhadores</h3>
+                    <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">Complementa a cotação com a quantidade de fornecedores que participaram de cada item (nunca decide recurso/pagamento sozinho). Cole o texto ou envie o arquivo do relatório.</p>
+                    <textarea id="ganhadores-textarea" class="form-field import-textarea" placeholder="Cole aqui o relatório de fornecedores ganhadores..."></textarea>
+                    <input type="file" id="ganhadores-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleRelatorioGanhadoresFileUpload(event)">
+                    <div class="actions" style="gap:10px;">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('ganhadores-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
+                        <button class="actions-button" onclick="processarRelatorioGanhadoresColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="ganhadores-preview" style="display:none;margin-top:10px;">
+                        <div id="ganhadores-resumo"></div>
+                        <div class="actions-row" id="ganhadores-actions" style="display:none;margin-top:10px;">
+                            <button class="actions-button is-success" onclick="confirmarImportacaoGanhadores()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
+                            <button class="actions-button is-neutral" onclick="cancelarImportacaoGanhadores()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="lista-cotacoes-container"></div>
             </div>
 
@@ -411,6 +465,11 @@
                 <div class="actions-row" style="margin: 20px 0;" id="btn-excluir-cotacao">
                     <button class="actions-button is-danger" onclick="excluirCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir Cotação</button>
                 </div>
+            </div>
+
+            <div class="app-screen" id="screen-analise-cotacao">
+                <div id="analise-cotacao-cabecalho" class="card"></div>
+                <div id="analise-cotacao-itens" class="nota-list" style="margin-top:12px;"></div>
             </div>
 
             <div class="app-screen" id="screen-central-pedido">
