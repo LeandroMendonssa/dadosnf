@@ -831,11 +831,11 @@ async function carregarEstado(){
         if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
         renderAbaAtivaRelatorios();
         if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs();
-        if (document.getElementById('analise-cotacao-itens') && analiseCotacaoAtual) renderAnaliseCotacao();
     }, error => console.error("Erro ao carregar cotações:", error)));
 
     dataUnsubscribers.push(produtosSpDataCollection.onSnapshot(snapshot => {
         listaProdutosSpData = snapshot.docs.map(doc => ({ codigo: doc.id, ...doc.data() }));
+        if (document.getElementById('spdata-lista-produtos')) renderListaProdutosSpData();
     }, error => console.error("Erro ao carregar produtos SP Data:", error)));
 
     dataUnsubscribers.push(associacoesSpDataCollection.onSnapshot(snapshot => {
@@ -874,7 +874,6 @@ async function carregarEstado(){
     dataUnsubscribers.push(relatorioGanhadoresCollection.onSnapshot(snapshot => {
         listaRelatorioGanhadores = snapshot.docs.map(doc => doc.data());
         if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
-        if (document.getElementById('analise-cotacao-itens') && analiseCotacaoAtual) renderAnaliseCotacao();
     }, error => console.error("Erro ao carregar relatório de fornecedores ganhadores:", error)));
 
     dataUnsubscribers.push(anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
@@ -2437,7 +2436,7 @@ function renderCentralPedidoCompleto(pedido) {
             return `<div class="central-fornecedor">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}')">
                     <i class="fa-solid fa-chevron-${aberto ? 'down' : 'right'}"></i>
-                    <span>${nomeExibicao}</span>
+                    <span>${nomeExibicao}${f.cnpj ? ` <span style="font-weight:400;color:var(--text-light);font-size:11px;">— CNPJ ${formatarCnpjExibicao(f.cnpj)}</span>` : ''}</span>
                 </div>
                 <div class="central-fornecedor-body" style="display:${aberto ? 'block' : 'none'};">
                     <div class="central-secao-titulo">Produtos Cotados</div>
@@ -2634,6 +2633,16 @@ function renderLinhaProduto(it, chaveUnica) {
             ? `<div class="central-item-desc-linha">${nomeOficialSmartCompras}</div>`
             : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
 
+    // Recurso confirmado na entrada da NF/XML (Parte 2/4 da correção) — só
+    // exibição, nunca uma ação de escolher aqui.
+    const recursoItem = (centralPedidoAtual && it.codProduto) ? (() => {
+        const c = listaCotacoes.find(x => x.pedido === centralPedidoAtual);
+        return c && c.recursosPorItem ? c.recursosPorItem[it.codProduto] : null;
+    })() : null;
+    const recursoHTML = recursoItem
+        ? `<div>Recurso: <strong>${recursoItem}</strong></div>`
+        : (it.codProduto ? '<div style="color:var(--text-light);"><em>Recurso: ainda não confirmado (definido na entrada da NF)</em></div>' : '');
+
     const detalhesHTML = expandido ? `<div class="central-item-detalhes" onclick="event.stopPropagation()">
         ${produtoSpData ? `<div>SP Data: ${produtoSpData.codigo}</div><div>Nome oficial SP Data: ${produtoSpData.nome}</div>` : ''}
         ${it.codProduto ? `<div>Código SmartCompras: ${it.codProduto}</div>` : ''}
@@ -2644,6 +2653,7 @@ function renderLinhaProduto(it, chaveUnica) {
         ${it.quantidade ? `<div>Quantidade: ${it.quantidade}</div>` : ''}
         ${it.precoUnitario ? `<div>Valor Unitário: R$ ${it.precoUnitario}</div>` : ''}
         ${it.precoTotal ? `<div>Valor Total: R$ ${it.precoTotal}</div>` : ''}
+        ${recursoHTML}
         ${participantesDetalheHTML}
         ${renderAssociacaoSpDataWidget(it, chaveUnica)}
     </div>` : '';
@@ -4399,6 +4409,7 @@ async function executarSalvarEntradaNF() {
     if (nfeInfoAtual) await garantirFornecedorPorCnpjXml(nfeInfoAtual.cnpjEmit, nfeInfoAtual.fornecedor);
 
     renderResultadoSalvarNF();
+    renderSugestaoRecursoNf();
     toast('✓ NF salva.');
 }
 
@@ -4434,6 +4445,66 @@ function renderResultadoSalvarNF() {
     </div>`).join('');
 
     el.innerHTML = cabecalho + itensComDivergencia;
+}
+
+// ===== Determinação assistida de recurso (correção conceitual da Fase 7) =====
+// O recurso NÃO é mais escolhido item a item dentro da cotação. A cotação
+// não sabe quantas NFs vão sair dela; quem sabe é a NF/XML que está
+// entrando agora. Por isso a sugestão/confirmação acontece aqui, no
+// salvamento da NF — reaproveitando sugerirRecursoPorHistorico (já existia
+// na Fase 7, só não era chamado neste ponto) e gravando no MESMO lugar de
+// sempre (cotacao.recursosPorItem), nunca uma estrutura nova. Sem IA, sem
+// fuzzy matching: a única fonte é o histórico de recursosPorItem já
+// confirmado noutras cotações pro mesmo código SmartCompras. Sem esse
+// histórico, o sistema não chuta — mostra que não conseguiu determinar e
+// deixa a escolha manual como exceção, não como fluxo principal.
+function renderSugestaoRecursoNf() {
+    const el = document.getElementById('xml-sugestao-recurso');
+    if (!el) return;
+    if (!pedidoSelecionadoXml || !nfeInfoAtual) { el.style.display = 'none'; return; }
+
+    const cotacao = listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml);
+    if (!cotacao) { el.style.display = 'none'; return; }
+
+    const codigosDestaNf = [...new Set(itensXmlDetectados
+        .map(item => bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)])
+        .filter(Boolean)
+        .map(a => a.codigoSmartCompras))];
+
+    // Só os itens desta NF que ainda não têm recurso confirmado — um item
+    // já confirmado (nesta ou numa NF anterior do mesmo pedido) não volta a
+    // pedir decisão de novo.
+    const pendentes = codigosDestaNf.filter(codigo => !(cotacao.recursosPorItem || {})[codigo]);
+    if (pendentes.length === 0) { el.style.display = 'none'; return; }
+
+    if (!cotacao.origem) {
+        el.style.display = 'block';
+        el.innerHTML = `<div class="xml-estado-card pendente"><div class="xml-estado-linha">⚠ Defina a Origem (Santa Casa/CTI) desta cotação (${escRel(cotacao.pedido)}) pra poder confirmar o recurso dos itens.</div></div>`;
+        return;
+    }
+
+    el.style.display = 'block';
+    const linhasHTML = pendentes.map(codigo => {
+        const itemCotacao = (cotacao.itens || []).find(it => it.codProduto === codigo);
+        const nome = itemCotacao ? (itemCotacao.nomeOficial || itemCotacao.descricao || codigo) : codigo;
+        const sugestao = sugerirRecursoPorHistorico(codigo, pedidoSelecionadoXml);
+        const ccOficial = calcularRecursoOficial(cotacao.origem, 'cc');
+        const proprioOficial = calcularRecursoOficial(cotacao.origem, 'proprio');
+        const sugestaoHTML = sugestao
+            ? `<div class="xml-item-cotacao">💡 Sugestão com base no histórico (usado ${sugestao.totalOcorrencias}x pra este código, mais recente no pedido ${escRel(sugestao.pedidoMaisRecente)}): <strong>${escRel(sugestao.recursoMaisRecente)}</strong></div>
+               <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="aplicarRecursoSugerido('${escRel(pedidoSelecionadoXml)}','${escRel(codigo)}','${escRel(sugestao.recursoMaisRecente)}')">Confirmar sugestão</button></div>`
+            : `<div class="xml-item-cotacao"><em>Não foi possível determinar com segurança — sem histórico pra este código. Confirme manualmente:</em></div>`;
+        return `<div class="xml-item-linha pendente">
+            <div class="xml-item-topo"><div class="xml-produto-nome">${escRel(upAud(nome))}</div></div>
+            ${sugestaoHTML}
+            <div class="xml-item-acao">
+                <button type="button" class="central-status-toggle" onclick="definirRecursoItem('${escRel(pedidoSelecionadoXml)}','${escRel(codigo)}','cc')">${escRel(ccOficial)}</button>
+                <button type="button" class="central-status-toggle" onclick="definirRecursoItem('${escRel(pedidoSelecionadoXml)}','${escRel(codigo)}','proprio')">${escRel(proprioOficial)}</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="xml-diff-titulo">Recurso pendente de confirmação (${pendentes.length} item(ns) desta NF)</div>${linhasHTML}`;
 }
 
 async function baixarXmlConvertido() {
@@ -4842,7 +4913,6 @@ function renderCardCotacao(c) {
     return `<div class="nota-item" onclick="abrirCentralPedido('${c.pedido}')">
         <div class="nota-info">${c.pedido}${c.origem ? ' - ' + c.origem : ''}</div>
         <div class="nota-detalhes">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · Limite: ' + dataLimite : ''}</div>
-        ${(c.itens || []).length ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="event.stopPropagation(); abrirAnaliseCotacao('${c.pedido}')">Analisar por item</button></div>` : ''}
     </div>`;
 }
 
@@ -5089,29 +5159,6 @@ function calcularRecursoOficial(origemPedido, tipo) {
     return tipo === 'cc' ? mapa.cc : tipo === 'proprio' ? mapa.proprio : null;
 }
 
-let analiseCotacaoAtual = null;
-
-function abrirAnaliseCotacao(pedido) {
-    analiseCotacaoAtual = pedido;
-    switchToScreen('screen-analise-cotacao', `Análise — Pedido ${pedido}`);
-    renderAnaliseCotacao();
-}
-
-// cotacao.itens tem uma linha por OFERTA (fornecedor × produto) — é a fonte
-// primária e sempre disponível de "quantos fornecedores cotaram este item"
-// (não depende do relatório de ganhadores ter sido colado). Agrupar por
-// código reconstrói a visão "item → fornecedores que cotaram" que o pedido
-// descreve, direto do dado já existente, sem duplicar nada.
-function agruparItensCotacaoPorProduto(cotacao) {
-    const porCodigo = {};
-    (cotacao.itens || []).forEach(it => {
-        const chave = it.codProduto || `semcodigo:${it.nomeOficial || it.descricao || ''}`;
-        if (!porCodigo[chave]) porCodigo[chave] = { codigo: it.codProduto || null, nome: it.nomeOficial || it.descricao || 'Produto sem nome', ofertas: [] };
-        porCodigo[chave].ofertas.push(it);
-    });
-    return Object.values(porCodigo).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-}
-
 // Sugestão de recurso baseada em evidência concreta: o MESMO código
 // SmartCompras já teve um recurso confirmado em OUTRA cotação antes. Nunca
 // por nome de produto (evidência frágil) — só pelo código, que é o
@@ -5132,100 +5179,33 @@ function sugerirRecursoPorHistorico(codProduto, pedidoAtual) {
     return { recursoMaisRecente: ocorrencias[0].recurso, pedidoMaisRecente: ocorrencias[0].pedido, totalOcorrencias: ocorrencias.length, contagem };
 }
 
-// Reúne, por item, tudo que a Fase 7 consegue dizer hoje — sem inventar
-// nenhuma regra que o sistema não tenha. O veredito de quantidade só existe
-// quando o usuário configurou um mínimo esperado (Configurações → Análise de
-// Cotações); sem isso, é sempre "não foi possível determinar", como pedido.
-function analisarItemCotacao(cotacao, grupoItem) {
-    const distintosCnpj = [...new Set(grupoItem.ofertas.map(o => o.cnpjFornecedor).filter(Boolean))];
-    const participantes = distintosCnpj.length || grupoItem.ofertas.length;
-
-    // Relatório de ganhadores (fonte complementar, só quando colada) —
-    // usado aqui só pra identificar o vencedor; participantes já vêm da
-    // cotação em si, que é sempre a fonte disponível.
-    const relatorioGanhadoresPedido = listaRelatorioGanhadores.find(r => r.pedido === cotacao.pedido);
-    const itemGanhadores = relatorioGanhadoresPedido && grupoItem.codigo ? relatorioGanhadoresPedido.itens.find(g => g.codigo === grupoItem.codigo) : null;
-    const vencedor = itemGanhadores ? itemGanhadores.fornecedorVencedor : null;
-    const participantesDivergentes = itemGanhadores && itemGanhadores.participantes !== participantes;
-
-    const recursoAtual = grupoItem.codigo ? (cotacao.recursosPorItem || {})[grupoItem.codigo] || null : null;
-    const sugestao = (!recursoAtual && grupoItem.codigo) ? sugerirRecursoPorHistorico(grupoItem.codigo, cotacao.pedido) : null;
-
-    let veredito = 'Não foi possível determinar o requisito aplicável.';
-    if (recursoAtual) {
-        const ehCC = recursoAtual.startsWith('C/C');
-        const minimo = parseInt(ehCC ? appConfig.minimoCotacoesCC : appConfig.minimoCotacoesRecursoProprio, 10);
-        if (minimo > 0) {
-            veredito = participantes >= minimo
-                ? `${participantes} fornecedor(es) cotaram — condição atendida (mínimo configurado: ${minimo})`
-                : `${participantes} fornecedor(es) cotaram — verificar (mínimo configurado: ${minimo})`;
-        }
-    }
-
-    const assocSpData = grupoItem.codigo ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === grupoItem.codigo) : null;
-    const produtoSpData = assocSpData ? listaProdutosSpData.find(p => p.codigo === assocSpData.spDataCodigo) : null;
-
-    return { participantes, distintosCnpj, vencedor, participantesDivergentes, recursoAtual, sugestao, veredito, produtoSpData };
-}
-
-async function definirRecursoItem(codigo, tipo) {
-    if (!codigo) return;
-    const cotacao = listaCotacoes.find(c => c.pedido === analiseCotacaoAtual);
+// Grava o recurso confirmado de um item — reaproveita exatamente a mesma
+// estrutura da Fase 7 (cotacao.recursosPorItem), só que agora quem chama é
+// o fluxo de entrada do XML/NF (Parte 4/5/6 da correção), não mais uma
+// escolha manual dentro da tela de Análise por item.
+async function definirRecursoItem(pedido, codigo, tipo) {
+    if (!codigo || !pedido) return;
+    const cotacao = listaCotacoes.find(c => c.pedido === pedido);
     if (!cotacao) return;
-    if (!cotacao.origem) return toast('Defina a Origem do pedido (Santa Casa/CTI) na cotação antes de atribuir recurso.');
+    if (!cotacao.origem) return toast('Defina a Origem do pedido (Santa Casa/CTI) na cotação antes de confirmar o recurso.');
     const recursoOficial = tipo ? calcularRecursoOficial(cotacao.origem, tipo) : null;
     try {
         const campo = `recursosPorItem.${codigo}`;
         if (recursoOficial) {
             await cotacoesCollection.doc(cotacao.pedido).set({ [campo]: recursoOficial }, { merge: true });
-            toast(`✓ Recurso definido: ${recursoOficial}`);
+            toast(`✓ Recurso confirmado: ${recursoOficial}`);
         } else {
             await cotacoesCollection.doc(cotacao.pedido).update({ [campo]: firebase.firestore.FieldValue.delete() });
             toast('Recurso removido deste item.');
         }
+        if (document.getElementById('xml-sugestao-recurso') && pedidoSelecionadoXml === pedido) renderSugestaoRecursoNf();
     } catch (e) {
         console.error('Erro ao definir recurso do item:', e);
         toast('✕ Erro ao salvar. Tente novamente.');
     }
 }
-function aplicarRecursoSugerido(codigo, recursoOficial) {
-    definirRecursoItem(codigo, recursoOficial.startsWith('C/C') ? 'cc' : 'proprio');
-}
-
-function renderAnaliseCotacao() {
-    const cabecalho = document.getElementById('analise-cotacao-cabecalho');
-    const container = document.getElementById('analise-cotacao-itens');
-    if (!cabecalho || !container) return;
-    const cotacao = listaCotacoes.find(c => c.pedido === analiseCotacaoAtual);
-    if (!cotacao) { cabecalho.innerHTML = ''; container.innerHTML = '<div class="empty-state">Cotação não encontrada.</div>'; return; }
-
-    const qtdOfertas = (cotacao.itens || []).length;
-    cabecalho.innerHTML = `<div class="nota-info">Pedido ${escRel(cotacao.pedido)}${cotacao.origem ? ' — ' + escRel(cotacao.origem) : ''}</div>
-        <div class="nota-detalhes">${qtdOfertas} oferta(s) recebidas no total</div>
-        ${!cotacao.origem ? '<div class="nota-detalhes"><strong>Defina a Origem (Santa Casa/CTI) na cotação antes de atribuir recurso aos itens.</strong></div>' : ''}`;
-
-    const grupos = agruparItensCotacaoPorProduto(cotacao);
-    if (!grupos.length) { container.innerHTML = '<div class="empty-state">Esta cotação ainda não tem itens importados do XML do SmartCompras.</div>'; return; }
-
-    container.innerHTML = grupos.map(g => {
-        const a = analisarItemCotacao(cotacao, g);
-        const nomeExibicao = a.produtoSpData ? `${escRel(a.produtoSpData.codigo)} — ${escRel(a.produtoSpData.nome)}` : escRel(upAud(g.nome));
-        const sugestaoHTML = a.sugestao
-            ? `<div class="nota-detalhes">💡 Sugestão (evidência: já usado ${a.sugestao.totalOcorrencias}x pra este código, mais recente no pedido ${escRel(a.sugestao.pedidoMaisRecente)}): <strong>${escRel(a.sugestao.recursoMaisRecente)}</strong> ${cotacao.origem ? `<button type="button" class="central-status-toggle" onclick="aplicarRecursoSugerido('${escRel(g.codigo)}', '${escRel(a.sugestao.recursoMaisRecente)}')">Usar</button>` : ''}</div>`
-            : '';
-        const opcoesRecurso = cotacao.origem
-            ? `<option value="">Sem recurso definido</option>
-               <option value="cc" ${a.recursoAtual === calcularRecursoOficial(cotacao.origem, 'cc') ? 'selected' : ''}>${calcularRecursoOficial(cotacao.origem, 'cc')}</option>
-               <option value="proprio" ${a.recursoAtual === calcularRecursoOficial(cotacao.origem, 'proprio') ? 'selected' : ''}>${calcularRecursoOficial(cotacao.origem, 'proprio')}</option>`
-            : `<option value="">Defina a Origem do pedido primeiro</option>`;
-        return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-            <div class="nota-info">${nomeExibicao}</div>
-            <div class="nota-detalhes">${g.codigo ? 'Cód. SmartCompras ' + escRel(g.codigo) + ' · ' : '<em>Sem código SmartCompras — recurso não pode ser atribuído aqui. </em>'}${a.participantes} fornecedor(es) cotaram${a.vencedor ? ' · Vencedor: ' + escRel(a.vencedor.nome) : ''}${a.participantesDivergentes ? ' · <em>relatório de ganhadores diverge na contagem — conferir</em>' : ''}</div>
-            <div class="nota-detalhes">${escRel(a.veredito)}</div>
-            ${sugestaoHTML}
-            ${g.codigo ? `<div class="campo"><label>Recurso deste item</label><select class="form-field" ${cotacao.origem ? '' : 'disabled'} onchange="definirRecursoItem('${escRel(g.codigo)}', this.value)">${opcoesRecurso}</select></div>` : ''}
-        </div>`;
-    }).join('');
+function aplicarRecursoSugerido(pedido, codigo, recursoOficial) {
+    definirRecursoItem(pedido, codigo, recursoOficial.startsWith('C/C') ? 'cc' : 'proprio');
 }
 
 // Configuração dos mínimos de cotações esperados por tipo de recurso — só
@@ -5558,10 +5538,14 @@ function parseRelatorioFornecedoresGanhadores(texto) {
             const empresas = [];
             while (j < linhas.length) {
                 const l = linhas[j];
+                // O relatório real separa cada linha de participante por uma
+                // linha em branco — isso NÃO é fim da tabela, só espaçamento
+                // visual. Pular sem contar, sem parar.
+                if (!l.trim()) { j++; continue; }
                 // Linha de participante tem pelo menos 2 valores "R$" (val.
-                // da proposta e valor total) — assim que isso não bater mais,
-                // a tabela deste produto terminou (não usa contagem de linha
-                // fixa, pra aguentar tabela com estrutura levemente diferente).
+                // da proposta e valor total) — assim que isso não bater mais
+                // (próximo "Cód:", "Total:" ou próximo fornecedor), a
+                // tabela deste produto realmente terminou.
                 if ((l.match(/R\$\s*[\d.,]+/g) || []).length < 2) break;
                 const partes = l.split('\t');
                 empresas.push({
@@ -5642,15 +5626,12 @@ async function confirmarImportacaoGanhadores() {
     if (!relatorioGanhadoresPendente) return;
     const dados = relatorioGanhadoresPendente;
     try {
-        await relatorioGanhadoresCollection.doc(dados.pedido).set({
-            pedido: dados.pedido,
-            descricao: dados.descricao,
-            itens: dados.itens,
-            excecoes: dados.excecoes,
-            importadoEm: new Date().toISOString()
-        });
-        toast(`✓ Relatório do pedido ${dados.pedido} importado — ${dados.itens.length} item(ns).`);
+        const r = await salvarRelatorioGanhadoresEComplementarCotacao(dados);
+        toast(r.cotacaoExiste
+            ? `✓ Relatório do pedido ${dados.pedido} importado — ${dados.itens.length} item(ns), ${r.nomesComplementados} nome(s) complementado(s) na cotação.`
+            : `✓ Relatório do pedido ${dados.pedido} importado — ${dados.itens.length} item(ns).`);
         cancelarImportacaoGanhadores();
+        if (centralPedidoAtual === dados.pedido) renderCentralPedidoCompleto(centralPedidoAtual);
     } catch (e) {
         console.error('Erro ao importar relatório de fornecedores ganhadores:', e);
         toast('✕ Erro ao importar o relatório.');
@@ -5738,6 +5719,25 @@ async function confirmarImportacaoXmlSmartCompras() {
             toast(`Sugestão de data limite de entrega: ${dataLimiteSugerida.split('-').reverse().join('/')} (baseada no XML — confirme manualmente).`);
         }
 
+        // Se um relatório de fornecedores ganhadores já tinha sido colado
+        // ANTES desta cotação existir (Parte 3 da correção — pode acontecer
+        // nos dois sentidos), complementa o nome oficial agora, sem esperar
+        // o usuário colar de novo. Usa dadosPrincipal.itens (o que acabou
+        // de ser gravado) direto, não a lista em cache — o snapshot local
+        // ainda não teve tempo de refletir esta escrita.
+        const relatorioPendente = listaRelatorioGanhadores.find(r => r.pedido === parsed.pedido);
+        if (relatorioPendente) {
+            const cruzamento = cruzarRelatorioComCotacao({ pedido: parsed.pedido, itens: dadosPrincipal.itens }, agruparGanhadoresPorFornecedor(relatorioPendente.itens));
+            if (cruzamento.atualizacoes.length > 0) {
+                const itensComplementados = dadosPrincipal.itens.map(it => {
+                    const match = cruzamento.atualizacoes.find(a => a.codProduto === it.codProduto && a.cnpjFornecedor === it.cnpjFornecedor);
+                    return match ? { ...it, nomeOficial: match.nomeOficial } : it;
+                });
+                await cotacoesCollection.doc(parsed.pedido).update({ itens: itensComplementados, atualizadoEm: new Date().toISOString() });
+                toast(`✓ ${cruzamento.atualizacoes.length} nome(s) de produto complementado(s) a partir do relatório de ganhadores já importado.`);
+            }
+        }
+
         cancelarImportacaoXml();
         await abrirCentralPedido(parsed.pedido);
     } catch (e) {
@@ -5769,63 +5769,19 @@ async function confirmarImportacaoXmlSmartCompras() {
 //   como pendente, nunca "no chute".
 // ============================================================
 
-function parseRelatorioSmartCompras(texto) {
-    const linhas = texto.split('\n').map(l => l.replace(/\r$/, ''));
-    const mPedido = texto.match(/pedido #(\d+)/i);
-    const pedido = mPedido ? mPedido[1] : '';
-
-    const fornecedores = [];
-    let i = 0;
-    while (i < linhas.length) {
-        const linha = linhas[i];
-        if (/^CNPJ:\s*[\d.\/-]+/.test(linha.trim())) {
-            const cnpjMatch = linha.match(/CNPJ:\s*([\d.\/-]+)/);
-            const cnpj = cnpjMatch ? cnpjMatch[1] : '';
-            let j = i - 1;
-            while (j >= 0 && linhas[j].trim() === '') j--;
-            const razaoSocial = linhas[j] ? linhas[j].trim() : '';
-
-            let k = i + 1;
-            while (k < linhas.length && !/^C[oó]digo\s*\t?Produto/i.test(linhas[k].trim())) {
-                if (/^CNPJ:\s*[\d.\/-]+/.test(linhas[k].trim())) break;
-                k++;
-            }
-            if (k >= linhas.length || !/^C[oó]digo/i.test(linhas[k].trim())) { i++; continue; }
-
-            const itens = [];
-            let linhaIdx = k + 1;
-            while (linhaIdx < linhas.length) {
-                const l = linhas[linhaIdx].trim();
-                if (l.startsWith('Total:')) break;
-                if (!l) { linhaIdx++; continue; }
-                if (l.startsWith('Observações:')) { linhaIdx++; continue; }
-
-                const partes = linhas[linhaIdx].split('\t').map(p => p.trim()).filter(p => p !== '');
-                if (partes.length >= 6) {
-                    const [codigo, produto, marca, qtd, valorUnitStr, valorTotalStr] = partes;
-                    const proxima = linhas[linhaIdx + 1] ? linhas[linhaIdx + 1].trim() : '';
-                    const observacao = proxima.startsWith('Observações:') ? proxima.replace('Observações:', '').trim() : '';
-                    itens.push({
-                        codigo,
-                        produto: upAud(produto),
-                        marca: (marca === '---') ? '' : marca,
-                        quantidade: qtd,
-                        valorUnitario: valorUnitStr.replace('R$', '').trim(),
-                        valorTotal: valorTotalStr.replace('R$', '').trim(),
-                        observacaoRelatorio: (observacao === '---' || observacao === '') ? '' : observacao
-                    });
-                    linhaIdx += proxima.startsWith('Observações:') ? 2 : 1;
-                } else {
-                    linhaIdx++;
-                }
-            }
-            fornecedores.push({ razaoSocial, cnpj, itens });
-            i = linhaIdx;
-            continue;
-        }
-        i++;
-    }
-    return { pedido, fornecedores };
+// Converte o resultado plano de parseRelatorioFornecedoresGanhadores (uma
+// linha por item, com o fornecedor vencedor embutido) pro formato agrupado
+// por fornecedor que cruzarRelatorioComCotacao espera. É só uma
+// reorganização dos MESMOS dados já parseados — nenhuma nova leitura de
+// texto, nenhuma identificação adicional.
+function agruparGanhadoresPorFornecedor(itensGanhadores) {
+    const porCnpj = {};
+    itensGanhadores.forEach(it => {
+        const cnpj = it.fornecedorVencedor.cnpj;
+        if (!porCnpj[cnpj]) porCnpj[cnpj] = { cnpj, razaoSocial: it.fornecedorVencedor.nome, itens: [] };
+        porCnpj[cnpj].itens.push({ codigo: it.codigo, produto: it.nomeProduto, quantidade: String(it.quantidade) });
+    });
+    return { fornecedores: Object.values(porCnpj) };
 }
 
 // Cruza o relatório já parseado com a cotação já cadastrada — determinístico
@@ -5856,40 +5812,83 @@ function cruzarRelatorioComCotacao(cotacao, relatorio) {
     return { atualizacoes, semCorrespondencia, divergenciasDetectadas };
 }
 
+// ===== Lógica central única — usada pelos DOIS pontos de entrada =====
+// (tela geral de Cotações e Central do Pedido). Resolve o bug relatado: os
+// dois pontos de entrada tinham parsers DIFERENTES — só parseRelatorioFor-
+// necedoresGanhadores realmente casa com o formato real do relatório (a
+// identificação do fornecedor vencedor é sempre estrutural: nome
+// imediatamente antes da linha "CNPJ:", nunca por nome aproximado). O outro
+// parser (parseRelatorioSmartCompras, removido) esperava um cabeçalho de
+// tabela que o relatório real não tem, então nunca reconhecia os
+// fornecedores corretamente nesse ponto de entrada — essa era a causa real,
+// não um problema de exibição.
+//
+// Grava em DOIS lugares já existentes, nunca numa coleção nova:
+// 1) relatorioGanhadores/{pedido} — registro completo (todos os
+//    participantes por item, contagem de cotações) usado pela Central do
+//    Pedido e pela Fase 7 (Analisar por item).
+// 2) cotacoes/{pedido}.itens[].nomeOficial — só quando já existe cotação
+//    cadastrada pra esse pedido, complementando o nome oficial do produto
+//    (o XML não traz isso). Nunca cria nem redefine outros campos do item.
+async function salvarRelatorioGanhadoresEComplementarCotacao(resultado) {
+    await relatorioGanhadoresCollection.doc(resultado.pedido).set({
+        pedido: resultado.pedido,
+        descricao: resultado.descricao,
+        itens: resultado.itens,
+        excecoes: resultado.excecoes,
+        importadoEm: new Date().toISOString()
+    });
+
+    const cotacao = listaCotacoes.find(c => c.pedido === resultado.pedido);
+    if (!cotacao) return { cotacaoExiste: false, nomesComplementados: 0 };
+
+    const relatorioAgrupado = agruparGanhadoresPorFornecedor(resultado.itens);
+    const cruzamento = cruzarRelatorioComCotacao(cotacao, relatorioAgrupado);
+    if (cruzamento.atualizacoes.length > 0) {
+        const novosItens = (cotacao.itens || []).map(it => {
+            const match = cruzamento.atualizacoes.find(a => a.codProduto === it.codProduto && a.cnpjFornecedor === it.cnpjFornecedor);
+            return match ? { ...it, nomeOficial: match.nomeOficial } : it;
+        });
+        await cotacoesCollection.doc(resultado.pedido).update({ itens: novosItens, atualizadoEm: new Date().toISOString() });
+    }
+    return { cotacaoExiste: true, nomesComplementados: cruzamento.atualizacoes.length, semCorrespondencia: cruzamento.semCorrespondencia, divergenciasDetectadas: cruzamento.divergenciasDetectadas };
+}
+
+// ----- Ponto de entrada: Central do Pedido -----
 let relatorioSmartComprasPendente = null;
 
 function processarRelatorioSmartComprasColado() {
     const texto = document.getElementById('relatorio-smartcompras-texto').value.trim();
     if (!texto) return toast('Cole o texto do relatório antes de processar.');
     if (!centralPedidoAtual) return;
+
+    const resultado = parseRelatorioFornecedoresGanhadores(texto);
+    if (!resultado.pedido) return toast('✕ Não consegui interpretar esse texto. Confira se é o relatório de fornecedores ganhadores.');
+    if (resultado.pedido !== centralPedidoAtual) {
+        return toast(`✕ Esse relatório é do pedido ${resultado.pedido}, mas você está na Central do pedido ${centralPedidoAtual}.`);
+    }
+    if (resultado.itens.length === 0) return toast('✕ Nenhum fornecedor/item reconhecido nesse texto.');
+
     const cotacao = listaCotacoes.find(c => c.pedido === centralPedidoAtual);
-    if (!cotacao) return toast('Nenhuma cotação cadastrada para este pedido ainda.');
-
-    let relatorio;
-    try {
-        relatorio = parseRelatorioSmartCompras(texto);
-    } catch (e) {
-        console.error('Erro ao interpretar o relatório:', e);
-        return toast('✕ Não consegui interpretar esse texto. Confira se é o relatório de fornecedores ganhadores.');
-    }
-    if (relatorio.fornecedores.length === 0) return toast('✕ Nenhum fornecedor reconhecido nesse texto.');
-    if (relatorio.pedido && relatorio.pedido !== centralPedidoAtual) {
-        return toast(`✕ Esse relatório é do pedido ${relatorio.pedido}, mas você está na Central do pedido ${centralPedidoAtual}.`);
-    }
-
-    const cruzamento = cruzarRelatorioComCotacao(cotacao, relatorio);
-    relatorioSmartComprasPendente = { relatorio, cruzamento };
+    const cruzamento = cotacao ? cruzarRelatorioComCotacao(cotacao, agruparGanhadoresPorFornecedor(resultado.itens)) : null;
+    relatorioSmartComprasPendente = resultado;
 
     const resumoEl = document.getElementById('relatorio-smartcompras-resumo');
-    const totalItensRelatorio = relatorio.fornecedores.reduce((s, f) => s + f.itens.length, 0);
-    let html = `<div class="xml-resumo-linha"><strong>Fornecedores no relatório:</strong> ${relatorio.fornecedores.length}</div>`;
-    html += `<div class="xml-resumo-linha"><strong>Itens no relatório:</strong> ${totalItensRelatorio}</div>`;
-    html += `<div class="xml-resumo-linha"><strong>Nomes que serão complementados:</strong> ${cruzamento.atualizacoes.length}</div>`;
-    if (cruzamento.semCorrespondencia.length > 0) {
-        html += `<div class="xml-diff-titulo">Itens do relatório sem correspondência na cotação (não afetados):</div><ul class="xml-diff-lista">${cruzamento.semCorrespondencia.map(x => `<li>${x.codigo} — ${x.produto} (${x.fornecedor})</li>`).join('')}</ul>`;
+    let html = `<div class="xml-resumo-linha"><strong>Fornecedores no relatório:</strong> ${new Set(resultado.itens.map(it => it.fornecedorVencedor.cnpj)).size}</div>`;
+    html += `<div class="xml-resumo-linha"><strong>Itens no relatório:</strong> ${resultado.itens.length}</div>`;
+    if (!cotacao) {
+        html += `<div class="xml-resumo-linha">⚠ Ainda não existe cotação cadastrada pra este pedido — o relatório fica guardado e o complemento de nome acontece automaticamente assim que a cotação for importada.</div>`;
+    } else {
+        html += `<div class="xml-resumo-linha"><strong>Nomes que serão complementados:</strong> ${cruzamento.atualizacoes.length}</div>`;
+        if (cruzamento.semCorrespondencia.length > 0) {
+            html += `<div class="xml-diff-titulo">Itens do relatório sem correspondência na cotação (não afetados):</div><ul class="xml-diff-lista">${cruzamento.semCorrespondencia.map(x => `<li>${x.codigo} — ${x.produto} (${x.fornecedor})</li>`).join('')}</ul>`;
+        }
+        if (cruzamento.divergenciasDetectadas.length > 0) {
+            html += `<div class="xml-diff-titulo">Possíveis divergências detectadas (revisar, não corrigidas automaticamente):</div><ul class="xml-diff-lista">${cruzamento.divergenciasDetectadas.map(l => `<li>${l}</li>`).join('')}</ul>`;
+        }
     }
-    if (cruzamento.divergenciasDetectadas.length > 0) {
-        html += `<div class="xml-diff-titulo">Possíveis divergências detectadas (revisar, não corrigidas automaticamente):</div><ul class="xml-diff-lista">${cruzamento.divergenciasDetectadas.map(l => `<li>${l}</li>`).join('')}</ul>`;
+    if (resultado.excecoes.length) {
+        html += `<div class="xml-diff-titulo">${resultado.excecoes.length} exceção(ões) no relatório:</div><ul class="xml-diff-lista">${resultado.excecoes.map(e => `<li>${e.motivo} (${e.nomeProduto})</li>`).join('')}</ul>`;
     }
     resumoEl.innerHTML = html;
     document.getElementById('relatorio-smartcompras-preview').style.display = 'block';
@@ -5902,26 +5901,14 @@ function cancelarRelatorioSmartCompras() {
 }
 
 async function confirmarRelatorioSmartCompras() {
-    if (!relatorioSmartComprasPendente || !centralPedidoAtual) return;
-    const cotacao = listaCotacoes.find(c => c.pedido === centralPedidoAtual);
-    if (!cotacao) return;
-
-    // Só acrescenta nomeOficial nos itens que bateram — todo o resto do item
-    // (código, observação do fornecedor, marca do XML, valores) permanece
-    // exatamente como veio do XML, intocado.
-    const { atualizacoes } = relatorioSmartComprasPendente.cruzamento;
-    const novosItens = (cotacao.itens || []).map(it => {
-        const match = atualizacoes.find(a => a.codProduto === it.codProduto && a.cnpjFornecedor === it.cnpjFornecedor);
-        return match ? { ...it, nomeOficial: match.nomeOficial } : it;
-    });
-
+    if (!relatorioSmartComprasPendente) return;
     try {
-        await cotacoesCollection.doc(centralPedidoAtual).update({ itens: novosItens, atualizadoEm: new Date().toISOString() });
-        toast(`✓ ${atualizacoes.length} nome(s) de produto complementado(s).`);
+        const r = await salvarRelatorioGanhadoresEComplementarCotacao(relatorioSmartComprasPendente);
+        toast(r.cotacaoExiste ? `✓ Relatório salvo — ${r.nomesComplementados} nome(s) de produto complementado(s).` : '✓ Relatório salvo — será aplicado à cotação assim que ela for importada.');
         cancelarRelatorioSmartCompras();
-        renderCentralPedidoCompleto(centralPedidoAtual);
+        if (centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
     } catch (e) {
-        console.error('Erro ao salvar relatório do SmartCompras:', e);
+        console.error('Erro ao salvar relatório de fornecedores ganhadores:', e);
         toast('✕ Erro ao salvar. Tente novamente.');
     }
 }
@@ -5986,8 +5973,152 @@ function cancelarImportacaoSpData() {
     document.getElementById('spdata-inventario-texto').value = '';
 }
 function atualizarContagemSpData() {
-    const el = document.getElementById('spdata-total-cadastrados');
-    if (el) el.textContent = `${listaProdutosSpData.length} produto(s) cadastrado(s) atualmente.`;
+    renderListaProdutosSpData();
+}
+
+// ===== CRUD básico de produtos SP Data (Código, renomear, inativar) =====
+// A importação em massa (colar relatório) continua existindo como está —
+// isto só acrescenta as funções básicas que faltavam pra um produto
+// individual: ver a lista de fato (antes só mostrava a contagem),
+// cadastrar um novo sem precisar montar um "relatório" de 1 linha,
+// renomear e inativar/reativar. Nada disso mexe na associação
+// SmartCompras↔SP Data já existente (associacoesSpData), só no cadastro
+// em si. "Inativar" nunca apaga o doc — produtos já associados em cotações
+// antigas continuam resolvendo normalmente; inativo só para de aparecer
+// como sugestão em NOVAS associações.
+let filtroProdutosSpData = '';
+let produtoSpDataEditando = new Set();
+let limiteExibicaoSpData = 40;
+
+function filtrarProdutosSpData(texto) {
+    filtroProdutosSpData = texto;
+    limiteExibicaoSpData = 40;
+    renderListaProdutosSpData();
+}
+
+function toggleFormNovoProdutoSpData() {
+    const form = document.getElementById('spdata-form-novo');
+    if (!form) return;
+    const abrindo = form.style.display === 'none';
+    form.style.display = abrindo ? 'block' : 'none';
+    if (abrindo) {
+        document.getElementById('spdata-novo-codigo').value = '';
+        document.getElementById('spdata-novo-nome').value = '';
+        document.getElementById('spdata-novo-unidade').value = '';
+    }
+}
+
+async function salvarNovoProdutoSpData() {
+    const codigo = document.getElementById('spdata-novo-codigo').value.trim();
+    const nome = document.getElementById('spdata-novo-nome').value.trim();
+    const unidade = document.getElementById('spdata-novo-unidade').value.trim();
+    if (!codigo || !nome) return toast('Preencha ao menos código e nome.');
+    if (listaProdutosSpData.some(p => p.codigo === codigo)) return toast(`✕ Já existe um produto com o código ${codigo}.`);
+    try {
+        await produtosSpDataCollection.doc(codigo).set({
+            codigo, nome, unidade,
+            ativo: true,
+            nomeEditadoManualmente: true,
+            importadoEm: new Date().toISOString(),
+            atualizadoEm: new Date().toISOString()
+        });
+        toast('✓ Produto cadastrado.');
+        toggleFormNovoProdutoSpData();
+    } catch (e) {
+        console.error('Erro ao cadastrar produto SP Data:', e);
+        toast('✕ Erro ao cadastrar. Tente novamente.');
+    }
+}
+
+function toggleEditarNomeProdutoSpData(codigo) {
+    if (produtoSpDataEditando.has(codigo)) produtoSpDataEditando.delete(codigo);
+    else produtoSpDataEditando.add(codigo);
+    renderListaProdutosSpData();
+}
+
+async function salvarNomeProdutoSpData(codigo) {
+    const nomeInput = document.getElementById(`spdata-nome-input-${codigo}`);
+    const unidadeInput = document.getElementById(`spdata-unidade-input-${codigo}`);
+    if (!nomeInput) return;
+    const nome = nomeInput.value.trim();
+    if (!nome) return toast('O nome não pode ficar em branco.');
+    try {
+        await produtosSpDataCollection.doc(codigo).update({
+            nome,
+            unidade: unidadeInput ? unidadeInput.value.trim() : '',
+            nomeEditadoManualmente: true,
+            atualizadoEm: new Date().toISOString()
+        });
+        produtoSpDataEditando.delete(codigo);
+        toast('✓ Produto atualizado.');
+    } catch (e) {
+        console.error('Erro ao renomear produto SP Data:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
+
+async function alternarAtivoProdutoSpData(codigo) {
+    const produto = listaProdutosSpData.find(p => p.codigo === codigo);
+    if (!produto) return;
+    const novoAtivo = produto.ativo === false; // ausência de campo = ativo (produtos importados antes desta função existir)
+    try {
+        await produtosSpDataCollection.doc(codigo).update({ ativo: novoAtivo, atualizadoEm: new Date().toISOString() });
+        toast(novoAtivo ? '✓ Produto reativado.' : '✓ Produto inativado — deixa de ser sugerido em novas associações.');
+    } catch (e) {
+        console.error('Erro ao alternar ativo do produto SP Data:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
+
+function renderListaProdutosSpData() {
+    const totalEl = document.getElementById('spdata-total-cadastrados');
+    const container = document.getElementById('spdata-lista-produtos');
+    if (totalEl) totalEl.textContent = `${listaProdutosSpData.length} produto(s) cadastrado(s) atualmente.`;
+    if (!container) return;
+
+    const termo = normalizarBuscaRel(filtroProdutosSpData);
+    const filtrados = listaProdutosSpData
+        .filter(p => !termo || normalizarBuscaRel(p.codigo).includes(termo) || normalizarBuscaRel(p.nome).includes(termo))
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+    if (filtrados.length === 0) {
+        container.innerHTML = '<div class="central-item-vazio">Nenhum produto encontrado.</div>';
+        return;
+    }
+
+    const visiveis = filtrados.slice(0, limiteExibicaoSpData);
+    container.innerHTML = visiveis.map(p => {
+        const inativo = p.ativo === false;
+        const editando = produtoSpDataEditando.has(p.codigo);
+        if (editando) {
+            return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+                <div class="campo"><label>Nome</label><input type="text" class="form-field" id="spdata-nome-input-${p.codigo}" value="${escRel(p.nome || '')}"></div>
+                <div class="campo"><label>Unidade</label><input type="text" class="form-field" id="spdata-unidade-input-${p.codigo}" value="${escRel(p.unidade || '')}"></div>
+                <div class="actions-row">
+                    <button class="actions-button is-success" onclick="salvarNomeProdutoSpData('${p.codigo}')"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                    <button class="actions-button is-neutral" onclick="toggleEditarNomeProdutoSpData('${p.codigo}')">Cancelar</button>
+                </div>
+            </div>`;
+        }
+        return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;${inativo ? 'opacity:0.55;' : ''}">
+            <div class="nota-info">${escRel(p.codigo)} — ${escRel(p.nome || '')}${inativo ? ' <span style="font-size:11px;color:var(--button-danger);">(inativo)</span>' : ''}</div>
+            <div class="nota-detalhes">${p.unidade ? 'Unidade: ' + escRel(p.unidade) : ''}</div>
+            <div class="actions-row">
+                <button type="button" class="central-status-toggle" onclick="toggleEditarNomeProdutoSpData('${p.codigo}')">Renomear</button>
+                <button type="button" class="central-status-toggle" onclick="alternarAtivoProdutoSpData('${p.codigo}')">${inativo ? 'Reativar' : 'Inativar'}</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    if (filtrados.length > visiveis.length) {
+        container.innerHTML += `<div class="actions" style="margin-top:12px;">
+            <button type="button" class="actions-button is-neutral" onclick="carregarMaisProdutosSpData()">Carregar mais (${filtrados.length - visiveis.length} restante(s))</button>
+        </div>`;
+    }
+}
+function carregarMaisProdutosSpData() {
+    limiteExibicaoSpData += 40;
+    renderListaProdutosSpData();
 }
 
 // Idempotente: reimportar o mesmo relatório não duplica nada — cada produto
@@ -6010,10 +6141,15 @@ async function confirmarImportacaoSpData() {
                 const existente = porCodigo.get(p.codigo);
                 const dados = {
                     codigo: p.codigo,
-                    nome: p.nome,
+                    // Reimportar o inventário nunca reverte uma renomeação manual nem
+                    // reativa silenciosamente um produto inativado — mesmo raciocínio
+                    // já usado pra nomeOficial na reimportação de cotação.
+                    nome: (existente && existente.nomeEditadoManualmente) ? existente.nome : p.nome,
                     unidade: p.unidade,
                     quantidadeInventario: p.quantidade,
                     precoInventario: p.preco,
+                    ativo: existente && existente.ativo === false ? false : true,
+                    nomeEditadoManualmente: existente ? !!existente.nomeEditadoManualmente : false,
                     importadoEm: existente ? existente.importadoEm : agora,
                     atualizadoEm: agora
                 };
@@ -6040,37 +6176,54 @@ function normalizarTextoBusca(s) {
 }
 function buscarSugestoesSpData(nomeItem) {
     const alvo = normalizarTextoBusca(nomeItem);
-    if (!alvo) return [];
-    const exatas = listaProdutosSpData.filter(p => normalizarTextoBusca(p.nome) === alvo);
+    // CAUSA RAIZ (item 451 desaparecendo da lista de associação): esta busca
+    // só comparava contra p.nome — nunca contra p.codigo — mesmo o campo de
+    // busca (renderBuscaAssociacaoSpData) anunciando "Buscar por nome ou
+    // código...". Um produto SP Data cujo nome não contém o código digitado
+    // (caso normal: nome é descritivo, código é numérico) nunca aparecia
+    // quando buscado pelo código, qualquer que fosse o produto — não é uma
+    // exceção do 451, é a regra geral de busca que ignorava código. Corrigido
+    // de forma geral: busca por código (exato ou como trecho) além do nome.
+    const alvoCodigo = String(nomeItem || '').trim();
+    if (!alvo && !alvoCodigo) return [];
+    // Produto inativado não entra como sugestão pra NOVA associação — mas
+    // continua resolvendo normalmente onde já estiver associado (ver
+    // renderAssociacaoSpDataWidget, que busca direto em listaProdutosSpData
+    // sem passar por aqui).
+    const disponiveis = listaProdutosSpData.filter(p => p.ativo !== false);
+    const exatas = disponiveis.filter(p => (alvo && normalizarTextoBusca(p.nome) === alvo) || (alvoCodigo && String(p.codigo || '').trim() === alvoCodigo));
     if (exatas.length > 0) return exatas;
-    const tokensAlvo = alvo.split(/\s+/).filter(Boolean);
-    return listaProdutosSpData.filter(p => {
+    const tokensAlvo = alvo ? alvo.split(/\s+/).filter(Boolean) : [];
+    return disponiveis.filter(p => {
         const nomeProd = normalizarTextoBusca(p.nome);
-        return tokensAlvo.every(t => nomeProd.includes(t));
+        const bateNome = tokensAlvo.length > 0 && tokensAlvo.every(t => nomeProd.includes(t));
+        const bateCodigo = alvoCodigo && String(p.codigo || '').trim().includes(alvoCodigo);
+        return bateNome || bateCodigo;
     });
 }
 
 // Confirma (ou corrige) uma associação. Histórico append-only: uma correção
 // nunca apaga a entrada anterior, só acrescenta uma nova e atualiza qual é
 // a atual (spDataCodigo no nível raiz do doc).
-async function confirmarAssociacaoSpData(codigoSmartCompras, spDataCodigo) {
+async function confirmarAssociacaoSpData(codigoSmartCompras, spDataCodigo, opcoes) {
+    opcoes = opcoes || {};
     if (!codigoSmartCompras || !spDataCodigo) return;
     const agora = new Date().toISOString();
     const existente = listaAssociacoesSpData.find(a => a.codigoSmartCompras === codigoSmartCompras);
     const jaEraEssa = existente && existente.spDataCodigo === spDataCodigo;
     const historico = existente ? [...(existente.historico || [])] : [];
-    if (!jaEraEssa) historico.push({ spDataCodigo, confirmadoEm: agora, tipo: existente ? 'correcao' : 'confirmacao' });
+    if (!jaEraEssa) historico.push({ spDataCodigo, confirmadoEm: agora, tipo: existente ? 'correcao' : (opcoes.origemAutomatica ? 'confirmacao_automatica_erp' : 'confirmacao') });
 
     try {
         await associacoesSpDataCollection.doc(codigoSmartCompras).set({
             codigoSmartCompras, spDataCodigo, confirmadoEm: agora, historico
         });
-        toast('✓ Associação confirmada.');
+        if (!opcoes.silencioso) toast('✓ Associação confirmada.');
         if (centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
         if (nfeInfoAtual) renderAssociacaoCotacaoXml();
     } catch (e) {
         console.error('Erro ao confirmar associação SP Data:', e);
-        toast('✕ Erro ao associar. Tente novamente.');
+        if (!opcoes.silencioso) toast('✕ Erro ao associar. Tente novamente.');
     }
 }
 
@@ -6495,7 +6648,7 @@ function montarHistoricoNfs() {
         const nomeFornecedorBruto = (nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '';
         const docFornecedor = cnpjFornecedor ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpjFornecedor)) : null;
         const nomeFornecedor = docFornecedor ? (docFornecedor.nomeExibido || docFornecedor.nomeReal) : nomeFornecedorBruto;
-        const pedido = (nf && nf.pedido) || (erp && erp.vinculo && erp.vinculo.pedido) || null;
+        const pedido = (nf && nf.pedido) || (erp && erp.vinculo && erp.vinculo.status === 'confirmado' && erp.vinculo.pedido) || null;
         const cotacao = pedido ? listaCotacoes.find(c => c.pedido === pedido) : null;
         const anotacao = pedido ? listaAnotacoes.find(a => a.pedido === pedido) : null;
 
@@ -6613,8 +6766,24 @@ function renderCardHistoricoNf(item) {
             ? item.nf.itens.map(i => `<div class="central-item-linha">${escRel(i.xProd)} — cód. fornecedor ${escRel(i.cProd)}${i.codigoSmartCompras ? ' · SmartCompras ' + escRel(i.codigoSmartCompras) : ''}${i.codigoSpData ? ' · SP Data ' + escRel(i.codigoSpData) : ''} · qtd ${i.quantidade}</div>`).join('')
             : '<div class="nota-detalhes"><em>Sem itens de XML processados pra esta NF.</em></div>';
 
+        const vinculoLabels = { confirmado: 'confirmado', sugerido: 'sugerido — precisa de confirmação', sem_associacao: 'sem associação' };
+        const vinculo = item.erp && item.erp.vinculo;
+        const evidenciasHTML = vinculo && vinculo.evidencias && vinculo.evidencias.length
+            ? `<div class="nota-detalhes">Evidências: ${vinculo.evidencias.map(escRel).join(' · ')}</div>`
+            : (vinculo && vinculo.motivo ? `<div class="nota-detalhes"><em>${escRel(vinculo.motivo)}</em></div>` : '');
+        // Fase 8: sugestão de vínculo ERP→pedido só se torna real com
+        // confirmação do usuário — nunca automática. Quando há mais de um
+        // pedido candidato (mesmo fornecedor, mesmo valor compatível), lista
+        // todos e deixa o usuário escolher; nunca decide sozinho.
+        const confirmarVinculoHTML = vinculo && vinculo.status === 'sugerido'
+            ? `<div class="xml-item-acao" onclick="event.stopPropagation()" style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+                ${(vinculo.candidatos && vinculo.candidatos.length ? vinculo.candidatos : [{ pedido: vinculo.pedido }]).map(c => c.pedido ? `<button type="button" class="central-status-toggle" onclick="confirmarVinculoErpComPedido('${item.erp.id}', '${escRel(c.pedido)}')">Confirmar vínculo com o Pedido ${escRel(c.pedido)}</button>` : '').join('')}
+              </div>`
+            : '';
         const erpHTML = item.erp
-            ? `<div class="nota-detalhes">ERP: lançada em ${escRel(item.erp.data || '-')}${item.erp.vencimento ? ', vencimento ' + escRel(item.erp.vencimento) : ''}${item.erp.vinculo && item.erp.vinculo.status ? ' · vínculo: ' + escRel(item.erp.vinculo.status) : ''}</div>`
+            ? `<div class="nota-detalhes">ERP: lançada em ${escRel(item.erp.data || '-')}${item.erp.vencimento ? ', vencimento ' + escRel(item.erp.vencimento) : ''}${vinculo && vinculo.status ? ' · vínculo: ' + escRel(vinculoLabels[vinculo.status] || vinculo.status) : ''}</div>
+                ${evidenciasHTML}
+                ${confirmarVinculoHTML}`
             : '<div class="nota-detalhes"><em>Ainda não vinculada a uma entrada de ERP.</em></div>';
         // Fase 5: uma NF de origem ERP já arquivada (ou que foi direto pro
         // histórico por bloqueio de fornecedor) pode ser desarquivada
@@ -7483,41 +7652,234 @@ function vincularEntidadeSelecionada(chave, principalId) {
 // UM deles bater com uma associação existente pra confirmar; se nenhum bater
 // (ou não houver associação pra nenhum deles), fica pendente — nunca grava
 // vínculo assumido.
+// Converte um número que pode vir em dois formatos diferentes já presentes
+// no app: formato BR de relatório impresso ("1.234,56", usado pelo ERP — ver
+// parseValorBR) ou texto simples com ponto decimal, tal como o XML do
+// SmartCompras grava em Quantidade/Preco_Unitario/Preco_Total (ver
+// parseXmlSmartCompras). Nunca inventa separador: decide pela presença de
+// vírgula decimal.
+function numeroFlexivel(v) {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number') return isNaN(v) ? null : v;
+    const s = String(v).trim();
+    if (!s) return null;
+    const n = /,\d{1,4}\s*$/.test(s) ? parseValorBR(s) : parseFloat(s);
+    return isNaN(n) ? null : n;
+}
+
+// Soma o valor total cotado (Preco_Total, com fallback pra
+// Quantidade × Preco_Unitario quando Preco_Total vier vazio) dos itens de um
+// fornecedor específico dentro de uma cotação — usado só como EVIDÊNCIA de
+// reconciliação (Fase 8), nunca como fonte de verdade do valor da cotação.
+function valorTotalCotacaoPorFornecedor(cotacao, cnpj) {
+    return (cotacao.itens || [])
+        .filter(it => it.cnpjFornecedor === cnpj)
+        .reduce((soma, it) => {
+            const total = numeroFlexivel(it.precoTotal);
+            if (total !== null) return soma + total;
+            const qtd = numeroFlexivel(it.quantidade);
+            const unit = numeroFlexivel(it.precoUnitario);
+            return soma + (qtd !== null && unit !== null ? qtd * unit : 0);
+        }, 0);
+}
+
+// Tolerância pra considerar o valor total do ERP "compatível" com o valor
+// cotado de um fornecedor dentro de um pedido — evidência de reconciliação,
+// nunca decide sozinha (sempre combinada com CNPJ, nunca com data isolada).
+// 5% cobre frete/desconto/ajustes comuns entre cotação e nota fiscal real
+// sem abrir demais pra falsos positivos.
+const TOLERANCIA_VALOR_RECONCILIACAO_ERP = 0.05;
+
+// ===================================================================
+// --- FASE 8: RECONCILIAÇÃO ERP → NF/PEDIDO (CONFIRMADA/SUGERIDA/SEM) ---
+// ===================================================================
+// Três estados, sempre determinísticos e auditáveis (nunca fuzzy matching,
+// nunca IA, nunca "mesma data = mesmo pedido" isolada):
+//
+// 'confirmado'      — já existe uma NF/XML processada (associacoesFornecedor)
+//                      pro mesmo número de NF + CNPJ cadastrado. Igual à
+//                      lógica original, preservada sem alteração de critério.
+// 'sugerido'        — não há XML processado pra esta NF ainda, mas o CNPJ do
+//                      fornecedor (cadastro oficial, nunca por nome) bate com
+//                      o fornecedor de um ou mais pedidos, E o valor total
+//                      cotado pra esse fornecedor nesse pedido é compatível
+//                      (dentro da tolerância) com o valor total da NF do ERP.
+//                      Sempre lista as evidências usadas e, quando mais de
+//                      um pedido bate, todos os candidatos — nunca escolhe
+//                      um sozinho.
+// 'sem_associacao'  — sem CNPJ cadastrado, sem pedido do fornecedor, ou CNPJ
+//                      bate mas nenhum pedido tem valor compatível.
 function vincularEntradaErpComNf(bloco) {
     const cnpjsFornecedor = resolverCnpjsFornecedorSpData(bloco.codigoFornecedorSpData);
 
     if (cnpjsFornecedor.length === 0) {
-        return { status: 'pendente', motivo: 'Código de fornecedor sem CNPJ cadastrado no SP Data (ou cadastro ainda não importado).', cnpjsFornecedor: [], cnpjFornecedor: null };
+        return { status: 'sem_associacao', motivo: 'Código de fornecedor sem CNPJ cadastrado no SP Data (ou cadastro ainda não importado).', evidencias: [], cnpjsFornecedor: [], cnpjFornecedor: null, pedido: null, candidatos: [] };
     }
 
     const associacoesCorrespondentes = Object.values(bancoAssociacoesFornecedor)
         .filter(a => a.nfNumero === bloco.nf && cnpjsFornecedor.includes(a.cnpjFornecedor));
 
-    if (associacoesCorrespondentes.length === 0) {
-        return { status: 'pendente', motivo: 'Nenhuma NF/XML já processada bate com este fornecedor (por CNPJ cadastrado) e este número de NF.', cnpjsFornecedor, cnpjFornecedor: null };
+    if (associacoesCorrespondentes.length > 0) {
+        // Todas as associações correspondentes devem concordar no mesmo CNPJ —
+        // se não concordarem (situação anômala), não decide sozinho.
+        const cnpjsBatidos = [...new Set(associacoesCorrespondentes.map(a => a.cnpjFornecedor))];
+        if (cnpjsBatidos.length > 1) {
+            return { status: 'sem_associacao', motivo: 'Mais de um CNPJ cadastrado para este fornecedor bate com esta NF — ambíguo, precisa de confirmação manual.', evidencias: [], cnpjsFornecedor, cnpjFornecedor: null, pedido: null, candidatos: [] };
+        }
+
+        // Localiza a cotação/pedido a partir do(s) item(ns) já confirmados.
+        const codigosSmartCompras = [...new Set(associacoesCorrespondentes.map(a => a.codigoSmartCompras))];
+        let pedido = null;
+        for (const cotacao of listaCotacoes) {
+            if ((cotacao.itens || []).some(it => codigosSmartCompras.includes(it.codProduto))) { pedido = cotacao.pedido; break; }
+        }
+
+        return {
+            status: 'confirmado',
+            motivo: '',
+            evidencias: ['NF/XML já processada e associada a este fornecedor e a este número de NF.'],
+            cnpjsFornecedor,
+            cnpjFornecedor: cnpjsBatidos[0],
+            pedido,
+            candidatos: []
+        };
     }
 
-    // Todas as associações correspondentes devem concordar no mesmo CNPJ —
-    // se não concordarem (situação anômala), não decide sozinho.
-    const cnpjsBatidos = [...new Set(associacoesCorrespondentes.map(a => a.cnpjFornecedor))];
-    if (cnpjsBatidos.length > 1) {
-        return { status: 'pendente', motivo: 'Mais de um CNPJ cadastrado para este fornecedor bate com esta NF — ambíguo, precisa de confirmação manual.', cnpjsFornecedor, cnpjFornecedor: null };
+    // Sem XML já processado pra esta NF — tenta reconciliar por evidência:
+    // CNPJ do fornecedor (cadastro oficial) + valor total compatível com
+    // algum pedido desse mesmo fornecedor. Nunca usa só data.
+    const valorErp = parseValorBR(bloco.valor);
+    const candidatos = [];
+    listaCotacoes.forEach(cotacao => {
+        const fornecedorMatch = (cotacao.fornecedores || []).find(f => cnpjsFornecedor.includes(f.cnpj));
+        if (!fornecedorMatch) return;
+        const valorCotado = valorTotalCotacaoPorFornecedor(cotacao, fornecedorMatch.cnpj);
+        const diff = Math.abs(valorCotado - valorErp);
+        const diffPercentual = valorCotado > 0 ? diff / valorCotado : null;
+        const valorCompativel = valorCotado > 0 && diffPercentual !== null && diffPercentual <= TOLERANCIA_VALOR_RECONCILIACAO_ERP;
+        const dataDentroPeriodo = !!(bloco.data && cotacao.dataPedido && cotacao.dataLimite &&
+            converterDataBRparaISO(bloco.data) >= cotacao.dataPedido && converterDataBRparaISO(bloco.data) <= cotacao.dataLimite);
+        candidatos.push({
+            pedido: cotacao.pedido, cnpjFornecedor: fornecedorMatch.cnpj,
+            valorCotado, valorErp, diffPercentual, valorCompativel, dataDentroPeriodo
+        });
+    });
+
+    const compativeis = candidatos.filter(c => c.valorCompativel);
+    if (compativeis.length > 0) {
+        compativeis.sort((a, b) => a.diffPercentual - b.diffPercentual);
+        const evidenciasBase = (c) => {
+            const ev = [
+                `CNPJ do fornecedor cadastrado bate com o pedido ${c.pedido}.`,
+                `Valor compatível: cotado R$ ${formatValorBR(c.valorCotado)} × NF do ERP R$ ${formatValorBR(c.valorErp)} (diferença ${(c.diffPercentual * 100).toFixed(1)}%).`
+            ];
+            if (c.dataDentroPeriodo) ev.push('Data da NF dentro do período do pedido (evidência complementar — nunca usada isoladamente).');
+            return ev;
+        };
+        return {
+            status: 'sugerido',
+            motivo: compativeis.length > 1 ? `${compativeis.length} pedido(s) do mesmo fornecedor com valor compatível — escolha manualmente.` : 'Evidências suficientes para sugerir, mas sem NF/XML processada confirmando — requer confirmação humana.',
+            evidencias: evidenciasBase(compativeis[0]),
+            cnpjsFornecedor,
+            cnpjFornecedor: compativeis[0].cnpjFornecedor,
+            pedido: compativeis.length === 1 ? compativeis[0].pedido : null,
+            candidatos: compativeis.map(c => ({ pedido: c.pedido, evidencias: evidenciasBase(c) }))
+        };
     }
 
-    // Localiza a cotação/pedido a partir do(s) item(ns) já confirmados.
-    const codigosSmartCompras = [...new Set(associacoesCorrespondentes.map(a => a.codigoSmartCompras))];
-    let pedido = null;
-    for (const cotacao of listaCotacoes) {
-        if ((cotacao.itens || []).some(it => codigosSmartCompras.includes(it.codProduto))) { pedido = cotacao.pedido; break; }
+    if (candidatos.length > 0) {
+        return {
+            status: 'sem_associacao',
+            motivo: `Fornecedor cadastrado tem ${candidatos.length} pedido(s), mas nenhum com valor total compatível com esta NF do ERP (R$ ${formatValorBR(valorErp)}).`,
+            evidencias: [],
+            cnpjsFornecedor,
+            cnpjFornecedor: candidatos[0].cnpjFornecedor,
+            pedido: null,
+            candidatos: []
+        };
     }
 
     return {
-        status: 'confirmado',
-        motivo: '',
+        status: 'sem_associacao',
+        motivo: 'Nenhum pedido/cotação cadastrado para este fornecedor (CNPJ oficial) ainda.',
+        evidencias: [],
         cnpjsFornecedor,
-        cnpjFornecedor: cnpjsBatidos[0],
-        pedido
+        cnpjFornecedor: null,
+        pedido: null,
+        candidatos: []
     };
+}
+
+// Permite ao usuário confirmar manualmente um vínculo 'sugerido' (ou escolher
+// entre candidatos empatados) — nunca automático. Preserva o registro
+// original (evidências, motivo) e só substitui o status/pedido. Reaproveita
+// o mesmo doc de entradasErp, nunca cria uma segunda estrutura.
+async function confirmarVinculoErpComPedido(chave, pedidoEscolhido) {
+    const entrada = listaEntradasErp.find(e => e.id === chave);
+    if (!entrada || !pedidoEscolhido) return;
+    try {
+        const novoVinculo = { ...entrada.vinculo, status: 'confirmado', pedido: pedidoEscolhido, confirmadoManualmente: true, confirmadoEm: new Date().toISOString() };
+        await entradasErpCollection.doc(chave).update({ vinculo: novoVinculo });
+        toast(`✓ Vínculo confirmado com o pedido ${pedidoEscolhido}.`);
+        // Agora que o pedido é certeza, tenta preencher automaticamente as
+        // associações de SP Data que ainda faltarem nesse fornecedor/pedido
+        // (ver reconciliarAssociacoesSpDataViaErp) — mesma regra determinística
+        // usada na importação, nunca decide em caso de ambiguidade.
+        const resultado = reconciliarAssociacoesSpDataViaErp({ ...entrada, vinculo: novoVinculo });
+        if (resultado.pares.length) {
+            for (const p of resultado.pares) await confirmarAssociacaoSpData(p.codigoSmartCompras, p.spDataCodigo, { silencioso: true, origemAutomatica: true });
+            toast(`✓ Vínculo confirmado · ${resultado.pares.length} associação(ões) de SP Data preenchida(s) automaticamente a partir do ERP.`);
+        }
+        renderHistoricoNfs();
+    } catch (e) {
+        console.error('Erro ao confirmar vínculo ERP → pedido:', e);
+        toast('✕ Erro ao confirmar vínculo.');
+    }
+}
+
+// ===================================================================
+// --- FASE 8: PREENCHIMENTO AUTOMÁTICO DE ASSOCIAÇÃO SP DATA VIA ERP ---
+// ===================================================================
+// Só atua quando o vínculo NF↔pedido já é uma CERTEZA (status 'confirmado' —
+// seja pela associação de XML já existente, seja por confirmação manual de
+// uma sugestão) — nunca a partir de uma sugestão ainda não confirmada.
+// Casa item da cotação (sem associação SP Data ainda) com item do ERP
+// (que já traz o código SP Data direto) pela QUANTIDADE e VALOR UNITÁRIO —
+// dados concretos da mesma nota fiscal, nunca por semelhança de nome/texto.
+// Só associa quando existe exatamente UM item do ERP compatível: ambiguidade
+// nunca decide sozinha, fica como estava (associação manual, já existente).
+function reconciliarAssociacoesSpDataViaErp(entrada) {
+    if (!entrada || !entrada.vinculo || entrada.vinculo.status !== 'confirmado' || !entrada.vinculo.pedido) return { pares: [] };
+    const cotacao = listaCotacoes.find(c => c.pedido === entrada.vinculo.pedido);
+    if (!cotacao) return { pares: [] };
+    const cnpj = entrada.vinculo.cnpjFornecedor;
+
+    const itensCotacaoSemAssociacao = (cotacao.itens || []).filter(it =>
+        it.cnpjFornecedor === cnpj && it.codProduto &&
+        !listaAssociacoesSpData.some(a => a.codigoSmartCompras === it.codProduto)
+    );
+    if (!itensCotacaoSemAssociacao.length) return { pares: [] };
+
+    const itensErp = entrada.itens || [];
+    const usados = new Set();
+    const pares = [];
+
+    itensCotacaoSemAssociacao.forEach(itCot => {
+        const qtdCot = numeroFlexivel(itCot.quantidade);
+        const precoCot = numeroFlexivel(itCot.precoUnitario);
+        if (qtdCot === null || precoCot === null) return;
+        const candidatosIdx = itensErp.reduce((acc, itErp, idx) => {
+            if (usados.has(idx)) return acc;
+            if (Math.abs(itErp.quantidade - qtdCot) < 0.001 && Math.abs(itErp.valorUnitario - precoCot) < 0.01) acc.push(idx);
+            return acc;
+        }, []);
+        if (candidatosIdx.length === 1) {
+            usados.add(candidatosIdx[0]);
+            pares.push({ codigoSmartCompras: itCot.codProduto, spDataCodigo: itensErp[candidatosIdx[0]].codigoSpData });
+        }
+    });
+
+    return { pares };
 }
 
 // Cruza cada item do bloco ERP (código SP Data) com associacoesSpData, só
@@ -7531,13 +7893,20 @@ function enriquecerItensEntradaErp(itens) {
 }
 
 async function salvarEntradasErp(blocosParsed) {
-    if (!blocosParsed || !blocosParsed.length) return { salvos: 0, erros: 0 };
+    if (!blocosParsed || !blocosParsed.length) return { salvos: 0, erros: 0, associacoesSpDataAutomaticas: 0 };
     const agora = new Date().toISOString();
     // Mapa dos docs já existentes — usado só pra decidir o statusFluxo (ver
     // resolverStatusFluxoEntradaErp), que precisa ser "grudento" em
     // reimportação: uma entrada já arquivada não deve voltar a pedir decisão.
     const existentesMap = {};
     listaEntradasErp.forEach(e => { existentesMap[e.id] = e; });
+    // Acumula pares candidatos à associação automática de SP Data (Fase 8)
+    // durante o parse dos blocos — só é aplicado DEPOIS que o batch de
+    // entradasErp confirmar commit, e nunca duas vezes pro mesmo item da
+    // cotação dentro da mesma importação (evita conflito se duas NFs desta
+    // mesma leva, por algum motivo, parecessem bater com o mesmo item).
+    const paresAutoAssociacao = [];
+    const codigosSmartComprasJaEnfileirados = new Set();
     let salvos = 0, erros = 0;
     for (let i = 0; i < blocosParsed.length; i += 400) {
         const lote = blocosParsed.slice(i, i + 400);
@@ -7547,6 +7916,7 @@ async function salvarEntradasErp(blocosParsed) {
             const chave = chaveEntradaErp(bloco);
             const vinculo = vincularEntradaErpComNf(bloco);
             const fluxo = resolverStatusFluxoEntradaErp(bloco, vinculo, existentesMap[chave]);
+            const itensEnriquecidos = enriquecerItensEntradaErp(bloco.itens);
             batch.set(entradasErpCollection.doc(chave), {
                 nf: bloco.nf,
                 serie: bloco.serie,
@@ -7556,17 +7926,30 @@ async function salvarEntradasErp(blocosParsed) {
                 cnpjFornecedor: vinculo.cnpjFornecedor, // null até confirmado — nunca escolhido arbitrariamente
                 data: bloco.data,
                 vencimento: bloco.vencimento,
-                itens: enriquecerItensEntradaErp(bloco.itens),
+                itens: itensEnriquecidos,
                 financeiro: bloco.financeiro,
                 parcelas: bloco.parcelasDetalhe,
                 avisos: bloco.avisos,
-                vinculo, // {status: 'confirmado'|'pendente', motivo, cnpjsFornecedor, cnpjFornecedor, pedido?} — referência, não altera nada original
+                vinculo, // {status: 'confirmado'|'sugerido'|'sem_associacao', motivo, evidencias, cnpjsFornecedor, cnpjFornecedor, pedido?, candidatos?} — referência, não altera nada original
                 statusFluxo: fluxo.statusFluxo,
                 notaVinculadaId: fluxo.notaVinculadaId,
                 avisoJaExisteNotaManual: fluxo.avisoJaExisteNotaManual,
                 atualizadoEm: agora
             });
             salvos++;
+
+            // Fase 8: só tenta preencher associação de SP Data quando o
+            // vínculo já saiu 'confirmado' nesta própria importação (NF/XML
+            // já processada) — uma sugestão nunca alimenta isso sozinha.
+            if (vinculo.status === 'confirmado' && vinculo.pedido) {
+                const { pares } = reconciliarAssociacoesSpDataViaErp({ vinculo, itens: itensEnriquecidos });
+                pares.forEach(p => {
+                    if (!codigosSmartComprasJaEnfileirados.has(p.codigoSmartCompras)) {
+                        codigosSmartComprasJaEnfileirados.add(p.codigoSmartCompras);
+                        paresAutoAssociacao.push(p);
+                    }
+                });
+            }
         });
         try {
             await batch.commit();
@@ -7576,7 +7959,18 @@ async function salvarEntradasErp(blocosParsed) {
             salvos -= lote.length;
         }
     }
-    return { salvos, erros };
+
+    let associacoesSpDataAutomaticas = 0;
+    for (const par of paresAutoAssociacao) {
+        try {
+            await confirmarAssociacaoSpData(par.codigoSmartCompras, par.spDataCodigo, { silencioso: true, origemAutomatica: true });
+            associacoesSpDataAutomaticas++;
+        } catch (e) {
+            console.error('Erro ao aplicar associação automática de SP Data via ERP:', e);
+        }
+    }
+
+    return { salvos, erros, associacoesSpDataAutomaticas };
 }
 
 // ===== Fase 5 — pré-seleção / bloqueio / financeiro (entradas do ERP) =====
@@ -7816,6 +8210,28 @@ function processarRelatorioImportacao() {
     }
 }
 
+// Alimenta o histórico/reconciliação do ERP (entradasErp) com TODAS as NFs
+// reconhecidas no relatório colado, independente do checkbox de seleção —
+// NUNCA cria nota no financeiro (notasCollection). Ação separada de
+// confirmarImportacaoLote porque o usuário pode querer só consolidar os
+// dados do ERP (Pré-seleção, Histórico, reconciliação da Fase 8) sem decidir
+// ainda quais NFs específicas precisam de nota financeira agora. Idempotente
+// (chaveEntradaErp = nf_serie, sempre .set() por chave) — pode ser clicado
+// de novo com o mesmo relatório sem duplicar nada.
+async function salvarHistoricoErpSemFinanceiro() {
+    if (!notasImportadasPreview.length) return toast('Nada pra salvar — processe um relatório primeiro.');
+    try {
+        const resultado = await salvarEntradasErp(notasImportadasPreview);
+        let msg = `✓ Histórico do ERP atualizado: ${resultado.salvos} nota(s) processada(s)`;
+        if (resultado.associacoesSpDataAutomaticas > 0) msg += ` · +${resultado.associacoesSpDataAutomaticas} associação(ões) de SP Data preenchida(s) automaticamente`;
+        if (resultado.erros > 0) msg += ` · ${resultado.erros} erro(s)`;
+        toast(msg);
+    } catch (e) {
+        console.error('Erro ao salvar histórico do ERP:', e);
+        toast('✕ Erro ao salvar o histórico do ERP.');
+    }
+}
+
 function renderPreviewImportacao() {
     const container = document.getElementById('import-preview-container');
     if (!container) return;
@@ -7879,6 +8295,13 @@ function renderPreviewImportacao() {
                 <div class="import-toggle-info"><strong>${totalNovas}</strong> nova${totalNovas === 1 ? '' : 's'} · <span>${totalProcessadas} já processada${totalProcessadas === 1 ? '' : 's'}</span></div>
                 <button id="import-toggle-novas-btn" class="manage-toolbar-btn" onclick="toggleMostrarApenasNovasImportacao()">${mostrarApenasNovasImportacao ? `Mostrar Todas (${notasImportadasPreview.length})` : 'Mostrar Apenas Novas'}</button>
             </div>
+            <div class="actions" style="margin-top:10px;">
+                <button class="actions-button is-neutral" onclick="salvarHistoricoErpSemFinanceiro()">
+                    <span class="icon-wrapper"><i class="fa-solid fa-database"></i></span>
+                    Alimentar Histórico do ERP (todas as ${notasImportadasPreview.length}, sem gerar nota no financeiro)
+                </button>
+            </div>
+            <div class="nota-detalhes" style="margin-top:2px;">Essa opção só salva os dados no histórico/reconciliação do ERP — não cria nada em Gerenciar Notas. Pode clicar quantas vezes quiser com o mesmo relatório, sem duplicar.</div>
             <div class="campo" style="margin-top:12px;"><input type="text" id="import-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarPreviewImportacao(this.value)"></div>
             <div class="actions" style="gap: 10px; margin-top: 8px;">
                 <button class="actions-button is-neutral" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
@@ -7893,7 +8316,7 @@ function renderPreviewImportacao() {
         <div class="actions" style="margin-top: 8px;">
             <button class="actions-button is-success" onclick="confirmarImportacaoLote()">
                 <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span>
-                Importar Selecionadas (<span id="import-count-selected">${totalNovas}</span>)
+                Importar Selecionadas pro Financeiro (<span id="import-count-selected">${totalNovas}</span>)
             </button>
         </div>`;
 
@@ -8005,12 +8428,12 @@ async function confirmarImportacaoLote() {
     const selecionadas = checks.filter(c => c.checked);
 
     if (selecionadas.length === 0) {
-        return toast('Nenhuma nota selecionada para importar.');
+        return toast('Nenhuma nota marcada para o financeiro. Se é só pra salvar os dados do ERP, use "Alimentar Histórico do ERP" acima.');
     }
 
     showConfirmModal({
-        title: 'Confirmar Importação',
-        message: `Importar ${selecionadas.length} nota(s) fiscal(is) para a lista de notas pendentes?`,
+        title: 'Confirmar Importação pro Financeiro',
+        message: `Criar ${selecionadas.length} nota(s) fiscal(is) na lista de notas pendentes (Gerenciar Notas)? O histórico do ERP dessas notas também será salvo/atualizado junto.`,
         confirmText: 'Sim, Importar',
         confirmClass: 'success',
         onConfirm: async () => {
@@ -8063,6 +8486,7 @@ async function confirmarImportacaoLote() {
                 try {
                     const resultado = await salvarEntradasErp(notasImportadasPreview);
                     if (resultado.salvos > 0) msgEntradasErp = ` (+${resultado.salvos} no histórico de entradas do ERP)`;
+                    if (resultado.associacoesSpDataAutomaticas > 0) msgEntradasErp += ` · +${resultado.associacoesSpDataAutomaticas} associação(ões) de SP Data preenchida(s) automaticamente`;
                 } catch (e) {
                     console.error('Erro ao salvar histórico entradasErp:', e);
                 }

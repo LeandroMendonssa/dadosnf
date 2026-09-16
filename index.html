@@ -358,6 +358,7 @@
                 </div>
 
                 <div id="xml-resultado-salvar" style="display:none;margin-top:16px;"></div>
+                <div id="xml-sugestao-recurso" style="display:none;margin-top:16px;"></div>
 
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
                     <button class="actions-button is-success" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
@@ -385,7 +386,21 @@
                     </div>
                 </div>
                 <div class="card" style="margin-top:16px;">
-                    <p style="margin:0;font-size:12px;color:var(--text-light);" id="spdata-total-cadastrados"></p>
+                    <div class="actions-row" style="margin:0 0 12px;">
+                        <button class="actions-button" onclick="toggleFormNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar produto</button>
+                    </div>
+                    <div class="card" id="spdata-form-novo" style="display:none;margin-bottom:14px;">
+                        <div class="campo"><label>Código SP Data</label><input type="text" id="spdata-novo-codigo" class="form-field" placeholder="Código"></div>
+                        <div class="campo"><label>Nome</label><input type="text" id="spdata-novo-nome" class="form-field" placeholder="Nome do produto"></div>
+                        <div class="campo"><label>Unidade</label><input type="text" id="spdata-novo-unidade" class="form-field" placeholder="Ex: UNID, CX"></div>
+                        <div class="actions-row">
+                            <button class="actions-button is-success" onclick="salvarNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                            <button class="actions-button is-neutral" onclick="toggleFormNovoProdutoSpData()">Cancelar</button>
+                        </div>
+                    </div>
+                    <div class="campo" style="margin-bottom:12px;"><input type="text" id="spdata-busca" class="form-field" placeholder="Buscar por código ou nome..." oninput="filtrarProdutosSpData(this.value)"></div>
+                    <div id="spdata-lista-produtos" class="nota-list"></div>
+                    <p style="margin:10px 0 0;font-size:12px;color:var(--text-light);" id="spdata-total-cadastrados"></p>
                 </div>
             </div>
 
@@ -465,11 +480,6 @@
                 <div class="actions-row" style="margin: 20px 0;" id="btn-excluir-cotacao">
                     <button class="actions-button is-danger" onclick="excluirCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir Cotação</button>
                 </div>
-            </div>
-
-            <div class="app-screen" id="screen-analise-cotacao">
-                <div id="analise-cotacao-cabecalho" class="card"></div>
-                <div id="analise-cotacao-itens" class="nota-list" style="margin-top:12px;"></div>
             </div>
 
             <div class="app-screen" id="screen-central-pedido">
