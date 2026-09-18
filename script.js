@@ -1166,9 +1166,8 @@ function gerarPdfSaida() {
         try { doc.addImage(logo, 'PNG', margin, y - 10, 55, 42); } catch (e) { console.error('Logo inválida pro PDF:', e); }
     }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text('PROTOCOLO', pageWidth / 2, y + 5, { align: 'center' });
-    doc.text('REPASSE NF', pageWidth / 2, y + 22, { align: 'center' });
+    doc.setFontSize(18);
+    doc.text('PROTOCOLO DE REPASSE NF', pageWidth / 2, y + 17, { align: 'center' });
     y += 55;
 
     // Tabela — mesmas colunas do documento de referência, nada inventado.
@@ -1188,9 +1187,10 @@ function gerarPdfSaida() {
     const alturaLinha = 22;
     const desenharCabecalhoTabela = () => {
         let x = margin;
-        doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
         colunas.forEach(col => {
             doc.rect(x, y, col.largura, alturaLinha);
+            doc.setFont('helvetica', 'bold');
             doc.text(col.titulo, x + col.largura / 2, y + 14, { align: 'center' });
             x += col.largura;
         });
@@ -1218,15 +1218,16 @@ function gerarPdfSaida() {
         y += alturaLinha;
     });
 
-    // Assinaturas — igual ao documento de referência.
-    y += 70;
-    if (y > pageHeight - 30) { doc.addPage(); y = margin + 70; }
+    // Assinaturas — fixas no rodapé da última página (a tabela já para 90pt
+    // acima do fim da página), com cada nome centralizado sob a sua linha.
+    const yAssinatura = pageHeight - 60;
     const larguraAssinatura = (pageWidth - margin * 2) / 3;
+    const larguraLinha = larguraAssinatura - 25;
     doc.setFontSize(9); doc.setFont('helvetica', 'bold');
     ['DATA', 'ASSINATURA CONTÁBIL', 'ASSINATURA ALMOXARIFADO'].forEach((label, i) => {
         const cx = margin + larguraAssinatura * i;
-        doc.line(cx, y, cx + larguraAssinatura - 25, y);
-        doc.text(label, cx, y + 12);
+        doc.line(cx, yAssinatura, cx + larguraLinha, yAssinatura);
+        doc.text(label, cx + larguraLinha / 2, yAssinatura + 12, { align: 'center' });
     });
 
     const hoje = new Date();
@@ -2333,6 +2334,7 @@ function limparNotificacaoAba(screenId) {
 // Não depende de dados novos nem de listeners de dados: só da lista de vistas.
 const NOVIDADES_APP = [
     { id: 'fase14-pdf-exportar', tela: 'screen-export' },
+    { id: 'fase14-pdf-ajustes-visuais', tela: 'screen-export' },
     { id: 'fase14-importar-simplificado', tela: 'screen-import' },
     { id: 'fase14-logo-personalizacao', tela: 'screen-personalizacao' }
 ];
@@ -2347,7 +2349,9 @@ function atualizarBolinhasNovidade() {
             const dot = document.createElement('span');
             dot.className = 'nav-notification-dot';
             dot.setAttribute('data-novidade', '1');
-            (el.querySelector('.icon-wrapper') || el).appendChild(dot);
+            const alvo = el.querySelector('.icon-wrapper');
+            if (alvo && getComputedStyle(alvo).display !== 'none') alvo.appendChild(dot);
+            else { el.style.position = 'relative'; dot.style.top = '4px'; dot.style.right = '6px'; el.appendChild(dot); } // ícones das abas desligados
         } else if (!deve && dotAtual) {
             dotAtual.remove();
         }
@@ -5913,7 +5917,9 @@ const HISTORICO_FASES = [
             'Repasse/Protocolo saiu da interface: telas de revisão, lista e detalhe, botões "Revisar e Confirmar Saída"/"Ver Repasses", selo "Repasse" no card e o botão de caminhão (seleção pra saída) em Gerenciar NF. Os repasses já gravados continuam no banco, nada foi apagado, e o protocolo não é necessário pra gerar PDF.',
             'Importar Relatório: removidos a Pré-seleção e o botão "Enviar pro Financeiro" (só criavam a mesma NF que "Importar Selecionadas" já cria). Fluxo antigo preservado: colar/subir relatório, buscar por NF ou fornecedor, ver novas × já processadas, marcar e levar pro Gerenciar NF. As NFs importadas agora ficam ligadas à entrada do ERP, e arquivar sincroniza com o ERP.',
             'Logo: a configuração continua em Configurações → Personalização, agora no topo da tela e com nome que indica o uso nos PDFs da aba Exportar.',
-            'Saída de texto, Copiar, Compartilhar e Arquivar Tudo não mudaram.'
+            'Saída de texto, Copiar, Compartilhar e Arquivar Tudo não mudaram.',
+            'Ajustes visuais do PDF: título "PROTOCOLO DE REPASSE NF" em uma linha, em negrito e com fonte maior; cabeçalhos das colunas em negrito; assinaturas fixas no rodapé da última página (qualquer quantidade de NFs), cada nome centralizado sob a sua linha; fonte Helvetica (equivalente ao Arial nos PDFs) em todo o documento.',
+            'Bolinha de novidade em Exportar reforçada: nova novidade registrada pra este ajuste e a bolinha também aparece quando os ícones das abas estão desligados.'
         ],
         testar: [
             'Exportar: com notas na lista, tocar em Gerar PDF e conferir que as NFs e a ordem são as mesmas da caixa de texto; usar "Ordenar por Recurso" e gerar de novo; marcar uma NF como pendente e conferir que ela fica fora do texto e do PDF.',
@@ -5922,6 +5928,7 @@ const HISTORICO_FASES = [
             'Importar: colar o relatório, buscar por NF e por fornecedor, conferir novas × já processadas, marcar e importar — a lista "Pré-seleção" não deve mais existir.',
             'Depois de importar, arquivar a NF e conferir no Histórico que a NF de origem ERP aparece como arquivada.',
             'Cadastrar uma NF manualmente (sem cotação/ERP), informar o recurso à mão e gerar texto e PDF — nada deve bloquear.',
+            'PDF: conferir título em negrito numa linha só, cabeçalhos em negrito e as três assinaturas no rodapé, com o nome centralizado sob cada linha — com poucas NFs e com muitas (várias páginas).',
             'Bolinhas: devem aparecer em Exportar e em Configurações; abrir Exportar, Importar Relatório e Personalização apaga a bolinha correspondente, e recarregar a página não traz de volta as já vistas.'
         ]
     },
