@@ -133,7 +133,7 @@
                         <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
                     </span>
                 </button>
-                <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;">
+                <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;" title="Selecionar em lote (editar)">
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-list-check"></i>
                     </span>
@@ -166,11 +166,12 @@
             </div>
             
             <div class="app-screen" id="screen-manage"> 
-                <div class="central-secao-titulo" id="titulo-pre-selecao-erp" style="display:none;">Pré-seleção (NFs do relatório ERP ainda não decididas)</div>
-                <div id="lista-pre-selecao-erp" class="nota-list" style="margin-bottom:16px;"></div>
-                <div class="campo" style="margin-bottom: 16px;"><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarNotasGerenciar(this.value)"></div>
+                <div class="campo" style="margin-bottom: 16px;"><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
+                <div id="manage-saida-filtros" class="manage-toolbar" style="display:none;margin-bottom:10px;"></div>
+                <div id="manage-saida-contador" class="nota-detalhes" style="display:none;margin-bottom:8px;"></div>
                 <div id="lista-notas-pendentes" class="nota-list"></div> 
             </div>
+            
             
             <div class="app-screen" id="screen-export">
                 <div id="export-info-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; color: var(--text-light); font-size: 14px;">
@@ -183,6 +184,7 @@
                     <button class="actions-button" onclick="ordenarExportacao()"><span class="icon-wrapper"><i class="fa-solid fa-sort-alpha-down"></i><span class="material-icons">sort_by_alpha</span></span> Ordenar por Recurso</button>
                     <button class="actions-button" onclick="exportar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
                     <button class="actions-button is-whatsapp" onclick="compartilharLista()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i><span class="material-icons">share</span></span> Compartilhar</button>
+                    <button class="actions-button is-neutral" onclick="gerarPdfSaida()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i><span class="material-icons">picture_as_pdf</span></span> Gerar PDF</button>
                     <button class="actions-button is-neutral" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button>
                 </div>
             </div>
@@ -241,6 +243,7 @@
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -306,6 +309,9 @@
                     <button id="bulk-select-all-fornecedores" onclick="selecionarTodosFornecedoresVisiveisToggle()">Todos Visíveis</button>
                     <ul id="lista-fornecedores-manage" class="manage-list"></ul>
                 </div>
+            </div>
+            <div class="app-screen" id="screen-historico-mudancas">
+                <div id="historico-mudancas-lista"></div>
             </div>
             <div class="app-screen" id="screen-backup">
                 <div class="card">
@@ -586,6 +592,17 @@
             </div>
             <div class="app-screen" id="screen-personalizacao">
                 <div class="card">
+                    <div class="campo">
+                        <label>Logo da Instituição (aparece no cabeçalho do PDF da aba Exportar)</label>
+                        <div id="logo-preview-container" style="margin:8px 0;display:none;"><img id="logo-preview-img" style="max-width:160px;max-height:80px;display:block;"></div>
+                        <input type="file" id="logo-upload-input" accept="image/png" onchange="handleLogoUpload(event)" style="display:none;">
+                        <div class="actions-row" style="gap:8px;">
+                            <button class="actions-button" onclick="document.getElementById('logo-upload-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-upload"></i></span> Enviar Logo (PNG)</button>
+                            <button class="actions-button is-danger" id="logo-remove-btn" onclick="removerLogo()" style="display:none;"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Remover</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
                     <div class="campo"> <label for="theme-select">Tema do Aplicativo</label> <select id="theme-select"> <option value="light">Claro</option> <option value="dark">Escuro</option> <option value="ocean">Oceano</option> <option value="sunset">Pôr do Sol</option> <option value="forest">Floresta</option> <option value="plum">Ameixa</option> <option value="wine">Vinho</option> </select> </div>
                     <div class="campo"> <label for="icon-theme-select">Estilo dos Ícones</label> <select id="icon-theme-select"> <option value="solid">Sólido (Padrão)</option> <option value="material">Material (Google)</option> <option value="outline">Contorno (Leve)</option> <option value="duotone">Duplo Tom</option> </select> </div>
                     <div class="campo"> <label for="font-select">Fonte do Aplicativo</label> <select id="font-select"> <option value="sans">Padrão (Inter)</option> <option value="serif">Serif (Roboto Slab)</option> <option value="mono">Mono (Source Code)</option> <option value="montserrat">Montserrat</option> </select> </div>
@@ -826,6 +843,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   
   <script src="script.js"></script>
 
