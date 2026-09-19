@@ -138,7 +138,6 @@ const DOM = {
     totalNotasExport: document.getElementById('total-notas-export'),
     fornDatalist: document.getElementById('fornecedores-sugeridos'),
     listaFornManage: document.getElementById('lista-fornecedores-manage'),
-    fornManageInput: document.getElementById('forn-manage'),
     listaObsManage: document.getElementById('lista-observacoes-manage'),
     obsManageInput: document.getElementById('obs-manage'),
     historicoActions: document.getElementById('historico-actions')
@@ -623,7 +622,7 @@ function renderRelatorioPedidos(container) {
         const numFornecedores = (c.fornecedores || []).length;
 
         return `<div class="nota-item" style="cursor:pointer;" onclick="abrirCentralPedido('${c.pedido}')">
-            <div class="nota-info">${escRel(c.pedido)} ${c.origem ? `<span style="font-weight:400;color:var(--text-light);">— ${escRel(c.origem)}</span>` : ''}</div>
+            <div class="nota-info">${escRel(c.pedido)} ${c.origem ? `<span class="txt-suave">— ${escRel(c.origem)}</span>` : ''}</div>
             <div class="nota-detalhes">${numFornecedores} fornecedor(es) cotado(s)${c.dataPedido ? ` | Pedido em ${escRel(c.dataPedido)}` : ''}</div>
             <div class="nota-detalhes">${todasDivergencias.length ? `${todasDivergencias.length} divergência(s) registrada(s)${pendentes ? `, <strong style="color:var(--button-danger);">${pendentes} pendente(s)</strong>` : ''}` : 'Nenhuma divergência registrada'}</div>
         </div>`;
@@ -683,7 +682,7 @@ function renderRelatorioDivergencias(container) {
         const badgeTexto = x.status === 'pendente' ? 'Pendente' : x.status === 'resolvida' ? 'Resolvida' : 'Encerrada';
         const linhasHTML = x.linhas.length ? x.linhas.map(l => `<div class="central-item-linha">${escRel(l)}</div>`).join('') : '';
         return `<div class="nota-item" ${x.pedido ? `style="cursor:pointer;" onclick="abrirCentralPedido('${x.pedido}')"` : ''}>
-            <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span style="font-weight:400;color:var(--text-light);">— ${escRel(upAud(x.fornecedor))}</span>` : ''} <span class="central-status-badge status-${x.status}">${badgeTexto}</span></div>
+            <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span class="txt-suave">— ${escRel(upAud(x.fornecedor))}</span>` : ''} <span class="central-status-badge status-${x.status}">${badgeTexto}</span></div>
             <div class="nota-detalhes">${def ? escRel(def.label) : escRel(x.tipo)}${x.notaFiscal ? ` | NF ${escRel(x.notaFiscal)}` : ''}</div>
             ${linhasHTML}
         </div>`;
@@ -854,7 +853,7 @@ function renderRelatorioAuditorias(container) {
         const tipos = [...new Set(x.divergencias.map(d => (TIPOS_DIVERGENCIA_AUDITORIA[d.tipo] || {}).label || d.tipo))];
         const dataTxt = dataRel(x.data) ? dataRel(x.data).toLocaleDateString('pt-BR') : 'sem data';
         return `<div class="nota-item" ${x.pedido ? `style="cursor:pointer;" onclick="abrirCentralPedido('${x.pedido}')"` : ''}>
-            <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span style="font-weight:400;color:var(--text-light);">— ${escRel(upAud(x.fornecedor))}</span>` : ''}</div>
+            <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span class="txt-suave">— ${escRel(upAud(x.fornecedor))}</span>` : ''}</div>
             <div class="nota-detalhes">${x.notaFiscal ? `NF ${escRel(x.notaFiscal)} | ` : ''}${dataTxt} | ${x.divergencias.length} divergência(s)${tipos.length ? `: ${escRel(tipos.join(', '))}` : ''}</div>
             ${x.observacaoGeral ? `<div class="nota-detalhes">${escRel(x.observacaoGeral)}</div>` : ''}
         </div>`;
@@ -1215,7 +1214,6 @@ function rebuildNotasPendentesList(){
 
     DOM.listaNotas.classList.toggle('selection-mode', selectionModeNotas);
     atualizarContadorGerenciar();
-    renderFiltrosSelecaoSaida();
 
     const createNotaHTML = nota => {
         const holdBadgeHTML = nota.emEspera ? `<span class="badge-pendente"><i class="fa-solid fa-clock"></i> Pendente</span>` : '';
@@ -1236,34 +1234,15 @@ function rebuildNotasPendentesList(){
         ].filter(Boolean);
         const complementoHTML = complementoPartes.length ? `<div class="nota-data">${complementoPartes.join(' · ')}</div>` : '';
 
-        // Checkbox: seleção em lote (edição) OU seleção pra saída (Fase 12)
-        // — nunca os dois ao mesmo tempo, os modos são mutuamente exclusivos
-        // (ver toggleModoSelecaoSaida/toggleSelectionModeNotas).
-        const checkboxHTML = modoSelecaoSaida
-            ? `<label class="nota-select-checkbox" onclick="event.stopPropagation()" title="Selecionar pra saída/repasse"><input type="checkbox" ${nota.selecionadaSaida ? 'checked' : ''} onchange="toggleSelecaoSaidaNota('${nota.id}')"></label>`
-            : `<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${notasSelecionadas.has(nota.id) ? 'checked' : ''} onchange="toggleNotaSelecionada('${nota.id}')"></label>`;
+        // Checkbox da seleção em lote (edição)
+        const checkboxHTML = `<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${notasSelecionadas.has(nota.id) ? 'checked' : ''} onchange="toggleNotaSelecionada('${nota.id}')"></label>`;
 
         return `${checkboxHTML}<div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="nota-detalhes">${aptidaoHTML}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
     };
 
-    // Fase 12: no modo "Selecionar pra Saída", filtra também por situação —
-    // mesma lista/mesmos cards, nunca uma segunda fonte de dados.
-    const notasParaExibir = modoSelecaoSaida
-        ? notasPendentes.filter(nota => statusBateFiltroSaida(calcularAptidaoSaidaNota(nota), nota))
-        : notasPendentes;
-
-    const contadorSaidaEl = document.getElementById('manage-saida-contador');
-    if (contadorSaidaEl) {
-        if (modoSelecaoSaida) {
-            const totalSelecionadas = notasPendentes.filter(n => n.selecionadaSaida).length;
-            contadorSaidaEl.textContent = `${notasParaExibir.length} nota(s) neste filtro · ${totalSelecionadas} selecionada(s) no total`;
-            contadorSaidaEl.style.display = '';
-        } else {
-            contadorSaidaEl.style.display = 'none';
-        }
-    }
+    const notasParaExibir = notasPendentes;
     if(notasParaExibir.length===0){
-        DOM.listaNotas.innerHTML=`<div class="empty-state">${modoSelecaoSaida ? 'Nenhuma NF encontrada para este filtro.' : 'Nenhuma nota pendente.'}</div>`;
+        DOM.listaNotas.innerHTML=`<div class="empty-state">Nenhuma nota pendente.</div>`;
         return;
     }
     
@@ -1271,7 +1250,7 @@ function rebuildNotasPendentesList(){
     const domNoteIds = new Set(Array.from(DOM.listaNotas.children).map(li=>li.dataset.noteId));
     const newNoteIds = new Set(notasParaExibir.map(n=>n.id));
     for(const id of domNoteIds){ if(!newNoteIds.has(id)){ const el=DOM.listaNotas.querySelector(`div[data-note-id="${id}"]`); if(el)el.remove(); } }
-    const getNotaClassName = (nota) => `nota-item ${nota.enviada?'nota-enviada':''} ${nota.emEspera?'nota-pendente':''} ${nota.selecionadaSaida?'nota-selecionada-saida':''}`.trim();
+    const getNotaClassName = (nota) => `nota-item ${nota.enviada?'nota-enviada':''} ${nota.emEspera?'nota-pendente':''}`.trim();
     notasParaExibir.forEach((nota,index)=>{
         const existingEl = DOM.listaNotas.querySelector(`div[data-note-id="${nota.id}"]`);
         const newHTML = createNotaHTML(nota);
@@ -1324,91 +1303,6 @@ function atualizarContadorGerenciar() {
     const total = notasPendentes.length;
     const pendentesCount = notasPendentes.filter(n => n.emEspera).length;
     counterEl.textContent = `${total} nota${total === 1 ? '' : 's'}${pendentesCount > 0 ? ` · ${pendentesCount} pendente${pendentesCount === 1 ? '' : 's'}` : ''}`;
-}
-
-// ===================================================================
-// --- FASE 12 (unificada com Gerenciar NF, Fase 12-refino): SELEÇÃO ---
-// --- DE NFs PARA SAÍDA/REPASSE ---
-// ===================================================================
-// Não é mais uma tela separada: "Gerenciar NF" e "Seleção Saída" mostravam
-// praticamente a mesma coisa, então a seleção pra saída passou a ser um
-// MODO dentro da própria tela Gerenciar NF (botão no cabeçalho, igual ao
-// modo de seleção em lote já existente) — mesma lista, mesmos cards, mesmos
-// botões de Editar/Pendente/Excluir (zero lógica de edição duplicada). A
-// seleção em si continua sendo só um campo booleano (selecionadaSaida) na
-// MESMA nota — não duplica, não recria e não altera a NF original.
-let modoSelecaoSaida = false;
-let filtroSelecaoSaidaStatus = 'todas';
-
-const FILTROS_STATUS_SAIDA = [
-    { valor: 'todas', label: 'Todas' },
-    { valor: 'apta', label: 'Aptas' },
-    { valor: 'pendencia', label: 'Com pendência/divergência' },
-    { valor: 'nao_conferida', label: 'Não conferidas' },
-    { valor: 'selecionadas', label: 'Selecionadas' }
-];
-
-function renderFiltrosSelecaoSaida() {
-    const el = document.getElementById('manage-saida-filtros');
-    if (!el) return;
-    el.style.display = modoSelecaoSaida ? '' : 'none';
-    el.innerHTML = FILTROS_STATUS_SAIDA.map(f =>
-        `<button type="button" class="manage-toolbar-btn${filtroSelecaoSaidaStatus === f.valor ? ' active' : ''}" onclick="filtrarSelecaoSaidaStatus('${f.valor}')">${f.label}</button>`
-    ).join('');
-}
-
-function filtrarSelecaoSaidaStatus(valor) {
-    filtroSelecaoSaidaStatus = valor;
-    rebuildNotasPendentesList();
-}
-
-// Modo "Selecionar pra Saída" — mutuamente exclusivo com o modo de edição
-// em lote (os dois usam o mesmo espaço de checkbox no card; não faz sentido
-// os dois ao mesmo tempo).
-function toggleModoSelecaoSaida() {
-    modoSelecaoSaida = !modoSelecaoSaida;
-    if (modoSelecaoSaida && selectionModeNotas) {
-        selectionModeNotas = false;
-        notasSelecionadas.clear();
-        const selBtn = document.getElementById('select-mode-btn');
-        if (selBtn) selBtn.classList.remove('active');
-        const toolbarBtn = document.getElementById('bulk-select-all-notas');
-        if (toolbarBtn) toolbarBtn.style.display = 'none';
-        atualizarBulkBarNotas();
-    }
-    const btn = document.getElementById('saida-mode-btn');
-    if (btn) btn.classList.toggle('active', modoSelecaoSaida);
-    rebuildNotasPendentesList();
-}
-
-// Toggle da seleção pra saída — independente da seleção em lote de Gerenciar
-// NF (notasSelecionadas/toggleNotaSelecionada, que serve pra edição em
-// lote): aqui o campo persistido é outro (selecionadaSaida), pra não
-// confundir os dois conceitos. Atualiza a tela na hora, sem esperar o
-// round-trip do Firestore — mesmo padrão já usado em toggleEmEspera.
-async function toggleSelecaoSaidaNota(id) {
-    const nota = notasPendentes.find(n => n.id === id);
-    if (!nota) return;
-    const novoValor = !nota.selecionadaSaida;
-    nota.selecionadaSaida = novoValor;
-    rebuildNotasPendentesList();
-    try {
-        await notasCollection.doc(id).update({ selecionadaSaida: novoValor });
-    } catch (e) {
-        console.error('Erro ao marcar seleção pra saída:', e);
-        nota.selecionadaSaida = !novoValor;
-        rebuildNotasPendentesList();
-        toast('✕ Não foi possível salvar a seleção. Tente novamente.');
-    }
-}
-
-function statusBateFiltroSaida(aptidao, nota) {
-    if (filtroSelecaoSaidaStatus === 'todas') return true;
-    if (filtroSelecaoSaidaStatus === 'selecionadas') return !!nota.selecionadaSaida;
-    if (filtroSelecaoSaidaStatus === 'apta') return aptidao.status === 'apta' || aptidao.status === 'divergencia_com_auditoria_resolvida';
-    if (filtroSelecaoSaidaStatus === 'pendencia') return aptidao.status === 'auditoria_pendente' || aptidao.status === 'divergencia_sem_auditoria';
-    if (filtroSelecaoSaidaStatus === 'nao_conferida') return aptidao.status === 'nao_conferida' || aptidao.status === 'sem_pedido' || aptidao.status === 'ambigua' || aptidao.status === 'sem_nf';
-    return true;
 }
 
 // ===================================================================
@@ -1519,11 +1413,6 @@ function gerarPdfSaida() {
 function toggleSelectionModeNotas() {
     selectionModeNotas = !selectionModeNotas;
     if (!selectionModeNotas) notasSelecionadas.clear();
-    if (selectionModeNotas && modoSelecaoSaida) {
-        modoSelecaoSaida = false;
-        const saidaBtn = document.getElementById('saida-mode-btn');
-        if (saidaBtn) saidaBtn.classList.remove('active');
-    }
     const btn = document.getElementById('select-mode-btn');
     if (btn) btn.classList.toggle('active', selectionModeNotas);
     const toolbarBtn = document.getElementById('bulk-select-all-notas');
@@ -1765,8 +1654,6 @@ function formatarValorBlur(event){
     if(v) event.target.value=parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
-// --- FUNÇÕES DE UI / MODAIS ---
-function openModal(id){closeAllModals();document.getElementById(id)?.classList.add('active')}
 function closeAllModals(){document.querySelectorAll('.modal-screen.active').forEach(modal=>modal.classList.remove('active'))}
 function personalizarMensagem(texto, ehSucesso){
     const nome = primeiroNomeUsuario();
@@ -1812,7 +1699,6 @@ function showConfirmModal({title,message,confirmText="Confirmar",confirmClass="d
 
 // --- FUNÇÕES DE SEGURANÇA E LOGIN (Firebase Authentication) ---
 const auth = firebase.auth();
-const checkmarkSVG = `<svg class="check-svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>`;
 
 let confirmationResultTelefone = null;
 let recaptchaVerifier = null;
@@ -2197,12 +2083,9 @@ async function baixarBackupCompleto() {
     }
 }
 
-// --- MANAGE E CONFIGURAÇÕES ---
-const debounce = (func, delay) => { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); }; };
 
 // Funções de Gerenciamento (Fornecedores/Pedidos/Obs)
 async function adicionarFornecedor(forn, noToast = false) {const f = String(forn || '').trim().toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {fornecedoresSugeridos.push(f);await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
-async function adicionarFornecedorManage(){const f=DOM.fornManageInput.value.trim();if(f){await adicionarFornecedor(f);DOM.fornManageInput.value=''}}
 async function deletarFornecedor(f){showConfirmModal({title:"Excluir Fornecedor",message:`Excluir "${f}"?`,onConfirm:async()=>{fornecedoresSugeridos = fornecedoresSugeridos.filter(item => item !== f);await settingsDocRef.update({fornecedores:firebase.firestore.FieldValue.arrayRemove(f)});toast(`Fornecedor ${f} excluído.`)}})}
 function popularDatalist(){DOM.fornDatalist.innerHTML='';const nomesUnificados=[...new Set([...fornecedoresSugeridos, ...listaFornecedoresSpData.map(f=>f.nomeExibido||f.nomeReal).filter(Boolean)])];nomesUnificados.sort().forEach(f=>DOM.fornDatalist.innerHTML+=`<option value="${f}"></option>`);popularListaFornecedores()}
 
@@ -2357,35 +2240,6 @@ async function bulkExcluirFornecedores() {
 // Usado principalmente na importação do relatório do ERP, para preencher o
 // campo Fornecedor já com o nome curto certo, sem precisar editar toda vez.
 
-async function adicionarApelidoFornecedor() {
-    const nomeCompletoInput = document.getElementById('alias-nome-completo');
-    const apelidoInput = document.getElementById('alias-apelido');
-    const nomeCompleto = nomeCompletoInput.value.trim().toUpperCase();
-    const apelido = apelidoInput.value.trim().toUpperCase();
-
-    if (!nomeCompleto || !apelido) {
-        return toast('Preencha o nome completo e o apelido.');
-    }
-
-    apelidosFornecedores[nomeCompleto] = apelido;
-    const updateData = {};
-    updateData[`apelidosFornecedores.${nomeCompleto}`] = apelido;
-    try {
-        await settingsDocRef.update(updateData);
-    } catch (error) {
-        if (error.code === 'not-found') {
-            await settingsDocRef.set({ apelidosFornecedores: { [nomeCompleto]: apelido } }, { merge: true });
-        } else {
-            return toast('Falha ao salvar o apelido.');
-        }
-    }
-
-    await adicionarFornecedor(apelido, true);
-
-    nomeCompletoInput.value = '';
-    apelidoInput.value = '';
-    toast(`Apelido "${apelido}" cadastrado!`);
-}
 
 async function deletarApelidoFornecedor(nomeCompleto) {
     showConfirmModal({
@@ -2416,7 +2270,7 @@ function popularListaApelidos() {
     }
     nomesCompletos.forEach(nomeCompleto => {
         const apelido = apelidosFornecedores[nomeCompleto];
-        lista.innerHTML += `<li><div><strong>${apelido}</strong><div style="font-size:12px; color:var(--text-light);">${nomeCompleto}</div></div> <button onclick="deletarApelidoFornecedor('${nomeCompleto.replace(/'/g, "\\'")}')"><i class="fa-solid fa-times-circle"></i></button></li>`;
+        lista.innerHTML += `<li><div><strong>${apelido}</strong><div class="txt-aux">${nomeCompleto}</div></div> <button onclick="deletarApelidoFornecedor('${nomeCompleto.replace(/'/g, "\\'")}')"><i class="fa-solid fa-times-circle"></i></button></li>`;
     });
 }
 
@@ -2425,100 +2279,10 @@ function popularListaApelidos() {
 // notas) com um fornecedor por linha, e adicionar todos de uma vez só — em vez
 // de precisar cadastrar um por um.
 
-let listaFornecedoresParaImportar = [];
 
-async function colarListaFornecedores() {
-    const textarea = document.getElementById('import-forn-textarea');
-    try {
-        const texto = await navigator.clipboard.readText();
-        textarea.value = texto;
-        toast('Texto colado!');
-    } catch (err) {
-        toast('Permissão negada ou não suportada. Cole manualmente (Ctrl+V).');
-    }
-}
 
-function handleFornecedoresFileUpload(event) {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const texto = decodificarArquivoTexto(e.target.result);
-        document.getElementById('import-forn-textarea').value = texto;
-        toast('Arquivo carregado! Clique em "Processar Lista".');
-    };
-    reader.onerror = () => toast('Erro ao ler o arquivo.');
-    reader.readAsArrayBuffer(file);
-    event.target.value = '';
-}
 
-function processarListaFornecedores() {
-    try {
-        const textareaEl = document.getElementById('import-forn-textarea');
-        if (!textareaEl) return toast('Erro interno: campo de texto não encontrado. Atualize a página (Ctrl+Shift+R) e tente de novo.');
-        const texto = textareaEl.value;
-        if (!texto || !texto.trim()) {
-            return toast('Cole ou envie a lista antes de processar.');
-        }
 
-        // Aceita um nome por linha (ou separados por vírgula/ponto e vírgula, caso
-        // venha de uma célula só).
-        const nomesBrutos = texto.split(/[\n,;]+/).map(n => n.trim().toUpperCase()).filter(Boolean);
-        const nomesUnicos = [...new Set(nomesBrutos)];
-
-        const existentes = new Set((fornecedoresSugeridos || []).map(f => f.toUpperCase()));
-        const novos = nomesUnicos.filter(n => !existentes.has(n));
-        const jaExistiam = nomesUnicos.length - novos.length;
-
-        listaFornecedoresParaImportar = novos;
-        const container = document.getElementById('import-forn-preview');
-
-        if (novos.length === 0) {
-            container.innerHTML = `<div class="empty-state">Nenhum fornecedor novo encontrado${jaExistiam > 0 ? ` (${jaExistiam} já estavam cadastrados)` : ''}.</div>`;
-            return;
-        }
-
-        container.innerHTML = `
-        <div class="card import-summary">
-            <strong>${novos.length}</strong> fornecedor(es) novo(s) serão adicionados${jaExistiam > 0 ? ` (${jaExistiam} já existiam e foram ignorados)` : ''}.
-            <div style="max-height:220px; overflow-y:auto; margin-top:12px; padding:12px; background:var(--bg-primary); border-radius:10px; font-size:13px; color:var(--text-dark); line-height:1.7;">
-                ${novos.map(n => `<div>• ${n}</div>`).join('')}
-            </div>
-            <div class="actions" style="margin-top:16px;">
-                <button class="actions-button is-success" onclick="confirmarImportacaoFornecedores()">
-                    <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span> Importar ${novos.length} Fornecedor(es)
-                </button>
-            </div>
-        </div>`;
-    } catch (e) {
-        console.error('Erro ao processar lista de fornecedores:', e);
-        toast('✕ Erro ao processar a lista. Veja o console para detalhes.');
-    }
-}
-
-async function confirmarImportacaoFornecedores() {
-    if (listaFornecedoresParaImportar.length === 0) return;
-
-    showConfirmModal({
-        title: 'Confirmar Importação',
-        message: `Adicionar ${listaFornecedoresParaImportar.length} fornecedor(es) à lista?`,
-        confirmText: 'Sim, Importar',
-        confirmClass: 'success',
-        onConfirm: async () => {
-            try {
-                const novaLista = [...fornecedoresSugeridos, ...listaFornecedoresParaImportar];
-                await settingsDocRef.set({ fornecedores: novaLista }, { merge: true });
-                toast(`✓ ${listaFornecedoresParaImportar.length} fornecedor(es) importado(s)!`);
-                listaFornecedoresParaImportar = [];
-                document.getElementById('import-forn-preview').innerHTML = '';
-                document.getElementById('import-forn-textarea').value = '';
-            } catch (e) {
-                console.error('Erro ao importar fornecedores:', e);
-                toast('✕ Erro ao importar fornecedores.');
-            }
-        }
-    });
-}
 
 // Procura um apelido cadastrado para um nome de fornecedor vindo do ERP.
 // O nome do ERP costuma vir truncado (ex: "COMERCIAL CIRURGICA RIOCLARENS"),
@@ -2577,7 +2341,7 @@ function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a 
 
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const saidaBtn = document.getElementById('saida-mode-btn'); if (saidaBtn) saidaBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } if (screenId !== 'screen-manage' && modoSelecaoSaida) { modoSelecaoSaida = false; if (saidaBtn) saidaBtn.classList.remove('active'); rebuildNotasPendentesList(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
@@ -2632,7 +2396,6 @@ function removerLogo() {
 function sincronizarManualmente(button){const syncButton=document.getElementById('sync-btn');if(syncButton.disabled)return;syncButton.disabled=true;const icon = syncButton.querySelector('.icon-wrapper i, .icon-wrapper svg'); if(icon) icon.classList.add('fa-spin'); toast("Sincronizando...");setTimeout(()=>{toast("✓ Dados atualizados.");syncButton.disabled=false;if(icon) icon.classList.remove('fa-spin'); if(icon) icon.classList.add('sync-success');setTimeout(()=>icon.classList.remove('sync-success'),800)},1250)}
 function toggleEditPanel(btn,notaId){const notaItem=btn.closest('.nota-item');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show').forEach(p=>{if(p!==editPanel)p.classList.remove('show')});const isVisible=editPanel.classList.toggle('show');if(isVisible&&editPanel.innerHTML===''){reconstruirPainelFotosEdit(notaId)}}
 async function salvarEdicao(id){const notaItem=document.querySelector(`div[data-note-id="${id}"]`);const data={fornecedor:notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),nf:notaItem.querySelector(`.nfEdit`).value.trim(),vencimento:notaItem.querySelector(`.vencEdit`).value.trim(),valor:notaItem.querySelector(`.valorEdit`).value.trim(),obs:notaItem.querySelector(`.obsEdit`).value.trim()};await notasCollection.doc(id).update(data);await adicionarFornecedor(data.fornecedor,true);toast('✓ Nota editada!');notaItem.querySelector('.edit-panel').classList.remove('show')}
-function generateUniqueId(){return`${Date.now()}-${Math.random().toString(36).substr(2,9)}`}
 async function deletarNota(id){showConfirmModal({title:"Confirmar Exclusão",message:"Deseja excluir esta nota permanentemente?",onConfirm:async()=>{await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")}})}
 
 // Marca/desmarca uma nota como "pendente" (em espera). Notas pendentes continuam
@@ -2702,9 +2465,6 @@ async function limpar(){
     });
 }
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-function toggleChecklist(btn,notaId){const notaItem=btn.closest('.nota-item');const checklistContainer=notaItem.querySelector('.checklist-container');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show, .checklist-container.show').forEach(p=>{if(p!==checklistContainer)p.classList.remove('show')});if(editPanel.classList.contains('show'))editPanel.classList.remove('show');checklistContainer.classList.toggle('show')}
-function gerarHtmlChecklist(nota){let html='';const checklistData=nota.checklist||{};for(const key in checklistDefinition){const isChecked=checklistData[key]?'checked':'';html+=`<div class="checklist-item"><input type="checkbox" id="check-${key}-${nota.id}" ${isChecked} onchange="atualizarChecklist('${nota.id}', '${key}', this.checked)"><label for="check-${key}-${nota.id}">${checklistDefinition[key]}</label></div>`}return html}
-function atualizarChecklist(notaId,tarefa,isChecked){isChecklistUpdate=!0;const updateData={};updateData[`checklist.${tarefa}`]=isChecked;notasCollection.doc(notaId).update(updateData).catch(error=>toast("Erro ao salvar progresso."));const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;if(!nota.checklist)nota.checklist={};nota.checklist[tarefa]=isChecked;const totalTasks=Object.keys(checklistDefinition).length;const completedTasks=Object.values(nota.checklist).filter(Boolean).length;const progressPercent=(completedTasks/totalTasks)*100;const notaItemEl=document.querySelector(`div[data-note-id="${notaId}"]`);if(notaItemEl){const progressBar=notaItemEl.querySelector('.progress-bar');const progressButton=notaItemEl.querySelector('.progress-btn');if(progressBar)progressBar.style.width=`${progressPercent}%`;if(progressButton)progressButton.textContent=`Progresso: ${completedTasks}/${totalTasks}`}}
 // --- SISTEMA DE ANOTAÇÕES (múltiplas notas, texto rico, tabelas) ---
 
 function stripHtmlAnotacao(html) {
@@ -3196,7 +2956,7 @@ function renderLinhaProduto(it, chaveUnica) {
     const itemGanhadores = relatorioGanhadoresPedido && it.codProduto ? relatorioGanhadoresPedido.itens.find(g => g.codigo === it.codProduto) : null;
     const participantesResumo = itemGanhadores ? ` · ${itemGanhadores.participantes} fornecedor(es) cotaram` : '';
     const participantesDetalheHTML = itemGanhadores
-        ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= 3 ? ' ✓' : ' (menos de 3 participantes)'}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div style="font-size:12px;color:var(--text-light);">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
+        ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= 3 ? ' ✓' : ' (menos de 3 participantes)'}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div class="txt-aux">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
         : '';
 
     const tituloHTML = produtoSpData
@@ -5633,10 +5393,6 @@ function atualizarCampoDivergencia(id, key, valor, maiusculo) {
     const d = divergenciasAuditoria.find(d => d.id === id);
     d.campos[key] = maiusculo ? upAud(valor) : valor;
 }
-function atualizarCampoDivergenciaCheckbox(id, key, checked) {
-    const d = divergenciasAuditoria.find(d => d.id === id);
-    d.campos[key] = checked;
-}
 function atualizarObservacaoOcorrencia(id, valor) {
     const d = divergenciasAuditoria.find(d => d.id === id);
     d.observacao = valor;
@@ -5774,7 +5530,6 @@ function renderDivergenciasAuditoria() {
 // SmartCompras na Fase 4, sem precisar migrar o formato do documento.
 // ============================================================
 
-const ORIGENS_COTACAO = ['Santa Casa', 'CTI'];
 
 let filtroCotacoesTexto = '';
 let ordenacaoCotacoes = 'entrada'; // 'entrada' (padrão, mais recente primeiro) ou 'pedido' (numérico)
@@ -6118,7 +5873,28 @@ function aplicarRecursoSugerido(pedido, codigo, recursoOficial) {
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '17.1', nome: 'Ajustes visuais da Fase 17 (após teste no iPhone)', status: 'atual',
+        numero: '17.2', nome: 'Redesign — Etapa 3 (telas de consulta) e limpeza de código', status: 'atual',
+        implementado: [
+            'Limpeza de código: removidas 13 funções e 4 variáveis sem nenhum uso (importação de fornecedores por texto, cadastro de apelidos pelo formulário antigo, checklist antigo, entre outras) e o modo "Selecionar pra saída" da Fase 12, que estava sem botão de acesso desde a Fase 14.',
+            'Limpeza de CSS: removidas as regras de classes que não existem mais e as declarações antigas que já eram sobrescritas por regras posteriores; 65 estilos inline repetidos viraram classes utilitárias (espaçamentos e textos auxiliares).',
+            'Botão principal preenchido nas telas de formulário: Cotações, Anotações, Nova Auditoria (Gerar Auditoria), Cotação, Entrada de NF (Salvar NF), Backup, Configuração da análise e edição em lote.',
+            'Relatórios: cartão "Próximos Vencimentos" neutro (sem a moldura de destaque) e painel de Filtros com indicador de aberto/fechado. Ações localizadas nos itens do Histórico, da Central do Pedido e do XML seguem a mesma linguagem dos chips. Estados vazios mais discretos. Histórico de Mudanças com destaque de 1px na versão atual.'
+        ],
+        mudou: [
+            'Texto que usa a cor de destaque passou a usar uma versão legível em cada tema (mais clara nos temas escuros, mais escura nos temas claros de destaque claro); texto sobre fundo de destaque usa a cor de contraste do tema.',
+            'Só apresentação e limpeza: nenhuma regra de negócio, cálculo, filtro, fluxo ou dado foi alterado. Notas que já tinham a marcação de "seleção pra saída" continuam no banco, sem uso.',
+            'Restam pra depois (sem urgência): refinamento visual das telas menos usadas (Produtos SP Data, Central do Pedido, editores) e o CSS antigo de seletores agrupados que ainda é sobrescrito pela camada nova.'
+        ],
+        testar: [
+            'Gerenciar NF: seleção em lote, Pendente/Retomar, Editar e Excluir; ícone de seleção no cabeçalho continua igual.',
+            'Relatórios: indicadores, painel de Filtros, as quatro abas e o toque nos indicadores.',
+            'Cotações, Anotações, Backup e Nova Auditoria: o botão principal aparece preenchido e faz o mesmo de antes.',
+            'Histórico e Central do Pedido: ações em forma de chip funcionando (ex.: Desarquivar temporariamente).',
+            'Temas Escuro, Ocean e Wine: textos e botões legíveis. Desktop: sidebar e troca de telas.'
+        ]
+    },
+    {
+        numero: '17.1', nome: 'Ajustes visuais da Fase 17 (após teste no iPhone)', status: 'concluida',
         implementado: [
             'Botões voltaram ao tamanho anterior (altura e fonte de antes, sem esticar na largura), mantendo a hierarquia: primário preenchido, secundário, discreto e destrutivo.',
             'Chips de Gerenciar NF (Editar, Pendente, Excluir) agora seguem a mesma linguagem dos botões das outras telas: pílula com borda de 1,5px, só que menores.'
@@ -6311,7 +6087,7 @@ function renderHistoricoMudancas() {
         const atual = fase.status === 'atual';
         const listaHTML = (titulo, itens) => itens && itens.length
             ? `<div class="nota-detalhes"><strong>${titulo}:</strong><br>${itens.map(i => '• ' + escRel(i)).join('<br>')}</div>` : '';
-        return `<div class="card" style="margin-bottom:12px;${atual ? 'border:2px solid var(--accent-color);' : ''}">
+        return `<div class="card hmud-item${atual ? ' hmud-atual' : ''}">
             <div class="nota-info">${atual ? '<span class="xml-item-badge pronto">FASE ATUAL</span> ' : ''}Fase ${escRel(fase.numero)} — ${escRel(fase.nome)}</div>
             ${listaHTML('O que foi implementado', fase.implementado)}
             ${listaHTML('O que mudou nesta versão', fase.mudou)}
@@ -7859,7 +7635,7 @@ function renderCardHistoricoNf(item) {
     if (item.tipo === 'nota_legado') {
         const n = item.notaLegado;
         return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-            <div class="nota-info">${escRel(item.nomeFornecedor)} ${escRel(item.numeroNf)} <span style="font-size:12px;color:var(--text-light);font-weight:400;">(registro simples arquivado)</span></div>
+            <div class="nota-info">${escRel(item.nomeFornecedor)} ${escRel(item.numeroNf)} <span class="txt-aux">(registro simples arquivado)</span></div>
             <div class="nota-detalhes">Arquivado em ${escRel(n.dataHistorico)} · Venc: ${escRel(n.vencimento) || 'N/A'} · Valor: ${escRel(n.valor) || 'N/A'}</div>
             ${n.obs ? `<div class="nota-detalhes">Obs: ${escRel(n.obs)}</div>` : ''}
         </div>`;
@@ -8657,12 +8433,12 @@ function renderListaFornecedoresUnificada() {
     container.innerHTML = visiveis.map(f => {
         if (f.origem === 'legado') {
             const vincularHTML = `<div class="central-spdata-busca" style="margin-top:6px;" onclick="event.stopPropagation()">
-                <label style="font-size:12px;color:var(--text-light);">É o mesmo fornecedor que um já cadastrado com CNPJ? Vincule aqui (não apaga este registro):</label>
+                <label class="txt-aux">É o mesmo fornecedor que um já cadastrado com CNPJ? Vincule aqui (não apaga este registro):</label>
                 <select class="form-field" id="vincular-select-${f.chave}"><option value="">Selecione o fornecedor cadastrado...</option>${opcoesLegadoHTML}</select>
                 <button type="button" class="central-status-toggle" onclick="vincularFornecedorLegadoSelecionado('${f.chave}', '${escRel(f.nomeReal)}')">Vincular</button>
             </div>`;
             return `<div class="nota-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:4px;">
-                <div class="nota-info">${f.nomeReal} <span style="font-size:12px;color:var(--text-light);font-weight:400;">(cadastro simples)</span></div>
+                <div class="nota-info">${f.nomeReal} <span class="txt-aux">(cadastro simples)</span></div>
                 <div class="nota-detalhes"><em>Cadastro simples, sem código/CNPJ — importe o relatório oficial de fornecedores pra identificação automática por CNPJ.</em></div>
                 ${vincularHTML}
             </div>`;
@@ -8695,9 +8471,9 @@ function renderListaFornecedoresUnificada() {
             const editando = fornecedorEditando.has(chaveDoc);
             const edicaoHTML = editando
                 ? `<div class="central-spdata-busca" onclick="event.stopPropagation()">
-                    <label style="font-size:12px;color:var(--text-light);">Razão social</label>
+                    <label class="txt-aux">Razão social</label>
                     <input type="text" class="form-field" id="nomereal-input-${chaveDoc}" value="${doc.nomeReal || ''}">
-                    <label style="font-size:12px;color:var(--text-light);">Nome de exibição no app</label>
+                    <label class="txt-aux">Nome de exibição no app</label>
                     <input type="text" class="form-field" id="apelido-input-${chaveDoc}" value="${doc.nomeExibido || ''}" placeholder="Nome de exibição no app">
                     <button type="button" class="central-status-toggle" onclick="salvarApelidoFornecedor('${chaveDoc}')">Salvar</button>
                     <label style="font-size:12px;color:var(--text-light);margin-top:8px;display:block;">Adicionar CNPJ (nunca remove os existentes)</label>
@@ -8713,13 +8489,13 @@ function renderListaFornecedoresUnificada() {
 
         const aliasesHTML = f.aliasesLegado.length ? `<div class="nota-detalhes">Também conhecido como: ${f.aliasesLegado.map(escRel).join(', ')}</div>` : '';
         const vincularEntidadeHTML = `<div class="central-spdata-busca" style="margin-top:6px;" onclick="event.stopPropagation()">
-            <label style="font-size:12px;color:var(--text-light);">É a mesma empresa que outro CNPJ já cadastrado (matriz/filial/CD)? Vincule aqui (nenhum CNPJ é apagado ou movido):</label>
+            <label class="txt-aux">É a mesma empresa que outro CNPJ já cadastrado (matriz/filial/CD)? Vincule aqui (nenhum CNPJ é apagado ou movido):</label>
             <select class="form-field" id="vincular-entidade-select-${f.chave}"><option value="">Selecione outro fornecedor cadastrado...</option>${opcoesVincularEntidadeHTML}</select>
             <button type="button" class="central-status-toggle" onclick="vincularEntidadeSelecionada('${f.chave}', '${principalId}')">Vincular</button>
         </div>`;
 
         return `<div class="nota-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:4px;">
-            <div class="nota-info">${f.nomeReal}${f.docs.length > 1 ? ` <span style="font-size:12px;color:var(--text-light);font-weight:400;">(${f.docs.length} CNPJs vinculados)</span>` : ''}</div>
+            <div class="nota-info">${f.nomeReal}${f.docs.length > 1 ? ` <span class="txt-aux">(${f.docs.length} CNPJs vinculados)</span>` : ''}</div>
             ${bloqueioHTML}
             ${subDocsHTML}
             ${aliasesHTML}
@@ -9126,15 +8902,6 @@ function resolverStatusFluxoEntradaErp(bloco, vinculo, docExistente) {
     return { statusFluxo: 'pre_selecao', notaVinculadaId: null, avisoJaExisteNotaManual: false };
 }
 
-// Bloqueio por CNPJ: fornecedor cujas NFs (vindas do relatório ERP) nunca
-// passam pelo processo de financeiro — vão direto pro Histórico (ver
-// salvarEntradasErp/resolverStatusFluxoEntradaErp). Independente do bloqueio
-// antigo por nome, que continua servindo o checklist de Adicionar Nota como
-// sempre serviu. Opera sobre o grupo unificado (listaFornecedoresUnificada),
-// já que um mesmo fornecedor pode ter mais de um CNPJ/documento vinculado.
-function fornecedorBloqueadoPorCnpj(cnpj) {
-    return fornecedoresIgnoradosCnpj.has(cnpj);
-}
 async function alternarBloqueioFornecedorCnpj(chave) {
     const grupo = listaFornecedoresUnificada().find(f => f.chave === chave);
     if (!grupo || !grupo.cnpjs.length) return toast('Cadastre pelo menos um CNPJ pra este fornecedor antes de bloquear.');

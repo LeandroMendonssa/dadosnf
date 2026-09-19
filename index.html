@@ -41,16 +41,16 @@
           <div id="login-email-step">
               <form id="login-email-form" onsubmit="event.preventDefault(); handleLoginEmail();">
                   <input type="email" id="login-email-input" placeholder="E-mail" autocomplete="username">
-                  <input type="password" id="login-password-input" placeholder="Senha" autocomplete="current-password" style="margin-top: 12px;">
+                  <input type="password" id="login-password-input" placeholder="Senha" autocomplete="current-password" class="mt-3">
                   <div id="login-error-message" class="error-message"></div>
-                  <button type="submit" id="login-button" class="actions-button" style="width:100%;margin-top:16px;">Entrar</button>
+                  <button type="submit" id="login-button" class="actions-button w-full mt-4" >Entrar</button>
               </form>
               <a class="login-link" onclick="handleForgotPassword()">Esqueci minha senha</a>
 
               <div class="login-divider"><span>ou</span></div>
 
               <button class="actions-button" style="width:100%;" onclick="handleLoginGoogle()"><span class="icon-wrapper"><i class="fa-brands fa-google"></i></span> Continuar com Google</button>
-              <button class="actions-button" style="width:100%;margin-top:10px;" onclick="mostrarEtapaTelefone()"><span class="icon-wrapper"><i class="fa-solid fa-phone"></i></span> Continuar com telefone</button>
+              <button class="actions-button w-full mt-3"  onclick="mostrarEtapaTelefone()"><span class="icon-wrapper"><i class="fa-solid fa-phone"></i></span> Continuar com telefone</button>
           </div>
 
           <div id="login-phone-step" style="display:none;">
@@ -58,7 +58,7 @@
                   <input type="tel" id="login-phone-input" placeholder="+55 11 91234-5678" autocomplete="tel">
                   <div id="login-phone-error-message" class="error-message"></div>
                   <div id="recaptcha-container" style="display:flex;justify-content:center;margin-top:12px;"></div>
-                  <button type="submit" class="actions-button" style="width:100%;margin-top:16px;">Enviar código</button>
+                  <button type="submit" class="actions-button w-full mt-4" >Enviar código</button>
               </form>
               <a class="login-link" onclick="voltarParaEmailStep()">Voltar</a>
           </div>
@@ -68,7 +68,7 @@
               <form onsubmit="event.preventDefault(); confirmarCodigoTelefone();">
                   <input type="tel" id="login-phone-code-input" placeholder="000000" maxlength="6" inputmode="numeric">
                   <div id="login-phone-code-error-message" class="error-message"></div>
-                  <button type="submit" class="actions-button" style="width:100%;margin-top:16px;">Confirmar</button>
+                  <button type="submit" class="actions-button w-full mt-4" >Confirmar</button>
               </form>
               <a class="login-link" onclick="voltarParaEmailStep()">Cancelar</a>
           </div>
@@ -90,7 +90,7 @@
           <form onsubmit="event.preventDefault(); handleSecurityCheck();">
               <input type="password" id="security-check-password-input" placeholder="••••••••" autocomplete="current-password"> 
               <div id="security-check-error-message" class="error-message"></div> 
-              <div class="actions" style="margin-top: 24px;"> 
+              <div class="actions mt-5" > 
                   <button type="button" class="actions-button is-neutral" onclick="cancelSecurityCheck()">Cancelar</button> 
                   <button type="submit" class="actions-button">Verificar</button> 
               </div> 
@@ -105,9 +105,9 @@
           <p>Crie uma nova senha para sua conta.</p> 
           <form onsubmit="event.preventDefault(); handleSaveNewPassword();">
               <input type="password" id="new-password-input" placeholder="Nova Senha (mín. 6 caracteres)" autocomplete="new-password"> 
-              <input type="password" id="confirm-password-input" placeholder="Confirmar Senha" autocomplete="new-password" style="margin-top: 16px;"> 
+              <input type="password" id="confirm-password-input" placeholder="Confirmar Senha" autocomplete="new-password" class="mt-4"> 
               <div id="password-error-message" class="error-message"></div> 
-              <div class="actions" style="margin-top: 24px;"> 
+              <div class="actions mt-5" > 
                   <button type="button" class="actions-button is-neutral" onclick="closePasswordChangeScreen()">Cancelar</button> 
                   <button type="submit" class="actions-button">Salvar</button> 
               </div> 
@@ -166,9 +166,7 @@
             </div>
             
             <div class="app-screen" id="screen-manage"> 
-                <div class="campo" style="margin-bottom: 16px;"><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div id="manage-saida-filtros" class="manage-toolbar" style="display:none;margin-bottom:10px;"></div>
-                <div id="manage-saida-contador" class="nota-detalhes" style="display:none;margin-bottom:8px;"></div>
+                <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
                 <div id="lista-notas-pendentes" class="nota-list"></div> 
             </div>
             
@@ -190,12 +188,12 @@
             </div>
 
             <div class="app-screen" id="screen-reports">
-                <div class="card" style="margin-bottom: 16px; background-color: color-mix(in srgb, var(--accent-color) 10%, transparent); border-color: var(--accent-color);">
-                    <div style="display: flex; gap: 12px; align-items: center;">
-                        <i class="fa-solid fa-calendar-week" style="font-size: 24px; color: var(--accent-color);"></i>
+                <div class="card vencimentos-card">
+                    <div class="cab">
+                        <i class="fa-solid fa-calendar-week"></i>
                         <div>
-                            <h3 style="margin: 0; font-size: 16px; color: var(--text-dark);">Próximos Vencimentos</h3>
-                            <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">Notas vencendo nos próximos 7 dias.</p>
+                            <h3>Próximos Vencimentos</h3>
+                            <p>Notas vencendo nos próximos 7 dias.</p>
                         </div>
                     </div>
                 </div>
@@ -203,17 +201,17 @@
                      <div class="empty-state">Nenhuma nota próxima do vencimento.</div>
                 </div>
 
-                <div class="xml-filtro-toggle" style="margin-top:24px;">
+                <div class="xml-filtro-toggle mt-5" >
                     <button type="button" class="xml-filtro-btn active" id="relatorios-tab-btn-pedidos" onclick="mudarAbaRelatorios('pedidos')">Pedidos</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-notas" onclick="mudarAbaRelatorios('notas')">Notas</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-divergencias" onclick="mudarAbaRelatorios('divergencias')">Divergências</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-auditorias" onclick="mudarAbaRelatorios('auditorias')">Auditorias</button>
                 </div>
 
-                <input type="text" id="relatorios-busca" class="form-field" style="margin-top:10px;" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarRelatorios(this.value)">
+                <input type="text" id="relatorios-busca" class="form-field mt-3"  placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarRelatorios(this.value)">
 
-                <details style="margin-top:10px;">
-                    <summary style="cursor:pointer;font-weight:600;font-size:13px;padding:6px 0;">Filtros (período, fornecedor, destino, recurso, tipo)</summary>
+                <details class="mt-3">
+                    <summary class="filtros-resumo">Filtros (período, fornecedor, destino, recurso, tipo)</summary>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
                         <div class="campo"><label>De</label><input type="date" id="rel-f-de" class="form-field" onchange="definirFiltroRelatorio('de', this.value)"></div>
                         <div class="campo"><label>Até</label><input type="date" id="rel-f-ate" class="form-field" onchange="definirFiltroRelatorio('ate', this.value)"></div>
@@ -226,15 +224,15 @@
                     <div class="campo"><label>Tipo de divergência</label><select id="rel-f-tipo" class="form-field" onchange="definirFiltroRelatorio('tipo', this.value)"><option value="">Todos</option></select></div>
                 </details>
                 <div id="relatorios-filtros-ativos" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-light);"></div>
-                <div id="relatorios-indicadores" style="margin-top:10px;"></div>
+                <div id="relatorios-indicadores" class="mt-3"></div>
 
-                <div class="xml-filtro-toggle" id="relatorios-subfiltro-notas" style="margin-top:10px;display:none;">
+                <div class="xml-filtro-toggle mt-3" id="relatorios-subfiltro-notas"  style="display:none">
                     <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-notas-pendente" onclick="filtrarStatusNotasRelatorio('pendente')">Pendentes</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-arquivada" onclick="filtrarStatusNotasRelatorio('arquivada')">Arquivadas</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-todas" onclick="filtrarStatusNotasRelatorio('todas')">Todas</button>
                 </div>
 
-                <div class="xml-filtro-toggle" id="relatorios-subfiltro-divergencias" style="margin-top:10px;display:none;">
+                <div class="xml-filtro-toggle mt-3" id="relatorios-subfiltro-divergencias"  style="display:none">
                     <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-div-pendente" onclick="filtrarStatusDivergenciaRelatorio('pendente')">Pendentes</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-resolvida" onclick="filtrarStatusDivergenciaRelatorio('resolvida')">Resolvidas</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-encerrada" onclick="filtrarStatusDivergenciaRelatorio('encerrada')">Encerradas</button>
@@ -247,8 +245,8 @@
 
             <div class="app-screen" id="screen-history">
                 <input type="text" id="historico-busca" class="form-field" placeholder="Buscar por NF, fornecedor, CNPJ, pedido ou produto..." oninput="filtrarHistoricoNfs(this.value)">
-                <div id="historico-nfs-navegacao" style="margin-top:10px;"></div>
-                <div id="historico-nfs-lista" class="nota-list" style="margin-top:10px;"></div>
+                <div id="historico-nfs-navegacao" class="mt-3"></div>
+                <div id="historico-nfs-lista" class="nota-list mt-3" ></div>
                 <div id="lista-historico" style="display:none;"></div>
                 <div id="historico-actions" style="display:none;"></div>
             </div>
@@ -292,7 +290,7 @@
                     <p style="margin:0 0 12px;font-size:12px;color:var(--text-light);">Usado só pra dar um veredito de "condição atendida/verificar" na Análise de Cotações por Item (Fase 7). Deixe em branco se não quiser esse veredito — o sistema nunca assume um número por conta própria.</p>
                     <div class="campo"><label>Mínimo de fornecedores cotando — itens em C/C</label><input type="number" min="1" id="config-minimo-cc" class="form-field" placeholder="Ex: 3"></div>
                     <div class="campo"><label>Mínimo de fornecedores cotando — itens em Recurso Próprio</label><input type="number" min="1" id="config-minimo-proprio" class="form-field" placeholder="Ex: 1"></div>
-                    <button class="actions-button is-success" onclick="salvarMinimosCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                    <button class="actions-button is-primary" onclick="salvarMinimosCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
                 </div>
             </div>
 
@@ -301,9 +299,9 @@
                     <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Fornecedores</h3>
                     <p id="contador-fornecedores-spdata" style="margin: 0 0 12px; font-size: 12px; color: var(--text-light);">0 fornecedor(es) cadastrado(s)</p>
                     <input type="text" class="form-field" placeholder="Buscar por código, razão social, apelido ou CNPJ..." oninput="filtrarCadastroFornecedoresSpData(this.value)">
-                    <div id="lista-cadastro-fornecedores-spdata" style="margin-top:10px;"></div>
+                    <div id="lista-cadastro-fornecedores-spdata" class="mt-3"></div>
                 </div>
-                <div class="card" style="margin-top: 16px;">
+                <div class="card mt-4" >
                     <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Importar/Atualizar Cadastro</h3>
                     <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Usado pra confirmar automaticamente a qual NF/cotação um lançamento do relatório de entrada do ERP corresponde — nunca por semelhança de nome. Atualização incremental: nunca apaga fornecedores, CNPJs ou apelidos já cadastrados.</p>
                     <textarea id="import-fornspdata-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do relatório de cadastro de fornecedores..."></textarea>
@@ -333,10 +331,10 @@
             <div class="app-screen" id="screen-backup">
                 <div class="card">
                     <p class="desc-tela">Baixa um arquivo com todas as suas notas pendentes, histórico, anotações, fornecedores e configurações — uma cópia de segurança que fica salva no seu dispositivo, independente do Firebase.</p>
-                    <button class="actions-button" onclick="baixarBackupCompleto()"><span class="icon-wrapper"><i class="fa-solid fa-cloud-arrow-down"></i></span> Baixar Backup (JSON)</button>
+                    <button class="actions-button is-primary" onclick="baixarBackupCompleto()"><span class="icon-wrapper"><i class="fa-solid fa-cloud-arrow-down"></i></span> Baixar Backup (JSON)</button>
                     <div id="backup-status" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
                 </div>
-                <div class="card" style="margin-top:16px;">
+                <div class="card mt-4" >
                     <p class="desc-tela">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
                 </div>
             </div>
@@ -350,15 +348,15 @@
                         <div id="xml-nome-arquivo" style="font-size:12px;color:var(--accent-color);font-weight:600;"></div>
                     </div>
                     <input type="file" id="xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXml(this.files[0])">
-                    <div class="campo" style="margin-top:16px;">
+                    <div class="campo mt-4" >
                         <label>Unidade de Dispensação (destino)</label>
                         <input type="text" id="xml-unidade-destino" class="form-field" value="UN">
                     </div>
                 </div>
 
-                <div class="card" id="xml-card-identificacao" style="display:none;margin-top:16px;">
+                <div class="card mt-4" id="xml-card-identificacao"  style="display:none">
                     <h3 style="margin:0 0 6px;font-size:16px;">NF-e carregada</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">Confira se é o arquivo certo antes de seguir — dados extraídos direto do XML.</p>
+                    <p class="desc-tela">Confira se é o arquivo certo antes de seguir — dados extraídos direto do XML.</p>
                     <div id="xml-identificacao-container" style="font-size:13px;line-height:1.6;"></div>
                     <div id="xml-identificacao-infadic" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color);">
                         <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;"><strong>Informações adicionais da NF (só consulta — não usado pra decidir pedido/produto):</strong></div>
@@ -366,25 +364,25 @@
                     </div>
                 </div>
 
-                <div id="xml-estado-nf" style="display:none;margin-top:16px;"></div>
+                <div id="xml-estado-nf" class="mt-4" style="display:none"></div>
 
-                <div class="card" id="xml-card-associacao" style="display:none;margin-top:16px;">
+                <div class="card mt-4" id="xml-card-associacao"  style="display:none">
                     <h3 style="margin:0 0 6px;font-size:16px;">Itens da NF</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:12px;">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
+                    <p class="desc-tela">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
                     <div class="campo">
                         <label>Pedido/Cotação correspondente</label>
                         <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
                         <div id="xml-pedido-caption" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
                     </div>
                     <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div>
-                    <div id="xml-associacao-container" style="margin-top:12px;"></div>
+                    <div id="xml-associacao-container" class="mt-3"></div>
                 </div>
 
-                <div id="xml-resultado-salvar" style="display:none;margin-top:16px;"></div>
-                <div id="xml-sugestao-recurso" style="display:none;margin-top:16px;"></div>
+                <div id="xml-resultado-salvar" class="mt-4" style="display:none"></div>
+                <div id="xml-sugestao-recurso" class="mt-4" style="display:none"></div>
 
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
-                    <button class="actions-button is-success" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
+                    <button class="actions-button is-primary" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
                     <button class="actions-button is-neutral" id="xml-btn-baixar" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
                 </div>
                 <div class="actions-row" style="margin:16px 0 20px;">
@@ -402,13 +400,13 @@
                     </div>
                     <div class="central-relatorio-preview" id="spdata-preview" style="display:none;">
                         <div id="spdata-resumo"></div>
-                        <div class="actions-row" style="margin-top:10px;">
+                        <div class="actions-row mt-3" >
                             <button class="actions-button is-success" onclick="confirmarImportacaoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
                             <button class="actions-button is-neutral" onclick="cancelarImportacaoSpData()">Cancelar</button>
                         </div>
                     </div>
                 </div>
-                <div class="card" style="margin-top:16px;">
+                <div class="card mt-4" >
                     <div class="actions-row" style="margin:0 0 12px;">
                         <button class="actions-button" onclick="toggleFormNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar produto</button>
                     </div>
@@ -421,22 +419,22 @@
                             <button class="actions-button is-neutral" onclick="toggleFormNovoProdutoSpData()">Cancelar</button>
                         </div>
                     </div>
-                    <div class="campo" style="margin-bottom:12px;"><input type="text" id="spdata-busca" class="form-field" placeholder="Buscar por código ou nome..." oninput="filtrarProdutosSpData(this.value)"></div>
+                    <div class="campo mb-3" ><input type="text" id="spdata-busca" class="form-field" placeholder="Buscar por código ou nome..." oninput="filtrarProdutosSpData(this.value)"></div>
                     <div id="spdata-lista-produtos" class="nota-list"></div>
                     <p style="margin:10px 0 0;font-size:12px;color:var(--text-light);" id="spdata-total-cadastrados"></p>
                 </div>
             </div>
 
             <div class="app-screen" id="screen-cotacoes">
-                <div class="campo" style="margin-bottom: 12px;"><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
-                <div class="campo" style="margin-bottom: 12px;">
+                <div class="campo mb-3" ><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
+                <div class="campo mb-3" >
                     <select id="cotacoes-ordenacao" class="form-field" onchange="alternarOrdenacaoCotacoes(this.value)">
                         <option value="entrada">Ordenar por: mais recentes primeiro</option>
                         <option value="pedido">Ordenar por: número do pedido</option>
                     </select>
                 </div>
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
-                    <button class="actions-button" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Cotação</button>
+                    <button class="actions-button is-primary" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Cotação</button>
                     <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Importar XML SmartCompras</button>
                 </div>
                 <input type="file" id="cotacao-xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
@@ -445,13 +443,13 @@
                     <h3 class="card-titulo card-titulo-sm">Prévia da Importação</h3>
                     <div id="resumo-importacao-xml"></div>
                     <div id="diff-importacao-xml"></div>
-                    <div class="actions-row" style="margin-top:16px;">
+                    <div class="actions-row mt-4" >
                         <button class="actions-button is-success" onclick="confirmarImportacaoXmlSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
                         <button class="actions-button is-neutral" onclick="cancelarImportacaoXml()">Cancelar</button>
                     </div>
                 </div>
 
-                <div class="card" style="margin-bottom:16px;">
+                <div class="card mb-4" >
                     <h3 style="margin:0 0 6px;font-size:15px;">Relatório de Fornecedores Ganhadores</h3>
                     <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">Complementa a cotação com a quantidade de fornecedores que participaram de cada item (nunca decide recurso/pagamento sozinho). Cole o texto ou envie o arquivo do relatório.</p>
                     <textarea id="ganhadores-textarea" class="form-field import-textarea" placeholder="Cole aqui o relatório de fornecedores ganhadores..."></textarea>
@@ -460,9 +458,9 @@
                         <button class="actions-button is-neutral" onclick="document.getElementById('ganhadores-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
                         <button class="actions-button" onclick="processarRelatorioGanhadoresColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
                     </div>
-                    <div class="central-relatorio-preview" id="ganhadores-preview" style="display:none;margin-top:10px;">
+                    <div class="central-relatorio-preview mt-3" id="ganhadores-preview"  style="display:none">
                         <div id="ganhadores-resumo"></div>
-                        <div class="actions-row" id="ganhadores-actions" style="display:none;margin-top:10px;">
+                        <div class="actions-row mt-3" id="ganhadores-actions"  style="display:none">
                             <button class="actions-button is-success" onclick="confirmarImportacaoGanhadores()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
                             <button class="actions-button is-neutral" onclick="cancelarImportacaoGanhadores()">Cancelar</button>
                         </div>
@@ -488,7 +486,7 @@
                     <div class="campo"><label>Observação</label><textarea id="cot-observacao" class="form-field"></textarea></div>
                 </div>
 
-                <div class="card" style="margin-top:16px;">
+                <div class="card mt-4" >
                     <h3 class="card-titulo">Fornecedores</h3>
                     <div id="lista-fornecedores-cotacao"><div class="empty-state">Nenhum fornecedor adicionado ainda.</div></div>
                     <div class="actions-row">
@@ -498,7 +496,7 @@
                 </div>
 
                 <div class="actions-row" style="margin: 20px 0;">
-                    <button class="actions-button is-success" onclick="salvarCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Cotação</button>
+                    <button class="actions-button is-primary" onclick="salvarCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Cotação</button>
                 </div>
                 <div class="actions-row" style="margin: 20px 0;" id="btn-excluir-cotacao">
                     <button class="actions-button is-danger" onclick="excluirCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir Cotação</button>
@@ -527,10 +525,10 @@
 
                 <div class="card" id="central-sem-cotacao" style="display:none;">
                     <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma cotação cadastrada para este pedido ainda.</p>
-                    <button class="actions-button" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar Cotação</button>
+                    <button class="actions-button is-primary" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar Cotação</button>
                 </div>
 
-                <div class="card" style="margin-top:16px;">
+                <div class="card mt-4" >
                     <h3 style="margin:0 0 10px;font-size:15px;">Complementar com Relatório do SmartCompras</h3>
                     <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
                     <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
@@ -539,14 +537,14 @@
                     </div>
                     <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
                         <div id="relatorio-smartcompras-resumo"></div>
-                        <div class="actions-row" style="margin-top:10px;">
+                        <div class="actions-row mt-3" >
                             <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
                             <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="central-secao-titulo" style="margin-top:16px;">Fornecedores</div>
+                <div class="central-secao-titulo mt-4" >Fornecedores</div>
                 <div id="central-fornecedores-container"></div>
 
                 <div class="actions-row" style="margin:16px 0;">
@@ -554,11 +552,11 @@
                     <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
                 </div>
 
-                <div class="central-secao-titulo" style="margin-top:16px;">Anotação do Pedido</div>
+                <div class="central-secao-titulo mt-4" >Anotação do Pedido</div>
                 <div class="card" id="central-anotacao-card" style="display:none;">
                     <div id="central-anotacao-conteudo" class="form-field" contenteditable="true" style="min-height:100px;line-height:1.5;" oninput="agendarSalvarAnotacaoInlineCentral()"></div>
                     <p style="margin:8px 0 0;font-size:12px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
-                    <div class="actions-row" style="margin-top:10px;">
+                    <div class="actions-row mt-3" >
                         <button class="actions-button is-neutral" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-expand"></i></span> Abrir Edição Completa</button>
                     </div>
                 </div>
@@ -578,7 +576,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card" style="margin-top: 16px;">
+                <div class="card mt-4" >
                     <div class="campo">
                         <label for="conta-nome-input">Nome</label>
                         <input type="text" id="conta-nome-input" placeholder="Como podemos te chamar?">
@@ -586,11 +584,11 @@
                     <p style="color:var(--text-light);font-size:13px;margin:-4px 0 14px;">Usado só pra personalizar as mensagens do app. Deixe em branco se preferir.</p>
                     <button class="actions-button" onclick="salvarNomeConta()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Nome</button>
                 </div>
-                <div class="card" id="conta-senha-card" style="margin-top: 16px;">
+                <div class="card mt-4" id="conta-senha-card" >
                     <p class="desc-tela">Sua conta usa login por e-mail e senha. Você pode alterar sua senha a qualquer momento.</p>
                     <button class="actions-button" onclick="abrirModalSenhaComVerificacao()"><span class="icon-wrapper"><i class="fa-solid fa-key"></i></span> Alterar Senha</button>
                 </div>
-                <div class="card" id="conta-senha-indisponivel" style="display:none;margin-top: 16px;">
+                <div class="card mt-4" id="conta-senha-indisponivel"  style="display:none">
                     <p class="desc-tela">Sua conta usa login pelo Google ou telefone — a senha é gerenciada por eles, não há senha para alterar aqui.</p>
                 </div>
             </div>
@@ -640,7 +638,7 @@
                             <div class="app-screen transition-demo-screen active" id="transition-demo-a">Tela A</div>
                             <div class="app-screen transition-demo-screen" id="transition-demo-b">Tela B</div>
                         </div>
-                        <button class="actions-button" style="margin-top: 10px;" onclick="testarTransicaoTela()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Agora</button>
+                        <button class="actions-button mt-3"  onclick="testarTransicaoTela()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Agora</button>
                     </div>
                     <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
                     <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
@@ -649,9 +647,9 @@
             </div>
             
             <div class="app-screen" id="screen-anotacoes" style="">
-                <div class="campo" style="margin-bottom: 12px;"><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
+                <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
-                    <button class="actions-button" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
+                    <button class="actions-button is-primary" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
                     <button class="actions-button is-neutral" onclick="abrirNovaAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
                     <button class="actions-button" id="btn-selecionar-anotacoes" onclick="toggleModoSelecaoAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
                 </div>
@@ -676,7 +674,7 @@
                     <div class="campo"><label>Observação Geral</label><textarea id="aud-obs-geral" class="form-field" placeholder="Ex: inicialmente havia faltado um volume, mas foi encontrado depois..."></textarea></div>
                 </div>
 
-                <div class="card" style="margin-top:16px;">
+                <div class="card mt-4" >
                     <h3 class="card-titulo">Divergências</h3>
                     <div id="lista-divergencias"><div class="empty-state" id="divergencias-vazio">Nenhuma divergência adicionada ainda.</div></div>
                     <div class="actions-row">
@@ -684,12 +682,12 @@
                     </div>
                 </div>
 
-                <div class="card" style="margin-top:16px;">
+                <div class="card mt-4" >
                     <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleConfigTextos()">
                         <h3 style="margin:0;font-size:16px;">⚙️ Configurar Textos Padrão</h3>
                         <i class="fa-solid fa-chevron-down" id="config-chevron" style="color:var(--text-light);transition:transform .25s var(--ease-out);"></i>
                     </div>
-                    <div id="config-textos-body" style="display:none;margin-top:16px;">
+                    <div id="config-textos-body" class="mt-4" style="display:none">
                         <p style="color:var(--text-light);font-size:12px;margin-top:0;">Ajuste o tom das frases usadas na geração. Use {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} na abertura — são substituídas automaticamente.</p>
                         <div class="campo"><label>Abertura do E-mail</label><textarea id="cfg-saudacao" class="form-field"></textarea></div>
                         <div class="campo"><label>Frase — Fotos em Anexo</label><input type="text" id="cfg-fotosAnexo" class="form-field"></div>
@@ -699,7 +697,7 @@
                 </div>
 
                 <div class="actions-row" style="margin: 20px 0;">
-                    <button class="actions-button is-success" onclick="gerarSaidasAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar Auditoria</button>
+                    <button class="actions-button is-primary" onclick="gerarSaidasAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar Auditoria</button>
                 </div>
 
                 <div class="card" id="card-resultado-auditoria" style="display:none;">
@@ -785,12 +783,12 @@
                     </div>
                 </div>
                 <div id="anotacao-corpo" class="rte-editor" contenteditable="true" oninput="agendarAutoSaveAnotacao()" onpaste="setTimeout(agendarAutoSaveAnotacao, 50)"></div>
-                <div class="actions" style="margin-top: 16px;">
+                <div class="actions mt-4" >
                     <button class="actions-button" onclick="copiarTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar Tudo</button>
                     <button class="actions-button" onclick="colarTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
                     <button class="actions-button is-neutral" onclick="limparTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-eraser"></i></span> Limpar Texto</button>
                     <button class="actions-button is-danger" onclick="excluirAnotacaoAtual()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir</button>
-                    <button class="actions-button is-success" onclick="salvarAnotacaoAtual(true)"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                    <button class="actions-button is-primary" onclick="salvarAnotacaoAtual(true)"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
                 </div>
             </div>
         </div>
@@ -834,7 +832,7 @@
             <div class="campo"><label>Recurso</label><select id="bulk-edit-obs"><option value="">Não alterar</option></select></div>
             <div class="actions" style="gap: 10px;">
                 <button class="actions-button is-neutral" onclick="fecharEdicaoEmLoteNotas()">Cancelar</button>
-                <button class="actions-button is-success" onclick="salvarEdicaoEmLoteNotas()">Salvar</button>
+                <button class="actions-button is-primary" onclick="salvarEdicaoEmLoteNotas()">Salvar</button>
             </div>
         </div>
     </div>
