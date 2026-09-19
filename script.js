@@ -117,7 +117,7 @@ const AUDITORIA_TEXTOS_DEFAULT = {
 let appConfig = {
     personalizacao: { 
         theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, transicaoTela: 'fade', densidade: 'confortavel', mostrarIconesAbas: 'on',
-        menuOrder: ['screen-cotacoes', 'screen-xml-editor', 'screen-add', 'screen-manage', 'screen-reports', 'screen-export', 'screen-history', 'screen-anotacoes', 'screen-settings'] 
+        menuOrder: ['screen-add', 'screen-manage', 'screen-export', 'screen-reports', 'screen-history', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'] 
     },
     anotacoes: '', fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"],
     auditoriaTextos: { ...AUDITORIA_TEXTOS_DEFAULT }
@@ -300,9 +300,6 @@ function aplicarPersonalizacoes() {
     document.querySelector('#tab-icons-select').value = mostrarIconesAbas || 'on';
     reordenarMenusDOM(menuOrder || Object.keys(menuDetails)); popularListaReordenar();
     atualizarPreviewLogo();
-    // Bolinha de novidade: calculada só a partir da lista de novidades já vistas
-    // (ver NOVIDADES_APP) — não depende de dados novos nem de listeners.
-    atualizarBolinhasNovidade();
     const currentActiveScreen = document.querySelector('.app-screen.active');
     if (currentActiveScreen) { const screenId = currentActiveScreen.id;
         const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); });
@@ -552,14 +549,14 @@ function atualizarAreaRelatorios() {
 
 function mudarAbaRelatorios(aba) {
     relatoriosAbaAtiva = aba;
-    ['pedidos', 'notas', 'divergencias'].forEach(a => {
+    ['pedidos', 'notas', 'divergencias', 'auditorias'].forEach(a => {
         const btn = document.getElementById(`relatorios-tab-btn-${a}`);
         if (btn) btn.classList.toggle('active', a === aba);
     });
     const busca = document.getElementById('relatorios-busca');
     if (busca) busca.placeholder = aba === 'notas'
         ? 'Buscar por fornecedor ou NF...'
-        : aba === 'divergencias'
+        : (aba === 'divergencias' || aba === 'auditorias')
             ? 'Buscar por pedido, fornecedor ou NF...'
             : 'Buscar por pedido, origem ou fornecedor...';
     const subfiltroNotas = document.getElementById('relatorios-subfiltro-notas');
@@ -595,8 +592,12 @@ function filtrarStatusDivergenciaRelatorio(status) {
 function renderAbaAtivaRelatorios() {
     const container = document.getElementById('relatorios-conteudo-aba');
     if (!container) return; // tela de relatórios ainda não está no DOM (login, etc.)
+    preencherOpcoesFiltrosRelatorio();
+    renderFiltrosAtivosRelatorio();
+    renderIndicadoresRelatorio();
     if (relatoriosAbaAtiva === 'notas') renderRelatorioNotas(container);
     else if (relatoriosAbaAtiva === 'divergencias') renderRelatorioDivergencias(container);
+    else if (relatoriosAbaAtiva === 'auditorias') renderRelatorioAuditorias(container);
     else renderRelatorioPedidos(container);
 }
 
@@ -604,15 +605,8 @@ function renderRelatorioPedidos(container) {
     const termo = normalizarBuscaRel(relatoriosFiltroTexto);
     const resumo = document.getElementById('relatorios-resumo');
 
-    let pedidos = listaCotacoes.slice();
-    if (termo) {
-        pedidos = pedidos.filter(c => {
-            const fornecedoresTexto = (c.fornecedores || []).map(f => f.razaoSocial || '').join(' ');
-            return normalizarBuscaRel(c.pedido).includes(termo)
-                || normalizarBuscaRel(c.origem).includes(termo)
-                || normalizarBuscaRel(fornecedoresTexto).includes(termo);
-        });
-    }
+    if (avisoFiltroInaplicavelRel('pedidos', container)) return;
+    let pedidos = listaCotacoes.filter(c => pedidoPassaFiltrosRel(c) && pedidoCasaTermoRel(c, termo));
 
     if (resumo) resumo.textContent = `${pedidos.length} pedido(s) encontrado(s)`;
 
@@ -639,17 +633,16 @@ function renderRelatorioPedidos(container) {
 function renderRelatorioNotas(container) {
     const termo = normalizarBuscaRel(relatoriosFiltroTexto);
     const resumo = document.getElementById('relatorios-resumo');
+    if (avisoFiltroInaplicavelRel('notas', container)) return;
 
     let notas = [];
     if (relatoriosFiltroStatusNotas === 'pendente') notas = notasPendentes.map(n => ({ ...n, _statusRel: 'pendente' }));
     else if (relatoriosFiltroStatusNotas === 'arquivada') notas = historicoNotas.map(n => ({ ...n, _statusRel: 'arquivada' }));
     else notas = [...notasPendentes.map(n => ({ ...n, _statusRel: 'pendente' })), ...historicoNotas.map(n => ({ ...n, _statusRel: 'arquivada' }))];
 
-    if (termo) {
-        notas = notas.filter(n => normalizarBuscaRel(n.fornecedor).includes(termo) || normalizarBuscaRel(n.nf).includes(termo));
-    }
+    notas = notas.filter(n => notaPassaFiltrosRel(n) && notaCasaTermoRel(n, termo));
 
-    if (resumo) resumo.textContent = `${notas.length} nota(s) encontrada(s)`;
+    if (resumo) resumo.textContent = `${notas.length} nota(s) encontrada(s)${relatoriosFiltros.destino ? ' — NFs sem pedido/destino identificado ficam fora do filtro de Destino' : ''}`;
 
     if (notas.length === 0) {
         container.innerHTML = '<div class="empty-state">Nenhuma nota encontrada.</div>';
@@ -671,38 +664,325 @@ function renderRelatorioDivergencias(container) {
     const termo = normalizarBuscaRel(relatoriosFiltroTexto);
     const resumo = document.getElementById('relatorios-resumo');
 
-    const todas = [];
-    listaAnotacoes.forEach(nota => {
-        if (!nota.pedido) return;
-        (nota.ocorrencias || []).forEach(oc => {
-            (oc.divergencias || []).forEach(d => {
-                todas.push({ pedido: nota.pedido, fornecedor: oc.fornecedor, notaFiscal: oc.notaFiscal, tipo: d.tipo, status: d.status || 'pendente', linhas: linhasDeMateriais(d) });
-            });
-        });
-    });
+    if (avisoFiltroInaplicavelRel('divergencias', container)) return;
+    const todas = divergenciasRel();
 
     let filtradas = relatoriosFiltroStatusDivergencia === 'todas' ? todas : todas.filter(x => x.status === relatoriosFiltroStatusDivergencia);
-    if (termo) {
-        filtradas = filtradas.filter(x => normalizarBuscaRel(x.pedido).includes(termo) || normalizarBuscaRel(x.fornecedor).includes(termo) || normalizarBuscaRel(x.notaFiscal).includes(termo));
-    }
+    if (termo) filtradas = filtradas.filter(x => auditoriaCasaTermoRel(x, termo));
 
     if (resumo) resumo.textContent = `${filtradas.length} divergência(s) encontrada(s)`;
 
+    const rankingsHTML = htmlRankingsRel(filtradas);
     if (filtradas.length === 0) {
         container.innerHTML = '<div class="empty-state">Nenhuma divergência encontrada.</div>';
         return;
     }
 
-    container.innerHTML = filtradas.map(x => {
+    container.innerHTML = rankingsHTML + filtradas.map(x => {
         const def = TIPOS_DIVERGENCIA_AUDITORIA[x.tipo];
         const badgeTexto = x.status === 'pendente' ? 'Pendente' : x.status === 'resolvida' ? 'Resolvida' : 'Encerrada';
         const linhasHTML = x.linhas.length ? x.linhas.map(l => `<div class="central-item-linha">${escRel(l)}</div>`).join('') : '';
-        return `<div class="nota-item" style="cursor:pointer;" onclick="abrirCentralPedido('${x.pedido}')">
-            <div class="nota-info">${escRel(x.pedido)} ${x.fornecedor ? `<span style="font-weight:400;color:var(--text-light);">— ${escRel(upAud(x.fornecedor))}</span>` : ''} <span class="central-status-badge status-${x.status}">${badgeTexto}</span></div>
+        return `<div class="nota-item" ${x.pedido ? `style="cursor:pointer;" onclick="abrirCentralPedido('${x.pedido}')"` : ''}>
+            <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span style="font-weight:400;color:var(--text-light);">— ${escRel(upAud(x.fornecedor))}</span>` : ''} <span class="central-status-badge status-${x.status}">${badgeTexto}</span></div>
             <div class="nota-detalhes">${def ? escRel(def.label) : escRel(x.tipo)}${x.notaFiscal ? ` | NF ${escRel(x.notaFiscal)}` : ''}</div>
             ${linhasHTML}
         </div>`;
     }).join('');
+}
+
+// ===================================================================
+// --- FASE 15: INDICADORES E FILTROS DO RELATÓRIOS ---
+// ===================================================================
+// Tudo calculado na hora e só leitura, sobre os mesmos arrays que as abas
+// já usam (notasPendentes, historicoNotas, listaCotacoes, listaAnotacoes) —
+// sem coleção nova, sem IA e sem estimativa. Um dado que os registros não
+// permitem determinar fica DE FORA do filtro correspondente (nunca é
+// adivinhado). Os números dos indicadores usam exatamente os mesmos filtros
+// das listas: tocar num indicador abre a lista dos registros que o compõem.
+let relatoriosFiltros = { de: '', ate: '', fornecedor: '', fornecedorExato: false, destino: '', recurso: '', tipo: '', produto: '' };
+let relRankingAtual = { tipo: [], fornecedor: [], produto: [] };
+let relCtxCache = { refs: null, map: new Map() };
+// Filtros que não existem pra um tipo de registro (ex.: NF não tem "tipo de
+// divergência"; divergência não tem "recurso" seguro) — nesse caso a aba avisa
+// em vez de mostrar um número que não reflete o filtro.
+const REL_INAPLICAVEL = { notas: ['tipo', 'produto'], pedidos: ['tipo', 'produto'], auditorias: ['recurso'], divergencias: ['recurso'] };
+const REL_NOMES_FILTRO = { tipo: 'Tipo de divergência', produto: 'Produto', recurso: 'Recurso' };
+const REL_NOMES_DATASET = { notas: 'notas', pedidos: 'pedidos', auditorias: 'auditorias', divergencias: 'divergências' };
+
+function filtrosInaplicaveisRel(dataset) {
+    return REL_INAPLICAVEL[dataset].filter(k => relatoriosFiltros[k]).map(k => REL_NOMES_FILTRO[k]);
+}
+function avisoFiltroInaplicavelRel(dataset, container) {
+    const ina = filtrosInaplicaveisRel(dataset);
+    if (!ina.length) return false;
+    const resumo = document.getElementById('relatorios-resumo');
+    if (resumo) resumo.textContent = '';
+    container.innerHTML = `<div class="empty-state">O filtro "${ina.join('", "')}" não se aplica a ${REL_NOMES_DATASET[dataset]}. Limpe-o pra ver estes registros.</div>`;
+    return true;
+}
+
+// Aceita 'aaaa-mm-dd' (campos de data), 'dd/mm/aaaa' (NFs) e ISO com hora.
+function dataRel(str) {
+    if (!str) return null;
+    const t = String(str).trim();
+    if (t.includes('T')) { const d = new Date(t); return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+    let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+    return null;
+}
+// Com período ativo, registro sem data válida não entra (não dá pra afirmar que está no período).
+function dentroPeriodoRel(str) {
+    const { de, ate } = relatoriosFiltros;
+    if (!de && !ate) return true;
+    const d = dataRel(str);
+    if (!d) return false;
+    if (de && d < dataRel(de)) return false;
+    if (ate && d > dataRel(ate)) return false;
+    return true;
+}
+function fornecedorCasaRel(nome) {
+    const f = normalizarBuscaRel(relatoriosFiltros.fornecedor).trim();
+    if (!f) return true;
+    const n = normalizarBuscaRel(nome).trim();
+    return relatoriosFiltros.fornecedorExato ? n === f : n.includes(f);
+}
+
+// Pedido/destino/recurso de uma NF vêm SÓ da mesma regra já usada na aptidão
+// pra saída (NF conferida na Entrada Segura → pedido → cotação). Sem esse
+// vínculo o dado é "não informado". Guardado em cache até algum array mudar.
+function contextoNotaRel(nota) {
+    const refs = [notasPendentes, historicoNotas, listaCotacoes, listaNfsProcessadas, listaEntradasErp, listaAnotacoes];
+    if (!relCtxCache.refs || refs.some((r, i) => r !== relCtxCache.refs[i])) relCtxCache = { refs, map: new Map() };
+    const chave = `${nota._statusRel || ''}:${nota.id}`;
+    if (!relCtxCache.map.has(chave)) {
+        let ctx = null;
+        try { ctx = calcularAptidaoSaidaNota(nota); } catch (e) { ctx = null; }
+        relCtxCache.map.set(chave, ctx);
+    }
+    return relCtxCache.map.get(chave);
+}
+
+function todasNotasRel() {
+    return [...notasPendentes.map(n => ({ ...n, _statusRel: 'pendente' })), ...historicoNotas.map(n => ({ ...n, _statusRel: 'arquivada' }))];
+}
+function notaPassaFiltrosRel(n) {
+    const f = relatoriosFiltros;
+    if (!dentroPeriodoRel(n.data)) return false;
+    if (!fornecedorCasaRel(n.fornecedor)) return false;
+    if (f.recurso && (n.obs || '').toString().trim() !== f.recurso) return false;
+    if (f.destino) { const ctx = contextoNotaRel(n); if (!ctx || ctx.destino !== f.destino) return false; }
+    return true;
+}
+function notaCasaTermoRel(n, termo) {
+    if (!termo) return true;
+    if (normalizarBuscaRel(n.fornecedor).includes(termo) || normalizarBuscaRel(n.nf).includes(termo)) return true;
+    const ctx = contextoNotaRel(n);
+    return !!(ctx && ctx.pedido && normalizarBuscaRel(ctx.pedido).includes(termo));
+}
+
+function pedidoPassaFiltrosRel(c) {
+    const f = relatoriosFiltros;
+    if (!dentroPeriodoRel(c.dataPedido)) return false;
+    if (f.destino && c.origem !== f.destino) return false;
+    if (f.recurso && !Object.values(c.recursosPorItem || {}).includes(f.recurso)) return false;
+    if (normalizarBuscaRel(f.fornecedor).trim() && !(c.fornecedores || []).some(x => fornecedorCasaRel(x.razaoSocial) || fornecedorCasaRel(nomeExibicaoFornecedor(x.razaoSocial)))) return false;
+    return true;
+}
+function pedidoCasaTermoRel(c, termo) {
+    if (!termo) return true;
+    const fornecedoresTexto = (c.fornecedores || []).map(f => f.razaoSocial || '').join(' ');
+    return normalizarBuscaRel(c.pedido).includes(termo)
+        || normalizarBuscaRel(c.origem).includes(termo)
+        || normalizarBuscaRel(fornecedoresTexto).includes(termo);
+}
+
+// Produto de uma divergência: só quando o próprio registro traz o produto
+// (materiais estruturados). Tipos sem produto ficam fora do ranking de produtos.
+function produtosDivergenciaRel(d) {
+    const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+    const nomes = def && def.multiMaterial
+        ? (d.materiais || []).map(m => m.produto || m.produtoPedido)
+        : [(d.campos || {}).produto];
+    return [...new Set(nomes.map(n => (n || '').toString().trim().toUpperCase()).filter(Boolean))];
+}
+// Uma "auditoria" = uma ocorrência registrada em "Nova Auditoria".
+function auditoriasBaseRel() {
+    const f = relatoriosFiltros;
+    const lista = [];
+    listaAnotacoes.forEach(a => (a.ocorrencias || []).forEach(oc => {
+        const x = { pedido: a.pedido || '', fornecedor: oc.fornecedor || '', notaFiscal: oc.notaFiscal || '', data: dataRel(oc.data) ? oc.data : (oc.criadoEm || ''), observacaoGeral: oc.observacaoGeral || '', divergencias: oc.divergencias || [] };
+        if (!dentroPeriodoRel(x.data) || !fornecedorCasaRel(x.fornecedor)) return;
+        if (f.destino) { const cot = listaCotacoes.find(c => c.pedido === x.pedido); if (!cot || cot.origem !== f.destino) return; }
+        lista.push(x);
+    }));
+    return lista;
+}
+function divPassaFiltrosRel(d) {
+    const f = relatoriosFiltros;
+    if (f.tipo && d.tipo !== f.tipo) return false;
+    if (f.produto && !produtosDivergenciaRel(d).includes(f.produto)) return false;
+    return true;
+}
+function auditoriasRel() {
+    const f = relatoriosFiltros;
+    const base = auditoriasBaseRel();
+    return (f.tipo || f.produto) ? base.filter(x => x.divergencias.some(divPassaFiltrosRel)) : base;
+}
+function divergenciasRel() {
+    const todas = [];
+    auditoriasBaseRel().forEach(x => x.divergencias.filter(divPassaFiltrosRel).forEach(d => {
+        todas.push({ pedido: x.pedido, fornecedor: x.fornecedor, notaFiscal: x.notaFiscal, tipo: d.tipo, status: d.status || 'pendente', linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d) });
+    }));
+    return todas;
+}
+function auditoriaCasaTermoRel(x, termo) {
+    return normalizarBuscaRel(x.pedido).includes(termo) || normalizarBuscaRel(x.fornecedor).includes(termo) || normalizarBuscaRel(x.notaFiscal).includes(termo);
+}
+
+function renderRelatorioAuditorias(container) {
+    const termo = normalizarBuscaRel(relatoriosFiltroTexto);
+    const resumo = document.getElementById('relatorios-resumo');
+    if (avisoFiltroInaplicavelRel('auditorias', container)) return;
+    let lista = auditoriasRel();
+    if (termo) lista = lista.filter(x => auditoriaCasaTermoRel(x, termo));
+    if (resumo) resumo.textContent = `${lista.length} auditoria(s) encontrada(s)`;
+    if (lista.length === 0) { container.innerHTML = '<div class="empty-state">Nenhuma auditoria encontrada.</div>'; return; }
+    lista.sort((a, b) => ((dataRel(b.data) || 0) - (dataRel(a.data) || 0)));
+    container.innerHTML = lista.map(x => {
+        const tipos = [...new Set(x.divergencias.map(d => (TIPOS_DIVERGENCIA_AUDITORIA[d.tipo] || {}).label || d.tipo))];
+        const dataTxt = dataRel(x.data) ? dataRel(x.data).toLocaleDateString('pt-BR') : 'sem data';
+        return `<div class="nota-item" ${x.pedido ? `style="cursor:pointer;" onclick="abrirCentralPedido('${x.pedido}')"` : ''}>
+            <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span style="font-weight:400;color:var(--text-light);">— ${escRel(upAud(x.fornecedor))}</span>` : ''}</div>
+            <div class="nota-detalhes">${x.notaFiscal ? `NF ${escRel(x.notaFiscal)} | ` : ''}${dataTxt} | ${x.divergencias.length} divergência(s)${tipos.length ? `: ${escRel(tipos.join(', '))}` : ''}</div>
+            ${x.observacaoGeral ? `<div class="nota-detalhes">${escRel(x.observacaoGeral)}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+// --- Indicadores (números em destaque) ---
+function calcularIndicadoresRel() {
+    const termo = normalizarBuscaRel(relatoriosFiltroTexto);
+    const notas = filtrosInaplicaveisRel('notas').length ? null : todasNotasRel().filter(n => notaPassaFiltrosRel(n) && notaCasaTermoRel(n, termo));
+    const pedidos = filtrosInaplicaveisRel('pedidos').length ? null : listaCotacoes.filter(c => pedidoPassaFiltrosRel(c) && pedidoCasaTermoRel(c, termo));
+    const auditorias = filtrosInaplicaveisRel('auditorias').length ? null : auditoriasRel().filter(x => !termo || auditoriaCasaTermoRel(x, termo));
+    const divergencias = filtrosInaplicaveisRel('divergencias').length ? null : divergenciasRel().filter(x => !termo || auditoriaCasaTermoRel(x, termo));
+    return { notas, pedidos, auditorias, divergencias };
+}
+function renderIndicadoresRelatorio() {
+    const el = document.getElementById('relatorios-indicadores');
+    if (!el) return;
+    const ind = calcularIndicadoresRel();
+    const card = (aba, rotulo, lista, sub) => `<div class="kpi" onclick="irParaAbaRelatorio('${aba}')">
+        <div class="kpi-label">${rotulo}</div>
+        <div class="kpi-value">${lista ? lista.length : '—'}</div>
+        <div class="kpi-sub">${lista ? sub : 'filtro não se aplica'}</div>
+    </div>`;
+    const total = ind.notas ? ind.notas.reduce((t, n) => t + parseValorBR(n.valor), 0) : 0;
+    const semValor = ind.notas ? ind.notas.filter(n => parseValorBR(n.valor) === 0).length : 0;
+    const divPend = ind.divergencias ? ind.divergencias.filter(d => d.status === 'pendente').length : 0;
+    const audComDiv = ind.auditorias ? ind.auditorias.filter(a => a.divergencias.length).length : 0;
+    el.innerHTML = `<div class="kpi-grid">
+        ${card('notas', 'NFs', ind.notas, `R$ ${formatValorBR(total)}${semValor ? ` · ${semValor} sem valor` : ''}`)}
+        ${card('pedidos', 'Pedidos', ind.pedidos, 'cotações registradas')}
+        ${card('auditorias', 'Auditorias', ind.auditorias, `${audComDiv} com divergência`)}
+        ${card('divergencias', 'Divergências', ind.divergencias, `${divPend} pendente(s)`)}
+    </div>`;
+}
+// Tocar no indicador abre a lista que o compõe (mesmos filtros; status = todas,
+// pra a lista ter exatamente a contagem do indicador).
+function irParaAbaRelatorio(aba) {
+    if (aba === 'notas') filtrarStatusNotasRelatorio('todas');
+    if (aba === 'divergencias') filtrarStatusDivergenciaRelatorio('todas');
+    mudarAbaRelatorios(aba);
+}
+
+// --- Rankings da aba Divergências (por tipo, fornecedor e produto) ---
+function htmlRankingsRel(divs) {
+    const contar = (chaveFn, rotuloFn) => {
+        const m = new Map();
+        divs.forEach(d => chaveFn(d).forEach(k => {
+            const atual = m.get(k.chave) || { chave: k.chave, label: k.label, n: 0 };
+            atual.n++;
+            m.set(k.chave, atual);
+        }));
+        return [...m.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
+    };
+    relRankingAtual = {
+        tipo: contar(d => [{ chave: d.tipo, label: (TIPOS_DIVERGENCIA_AUDITORIA[d.tipo] || {}).label || d.tipo }]),
+        fornecedor: contar(d => [{ chave: normalizarBuscaRel(d.fornecedor).trim() || '(sem)', label: upAud(d.fornecedor) || 'Fornecedor não informado' }]),
+        produto: contar(d => d.produtos.map(p => ({ chave: p, label: p })))
+    };
+    const bloco = (tipo, titulo) => {
+        const itens = relRankingAtual[tipo];
+        if (!itens.length) return '';
+        const linhas = itens.slice(0, 10).map((it, i) => `<div class="rank-linha" onclick="filtrarPorRankingRelatorio('${tipo}', ${i})"><span>${escRel(it.label)}</span><strong>${it.n}</strong></div>`).join('');
+        return `<div class="rank-bloco"><div class="rank-titulo">${titulo}${itens.length > 10 ? ` (10 de ${itens.length})` : ''}</div>${linhas}</div>`;
+    };
+    return `<div class="rank-bloco">${bloco('tipo', 'Divergências por tipo')}${bloco('fornecedor', 'Divergências por fornecedor')}${bloco('produto', 'Produtos com mais divergências')}<div class="txt-aux">Toque numa linha pra filtrar a lista abaixo por ela.</div></div>`;
+}
+function filtrarPorRankingRelatorio(tipo, idx) {
+    const it = (relRankingAtual[tipo] || [])[idx];
+    if (!it) return;
+    if (it.chave === '(sem)') return toast('Sem fornecedor informado nestes registros — não há como filtrar por ele.');
+    if (tipo === 'tipo') relatoriosFiltros.tipo = it.chave;
+    else if (tipo === 'fornecedor') { relatoriosFiltros.fornecedor = it.label; relatoriosFiltros.fornecedorExato = true; }
+    else relatoriosFiltros.produto = it.chave;
+    sincronizarCamposFiltrosRelatorio();
+    renderAbaAtivaRelatorios();
+}
+
+// --- Filtros ---
+function definirFiltroRelatorio(campo, valor) {
+    relatoriosFiltros[campo] = valor || '';
+    if (campo === 'fornecedor') relatoriosFiltros.fornecedorExato = false; // digitado à mão = busca parcial
+    renderAbaAtivaRelatorios();
+}
+function limparFiltrosRelatorio() {
+    relatoriosFiltros = { de: '', ate: '', fornecedor: '', fornecedorExato: false, destino: '', recurso: '', tipo: '', produto: '' };
+    sincronizarCamposFiltrosRelatorio();
+    renderAbaAtivaRelatorios();
+}
+function sincronizarCamposFiltrosRelatorio() {
+    [['de', 'rel-f-de'], ['ate', 'rel-f-ate'], ['fornecedor', 'rel-f-fornecedor'], ['destino', 'rel-f-destino'], ['recurso', 'rel-f-recurso'], ['tipo', 'rel-f-tipo']].forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = relatoriosFiltros[k];
+    });
+}
+// Opções vêm só do que existe nos registros (nada inventado); só reescreve
+// quando a lista muda, pra não atrapalhar a digitação/seleção.
+function preencherOpcoesFiltrosRelatorio() {
+    const unicos = arr => { const m = new Map(); arr.forEach(v => { const t = (v || '').toString().trim(); if (t && !m.has(normalizarBuscaRel(t))) m.set(normalizarBuscaRel(t), t); }); return [...m.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')); };
+    const atualiza = (id, assinatura, montar) => {
+        const el = document.getElementById(id);
+        if (!el || el.dataset.assinatura === assinatura) return;
+        el.dataset.assinatura = assinatura;
+        const valor = el.value;
+        montar(el);
+        el.value = valor;
+    };
+    const recursos = unicos([...notasPendentes.map(n => n.obs), ...historicoNotas.map(n => n.obs), ...listaCotacoes.flatMap(c => Object.values(c.recursosPorItem || {}))]);
+    atualiza('rel-f-recurso', recursos.join('|'), el => { el.innerHTML = '<option value="">Todos</option>' + recursos.map(r => `<option value="${escRel(r).replace(/"/g, '&quot;')}">${escRel(r)}</option>`).join(''); });
+    const fornecedores = unicos([...notasPendentes.map(n => n.fornecedor), ...historicoNotas.map(n => n.fornecedor), ...listaAnotacoes.flatMap(a => (a.ocorrencias || []).map(oc => oc.fornecedor)), ...listaCotacoes.flatMap(c => (c.fornecedores || []).map(f => f.razaoSocial))]);
+    atualiza('rel-f-fornecedores', fornecedores.join('|'), el => { el.innerHTML = fornecedores.map(f => `<option value="${escRel(f).replace(/"/g, '&quot;')}"></option>`).join(''); });
+    const tipos = Object.keys(TIPOS_DIVERGENCIA_AUDITORIA);
+    atualiza('rel-f-tipo', tipos.join('|'), el => { el.innerHTML = '<option value="">Todos</option>' + tipos.map(t => `<option value="${t}">${escRel(TIPOS_DIVERGENCIA_AUDITORIA[t].label)}</option>`).join(''); });
+}
+function renderFiltrosAtivosRelatorio() {
+    const el = document.getElementById('relatorios-filtros-ativos');
+    if (!el) return;
+    const f = relatoriosFiltros;
+    const partes = [];
+    if (f.de || f.ate) partes.push(`Período: ${f.de ? dataRel(f.de).toLocaleDateString('pt-BR') : '…'} a ${f.ate ? dataRel(f.ate).toLocaleDateString('pt-BR') : '…'}`);
+    if (f.fornecedor) partes.push(`Fornecedor: ${f.fornecedor}${f.fornecedorExato ? ' (exato)' : ''}`);
+    if (f.destino) partes.push(`Destino: ${f.destino}`);
+    if (f.recurso) partes.push(`Recurso: ${f.recurso}`);
+    if (f.tipo) partes.push(`Tipo: ${(TIPOS_DIVERGENCIA_AUDITORIA[f.tipo] || {}).label || f.tipo}`);
+    if (f.produto) partes.push(`Produto: ${f.produto}`);
+    if (!partes.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = 'flex';
+    el.innerHTML = `<span style="flex:1;">Filtros ativos: ${partes.map(escRel).join(' · ')}</span><button type="button" class="action-chip edit-chip" onclick="limparFiltrosRelatorio()">Limpar</button>`;
 }
 
 // --- LISTENERS DE DADOS ---
@@ -2297,77 +2577,7 @@ function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a 
 
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-// ===================================================================
-// --- INDICADOR DE NOVIDADE (bolinha reutilizável, nunca persiste) ---
-// ===================================================================
-// Mecanismo genérico pra marcar qualquer aba/recurso do app como "tem algo
-// novo aqui, vale ver" — igual à bolinha de notificação de qualquer app.
-// Não é amarrado a nenhum evento específico (não é "chegou NF do ERP"): é
-// só um screenId + duração. Pode ser usado tanto pra avisar de dados novos
-// quanto pra apontar uma funcionalidade/melhoria recém-lançada que merece
-// ser vista/testada — quem chama decide o motivo, a bolinha só mostra.
-// É puro estado de tela: nunca é salva no Firestore/localStorage, então
-// nunca persiste de verdade — some sozinha depois de um tempo, e some
-// imediatamente ao abrir a aba (ou quando quem chamou decidir limpar antes).
-function mostrarNotificacaoAba(screenId, duracaoMs = 60000) {
-    document.querySelectorAll(`.tab-item[data-screen="${screenId}"], .sidebar-item[data-screen="${screenId}"]`).forEach(el => {
-        if (el.classList.contains('active') || el.querySelector('.nav-notification-dot')) return;
-        const dot = document.createElement('span');
-        dot.className = 'nav-notification-dot';
-        (el.querySelector('.icon-wrapper') || el).appendChild(dot);
-        setTimeout(() => dot.remove(), duracaoMs);
-    });
-}
-function limparNotificacaoAba(screenId) {
-    document.querySelectorAll(`.tab-item[data-screen="${screenId}"] .nav-notification-dot:not([data-novidade]), .sidebar-item[data-screen="${screenId}"] .nav-notification-dot:not([data-novidade])`).forEach(el => el.remove());
-}
-
-// ===================================================================
-// --- NOVIDADES DO APP (bolinha persistente, controlada por "já vista") ---
-// ===================================================================
-// Regra permanente: toda funcionalidade nova/modificada/que mudou de lugar
-// ganha uma entrada aqui (id único + tela onde a novidade está) e uma entrada
-// no Histórico de Mudanças. A bolinha aparece na aba (ou na aba-pai, quando a
-// tela fica dentro de Configurações) enquanto o id NÃO estiver em
-// appConfig.novidadesVistas, e some de vez quando o usuário abre a tela da
-// novidade — o id é gravado no documento de configurações (arrayUnion).
-// Não depende de dados novos nem de listeners de dados: só da lista de vistas.
-const NOVIDADES_APP = [
-    { id: 'fase14-pdf-exportar', tela: 'screen-export' },
-    { id: 'fase14-pdf-ajustes-visuais', tela: 'screen-export' },
-    { id: 'fase14-importar-simplificado', tela: 'screen-import' },
-    { id: 'fase14-logo-personalizacao', tela: 'screen-personalizacao' }
-];
-function novidadesVistasIds() { return Array.isArray(appConfig.novidadesVistas) ? appConfig.novidadesVistas : []; }
-function atualizarBolinhasNovidade() {
-    const vistas = new Set(novidadesVistasIds());
-    const abasComNovidade = new Set(NOVIDADES_APP.filter(n => !vistas.has(n.id)).map(n => screenParentMap[n.tela] || n.tela));
-    document.querySelectorAll('.tab-item[data-screen], .sidebar-item[data-screen]').forEach(el => {
-        const dotAtual = el.querySelector('.nav-notification-dot[data-novidade]');
-        const deve = abasComNovidade.has(el.dataset.screen);
-        if (deve && !dotAtual) {
-            const dot = document.createElement('span');
-            dot.className = 'nav-notification-dot';
-            dot.setAttribute('data-novidade', '1');
-            const alvo = el.querySelector('.icon-wrapper');
-            if (alvo && getComputedStyle(alvo).display !== 'none') alvo.appendChild(dot);
-            else { el.style.position = 'relative'; dot.style.top = '4px'; dot.style.right = '6px'; el.appendChild(dot); } // ícones das abas desligados
-        } else if (!deve && dotAtual) {
-            dotAtual.remove();
-        }
-    });
-}
-function marcarNovidadeVista(telaId) {
-    const vistas = novidadesVistasIds();
-    const novas = NOVIDADES_APP.filter(n => n.tela === telaId && !vistas.includes(n.id)).map(n => n.id);
-    if (!novas.length) return;
-    appConfig.novidadesVistas = [...vistas, ...novas];
-    atualizarBolinhasNovidade();
-    settingsDocRef.set({ novidadesVistas: firebase.firestore.FieldValue.arrayUnion(...novas) }, { merge: true })
-        .catch(error => console.error('Erro ao salvar novidades vistas:', error));
-}
-
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const saidaBtn = document.getElementById('saida-mode-btn'); if (saidaBtn) saidaBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } if (screenId !== 'screen-manage' && modoSelecaoSaida) { modoSelecaoSaida = false; if (saidaBtn) saidaBtn.classList.remove('active'); rebuildNotasPendentesList(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); limparNotificacaoAba(parentScreenId); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); marcarNovidadeVista(screenId); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const saidaBtn = document.getElementById('saida-mode-btn'); if (saidaBtn) saidaBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } if (screenId !== 'screen-manage' && modoSelecaoSaida) { modoSelecaoSaida = false; if (saidaBtn) saidaBtn.classList.remove('active'); rebuildNotasPendentesList(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
@@ -2798,7 +3008,7 @@ function renderCentralPedidoCompleto(pedido) {
             return `<div class="central-fornecedor">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}')">
                     <i class="fa-solid fa-chevron-${aberto ? 'down' : 'right'}"></i>
-                    <span>${nomeExibicao}${f.cnpj ? ` <span style="font-weight:400;color:var(--text-light);font-size:11px;">— CNPJ ${formatarCnpjExibicao(f.cnpj)}</span>` : ''}</span>
+                    <span>${nomeExibicao}${f.cnpj ? ` <span style="font-weight:400;color:var(--text-light);font-size:12px;">— CNPJ ${formatarCnpjExibicao(f.cnpj)}</span>` : ''}</span>
                 </div>
                 <div class="central-fornecedor-body" style="display:${aberto ? 'block' : 'none'};">
                     <div class="central-secao-titulo">Produtos Cotados</div>
@@ -2818,7 +3028,7 @@ function renderCentralPedidoCompleto(pedido) {
                 <span>Outras ocorrências (sem fornecedor identificado na cotação)</span>
             </div>
             <div class="central-fornecedor-body" style="display:${centralFornecedoresAbertos.has('_sem_cnpj') ? 'block' : 'none'};">
-                ${semFornecedor.map(x => `<div style="margin-bottom:6px;font-size:11px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')}
+                ${semFornecedor.map(x => `<div style="margin-bottom:6px;font-size:12px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')}
             </div>
         </div>` : '';
 
@@ -2828,7 +3038,7 @@ function renderCentralPedidoCompleto(pedido) {
         // auditorias antigas de antes da cotação existir) — mostra tudo junto,
         // sem agrupamento por fornecedor (não há CNPJ pra agrupar por).
         container.innerHTML = todasDivergencias.length
-            ? todasDivergencias.map(x => `<div style="margin-bottom:6px;font-size:11px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')
+            ? todasDivergencias.map(x => `<div style="margin-bottom:6px;font-size:12px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')
             : '<div class="central-item-vazio">Nenhuma ocorrência registrada ainda.</div>';
     } else {
         container.innerHTML = '';
@@ -2986,7 +3196,7 @@ function renderLinhaProduto(it, chaveUnica) {
     const itemGanhadores = relatorioGanhadoresPedido && it.codProduto ? relatorioGanhadoresPedido.itens.find(g => g.codigo === it.codProduto) : null;
     const participantesResumo = itemGanhadores ? ` · ${itemGanhadores.participantes} fornecedor(es) cotaram` : '';
     const participantesDetalheHTML = itemGanhadores
-        ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= 3 ? ' ✓' : ' (menos de 3 participantes)'}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div style="font-size:11px;color:var(--text-light);">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
+        ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= 3 ? ' ✓' : ' (menos de 3 participantes)'}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div style="font-size:12px;color:var(--text-light);">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
         : '';
 
     const tituloHTML = produtoSpData
@@ -5908,10 +6118,86 @@ function aplicarRecursoSugerido(pedido, codigo, recursoOficial) {
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: 14, nome: 'PDF na Saída de Texto + Importar simplificado + Logo (revisão das Fases 13-14)', status: 'atual',
+        numero: '17.1', nome: 'Ajustes visuais da Fase 17 (após teste no iPhone)', status: 'atual',
+        implementado: [
+            'Botões voltaram ao tamanho anterior (altura e fonte de antes, sem esticar na largura), mantendo a hierarquia: primário preenchido, secundário, discreto e destrutivo.',
+            'Chips de Gerenciar NF (Editar, Pendente, Excluir) agora seguem a mesma linguagem dos botões das outras telas: pílula com borda de 1,5px, só que menores.'
+        ],
+        mudou: [
+            'Selo "Ainda não passou pela Entrada Segura" e demais selos longos passam a quebrar linha em vez de sair do cartão; textos de selo, contador, tabela XML e rótulo da barra inferior voltaram ao tamanho de antes (o rótulo "Entrada de NF" deixa de quebrar em duas linhas).',
+            'Botão "Limpar Banco de Exceções" ganhou espaço em relação ao cartão acima.'
+        ],
+        testar: [
+            'Gerenciar NF: selo da Entrada Segura dentro do cartão, chips com o mesmo formato dos botões.',
+            'Exportar e Entrada de NF: tamanho dos botões como antes e barra inferior com o rótulo "Entrada de NF" em uma linha.',
+            'Conferir se algum outro texto ainda estoura em telas pequenas e me avisar qual.'
+        ]
+    },
+    {
+        numero: 17, nome: 'Redesign Visual e Sistema de Design — Etapa 2 (fundação)', status: 'concluida',
+        implementado: [
+            'Base do sistema visual: escala de tipografia (22/13/15/16/12/28), espaçamento (4-8-12-16-24-32), raios (8/12/20/pílula), cores semânticas (sucesso, perigo, atenção, info) e --accent-contrast, tudo compatível com os 7 temas, fontes, ícones, transições e densidade.',
+            'Botões com hierarquia: primário preenchido (Salvar na Entrada, Copiar em Exportar, confirmar nos modais), secundário, discreto e destrutivo (Arquivar Tudo separado das demais ações). Campos de 44px/16px, rótulos sem caixa alta.',
+            'Controle segmentado unificado (abas e filtros do Relatórios, etc.), chips, cartão de NF com uma só gramática de estados (barra lateral, etiqueta Pendente discreta, seleção com tinta), indicadores dos Relatórios em novo padrão visual e modais como folha inferior no iPhone / diálogo no desktop.',
+            'Desktop (≥900px): a barra lateral que já existia foi ativada (item atual destacado, Ajustes no rodapé) e o conteúdo usa a largura disponível; no iPhone a barra inferior continua.'
+        ],
+        mudou: [
+            'Só apresentação (style.css) e classes visuais no HTML/templates. Nenhuma regra de negócio, cálculo, filtro, fluxo ou função foi alterada.',
+            'Ordem padrão do menu agora começa pelo fluxo diário (Adicionar, Gerenciar, Exportar); quem já personalizou a ordem em Ajustes não é afetado.',
+            'Textos que estavam entre 9 e 11,5px agora têm no mínimo 12px (só o rótulo da barra inferior mantém 11px). Pesos de fonte reduzidos a 400/600/700 e raios a 8/12/20/pílula.',
+            'Restam pra próximas etapas: redesenho de cada tela, redução dos estilos inline restantes e a limpeza final do CSS antigo que a nova camada substitui.'
+        ],
+        testar: [
+            'iPhone: Adicionar (campos e botão Salvar preenchido), Gerenciar (cartões de NF, estados pendente/selecionado/vencimento), Exportar (Copiar preenchido; Arquivar Tudo separado em vermelho), Relatórios (indicadores e abas), barra inferior e um modal (abre como folha inferior).',
+            'Desktop: barra lateral com todos os itens, troca de telas, item ativo destacado, Ajustes no rodapé, conteúdo centralizado e modal centralizado.',
+            'Ajustes → Personalização: trocar tema (incluindo Ocean, Sunset, Forest e Wine — texto do botão preenchido deve ficar legível), fonte, densidade e ordem dos menus.',
+            'Confirmar que Copiar, Compartilhar, Gerar PDF, Arquivar Tudo e Salvar continuam fazendo o mesmo de antes.'
+        ]
+    },
+    {
+        numero: 16, nome: 'Revisão Geral e Estabilização Final', status: 'concluida',
+        implementado: [
+            'Limpeza: removido o código das bolinhas de novidade (funções que desenhavam/controlavam a bolinha no menu, chamadas em Ajustes/navegação e o estilo da bolinha). Nada foi criado no lugar.',
+            'Revisão integrada dos fluxos (NF → saída de texto → PDF → Relatórios, navegação entre telas, botões/IDs do HTML, textos de interface): verificação técnica sem encontrar outras falhas concretas — nenhuma outra funcionalidade foi alterada.'
+        ],
+        mudou: [
+            'Só a remoção das bolinhas. Saída de Texto, PDF, Relatórios, Importar, Gerenciar NF, Histórico e demais módulos ficaram como estavam.',
+            'O campo antigo de "novidades vistas" que ficou gravado nas configurações do Firebase não é mais usado (inofensivo; nada foi apagado).',
+            'Possíveis melhorias futuras (NÃO implementadas): remover funções antigas sem nenhum uso (ex.: importação de lista de fornecedores por texto, apelidos por formulário antigo) e o modo dormante "Selecionar pra saída" da Fase 12, que ficou sem botão de acesso desde a Fase 14.'
+        ],
+        testar: [
+            'Abrir o app e navegar pelas abas e por Ajustes: não deve aparecer nenhuma bolinha nem erro, e o menu deve continuar igual.',
+            'Fluxo completo com uma NF: Importar/cadastrar → Gerenciar NF → Exportar (texto e PDF com as mesmas NFs) → Arquivar Tudo → conferir no Histórico.',
+            'Relatórios: conferir indicadores, filtros e as abas Pedidos, Notas, Divergências e Auditorias.',
+            'Ajustes → Histórico de Mudanças: a Fase 16 aparece como fase atual.'
+        ]
+    },
+    {
+        numero: 15, nome: 'Relatórios e Indicadores', status: 'concluida',
+        implementado: [
+            'Relatórios evoluído (mesma tela, sem tela nova nem coleção nova): indicadores em destaque — NFs (quantidade e valor total), Pedidos, Auditorias e Divergências (com pendentes) — calculados na hora a partir dos registros existentes, sem estimativas.',
+            'Nova aba "Auditorias" ao lado de Pedidos, Notas e Divergências (uma auditoria = uma ocorrência registrada em Nova Auditoria).',
+            'Na aba Divergências: rankings por tipo, por fornecedor e por produto (produtos com mais divergências); tocar numa linha filtra a lista pelos registros que compõem aquele número.',
+            'Filtros (painel "Filtros"): período (De/Até), fornecedor, destino (Santa Casa/CTI), recurso e tipo de divergência; pedido e NF continuam na busca por texto (que agora também acha NF pelo pedido). Indicadores e listas usam os mesmos filtros; tocar num indicador abre a lista correspondente.'
+        ],
+        mudou: [
+            'A aba Divergências agora também mostra divergências de auditorias sem pedido ("Sem pedido").',
+            'Regras: período usa a data da NF (Notas), a data do pedido (Pedidos) e a data da auditoria (Auditorias/Divergências); registro sem data válida fica fora quando há período. Destino e pedido de uma NF só aparecem se a NF foi conferida na Entrada Segura (mesma regra da aptidão) — senão ficam fora do filtro de Destino. Recurso da NF é o texto do campo de recurso/observação. Filtros que não existem pra um tipo de registro (ex.: Tipo de divergência em Notas; Recurso em Divergências) avisam em vez de mostrar número errado.',
+            'Nada mudou em Entrada Segura, Auditoria, Histórico, Gerenciar NF, Cotações, ERP, Saída de Texto, PDF ou Arquivamento.'
+        ],
+        testar: [
+            'Relatórios sem nenhum filtro: os 4 indicadores aparecem e batem com as contagens das abas (tocar em NFs abre Notas com "Todas"; em Divergências abre a aba com "Todas").',
+            'Filtros: período, fornecedor (digitando e escolhendo da lista), destino, recurso e tipo — conferir se indicadores e lista mudam juntos; "Limpar" nos filtros ativos volta tudo.',
+            'Divergências: tocar numa linha dos rankings (tipo, fornecedor, produto) e conferir que a lista mostra exatamente as divergências que compõem o número.',
+            'Aba Auditorias: conferir a lista e que tocar abre a Central do Pedido.',
+            'Conferir com uma NF cadastrada manualmente (sem pedido/cotação): ela aparece nos totais e nos filtros de período/fornecedor/recurso, e fica fora do filtro de Destino.'
+        ]
+    },
+    {
+        numero: 14, nome: 'PDF na Saída de Texto + Importar simplificado + Logo (revisão das Fases 13-14)', status: 'concluida',
         implementado: [
             'Aba Exportar: novo botão "Gerar PDF" ao lado de Copiar, Compartilhar e Arquivar Tudo. O PDF usa exatamente a mesma lista (e a mesma ordem, inclusive depois de "Ordenar por Recurso") da saída de texto, no modelo em papel já usado (DATA, NF, VENCIMENTO, VALOR TOTAL, FORNECEDOR, RECEBIDO COMPRAS, RECEBIDO CONTÁBIL, OBSERVAÇÕES + assinaturas).',
-            'Indicador de novidade (bolinha) reutilizável e persistente: cada novidade tem um id e a bolinha fica na aba até o usuário abrir a tela da novidade — depois nunca mais reaparece (fica registrado nas configurações, sem coleção nova).'
+            'Indicador de novidade (bolinha) reutilizável e persistente: cada novidade tem um id e a bolinha fica na aba até o usuário abrir a tela da novidade — depois nunca mais reaparece (fica registrado nas configurações, sem coleção nova). (Recurso de bolinhas removido na Fase 16.)'
         ],
         mudou: [
             'Repasse/Protocolo saiu da interface: telas de revisão, lista e detalhe, botões "Revisar e Confirmar Saída"/"Ver Repasses", selo "Repasse" no card e o botão de caminhão (seleção pra saída) em Gerenciar NF. Os repasses já gravados continuam no banco, nada foi apagado, e o protocolo não é necessário pra gerar PDF.',
@@ -5919,7 +6205,7 @@ const HISTORICO_FASES = [
             'Logo: a configuração continua em Configurações → Personalização, agora no topo da tela e com nome que indica o uso nos PDFs da aba Exportar.',
             'Saída de texto, Copiar, Compartilhar e Arquivar Tudo não mudaram.',
             'Ajustes visuais do PDF: título "PROTOCOLO DE REPASSE NF" em uma linha, em negrito e com fonte maior; cabeçalhos das colunas em negrito; assinaturas fixas no rodapé da última página (qualquer quantidade de NFs), cada nome centralizado sob a sua linha; fonte Helvetica (equivalente ao Arial nos PDFs) em todo o documento.',
-            'Bolinha de novidade em Exportar reforçada: nova novidade registrada pra este ajuste e a bolinha também aparece quando os ícones das abas estão desligados.'
+            'Bolinha de novidade em Exportar reforçada: nova novidade registrada pra este ajuste e a bolinha também aparece quando os ícones das abas estão desligados. (Recurso de bolinhas removido na Fase 16.)'
         ],
         testar: [
             'Exportar: com notas na lista, tocar em Gerar PDF e conferir que as NFs e a ordem são as mesmas da caixa de texto; usar "Ordenar por Recurso" e gerar de novo; marcar uma NF como pendente e conferir que ela fica fora do texto e do PDF.',
@@ -5929,7 +6215,7 @@ const HISTORICO_FASES = [
             'Depois de importar, arquivar a NF e conferir no Histórico que a NF de origem ERP aparece como arquivada.',
             'Cadastrar uma NF manualmente (sem cotação/ERP), informar o recurso à mão e gerar texto e PDF — nada deve bloquear.',
             'PDF: conferir título em negrito numa linha só, cabeçalhos em negrito e as três assinaturas no rodapé, com o nome centralizado sob cada linha — com poucas NFs e com muitas (várias páginas).',
-            'Bolinhas: devem aparecer em Exportar e em Configurações; abrir Exportar, Importar Relatório e Personalização apaga a bolinha correspondente, e recarregar a página não traz de volta as já vistas.'
+            'Bolinhas: devem aparecer em Exportar e em Configurações; abrir Exportar, Importar Relatório e Personalização apaga a bolinha correspondente, e recarregar a página não traz de volta as já vistas. (Recurso de bolinhas removido na Fase 16.)'
         ]
     },
     {
@@ -5956,7 +6242,7 @@ const HISTORICO_FASES = [
             '"Seleção Saída" deixou de ser uma tela própria — agora é um modo dentro de Gerenciar NF (botão no cabeçalho), com filtro por situação e checkbox de seleção pra saída.',
             'Card de Gerenciar NF passou a mostrar sempre pedido, CNPJ, destino e recurso confirmado, além do selo de aptidão (Fase 11).',
             'Edição (fornecedor, NF, vencimento, valor) já é a mesma de sempre — nunca existiu uma segunda implementação.',
-            'Indicador de novidade corrigido: agora dispara só uma vez por carregamento do app (antes podia reaparecer sempre que uma configuração fosse salva) e aponta pra aba Gerenciar NF.',
+            'Indicador de novidade corrigido: agora dispara só uma vez por carregamento do app (antes podia reaparecer sempre que uma configuração fosse salva) e aponta pra aba Gerenciar NF. (Recurso de bolinhas removido na Fase 16.)',
             'Esta tela de Histórico de Mudanças, dentro de Configurações.'
         ],
         mudou: [
@@ -6924,7 +7210,7 @@ function renderListaProdutosSpData() {
             </div>`;
         }
         return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;${inativo ? 'opacity:0.55;' : ''}">
-            <div class="nota-info">${escRel(p.codigo)} — ${escRel(p.nome || '')}${inativo ? ' <span style="font-size:11px;color:var(--button-danger);">(inativo)</span>' : ''}</div>
+            <div class="nota-info">${escRel(p.codigo)} — ${escRel(p.nome || '')}${inativo ? ' <span style="font-size:12px;color:var(--button-danger);">(inativo)</span>' : ''}</div>
             <div class="nota-detalhes">${p.unidade ? 'Unidade: ' + escRel(p.unidade) : ''}</div>
             <div class="actions-row">
                 <button type="button" class="central-status-toggle" onclick="toggleEditarNomeProdutoSpData('${p.codigo}')">Renomear</button>
@@ -7573,7 +7859,7 @@ function renderCardHistoricoNf(item) {
     if (item.tipo === 'nota_legado') {
         const n = item.notaLegado;
         return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-            <div class="nota-info">${escRel(item.nomeFornecedor)} ${escRel(item.numeroNf)} <span style="font-size:10px;color:var(--text-light);font-weight:400;">(registro simples arquivado)</span></div>
+            <div class="nota-info">${escRel(item.nomeFornecedor)} ${escRel(item.numeroNf)} <span style="font-size:12px;color:var(--text-light);font-weight:400;">(registro simples arquivado)</span></div>
             <div class="nota-detalhes">Arquivado em ${escRel(n.dataHistorico)} · Venc: ${escRel(n.vencimento) || 'N/A'} · Valor: ${escRel(n.valor) || 'N/A'}</div>
             ${n.obs ? `<div class="nota-detalhes">Obs: ${escRel(n.obs)}</div>` : ''}
         </div>`;
@@ -8371,12 +8657,12 @@ function renderListaFornecedoresUnificada() {
     container.innerHTML = visiveis.map(f => {
         if (f.origem === 'legado') {
             const vincularHTML = `<div class="central-spdata-busca" style="margin-top:6px;" onclick="event.stopPropagation()">
-                <label style="font-size:11px;color:var(--text-light);">É o mesmo fornecedor que um já cadastrado com CNPJ? Vincule aqui (não apaga este registro):</label>
+                <label style="font-size:12px;color:var(--text-light);">É o mesmo fornecedor que um já cadastrado com CNPJ? Vincule aqui (não apaga este registro):</label>
                 <select class="form-field" id="vincular-select-${f.chave}"><option value="">Selecione o fornecedor cadastrado...</option>${opcoesLegadoHTML}</select>
                 <button type="button" class="central-status-toggle" onclick="vincularFornecedorLegadoSelecionado('${f.chave}', '${escRel(f.nomeReal)}')">Vincular</button>
             </div>`;
             return `<div class="nota-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:4px;">
-                <div class="nota-info">${f.nomeReal} <span style="font-size:10px;color:var(--text-light);font-weight:400;">(cadastro simples)</span></div>
+                <div class="nota-info">${f.nomeReal} <span style="font-size:12px;color:var(--text-light);font-weight:400;">(cadastro simples)</span></div>
                 <div class="nota-detalhes"><em>Cadastro simples, sem código/CNPJ — importe o relatório oficial de fornecedores pra identificação automática por CNPJ.</em></div>
                 ${vincularHTML}
             </div>`;
@@ -8409,12 +8695,12 @@ function renderListaFornecedoresUnificada() {
             const editando = fornecedorEditando.has(chaveDoc);
             const edicaoHTML = editando
                 ? `<div class="central-spdata-busca" onclick="event.stopPropagation()">
-                    <label style="font-size:11px;color:var(--text-light);">Razão social</label>
+                    <label style="font-size:12px;color:var(--text-light);">Razão social</label>
                     <input type="text" class="form-field" id="nomereal-input-${chaveDoc}" value="${doc.nomeReal || ''}">
-                    <label style="font-size:11px;color:var(--text-light);">Nome de exibição no app</label>
+                    <label style="font-size:12px;color:var(--text-light);">Nome de exibição no app</label>
                     <input type="text" class="form-field" id="apelido-input-${chaveDoc}" value="${doc.nomeExibido || ''}" placeholder="Nome de exibição no app">
                     <button type="button" class="central-status-toggle" onclick="salvarApelidoFornecedor('${chaveDoc}')">Salvar</button>
-                    <label style="font-size:11px;color:var(--text-light);margin-top:8px;display:block;">Adicionar CNPJ (nunca remove os existentes)</label>
+                    <label style="font-size:12px;color:var(--text-light);margin-top:8px;display:block;">Adicionar CNPJ (nunca remove os existentes)</label>
                     <input type="text" class="form-field" id="novo-cnpj-input-${chaveDoc}" placeholder="Só números">
                     <button type="button" class="central-status-toggle" onclick="adicionarCnpjFornecedorManual('${doc.id}')">+ Adicionar CNPJ</button>
                 </div>`
@@ -8427,13 +8713,13 @@ function renderListaFornecedoresUnificada() {
 
         const aliasesHTML = f.aliasesLegado.length ? `<div class="nota-detalhes">Também conhecido como: ${f.aliasesLegado.map(escRel).join(', ')}</div>` : '';
         const vincularEntidadeHTML = `<div class="central-spdata-busca" style="margin-top:6px;" onclick="event.stopPropagation()">
-            <label style="font-size:11px;color:var(--text-light);">É a mesma empresa que outro CNPJ já cadastrado (matriz/filial/CD)? Vincule aqui (nenhum CNPJ é apagado ou movido):</label>
+            <label style="font-size:12px;color:var(--text-light);">É a mesma empresa que outro CNPJ já cadastrado (matriz/filial/CD)? Vincule aqui (nenhum CNPJ é apagado ou movido):</label>
             <select class="form-field" id="vincular-entidade-select-${f.chave}"><option value="">Selecione outro fornecedor cadastrado...</option>${opcoesVincularEntidadeHTML}</select>
             <button type="button" class="central-status-toggle" onclick="vincularEntidadeSelecionada('${f.chave}', '${principalId}')">Vincular</button>
         </div>`;
 
         return `<div class="nota-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:4px;">
-            <div class="nota-info">${f.nomeReal}${f.docs.length > 1 ? ` <span style="font-size:10px;color:var(--text-light);font-weight:400;">(${f.docs.length} CNPJs vinculados)</span>` : ''}</div>
+            <div class="nota-info">${f.nomeReal}${f.docs.length > 1 ? ` <span style="font-size:12px;color:var(--text-light);font-weight:400;">(${f.docs.length} CNPJs vinculados)</span>` : ''}</div>
             ${bloqueioHTML}
             ${subDocsHTML}
             ${aliasesHTML}

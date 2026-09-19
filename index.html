@@ -149,7 +149,7 @@
         <div class="screen-wrapper">
             
             <div class="app-screen active" id="screen-add">
-                <div class="card">
+                <div class="card card-plain">
                     <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
                     <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"></div>
                     <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
@@ -158,7 +158,7 @@
                     <div class="campo"><label for="obs">Observações</label><select id="obs" class="form-field"><option value="">Recurso a ser pago</option></select></div>
                     
                     <div class="actions">
-                        <button id="salvarBtn" class="actions-button is-success" onclick="salvarNota()">
+                        <button id="salvarBtn" class="actions-button is-primary" onclick="salvarNota()">
                             <span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar
                         </button>
                     </div>
@@ -182,11 +182,11 @@
                 <textarea id="saida" readonly="" placeholder="O texto das notas pendentes aparecerá aqui..."></textarea>
                 <div class="actions">
                     <button class="actions-button" onclick="ordenarExportacao()"><span class="icon-wrapper"><i class="fa-solid fa-sort-alpha-down"></i><span class="material-icons">sort_by_alpha</span></span> Ordenar por Recurso</button>
-                    <button class="actions-button" onclick="exportar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
+                    <button class="actions-button is-primary" onclick="exportar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
                     <button class="actions-button is-whatsapp" onclick="compartilharLista()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i><span class="material-icons">share</span></span> Compartilhar</button>
                     <button class="actions-button is-neutral" onclick="gerarPdfSaida()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i><span class="material-icons">picture_as_pdf</span></span> Gerar PDF</button>
-                    <button class="actions-button is-neutral" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button>
-                </div>
+                    </div>
+                <div class="actions actions-destrutivas"><button class="actions-button is-danger" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button></div>
             </div>
 
             <div class="app-screen" id="screen-reports">
@@ -207,9 +207,26 @@
                     <button type="button" class="xml-filtro-btn active" id="relatorios-tab-btn-pedidos" onclick="mudarAbaRelatorios('pedidos')">Pedidos</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-notas" onclick="mudarAbaRelatorios('notas')">Notas</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-divergencias" onclick="mudarAbaRelatorios('divergencias')">Divergências</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-auditorias" onclick="mudarAbaRelatorios('auditorias')">Auditorias</button>
                 </div>
 
                 <input type="text" id="relatorios-busca" class="form-field" style="margin-top:10px;" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarRelatorios(this.value)">
+
+                <details style="margin-top:10px;">
+                    <summary style="cursor:pointer;font-weight:600;font-size:13px;padding:6px 0;">Filtros (período, fornecedor, destino, recurso, tipo)</summary>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+                        <div class="campo"><label>De</label><input type="date" id="rel-f-de" class="form-field" onchange="definirFiltroRelatorio('de', this.value)"></div>
+                        <div class="campo"><label>Até</label><input type="date" id="rel-f-ate" class="form-field" onchange="definirFiltroRelatorio('ate', this.value)"></div>
+                    </div>
+                    <div class="campo"><label>Fornecedor</label><input type="text" id="rel-f-fornecedor" class="form-field" list="rel-f-fornecedores" placeholder="Digite ou escolha..." oninput="definirFiltroRelatorio('fornecedor', this.value)"><datalist id="rel-f-fornecedores"></datalist></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="campo"><label>Destino</label><select id="rel-f-destino" class="form-field" onchange="definirFiltroRelatorio('destino', this.value)"><option value="">Todos</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div>
+                        <div class="campo"><label>Recurso</label><select id="rel-f-recurso" class="form-field" onchange="definirFiltroRelatorio('recurso', this.value)"><option value="">Todos</option></select></div>
+                    </div>
+                    <div class="campo"><label>Tipo de divergência</label><select id="rel-f-tipo" class="form-field" onchange="definirFiltroRelatorio('tipo', this.value)"><option value="">Todos</option></select></div>
+                </details>
+                <div id="relatorios-filtros-ativos" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-light);"></div>
+                <div id="relatorios-indicadores" style="margin-top:10px;"></div>
 
                 <div class="xml-filtro-toggle" id="relatorios-subfiltro-notas" style="margin-top:10px;display:none;">
                     <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-notas-pendente" onclick="filtrarStatusNotasRelatorio('pendente')">Pendentes</button>
@@ -315,18 +332,18 @@
             </div>
             <div class="app-screen" id="screen-backup">
                 <div class="card">
-                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Baixa um arquivo com todas as suas notas pendentes, histórico, anotações, fornecedores e configurações — uma cópia de segurança que fica salva no seu dispositivo, independente do Firebase.</p>
+                    <p class="desc-tela">Baixa um arquivo com todas as suas notas pendentes, histórico, anotações, fornecedores e configurações — uma cópia de segurança que fica salva no seu dispositivo, independente do Firebase.</p>
                     <button class="actions-button" onclick="baixarBackupCompleto()"><span class="icon-wrapper"><i class="fa-solid fa-cloud-arrow-down"></i></span> Baixar Backup (JSON)</button>
                     <div id="backup-status" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
                 </div>
                 <div class="card" style="margin-top:16px;">
-                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
+                    <p class="desc-tela">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
                 </div>
             </div>
             <div class="app-screen" id="screen-xml-editor">
                 <div class="card">
-                    <h3 style="margin:0 0 12px;font-size:16px;">Entrada de NF</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
+                    <h3 class="card-titulo card-titulo-sm">Entrada de NF</h3>
+                    <p class="desc-tela">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
                     <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
                         <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
                         <div>Toque para escolher o arquivo .xml da NF-e</div>
@@ -357,7 +374,7 @@
                     <div class="campo">
                         <label>Pedido/Cotação correspondente</label>
                         <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
-                        <div id="xml-pedido-caption" style="font-size:11px;color:var(--text-light);margin-top:4px;"></div>
+                        <div id="xml-pedido-caption" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
                     </div>
                     <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div>
                     <div id="xml-associacao-container" style="margin-top:12px;"></div>
@@ -370,15 +387,15 @@
                     <button class="actions-button is-success" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
                     <button class="actions-button is-neutral" id="xml-btn-baixar" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
                 </div>
-                <div class="actions-row" style="margin:0 0 20px;">
+                <div class="actions-row" style="margin:16px 0 20px;">
                     <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
                 </div>
             </div>
 
             <div class="app-screen" id="screen-spdata">
                 <div class="card">
-                    <h3 style="margin:0 0 12px;font-size:16px;">Produtos SP Data</h3>
-                    <p style="margin-top:0;color:var(--text-light);font-size:13px;">Cole o texto do relatório de inventário do SP Data (Código, Nome, Unidade) — a identidade padronizada usada pra associar os itens das cotações.</p>
+                    <h3 class="card-titulo card-titulo-sm">Produtos SP Data</h3>
+                    <p class="desc-tela">Cole o texto do relatório de inventário do SP Data (Código, Nome, Unidade) — a identidade padronizada usada pra associar os itens das cotações.</p>
                     <div class="campo"><textarea id="spdata-inventario-texto" class="form-field" style="min-height:120px;" placeholder="Cole aqui o relatório de inventário..."></textarea></div>
                     <div class="actions-row">
                         <button class="actions-button" onclick="processarInventarioSpDataColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
@@ -425,7 +442,7 @@
                 <input type="file" id="cotacao-xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
 
                 <div class="card" id="card-preview-importacao-xml" style="display:none; margin-bottom:16px;">
-                    <h3 style="margin:0 0 12px;font-size:16px;">Prévia da Importação</h3>
+                    <h3 class="card-titulo card-titulo-sm">Prévia da Importação</h3>
                     <div id="resumo-importacao-xml"></div>
                     <div id="diff-importacao-xml"></div>
                     <div class="actions-row" style="margin-top:16px;">
@@ -457,7 +474,7 @@
 
             <div class="app-screen" id="screen-cotacao-editor">
                 <div class="card">
-                    <h3 style="margin:0 0 16px;font-size:16px;">Dados do Pedido</h3>
+                    <h3 class="card-titulo">Dados do Pedido</h3>
                     <div class="campo"><label>Pedido SmartCompras</label><input type="text" id="cot-pedido" class="form-field" placeholder="1698"></div>
                     <div class="campo"><label>Origem</label>
                         <select id="cot-origem" class="form-field">
@@ -472,7 +489,7 @@
                 </div>
 
                 <div class="card" style="margin-top:16px;">
-                    <h3 style="margin:0 0 16px;font-size:16px;">Fornecedores</h3>
+                    <h3 class="card-titulo">Fornecedores</h3>
                     <div id="lista-fornecedores-cotacao"><div class="empty-state">Nenhum fornecedor adicionado ainda.</div></div>
                     <div class="actions-row">
                         <button class="actions-button" onclick="adicionarFornecedorCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Fornecedor</button>
@@ -540,7 +557,7 @@
                 <div class="central-secao-titulo" style="margin-top:16px;">Anotação do Pedido</div>
                 <div class="card" id="central-anotacao-card" style="display:none;">
                     <div id="central-anotacao-conteudo" class="form-field" contenteditable="true" style="min-height:100px;line-height:1.5;" oninput="agendarSalvarAnotacaoInlineCentral()"></div>
-                    <p style="margin:8px 0 0;font-size:11px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
+                    <p style="margin:8px 0 0;font-size:12px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
                     <div class="actions-row" style="margin-top:10px;">
                         <button class="actions-button is-neutral" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-expand"></i></span> Abrir Edição Completa</button>
                     </div>
@@ -570,16 +587,16 @@
                     <button class="actions-button" onclick="salvarNomeConta()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Nome</button>
                 </div>
                 <div class="card" id="conta-senha-card" style="margin-top: 16px;">
-                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Sua conta usa login por e-mail e senha. Você pode alterar sua senha a qualquer momento.</p>
+                    <p class="desc-tela">Sua conta usa login por e-mail e senha. Você pode alterar sua senha a qualquer momento.</p>
                     <button class="actions-button" onclick="abrirModalSenhaComVerificacao()"><span class="icon-wrapper"><i class="fa-solid fa-key"></i></span> Alterar Senha</button>
                 </div>
                 <div class="card" id="conta-senha-indisponivel" style="display:none;margin-top: 16px;">
-                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Sua conta usa login pelo Google ou telefone — a senha é gerenciada por eles, não há senha para alterar aqui.</p>
+                    <p class="desc-tela">Sua conta usa login pelo Google ou telefone — a senha é gerenciada por eles, não há senha para alterar aqui.</p>
                 </div>
             </div>
             <div class="app-screen" id="screen-aprovacoes">
                 <div class="card">
-                    <p style="margin-top:0;color:var(--text-light);font-size:14px;">Pessoas que entraram pelo Google ou telefone aparecem aqui. Aprove para liberar o acesso delas ao app.</p>
+                    <p class="desc-tela">Pessoas que entraram pelo Google ou telefone aparecem aqui. Aprove para liberar o acesso delas ao app.</p>
                     <ul id="lista-aprovacoes" class="approval-list"><li class="empty-state">Carregando...</li></ul>
                 </div>
             </div>
@@ -647,7 +664,7 @@
 
             <div class="app-screen" id="screen-auditoria-nova">
                 <div class="card">
-                    <h3 style="margin:0 0 16px;font-size:16px;">Dados da Auditoria</h3>
+                    <h3 class="card-titulo">Dados da Auditoria</h3>
                     <div class="campo"><label>Pedido SmartCompras (Cotação)</label><input type="text" id="aud-pedido" class="form-field" placeholder="1690" oninput="buscarCotacaoParaAuditoria()"></div>
                     <div class="aud-cotacao-info" id="aud-cotacao-info" style="display:none;"></div>
                     <div class="campo"><label>Nota Fiscal</label><input type="text" id="aud-nf" class="form-field" placeholder="374609"></div>
@@ -660,7 +677,7 @@
                 </div>
 
                 <div class="card" style="margin-top:16px;">
-                    <h3 style="margin:0 0 16px;font-size:16px;">Divergências</h3>
+                    <h3 class="card-titulo">Divergências</h3>
                     <div id="lista-divergencias"><div class="empty-state" id="divergencias-vazio">Nenhuma divergência adicionada ainda.</div></div>
                     <div class="actions-row">
                         <button class="actions-button" onclick="adicionarDivergencia()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Divergência</button>
@@ -686,7 +703,7 @@
                 </div>
 
                 <div class="card" id="card-resultado-auditoria" style="display:none;">
-                    <h3 style="margin:0 0 16px;font-size:16px;">Resultado</h3>
+                    <h3 class="card-titulo">Resultado</h3>
                     <div class="output-tabs">
                         <button class="output-tab active" onclick="mostrarSaidaAuditoria('mensagem', this)">Mensagem</button>
                         <button class="output-tab" onclick="mostrarSaidaAuditoria('email', this)">E-mail</button>
@@ -809,7 +826,7 @@
     </div>
 
     <div id="bulk-edit-notas-modal" class="modal-screen">
-        <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-content modal-md">
             <h3 style="margin: 0 0 4px; color: var(--text-dark);">Editar em Lote</h3>
             <p style="margin: 0 0 20px; font-size: 13px; color: var(--text-light);">Alterando <strong id="bulk-edit-count">0</strong> nota(s). Deixe em branco os campos que não quer alterar.</p>
             <div class="campo"><label>Fornecedor</label><input type="text" id="bulk-edit-forn" placeholder="Não alterar" list="fornecedores-sugeridos"></div>
@@ -829,7 +846,7 @@
           <h2 id="confirm-title"></h2> 
           <p id="confirm-message"></p> 
           <div class="confirm-actions"> 
-              <button id="cancel-btn" class="actions-button is-neutral">Cancelar</button> 
+              <button id="cancel-btn" class="actions-button is-ghost">Cancelar</button> 
               <button id="confirm-btn" class="actions-button">Confirmar</button> 
           </div> 
       </div> 
