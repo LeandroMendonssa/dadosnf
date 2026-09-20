@@ -785,3 +785,29 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 .hmud-item { margin-bottom: var(--space-3); }
 .hmud-item .nota-detalhes { margin-top: var(--space-2); }
 .hmud-atual { border-color: var(--accent-color); background: color-mix(in srgb, var(--accent-color) 5%, var(--bg-secondary)); }
+
+/* =====================================================================
+   FASE 17.3 — Etapa 4: áreas de uso frequente (Entrada de NF/XML, SP Data,
+   Fornecedores, Histórico, editor de cotação)
+   ===================================================================== */
+.txt-aux { font-weight: 400; }
+/* Ações localizadas num item: agrupadas (o "empurrar pra direita" antigo separava os chips) */
+.actions-row .central-status-toggle, .nota-item .central-status-toggle { margin-left: 0; }
+.central-status-toggle.is-danger { color: var(--danger); }
+.acao-legado { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--border-color); }
+
+/* Fluxo XML: mesma gramática de estados do cartão de NF (barra lateral + 1px + tinta) */
+.xml-item-linha.pendente { border: 1px solid var(--border-color); background: color-mix(in srgb, var(--warning) 6%, var(--bg-secondary)); box-shadow: inset 3px 0 0 var(--warning); }
+.xml-estado-card.pendente { border: 1px solid var(--border-color); background: color-mix(in srgb, var(--warning) 8%, var(--bg-secondary)); box-shadow: inset 3px 0 0 var(--warning); }
+.xml-estado-card.pronto { border: 1px solid var(--border-color); background: color-mix(in srgb, var(--success) 8%, var(--bg-secondary)); box-shadow: inset 3px 0 0 var(--success); }
+.xml-item-badge.pendente { background: var(--warning-bg); color: var(--warning-text); }
+.xml-item-badge.pronto { background: var(--success-bg); color: var(--success-text); }
+.xml-item-linha .actions-button, .xml-item-acao .actions-button { min-height: 32px; padding: 0 14px; font-size: var(--fs-min); border-width: 1.5px; }
+
+/* Editor de cotação no iPhone: Razão Social em linha própria; CNPJ ao lado da lixeira */
+@media (max-width: 480px) {
+    .fornecedor-cotacao-row { display: grid; grid-template-columns: 1fr 44px; column-gap: var(--space-2); align-items: end; }
+    .fornecedor-cotacao-row .campo:first-child { grid-column: 1 / -1; margin-bottom: var(--space-3); }
+    .fornecedor-cotacao-row .campo:nth-child(2) { grid-column: 1; }
+    .fornecedor-cotacao-row .divergencia-del { grid-column: 2; }
+}

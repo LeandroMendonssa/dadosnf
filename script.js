@@ -2753,8 +2753,8 @@ function renderCentralPedidoCompleto(pedido) {
     if (cotacao) {
         const fornecedoresHTML = (cotacao.fornecedores || []).map(f => {
             const nomeExibicao = nomeExibicaoFornecedor(f.razaoSocial, f.cnpj);
-            const produtos = (cotacao.itens || []).filter(it => it.cnpjFornecedor === f.cnpj);
-            const divergenciasForn = todasDivergencias.filter(x => x.oc.fornecedorCnpj === f.cnpj);
+            const produtos = (cotacao.itens || []).filter(it => normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(f.cnpj));
+            const divergenciasForn = todasDivergencias.filter(x => normalizarCnpj(x.oc.fornecedorCnpj) === normalizarCnpj(f.cnpj));
             const aberto = centralFornecedoresAbertos.has(f.cnpj);
 
             const produtosHTML = produtos.length
@@ -3662,7 +3662,7 @@ function processarXmlTexto(texto) {
     } else {
         // 2ª prioridade (regra já existente): CNPJ do emitente bate com
         // exatamente uma cotação.
-        const cotacoesDoFornecedor = listaCotacoes.filter(c => (c.fornecedores || []).some(f => f.cnpj === cnpjEmit));
+        const cotacoesDoFornecedor = listaCotacoes.filter(c => (c.fornecedores || []).some(f => mesmoCnpj(f.cnpj, cnpjEmit)));
         if (cotacoesDoFornecedor.length === 1) {
             pedidoSelecionadoXml = cotacoesDoFornecedor[0].pedido;
             pedidoOrigemXml = 'automatico';
@@ -3676,7 +3676,7 @@ function processarXmlTexto(texto) {
             pedidoSelecionadoXml = null;
             const valorNf = numeroFlexivel(nfeIdentificacao.valorTotal);
             const candidatos = cotacoesDoFornecedor.map(cotacao => {
-                const fornecedorMatch = (cotacao.fornecedores || []).find(f => f.cnpj === cnpjEmit);
+                const fornecedorMatch = (cotacao.fornecedores || []).find(f => mesmoCnpj(f.cnpj, cnpjEmit));
                 const valorCotado = valorTotalCotacaoPorFornecedor(cotacao, fornecedorMatch.cnpj);
                 const diffPercentual = (valorNf !== null && valorCotado > 0) ? Math.abs(valorCotado - valorNf) / valorCotado : null;
                 return { pedido: cotacao.pedido, valorCotado, diffPercentual };
@@ -3767,6 +3767,7 @@ function formatarPreviewXml(item) {
 // suporta vários CNPJs por código — nunca assume 1:1). Só informativo: não
 // bloqueia nada quando não encontra, só sinaliza pra conferência.
 function validarFornecedorSpData(cnpjEmit) {
+    cnpjEmit = normalizarCnpj(cnpjEmit);
     const docs = listaFornecedoresSpData.filter(f => f.cnpjs.some(c => c.cnpj === cnpjEmit));
     if (docs.length === 0) return { encontrado: false, ambiguo: false };
     if (docs.length > 1) {
@@ -3860,7 +3861,7 @@ function calcularResumoPendenciasXml() {
                 listaNfsProcessadas.filter(nf => nf.pedido === pedidoSelecionadoXml)
                     .flatMap(nf => (nf.itens || []).map(it => it.codigoSmartCompras))
             );
-            const itensCotacaoDesteFornecedor = (cotacaoSelecionada.itens || []).filter(it => cnpjsFornecedorNf.includes(it.cnpjFornecedor));
+            const itensCotacaoDesteFornecedor = (cotacaoSelecionada.itens || []).filter(it => cnpjEmLista(cnpjsFornecedorNf, it.cnpjFornecedor));
             const codigosUnicos = [...new Set(itensCotacaoDesteFornecedor.map(it => it.codProduto).filter(Boolean))];
             const codigosAusentes = codigosUnicos.filter(cod => !codigosDestaNf.includes(cod) && !codigosJaEmOutraNfDoPedido.has(cod));
             if (codigosAusentes.length > 0) {
@@ -3984,8 +3985,18 @@ function limparBancoExcecoesXml() {
 // qual é a atual.
 // ============================================================
 
+// CNPJ sempre é COMPARADO só pelos dígitos. O XML do SmartCompras (principalmente
+// os antigos) traz "44.672.062/0001-15", enquanto NF-e, cadastro SP Data, ERP e o
+// relatório de fornecedores ganhadores usam os 14 dígitos. Nada é reescrito no
+// banco: só a comparação ignora a pontuação (igualdade exata dos dígitos — nunca
+// aproximada). Toda comparação nova envolvendo CNPJ deve usar estes helpers.
+function normalizarCnpj(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
+// Identidade: só é "o mesmo" se os dois tiverem CNPJ e os dígitos forem idênticos.
+function mesmoCnpj(a, b) { const x = normalizarCnpj(a); return x !== '' && x === normalizarCnpj(b); }
+function cnpjEmLista(lista, c) { return (lista || []).some(x => mesmoCnpj(x, c)); }
+
 function chaveAssociacaoFornecedor(cnpjEmit, codigoFornecedor) {
-    return `${cnpjEmit}::${codigoFornecedor}`.replace(/\//g, '_');
+    return `${normalizarCnpj(cnpjEmit)}::${codigoFornecedor}`.replace(/\//g, '_');
 }
 
 // ===================================================================
@@ -4014,6 +4025,7 @@ function chaveAssociacaoFornecedor(cnpjEmit, codigoFornecedor) {
 // listaFornecedoresUnificada(), mas partindo de um CNPJ (não de um id de
 // documento). Só leitura.
 function cnpjsDaMesmaEntidadeFornecedor(cnpj) {
+    cnpj = normalizarCnpj(cnpj);
     const docInicial = listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj));
     if (!docInicial) return [cnpj];
     const porId = {};
@@ -4105,6 +4117,7 @@ function consultarHistoricoAssociacaoFornecedor(cnpjEmit, codigoFornecedor) {
 //   - inclui o nome de exibição do fornecedor, pra dar contexto.
 // Não decide nada: quem escolhe é sempre o usuário, no futuro Editor.
 function consultarAssociacoesConhecidasParaXml(cnpjEmit, codigoFornecedor) {
+    cnpjEmit = normalizarCnpj(cnpjEmit);
     const historico = consultarHistoricoAssociacaoFornecedor(cnpjEmit, codigoFornecedor);
     const docFornecedor = listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpjEmit));
     const cnpjsConsiderados = cnpjsDaMesmaEntidadeFornecedor(cnpjEmit);
@@ -4306,7 +4319,7 @@ function renderAssociacaoCotacaoXml() {
     const cnpjsFornecedorIdentificado = validacaoFornecedorXml.encontrado
         ? [nfeInfoAtual.cnpjEmit, ...validacaoFornecedorXml.cnpjsRelacionados]
         : [nfeInfoAtual.cnpjEmit];
-    const itensDoFornecedorIdentificado = itensDaCotacao.filter(it => cnpjsFornecedorIdentificado.includes(it.cnpjFornecedor));
+    const itensDoFornecedorIdentificado = itensDaCotacao.filter(it => cnpjEmLista(cnpjsFornecedorIdentificado, it.cnpjFornecedor));
     const restringeFornecedor = itensDoFornecedorIdentificado.length > 0 && itensDoFornecedorIdentificado.length < itensDaCotacao.length;
     const itensParaOpcoes = (restringeFornecedor && !mostrarOutrosFornecedoresXml) ? itensDoFornecedorIdentificado : itensDaCotacao;
 
@@ -4318,7 +4331,7 @@ function renderAssociacaoCotacaoXml() {
             cotacaoSpDataHTML = 'Selecione o pedido acima pra associar este item à cotação.';
         } else {
             const opcoesHTML = itensParaOpcoes.map(it => {
-                const fornecedorIt = (cotacaoAtual.fornecedores || []).find(f => f.cnpj === it.cnpjFornecedor);
+                const fornecedorIt = (cotacaoAtual.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor));
                 const nomeForn = fornecedorIt ? nomeExibicaoFornecedor(fornecedorIt.razaoSocial, fornecedorIt.cnpj) : (it.cnpjFornecedor || 'fornecedor não identificado');
                 const detalhes = [it.fabricante && it.fabricante !== '---' ? it.fabricante : '', it.embalagem || '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ');
                 return `<option value="${it.codProduto}">${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'} (${nomeForn})${detalhes ? ' — ' + detalhes : ''}</option>`;
@@ -4352,7 +4365,7 @@ function renderAssociacaoCotacaoXml() {
                 const nomeItem = itemCotacao
                     ? (itemCotacao.nomeOficial || itemCotacao.descricao || status.associacao.codigoSmartCompras)
                     : `${status.associacao.codigoSmartCompras} (item não encontrado em nenhuma cotação cadastrada)`;
-                const fornecedorCotacao = itemCotacao && cotacaoDoItem ? (cotacaoDoItem.fornecedores || []).find(f => f.cnpj === itemCotacao.cnpjFornecedor) : null;
+                const fornecedorCotacao = itemCotacao && cotacaoDoItem ? (cotacaoDoItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, itemCotacao.cnpjFornecedor)) : null;
                 const nomeFornecedorCotacao = fornecedorCotacao ? nomeExibicaoFornecedor(fornecedorCotacao.razaoSocial, fornecedorCotacao.cnpj) : '';
 
                 // SP Data direto na Entrada de NF (sem sair pra Cotações): reaproveita
@@ -4777,7 +4790,7 @@ function calcularAptidaoSaidaNota(nota) {
 // faturado/lançado, ou item pendente de faturamento quando o pedido já tem
 // alguma NF processada).
 function renderComparacaoFornecedorHTML(pedido, cnpjFornecedor) {
-    const itens = compararFontesPedido(pedido).filter(item => item.cnpjFornecedor === cnpjFornecedor && (item.temNf || item.temErp || item.divergencias.length));
+    const itens = compararFontesPedido(pedido).filter(item => normalizarCnpj(item.cnpjFornecedor) === normalizarCnpj(cnpjFornecedor) && (item.temNf || item.temErp || item.divergencias.length));
     if (itens.length === 0) return '<div class="central-item-vazio">Nenhuma NF processada ainda pra este fornecedor neste pedido.</div>';
 
     return itens.map(item => {
@@ -4850,7 +4863,7 @@ function registrarDivergenciaDaComparacao(pedido, codProduto) {
     const item = compararFontesPedido(pedido).find(i => i.codProduto === codProduto);
     const cotacao = listaCotacoes.find(c => c.pedido === pedido);
     if (!item || !cotacao) return;
-    const fornecedor = (cotacao.fornecedores || []).find(f => f.cnpj === item.cnpjFornecedor);
+    const fornecedor = (cotacao.fornecedores || []).find(f => mesmoCnpj(f.cnpj, item.cnpjFornecedor));
 
     const telaJaAberta = document.getElementById('screen-auditoria-nova').classList.contains('active');
     const mesmoPedidoNoRascunho = telaJaAberta && document.getElementById('aud-pedido').value.trim() === pedido;
@@ -5345,7 +5358,7 @@ function atualizarDatalistProdutosAuditoria() {
         upAud(f.razaoSocial) === nomeFornecedorDigitado || upAud(nomeExibicaoFornecedor(f.razaoSocial)) === nomeFornecedorDigitado
     );
     const itens = cotacaoEncontradaAuditoria.itens || [];
-    const itensFiltrados = fornMatch ? itens.filter(it => it.cnpjFornecedor === fornMatch.cnpj) : itens;
+    const itensFiltrados = fornMatch ? itens.filter(it => normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(fornMatch.cnpj)) : itens;
 
     const vistos = new Set();
     const opcoes = [];
@@ -5575,7 +5588,7 @@ function renderCardCotacao(c) {
 // mesmo produto aparecer com mais de um fornecedor na cotação, cada um vira
 // uma linha separada (um por item correspondente).
 function renderCardResultadoItem(cotacao, item) {
-    const fornecedor = (cotacao.fornecedores || []).find(f => f.cnpj === item.cnpjFornecedor);
+    const fornecedor = (cotacao.fornecedores || []).find(f => mesmoCnpj(f.cnpj, item.cnpjFornecedor));
     const nomeProduto = item.nomeOficial ? upAud(item.nomeOficial) : (item.descricao ? upAud(item.descricao) : 'Produto sem nome identificado');
     const nomeFornecedor = fornecedor ? nomeExibicaoFornecedor(fornecedor.razaoSocial, fornecedor.cnpj) : (item.cnpjFornecedor || 'Fornecedor não identificado');
     const associacao = item.codProduto ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === item.codProduto) : null;
@@ -5873,7 +5886,58 @@ function aplicarRecursoSugerido(pedido, codigo, recursoOficial) {
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '17.2', nome: 'Redesign — Etapa 3 (telas de consulta) e limpeza de código', status: 'atual',
+        numero: 19, nome: 'Correção: CNPJ com pontuação (XML antigo do SmartCompras)', status: 'atual',
+        implementado: [
+            'O "Complementar com Relatório do SmartCompras" agora casa os itens por código + CNPJ comparando só os dígitos. Antes, o XML antigo (CNPJ como 44.672.062/0001-15) nunca casava com o relatório (só dígitos) e nenhum nome era complementado (0 de 112 no pedido 1653).',
+            'A mesma regra foi aplicada a todos os pontos que comparam o CNPJ vindo do XML com o da NF-e, do cadastro SP Data, do ERP ou do relatório: identificar o pedido pela NF, itens do fornecedor na Entrada de NF, alerta de itens esperados, reconciliação do ERP com a NF, associações SP Data via ERP, valor cotado por fornecedor e nome de exibição do fornecedor. Também vale ao reimportar um pedido (diferenças entre versões e nome oficial preservado), mesmo que o formato do CNPJ mude de uma versão para outra.'
+        ],
+        mudou: [
+            'Só a comparação: igualdade exata dos 14 dígitos (nunca aproximada, nunca por nome) e CNPJ vazio nunca casa. Nada foi reescrito no banco — pedidos já importados continuam como estão.',
+            'Regra pra frente: qualquer comparação nova com CNPJ deve usar normalizarCnpj / mesmoCnpj / cnpjEmLista (comentário no código).'
+        ],
+        testar: [
+            'Pedido 1653: Central do Pedido → colar o relatório de fornecedores ganhadores → Processar: deve mostrar "Nomes que serão complementados: 112" e nenhum item sem correspondência; confirmar e conferir que os itens ganham o nome oficial.',
+            'Entrada de NF com um fornecedor desse pedido: o pedido deve ser identificado automaticamente e os itens do fornecedor aparecerem na associação com a cotação.',
+            'Ao reimportar o XML de um pedido que já tinha nomes complementados, os nomes continuam lá.'
+        ]
+    },
+    {
+        numero: 18, nome: 'Paginação do Histórico', status: 'concluida',
+        implementado: [
+            'Histórico: a lista de dentro do mês (e o resultado da busca) agora aparece em lotes de 40, com o botão "Carregar mais (N restante(s))" no fim — o mesmo padrão já usado em Produtos SP Data e Fornecedores.',
+            'O limite recomeça no primeiro lote a cada nova busca ou troca de ano/mês; expandir ou recolher um registro não reinicia a lista.'
+        ],
+        mudou: [
+            'Só a exibição do Histórico: nenhum registro foi alterado ou apagado, a ordem continua por data (mais recentes primeiro) e a busca continua varrendo todos os meses.',
+            'O botão "Limpar registros simples arquivados (legado)" ficou separado no fim da tela, em vermelho, longe do "Carregar mais".'
+        ],
+        testar: [
+            'Histórico → ano → mês com mais de 40 registros: aparecem 40 e o botão informa quantos faltam; tocar em "Carregar mais" mostra os próximos até acabar.',
+            'Expandir um registro depois de carregar mais: a lista não volta ao início. Trocar de mês ou buscar: volta a mostrar o primeiro lote.',
+            'Busca por NF, fornecedor, CNPJ ou pedido continua achando registros de qualquer mês.'
+        ]
+    },
+    {
+        numero: '17.3', nome: 'Redesign — Etapa 4 (áreas de uso frequente)', status: 'concluida',
+        implementado: [
+            'Entrada de NF (XML): itens e alertas usam a mesma gramática de estados do cartão de NF (barra lateral, borda de 1px e tinta sutil) no lugar da borda tracejada amarela; selos de pendência mais leves; ações dentro de cada item (Associar, Confirmar fator) no formato de chip.',
+            'Produtos SP Data e Fornecedores: o cartão que envolvia a lista saiu (os itens já são cartões); ações Renomear/Inativar/Reativar agrupadas no formato de chip; "Cadastrar produto" é o botão principal.',
+            'Botão principal preenchido em Importar ERP (Processar Relatório e Importar Selecionadas) e Observações (Adicionar Observação).',
+            'Editor de cotação no iPhone: Razão Social em linha própria e CNPJ ao lado da lixeira, sem cortar o texto.'
+        ],
+        mudou: [
+            'Só apresentação. Nenhuma regra de negócio, cálculo, filtro, fluxo ou dado foi alterado.',
+            'Central do Pedido, editores de Anotação e Aprovações herdam o sistema sem mudança própria: já estavam coerentes.'
+        ],
+        testar: [
+            'Entrada de NF: carregar um XML e conferir itens pendentes, alerta "Resolva antes de salvar" e os botões Associar e Confirmar fator.',
+            'Produtos SP Data e Fornecedores: lista, busca, Renomear e Inativar/Reativar.',
+            'Importar ERP: Processar Relatório e Importar Selecionadas. Observações: Adicionar Observação.',
+            'Nova Cotação no iPhone: adicionar fornecedores e conferir os campos.'
+        ]
+    },
+    {
+        numero: '17.2', nome: 'Redesign — Etapa 3 (telas de consulta) e limpeza de código', status: 'concluida',
         implementado: [
             'Limpeza de código: removidas 13 funções e 4 variáveis sem nenhum uso (importação de fornecedores por texto, cadastro de apelidos pelo formulário antigo, checklist antigo, entre outras) e o modo "Selecionar pra saída" da Fase 12, que estava sem botão de acesso desde a Fase 14.',
             'Limpeza de CSS: removidas as regras de classes que não existem mais e as declarações antigas que já eram sobrescritas por regras posteriores; 65 estilos inline repetidos viraram classes utilitárias (espaçamentos e textos auxiliares).',
@@ -6130,7 +6194,7 @@ async function salvarMinimosCotacoes() {
 // último recurso, sem apagar nada do que já existia.
 function nomeExibicaoFornecedor(razaoSocial, cnpj) {
     if (cnpj) {
-        const doc = listaFornecedoresSpData.find(f => f.cnpjs.some(c => c.cnpj === cnpj));
+        const doc = listaFornecedoresSpData.find(f => f.cnpjs.some(c => mesmoCnpj(c.cnpj, cnpj)));
         if (doc) return doc.nomeExibido || doc.nomeReal || razaoSocial || '';
     }
     if (!razaoSocial) return '';
@@ -6297,8 +6361,8 @@ function somarDiasISO(dataISO, dias) {
 
 function calcularDiffCotacao(antiga, nova) {
     const diffs = [];
-    const fornAntigos = new Map((antiga.fornecedores || []).map(f => [f.cnpj, f]));
-    const fornNovos = new Map((nova.fornecedores || []).map(f => [f.cnpj, f]));
+    const fornAntigos = new Map((antiga.fornecedores || []).map(f => [normalizarCnpj(f.cnpj), f]));
+    const fornNovos = new Map((nova.fornecedores || []).map(f => [normalizarCnpj(f.cnpj), f]));
     fornNovos.forEach((f, cnpj) => { if (!fornAntigos.has(cnpj)) diffs.push(`+ Fornecedor adicionado: ${f.razaoSocial}`); });
     fornAntigos.forEach((f, cnpj) => { if (!fornNovos.has(cnpj)) diffs.push(`− Fornecedor removido: ${f.razaoSocial}`); });
 
@@ -6308,9 +6372,9 @@ function calcularDiffCotacao(antiga, nova) {
         const velho = itensAntigos.get(cod);
         if (!velho) { diffs.push(`+ Item novo: ${novo.descricao || cod}`); return; }
         if (velho.quantidade !== novo.quantidade) diffs.push(`↕ ${novo.descricao || cod}: quantidade alterada de ${velho.quantidade} para ${novo.quantidade}`);
-        if (velho.cnpjFornecedor !== novo.cnpjFornecedor) {
-            const nomeAntigo = (antiga.fornecedores || []).find(f => f.cnpj === velho.cnpjFornecedor)?.razaoSocial || velho.cnpjFornecedor || '?';
-            const nomeNovo = (nova.fornecedores || []).find(f => f.cnpj === novo.cnpjFornecedor)?.razaoSocial || novo.cnpjFornecedor || '?';
+        if (normalizarCnpj(velho.cnpjFornecedor) !== normalizarCnpj(novo.cnpjFornecedor)) {
+            const nomeAntigo = (antiga.fornecedores || []).find(f => mesmoCnpj(f.cnpj, velho.cnpjFornecedor))?.razaoSocial || velho.cnpjFornecedor || '?';
+            const nomeNovo = (nova.fornecedores || []).find(f => mesmoCnpj(f.cnpj, novo.cnpjFornecedor))?.razaoSocial || novo.cnpjFornecedor || '?';
             diffs.push(`↕ ${novo.descricao || cod}: fornecedor alterado de ${nomeAntigo} para ${nomeNovo}`);
         }
         if (velho.precoUnitario !== novo.precoUnitario) diffs.push(`↕ ${novo.descricao || cod}: preço alterado de ${velho.precoUnitario} para ${novo.precoUnitario}`);
@@ -6539,7 +6603,7 @@ function cancelarImportacaoXml() {
 function preservarNomeOficialAoReimportar(itensAntigos, itensNovosXml) {
     if (!itensAntigos || !itensAntigos.length) return itensNovosXml;
     return itensNovosXml.map(novo => {
-        const antigo = itensAntigos.find(it => it.codProduto === novo.codProduto && it.cnpjFornecedor === novo.cnpjFornecedor);
+        const antigo = itensAntigos.find(it => it.codProduto === novo.codProduto && normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(novo.cnpjFornecedor));
         return (antigo && antigo.nomeOficial) ? { ...novo, nomeOficial: antigo.nomeOficial } : novo;
     });
 }
@@ -6615,7 +6679,7 @@ async function confirmarImportacaoXmlSmartCompras() {
             const cruzamento = cruzarRelatorioComCotacao({ pedido: parsed.pedido, itens: dadosPrincipal.itens }, agruparGanhadoresPorFornecedor(relatorioPendente.itens));
             if (cruzamento.atualizacoes.length > 0) {
                 const itensComplementados = dadosPrincipal.itens.map(it => {
-                    const match = cruzamento.atualizacoes.find(a => a.codProduto === it.codProduto && a.cnpjFornecedor === it.cnpjFornecedor);
+                    const match = cruzamento.atualizacoes.find(a => a.codProduto === it.codProduto && mesmoCnpj(a.cnpjFornecedor, it.cnpjFornecedor));
                     return match ? { ...it, nomeOficial: match.nomeOficial } : it;
                 });
                 await cotacoesCollection.doc(parsed.pedido).update({ itens: itensComplementados, atualizadoEm: new Date().toISOString() });
@@ -6679,12 +6743,12 @@ function cruzarRelatorioComCotacao(cotacao, relatorio) {
 
     relatorio.fornecedores.forEach(fRel => {
         fRel.itens.forEach(itRel => {
-            const itemCotacao = (cotacao.itens || []).find(it => it.codProduto === itRel.codigo && it.cnpjFornecedor === fRel.cnpj);
+            const itemCotacao = (cotacao.itens || []).find(it => it.codProduto === itRel.codigo && mesmoCnpj(it.cnpjFornecedor, fRel.cnpj));
             if (!itemCotacao) {
                 semCorrespondencia.push({ codigo: itRel.codigo, produto: itRel.produto, fornecedor: fRel.razaoSocial });
                 return;
             }
-            atualizacoes.push({ codProduto: itRel.codigo, cnpjFornecedor: fRel.cnpj, nomeOficial: itRel.produto });
+            atualizacoes.push({ codProduto: itRel.codigo, cnpjFornecedor: itemCotacao.cnpjFornecedor, nomeOficial: itRel.produto });
 
             const qtdXml = parseFloat((itemCotacao.quantidade || '').replace(/\./g, '').replace(',', '.'));
             const qtdRel = parseFloat((itRel.quantidade || '').replace(/\./g, '').replace(',', '.'));
@@ -6731,7 +6795,7 @@ async function salvarRelatorioGanhadoresEComplementarCotacao(resultado) {
     const cruzamento = cruzarRelatorioComCotacao(cotacao, relatorioAgrupado);
     if (cruzamento.atualizacoes.length > 0) {
         const novosItens = (cotacao.itens || []).map(it => {
-            const match = cruzamento.atualizacoes.find(a => a.codProduto === it.codProduto && a.cnpjFornecedor === it.cnpjFornecedor);
+            const match = cruzamento.atualizacoes.find(a => a.codProduto === it.codProduto && mesmoCnpj(a.cnpjFornecedor, it.cnpjFornecedor));
             return match ? { ...it, nomeOficial: match.nomeOficial } : it;
         });
         await cotacoesCollection.doc(resultado.pedido).update({ itens: novosItens, atualizadoEm: new Date().toISOString() });
@@ -7604,8 +7668,28 @@ function textoBuscavelHistoricoNf(item) {
     return normalizarBuscaRel(partes.filter(Boolean).join(' '));
 }
 
+// Paginação do Histórico: mesmo padrão do resto do app (lote + botão "Carregar
+// mais (N restante(s))"). A lista de dentro do mês/da busca aparece em lotes,
+// e o limite recomeça do primeiro lote a cada nova busca ou troca de ano/mês.
+// Expandir/recolher um card NÃO reinicia o limite.
+const LOTE_HISTORICO = 40;
+let limiteExibicaoHistorico = LOTE_HISTORICO;
+function carregarMaisHistorico() {
+    limiteExibicaoHistorico += LOTE_HISTORICO;
+    renderHistoricoNfs();
+}
+function htmlListaHistoricoPaginada(itens) {
+    const visiveis = itens.slice(0, limiteExibicaoHistorico);
+    let html = visiveis.map(item => renderCardHistoricoNf(item)).join('');
+    if (itens.length > visiveis.length) {
+        html += `<div class="actions mt-3"><button type="button" class="actions-button is-neutral" onclick="carregarMaisHistorico()">Carregar mais (${itens.length - visiveis.length} restante(s))</button></div>`;
+    }
+    return html;
+}
+
 function filtrarHistoricoNfs(texto) {
     historicoFiltroTexto = texto || '';
+    limiteExibicaoHistorico = LOTE_HISTORICO;
     renderHistoricoNfs();
 }
 
@@ -7613,17 +7697,20 @@ function selecionarAnoHistorico(ano) {
     historicoAnoSelecionado = ano;
     historicoMesSelecionado = null;
     historicoNfExpandida = null;
+    limiteExibicaoHistorico = LOTE_HISTORICO;
     renderHistoricoNfs();
 }
 function selecionarMesHistorico(mes) {
     historicoMesSelecionado = mes;
     historicoNfExpandida = null;
+    limiteExibicaoHistorico = LOTE_HISTORICO;
     renderHistoricoNfs();
 }
 function voltarNavegacaoHistorico() {
     if (historicoMesSelecionado) historicoMesSelecionado = null;
     else if (historicoAnoSelecionado) historicoAnoSelecionado = null;
     historicoNfExpandida = null;
+    limiteExibicaoHistorico = LOTE_HISTORICO;
     renderHistoricoNfs();
 }
 function toggleDetalheHistoricoNf(chave) {
@@ -7714,7 +7801,7 @@ function renderHistoricoNfs() {
     const termo = normalizarBuscaRel(historicoFiltroTexto.trim());
 
     const acaoLegadoHTML = historicoNotas.length
-        ? `<div style="margin-top:8px;"><button type="button" class="central-status-toggle" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>`
+        ? `<div class="acao-legado"><button type="button" class="central-status-toggle is-danger" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>`
         : '';
 
     // Busca sobrepõe a navegação: mostra resultado achatado de qualquer Ano/Mês.
@@ -7723,7 +7810,7 @@ function renderHistoricoNfs() {
         const encontrados = todos.filter(item => textoBuscavelHistoricoNf(item).includes(termo))
             .sort((a, b) => (b.dataISO || '').localeCompare(a.dataISO || ''));
         lista.innerHTML = (encontrados.length
-            ? encontrados.map(item => renderCardHistoricoNf(item)).join('')
+            ? htmlListaHistoricoPaginada(encontrados)
             : '<div class="empty-state">Nenhum registro encontrado.</div>') + acaoLegadoHTML;
         return;
     }
@@ -7732,7 +7819,7 @@ function renderHistoricoNfs() {
         const doMes = todos.filter(item => item.ano === historicoAnoSelecionado && item.mes === historicoMesSelecionado)
             .sort((a, b) => (b.dataISO || '').localeCompare(a.dataISO || ''));
         nav.innerHTML = `<button type="button" class="central-status-toggle" onclick="voltarNavegacaoHistorico()">← ${NOMES_MESES_HISTORICO[parseInt(historicoMesSelecionado, 10) - 1]}/${historicoAnoSelecionado}</button>`;
-        lista.innerHTML = (doMes.length ? doMes.map(item => renderCardHistoricoNf(item)).join('') : '<div class="empty-state">Nenhum registro neste mês.</div>') + acaoLegadoHTML;
+        lista.innerHTML = (doMes.length ? htmlListaHistoricoPaginada(doMes) : '<div class="empty-state">Nenhum registro neste mês.</div>') + acaoLegadoHTML;
         return;
     }
 
@@ -8108,8 +8195,9 @@ function resolverCnpjsFornecedorSpData(codigo) {
 }
 
 function formatarCnpjExibicao(cnpj) {
-    if (!cnpj || cnpj.length !== 14) return cnpj || '';
-    return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    const d = normalizarCnpj(cnpj);
+    if (d.length !== 14) return cnpj || '';
+    return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
 }
 
 // --- UI: importação do cadastro (tela Fornecedores) ---
@@ -8558,7 +8646,7 @@ function numeroFlexivel(v) {
 // reconciliação (Fase 8), nunca como fonte de verdade do valor da cotação.
 function valorTotalCotacaoPorFornecedor(cotacao, cnpj) {
     return (cotacao.itens || [])
-        .filter(it => it.cnpjFornecedor === cnpj)
+        .filter(it => mesmoCnpj(it.cnpjFornecedor, cnpj))
         .reduce((soma, it) => {
             const total = numeroFlexivel(it.precoTotal);
             if (total !== null) return soma + total;
@@ -8636,7 +8724,7 @@ function vincularEntradaErpComNf(bloco) {
     const valorErp = parseValorBR(bloco.valor);
     const candidatos = [];
     listaCotacoes.forEach(cotacao => {
-        const fornecedorMatch = (cotacao.fornecedores || []).find(f => cnpjsFornecedor.includes(f.cnpj));
+        const fornecedorMatch = (cotacao.fornecedores || []).find(f => cnpjEmLista(cnpjsFornecedor, f.cnpj));
         if (!fornecedorMatch) return;
         const valorCotado = valorTotalCotacaoPorFornecedor(cotacao, fornecedorMatch.cnpj);
         const diff = Math.abs(valorCotado - valorErp);
@@ -8740,7 +8828,7 @@ function reconciliarAssociacoesSpDataViaErp(entrada) {
     const cnpj = entrada.vinculo.cnpjFornecedor;
 
     const itensCotacaoSemAssociacao = (cotacao.itens || []).filter(it =>
-        it.cnpjFornecedor === cnpj && it.codProduto &&
+        mesmoCnpj(it.cnpjFornecedor, cnpj) && it.codProduto &&
         !listaAssociacoesSpData.some(a => a.codigoSmartCompras === it.codProduto)
     );
     if (!itensCotacaoSemAssociacao.length) return { pares: [] };
@@ -9130,7 +9218,7 @@ function renderPreviewImportacao() {
         </div>
         ${itensHTML}
         <div class="actions" style="margin-top: 8px;">
-            <button class="actions-button is-success" onclick="confirmarImportacaoLote()">
+            <button class="actions-button is-primary" onclick="confirmarImportacaoLote()">
                 <span class="icon-wrapper"><i class="fa-solid fa-check-double"></i></span>
                 Importar Selecionadas (<span id="import-count-selected">${totalNovas}</span>)
             </button>

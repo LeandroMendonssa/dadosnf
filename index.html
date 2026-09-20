@@ -244,7 +244,7 @@
             </div>
 
             <div class="app-screen" id="screen-history">
-                <input type="text" id="historico-busca" class="form-field" placeholder="Buscar por NF, fornecedor, CNPJ, pedido ou produto..." oninput="filtrarHistoricoNfs(this.value)">
+                <input type="text" id="historico-busca" class="form-field" placeholder="Buscar NF, fornecedor, CNPJ, pedido..." oninput="filtrarHistoricoNfs(this.value)">
                 <div id="historico-nfs-navegacao" class="mt-3"></div>
                 <div id="historico-nfs-lista" class="nota-list mt-3" ></div>
                 <div id="lista-historico" style="display:none;"></div>
@@ -279,7 +279,7 @@
                         <button class="actions-button is-neutral" onclick="colarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
                     </div>
                     <div class="actions">
-                        <button class="actions-button" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
+                        <button class="actions-button is-primary" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
                     </div>
                 </div>
                 <div id="import-preview-container"></div>
@@ -295,7 +295,7 @@
             </div>
 
             <div class="app-screen" id="screen-fornecedores">
-                <div class="card">
+                <div class="card card-plain">
                     <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Fornecedores</h3>
                     <p id="contador-fornecedores-spdata" style="margin: 0 0 12px; font-size: 12px; color: var(--text-light);">0 fornecedor(es) cadastrado(s)</p>
                     <input type="text" class="form-field" placeholder="Buscar por código, razão social, apelido ou CNPJ..." oninput="filtrarCadastroFornecedoresSpData(this.value)">
@@ -406,9 +406,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="card mt-4" >
+                <div class="card card-plain mt-4" >
                     <div class="actions-row" style="margin:0 0 12px;">
-                        <button class="actions-button" onclick="toggleFormNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar produto</button>
+                        <button class="actions-button is-primary" onclick="toggleFormNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar produto</button>
                     </div>
                     <div class="card" id="spdata-form-novo" style="display:none;margin-bottom:14px;">
                         <div class="campo"><label>Código SP Data</label><input type="text" id="spdata-novo-codigo" class="form-field" placeholder="Código"></div>
@@ -601,7 +601,7 @@
             <div class="app-screen" id="screen-observacoes">
                 <div class="card">
                      <div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div>
-                     <button class="actions-button" onclick="adicionarObservacaoManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Observação</button>
+                     <button class="actions-button is-primary" onclick="adicionarObservacaoManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Observação</button>
                      <ul id="lista-observacoes-manage" class="manage-list"></ul>
                 </div>
             </div>
