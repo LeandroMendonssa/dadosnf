@@ -287,9 +287,9 @@
 
             <div class="app-screen" id="screen-config-analise-cotacoes">
                 <div class="card">
-                    <p style="margin:0 0 12px;font-size:12px;color:var(--text-light);">Usado só pra dar um veredito de "condição atendida/verificar" na Análise de Cotações por Item (Fase 7). Deixe em branco se não quiser esse veredito — o sistema nunca assume um número por conta própria.</p>
-                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em C/C</label><input type="number" min="1" id="config-minimo-cc" class="form-field" placeholder="Ex: 3"></div>
-                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em Recurso Próprio</label><input type="number" min="1" id="config-minimo-proprio" class="form-field" placeholder="Ex: 1"></div>
+                    <p style="margin:0 0 12px;font-size:12px;color:var(--text-light);">Define o recurso dos itens na Entrada de NF: com pelo menos este número de fornecedores cotando, o item é C/C (recurso público/externo); com menos, é Recurso Próprio. Em branco, valem 3 (C/C) e 1 (Recurso Próprio). Abaixo do mínimo de Recurso Próprio, ou sem o relatório de ganhadores do pedido, a escolha fica manual.</p>
+                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em C/C</label><input type="number" min="1" id="config-minimo-cc" class="form-field" placeholder="Padrão: 3"></div>
+                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em Recurso Próprio</label><input type="number" min="1" id="config-minimo-proprio" class="form-field" placeholder="Padrão: 1"></div>
                     <button class="actions-button is-primary" onclick="salvarMinimosCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
                 </div>
             </div>
@@ -373,6 +373,19 @@
                         <label>Pedido/Cotação correspondente</label>
                         <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
                         <div id="xml-pedido-caption" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
+                        <div id="xml-cotacao-adicional-box" class="mt-3" style="display:none;"></div>
+                        <label class="mt-3" style="display:flex;gap:10px;align-items:center;font-size:13px;font-weight:600;color:var(--text-dark);">
+                            <input type="checkbox" id="xml-sem-cotacao-nf" onchange="alternarSemCotacaoNfXml(this.checked)" class="checkbox-grande">
+                            Esta NF não possui cotação do SmartCompras (compra direta)
+                        </label>
+                    </div>
+                    <div id="xml-destino-sem-cotacao" class="campo mt-3" style="display:none;">
+                        <label>Destino dos itens sem cotação</label>
+                        <select class="form-field" id="xml-destino-sem-cotacao-select" onchange="definirDestinoSemCotacaoXml(this.value)">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
                     </div>
                     <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div>
                     <div id="xml-associacao-container" class="mt-3"></div>

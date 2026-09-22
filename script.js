@@ -187,8 +187,20 @@ const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sis
 // algum evento de resize "de verdade" acontecer depois. Por isso: preferimos
 // visualViewport.height quando disponível (mais confiável), e recalculamos em
 // vários momentos-gatilho, não só uma vez.
+// Campos que abrem o teclado do celular (checkbox, botão, data etc. não abrem).
+const TIPOS_SEM_TECLADO = ['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'file', 'color', 'date', 'time', 'datetime-local', 'month', 'week', 'image'];
+const campoDeTexto = el => !!el && ((el.tagName === 'INPUT' && !TIPOS_SEM_TECLADO.includes((el.type || 'text').toLowerCase())) || el.tagName === 'TEXTAREA' || el.isContentEditable === true);
+const telaDeToque = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+let alturaViewportRepouso = 0; // altura do viewport SEM teclado (última medida em repouso)
+
 const setAppHeight = () => {
+    // Com o teclado aberto (ou um campo de texto em edição no celular) a altura
+    // do app fica CONGELADA. Alguns navegadores encolhem a janela/visualViewport
+    // ao abrir o teclado e, se a altura fosse recalculada aí, o app encolheria e
+    // a barra de navegação "subiria" pro topo, deixando a tela vazia embaixo.
+    if (document.body.classList.contains('keyboard-open') || (telaDeToque && campoDeTexto(document.activeElement))) return;
     const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    alturaViewportRepouso = h;
     document.documentElement.style.setProperty('--app-height', `${h}px`);
 };
 window.addEventListener('resize', setAppHeight);
@@ -208,6 +220,7 @@ setTimeout(setAppHeight, 1000);
 // teclado). Em vez disso, só escondemos a tab-bar via classe no body, o que
 // libera o espaço que ela ocupava sem mover mais nada.
 const KEYBOARD_HEIGHT_THRESHOLD = 120;
+const TECLADO_ESTIMADO = 300; // usado até o navegador informar a altura real do teclado
 
 const setupKeyboardListener = () => {
     if (!('visualViewport' in window)) return;
@@ -228,12 +241,27 @@ const setupKeyboardListener = () => {
         } else {
             document.querySelectorAll('.app-screen').forEach(s => s.style.paddingBottom = '');
             setAppHeight();
+            window.scrollTo(0, 0);
         }
     };
 
+    // A medição da altura do teclado varia por navegador (em alguns, a janela
+    // inteira encolhe junto e a diferença some). Por isso, no celular, um campo
+    // de texto em edição já conta como "teclado aberto", medindo ou não.
+    const alturaDoTeclado = () => Math.max(window.innerHeight - window.visualViewport.height, alturaViewportRepouso - window.visualViewport.height, 0);
+    const emEdicao = () => telaDeToque && campoDeTexto(document.activeElement);
+
     window.visualViewport.addEventListener('resize', () => {
-        const keyboardHeight = window.innerHeight - window.visualViewport.height;
-        aplicarEstadoTeclado(keyboardHeight > KEYBOARD_HEIGHT_THRESHOLD, keyboardHeight);
+        const medida = alturaDoTeclado();
+        aplicarEstadoTeclado(medida > KEYBOARD_HEIGHT_THRESHOLD || emEdicao(), medida > KEYBOARD_HEIGHT_THRESHOLD ? medida : TECLADO_ESTIMADO);
+    });
+
+    // Ao tocar num campo, o estado já muda ANTES do teclado terminar de abrir:
+    // a barra some e a altura congela sem esperar (nem depender de) nenhum resize.
+    document.addEventListener('focusin', (e) => {
+        if (!telaDeToque || !campoDeTexto(e.target)) return;
+        const medida = alturaDoTeclado();
+        aplicarEstadoTeclado(true, medida > KEYBOARD_HEIGHT_THRESHOLD ? medida : TECLADO_ESTIMADO);
     });
 
     // Rede de segurança: se o campo perder o foco e nada mais assumir o foco
@@ -2956,7 +2984,7 @@ function renderLinhaProduto(it, chaveUnica) {
     const itemGanhadores = relatorioGanhadoresPedido && it.codProduto ? relatorioGanhadoresPedido.itens.find(g => g.codigo === it.codProduto) : null;
     const participantesResumo = itemGanhadores ? ` · ${itemGanhadores.participantes} fornecedor(es) cotaram` : '';
     const participantesDetalheHTML = itemGanhadores
-        ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= 3 ? ' ✓' : ' (menos de 3 participantes)'}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div class="txt-aux">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
+        ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= minimoFornecedoresCC() ? ' ✓' : ` (menos de ${minimoFornecedoresCC()} participantes)`}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div class="txt-aux">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
         : '';
 
     const tituloHTML = produtoSpData
@@ -3502,6 +3530,15 @@ let conflitoPedidoXmlInfo = null; // {pedidos:[{pedido, itens:[xProd,...]}]} qua
 let pedidoSugestaoXmlInfo = null; // {candidatos:[{pedido, valorCotado, diffPercentual}], valorNf} — Fase 9: CNPJ bate com mais de uma cotação; sugere por valor compatível, nunca decide sozinho
 let pedidoOrigemXml = null; // 'automatico' | 'manual' | null — só pra indicar na tela como o pedido foi definido, não influencia a lógica
 let filtroItensXml = 'todos'; // 'todos' | 'pendencias' — filtro visual da lista de itens, não altera nenhum dado
+// --- Fase 21: tratamento da NF antes de salvar (recurso, sem cotação, conferência) ---
+let semCotacaoNfXml = false;            // caixinha: a NF inteira não tem cotação do SmartCompras
+let pedidoAntesSemCotacaoXml = null;    // {pedido, origem} guardado ao marcar a caixinha (pra poder desmarcar)
+let destinoSemCotacaoXml = '';          // 'Santa Casa' | 'CTI' — só quando não há cotação pra dar o destino
+let recursosRascunhoXml = {};           // recurso editado nesta NF: 'c:<codSmartCompras>' | 'd:<cProd>' -> recurso oficial
+let pedidosAdicionaisXml = [];          // pedidos além do principal (pedidoSelecionadoXml) — NF com itens de mais de uma cotação
+function cotacoesSelecionadasXml() { return [pedidoSelecionadoXml, ...pedidosAdicionaisXml].filter(Boolean); }
+let nfSalvaXml = false;                 // depois de salvar, trocar o recurso grava na hora
+const SEM_COTACAO_VALOR = '__SEM_COTACAO__';
 let mostrarOutrosFornecedoresXml = false; // por padrão a seleção de item prioriza o fornecedor identificado pelo CNPJ; só amplia quando pedido explicitamente
 
 function detectarFatorXml(xProd) {
@@ -3539,6 +3576,14 @@ function processarXmlTexto(texto) {
         xmlDocAtual = null;
         return;
     }
+
+    // Uma NF nova não herda o que ficou na tela da anterior: o resultado da
+    // conferência e o recurso só existem depois de salvar, e eram os únicos
+    // blocos que sobreviviam ao carregar outro XML.
+    ['xml-resultado-salvar', 'xml-sugestao-recurso'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = ''; el.style.display = 'none'; }
+    });
 
     const cnpjEmit = xmlDocAtual.querySelector('emit CNPJ')?.textContent || '';
     const nNF = xmlDocAtual.querySelector('ide nNF')?.textContent || '';
@@ -3648,11 +3693,19 @@ function processarXmlTexto(texto) {
     conflitoPedidoXmlInfo = null;
     pedidoSugestaoXmlInfo = null;
     pedidoOrigemXml = null;
+    semCotacaoNfXml = false; pedidoAntesSemCotacaoXml = null; destinoSemCotacaoXml = '';
+    recursosRascunhoXml = {}; nfSalvaXml = false; pedidosAdicionaisXml = [];
     if (pedidosDistintos.length === 1) {
         pedidoSelecionadoXml = pedidosDistintos[0];
         pedidoOrigemXml = 'automatico';
     } else if (pedidosDistintos.length > 1) {
-        pedidoSelecionadoXml = null;
+        // Cada item já tem uma associação CONFIRMADA (não é achismo) apontando
+        // pra pedidos diferentes — mais forte que a checagem por CNPJ/valor
+        // (Fase 9) por isso os dois/todos já entram, sem exigir escolher um só.
+        // Continua nunca inventando nada: só reaproveita o que já foi confirmado.
+        pedidoSelecionadoXml = pedidosDistintos[0];
+        pedidosAdicionaisXml = pedidosDistintos.slice(1);
+        pedidoOrigemXml = 'automatico';
         conflitoPedidoXmlInfo = {
             pedidos: pedidosDistintos.map(pedido => ({
                 pedido,
@@ -3789,12 +3842,28 @@ function validarFornecedorSpData(cnpjEmit) {
 // exige as DUAS coisas: associação+SP Data resolvidos E nenhuma conversão
 // pendente — um item pode estar associado e ainda não estar totalmente
 // pronto (correção desta rodada: antes "resolvido" só olhava associação).
+function chaveDiretaSpData(item) { return 'DIRETO::' + chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd); }
+function ehChaveDiretaSpData(codigo) { return typeof codigo === 'string' && codigo.startsWith('DIRETO::'); }
+
 function statusItemXml(item) {
     const chave = chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd);
     const associacao = bancoAssociacoesFornecedor[chave];
     const associacaoSpData = associacao ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === associacao.codigoSmartCompras) : null;
     const produtoSpData = associacaoSpData ? listaProdutosSpData.find(p => p.codigo === associacaoSpData.spDataCodigo) : null;
     const conversaoPendente = !!item.suspeito; // "suspeito" só continua true até confirmação explícita (edição OU botão Confirmar) — nunca mais "não mudou = não conferi"
+
+    // Compra direta (sem cotação do SmartCompras): não passa pela associação
+    // com a cotação — só o SP Data (guardado com uma chave própria "DIRETO::…",
+    // na mesma coleção de associações SP Data, por fornecedor + código).
+    if (item.semCotacao) {
+        const chaveDireta = chaveDiretaSpData(item);
+        const assocDireta = listaAssociacoesSpData.find(a => a.codigoSmartCompras === chaveDireta);
+        const produtoDireto = assocDireta ? listaProdutosSpData.find(p => p.codigo === assocDireta.spDataCodigo) : null;
+        const motivosDiretos = [];
+        if (!produtoDireto) motivosDiretos.push('Sem SP Data');
+        if (conversaoPendente) motivosDiretos.push('Conferir conversão');
+        return { chave, associacao: null, semCotacao: true, chaveDireta, produtoSpData: produtoDireto, conversaoPendente, motivos: motivosDiretos, pronto: motivosDiretos.length === 0 };
+    }
 
     const motivos = [];
     if (!associacao) motivos.push('Sem associação');
@@ -3819,25 +3888,50 @@ function statusItemXml(item) {
 function calcularResumoPendenciasXml() {
     if (!nfeInfoAtual || !itensXmlDetectados.length) return null;
 
-    let totalmentePronto = 0, semAssociacao = 0, semSpData = 0, conversaoPendente = 0;
+    let totalmentePronto = 0, semAssociacao = 0, semSpData = 0, semSpDataDireto = 0, conversaoPendente = 0, recursoSemDefinir = 0, recursoAtingiuMinimo = 0, recursoAbaixoMinimo = 0;
     itensXmlDetectados.forEach(item => {
         const s = statusItemXml(item);
         if (s.pronto) totalmentePronto++;
-        if (!s.associacao) semAssociacao++;
+        if (s.semCotacao) { if (!s.produtoSpData) semSpDataDireto++; }
+        else if (!s.associacao) semAssociacao++;
         else if (!s.produtoSpData) semSpData++;
         if (s.conversaoPendente) conversaoPendente++;
+        const rec = recursoPrevistoItemXml(item, s);
+        if (rec && !rec.valor && !rec.semDestino && !rec.semOrigem) recursoSemDefinir++;
+        if (rec && rec.detTipo === 'cc') recursoAtingiuMinimo++;
+        else if (rec && rec.detTipo === 'proprio') recursoAbaixoMinimo++;
     });
+    const algumSemCotacao = itensXmlDetectados.some(i => i.semCotacao);
+    const algumComCotacao = itensXmlDetectados.some(i => !i.semCotacao);
 
     const bloqueios = [];
     const alertas = [];
 
     if (conflitoPedidoXmlInfo) {
-        bloqueios.push(`Itens desta NF apontam pra pedidos diferentes (${conflitoPedidoXmlInfo.pedidos.map(p => p.pedido).join(' e ')}) — selecione manualmente o pedido correto.`);
-    } else if (!pedidoSelecionadoXml) {
-        alertas.push('Pedido/cotação ainda não identificado — selecione manualmente (ou confirme a sugestão, se houver uma).');
+        // Já foi resolvido sozinho (pedido principal + adicional(is), ver
+        // processarXmlTexto) — só um alerta informativo, nunca bloqueia.
+        alertas.push(`Itens desta NF pertencem a pedidos diferentes (${conflitoPedidoXmlInfo.pedidos.map(p => p.pedido).join(' e ')}) — todos já adicionados (cotação principal + adicional(is) acima).`);
+    } else if (!pedidoSelecionadoXml && algumComCotacao) {
+        alertas.push('Pedido/cotação ainda não identificado — selecione manualmente (ou confirme a sugestão, se houver uma). Se a NF não tem cotação do SmartCompras, marque a caixinha acima.');
+    }
+    // Cabeçalho informativo: quantos itens já atingiram o mínimo de
+    // fornecedores (C/C) e quantos não (Recurso Próprio) — só aparece quando
+    // há pelo menos um item com essa determinação.
+    if (recursoAtingiuMinimo + recursoAbaixoMinimo > 0) {
+        alertas.push(recursoAbaixoMinimo === 0
+            ? `Recurso pelas cotações: todos os ${recursoAtingiuMinimo} item(ns) atingiram ${minimoFornecedoresCC()}+ fornecedores (C/C).`
+            : `Recurso pelas cotações: ${recursoAtingiuMinimo} item(ns) com ${minimoFornecedoresCC()}+ fornecedores (C/C) · ${recursoAbaixoMinimo} item(ns) com menos (Recurso Próprio).`);
+    }
+    if (algumSemCotacao) {
+        const cotDestino = pedidoSelecionadoXml ? listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml) : null;
+        if (!(cotDestino && cotDestino.origem) && !destinoSemCotacaoXml) {
+            bloqueios.push('Defina o destino (Santa Casa/CTI) dos itens sem cotação do SmartCompras — é ele que define o recurso.');
+        }
     }
     if (semAssociacao > 0) alertas.push(`${semAssociacao} item(ns) sem associação com a cotação — pode salvar e associar depois.`);
     if (semSpData > 0) alertas.push(`${semSpData} item(ns) associados à cotação mas ainda sem SP Data — pode salvar e associar depois.`);
+    if (semSpDataDireto > 0) alertas.push(`${semSpDataDireto} item(ns) sem cotação do SmartCompras ainda sem SP Data — pode salvar e associar depois.`);
+    if (recursoSemDefinir > 0) alertas.push(`${recursoSemDefinir} item(ns) sem recurso definido — escolha C/C ou Recurso Próprio na linha do item.`);
     if (conversaoPendente > 0) bloqueios.push(`${conversaoPendente} item(ns) com possível conversão de unidade sem confirmação — a quantidade gravada depende desse fator, confirme antes de salvar.`);
 
     // Itens que a cotação deste pedido/fornecedor espera, mas que não
@@ -3847,32 +3941,32 @@ function calcularResumoPendenciasXml() {
     // compararFontesPedido), sem o filtro "pedidoTemNf" de lá — aqui
     // queremos o alerta já na primeira NF do pedido, não só a partir da
     // segunda. Só um alerta informativo, nunca bloqueia.
-    if (pedidoSelecionadoXml) {
-        const cotacaoSelecionada = listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml);
-        if (cotacaoSelecionada) {
-            const validacaoFornecedorAlerta = validarFornecedorSpData(nfeInfoAtual.cnpjEmit);
-            const cnpjsFornecedorNf = validacaoFornecedorAlerta.encontrado
-                ? [nfeInfoAtual.cnpjEmit, ...validacaoFornecedorAlerta.cnpjsRelacionados]
-                : [nfeInfoAtual.cnpjEmit];
-            const codigosDestaNf = itensXmlDetectados
-                .map(item => bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)])
-                .filter(Boolean).map(a => a.codigoSmartCompras);
-            const codigosJaEmOutraNfDoPedido = new Set(
-                listaNfsProcessadas.filter(nf => nf.pedido === pedidoSelecionadoXml)
-                    .flatMap(nf => (nf.itens || []).map(it => it.codigoSmartCompras))
-            );
-            const itensCotacaoDesteFornecedor = (cotacaoSelecionada.itens || []).filter(it => cnpjEmLista(cnpjsFornecedorNf, it.cnpjFornecedor));
-            const codigosUnicos = [...new Set(itensCotacaoDesteFornecedor.map(it => it.codProduto).filter(Boolean))];
-            const codigosAusentes = codigosUnicos.filter(cod => !codigosDestaNf.includes(cod) && !codigosJaEmOutraNfDoPedido.has(cod));
-            if (codigosAusentes.length > 0) {
-                const nomes = codigosAusentes.map(cod => {
-                    const it = itensCotacaoDesteFornecedor.find(x => x.codProduto === cod);
-                    return it ? (it.nomeOficial || it.descricao || cod) : cod;
-                });
-                alertas.push(`${codigosAusentes.length} item(ns) da cotação deste pedido/fornecedor ainda não apareceram em nenhuma NF (${nomes.join(', ')}) — pode vir numa NF seguinte, não é um problema desta NF.`);
-            }
+    // Roda pra cada cotação selecionada (normalmente só uma; numa NF com
+    // itens de mais de um pedido, uma vez por pedido).
+    cotacoesSelecionadasXml().forEach(pedidoAlerta => {
+        const cotacaoSelecionada = listaCotacoes.find(c => c.pedido === pedidoAlerta);
+        if (!cotacaoSelecionada) return;
+        const validacaoFornecedorAlerta = validarFornecedorSpData(nfeInfoAtual.cnpjEmit);
+        const cnpjsFornecedorNf = validacaoFornecedorAlerta.encontrado
+            ? [nfeInfoAtual.cnpjEmit, ...validacaoFornecedorAlerta.cnpjsRelacionados]
+            : [nfeInfoAtual.cnpjEmit];
+        const codigosDestaNf = codigosSmartComprasDestaNf();
+        const codigosJaEmOutraNfDoPedido = new Set(
+            listaNfsProcessadas.filter(nf => nf.pedido === pedidoAlerta || (nf.pedidos && nf.pedidos.includes(pedidoAlerta)))
+                .flatMap(nf => (nf.itens || []).filter(it => !it.pedidoItem || it.pedidoItem === pedidoAlerta).map(it => it.codigoSmartCompras))
+        );
+        const itensCotacaoDesteFornecedor = (cotacaoSelecionada.itens || []).filter(it => cnpjEmLista(cnpjsFornecedorNf, it.cnpjFornecedor));
+        const codigosUnicos = [...new Set(itensCotacaoDesteFornecedor.map(it => it.codProduto).filter(Boolean))];
+        const codigosAusentes = codigosUnicos.filter(cod => !codigosDestaNf.includes(cod) && !codigosJaEmOutraNfDoPedido.has(cod));
+        if (codigosAusentes.length > 0) {
+            const nomes = codigosAusentes.map(cod => {
+                const it = itensCotacaoDesteFornecedor.find(x => x.codProduto === cod);
+                return it ? (it.nomeOficial || it.descricao || cod) : cod;
+            });
+            const rotuloPedido = cotacoesSelecionadasXml().length > 1 ? `do pedido ${pedidoAlerta} ` : '';
+            alertas.push(`${codigosAusentes.length} item(ns) da cotação ${rotuloPedido}deste fornecedor ainda não apareceram em nenhuma NF (${nomes.join(', ')}) — pode vir numa NF seguinte, não é um problema desta NF.`);
         }
-    }
+    });
 
     return {
         totalItens: itensXmlDetectados.length,
@@ -4198,6 +4292,21 @@ function selecionarPedidoAssociacaoXml(pedido) {
     pedidoSelecionadoXml = pedido || null;
     pedidoOrigemXml = pedido ? 'manual' : null;
     pedidoSugestaoXmlInfo = null;
+    pedidosAdicionaisXml = pedidosAdicionaisXml.filter(p => p !== pedido);
+    renderAssociacaoCotacaoXml();
+}
+
+// "Cotação adicional": pra quando a mesma NF traz itens de mais de um pedido
+// (ex.: compra que juntou dois pedidos do SmartCompras). Fica só como
+// EXTRA — a cotação principal (seletor de cima) continua sendo a única
+// obrigatória.
+function adicionarCotacaoXml(pedido) {
+    if (!pedido || pedido === pedidoSelecionadoXml || pedidosAdicionaisXml.includes(pedido)) return;
+    pedidosAdicionaisXml.push(pedido);
+    renderAssociacaoCotacaoXml();
+}
+function removerCotacaoAdicionalXml(pedido) {
+    pedidosAdicionaisXml = pedidosAdicionaisXml.filter(p => p !== pedido);
     renderAssociacaoCotacaoXml();
 }
 
@@ -4220,7 +4329,7 @@ function filtrarOpcoesItemXml(chave, termo) {
     if (!select) return;
     const t = termo.trim().toUpperCase();
     Array.from(select.options).forEach(opt => {
-        if (!opt.value) { opt.style.display = ''; return; }
+        if (!opt.value || opt.value === SEM_COTACAO_VALOR) { opt.style.display = ''; return; }
         opt.style.display = (!t || opt.textContent.toUpperCase().includes(t)) ? '' : 'none';
     });
 }
@@ -4248,19 +4357,53 @@ function renderAssociacaoCotacaoXml() {
     seletorPedido.innerHTML = '<option value="">Selecione o pedido/cotação...</option>' +
         pedidosOrdenados.map(c => `<option value="${c.pedido}" ${pedidoSelecionadoXml === c.pedido ? 'selected' : ''}>${c.pedido}${c.origem ? ' — ' + c.origem : ''}</option>`).join('');
 
-    if (pedidosOrdenados.length === 0) {
-        container.innerHTML = '<div class="central-item-vazio">Nenhuma cotação cadastrada ainda. Cadastre a cotação correspondente pra poder associar os itens desta NF-e.</div>';
-        if (captionEl) captionEl.textContent = '';
-        renderResumoPendenciasXml();
-        return;
-    }
+    const avisoSemCotacoesHTML = pedidosOrdenados.length === 0
+        ? '<div class="central-item-vazio">Nenhuma cotação cadastrada ainda. Cadastre a cotação correspondente pra associar os itens, ou marque "Esta NF não possui cotação do SmartCompras".</div>' : '';
+
+    const chkSemCotacao = document.getElementById('xml-sem-cotacao-nf');
+    if (chkSemCotacao) chkSemCotacao.checked = semCotacaoNfXml;
+    seletorPedido.disabled = semCotacaoNfXml;
 
     const cotacaoAtual = listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml);
+    const cotacoesAdicionaisObjs = pedidosAdicionaisXml.map(p => listaCotacoes.find(c => c.pedido === p)).filter(Boolean);
+    const multiPedido = cotacoesAdicionaisObjs.length > 0;
+
+    // Destino (Santa Casa/CTI): só é pedido quando há item sem cotação e não
+    // existe cotação com Origem pra dar o destino.
+    const destinoBox = document.getElementById('xml-destino-sem-cotacao');
+    if (destinoBox) {
+        const precisaDestino = itensXmlDetectados.some(i => i.semCotacao) && !(cotacaoAtual && cotacaoAtual.origem);
+        destinoBox.style.display = precisaDestino ? 'block' : 'none';
+        const selDestino = document.getElementById('xml-destino-sem-cotacao-select');
+        if (selDestino) selDestino.value = destinoSemCotacaoXml;
+    }
+
+    // "+ Adicionar cotação": pra NF com itens de mais de um pedido. Fica
+    // escondido quando não há cotação sem ser a principal pra adicionar.
+    const addBox = document.getElementById('xml-cotacao-adicional-box');
+    if (addBox) {
+        addBox.style.display = semCotacaoNfXml ? 'none' : 'block';
+        const chipsHTML = cotacoesAdicionaisObjs.map(c => `<span class="action-chip">${escRel(c.pedido)}${c.origem ? ' — ' + escRel(c.origem) : ''}<button type="button" class="divergencia-del" onclick="removerCotacaoAdicionalXml('${escRel(c.pedido)}')" aria-label="Remover cotação ${escRel(c.pedido)}"><i class="fa-solid fa-xmark"></i></button></span>`).join(' ');
+        const disponiveis = pedidosOrdenados.filter(c => c.pedido !== pedidoSelecionadoXml && !pedidosAdicionaisXml.includes(c.pedido));
+        const selHTML = `<select class="form-field" id="xml-cotacao-adicional-select" ${disponiveis.length ? '' : 'disabled'}>
+            <option value="">${disponiveis.length ? 'Selecione a cotação adicional...' : 'Nenhuma outra cotação cadastrada'}</option>
+            ${disponiveis.map(c => `<option value="${escRel(c.pedido)}">${escRel(c.pedido)}${c.origem ? ' — ' + escRel(c.origem) : ''}</option>`).join('')}
+        </select> <button type="button" class="central-status-toggle" ${disponiveis.length ? '' : 'disabled'} onclick="adicionarCotacaoXml(document.getElementById('xml-cotacao-adicional-select').value)">+ Adicionar cotação</button>`;
+        addBox.innerHTML = (chipsHTML ? `<div class="mt-2">${chipsHTML}</div>` : '') + `<div class="mt-3 cotacao-adicional-linha">${selHTML}</div>`;
+    }
+
     // Não filtra por CNPJ aqui: depois que o usuário escolheu a cotação, ele
     // já resolveu a ambiguidade — mostrar só os itens do fornecedor "certo"
     // por CNPJ esconderia justamente os casos de CD/filial que motivaram
     // essa correção. Cada opção mostra o fornecedor pra escolha ficar clara.
-    const itensDaCotacao = cotacaoAtual ? (cotacaoAtual.itens || []) : [];
+    // Com mais de uma cotação (NF de dois pedidos), os itens de cada uma
+    // carregam o próprio pedido (_pedido/_cotacao) pra achar o fornecedor
+    // certo e pra montar um valor de opção sem ambiguidade quando o mesmo
+    // código do SmartCompras existir em pedidos diferentes.
+    const itensDaCotacao = [
+        ...(cotacaoAtual ? (cotacaoAtual.itens || []).map(it => ({ ...it, _pedido: cotacaoAtual.pedido, _cotacao: cotacaoAtual })) : []),
+        ...cotacoesAdicionaisObjs.flatMap(c => (c.itens || []).map(it => ({ ...it, _pedido: c.pedido, _cotacao: c })))
+    ];
 
     // Uma única exibição do pedido escolhido: o valor já está no <select>
     // acima, então aqui só a legenda com como foi definido (item 6/7 desta
@@ -4276,8 +4419,10 @@ function renderAssociacaoCotacaoXml() {
 
     // Aviso de conflito de pedido: itens já associados apontam pra pedidos
     // diferentes — nunca escolhe sozinho, só avisa.
-    const conflitoHTML = conflitoPedidoXmlInfo ? `<div class="xml-item-linha pendente">
-        <span>⚠ <strong>Itens desta NF já associados apontam pra pedidos diferentes:</strong><br>${conflitoPedidoXmlInfo.pedidos.map(p => `Pedido ${p.pedido}: ${p.itens.join(', ')}`).join('<br>')}<br>Selecione manualmente o pedido correto acima.</span>
+    // Já usado como cotação principal + adicional(is) automaticamente (ver
+    // processarXmlTexto) — aqui é só o aviso do porquê, nunca uma pendência.
+    const conflitoHTML = conflitoPedidoXmlInfo ? `<div class="xml-item-linha">
+        <span>✓ <strong>Itens desta NF pertencem a ${conflitoPedidoXmlInfo.pedidos.length} pedidos</strong> (pelas associações já confirmadas) — todos adicionados abaixo:<br>${conflitoPedidoXmlInfo.pedidos.map(p => `Pedido ${escRel(p.pedido)}: ${p.itens.map(escRel).join(', ')}`).join('<br>')}<br>Pra usar só um, remova o(s) outro(s) na lista de cotações adicionais acima.</span>
     </div>` : '';
 
     // Fase 9: sugestão de pedido quando o CNPJ bate com mais de uma cotação
@@ -4327,19 +4472,30 @@ function renderAssociacaoCotacaoXml() {
         const buscaAberta = associacaoFornecedorBuscaAberta.has(status.chave);
         let cotacaoSpDataHTML, acaoHTML = '';
 
-        if (!cotacaoAtual && !status.associacao) {
-            cotacaoSpDataHTML = 'Selecione o pedido acima pra associar este item à cotação.';
+        if (item.semCotacao) {
+            const spDataDiretoHTML = renderAssociacaoSpDataWidget({ codProduto: status.chaveDireta, nomeOficial: item.xProd }, 'nf-' + status.chave);
+            cotacaoSpDataHTML = `Sem cotação do SmartCompras (compra direta).${spDataDiretoHTML}`;
+            acaoHTML = semCotacaoNfXml ? '' : `<button type="button" class="central-status-toggle" onclick="marcarItemSemCotacaoXml('${status.chave}', false)">Voltar a associar à cotação</button>`;
+        } else if (!cotacaoAtual && !status.associacao) {
+            cotacaoSpDataHTML = 'Selecione o pedido acima pra associar este item à cotação (ou marque "Esta NF não possui cotação do SmartCompras").';
         } else {
             const opcoesHTML = itensParaOpcoes.map(it => {
-                const fornecedorIt = (cotacaoAtual.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor));
+                const cotItem = it._cotacao || cotacaoAtual;
+                const fornecedorIt = (cotItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor));
                 const nomeForn = fornecedorIt ? nomeExibicaoFornecedor(fornecedorIt.razaoSocial, fornecedorIt.cnpj) : (it.cnpjFornecedor || 'fornecedor não identificado');
                 const detalhes = [it.fabricante && it.fabricante !== '---' ? it.fabricante : '', it.embalagem || '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ');
-                return `<option value="${it.codProduto}">${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'} (${nomeForn})${detalhes ? ' — ' + detalhes : ''}</option>`;
+                // Valor da opção: só carrega o pedido quando há mais de uma cotação
+                // selecionada (evita ambiguidade se o mesmo código existir nas duas);
+                // com uma cotação só, é idêntico a antes.
+                const valorOpcao = multiPedido ? `${it._pedido}::${it.codProduto}` : it.codProduto;
+                const rotuloPedido = multiPedido ? `[Pedido ${it._pedido}] ` : '';
+                return `<option value="${escRel(valorOpcao)}">${rotuloPedido}${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'} (${nomeForn})${detalhes ? ' — ' + detalhes : ''}</option>`;
             }).join('');
             const buscaHTML = `<div class="central-spdata-busca" onclick="event.stopPropagation()">
                 <input type="text" class="form-field" placeholder="Buscar por código ou nome..." oninput="filtrarOpcoesItemXml('${status.chave}', this.value)">
                 <select class="form-field" id="assoc-forn-select-${status.chave}" size="6" onchange="confirmarSelecaoAssociacaoFornecedor('${status.chave}')">
                     <option value="">Selecione o item da cotação...</option>
+                    <option value="${SEM_COTACAO_VALOR}">— Sem cotação do SmartCompras (compra direta) —</option>
                     ${opcoesHTML}
                 </select>
                 ${restringeFornecedor ? `<button type="button" class="central-status-toggle" onclick="alternarOutrosFornecedoresXml()">${mostrarOutrosFornecedoresXml ? 'Mostrar só do fornecedor identificado' : 'Mostrar itens de outros fornecedores'}</button>` : ''}
@@ -4353,15 +4509,18 @@ function renderAssociacaoCotacaoXml() {
                 // ter itens de pedidos diferentes (ver conflitoPedidoXmlInfo acima) —
                 // achar o item numa cotação diferente da selecionada não é erro, só
                 // precisa dizer isso claramente em vez de "não encontrado".
-                let itemCotacao = itensDaCotacao.find(it => it.codProduto === status.associacao.codigoSmartCompras);
-                let cotacaoDoItem = cotacaoAtual;
+                // A própria associação pode carregar o pedido (gravado quando havia
+                // mais de uma cotação selecionada) — usa ele pra achar a cotação certa
+                // sem ambiguidade quando o mesmo código existe em pedidos diferentes.
+                let cotacaoDoItem = status.associacao.pedido ? listaCotacoes.find(c => c.pedido === status.associacao.pedido) : cotacaoAtual;
+                let itemCotacao = cotacaoDoItem ? (cotacaoDoItem.itens || []).find(it => it.codProduto === status.associacao.codigoSmartCompras) : null;
                 if (!itemCotacao) {
                     for (const c of listaCotacoes) {
                         const achado = (c.itens || []).find(it => it.codProduto === status.associacao.codigoSmartCompras);
                         if (achado) { itemCotacao = achado; cotacaoDoItem = c; break; }
                     }
                 }
-                const pedidoDiferente = itemCotacao && cotacaoDoItem && cotacaoAtual && cotacaoDoItem.pedido !== cotacaoAtual.pedido;
+                const pedidoDiferente = itemCotacao && cotacaoDoItem && !cotacoesSelecionadasXml().includes(cotacaoDoItem.pedido);
                 const nomeItem = itemCotacao
                     ? (itemCotacao.nomeOficial || itemCotacao.descricao || status.associacao.codigoSmartCompras)
                     : `${status.associacao.codigoSmartCompras} (item não encontrado em nenhuma cotação cadastrada)`;
@@ -4388,6 +4547,7 @@ function renderAssociacaoCotacaoXml() {
         // quantidade) + cotação/SP Data + estado, tudo num único bloco — não
         // precisa mais comparar duas listas separadas pra entender um item.
         const codigoSaidaDiferente = item.cProdNovo && item.cProdNovo !== item.cProd;
+        const recursoHTML = htmlRecursoItemXml(item, idx, status);
         return `<div class="xml-item-linha ${status.pronto ? '' : 'pendente'}">
             <div class="xml-item-topo">
                 <div>
@@ -4403,14 +4563,16 @@ function renderAssociacaoCotacaoXml() {
                 <span class="xml-preview-linha">${formatarPreviewXml(item)}</span>
             </div>
             <div class="xml-item-cotacao">${cotacaoSpDataHTML}</div>
+            ${recursoHTML ? `<div class="xml-item-cotacao">${recursoHTML}</div>` : ''}
             ${acaoHTML ? `<div class="xml-item-acao">${acaoHTML}</div>` : ''}
-            ${renderPainelAssociacoesConhecidasXml(item, idx)}
+            ${item.semCotacao ? '' : renderPainelAssociacoesConhecidasXml(item, idx)}
         </div>`;
     }).join('');
 
-    container.innerHTML = conflitoHTML + sugestaoPedidoHTML + filtroHTML + linhasItens;
+    container.innerHTML = avisoSemCotacoesHTML + conflitoHTML + sugestaoPedidoHTML + filtroHTML + linhasItens;
     renderResumoPendenciasXml();
     renderResumoCodigosXml();
+    renderResultadoSalvarNF(); // conferência ao vivo, antes de salvar
 }
 
 // ============================================================
@@ -4560,15 +4722,61 @@ function confirmarAlteracoesEExecutar(acao) {
 
 function confirmarSelecaoAssociacaoFornecedor(chave) {
     const select = document.getElementById(`assoc-forn-select-${chave}`);
-    const codigoSmartCompras = select ? select.value : '';
-    if (!codigoSmartCompras) return toast('✕ Selecione um item da cotação antes de confirmar.');
-    confirmarAssociacaoFornecedor(chave, codigoSmartCompras);
+    const valor = select ? select.value : '';
+    if (!valor) return toast('✕ Selecione um item da cotação antes de confirmar.');
+    if (valor === SEM_COTACAO_VALOR) return marcarItemSemCotacaoXml(chave, true);
+    // Valor "pedido::código" só existe quando há mais de uma cotação
+    // selecionada (evita ambiguidade quando o mesmo código do SmartCompras
+    // existe em pedidos diferentes); com uma só cotação, o valor é o código puro.
+    const sep = valor.indexOf('::');
+    const pedidoDaAssociacao = sep >= 0 ? valor.slice(0, sep) : null;
+    const codigoSmartCompras = sep >= 0 ? valor.slice(sep + 2) : valor;
+    confirmarAssociacaoFornecedor(chave, codigoSmartCompras, pedidoDaAssociacao);
 }
 
-async function confirmarAssociacaoFornecedor(chave, codigoSmartCompras) {
+// Compra direta: o item não passa pela associação com a cotação (só SP Data).
+function marcarItemSemCotacaoXml(chave, valor) {
+    if (!nfeInfoAtual) return;
+    const item = itensXmlDetectados.find(i => chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, i.cProd) === chave);
+    if (!item) return;
+    item.semCotacao = !!valor;
+    associacaoFornecedorBuscaAberta.delete(chave);
+    if (valor) toast('Item marcado como compra direta (sem cotação do SmartCompras).');
+    renderAssociacaoCotacaoXml();
+}
+
+// Atalho da NF inteira sem cotação do SmartCompras. Guarda o pedido que estava
+// definido pra poder desmarcar sem perder nada.
+function alternarSemCotacaoNfXml(marcado) {
+    if (!nfeInfoAtual) return;
+    if (marcado) {
+        pedidoAntesSemCotacaoXml = { pedido: pedidoSelecionadoXml, origem: pedidoOrigemXml, conflito: conflitoPedidoXmlInfo, sugestao: pedidoSugestaoXmlInfo, adicionais: pedidosAdicionaisXml };
+        pedidoSelecionadoXml = null; pedidoOrigemXml = null; conflitoPedidoXmlInfo = null; pedidoSugestaoXmlInfo = null; pedidosAdicionaisXml = [];
+        semCotacaoNfXml = true;
+        itensXmlDetectados.forEach(i => { i.semCotacao = true; });
+    } else {
+        semCotacaoNfXml = false;
+        itensXmlDetectados.forEach(i => { i.semCotacao = false; });
+        if (pedidoAntesSemCotacaoXml) {
+            pedidoSelecionadoXml = pedidoAntesSemCotacaoXml.pedido; pedidoOrigemXml = pedidoAntesSemCotacaoXml.origem;
+            conflitoPedidoXmlInfo = pedidoAntesSemCotacaoXml.conflito; pedidoSugestaoXmlInfo = pedidoAntesSemCotacaoXml.sugestao;
+            pedidosAdicionaisXml = pedidoAntesSemCotacaoXml.adicionais || [];
+        }
+        pedidoAntesSemCotacaoXml = null;
+    }
+    renderAssociacaoCotacaoXml();
+}
+
+function definirDestinoSemCotacaoXml(valor) {
+    destinoSemCotacaoXml = valor || '';
+    renderAssociacaoCotacaoXml();
+}
+
+async function confirmarAssociacaoFornecedor(chave, codigoSmartCompras, pedidoDaAssociacao) {
     if (!chave || !codigoSmartCompras || !nfeInfoAtual) return;
     const item = itensXmlDetectados.find(i => chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, i.cProd) === chave);
     if (!item) return;
+    item.semCotacao = false; // escolheu um item da cotação: deixa de ser compra direta
 
     const agora = new Date().toISOString();
     const existente = bancoAssociacoesFornecedor[chave];
@@ -4581,6 +4789,7 @@ async function confirmarAssociacaoFornecedor(chave, codigoSmartCompras) {
             cnpjFornecedor: nfeInfoAtual.cnpjEmit,
             codigoFornecedor: item.cProd,
             codigoSmartCompras,
+            ...(pedidoDaAssociacao ? { pedido: pedidoDaAssociacao } : {}),
             nfNumero: nfeInfoAtual.nNF || '',
             confirmadoEm: agora,
             historico
@@ -4598,27 +4807,59 @@ async function confirmarAssociacaoFornecedor(chave, codigoSmartCompras) {
 // (associação fornecedor→cotação→SP Data, quantidade/valor já com a
 // conversão aplicada). Não cria associação nova nenhuma, só um retrato do
 // que foi faturado nesta NF especificamente.
-async function salvarNfProcessada() {
-    if (!nfeInfoAtual || !itensXmlDetectados.length) return;
+function montarNfProcessadaAtual(opcoes) {
+    opcoes = opcoes || {};
+    if (!nfeInfoAtual || !itensXmlDetectados.length) return null;
     const chave = nfeInfoAtual.serie ? `${nfeInfoAtual.nNF}_${nfeInfoAtual.serie}` : nfeInfoAtual.nNF;
-    if (!chave) return;
+    if (!chave) return null;
 
-    const itens = itensXmlDetectados.map(item => {
-        const chaveAssoc = chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd);
-        const associacao = bancoAssociacoesFornecedor[chaveAssoc];
-        const associacaoSpData = associacao ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === associacao.codigoSmartCompras) : null;
-        return {
-            cProd: item.cProd,
-            xProd: item.xProd,
-            codigoSmartCompras: associacao ? associacao.codigoSmartCompras : null,
-            codigoSpData: associacaoSpData ? associacaoSpData.spDataCodigo : null,
-            quantidade: parseFloat((item.qComOriginal * item.fator).toFixed(4)),
-            valorUnitario: parseFloat((item.vUnComOriginal / item.fator).toFixed(4)),
-            fatorAplicado: item.fator
-        };
-    });
+    const pedidosSelecionados = cotacoesSelecionadasXml();
+    const multi = pedidosSelecionados.length > 1;
+    const itens = itensXmlDetectados
+        .filter(item => !(opcoes.soConfirmados && item.suspeito))
+        .map(item => {
+            const st = statusItemXml(item);
+            const direto = !!item.semCotacao;
+            const associacao = direto ? null : bancoAssociacoesFornecedor[st.chave];
+            const chaveSpData = direto ? st.chaveDireta : (associacao ? associacao.codigoSmartCompras : null);
+            const associacaoSpData = chaveSpData ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === chaveSpData) : null;
+            const rec = direto ? recursoPrevistoItemXml(item, st) : null;
+            // Com mais de uma cotação na NF, cada linha precisa saber de QUAL
+            // pedido é seu código (o mesmo código do SmartCompras pode existir
+            // em pedidos diferentes) — sem isso a conferência por pedido
+            // poderia contar o item no pedido errado.
+            // Associação sem o pedido gravado (ex.: confirmada antes de esta NF
+            // virar multi-pedido, como no caminho automático que reaproveita
+            // associações antigas): acha, entre as cotações selecionadas, qual
+            // delas realmente TEM esse código — só cai no pedido principal se o
+            // código existir em mais de uma (aí sim é ambíguo de verdade).
+            let pedidoItem = null;
+            if (multi && associacao) {
+                if (associacao.pedido) pedidoItem = associacao.pedido;
+                else {
+                    const donos = pedidosSelecionados.filter(p => {
+                        const c = listaCotacoes.find(cc => cc.pedido === p);
+                        return c && (c.itens || []).some(i => i.codProduto === associacao.codigoSmartCompras);
+                    });
+                    pedidoItem = donos.length === 1 ? donos[0] : pedidoSelecionadoXml;
+                }
+            }
+            return {
+                cProd: item.cProd,
+                xProd: item.xProd,
+                codigoSmartCompras: associacao ? associacao.codigoSmartCompras : null,
+                codigoSpData: associacaoSpData ? associacaoSpData.spDataCodigo : null,
+                quantidade: parseFloat((item.qComOriginal * item.fator).toFixed(4)),
+                valorUnitario: parseFloat((item.vUnComOriginal / item.fator).toFixed(4)),
+                fatorAplicado: item.fator,
+                ...(direto ? { semCotacao: true, recurso: (rec && rec.valor) || null } : {}),
+                ...(pedidoItem ? { pedidoItem } : {})
+            };
+        });
 
-    await nfsProcessadasCollection.doc(chave).set({
+    const algumDireto = itensXmlDetectados.some(i => i.semCotacao);
+    const cotSel = pedidoSelecionadoXml ? listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml) : null;
+    const doc = {
         nf: nfeInfoAtual.nNF,
         serie: nfeInfoAtual.serie,
         cnpjFornecedor: nfeInfoAtual.cnpjEmit,
@@ -4627,8 +4868,17 @@ async function salvarNfProcessada() {
         valorTotal: nfeInfoAtual.valorTotal,
         pedido: pedidoSelecionadoXml,
         itens,
-        processadoEm: new Date().toISOString()
-    });
+        processadoEm: new Date().toISOString(),
+        ...(algumDireto ? { semCotacaoSmartCompras: itensXmlDetectados.every(i => i.semCotacao), destino: (cotSel && cotSel.origem) || destinoSemCotacaoXml || null } : {}),
+        ...(multi ? { pedidos: pedidosSelecionados } : {})
+    };
+    return { chave, doc };
+}
+
+async function salvarNfProcessada() {
+    const montada = montarNfProcessadaAtual();
+    if (!montada) return;
+    await nfsProcessadasCollection.doc(montada.chave).set(montada.doc);
 }
 
 // ===================================================================
@@ -4638,11 +4888,18 @@ async function salvarNfProcessada() {
 // automática de divergência. Casa os itens pelas chaves que já existem:
 // codigoSmartCompras (cotação ↔ NF) e codigoSpData (NF ↔ ERP, via
 // entradasErp.itens[].codigoSpData e vinculo.pedido).
-function compararFontesPedido(pedido) {
+function compararFontesPedido(pedido, opcoes) {
     const cotacao = listaCotacoes.find(c => c.pedido === pedido);
     if (!cotacao) return [];
 
-    const nfsDoPedido = listaNfsProcessadas.filter(nf => nf.pedido === pedido);
+    // NF de mais de um pedido: nf.pedido é sempre o principal (compatível com
+    // toda NF já salva antes desta funcionalidade); nf.pedidos (plural) só
+    // existe quando a NF tem itens de mais de uma cotação.
+    const nfPertenceAoPedido = nf => nf.pedido === pedido || (nf.pedidos && nf.pedidos.includes(pedido));
+    // opcoes.nfExtra = a NF que está sendo tratada na tela (ainda não salva, ou
+    // já salva): entra na conta no lugar da gravada, sem gravar nada.
+    const nfExtra = opcoes && opcoes.nfExtra && nfPertenceAoPedido(opcoes.nfExtra) ? opcoes.nfExtra : null;
+    const nfsDoPedido = listaNfsProcessadas.filter(nf => nfPertenceAoPedido(nf) && !(nfExtra && nf.id === nfExtra.id)).concat(nfExtra ? [nfExtra] : []);
     const entradasErpDoPedido = listaEntradasErp.filter(e => e.vinculo && e.vinculo.status === 'confirmado' && e.vinculo.pedido === pedido);
     // Só sinaliza "não faturado" quando o pedido já tem alguma NF processada —
     // um pedido que ainda nem começou a ser atendido não é uma divergência,
@@ -4652,8 +4909,13 @@ function compararFontesPedido(pedido) {
 
     return (cotacao.itens || []).map(itemCotacao => {
         const nome = itemCotacao.nomeOficial || itemCotacao.descricao || itemCotacao.codProduto;
+        // Numa NF de um pedido só (a grande maioria), it.pedidoItem nem existe
+        // — conta normal, como sempre foi. Só quando a NF tem mais de um
+        // pedido (it.pedidoItem presente) é que o código precisa bater com
+        // ESTE pedido, pra não contar um item do pedido errado (o mesmo
+        // código do SmartCompras pode existir em pedidos diferentes).
         const itensNf = nfsDoPedido.flatMap(nf => (nf.itens || [])
-            .filter(it => it.codigoSmartCompras === itemCotacao.codProduto)
+            .filter(it => it.codigoSmartCompras === itemCotacao.codProduto && (!it.pedidoItem || it.pedidoItem === pedido))
             .map(it => ({ ...it, nfNumero: nf.nf })));
         const quantidadeFaturada = itensNf.length ? itensNf.reduce((s, it) => s + it.quantidade, 0) : null;
         const valorUnitarioFaturado = itensNf.length ? itensNf[itensNf.length - 1].valorUnitario : null;
@@ -4751,6 +5013,11 @@ function calcularAptidaoSaidaNota(nota) {
     }
 
     const nfProcessada = candidatas[0];
+    const itensDiretos = (nfProcessada.itens || []).filter(it => it.semCotacao);
+    const recursosDiretos = [...new Set(itensDiretos.map(it => it.recurso).filter(Boolean))];
+    if (!nfProcessada.pedido && (nfProcessada.semCotacaoSmartCompras || itensDiretos.length)) {
+        return { status: 'sem_cotacao', label: '✓ Conferida — compra direta, sem cotação do SmartCompras', badge: 'pronto', cnpjFornecedor: nfProcessada.cnpjFornecedor || null, destino: nfProcessada.destino || null, recursos: recursosDiretos };
+    }
     if (!nfProcessada.pedido) {
         return { status: 'sem_pedido', label: 'Conferida, mas sem pedido/cotação vinculado', badge: 'neutro', cnpjFornecedor: nfProcessada.cnpjFornecedor || null };
     }
@@ -4758,7 +5025,7 @@ function calcularAptidaoSaidaNota(nota) {
     const cotacao = listaCotacoes.find(c => c.pedido === nfProcessada.pedido);
     const codigosDestaNf = (nfProcessada.itens || []).map(it => it.codigoSmartCompras).filter(Boolean);
     const destino = cotacao ? (cotacao.origem || null) : null;
-    const recursos = cotacao ? [...new Set(codigosDestaNf.map(cod => (cotacao.recursosPorItem || {})[cod]).filter(Boolean))] : [];
+    const recursos = [...new Set([...(cotacao ? codigosDestaNf.map(cod => (cotacao.recursosPorItem || {})[cod]) : []), ...recursosDiretos].filter(Boolean))];
     const base = { pedido: nfProcessada.pedido, cnpjFornecedor: nfProcessada.cnpjFornecedor || null, destino, recursos };
 
     const divergenciasDestaNf = compararFontesPedido(nfProcessada.pedido)
@@ -4860,7 +5127,7 @@ function camposMaterialDivergencia(tipoEstruturado, item, div) {
 // resetar tudo. Só abre/limpa quando é de fato um pedido diferente do que já
 // estava sendo preenchido.
 function registrarDivergenciaDaComparacao(pedido, codProduto) {
-    const item = compararFontesPedido(pedido).find(i => i.codProduto === codProduto);
+    const item = compararFontesPedido(pedido, { nfExtra: nfExtraDaTela(pedido) }).find(i => i.codProduto === codProduto);
     const cotacao = listaCotacoes.find(c => c.pedido === pedido);
     if (!item || !cotacao) return;
     const fornecedor = (cotacao.fornecedores || []).find(f => mesmoCnpj(f.cnpj, item.cnpjFornecedor));
@@ -5049,103 +5316,213 @@ async function executarSalvarEntradaNF() {
     // Cadastro automático por CNPJ (não bloqueia o salvamento da NF se falhar).
     if (nfeInfoAtual) await garantirFornecedorPorCnpjXml(nfeInfoAtual.cnpjEmit, nfeInfoAtual.fornecedor);
 
-    renderResultadoSalvarNF();
-    renderSugestaoRecursoNf();
-    toast('✓ NF salva.');
+    const recursosAplicados = await aplicarRecursoPorCotacaoNf();
+    nfSalvaXml = true;
+    renderAssociacaoCotacaoXml();
+    toast(recursosAplicados.length ? `✓ NF salva. Recurso gravado em ${recursosAplicados.length} item(ns) da cotação.` : '✓ NF salva.');
 }
 
 // Mostra, direto na Entrada de NF (sem trocar de tela), o resultado da
 // comparação Cotação × NF × ERP só pros itens desta NF — reaproveita
 // compararFontesPedido/textoDivergenciaNatural, os mesmos usados na Central
 // do Pedido. "Gerar auditoria" só prepara o rascunho, nunca salva sozinho.
+// Conferência Cotação × NF × ERP da NF em tratamento: recalculada na tela a
+// cada mudança (fator, associação, pedido…), ANTES de salvar. Usa a NF em
+// edição como se já estivesse salva, mas não grava nada. Itens com conversão
+// ainda não confirmada não entram (evita falso alarme de quantidade).
+function nfExtraDaTela(pedido) {
+    if (!nfeInfoAtual || !pedidoSelecionadoXml || pedidoSelecionadoXml !== pedido) return null;
+    const tela = document.getElementById('screen-xml-editor');
+    if (!tela || !tela.classList.contains('active')) return null;
+    const montada = montarNfProcessadaAtual({ soConfirmados: true });
+    return montada ? { id: montada.chave, ...montada.doc } : null;
+}
+
 function renderResultadoSalvarNF() {
     const el = document.getElementById('xml-resultado-salvar');
     if (!el) return;
     if (!pedidoSelecionadoXml || !nfeInfoAtual) { el.style.display = 'none'; return; }
 
-    const codigosDestaNf = itensXmlDetectados
+    const montada = montarNfProcessadaAtual({ soConfirmados: true });
+    const nfExtra = montada ? { id: montada.chave, ...montada.doc } : null;
+    const codigosConfirmados = itensXmlDetectados
+        .filter(item => !item.semCotacao && !item.suspeito)
         .map(item => bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)])
         .filter(Boolean)
         .map(a => a.codigoSmartCompras);
+    const aguardando = itensXmlDetectados.filter(item => !item.semCotacao && item.suspeito
+        && bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)]).length;
 
-    const comparacao = compararFontesPedido(pedidoSelecionadoXml).filter(item => codigosDestaNf.includes(item.codProduto));
-    if (comparacao.length === 0) { el.style.display = 'none'; return; }
+    // Uma cotação (o normal) ou várias (NF com itens de mais de um pedido):
+    // junta a conferência de cada pedido selecionado; cada resultado carrega
+    // o próprio pedido pra "Gerar auditoria" abrir o pedido certo.
+    const comparacao = cotacoesSelecionadasXml()
+        .flatMap(p => compararFontesPedido(p, { nfExtra }).map(item => ({ ...item, _pedido: p })))
+        .filter(item => codigosConfirmados.includes(item.codProduto));
+    if (comparacao.length === 0 && aguardando === 0) { el.style.display = 'none'; return; }
     el.style.display = 'block';
 
     const temDivergencia = comparacao.some(item => item.divergencias.length > 0);
-    const cabecalho = `<div class="xml-estado-card ${temDivergencia ? 'pendente' : 'pronto'}"><div class="xml-estado-linha">${
+    const previa = nfSalvaXml ? '' : ' (prévia — ainda não salva)';
+    const cabecalho = comparacao.length === 0 ? '' : `<div class="xml-estado-card ${temDivergencia ? 'pendente' : 'pronto'}"><div class="xml-estado-linha">${
         temDivergencia
-            ? '<span class="xml-item-badge pendente">⚠ Divergência com a cotação/ERP</span>'
-            : '<span class="xml-item-badge pronto">✓ Confere com a cotação/ERP</span>'
+            ? `<span class="xml-item-badge pendente">⚠ Divergência com a cotação/ERP${previa}</span>`
+            : `<span class="xml-item-badge pronto">✓ Confere com a cotação/ERP${previa}</span>`
     }</div></div>`;
+    const aguardandoHTML = aguardando > 0
+        ? `<div class="xml-item-meta">${aguardando} item(ns) aguardando a confirmação do fator de conversão — só entram na conferência depois de confirmados.</div>` : '';
 
     const itensComDivergencia = comparacao.filter(item => item.divergencias.length > 0).map(item => `<div class="xml-item-linha pendente">
-        <div class="xml-item-topo"><div class="xml-produto-nome">${item.nome}</div></div>
+        <div class="xml-item-topo"><div class="xml-produto-nome">${item.nome}${multiPedidoAtivo() ? ` <span class="xml-item-meta">(Pedido ${escRel(item._pedido)})</span>` : ''}</div></div>
         <div class="xml-item-cotacao">${item.divergencias.map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div>
-        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${pedidoSelecionadoXml}', '${item.codProduto}')">Gerar auditoria</button></div>
+        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${escRel(item._pedido)}', '${item.codProduto}')">Gerar auditoria</button></div>
     </div>`).join('');
 
-    el.innerHTML = cabecalho + itensComDivergencia;
+    el.innerHTML = cabecalho + aguardandoHTML + itensComDivergencia;
 }
+function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
 
-// ===== Determinação assistida de recurso (correção conceitual da Fase 7) =====
-// O recurso NÃO é mais escolhido item a item dentro da cotação. A cotação
-// não sabe quantas NFs vão sair dela; quem sabe é a NF/XML que está
-// entrando agora. Por isso a sugestão/confirmação acontece aqui, no
-// salvamento da NF — reaproveitando sugerirRecursoPorHistorico (já existia
-// na Fase 7, só não era chamado neste ponto) e gravando no MESMO lugar de
-// sempre (cotacao.recursosPorItem), nunca uma estrutura nova. Sem IA, sem
-// fuzzy matching: a única fonte é o histórico de recursosPorItem já
-// confirmado noutras cotações pro mesmo código SmartCompras. Sem esse
-// histórico, o sistema não chuta — mostra que não conseguiu determinar e
-// deixa a escolha manual como exceção, não como fluxo principal.
-function renderSugestaoRecursoNf() {
-    const el = document.getElementById('xml-sugestao-recurso');
-    if (!el) return;
-    if (!pedidoSelecionadoXml || !nfeInfoAtual) { el.style.display = 'none'; return; }
-
-    const cotacao = listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml);
-    if (!cotacao) { el.style.display = 'none'; return; }
-
-    const codigosDestaNf = [...new Set(itensXmlDetectados
+// ===== Determinação do recurso pelas cotações (regra de negócio) =====
+// Recurso público/externo (C/C) exige NO MÍNIMO 3 fornecedores disputando o
+// item. Com menos (1 ou 2 cotaram), a compra é feita com Recurso Próprio.
+// O número de fornecedores que cotaram cada item vem do relatório de
+// fornecedores ganhadores do PRÓPRIO pedido (listaRelatorioGanhadores) — fato
+// objetivo, comparado por código. Histórico de outros pedidos NÃO é base: o
+// mesmo produto pode ser comprado ora com C/C, ora com Recurso Próprio.
+// Sem o relatório (ou sem o item nele) o sistema não chuta: a escolha fica
+// manual. Grava no MESMO lugar de sempre (cotacao.recursosPorItem).
+// Mínimos: os dois campos de Configurações → Análise de cotações mandam;
+// vazios, valem 3 (C/C) e 1 (Recurso Próprio).
+function minimoFornecedoresCC() { const n = parseInt(appConfig.minimoCotacoesCC, 10); return n >= 1 ? n : 3; }
+function minimoFornecedoresProprio() { const n = parseInt(appConfig.minimoCotacoesRecursoProprio, 10); return n >= 1 ? n : 1; }
+function participantesDoItem(pedido, codigo) {
+    const rel = listaRelatorioGanhadores.find(r => r.pedido === pedido);
+    const item = rel && codigo ? (rel.itens || []).find(g => g.codigo === codigo) : null;
+    const n = item ? Number(item.participantes) : NaN;
+    return Number.isFinite(n) ? n : null;
+}
+function determinarRecursoPorCotacao(pedido, codigo) {
+    const n = participantesDoItem(pedido, codigo);
+    if (n === null) return null;
+    const minimo = minimoFornecedoresCC();
+    if (n >= minimo) return { tipo: 'cc', participantes: n, minimo };
+    if (n >= minimoFornecedoresProprio()) return { tipo: 'proprio', participantes: n, minimo };
+    return null;
+}
+function codigosSmartComprasDestaNf() {
+    return [...new Set(itensXmlDetectados
+        .filter(item => !item.semCotacao)
         .map(item => bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)])
         .filter(Boolean)
         .map(a => a.codigoSmartCompras))];
-
-    // Só os itens desta NF que ainda não têm recurso confirmado — um item
-    // já confirmado (nesta ou numa NF anterior do mesmo pedido) não volta a
-    // pedir decisão de novo.
-    const pendentes = codigosDestaNf.filter(codigo => !(cotacao.recursosPorItem || {})[codigo]);
-    if (pendentes.length === 0) { el.style.display = 'none'; return; }
-
-    if (!cotacao.origem) {
-        el.style.display = 'block';
-        el.innerHTML = `<div class="xml-estado-card pendente"><div class="xml-estado-linha">⚠ Defina a Origem (Santa Casa/CTI) desta cotação (${escRel(cotacao.pedido)}) pra poder confirmar o recurso dos itens.</div></div>`;
-        return;
+}
+// Chamado ao salvar a NF (o salvamento é a confirmação do usuário): define, de
+// uma vez, o recurso dos itens desta NF que ainda não têm e que a regra acima
+// consegue determinar. Os demais ficam pra escolha manual.
+// Recurso de UM item da NF em edição (antes de salvar). Nada aqui grava.
+// Null = o item ainda não tem base (sem associação).
+function recursoPrevistoItemXml(item, status) {
+    if (!nfeInfoAtual) return null;
+    if (item.semCotacao) {
+        const cotDireta = pedidoSelecionadoXml ? listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml) : null;
+        const destino = (cotDireta && cotDireta.origem) || destinoSemCotacaoXml;
+        const chaveRec = 'd:' + item.cProd;
+        if (!destino) return { chaveRec, semDestino: true };
+        const rasc = recursosRascunhoXml[chaveRec] || null;
+        const proprio = calcularRecursoOficial(destino, 'proprio');
+        return { chaveRec, direto: true, cc: calcularRecursoOficial(destino, 'cc'), proprio, valor: rasc || proprio, motivo: rasc ? 'definido manualmente' : 'sem cotação do SmartCompras → Recurso Próprio' };
     }
+    if (!status || !status.associacao) return null;
+    const codigo = status.associacao.codigoSmartCompras;
+    const temItem = c => (c.itens || []).some(i => i.codProduto === codigo);
+    const cotDaAssociacao = status.associacao.pedido ? listaCotacoes.find(c => c.pedido === status.associacao.pedido) : null;
+    const cot = (cotDaAssociacao && temItem(cotDaAssociacao)) ? cotDaAssociacao
+        : listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml && temItem(c))
+        || cotacoesSelecionadasXml().map(p => listaCotacoes.find(c => c.pedido === p)).find(c => c && temItem(c))
+        || listaCotacoes.find(temItem);
+    const chaveRec = 'c:' + codigo;
+    if (!cot || !cot.origem) return { chaveRec, semOrigem: true };
+    const existente = (cot.recursosPorItem || {})[codigo] || null;
+    const det = determinarRecursoPorCotacao(cot.pedido, codigo);
+    const esperado = det ? calcularRecursoOficial(cot.origem, det.tipo) : null;
+    const detTipo = det ? det.tipo : null;
+    const rasc = recursosRascunhoXml[chaveRec] || null;
+    const valor = rasc || existente || esperado;
+    const conforme = det ? `conforme as cotações: ${det.participantes} fornecedor(es) cotaram (C/C exige ${det.minimo} ou mais)` : 'já definido';
+    let motivo = '';
+    if (rasc) motivo = esperado && rasc !== esperado ? `definido manualmente (as cotações indicariam ${esperado})` : 'definido manualmente';
+    else if (existente) motivo = esperado && existente !== esperado ? `já definido (as cotações indicariam ${esperado})` : conforme;
+    else if (det) motivo = conforme;
+    return { chaveRec, cotacao: cot, codigo, cc: calcularRecursoOficial(cot.origem, 'cc'), proprio: calcularRecursoOficial(cot.origem, 'proprio'), valor, motivo, detTipo };
+}
 
-    el.style.display = 'block';
-    const linhasHTML = pendentes.map(codigo => {
-        const itemCotacao = (cotacao.itens || []).find(it => it.codProduto === codigo);
-        const nome = itemCotacao ? (itemCotacao.nomeOficial || itemCotacao.descricao || codigo) : codigo;
-        const sugestao = sugerirRecursoPorHistorico(codigo, pedidoSelecionadoXml);
-        const ccOficial = calcularRecursoOficial(cotacao.origem, 'cc');
-        const proprioOficial = calcularRecursoOficial(cotacao.origem, 'proprio');
-        const sugestaoHTML = sugestao
-            ? `<div class="xml-item-cotacao">💡 Sugestão com base no histórico (usado ${sugestao.totalOcorrencias}x pra este código, mais recente no pedido ${escRel(sugestao.pedidoMaisRecente)}): <strong>${escRel(sugestao.recursoMaisRecente)}</strong></div>
-               <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="aplicarRecursoSugerido('${escRel(pedidoSelecionadoXml)}','${escRel(codigo)}','${escRel(sugestao.recursoMaisRecente)}')">Confirmar sugestão</button></div>`
-            : `<div class="xml-item-cotacao"><em>Não foi possível determinar com segurança — sem histórico pra este código. Confirme manualmente:</em></div>`;
-        return `<div class="xml-item-linha pendente">
-            <div class="xml-item-topo"><div class="xml-produto-nome">${escRel(upAud(nome))}</div></div>
-            ${sugestaoHTML}
-            <div class="xml-item-acao">
-                <button type="button" class="central-status-toggle" onclick="definirRecursoItem('${escRel(pedidoSelecionadoXml)}','${escRel(codigo)}','cc')">${escRel(ccOficial)}</button>
-                <button type="button" class="central-status-toggle" onclick="definirRecursoItem('${escRel(pedidoSelecionadoXml)}','${escRel(codigo)}','proprio')">${escRel(proprioOficial)}</button>
-            </div>
-        </div>`;
-    }).join('');
+function htmlRecursoItemXml(item, idx, status) {
+    const r = recursoPrevistoItemXml(item, status);
+    if (!r) return '';
+    if (r.semDestino) return '<em>Recurso: defina o destino (Santa Casa/CTI) desta NF pra definir o recurso.</em>';
+    if (r.semOrigem) return '<em>Recurso: a cotação deste item não tem a Origem (Santa Casa/CTI) definida.</em>';
+    if (r.valor) {
+        const trocarPara = r.valor === r.cc ? 'proprio' : 'cc';
+        const rotulo = trocarPara === 'cc' ? r.cc : r.proprio;
+        const forcandoContraRegra = r.detTipo && r.valor !== (r.detTipo === 'cc' ? r.cc : r.proprio); // já é uma exceção manual — sempre reversível
+        const valeAPenaSugerirTroca = r.detTipo !== 'cc' || forcandoContraRegra; // "trocar" só faz sentido abaixo do mínimo (ou desfazendo uma exceção)
+        const acaoHTML = valeAPenaSugerirTroca
+            ? `<button type="button" class="central-status-toggle" onclick="definirRecursoNfXml(${idx}, '${trocarPara}')">Trocar pra ${escRel(rotulo)}</button>`
+            : `<button type="button" class="link-discreto" onclick="definirRecursoNfXml(${idx}, '${trocarPara}')">Corrigir</button>`;
+        return `Recurso: <strong>${escRel(r.valor)}</strong> — ${escRel(r.motivo)} ${acaoHTML}`;
+    }
+    return `<em>Recurso: não dá pra definir pelas cotações — este pedido não tem o relatório de fornecedores ganhadores com este item. Escolha:</em> `
+        + `<button type="button" class="central-status-toggle" onclick="definirRecursoNfXml(${idx}, 'cc')">${escRel(r.cc)}</button> `
+        + `<button type="button" class="central-status-toggle" onclick="definirRecursoNfXml(${idx}, 'proprio')">${escRel(r.proprio)}</button>`;
+}
 
-    el.innerHTML = `<div class="xml-diff-titulo">Recurso pendente de confirmação (${pendentes.length} item(ns) desta NF)</div>${linhasHTML}`;
+async function gravarRecursoCotacaoXml(cotacao, novos) {
+    await cotacoesCollection.doc(cotacao.pedido).set({ recursosPorItem: novos }, { merge: true });
+    cotacao.recursosPorItem = { ...(cotacao.recursosPorItem || {}), ...novos };
+}
+
+// Antes de salvar, a escolha fica só na tela (rascunho); depois de salvar,
+// trocar o recurso grava na hora (cotação, ou a própria NF nos itens diretos).
+async function definirRecursoNfXml(idx, tipo) {
+    const item = itensXmlDetectados[idx];
+    if (!item) return;
+    const r = recursoPrevistoItemXml(item, statusItemXml(item));
+    if (!r || r.semDestino || r.semOrigem) return;
+    const oficial = tipo === 'cc' ? r.cc : r.proprio;
+    if (!oficial) return;
+    recursosRascunhoXml[r.chaveRec] = oficial;
+    if (nfSalvaXml) {
+        try {
+            if (r.direto) await salvarNfProcessada();
+            else await gravarRecursoCotacaoXml(r.cotacao, { [r.codigo]: oficial });
+        } catch (e) {
+            console.error('Erro ao salvar o recurso:', e);
+            toast('✕ Erro ao salvar o recurso. Tente novamente.');
+        }
+    }
+    renderAssociacaoCotacaoXml();
+}
+
+// Ao salvar a NF (a confirmação do usuário): grava na cotação o recurso dos
+// itens (o que a regra das cotações determinou e/ou o que foi trocado na
+// tela). Nunca sobrescreve um recurso já definido sem uma troca explícita.
+async function aplicarRecursoPorCotacaoNf() {
+    if (!nfeInfoAtual) return [];
+    const porCotacao = new Map();
+    itensXmlDetectados.forEach(item => {
+        if (item.semCotacao) return;
+        const r = recursoPrevistoItemXml(item, statusItemXml(item));
+        if (!r || !r.valor || !r.cotacao) return;
+        if ((r.cotacao.recursosPorItem || {})[r.codigo] === r.valor) return;
+        if (!porCotacao.has(r.cotacao)) porCotacao.set(r.cotacao, {});
+        porCotacao.get(r.cotacao)[r.codigo] = r.valor;
+    });
+    const aplicados = [];
+    for (const [cotacao, novos] of porCotacao) {
+        try { await gravarRecursoCotacaoXml(cotacao, novos); aplicados.push(...Object.keys(novos)); }
+        catch (e) { console.error('Erro ao definir recurso pelas cotações:', e); }
+    }
+    return aplicados;
 }
 
 async function baixarXmlConvertido() {
@@ -5824,55 +6201,6 @@ function calcularRecursoOficial(origemPedido, tipo) {
     return tipo === 'cc' ? mapa.cc : tipo === 'proprio' ? mapa.proprio : null;
 }
 
-// Sugestão de recurso baseada em evidência concreta: o MESMO código
-// SmartCompras já teve um recurso confirmado em OUTRA cotação antes. Nunca
-// por nome de produto (evidência frágil) — só pelo código, que é o
-// identificador concreto disponível hoje nessa cadeia. Nunca aplica
-// sozinho, só sugere; a confirmação é sempre uma ação manual do usuário.
-function sugerirRecursoPorHistorico(codProduto, pedidoAtual) {
-    if (!codProduto) return null;
-    const ocorrencias = [];
-    listaCotacoes.forEach(c => {
-        if (c.pedido === pedidoAtual) return;
-        const valor = (c.recursosPorItem || {})[codProduto];
-        if (valor) ocorrencias.push({ pedido: c.pedido, recurso: valor, atualizadoEm: c.atualizadoEm || '' });
-    });
-    if (!ocorrencias.length) return null;
-    ocorrencias.sort((a, b) => b.atualizadoEm.localeCompare(a.atualizadoEm));
-    const contagem = {};
-    ocorrencias.forEach(o => contagem[o.recurso] = (contagem[o.recurso] || 0) + 1);
-    return { recursoMaisRecente: ocorrencias[0].recurso, pedidoMaisRecente: ocorrencias[0].pedido, totalOcorrencias: ocorrencias.length, contagem };
-}
-
-// Grava o recurso confirmado de um item — reaproveita exatamente a mesma
-// estrutura da Fase 7 (cotacao.recursosPorItem), só que agora quem chama é
-// o fluxo de entrada do XML/NF (Parte 4/5/6 da correção), não mais uma
-// escolha manual dentro da tela de Análise por item.
-async function definirRecursoItem(pedido, codigo, tipo) {
-    if (!codigo || !pedido) return;
-    const cotacao = listaCotacoes.find(c => c.pedido === pedido);
-    if (!cotacao) return;
-    if (!cotacao.origem) return toast('Defina a Origem do pedido (Santa Casa/CTI) na cotação antes de confirmar o recurso.');
-    const recursoOficial = tipo ? calcularRecursoOficial(cotacao.origem, tipo) : null;
-    try {
-        const campo = `recursosPorItem.${codigo}`;
-        if (recursoOficial) {
-            await cotacoesCollection.doc(cotacao.pedido).set({ [campo]: recursoOficial }, { merge: true });
-            toast(`✓ Recurso confirmado: ${recursoOficial}`);
-        } else {
-            await cotacoesCollection.doc(cotacao.pedido).update({ [campo]: firebase.firestore.FieldValue.delete() });
-            toast('Recurso removido deste item.');
-        }
-        if (document.getElementById('xml-sugestao-recurso') && pedidoSelecionadoXml === pedido) renderSugestaoRecursoNf();
-    } catch (e) {
-        console.error('Erro ao definir recurso do item:', e);
-        toast('✕ Erro ao salvar. Tente novamente.');
-    }
-}
-function aplicarRecursoSugerido(pedido, codigo, recursoOficial) {
-    definirRecursoItem(pedido, codigo, recursoOficial.startsWith('C/C') ? 'cc' : 'proprio');
-}
-
 // Configuração dos mínimos de cotações esperados por tipo de recurso — só
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
@@ -5886,7 +6214,89 @@ function aplicarRecursoSugerido(pedido, codigo, recursoOficial) {
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: 19, nome: 'Correção: CNPJ com pontuação (XML antigo do SmartCompras)', status: 'atual',
+        numero: '21.1', nome: 'Correção: teclado do celular não move mais a barra de navegação', status: 'concluida',
+        implementado: [
+            'Ao tocar num campo de texto no celular, a barra de navegação some na hora e a altura do app fica congelada enquanto o teclado está aberto. Antes, em alguns navegadores o app encolhia junto com o teclado: a barra subia pro topo e sobrava uma tela vazia.',
+            'Ao sair do campo, a barra volta e a altura é recalculada; o app também volta ao topo da página caso o navegador tenha rolado a tela.'
+        ],
+        mudou: ['Só o comportamento com teclado aberto no celular (telas de toque). No computador nada muda.'],
+        testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
+    },
+    {
+        numero: '22.1', nome: 'Ajustes: recurso por item, espaçamento e checkbox da Entrada de NF', status: 'atual',
+        implementado: [
+            'Recurso por item: o botão "Trocar pra…" só aparece quando faz sentido — quando o item NÃO atinge o mínimo de fornecedores (Recurso Próprio) ou quando já é uma exceção definida manualmente. Quando o item já atingiu o mínimo (C/C, o caso comum) não tem mais um botão sugerindo baixar pra Recurso Próprio — só um link discreto "Corrigir" pro caso raro de precisar mesmo assim.',
+            'Cabeçalho informativo acima da lista de itens: "Recurso pelas cotações: X item(ns) com 3+ fornecedores (C/C) · Y item(ns) com menos (Recurso Próprio)" (ou "todos atingiram", quando não há nenhum abaixo do mínimo).',
+            'Entrada de NF: mais espaço entre o seletor de pedido, a cotação adicional e a caixinha "sem cotação do SmartCompras"; a caixinha ficou maior (22px), mais fácil de tocar no celular.'
+        ],
+        mudou: ['Só apresentação da Entrada de NF. Nenhuma regra de recurso, associação ou dado gravado foi alterada.'],
+        testar: ['Item com 3+ fornecedores: mostra o recurso e só o link discreto "Corrigir", sem botão de destaque. Item com menos de 3: mostra o botão "Trocar pra C/C" normalmente. Cabeçalho mostra a contagem certa.']
+    },
+    {
+        numero: 22, nome: 'NF com itens de mais de um pedido (cotação adicional)', status: 'concluida',
+        implementado: [
+            'Quando os itens da NF já têm associação confirmada apontando pra pedidos diferentes, o app não força mais escolher um só: usa o pedido principal (seletor de cima) e adiciona os demais automaticamente como "cotação adicional", mostrados em chips removíveis logo abaixo.',
+            'Também dá pra adicionar manualmente: "+ Adicionar cotação" ao lado do seletor de pedido, listando as cotações cadastradas que ainda não foram usadas nesta NF.',
+            'A lista de itens da cotação (associação de cada produto) passa a mostrar as opções de todas as cotações selecionadas; se o mesmo código do SmartCompras existir em mais de um pedido, a opção mostra "[Pedido …]" pra diferenciar.'
+        ],
+        mudou: [
+            'Recurso por item continua raro de mexer: ele já procura a cotação certa sozinho (pelo código), então não precisa de nenhuma tela nova — funciona igual com uma ou várias cotações.',
+            'NF salva: o campo "pedido" continua sendo só o principal (nenhuma NF antiga muda de formato); um campo "pedidos" (lista) só aparece quando há mais de um. Cada item ganha "pedidoItem" só nesse caso, pra a conferência não confundir o mesmo código em pedidos diferentes.',
+            'A conferência Cotação × NF × ERP, o alerta de itens esperados e "Gerar auditoria" agora consideram todas as cotações da NF, não só a principal.'
+        ],
+        testar: [
+            'NF com itens de dois pedidos já associados antes: confirmar que os dois entram automaticamente (chips) e a conferência considera os dois, sem pedir escolha manual.',
+            'Adicionar uma cotação manualmente por "+ Adicionar cotação" e depois remover pelo × do chip.',
+            'Associar um item a um código que existe em duas cotações selecionadas: o seletor mostra "[Pedido …]" em cada opção.',
+            'NF de um pedido só (o caso comum): tudo igual a antes, sem chips nem "[Pedido …]" nas opções.'
+        ]
+    },
+    {
+        numero: 21, nome: 'Tratamento da NF antes de salvar (recurso, compra direta e conferência)', status: 'concluida',
+        implementado: [
+            'Recurso na própria linha do item, antes de salvar: mostra o recurso previsto e o motivo (quantos fornecedores cotaram), com "Trocar pra…". A escolha fica na tela e só grava ao "Salvar NF" — acabou o ciclo salvar, revisar e salvar de novo. O bloco de recurso pós-salvamento saiu.',
+            'Conferência Cotação × NF × ERP ao vivo: recalcula a cada mudança (fator, associação, pedido) com a NF em edição contada como se já estivesse salva, sem gravar nada. Itens com conversão ainda não confirmada aguardam, sem falso alarme. "Gerar auditoria" também funciona antes de salvar.',
+            'Compra direta (sem cotação do SmartCompras): opção "— Sem cotação do SmartCompras (compra direta) —" no seletor de associação de cada item, e uma caixinha "Esta NF não possui cotação do SmartCompras" como atalho pra NF inteira. O item passa a associar só com o SP Data (lembrado por fornecedor + código), o recurso começa como Recurso Próprio do destino, e o destino (Santa Casa/CTI) é pedido quando não há cotação pra informá-lo.'
+        ],
+        mudou: [
+            'NFs com cotação seguem como antes. Na NF salva ficam os campos semCotacaoSmartCompras, destino e, nos itens diretos, semCotacao e recurso; a aptidão, o Gerenciar e o filtro de destino dos Relatórios leem esses dados.',
+            'A associação SP Data de itens diretos usa a mesma coleção de associações SP Data, com chave "DIRETO::" + CNPJ + código do fornecedor (nenhuma coleção nova). O ERP ignora essas chaves ao ligar itens a códigos da cotação.'
+        ],
+        testar: [
+            'NF com cotação: o recurso aparece em cada item antes de salvar, dá pra trocar, e a conferência muda ao confirmar/alterar um fator. Salvar NF grava tudo de uma vez.',
+            'NF sem cotação (caixinha): escolher o destino, associar os itens ao SP Data, conferir o recurso Recurso Próprio e trocar um item pra C/C; salvar e ver destino/recurso no Gerenciar.',
+            'NF mista: com o pedido selecionado, escolher "Sem cotação do SmartCompras" na lista de um item (ex.: álcool) e conferir que os outros itens seguem normais.',
+            'Carregar outro XML depois de salvar: nada da NF anterior deve aparecer.'
+        ]
+    },
+    {
+        numero: '20.1', nome: 'Correção: resquício da NF anterior ao carregar outro XML', status: 'concluida',
+        implementado: [
+            'Ao carregar um XML novo na Entrada de NF, o resultado da conferência ("Confere com a cotação/ERP") e o bloco de recurso da NF anterior são limpos. Antes eles continuavam na tela mostrando itens e recursos da NF que já tinha sido salva.'
+        ],
+        mudou: ['Só a limpeza da tela ao carregar outro XML; nada é gravado ou alterado no banco.'],
+        testar: ['Salve uma NF, carregue outro XML (com ou sem cotação): os blocos "Recurso definido/pendente" e "Confere com a cotação/ERP" da NF anterior não devem aparecer.']
+    },
+    {
+        numero: 20, nome: 'Recurso definido pelas cotações na Entrada de NF', status: 'concluida',
+        implementado: [
+            'Regra de negócio: item com 3 ou mais fornecedores cotando é pago com recurso público/externo (C/C); com menos (1 ou 2), é Recurso Próprio. O número de fornecedores vem do relatório de fornecedores ganhadores do próprio pedido.',
+            'Ao salvar a NF, o recurso dos itens que ainda não tinham é definido automaticamente por essa regra (C/C ou Recurso Próprio da origem do pedido) e a tela mostra, item a item, o motivo (quantos fornecedores cotaram) com o botão "Trocar pra…". Só cai na escolha manual o item sem o dado (pedido sem relatório de ganhadores).'
+        ],
+        mudou: [
+            'Removida a sugestão por histórico de outros pedidos: o mesmo produto pode ser comprado com C/C ou com Recurso Próprio, então o histórico não define recurso.',
+            'Os mínimos de Configurações → Análise de cotações agora valem: vazios, usa 3 (C/C) e 1 (Recurso Próprio). O ✓ da Central do Pedido usa o mesmo mínimo.',
+            'A gravação do recurso agora salva o mapa aninhado (recursosPorItem → código), garantindo que set + merge não crie um campo literal com ponto no nome.'
+        ],
+        testar: [
+            'Pedido 1653 (com o relatório de ganhadores importado): Entrada de NF de um fornecedor do pedido → Salvar NF: os itens com 3+ fornecedores ficam C/C e os com 1 ou 2 ficam Recurso Próprio, com o motivo na tela.',
+            'Trocar o recurso de um item pelo botão "Trocar pra…" e conferir que o item passa a aparecer como "definido manualmente".',
+            'Pedido sem relatório de ganhadores: os itens aparecem como pendentes com a mensagem explicando por quê, e a escolha manual continua funcionando.',
+            'Conferir a Central do Pedido: "Recurso" do item e o ✓ de fornecedores que cotaram.'
+        ]
+    },
+    {
+        numero: 19, nome: 'Correção: CNPJ com pontuação (XML antigo do SmartCompras)', status: 'concluida',
         implementado: [
             'O "Complementar com Relatório do SmartCompras" agora casa os itens por código + CNPJ comparando só os dígitos. Antes, o XML antigo (CNPJ como 44.672.062/0001-15) nunca casava com o relatório (só dígitos) e nenhum nome era complementado (0 de 112 no pedido 1653).',
             'A mesma regra foi aplicada a todos os pontos que comparam o CNPJ vindo do XML com o da NF-e, do cadastro SP Data, do ERP ou do relatório: identificar o pedido pela NF, itens do fornecedor na Entrada de NF, alerta de itens esperados, reconciliação do ERP com a NF, associações SP Data via ERP, valor cotado por fornecedor e nome de exibição do fornecedor. Também vale ao reimportar um pedido (diferenças entre versões e nome oficial preservado), mesmo que o formato do CNPJ mude de uma versão para outra.'
@@ -8860,7 +9270,7 @@ function reconciliarAssociacoesSpDataViaErp(entrada) {
 // Não sobrescreve o item original — devolve uma cópia com um campo extra.
 function enriquecerItensEntradaErp(itens) {
     return itens.map(item => {
-        const associacao = listaAssociacoesSpData.find(a => a.spDataCodigo === item.codigoSpData);
+        const associacao = listaAssociacoesSpData.find(a => a.spDataCodigo === item.codigoSpData && !ehChaveDiretaSpData(a.codigoSmartCompras));
         return { ...item, codigoSmartComprasRelacionado: associacao ? associacao.codigoSmartCompras : null };
     });
 }
