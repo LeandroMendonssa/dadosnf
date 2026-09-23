@@ -2923,13 +2923,13 @@ function renderAssociacaoSpDataWidget(it, chaveUnica) {
         const linha = produto ? `${produto.codigo} — ${produto.nome} — ${produto.unidade}` : `${associacao.spDataCodigo} (produto não encontrado no cadastro atual)`;
         return `<div class="central-spdata-linha">
             <span><strong>SP Data:</strong> ${linha}</span>
-            <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); toggleBuscaAssociacaoSpData('${chaveWidget}')">${buscaAberta ? 'Cancelar' : 'Corrigir'}</button>
+            <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); toggleBuscaAssociacaoSpData('${chaveWidget}')">${buscaAberta ? 'Cancelar' : 'Corrigir SP Data'}</button>
         </div>${buscaAberta ? renderBuscaAssociacaoSpData(it, chaveWidget) : ''}`;
     }
 
     return `<div class="central-spdata-linha central-item-sem-desc">
         <span>SP Data: não associado</span>
-        <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); toggleBuscaAssociacaoSpData('${chaveWidget}')">${buscaAberta ? 'Cancelar' : 'Associar'}</button>
+        <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); toggleBuscaAssociacaoSpData('${chaveWidget}')">${buscaAberta ? 'Cancelar' : 'Associar SP Data'}</button>
     </div>${buscaAberta ? renderBuscaAssociacaoSpData(it, chaveWidget) : ''}`;
 }
 function toggleBuscaAssociacaoSpData(chaveWidget) {
@@ -2987,11 +2987,13 @@ function renderLinhaProduto(it, chaveUnica) {
         ? `<div>Fornecedores que cotaram este item: <strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= minimoFornecedoresCC() ? ' ✓' : ` (menos de ${minimoFornecedoresCC()} participantes)`}</div><div>Vencedor: ${itemGanhadores.fornecedorVencedor ? itemGanhadores.fornecedorVencedor.nome : '<em>não identificado</em>'}</div>${itemGanhadores.empresas.length ? `<div class="txt-aux">Participantes: ${itemGanhadores.empresas.map(e => e.nome).join(', ')}</div>` : ''}`
         : '';
 
-    const tituloHTML = produtoSpData
-        ? `<div class="central-item-desc-linha">${produtoSpData.codigo} — ${produtoSpData.nome}</div>`
-        : nomeOficialSmartCompras
-            ? `<div class="central-item-desc-linha">${nomeOficialSmartCompras}</div>`
-            : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
+    const tituloHTML = nomeOficialSmartCompras
+        ? `<div class="central-item-desc-linha">${nomeOficialSmartCompras}</div>`
+        : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
+    // SP Data sempre visível, mas como linha SECUNDÁRIA — nunca substitui o
+    // nome real da cotação (já foi assim antes e causou associação errada:
+    // nomes do SP Data podem vir cortados/parecidos e escondiam o nome real).
+    const spDataSubtituloHTML = produtoSpData ? `<div class="central-item-meta">SP Data ${produtoSpData.codigo} — ${produtoSpData.nome}</div>` : '';
 
     // Recurso confirmado na entrada da NF/XML (Parte 2/4 da correção) — só
     // exibição, nunca uma ação de escolher aqui.
@@ -3004,7 +3006,6 @@ function renderLinhaProduto(it, chaveUnica) {
         : (it.codProduto ? '<div style="color:var(--text-light);"><em>Recurso: ainda não confirmado (definido na entrada da NF)</em></div>' : '');
 
     const detalhesHTML = expandido ? `<div class="central-item-detalhes" onclick="event.stopPropagation()">
-        ${produtoSpData ? `<div>SP Data: ${produtoSpData.codigo}</div><div>Nome oficial SP Data: ${produtoSpData.nome}</div>` : ''}
         ${it.codProduto ? `<div>Código SmartCompras: ${it.codProduto}</div>` : ''}
         ${nomeOficialSmartCompras ? `<div>Nome oficial SmartCompras: ${nomeOficialSmartCompras}</div>` : ''}
         ${observacao ? `<div>Descrição/observação original SmartCompras: ${observacao}</div>` : ''}
@@ -3022,6 +3023,7 @@ function renderLinhaProduto(it, chaveUnica) {
 
     return `<div class="central-item-linha" onclick="toggleCentralProduto('${chaveUnica}')">
         ${tituloHTML}
+        ${spDataSubtituloHTML}
         <div class="central-item-meta">${resumoMeta}${participantesResumo}<i class="fa-solid fa-chevron-${expandido ? 'up' : 'down'} central-item-chevron"></i></div>
         ${detalhesHTML}
     </div>`;
@@ -3526,6 +3528,7 @@ let nfeInfoAtual = null; // { cnpjEmit, nNF } da NF-e atualmente carregada no ed
 let bancoAssociacoesFornecedor = {}; // chave (cnpjEmit::cProd) -> doc de associacoesFornecedor
 let pedidoSelecionadoXml = null; // pedido/cotação escolhido pra associar os itens desta NF-e
 let associacaoFornecedorBuscaAberta = new Set();
+let historicoAssociacaoAbertoXml = new Set(); // painel de histórico da Entrada de NF — recolhido por padrão (Fase 22.2)
 let conflitoPedidoXmlInfo = null; // {pedidos:[{pedido, itens:[xProd,...]}]} quando itens já associados apontam pra pedidos diferentes — nunca escolhe sozinho nesse caso
 let pedidoSugestaoXmlInfo = null; // {candidatos:[{pedido, valorCotado, diffPercentual}], valorNf} — Fase 9: CNPJ bate com mais de uma cotação; sugere por valor compatível, nunca decide sozinho
 let pedidoOrigemXml = null; // 'automatico' | 'manual' | null — só pra indicar na tela como o pedido foi definido, não influencia a lógica
@@ -3676,6 +3679,7 @@ function processarXmlTexto(texto) {
     // confirmadas em NFs anteriores.
     nfeInfoAtual = { cnpjEmit, nNF, fornecedor: nfeIdentificacao.fornecedor, serie: nfeIdentificacao.serie, emissao: nfeIdentificacao.emissao, valorTotal: nfeIdentificacao.valorTotal };
     associacaoFornecedorBuscaAberta = new Set();
+    historicoAssociacaoAbertoXml = new Set();
 
     // 1ª prioridade: pelas associações de fornecedor já confirmadas dos
     // itens desta NF (mais forte que CNPJ, porque já foi confirmado à mão
@@ -4540,7 +4544,7 @@ function renderAssociacaoCotacaoXml() {
                 cotacaoSpDataHTML = 'Não associado à cotação.';
             }
 
-            acaoHTML = `<button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${status.chave}')">${buscaAberta ? 'Cancelar' : (status.associacao ? 'Corrigir' : 'Associar')}</button>${buscaAberta ? buscaHTML : ''}`;
+            acaoHTML = `<button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${status.chave}')">${buscaAberta ? 'Cancelar' : (status.associacao ? 'Corrigir cotação' : 'Associar à cotação')}</button>${buscaAberta ? buscaHTML : ''}`;
         }
 
         // Item unificado: produto + código do fornecedor + conversão (fator/
@@ -4563,8 +4567,8 @@ function renderAssociacaoCotacaoXml() {
                 <span class="xml-preview-linha">${formatarPreviewXml(item)}</span>
             </div>
             <div class="xml-item-cotacao">${cotacaoSpDataHTML}</div>
-            ${recursoHTML ? `<div class="xml-item-cotacao">${recursoHTML}</div>` : ''}
             ${acaoHTML ? `<div class="xml-item-acao">${acaoHTML}</div>` : ''}
+            ${recursoHTML ? `<div class="xml-item-cotacao">${recursoHTML}</div>` : ''}
             ${item.semCotacao ? '' : renderPainelAssociacoesConhecidasXml(item, idx)}
         </div>`;
     }).join('');
@@ -4597,6 +4601,10 @@ function renderPainelAssociacoesConhecidasXml(item, idx) {
 
     const situacaoTexto = info.possibilidades.length === 1 ? 'Associação conhecida' : `Mais de uma associação encontrada (${info.possibilidades.length})`;
     const situacaoClasse = info.possibilidades.length === 1 ? 'pronto' : 'pendente';
+    // Recolhido por padrão — a lista tende a crescer, e a maior parte do
+    // tempo o resumo (badge) já basta; só expande quem quiser conferir.
+    const chaveHistorico = `${nfeInfoAtual ? nfeInfoAtual.cnpjEmit : ''}::${item.cProd}`;
+    const aberto = historicoAssociacaoAbertoXml.has(chaveHistorico);
 
     const possibilidadesHTML = info.possibilidades.map((p, pIdx) => {
         const foraDoCnpjAtual = cnpjAtualNf && !p.cnpjsQueConfirmaram.includes(cnpjAtualNf);
@@ -4620,20 +4628,65 @@ function renderPainelAssociacoesConhecidasXml(item, idx) {
                 </div>
                 ${selecionada ? '<span class="xml-item-badge pronto">✓ Selecionada</span>' : ''}
             </div>
-            ${p.spDataCodigo
-                ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="aplicarPossibilidadeConhecidaXml(${idx}, ${pIdx})">${selecionada ? 'Selecionada — usar esta' : 'Usar esta associação'}</button></div>`
-                : `<div class="nota-detalhes"><em>Sem código SP Data confirmado ainda pra esta associação — nada pra aplicar na saída por enquanto.</em></div>`
-            }
+            <div class="xml-item-acao">
+                ${p.spDataCodigo
+                    ? `<button type="button" class="central-status-toggle" onclick="aplicarPossibilidadeConhecidaXml(${idx}, ${pIdx})">${selecionada ? 'Selecionada — usar esta' : 'Usar esta associação'}</button>`
+                    : `<span class="nota-detalhes"><em>Sem código SP Data confirmado ainda — nada pra aplicar na saída por enquanto.</em></span>`}
+                ${!p.atual ? `<button type="button" class="link-discreto" onclick="excluirPossibilidadeConhecidaXml(${idx}, ${pIdx})">Excluir do histórico</button>` : ''}
+            </div>
         </div>`;
     }).join('');
 
     return `<div class="xml-item-cotacao" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border-color);">
-        <span class="xml-item-badge ${situacaoClasse}">${situacaoTexto}</span>
-        ${possibilidadesHTML}
+        <div class="xml-item-acao" onclick="toggleHistoricoAssociacaoXml('${escRel(chaveHistorico)}')" style="cursor:pointer;">
+            <span class="xml-item-badge ${situacaoClasse}">${situacaoTexto}</span>
+            <button type="button" class="central-status-toggle">${aberto ? 'Recolher' : 'Ver histórico'}</button>
+        </div>
+        ${aberto ? `${possibilidadesHTML}
         <div class="xml-item-acao" style="margin-top:6px;">
             <button type="button" class="central-status-toggle" onclick="manterCodigoOriginalXml(${idx})">${item.decisaoTomada === 'mantido_original' ? '✓ Mantendo código original' : 'Manter código original'}</button>
-        </div>
+        </div>` : ''}
     </div>`;
+}
+function toggleHistoricoAssociacaoXml(chave) {
+    if (historicoAssociacaoAbertoXml.has(chave)) historicoAssociacaoAbertoXml.delete(chave);
+    else historicoAssociacaoAbertoXml.add(chave);
+    renderAssociacaoCotacaoXml();
+}
+// Remove uma possibilidade do histórico (nunca a vigente hoje — pra corrigir
+// a vigente, use "Corrigir cotação"/"Corrigir SP Data" normalmente, que já
+// registra uma nova entrada sem apagar nada). Útil quando o histórico
+// acumula tentativas erradas/duplicadas que só atrapalham a leitura depois.
+async function excluirPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
+    const item = itensXmlDetectados[idx];
+    if (!item || !item.associacoesConhecidas || !nfeInfoAtual) return;
+    const p = item.associacoesConhecidas.possibilidades[possibilidadeIdx];
+    if (!p || p.atual) return;
+    showConfirmModal({
+        title: 'Excluir do histórico?',
+        message: `Remove "${p.spDataCodigo ? 'SP Data ' + p.spDataCodigo : 'SmartCompras ' + p.codigoSmartCompras}"${p.produtoNome ? ' — ' + p.produtoNome : ''} do histórico deste código de fornecedor. Isso não muda a associação vigente, só limpa uma entrada antiga do histórico. Não pode ser desfeito.`,
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                for (const cnpj of p.cnpjsQueConfirmaram) {
+                    const chave = chaveAssociacaoFornecedor(cnpj, item.cProd);
+                    const doc = bancoAssociacoesFornecedor[chave];
+                    if (!doc || !doc.historico) continue;
+                    const novoHistorico = doc.historico.filter(h => h.codigoSmartCompras !== p.codigoSmartCompras);
+                    if (novoHistorico.length === doc.historico.length) continue;
+                    await associacoesFornecedorCollection.doc(chave).set({ ...doc, historico: novoHistorico });
+                    bancoAssociacoesFornecedor[chave] = { ...doc, historico: novoHistorico };
+                }
+                item.associacoesConhecidas = consultarAssociacoesConhecidasParaXml(nfeInfoAtual.cnpjEmit, item.cProd);
+                toast('✓ Removido do histórico.');
+                renderAssociacaoCotacaoXml();
+            } catch (e) {
+                console.error('Erro ao excluir do histórico:', e);
+                toast('✕ Erro ao excluir. Tente novamente.');
+            }
+        }
+    });
 }
 
 // Aplica (só na saída, ver aplicarConversaoNoXmlDom) o código SP Data de uma
@@ -5468,7 +5521,7 @@ function htmlRecursoItemXml(item, idx, status) {
         const valeAPenaSugerirTroca = r.detTipo !== 'cc' || forcandoContraRegra; // "trocar" só faz sentido abaixo do mínimo (ou desfazendo uma exceção)
         const acaoHTML = valeAPenaSugerirTroca
             ? `<button type="button" class="central-status-toggle" onclick="definirRecursoNfXml(${idx}, '${trocarPara}')">Trocar pra ${escRel(rotulo)}</button>`
-            : `<button type="button" class="link-discreto" onclick="definirRecursoNfXml(${idx}, '${trocarPara}')">Corrigir</button>`;
+            : `<button type="button" class="link-discreto" onclick="definirRecursoNfXml(${idx}, '${trocarPara}')">Corrigir recurso</button>`;
         return `Recurso: <strong>${escRel(r.valor)}</strong> — ${escRel(r.motivo)} ${acaoHTML}`;
     }
     return `<em>Recurso: não dá pra definir pelas cotações — este pedido não tem o relatório de fornecedores ganhadores com este item. Escolha:</em> `
@@ -6223,7 +6276,24 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: '22.1', nome: 'Ajustes: recurso por item, espaçamento e checkbox da Entrada de NF', status: 'atual',
+        numero: '22.2', nome: 'Nome real da cotação como central; reorganização da Entrada de NF; histórico recolhível e excluível', status: 'atual',
+        implementado: [
+            'Revertido: o nome exibido como título do produto na tela Cotações volta a ser o nome oficial do SmartCompras (não mais o nome do SP Data). O SP Data aparece sempre como linha secundária, visível sem precisar expandir — evita o problema de nomes do SP Data parecidos/cortados esconderem o nome real e levarem a uma associação errada.',
+            'Entrada de NF: o botão de corrigir a associação com a COTAÇÃO agora aparece logo depois da linha "Cotação:", antes do recurso — não mais por último, escondido depois de dois outros botões. Os três botões "Corrigir" da tela ganharam nomes específicos: "Corrigir cotação", "Corrigir SP Data", "Corrigir recurso".',
+            'Histórico de associações do código do fornecedor: painel recolhido por padrão (mostra só o resumo, com "Ver histórico"/"Recolher"); cada entrada do histórico que não é a vigente hoje ganhou "Excluir do histórico", pra tirar tentativas erradas ou duplicadas que só atrapalhavam a leitura.'
+        ],
+        mudou: [
+            'A entrada vigente de uma associação nunca pode ser excluída por aqui — pra corrigi-la, continua sendo "Corrigir cotação"/"Corrigir SP Data" (que registra uma nova entrada, sem apagar as antigas).',
+            'Excluir do histórico pede confirmação e não pode ser desfeito; só remove a entrada do histórico, não muda a associação vigente nem nenhum dado de NF já salva.'
+        ],
+        testar: [
+            'Tela Cotações: o nome do produto continua sendo o nome do SmartCompras mesmo depois de associar ao SP Data; o SP Data aparece como linha abaixo, sempre visível.',
+            'Entrada de NF: o botão "Corrigir cotação" aparece logo após a linha da cotação, antes do recurso.',
+            'Um item com histórico de mais de uma associação: o painel abre recolhido; "Ver histórico" mostra a lista; a vigente não tem botão de excluir, as outras têm "Excluir do histórico".'
+        ]
+    },
+    {
+        numero: '22.1', nome: 'Ajustes: recurso por item, espaçamento e checkbox da Entrada de NF', status: 'concluida',
         implementado: [
             'Recurso por item: o botão "Trocar pra…" só aparece quando faz sentido — quando o item NÃO atinge o mínimo de fornecedores (Recurso Próprio) ou quando já é uma exceção definida manualmente. Quando o item já atingiu o mínimo (C/C, o caso comum) não tem mais um botão sugerindo baixar pra Recurso Próprio — só um link discreto "Corrigir" pro caso raro de precisar mesmo assim.',
             'Cabeçalho informativo acima da lista de itens: "Recurso pelas cotações: X item(ns) com 3+ fornecedores (C/C) · Y item(ns) com menos (Recurso Próprio)" (ou "todos atingiram", quando não há nenhum abaixo do mínimo).',
