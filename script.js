@@ -6276,7 +6276,19 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: '22.2', nome: 'Nome real da cotação como central; reorganização da Entrada de NF; histórico recolhível e excluível', status: 'atual',
+        numero: 23, nome: 'Importação do inventário SP Data: coluna de nome não é mais fixa em 38 caracteres', status: 'atual',
+        implementado: [
+            'Complementar cadastro → Produtos SP Data: o leitor do relatório colado passou a ler a largura das colunas direto da borda do próprio relatório (o "+----+----+"), em vez de uma largura fixa de 38 caracteres. Agora aceita qualquer um dos relatórios do SGH (Listagem de itens, por grupo, por subgrupo, por local...), cada um com sua própria largura, sem cortar o nome quando a coluna colada é mais larga.',
+            'Testado com 6 formatos reais do SGH; o recomendado é "Itens por subgrupo II" (58 caracteres de nome, cobre os 2.682 produtos sem repetição). "Relatório de Itens por Local" também tem coluna larga (72), mas só lista os itens que têm local de armazenagem vinculado — não serve pra completar o cadastro todo.'
+        ],
+        mudou: [
+            'Continua funcionando com o formato antigo (38 caracteres) se alguém colar assim, e continua protegendo nomes editados manualmente (nomeEditadoManualmente) — reimportar nunca reverte uma renomeação feita à mão.',
+            'Sem a borda "+----+----+" reconhecível no texto colado, cai nas posições do formato antigo, como sempre foi.'
+        ],
+        testar: ['Complementar cadastro → Produtos SP Data → colar o relatório "Itens por subgrupo II" → Processar: confirmar que os nomes vêm completos (ex.: "CABO DE MADEIRA 1,3 MT", não cortado) e que um produto renomeado manualmente antes continua com o nome que você deu.']
+    },
+    {
+        numero: '22.2', nome: 'Nome real da cotação como central; reorganização da Entrada de NF; histórico recolhível e excluível', status: 'concluida',
         implementado: [
             'Revertido: o nome exibido como título do produto na tela Cotações volta a ser o nome oficial do SmartCompras (não mais o nome do SP Data). O SP Data aparece sempre como linha secundária, visível sem precisar expandir — evita o problema de nomes do SP Data parecidos/cortados esconderem o nome real e levarem a uma associação errada.',
             'Entrada de NF: o botão de corrigir a associação com a COTAÇÃO agora aparece logo depois da linha "Cotação:", antes do recurso — não mais por último, escondido depois de dois outros botões. Os três botões "Corrigir" da tela ganharam nomes específicos: "Corrigir cotação", "Corrigir SP Data", "Corrigir recurso".',
@@ -7356,19 +7368,44 @@ async function confirmarRelatorioSmartCompras() {
 // portado pra JS aqui, sem repetir a validação.
 // ============================================================
 
+// As colunas variam de largura conforme o relatório do SGH que a pessoa colar
+// (Listagem de itens, Listagem simples, por grupo, por subgrupo...) — todos
+// têm o mesmo layout de tabela com borda "+----+----+", só a largura de cada
+// coluna muda. Em vez de fixar a largura de UM relatório específico (o que
+// cortava o nome sempre que alguém colava um relatório com coluna mais
+// larga), as colunas são lidas da própria borda/cabeçalho colado. Sem
+// cabeçalho reconhecível, cai nas posições do relatório mais estreito (
+// "Listagem de itens I") como antes, pra continuar aceitando um trecho colado
+// só com as linhas de dado.
+function colunasInventarioSpData(linhas) {
+    const bordaRe = /^\+[-+]+\+\s*$/;
+    const idxBorda = linhas.findIndex((l, i) => bordaRe.test(l) && linhas[i + 1] && /\|/.test(linhas[i + 1]) && bordaRe.test(linhas[i + 2] || ''));
+    if (idxBorda === -1) return { codigo: [0, 7], nome: [7, 45], unidade: [45, 54], quantidade: [54, 67], preco: [81, 95] };
+    const borda = linhas[idxBorda];
+    const cabecalho = linhas[idxBorda + 1];
+    const marcas = [...borda].reduce((a, c, i) => { if (c === '+') a.push(i); return a; }, []);
+    const cols = [];
+    for (let i = 0; i < marcas.length - 1; i++) cols.push({ ini: marcas[i] + 1, fim: marcas[i + 1], titulo: cabecalho.slice(marcas[i] + 1, marcas[i + 1]).trim().toUpperCase() });
+    const acha = (regex) => { const c = cols.find(c => regex.test(c.titulo)); return c ? [c.ini, c.fim] : null; };
+    return {
+        codigo: acha(/C[OÓ]D/) || [0, 7],
+        nome: acha(/NOME/) || [7, 45],
+        unidade: acha(/^UN\.?\s*CON/) || acha(/UNI?D/) || acha(/^UN/) || null,
+        quantidade: acha(/QUANT/) || null,
+        preco: acha(/PRE[CÇ]O/) || null
+    };
+}
 function parseInventarioSpData(texto) {
-    const linhas = texto.split('\n');
+    const linhas = texto.split('\n').map(l => l.replace(/\r$/, ''));
     const produtos = [];
-    // Posições fixas de coluna (mesmas encontradas nos '+' da borda do
-    // relatório real): Código, Nome, Unidade, Quantidade, Contagem, Preço.
-    const P = { codigo: [0, 7], nome: [7, 45], unidade: [45, 54], quantidade: [54, 67], preco: [81, 95] };
+    const P = colunasInventarioSpData(linhas);
     linhas.forEach(l => {
-        if (!/^\s*\d+\s/.test(l) || l.includes('Pag:')) return; // pula cabeçalho/rodapé/linhas de total
+        if (!/^\|?\s*\d+[\s|]/.test(l) || l.includes('Pag:') || l.includes('Pag.:')) return; // pula cabeçalho/rodapé/linhas de total (Grupo:/Subgrupo:/Local de armazenagem: também não começam com dígito)
         const codigo = l.slice(P.codigo[0], P.codigo[1]).trim();
         const nome = l.slice(P.nome[0], P.nome[1]).trim();
-        const unidade = l.slice(P.unidade[0], P.unidade[1]).trim();
-        const quantidade = l.slice(P.quantidade[0], P.quantidade[1]).trim();
-        const preco = l.slice(P.preco[0], P.preco[1]).trim();
+        const unidade = P.unidade ? l.slice(P.unidade[0], P.unidade[1]).trim() : '';
+        const quantidade = P.quantidade ? l.slice(P.quantidade[0], P.quantidade[1]).trim() : '';
+        const preco = P.preco ? l.slice(P.preco[0], P.preco[1]).trim() : '';
         if (!codigo || !nome) return;
         produtos.push({ codigo, nome: upAud(nome), unidade, quantidade, preco });
     });
