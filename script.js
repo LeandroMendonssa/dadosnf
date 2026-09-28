@@ -3775,6 +3775,18 @@ function renderIdentificacaoXml(info) {
     const container = document.getElementById('xml-identificacao-container');
     if (!card || !container) return;
 
+    // Reprocessar o mesmo XML (mesma NF, série e fornecedor) é comum —
+    // reenvio, conferência, ajuste. O fator e as associações já ficam
+    // lembrados por fornecedor/produto (não por esta NF específica), então
+    // não pedem confirmação de novo sozinhos; isso aqui é só pra avisar
+    // que já existe uma versão salva, com a data, sem impedir nada.
+    const nfExistente = info.nNF ? listaNfsProcessadas.find(nf =>
+        nf.nf === info.nNF && (nf.serie || '') === (info.serie || '') && mesmoCnpj(nf.cnpjFornecedor, info.cnpjEmit)
+    ) : null;
+    const avisoJaProcessadaHTML = nfExistente
+        ? `<div class="xml-estado-card pronto mb-3"><div class="xml-estado-linha"><span class="xml-item-badge pronto">✓ NF já processada</span><span class="txt-aux">salva em ${nfExistente.processadoEm ? formatarDataCompletaBR(nfExistente.processadoEm) : '—'}${nfExistente.pedido ? `, pedido ${nfExistente.pedido}` : ''} — salvar de novo atualiza a mesma NF, não duplica.</span></div></div>`
+        : '';
+
     const linhas = [
         info.fornecedor ? `<div><strong>Fornecedor:</strong> ${info.fornecedor}</div>` : '',
         info.cnpjEmit ? `<div><strong>CNPJ:</strong> ${info.cnpjEmit}</div>` : '',
@@ -3786,7 +3798,7 @@ function renderIdentificacaoXml(info) {
         `<div><strong>Itens:</strong> ${info.qtdItens}</div>`
     ].filter(Boolean).join('');
 
-    container.innerHTML = linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>';
+    container.innerHTML = avisoJaProcessadaHTML + (linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>');
 
     // Informações adicionais/observações (infCpl) — só pra consulta humana.
     // Fornecedor às vezes escreve número de pedido ali, mas nunca é usado
@@ -3910,11 +3922,12 @@ function calcularResumoPendenciasXml() {
 
     const bloqueios = [];
     const alertas = [];
+    const informativos = []; // nunca impedem o "tudo pronto" (verde) — só contexto, não pendência
 
     if (conflitoPedidoXmlInfo) {
         // Já foi resolvido sozinho (pedido principal + adicional(is), ver
-        // processarXmlTexto) — só um alerta informativo, nunca bloqueia.
-        alertas.push(`Itens desta NF pertencem a pedidos diferentes (${conflitoPedidoXmlInfo.pedidos.map(p => p.pedido).join(' e ')}) — todos já adicionados (cotação principal + adicional(is) acima).`);
+        // processarXmlTexto) — só informativo, nunca impede o "tudo pronto".
+        informativos.push(`Itens desta NF pertencem a pedidos diferentes (${conflitoPedidoXmlInfo.pedidos.map(p => p.pedido).join(' e ')}) — todos já adicionados (cotação principal + adicional(is) acima).`);
     } else if (!pedidoSelecionadoXml && algumComCotacao) {
         alertas.push('Pedido/cotação ainda não identificado — selecione manualmente (ou confirme a sugestão, se houver uma). Se a NF não tem cotação do SmartCompras, marque a caixinha acima.');
     }
@@ -3922,7 +3935,7 @@ function calcularResumoPendenciasXml() {
     // fornecedores (C/C) e quantos não (Recurso Próprio) — só aparece quando
     // há pelo menos um item com essa determinação.
     if (recursoAtingiuMinimo + recursoAbaixoMinimo > 0) {
-        alertas.push(recursoAbaixoMinimo === 0
+        informativos.push(recursoAbaixoMinimo === 0
             ? `Recurso pelas cotações: todos os ${recursoAtingiuMinimo} item(ns) atingiram ${minimoFornecedoresCC()}+ fornecedores (C/C).`
             : `Recurso pelas cotações: ${recursoAtingiuMinimo} item(ns) com ${minimoFornecedoresCC()}+ fornecedores (C/C) · ${recursoAbaixoMinimo} item(ns) com menos (Recurso Próprio).`);
     }
@@ -3962,13 +3975,73 @@ function calcularResumoPendenciasXml() {
         const itensCotacaoDesteFornecedor = (cotacaoSelecionada.itens || []).filter(it => cnpjEmLista(cnpjsFornecedorNf, it.cnpjFornecedor));
         const codigosUnicos = [...new Set(itensCotacaoDesteFornecedor.map(it => it.codProduto).filter(Boolean))];
         const codigosAusentes = codigosUnicos.filter(cod => !codigosDestaNf.includes(cod) && !codigosJaEmOutraNfDoPedido.has(cod));
+        const nomesAusentes = codigosAusentes.map(cod => {
+            const it = itensCotacaoDesteFornecedor.find(x => x.codProduto === cod);
+            return it ? (it.nomeOficial || it.descricao || cod) : cod;
+        });
         if (codigosAusentes.length > 0) {
-            const nomes = codigosAusentes.map(cod => {
-                const it = itensCotacaoDesteFornecedor.find(x => x.codProduto === cod);
-                return it ? (it.nomeOficial || it.descricao || cod) : cod;
-            });
             const rotuloPedido = cotacoesSelecionadasXml().length > 1 ? `do pedido ${pedidoAlerta} ` : '';
-            alertas.push(`${codigosAusentes.length} item(ns) da cotação ${rotuloPedido}deste fornecedor ainda não apareceram em nenhuma NF (${nomes.join(', ')}) — pode vir numa NF seguinte, não é um problema desta NF.`);
+            informativos.push(`${codigosAusentes.length} item(ns) da cotação ${rotuloPedido}deste fornecedor ainda não apareceram em nenhuma NF (${nomesAusentes.join(', ')}) — pode vir numa NF seguinte, não é um problema desta NF.`);
+        }
+
+        // Valor total cotado × faturado pra este fornecedor dentro do pedido —
+        // o indicador mais direto de que algo não fechou (item não faturado,
+        // preço diferente, item a mais/a menos), mesmo sem abrir Cotações.
+        // Soma item a item (não o valor total da NF inteira): o preço × a
+        // quantidade ORIGINAL da nota é sempre o valor real pago, imune a
+        // qualquer fator de conversão (gotas/frasco, doses/frasco...) — e
+        // funciona certo mesmo numa NF com itens de mais de um pedido.
+        // Mesma tolerância já usada na reconciliação do ERP (Fase 8/9).
+        const valorCotadoFornecedor = itensCotacaoDesteFornecedor.reduce((soma, it) => {
+            const total = numeroFlexivel(it.precoTotal);
+            if (total !== null) return soma + total;
+            const qtd = numeroFlexivel(it.quantidade), unit = numeroFlexivel(it.precoUnitario);
+            return soma + (qtd !== null && unit !== null ? qtd * unit : 0);
+        }, 0);
+        if (valorCotadoFornecedor > 0) {
+            const codigosDaCotacaoDesteFornecedor = new Set(itensCotacaoDesteFornecedor.map(it => it.codProduto));
+            const valorDestaNfFornecedor = itensXmlDetectados.reduce((s, it) => {
+                if (it.semCotacao) return s;
+                const assoc = bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, it.cProd)];
+                if (!assoc || !codigosDaCotacaoDesteFornecedor.has(assoc.codigoSmartCompras)) return s;
+                if ((assoc.pedido || pedidoSelecionadoXml) !== pedidoAlerta) return s;
+                return s + (it.qComOriginal || 0) * (it.vUnComOriginal || 0);
+            }, 0);
+            const ehEstaNf = nf => nf.nf === nfeInfoAtual.nNF && (nf.serie || '') === (nfeInfoAtual.serie || '') && mesmoCnpj(nf.cnpjFornecedor, nfeInfoAtual.cnpjEmit);
+            const outrasNfsFornecedor = listaNfsProcessadas.filter(nf =>
+                (nf.pedido === pedidoAlerta || (nf.pedidos && nf.pedidos.includes(pedidoAlerta))) &&
+                cnpjEmLista(cnpjsFornecedorNf, nf.cnpjFornecedor) && !ehEstaNf(nf)
+            );
+            const valorOutrasNfsFornecedor = outrasNfsFornecedor.reduce((s, nf) => s + (nf.itens || [])
+                .filter(it => codigosDaCotacaoDesteFornecedor.has(it.codigoSmartCompras) && (!it.pedidoItem || it.pedidoItem === pedidoAlerta))
+                .reduce((s2, it) => s2 + (it.quantidade || 0) * (it.valorUnitario || 0), 0), 0);
+            const valorFaturadoFornecedor = valorOutrasNfsFornecedor + valorDestaNfFornecedor;
+            const diffPercentual = Math.abs(valorFaturadoFornecedor - valorCotadoFornecedor) / valorCotadoFornecedor;
+            if (diffPercentual > TOLERANCIA_VALOR_RECONCILIACAO_ERP) {
+                const rotuloPedido2 = cotacoesSelecionadasXml().length > 1 ? ` do pedido ${pedidoAlerta}` : '';
+                const diferenca = Math.abs(valorFaturadoFornecedor - valorCotadoFornecedor);
+                // Se a diferença bate (mais ou menos) com o valor cotado dos
+                // itens que ainda não apareceram em nenhuma NF, é o esperado
+                // duma entrega parcial — só um informativo, junto do aviso de
+                // quais itens faltam. Só vira alerta (bloqueia o "pronta")
+                // quando a diferença NÃO se explica só por isso — sinal de
+                // algo genuinamente errado (preço, quantidade, item a mais).
+                const valorAusentes = codigosAusentes.reduce((s, cod) => {
+                    const it = itensCotacaoDesteFornecedor.find(x => x.codProduto === cod);
+                    if (!it) return s;
+                    const total = numeroFlexivel(it.precoTotal);
+                    if (total !== null) return s + total;
+                    const qtd = numeroFlexivel(it.quantidade), unit = numeroFlexivel(it.precoUnitario);
+                    return s + (qtd !== null && unit !== null ? qtd * unit : 0);
+                }, 0);
+                const toleranciaAbs = Math.max(0.5, valorCotadoFornecedor * TOLERANCIA_VALOR_RECONCILIACAO_ERP);
+                const explicadoPelosAusentes = codigosAusentes.length > 0 && Math.abs(diferenca - valorAusentes) <= toleranciaAbs;
+                const explicacao = codigosAusentes.length
+                    ? ` — possivelmente porque ${codigosAusentes.length === 1 ? 'o item' : 'os itens'} ${nomesAusentes.join(', ')} ainda não ${codigosAusentes.length === 1 ? 'foi faturado' : 'foram faturados'}`
+                    : '';
+                const mensagem = `Valor total${rotuloPedido2} não bate: cotado R$ ${formatarValorMonetarioBR(valorCotadoFornecedor)}, faturado até agora R$ ${formatarValorMonetarioBR(valorFaturadoFornecedor)} (diferença de R$ ${formatarValorMonetarioBR(diferenca)})${explicacao}.`;
+                (explicadoPelosAusentes ? informativos : alertas).push(mensagem);
+            }
         }
     });
 
@@ -3976,7 +4049,7 @@ function calcularResumoPendenciasXml() {
         totalItens: itensXmlDetectados.length,
         totalmentePronto, semAssociacao, semSpData, conversaoPendente,
         validacaoFornecedor: validarFornecedorSpData(nfeInfoAtual.cnpjEmit),
-        bloqueios, alertas,
+        bloqueios, alertas, informativos,
         pronta: bloqueios.length === 0 && alertas.length === 0,
         podeSalvar: bloqueios.length === 0
     };
@@ -3986,7 +4059,12 @@ function renderResumoPendenciasXml() {
     const el = document.getElementById('xml-estado-nf');
     if (!el) return;
     const resumo = calcularResumoPendenciasXml();
-    if (!resumo) { el.style.display = 'none'; return; }
+    if (!resumo) {
+        el.style.display = 'none';
+        const elInfo0 = document.getElementById('xml-informativos-nf');
+        if (elInfo0) elInfo0.style.display = 'none';
+        return;
+    }
     el.style.display = 'block';
     const estadoClasse = resumo.pronta ? 'pronto' : (resumo.podeSalvar ? 'atencao' : 'pendente');
     el.className = `xml-estado-card ${estadoClasse}`;
@@ -4010,6 +4088,20 @@ function renderResumoPendenciasXml() {
     }
 
     el.innerHTML = corpoHTML + validacaoHTML;
+
+    // Informativos (recurso pelas cotações, itens de outro pedido já
+    // resolvidos, itens que ainda podem vir numa próxima NF): nunca são uma
+    // pendência a resolver, então ficam num card neutro separado — mesmo
+    // numa NF 100% pronta, sem tirar o "✓ Pronta" de verde.
+    const elInfo = document.getElementById('xml-informativos-nf');
+    if (elInfo) {
+        if (resumo.informativos.length) {
+            elInfo.style.display = 'block';
+            elInfo.innerHTML = `<div class="xml-estado-lista txt-aux">${resumo.informativos.map(p => '• ' + p).join('<br>')}</div>`;
+        } else {
+            elInfo.style.display = 'none';
+        }
+    }
 
     // O botão principal agora é "Salvar NF" — reflete o estado (verde
     // quando pronta, alerta quando há pendência não-bloqueante, e continua
@@ -4541,7 +4633,26 @@ function renderAssociacaoCotacaoXml() {
 
                 cotacaoSpDataHTML = `Cotação: ${nomeItem}${nomeFornecedorCotacao ? ` (${nomeFornecedorCotacao})` : ''}${pedidoDiferente ? ` <em style="color:var(--text-light);">(pedido ${cotacaoDoItem.pedido}, diferente do selecionado)</em>` : ''}${spDataWidgetHTML}`;
             } else {
-                cotacaoSpDataHTML = 'Não associado à cotação.';
+                // Sugestão automática pelo nome do produto (o mesmo princípio já
+                // usado pra sugerir o SP Data, ver buscarSugestoesSpData): o
+                // texto do XML (xProd) quase sempre já traz o princípio ativo,
+                // então dá pra sugerir direto, sem abrir a lista — só quando o
+                // nome bate com folga (todas as palavras), nunca por
+                // aproximação/edição de texto. Continua sendo uma SUGESTÃO: o
+                // usuário confirma com um toque, ou ignora e busca manualmente.
+                const sugestoesCotacao = item.xProd ? buscarSugestoesCotacao(item.xProd, itensParaOpcoes) : [];
+                if (sugestoesCotacao.length > 0 && sugestoesCotacao.length <= 4) {
+                    const sugestoesHTML = sugestoesCotacao.map(it => {
+                        const cotItem = it._cotacao || cotacaoAtual;
+                        const fornecedorIt = (cotItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor));
+                        const nomeForn = fornecedorIt ? nomeExibicaoFornecedor(fornecedorIt.razaoSocial, fornecedorIt.cnpj) : '';
+                        const valorOpcao = multiPedido ? `${it._pedido}::${it.codProduto}` : it.codProduto;
+                        return `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); confirmarSelecaoDireta('${status.chave}', '${escRel(valorOpcao)}')">Usar: ${it.codProduto} — ${escRel(it.nomeOficial || it.descricao)}${nomeForn ? ` (${escRel(nomeForn)})` : ''}</button>`;
+                    }).join('');
+                    cotacaoSpDataHTML = `Não associado à cotação. Sugestão pelo nome:<div class="xml-item-acao" style="margin-top:4px;">${sugestoesHTML}</div>`;
+                } else {
+                    cotacaoSpDataHTML = 'Não associado à cotação.';
+                }
             }
 
             acaoHTML = `<button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${status.chave}')">${buscaAberta ? 'Cancelar' : (status.associacao ? 'Corrigir cotação' : 'Associar à cotação')}</button>${buscaAberta ? buscaHTML : ''}`;
@@ -4773,6 +4884,16 @@ function confirmarAlteracoesEExecutar(acao) {
     });
 }
 
+// Usado pelos botões de sugestão automática (buscarSugestoesCotacao): mesma
+// decodificação de "pedido::código" que confirmarSelecaoAssociacaoFornecedor,
+// só que sem depender do <select> (o valor já vem pronto do botão tocado).
+function confirmarSelecaoDireta(chave, valor) {
+    if (!valor) return;
+    const sep = valor.indexOf('::');
+    const pedidoDaAssociacao = sep >= 0 ? valor.slice(0, sep) : null;
+    const codigoSmartCompras = sep >= 0 ? valor.slice(sep + 2) : valor;
+    confirmarAssociacaoFornecedor(chave, codigoSmartCompras, pedidoDaAssociacao);
+}
 function confirmarSelecaoAssociacaoFornecedor(chave) {
     const select = document.getElementById(`assoc-forn-select-${chave}`);
     const valor = select ? select.value : '';
@@ -4971,6 +5092,19 @@ function compararFontesPedido(pedido, opcoes) {
             .filter(it => it.codigoSmartCompras === itemCotacao.codProduto && (!it.pedidoItem || it.pedidoItem === pedido))
             .map(it => ({ ...it, nfNumero: nf.nf })));
         const quantidadeFaturada = itensNf.length ? itensNf.reduce((s, it) => s + it.quantidade, 0) : null;
+        // SmartCompras e SP Data às vezes registram o mesmo produto em
+        // unidades diferentes (ex.: cotação em frasco, dispensação em gotas
+        // ou em doses — 500 gotas ou 60 doses por frasco). O Fator de
+        // conversão confirmado na Entrada de NF é exatamente essa razão, então
+        // se a quantidade cotada bate com a faturada DEPOIS de desfazer essa
+        // conversão, não é divergência — é só a unidade sendo diferente.
+        // Só sinaliza quando NENHUMA das duas contas fecha (nem direta, nem
+        // convertida), pra nunca deixar passar uma quantidade genuinamente
+        // errada. NFs sem fator registrado (antigas) contam como fator 1,
+        // então a conta convertida vira igual à direta — sem regressão.
+        const quantidadeFaturadaConvertida = itensNf.length
+            ? itensNf.reduce((s, it) => s + it.quantidade / (it.fatorAplicado || 1), 0)
+            : null;
         const valorUnitarioFaturado = itensNf.length ? itensNf[itensNf.length - 1].valorUnitario : null;
         const codigoSpData = itensNf.find(it => it.codigoSpData)?.codigoSpData || null;
         const nfsQueFaturaram = [...new Set(itensNf.map(it => it.nfNumero))];
@@ -4984,14 +5118,22 @@ function compararFontesPedido(pedido, opcoes) {
                 divergencias.push({ tipo: 'nao_faturado', nome, quantidadeCotada: itemCotacao.quantidade });
             }
         } else {
-            if (Number(itemCotacao.quantidade) !== quantidadeFaturada) {
+            const bateDireto = Number(itemCotacao.quantidade) === quantidadeFaturada;
+            const bateConvertido = Math.abs(Number(itemCotacao.quantidade) - quantidadeFaturadaConvertida) < 0.01;
+            if (!bateDireto && !bateConvertido) {
                 divergencias.push({ tipo: 'quantidade_cotada_nf', nome, quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada, nfs: nfsQueFaturaram });
             }
             if (quantidadeLancada !== null && quantidadeLancada !== quantidadeFaturada) {
                 divergencias.push({ tipo: 'quantidade_nf_erp', nome, quantidadeFaturada, quantidadeLancada, nfs: nfsQueFaturaram });
             }
-            if (valorUnitarioFaturado !== null && itemCotacao.precoUnitario && Math.abs(parseFloat(itemCotacao.precoUnitario) - valorUnitarioFaturado) > 0.005) {
-                divergencias.push({ tipo: 'valor_cotado_nf', nome, valorCotado: parseFloat(itemCotacao.precoUnitario), valorFaturado: valorUnitarioFaturado, nfs: nfsQueFaturaram });
+            if (valorUnitarioFaturado !== null && itemCotacao.precoUnitario) {
+                const cotado = parseFloat(itemCotacao.precoUnitario);
+                const fatorUltimoItem = itensNf[itensNf.length - 1].fatorAplicado || 1;
+                const bateDiretoValor = Math.abs(cotado - valorUnitarioFaturado) <= 0.005;
+                const bateConvertidoValor = Math.abs(cotado - valorUnitarioFaturado * fatorUltimoItem) <= 0.005;
+                if (!bateDiretoValor && !bateConvertidoValor) {
+                    divergencias.push({ tipo: 'valor_cotado_nf', nome, valorCotado: cotado, valorFaturado: valorUnitarioFaturado, nfs: nfsQueFaturaram });
+                }
             }
         }
 
@@ -6276,7 +6418,48 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: 23, nome: 'Importação do inventário SP Data: coluna de nome não é mais fixa em 38 caracteres', status: 'atual',
+        numero: '25.1', nome: 'Correção: sugestão de cotação agora funciona com nomes reais', status: 'atual',
+        implementado: [
+            'A sugestão automática de associação com a cotação (botão "Usar: código — nome") exigia que TODAS as palavras do nome do XML aparecessem na descrição da cotação — o que quase nunca acontece, porque o XML do fornecedor traz o sal químico, a forma farmacêutica e a embalagem ("MIDAZOLAM CLORIDRATO 5MG/ML SOL INJ 10ML") e a descrição da cotação é mais curta ("MIDAZOLAM 5MG/ML CX C/100AP X 10ML GEN"). Por isso não sugeria quase nada.',
+            'Agora, se as palavras todas não baterem, tenta um segundo critério: a primeira palavra do nome (o princípio ativo) e a dosagem (ex. "5MG/ML") precisam estar nos dois lados. Ainda é só uma sugestão — nunca associa sozinho — e sem correspondência boa continua no fluxo manual de sempre.'
+        ],
+        mudou: ['Só a sugestão de cotação; a associação, o fator e o resto do fluxo continuam iguais.'],
+        testar: ['Item do XML com sal/forma farmacêutica no nome, cuja cotação tem o nome mais curto: deve aparecer a sugestão "Usar: ..." com o item certo. Mesmo princípio ativo com dosagem diferente: não deve sugerir.']
+    },
+    {
+        numero: 25, nome: 'Falso positivo de unidade, alerta de valor total e sugestão automática de cotação', status: 'concluida',
+        implementado: [
+            'Corrigida a conferência Cotação × NF × ERP pra não acusar divergência quando o SmartCompras cota numa unidade e o SP Data dispensa em outra (ex.: cotação em frasco, dispensação em gotas — 500 gotas/frasco; ou em doses — 60 doses/frasco). A quantidade e o valor unitário faturados agora são conferidos tanto do jeito direto quanto convertidos pelo Fator confirmado na Entrada de NF; só vira divergência quando NENHuma das duas contas fecha — uma quantidade genuinamente errada continua sendo pega normalmente.',
+            'Novo alerta de valor total por fornecedor dentro do pedido, na própria Entrada de NF: compara o valor cotado com o valor já faturado (todas as NFs desse fornecedor nesse pedido, incluindo a que está sendo editada). Quando a diferença é só o quanto falta dos itens que ainda não apareceram em nenhuma NF, fica um informativo (entrega parcial é normal); quando a diferença não se explica só por isso, vira um alerta de verdade, porque algo pode estar errado (preço, quantidade, item a mais).',
+            'Associação com a cotação: quando o item ainda não está associado, o sistema já sugere direto pelo nome (o mesmo princípio já usado pra sugerir o SP Data) — aparece um botão "Usar: código — nome" pra confirmar com um toque, sem precisar abrir a lista. Cada palavra do nome do XML precisa achar uma equivalente no nome da cotação (inclusive abreviações como "COMP" de "COMPRIMIDO"); sem essa correspondência, continua caindo no fluxo manual de sempre — nunca decide sozinho.'
+        ],
+        mudou: [
+            'A conferência de valor usa o preço × quantidade ORIGINAIS da nota (antes da conversão), que é sempre o valor real pago, independente de qualquer fator — funciona certo mesmo numa NF com itens de mais de um pedido.',
+            'NFs salvas antes desta fase (sem o fator de cada linha) continuam comparadas como antes, sem regressão.'
+        ],
+        testar: [
+            'Um item cotado numa unidade e dispensado em outra (fator confirmado ≠ 1): não deve mais gerar divergência de quantidade/valor quando a conta bate pela conversão.',
+            'Uma NF que só fatura parte dos itens do fornecedor: aparece o aviso de valor total como informativo, citando os itens que faltam — sem bloquear o "pronta".',
+            'Um item com preço realmente errado (sem nenhum item pendente que explique): o aviso de valor total vira alerta de verdade.',
+            'Um item do XML com nome parecido ao de um item da cotação (mesmo com abreviação): aparece a sugestão "Usar: ..." pra confirmar com um toque.'
+        ]
+    },
+    {
+        numero: 24, nome: 'Recurso separado das pendências; NF já processada; upload de arquivo no SP Data', status: 'concluida',
+        implementado: [
+            'O resumo de recurso pelas cotações (e outros avisos puramente informativos: itens de outro pedido já resolvidos, itens que ainda podem vir numa NF seguinte) saiu da área de pendências (amarela) e ganhou um cartão neutro próprio, sem cor de alerta. Uma NF com tudo certo agora fica "✓ Pronta" (verde) mesmo tendo recurso pra mostrar.',
+            'Entrada de NF: ao carregar um XML de uma NF que já foi salva antes (mesmo número, série e fornecedor), aparece um aviso "✓ NF já processada", com a data e o pedido. Testei separadamente que o fator e as associações já confirmadas continuam sendo lembradas por fornecedor/produto — não pedem confirmação de novo.',
+            'Produtos SP Data: botão "Subir Arquivo" pra completar/atualizar o cadastro a partir de um .txt, além de colar o texto — igual já existe no cadastro de Fornecedores SP Data.'
+        ],
+        mudou: ['Nenhuma regra de recurso, fator ou associação mudou; só apresentação e o aviso de reprocessamento.'],
+        testar: [
+            'Uma NF com todos os itens certos (associação, SP Data e recurso definido): confirmar que fica "✓ Pronta" em verde, com o recurso aparecendo separado, sem amarelo.',
+            'Reabrir/reprocessar uma NF já salva: aparece o aviso "NF já processada"; os itens não voltam a pedir confirmação de fator.',
+            'Produtos SP Data: usar "Subir Arquivo" com um .txt do relatório do SGH.'
+        ]
+    },
+    {
+        numero: 23, nome: 'Importação do inventário SP Data: coluna de nome não é mais fixa em 38 caracteres', status: 'concluida',
         implementado: [
             'Complementar cadastro → Produtos SP Data: o leitor do relatório colado passou a ler a largura das colunas direto da borda do próprio relatório (o "+----+----+"), em vez de uma largura fixa de 38 caracteres. Agora aceita qualquer um dos relatórios do SGH (Listagem de itens, por grupo, por subgrupo, por local...), cada um com sua própria largura, sem cortar o nome quando a coluna colada é mais larga.',
             'Testado com 6 formatos reais do SGH; o recomendado é "Itens por subgrupo II" (58 caracteres de nome, cobre os 2.682 produtos sem repetição). "Relatório de Itens por Local" também tem coluna larga (72), mas só lista os itens que têm local de armazenagem vinculado — não serve pra completar o cadastro todo.'
@@ -7395,6 +7578,18 @@ function colunasInventarioSpData(linhas) {
         preco: acha(/PRE[CÇ]O/) || null
     };
 }
+function handleInventarioSpDataFileUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('spdata-inventario-texto').value = decodificarArquivoTexto(e.target.result);
+        toast('Arquivo carregado! Toque em "Processar".');
+    };
+    reader.onerror = () => toast('Erro ao ler o arquivo.');
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+}
 function parseInventarioSpData(texto) {
     const linhas = texto.split('\n').map(l => l.replace(/\r$/, ''));
     const produtos = [];
@@ -7639,6 +7834,40 @@ async function confirmarImportacaoSpData() {
 // sem IA — comparação de texto objetiva). ---
 function normalizarTextoBusca(s) {
     return upAud(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+// Mesmo critério de buscarSugestoesSpData na base (token a token — nunca
+// aproximação/distância de texto), com um 3º nível pensado especificamente
+// pra cotação: o nome do XML do fornecedor costuma incluir sal químico,
+// forma farmacêutica e embalagem que o "Comentario" da cotação não repete
+// (ex.: XML "MIDAZOLAM CLORIDRATO 5MG/ML SOL INJ 10ML" × cotação "MIDAZOLAM
+// 5MG/ML CX C/100AP X 10ML") — exigir que TODA palavra bata simplesmente
+// nunca sugere nesses casos, que são a maioria. O 3º nível some pra exigir só
+// duas coisas concretas, sempre com token exato/abreviação (nunca distância
+// de texto): a primeira palavra (o princípio ativo, quase sempre líder no
+// nome) e, se o nome do XML tiver alguma dosagem numérica (ex. "5MG/ML"),
+// essa mesma dosagem também precisa aparecer no nome da cotação.
+function buscarSugestoesCotacao(nomeItem, itens) {
+    const alvo = normalizarTextoBusca(nomeItem);
+    if (!alvo) return [];
+    const tokensAlvo = alvo.split(/\s+/).filter(Boolean);
+    if (!tokensAlvo.length) return [];
+    const nomeDoItem = it => normalizarTextoBusca(it.nomeOficial || it.descricao || '');
+    const exatas = itens.filter(it => nomeDoItem(it) === alvo);
+    if (exatas.length) return exatas;
+    const tokenBate = (a, b) => a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a)));
+    const todasAsPalavras = itens.filter(it => {
+        const tokensItem = nomeDoItem(it).split(/\s+/).filter(Boolean);
+        return tokensAlvo.every(ta => tokensItem.some(ti => tokenBate(ta, ti)));
+    });
+    if (todasAsPalavras.length) return todasAsPalavras;
+    const primeira = tokensAlvo[0];
+    if (!primeira || primeira.length < 4) return [];
+    const dosagensAlvo = tokensAlvo.filter(t => /\d/.test(t));
+    return itens.filter(it => {
+        const tokensItem = nomeDoItem(it).split(/\s+/).filter(Boolean);
+        if (!tokensItem.some(ti => tokenBate(primeira, ti))) return false;
+        return !dosagensAlvo.length || dosagensAlvo.some(d => tokensItem.some(ti => tokenBate(d, ti)));
+    });
 }
 function buscarSugestoesSpData(nomeItem) {
     const alvo = normalizarTextoBusca(nomeItem);
