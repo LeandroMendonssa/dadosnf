@@ -5118,7 +5118,11 @@ function compararFontesPedido(pedido, opcoes) {
                 divergencias.push({ tipo: 'nao_faturado', nome, quantidadeCotada: itemCotacao.quantidade });
             }
         } else {
-            const bateDireto = Number(itemCotacao.quantidade) === quantidadeFaturada;
+            // Produto sinalizado no SP Data (ex.: insulinas — cotado numa unidade,
+            // recebido/dispensado em outra): quantidade e valor unitário não são
+            // comparáveis, então essas duas divergências não são geradas.
+            const ignoraUnidade = !!(codigoSpData && (listaProdutosSpData.find(pr => pr.codigo === codigoSpData) || {}).ignorarDivergenciaUnidade);
+            const bateDireto = ignoraUnidade || Number(itemCotacao.quantidade) === quantidadeFaturada;
             const bateConvertido = Math.abs(Number(itemCotacao.quantidade) - quantidadeFaturadaConvertida) < 0.01;
             if (!bateDireto && !bateConvertido) {
                 divergencias.push({ tipo: 'quantidade_cotada_nf', nome, quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada, nfs: nfsQueFaturaram });
@@ -5126,7 +5130,7 @@ function compararFontesPedido(pedido, opcoes) {
             if (quantidadeLancada !== null && quantidadeLancada !== quantidadeFaturada) {
                 divergencias.push({ tipo: 'quantidade_nf_erp', nome, quantidadeFaturada, quantidadeLancada, nfs: nfsQueFaturaram });
             }
-            if (valorUnitarioFaturado !== null && itemCotacao.precoUnitario) {
+            if (!ignoraUnidade && valorUnitarioFaturado !== null && itemCotacao.precoUnitario) {
                 const cotado = parseFloat(itemCotacao.precoUnitario);
                 const fatorUltimoItem = itensNf[itensNf.length - 1].fatorAplicado || 1;
                 const bateDiretoValor = Math.abs(cotado - valorUnitarioFaturado) <= 0.005;
@@ -5144,7 +5148,7 @@ function compararFontesPedido(pedido, opcoes) {
             quantidadeCotada: itemCotacao.quantidade,
             quantidadeFaturada, quantidadeLancada,
             temNf: itensNf.length > 0, temErp: itensErp.length > 0,
-            nfs: nfsQueFaturaram,
+            nfs: nfsQueFaturaram, codigoSpData,
             divergencias
         };
     });
@@ -5570,10 +5574,15 @@ function renderResultadoSalvarNF() {
     const itensComDivergencia = comparacao.filter(item => item.divergencias.length > 0).map(item => `<div class="xml-item-linha pendente">
         <div class="xml-item-topo"><div class="xml-produto-nome">${item.nome}${multiPedidoAtivo() ? ` <span class="xml-item-meta">(Pedido ${escRel(item._pedido)})</span>` : ''}</div></div>
         <div class="xml-item-cotacao">${item.divergencias.map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div>
-        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${escRel(item._pedido)}', '${item.codProduto}')">Gerar auditoria</button></div>
+        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${escRel(item._pedido)}', '${item.codProduto}')">Gerar auditoria</button>${item.divergencias.some(d => d.tipo === 'quantidade_cotada_nf' || d.tipo === 'valor_cotado_nf') ? ` <button type="button" class="central-status-toggle" onclick="marcarFalsoPositivoUnidade('${escRel(item.codigoSpData || '')}')">Falso positivo (unidade)</button>` : ''}</div>
     </div>`).join('');
 
     el.innerHTML = cabecalho + aguardandoHTML + itensComDivergencia;
+}
+function marcarFalsoPositivoUnidade(codigoSpData) {
+    const produto = codigoSpData ? listaProdutosSpData.find(p => p.codigo === codigoSpData) : null;
+    if (!produto) return toast('Associe este item ao SP Data primeiro — o aviso é sinalizado por produto SP Data.');
+    if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
 
@@ -6418,7 +6427,16 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: '25.1', nome: 'Correção: sugestão de cotação agora funciona com nomes reais', status: 'atual',
+        numero: '25.2', nome: 'Falso positivo de unidade sinalizado por produto', status: 'atual',
+        implementado: [
+            'Botão "Falso positivo (unidade)" ao lado de "Gerar auditoria" nas divergências de quantidade/valor da Entrada de NF: sinaliza o produto SP Data pra que esse tipo de divergência deixe de aparecer nele (ex.: insulinas cotadas em uma unidade e recebidas em outra).',
+            'Em Produtos SP Data, cada produto ganhou o botão "Ignorar divergência de unidade" / "Voltar a conferir unidade", pra sinalizar antes ou desfazer. A reimportação do inventário preserva a sinalização.'
+        ],
+        mudou: ['Só as divergências de quantidade cotada e valor unitário são ignoradas nos produtos sinalizados; item não faturado e valor total continuam sendo conferidos.'],
+        testar: ['Numa NF com divergência de quantidade num item com SP Data associado: tocar "Falso positivo (unidade)" e ver a divergência sumir; desfazer em Produtos SP Data.']
+    },
+    {
+        numero: '25.1', nome: 'Correção: sugestão de cotação agora funciona com nomes reais', status: 'concluida',
         implementado: [
             'A sugestão automática de associação com a cotação (botão "Usar: código — nome") exigia que TODAS as palavras do nome do XML aparecessem na descrição da cotação — o que quase nunca acontece, porque o XML do fornecedor traz o sal químico, a forma farmacêutica e a embalagem ("MIDAZOLAM CLORIDRATO 5MG/ML SOL INJ 10ML") e a descrição da cotação é mais curta ("MIDAZOLAM 5MG/ML CX C/100AP X 10ML GEN"). Por isso não sugeria quase nada.',
             'Agora, se as palavras todas não baterem, tenta um segundo critério: a primeira palavra do nome (o princípio ativo) e a dosagem (ex. "5MG/ML") precisam estar nos dois lados. Ainda é só uma sugestão — nunca associa sozinho — e sem correspondência boa continua no fluxo manual de sempre.'
@@ -7718,6 +7736,20 @@ async function salvarNomeProdutoSpData(codigo) {
     }
 }
 
+async function alternarIgnorarDivergenciaProdutoSpData(codigo) {
+    const produto = listaProdutosSpData.find(p => p.codigo === codigo);
+    if (!produto) return toast('Associe o SP Data deste item primeiro.');
+    const novo = !produto.ignorarDivergenciaUnidade;
+    try {
+        await produtosSpDataCollection.doc(codigo).update({ ignorarDivergenciaUnidade: novo, atualizadoEm: new Date().toISOString() });
+        produto.ignorarDivergenciaUnidade = novo;
+        toast(novo ? '✓ Divergência de quantidade/valor unitário deste produto passa a ser ignorada.' : '✓ Este produto volta a ser conferido normalmente.');
+        if (nfeInfoAtual) renderAssociacaoCotacaoXml();
+    } catch (e) {
+        console.error('Erro ao sinalizar produto SP Data:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
 async function alternarAtivoProdutoSpData(codigo) {
     const produto = listaProdutosSpData.find(p => p.codigo === codigo);
     if (!produto) return;
@@ -7767,6 +7799,7 @@ function renderListaProdutosSpData() {
             <div class="actions-row">
                 <button type="button" class="central-status-toggle" onclick="toggleEditarNomeProdutoSpData('${p.codigo}')">Renomear</button>
                 <button type="button" class="central-status-toggle" onclick="alternarAtivoProdutoSpData('${p.codigo}')">${inativo ? 'Reativar' : 'Inativar'}</button>
+                <button type="button" class="central-status-toggle" onclick="alternarIgnorarDivergenciaProdutoSpData('${p.codigo}')">${p.ignorarDivergenciaUnidade ? 'Voltar a conferir unidade' : 'Ignorar divergência de unidade'}</button>
             </div>
         </div>`;
     }).join('');
@@ -7811,6 +7844,7 @@ async function confirmarImportacaoSpData() {
                     precoInventario: p.preco,
                     ativo: existente && existente.ativo === false ? false : true,
                     nomeEditadoManualmente: existente ? !!existente.nomeEditadoManualmente : false,
+                    ignorarDivergenciaUnidade: existente ? !!existente.ignorarDivergenciaUnidade : false,
                     importadoEm: existente ? existente.importadoEm : agora,
                     atualizadoEm: agora
                 };
