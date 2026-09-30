@@ -6427,6 +6427,15 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
+        numero: '25.3', nome: 'Recurso sugerido ao importar o relatório do ERP', status: 'atual',
+        implementado: [
+            'Na tela Importar Relatório (ERP), o campo Recurso de cada nota já vem preenchido quando essa NF passou antes pela Entrada de NF e todos os itens dela concordam no mesmo recurso — reaproveita o que já foi determinado lá, não recalcula nada.',
+            'Sem essa informação, ou com mais de um recurso na mesma nota, o campo continua em branco pra escolha manual, como antes.'
+        ],
+        mudou: ['Só o preenchimento inicial do campo; continua editável antes de importar.'],
+        testar: ['Importar o relatório do ERP de uma NF já processada pela Entrada de NF: o Recurso já vem selecionado, com "Sugerido pela Entrada de NF desta nota" embaixo.']
+    },
+    {
         numero: '25.2', nome: 'Falso positivo de unidade sinalizado por produto', status: 'atual',
         implementado: [
             'Botão "Falso positivo (unidade)" ao lado de "Gerar auditoria" nas divergências de quantidade/valor da Entrada de NF: sinaliza o produto SP Data pra que esse tipo de divergência deixe de aparecer nele (ex.: insulinas cotadas em uma unidade e recebidas em outra).',
@@ -7736,6 +7745,21 @@ async function salvarNomeProdutoSpData(codigo) {
     }
 }
 
+// O recurso já foi determinado quando esta NF passou pela Entrada de NF
+// (pelas cotações, Fase 20/21) — aqui só é reaproveitado, nunca recalculado
+// nem decidido do zero. Só sugere quando todos os itens da NF concordam no
+// mesmo recurso; havendo mais de um, fica em branco pra decisão manual.
+function sugerirRecursoImportacaoErp(nota) {
+    const nfSalva = listaNfsProcessadas.find(nf => nf.nf === nota.nf && (nf.serie || '') === (nota.serie || ''));
+    if (!nfSalva || !(nfSalva.itens || []).length) return '';
+    const recursos = new Set((nfSalva.itens || []).map(it => {
+        if (it.semCotacao) return it.recurso || null;
+        if (!it.codigoSmartCompras) return null;
+        const cot = listaCotacoes.find(c => c.pedido === (it.pedidoItem || nfSalva.pedido));
+        return cot && cot.recursosPorItem ? (cot.recursosPorItem[it.codigoSmartCompras] || null) : null;
+    }).filter(Boolean));
+    return recursos.size === 1 ? [...recursos][0] : '';
+}
 async function alternarIgnorarDivergenciaProdutoSpData(codigo) {
     const produto = listaProdutosSpData.find(p => p.codigo === codigo);
     if (!produto) return toast('Associe o SP Data deste item primeiro.');
@@ -9935,13 +9959,13 @@ function renderPreviewImportacao() {
         if (ignorado) status = 'ignorado';
         else if (duplicata) status = 'duplicata';
 
-        return { nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, ignorado, status };
+        return { nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, ignorado, status, recursoSugerido: sugerirRecursoImportacaoErp(nota) };
     });
 
     const totalNovas = linhas.filter(l => l.status === 'novo').length;
     const totalProcessadas = linhas.length - totalNovas;
 
-    const itensHTML = linhas.map(({ nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, ignorado, status }) => {
+    const itensHTML = linhas.map(({ nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, ignorado, status, recursoSugerido }) => {
         const avisosHTML = nota.avisos.length
             ? `<div class="import-avisos">${nota.avisos.map(a => `<div class="import-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${a}</div>`).join('')}</div>`
             : '';
@@ -9967,7 +9991,7 @@ function renderPreviewImportacao() {
             <div class="campo"><label>Data</label><input type="text" class="form-field import-field-data" data-idx="${idx}" value="${nota.data}" oninput="formatarDataInput(this)"></div>
             <div class="campo"><label>Vencimento</label><input type="text" class="form-field import-field-venc" data-idx="${idx}" value="${nota.vencimento}" oninput="formatarDataInput(this)"></div>
             <div class="campo"><label>Valor Total</label><input type="text" class="form-field import-field-valor" data-idx="${idx}" value="${nota.valor}" onblur="formatarValorBlur(event)"></div>
-            <div class="campo"><label>Recurso</label><select class="import-field-obs" data-idx="${idx}">${DOM.obs.innerHTML}</select></div>
+            <div class="campo"><label>Recurso</label><select class="import-field-obs" data-idx="${idx}">${DOM.obs.innerHTML}${recursoSugerido && !observacoesSugeridas.includes(recursoSugerido) ? `<option value="${recursoSugerido}">${recursoSugerido}</option>` : ''}</select>${recursoSugerido ? `<div class="nota-detalhes">Sugerido pela Entrada de NF desta nota.</div>` : ''}</div>
             ${avisosHTML}
         </div>`;
     }).join('');
@@ -10006,6 +10030,11 @@ function renderPreviewImportacao() {
 
     aplicarFiltrosPreviewImportacao();
     atualizarContadorImportacao();
+    linhas.forEach(({ idx, recursoSugerido }) => {
+        if (!recursoSugerido) return;
+        const sel = container.querySelector(`select.import-field-obs[data-idx="${idx}"]`);
+        if (sel) sel.value = recursoSugerido;
+    });
 }
 
 // Aplica em conjunto o filtro de busca (NF/fornecedor) e o filtro de status
