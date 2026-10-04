@@ -818,3 +818,18 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 .cotacao-adicional-linha select { flex: 1 1 220px; }
 .checkbox-grande { width: 22px; height: 22px; min-width: 22px; flex: none; margin: 0; padding: 0; cursor: pointer; accent-color: var(--accent-color); }
 .link-discreto { background: none; border: none; padding: 0; margin-left: 6px; font: inherit; font-size: 12px; color: var(--text-light); text-decoration: underline; cursor: pointer; }
+
+/* Fase 27 — Central do Pedido: abertura suave (fornecedor e produto) */
+.central-colapso{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease-out)}
+.aberto>.central-colapso{grid-template-rows:1fr}
+.central-colapso-inner{overflow:hidden;min-height:0}
+.central-fornecedor-header i,.central-item-chevron{transition:transform .3s var(--ease-out)}
+.central-fornecedor.aberto>.central-fornecedor-header i{transform:rotate(90deg)}
+.central-prod.aberto .central-item-chevron{transform:rotate(180deg)}
+.central-item-linha.central-prod{cursor:default}
+.central-prod-cab{cursor:pointer}
+.central-prod-badges{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.central-fornecedor-resumo{display:block;font-weight:400;font-size:11px;color:var(--text-light);margin-top:2px}
+@media (prefers-reduced-motion:reduce){.central-colapso{transition:none}}
+
+.central-chegada{margin:6px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}

@@ -151,7 +151,7 @@
             <div class="app-screen active" id="screen-add">
                 <div class="card card-plain">
                     <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
-                    <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"></div>
+                    <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"><div id="nf-sugestoes"></div></div>
                     <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
                     <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" class="form-field" placeholder="Ex: 1200,50" inputmode="decimal" onblur="formatarValorBlur(event)"></div>
                     <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" class="form-field" placeholder="Nome do fornecedor" list="fornecedores-sugeridos" value="" onblur="aplicarApelidoNoCampo(this)"><datalist id="fornecedores-sugeridos"></datalist></div>
