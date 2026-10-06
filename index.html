@@ -124,6 +124,10 @@
     
     <div class="main-content">
         <header class="header">
+            <button class="header-action back-button" id="close-btn" aria-label="Voltar" title="Voltar" style="display: none;">
+                    <span class="icon-wrapper">
+                        <i class="fa-solid fa-chevron-left"></i><span class="material-icons">chevron_left</span>
+                    </span></button>
             <h1 id="main-header-title" class="header-title">Adicionar</h1>
             <div class="header-actions">
                 <span id="manage-counter" class="manage-counter header-counter" style="display: none;">0 notas</span>
@@ -137,11 +141,6 @@
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-list-check"></i>
                     </span>
-                </button>
-                <button class="header-action back-button" id="close-btn" style="display: none;">
-                    <span class="icon-wrapper">
-                        <i class="fa-solid fa-chevron-left"></i><span class="material-icons">chevron_left</span>
-                    </span> Voltar
                 </button>
             </div>
         </header>
@@ -192,7 +191,7 @@
                     <div class="cab">
                         <i class="fa-solid fa-calendar-week"></i>
                         <div>
-                            <h3>Próximos Vencimentos</h3>
+                            <h3 class="card-titulo card-titulo-sm">Próximos Vencimentos</h3>
                             <p>Notas vencendo nos próximos 7 dias.</p>
                         </div>
                     </div>
@@ -253,7 +252,6 @@
 
             <div class="app-screen" id="screen-settings">
                 <ul class="settings-list-group">
-                    <li><a data-screen="screen-import" data-title="Importar Relatório (ERP)"><i class="icon fa-solid fa-file-import" style="background-color: #007aff;"></i> Importar Relatório (ERP) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -296,13 +294,12 @@
 
             <div class="app-screen" id="screen-fornecedores">
                 <div class="card card-plain">
-                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Fornecedores</h3>
                     <p id="contador-fornecedores-spdata" style="margin: 0 0 12px; font-size: 12px; color: var(--text-light);">0 fornecedor(es) cadastrado(s)</p>
                     <input type="text" class="form-field" placeholder="Buscar por código, razão social, apelido ou CNPJ..." oninput="filtrarCadastroFornecedoresSpData(this.value)">
                     <div id="lista-cadastro-fornecedores-spdata" class="mt-3"></div>
                 </div>
                 <div class="card mt-4" >
-                    <h3 style="margin: 0 0 4px; font-size: 16px; color: var(--text-dark);">Importar/Atualizar Cadastro</h3>
+                    <h3 class="card-titulo card-titulo-sm">Importar/Atualizar Cadastro</h3>
                     <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Usado pra confirmar automaticamente a qual NF/cotação um lançamento do relatório de entrada do ERP corresponde — nunca por semelhança de nome. Atualização incremental: nunca apaga fornecedores, CNPJs ou apelidos já cadastrados.</p>
                     <textarea id="import-fornspdata-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do relatório de cadastro de fornecedores..."></textarea>
                     <input type="file" id="import-fornspdata-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleFornecedoresSpDataFileUpload(event)">
@@ -339,8 +336,7 @@
                 </div>
             </div>
             <div class="app-screen" id="screen-xml-editor">
-                <div class="card">
-                    <h3 class="card-titulo card-titulo-sm">Entrada de NF</h3>
+                <div class="card" id="xml-card-importar">
                     <p class="desc-tela">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
                     <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
                         <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
@@ -355,8 +351,7 @@
                 </div>
 
                 <div class="card mt-4" id="xml-card-identificacao"  style="display:none">
-                    <h3 style="margin:0 0 6px;font-size:16px;">NF-e carregada</h3>
-                    <p class="desc-tela">Confira se é o arquivo certo antes de seguir — dados extraídos direto do XML.</p>
+                    <div class="xml-eyebrow">NF-e carregada</div>
                     <div id="xml-identificacao-container" style="font-size:13px;line-height:1.6;"></div>
                     <div id="xml-identificacao-infadic" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color);">
                         <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;"><strong>Informações adicionais da NF (só consulta — não usado pra decidir pedido/produto):</strong></div>
@@ -364,10 +359,10 @@
                     </div>
                 </div>
 
-                <div id="xml-estado-nf" class="mt-4" style="display:none"></div>
+                <div id="xml-estado-nf" class="mt-4" style="display:none"></div> <div id="xml-informativos-nf" class="mt-4" style="display:none"></div>
 
                 <div class="card mt-4" id="xml-card-associacao"  style="display:none">
-                    <h3 style="margin:0 0 6px;font-size:16px;">Itens da NF</h3>
+                    <h3 class="card-titulo card-titulo-sm">Itens da NF</h3>
                     <p class="desc-tela">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
                     <div class="campo">
                         <label>Pedido/Cotação correspondente</label>
@@ -394,7 +389,7 @@
                 <div id="xml-resultado-salvar" class="mt-4" style="display:none"></div>
                 <div id="xml-sugestao-recurso" class="mt-4" style="display:none"></div>
 
-                <div class="actions-row" id="xml-acoes-finais" style="display:none;margin:20px 0;">
+                <div class="actions-row" id="xml-acoes-finais" style="display:none;"> <div id="xml-acoes-status" class="xml-acoes-status"></div>
                     <button class="actions-button is-primary" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
                     <button class="actions-button is-neutral" id="xml-btn-baixar" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
                 </div>
@@ -405,7 +400,6 @@
 
             <div class="app-screen" id="screen-spdata">
                 <div class="card">
-                    <h3 class="card-titulo card-titulo-sm">Produtos SP Data</h3>
                     <p class="desc-tela">Cole o texto do relatório do SGH com Código, Nome e Unidade — qualquer um deles funciona (Listagem de itens, por grupo, por subgrupo...), mas prefira um com coluna de nome mais larga, como "Itens por subgrupo II", pra vir menos cortado.</p>
                     <div class="campo"><textarea id="spdata-inventario-texto" class="form-field" style="min-height:120px;" placeholder="Cole aqui o relatório de inventário..."></textarea></div>
                     <div class="actions-row">
@@ -463,7 +457,7 @@
                 </div>
 
                 <div class="card mb-4" >
-                    <h3 style="margin:0 0 6px;font-size:15px;">Relatório de Fornecedores Ganhadores</h3>
+                    <h3 class="card-titulo card-titulo-sm">Relatório de Fornecedores Ganhadores</h3>
                     <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">Complementa a cotação com a quantidade de fornecedores que participaram de cada item (nunca decide recurso/pagamento sozinho). Cole o texto ou envie o arquivo do relatório.</p>
                     <textarea id="ganhadores-textarea" class="form-field import-textarea" placeholder="Cole aqui o relatório de fornecedores ganhadores..."></textarea>
                     <input type="file" id="ganhadores-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleRelatorioGanhadoresFileUpload(event)">
@@ -517,9 +511,43 @@
             </div>
 
             <div class="app-screen" id="screen-central-pedido">
-                <h3 id="central-titulo-pedido" style="margin:0 0 12px;font-size:20px;font-weight:700;"></h3>
+                <h3 id="central-titulo-pedido" class="tela-lead"></h3> <div id="central-subtitulo-pedido" class="central-subtitulo" style="display:none;"></div>
 
-                <div class="card" id="central-header-card" style="display:none;">
+                <div class="card" id="central-sem-cotacao" style="display:none;">
+                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma cotação cadastrada para este pedido ainda.</p>
+                    <button class="actions-button is-primary" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar Cotação</button>
+                </div>
+
+                <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="relatorio" onclick="alternarAbaCentral('relatorio')">Relatório</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
+                    <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                    <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
+                </div>
+
+                <div class="card" id="central-anotacao-card" style="display:none;">
+                    <div id="central-anotacao-conteudo" class="form-field" contenteditable="true" style="min-height:100px;line-height:1.5;" oninput="agendarSalvarAnotacaoInlineCentral()"></div>
+                    <p style="margin:8px 0 0;font-size:12px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
+                    <div class="actions-row mt-3" >
+                        <button class="actions-button is-neutral" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-expand"></i></span> Abrir Edição Completa</button>
+                    </div>
+                </div>
+                <div class="card" id="central-anotacao-vazia" style="display:none;">
+                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma anotação para este pedido ainda.</p>
+                    <button class="actions-button" onclick="criarAnotacaoInlineCentral()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Criar Anotação</button>
+                </div>
+            </div> <div class="central-aba-pane" data-aba="relatorio"><div class="card" id="central-relatorio-card"><h3 class="card-titulo card-titulo-sm">Complementar com Relatório do SmartCompras</h3>
+                    <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
+                    <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="processarRelatorioSmartComprasColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar Relatório</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
+                        <div id="relatorio-smartcompras-resumo"></div>
+                        <div class="actions-row mt-3" >
+                            <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
+                            <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
+                        </div>
+                    </div>
+                </div></div> <div class="central-aba-pane" data-aba="dados"><div class="card" id="central-header-card" style="display:none;">
                     <div class="campo"><label>Origem</label>
                         <select id="central-origem" class="form-field" onchange="salvarCabecalhoCotacaoCentral()">
                             <option value="">Selecione...</option>
@@ -534,52 +562,9 @@
                         <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Atualizar via XML</button>
                         <button class="actions-button is-neutral" onclick="abrirCotacaoParaEdicao(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-truck"></i></span> Editar Fornecedores</button>
                     </div>
-                </div>
-
-                <div class="card" id="central-sem-cotacao" style="display:none;">
-                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma cotação cadastrada para este pedido ainda.</p>
-                    <button class="actions-button is-primary" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar Cotação</button>
-                </div>
-
-                <div class="card mt-4" >
-                    <h3 style="margin:0 0 10px;font-size:15px;">Complementar com Relatório do SmartCompras</h3>
-                    <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
-                    <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
-                    <div class="actions-row">
-                        <button class="actions-button" onclick="processarRelatorioSmartComprasColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar Relatório</button>
-                    </div>
-                    <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
-                        <div id="relatorio-smartcompras-resumo"></div>
-                        <div class="actions-row mt-3" >
-                            <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
-                            <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="central-secao-titulo mt-4" >Fornecedores</div>
-                <div id="central-fornecedores-container"></div>
-
-                <div class="actions-row" style="margin:16px 0;">
-                    <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
-                    <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
-                </div>
-
-                <div class="central-secao-titulo mt-4" >Anotação do Pedido</div>
-                <div class="card" id="central-anotacao-card" style="display:none;">
-                    <div id="central-anotacao-conteudo" class="form-field" contenteditable="true" style="min-height:100px;line-height:1.5;" oninput="agendarSalvarAnotacaoInlineCentral()"></div>
-                    <p style="margin:8px 0 0;font-size:12px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
-                    <div class="actions-row mt-3" >
-                        <button class="actions-button is-neutral" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-expand"></i></span> Abrir Edição Completa</button>
-                    </div>
-                </div>
-                <div class="card" id="central-anotacao-vazia" style="display:none;">
-                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma anotação para este pedido ainda.</p>
-                    <button class="actions-button" onclick="criarAnotacaoInlineCentral()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Criar Anotação</button>
-                </div>
-            </div>
-
-            <div class="app-screen" id="screen-conta">
+                </div></div>
+      </div>
+<div class="app-screen" id="screen-conta">
                 <div class="card">
                     <div class="conta-info">
                         <div class="conta-avatar"><i class="fa-solid fa-user"></i></div>
@@ -655,11 +640,11 @@
                     </div>
                     <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
                     <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
-                    <div class="campo"> <label>Ordem dos Menus</label> <div id="menu-reorder-list" class="reorder-list"></div> </div>
+                    <div class="campo"> <label>Ordem dos Menus e barra inferior</label> <div class="campo-dica">Desmarque "Na barra" para mandar um destino para a tela "Mais". O botão "Mais" fica sempre na barra, com as ferramentas (ex.: Importar Relatório ERP).</div> <div id="menu-reorder-list" class="reorder-list"></div> </div>
                 </div>
             </div>
             
-            <div class="app-screen" id="screen-anotacoes" style="">
+            <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div> <div class="app-screen" id="screen-anotacoes" style="">
                 <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
                     <button class="actions-button is-primary" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
@@ -697,7 +682,7 @@
 
                 <div class="card mt-4" >
                     <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleConfigTextos()">
-                        <h3 style="margin:0;font-size:16px;">⚙️ Configurar Textos Padrão</h3>
+                        <h3 class="card-titulo card-titulo-sm">⚙️ Configurar Textos Padrão</h3>
                         <i class="fa-solid fa-chevron-down" id="config-chevron" style="color:var(--text-light);transition:transform .25s var(--ease-out);"></i>
                     </div>
                     <div id="config-textos-body" class="mt-4" style="display:none">
@@ -838,7 +823,7 @@
 
     <div id="bulk-edit-notas-modal" class="modal-screen">
         <div class="modal-content modal-md">
-            <h3 style="margin: 0 0 4px; color: var(--text-dark);">Editar em Lote</h3>
+            <h3 class="card-titulo card-titulo-sm">Editar em Lote</h3>
             <p style="margin: 0 0 20px; font-size: 13px; color: var(--text-light);">Alterando <strong id="bulk-edit-count">0</strong> nota(s). Deixe em branco os campos que não quer alterar.</p>
             <div class="campo"><label>Fornecedor</label><input type="text" id="bulk-edit-forn" placeholder="Não alterar" list="fornecedores-sugeridos"></div>
             <div class="campo"><label>Vencimento</label><input type="text" id="bulk-edit-venc" placeholder="Não alterar (dd/mm/aaaa)" oninput="formatarDataInput(this)"></div>

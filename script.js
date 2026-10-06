@@ -117,7 +117,9 @@ const AUDITORIA_TEXTOS_DEFAULT = {
 let appConfig = {
     personalizacao: { 
         theme: 'light', iconTheme: 'solid', font: 'sans', animationSpeed: 2, transicaoTela: 'fade', densidade: 'confortavel', mostrarIconesAbas: 'on',
-        menuOrder: ['screen-add', 'screen-manage', 'screen-export', 'screen-reports', 'screen-history', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'] 
+        menuOrder: ['screen-add', 'screen-manage', 'screen-export', 'screen-reports', 'screen-history', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'],
+        // Fase 32: destinos tirados da barra inferior (vão pra tela "Mais"). Vazio = todos na barra.
+        menuHidden: []
     },
     anotacoes: '', fornecedores: [], observacoes: ["C/C CTI", "C/C SANTA CASA", "Recurso Proprio Santa Casa", "Recurso Proprio CTI", "PAGO", "REMESSA"],
     auditoriaTextos: { ...AUDITORIA_TEXTOS_DEFAULT }
@@ -174,8 +176,9 @@ const menuDetails = {
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.91V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.51-1A1.65 1.65 0 0 0 7.4 19.4l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`},
 };
 
-const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-historico-mudancas': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
-const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-settings', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-historico-mudancas': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+let destinoViaMais = null; // Fase 36: destino aberto pela tela "Mais" (ganha o Voltar para ela)
+const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-mais', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-historico-mudancas': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
+const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-mais', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-historico-mudancas': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
@@ -314,6 +317,7 @@ function alterarIconesAbas(valor) {
 
 function aplicarPersonalizacoes() {
     const { theme, iconTheme, font, animationSpeed, menuOrder, transicaoTela, densidade, mostrarIconesAbas } = appConfig.personalizacao;
+    if (!Array.isArray(appConfig.personalizacao.menuHidden)) appConfig.personalizacao.menuHidden = [];
     document.documentElement.setAttribute('data-font', font); document.body.setAttribute('data-theme', theme); document.body.setAttribute('data-icon-theme', iconTheme);
     document.body.setAttribute('data-transition', transicaoTela || 'fade');
     document.body.setAttribute('data-density', densidade || 'confortavel');
@@ -329,28 +333,67 @@ function aplicarPersonalizacoes() {
     atualizarPreviewLogo();
     const currentActiveScreen = document.querySelector('.app-screen.active');
     if (currentActiveScreen) { const screenId = currentActiveScreen.id;
-        const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); });
+        const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); });
     }
 }
     
+// Fase 32: destinos fora da barra (aparecem na tela "Mais"). Na ordem do menu.
+function menuEscondidos(order) {
+    const hidden = (appConfig.personalizacao && appConfig.personalizacao.menuHidden) || [];
+    return (order || appConfig.personalizacao.menuOrder || []).filter(id => hidden.includes(id) && menuDetails[id]);
+}
+// Em qual aba da barra um destino aparece: ele mesmo, ou "Mais" se estiver escondido.
+function abaDaBarra(screenId) {
+    const pai = screenParentMap[screenId] || screenId;
+    if (pai === 'screen-mais') return 'screen-mais';
+    return menuEscondidos().includes(pai) ? 'screen-mais' : pai;
+}
+function abrirDestinoPeloMais(id, title) { destinoViaMais = id; switchToScreen(id, title); }
+function renderTelaMais() {
+    const lista = document.getElementById('mais-lista');
+    if (!lista) return;
+    const linha = (onclick, iconeHTML, nome) => `<button type="button" class="mais-item" onclick="${onclick}"><span class="icon-wrapper">${iconeHTML}</span><span class="mais-item-nome">${nome}</span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`;
+    // Ferramentas: ficam sempre aqui (não são configuração)
+    const ferramentas = linha("switchToScreen('screen-import', 'Importar Relatório (ERP)')", '<i class="fa-solid fa-file-import"></i>', 'Importar Relatório (ERP)');
+    const itens = menuEscondidos();
+    const fora = itens.map(id => {
+        const d = menuDetails[id];
+        return linha(`abrirDestinoPeloMais('${id}', '${d.title}')`, `<i class="${d.icon}"></i><span class="material-icons">${d.material}</span>${d.outlineSvg || ''}${d.duotoneSvg || ''}`, d.title);
+    }).join('');
+    lista.innerHTML = `<div class="mais-secao-titulo">Ferramentas</div><div class="mais-grupo">${ferramentas}</div>` +
+        (itens.length ? `<div class="mais-secao-titulo">Atalhos</div><div class="mais-grupo">${fora}</div>` : '');
+}
 function reordenarMenusDOM(order) {
     const tabBar = document.getElementById('tab-bar');
     const sidebarNav = document.getElementById('sidebar-nav');
     tabBar.innerHTML = ''; sidebarNav.innerHTML = '';
+    const escondidos = menuEscondidos(order);
     order.forEach(screenId => {
         const details = menuDetails[screenId];
         if (details) {
             const iconHTML = `<span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span>`;
-            const tabButton = document.createElement('button'); tabButton.className = 'tab-item'; tabButton.dataset.screen = screenId; tabButton.dataset.title = details.title;
-            tabButton.innerHTML = `${iconHTML}<span>${details.title}</span>`;
-            tabButton.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(screenId, details.title); });
-            tabBar.appendChild(tabButton);
+            if (!escondidos.includes(screenId)) {
+                const tabButton = document.createElement('button'); tabButton.className = 'tab-item'; tabButton.dataset.screen = screenId; tabButton.dataset.title = details.title;
+                tabButton.innerHTML = `${iconHTML}<span>${details.title}</span>`;
+                tabButton.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(screenId, details.title); });
+                tabBar.appendChild(tabButton);
+            }
             const sidebarLi = document.createElement('li'); const sidebarA = document.createElement('a'); sidebarA.className = 'sidebar-item'; sidebarA.dataset.screen = screenId; sidebarA.dataset.title = details.title;
             sidebarA.innerHTML = `${iconHTML}<span>${details.title}</span>`;
             sidebarA.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(screenId, details.title); });
             sidebarLi.appendChild(sidebarA); sidebarNav.appendChild(sidebarLi);
         }
     });
+    // Botão "Mais": sempre ativo — guarda as ferramentas (Importar Relatório ERP) e os destinos tirados da barra.
+    {
+        const mais = document.createElement('button'); mais.className = 'tab-item'; mais.dataset.screen = 'screen-mais'; mais.dataset.title = 'Mais';
+        mais.innerHTML = `<span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i><span class="material-icons">more_horiz</span><svg class="icon-svg-outline" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span><span>Mais</span>`;
+        mais.addEventListener('click', (e) => { e.preventDefault(); switchToScreen('screen-mais', 'Mais'); });
+        tabBar.appendChild(mais);
+    }
+    renderTelaMais();
+    const ativa = document.querySelector('.app-screen.active');
+    if (ativa) document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(ativa.id) : (screenParentMap[ativa.id] || ativa.id))));
 }
 
 // --- LÓGICA DE DADOS E FIREBASE ---
@@ -1307,7 +1350,13 @@ function rebuildNotasPendentesList(){
         // Checkbox da seleção em lote (edição)
         const checkboxHTML = `<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${notasSelecionadas.has(nota.id) ? 'checked' : ''} onchange="toggleNotaSelecionada('${nota.id}')"></label>`;
 
-        return `${checkboxHTML}<div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'}${recursoHTML}</div><div class="nota-detalhes">${aptidaoHTML}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}${arquivarChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
+        // Fase 32: cabeçalho compacto (quem · NF / valor · vencimento / prazo) + chips; o resto continua igual.
+        const diasVenc = calcularDiasParaVencimento(nota.vencimento);
+        const prazoHTML = diasVenc === null ? '' : diasVenc < 0
+            ? `<span class="nota-prazo atrasada">Venceu há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}</span>`
+            : diasVenc === 0 ? `<span class="nota-prazo atrasada">Vence hoje</span>`
+            : `<span class="nota-prazo ${diasVenc <= 3 ? 'proximo' : ''}">Vence em ${diasVenc} dia${diasVenc === 1 ? '' : 's'}</span>`;
+        return `${checkboxHTML}<div class="nota-topo"><div><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-sub">${nota.valor||'N/A'} · Venc. ${nota.vencimento||'N/A'}${nota.obs ? ' · ' + nota.obs : ''}</div></div>${prazoHTML}</div><div class="nota-chips">${aptidaoHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}${arquivarChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
     };
 
     const notasParaExibir = notasPendentes;
@@ -1372,7 +1421,9 @@ function atualizarContadorGerenciar() {
     if (!counterEl) return;
     const total = notasPendentes.length;
     const pendentesCount = notasPendentes.filter(n => n.emEspera).length;
-    counterEl.textContent = `${total} nota${total === 1 ? '' : 's'}${pendentesCount > 0 ? ` · ${pendentesCount} pendente${pendentesCount === 1 ? '' : 's'}` : ''}`;
+    // Fase 33: texto curto pra não espremer o título "Gerenciar NF"; o completo fica no title.
+    counterEl.textContent = `${total}${pendentesCount > 0 ? ` · ${pendentesCount} pend.` : ''}`;
+    counterEl.title = `${total} nota${total === 1 ? '' : 's'}${pendentesCount > 0 ? ` · ${pendentesCount} pendente${pendentesCount === 1 ? '' : 's'}` : ''}`;
 }
 
 // ===================================================================
@@ -1660,6 +1711,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-btn').addEventListener('click', () => {
         const activeScreen = document.querySelector('.app-screen.active');
         const activeId = activeScreen ? activeScreen.id : null;
+        if (activeId && activeId === destinoViaMais) { destinoViaMais = null; switchToScreen('screen-mais', 'Mais'); return; }
         if (activeId === 'screen-anotacoes-editor') {
             voltarParaListaAnotacoes();
             return;
@@ -1670,7 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (centralPedidoAtual) { abrirCentralPedido(centralPedidoAtual); return; }
         }
         const voltarPara = closeBtnBackScreen[activeId] || 'screen-settings';
-        const tituloVoltar = (menuDetails[voltarPara] && menuDetails[voltarPara].title) || 'Ajustes';
+        const tituloVoltar = voltarPara === 'screen-mais' ? 'Mais' : ((menuDetails[voltarPara] && menuDetails[voltarPara].title) || 'Ajustes');
         switchToScreen(voltarPara, tituloVoltar);
     });
     
@@ -2411,8 +2463,10 @@ function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a 
 
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); const subMenuScreens = Object.keys(closeBtnBackScreen); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === parentScreenId); }); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
-function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const li = document.createElement('div'); li.className = 'reorder-list-item'; li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); if (screenId === 'screen-mais' || (menuDetails[screenId] && screenId !== destinoViaMais)) destinoViaMais = null; const subMenuScreens = Object.keys(closeBtnBackScreen).concat(destinoViaMais ? [destinoViaMais] : []); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); }); if (screenId === 'screen-mais') renderTelaMais(); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
+function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; const hidden = appConfig.personalizacao.menuHidden || []; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const naBarra = !hidden.includes(screenId); const li = document.createElement('div'); li.className = 'reorder-list-item' + (naBarra ? '' : ' fora-da-barra'); li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <label class="menu-barra-toggle" title="Mostrar na barra inferior"><input type="checkbox" ${naBarra ? 'checked' : ''} onchange="toggleMenuNaBarra('${screenId}', this.checked)"><span>${naBarra ? 'Na barra' : 'Em Mais'}</span></label> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
+// Fase 32: escolher quais destinos ficam na barra inferior. Os que saem vão pra tela "Mais" (o botão aparece sozinho); todos na barra = sem "Mais".
+function toggleMenuNaBarra(screenId, naBarra) { const cfg = appConfig.personalizacao; const hidden = new Set(cfg.menuHidden || []); if (naBarra) hidden.delete(screenId); else hidden.add(screenId); cfg.menuHidden = [...hidden]; reordenarMenusDOM(cfg.menuOrder); popularListaReordenar(); salvarPersonalizacao(); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
 function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
 
@@ -2465,7 +2519,7 @@ function removerLogo() {
 
 function sincronizarManualmente(button){const syncButton=document.getElementById('sync-btn');if(syncButton.disabled)return;syncButton.disabled=true;const icon = syncButton.querySelector('.icon-wrapper i, .icon-wrapper svg'); if(icon) icon.classList.add('fa-spin'); toast("Sincronizando...");setTimeout(()=>{toast("✓ Dados atualizados.");syncButton.disabled=false;if(icon) icon.classList.remove('fa-spin'); if(icon) icon.classList.add('sync-success');setTimeout(()=>icon.classList.remove('sync-success'),800)},1250)}
 function toggleEditPanel(btn,notaId){const notaItem=btn.closest('.nota-item');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show').forEach(p=>{if(p!==editPanel)p.classList.remove('show')});const isVisible=editPanel.classList.toggle('show');if(isVisible&&editPanel.innerHTML===''){reconstruirPainelFotosEdit(notaId)}}
-async function salvarEdicao(id){const notaItem=document.querySelector(`div[data-note-id="${id}"]`);const data={fornecedor:notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),nf:notaItem.querySelector(`.nfEdit`).value.trim(),vencimento:notaItem.querySelector(`.vencEdit`).value.trim(),valor:notaItem.querySelector(`.valorEdit`).value.trim(),obs:notaItem.querySelector(`.obsEdit`).value.trim()};await notasCollection.doc(id).update(data);await adicionarFornecedor(data.fornecedor,true);toast('✓ Nota editada!');notaItem.querySelector('.edit-panel').classList.remove('show')}
+async function salvarEdicao(id){const notaItem=document.querySelector(`div[data-note-id="${id}"]`);const data={fornecedor:notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),nf:notaItem.querySelector(`.nfEdit`).value.trim(),vencimento:notaItem.querySelector(`.vencEdit`).value.trim(),valor:notaItem.querySelector(`.valorEdit`).value.trim(),obs:notaItem.querySelector(`.obsEdit`).value.trim()};const notaLocal=notasPendentes.find(n=>n.id===id);if(notaLocal)Object.assign(notaLocal,data);await notasCollection.doc(id).update(data);await adicionarFornecedor(data.fornecedor,true);DOM.saida.value=buildSaidaText(notasPendentes.filter(n=>!n.emEspera));atualizarContadorExportacao();toast('✓ Nota editada!');notaItem.querySelector('.edit-panel').classList.remove('show')}
 async function deletarNota(id){showConfirmModal({title:"Confirmar Exclusão",message:"Deseja excluir esta nota permanentemente?",onConfirm:async()=>{await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")}})}
 
 // Marca/desmarca uma nota como "pendente" (em espera). Notas pendentes continuam
@@ -2737,11 +2791,17 @@ let voltarAnotacaoEditorParaCentral = null; // guarda o pedido, se o editor de t
 
 const ROTULOS_HISTORICO = { identificacao: 'Identificado', resolucao: 'Resolvido', encerramento: 'Encerrado', reabertura: 'Reaberto' };
 
+// Fase 37: a cotação individual tem abas (Produtos · Anotações · Relatório · Dados), no mesmo padrão das abas de Relatórios.
+function alternarAbaCentral(aba) {
+    document.querySelectorAll('#screen-central-pedido .central-aba-pane').forEach(p => p.classList.toggle('ativa', p.dataset.aba === aba));
+    document.querySelectorAll('#screen-central-pedido .central-abas .xml-filtro-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.aba === aba));
+}
 function abrirCentralPedido(pedido) {
     if (!pedido) return;
     centralPedidoAtual = pedido;
     centralFornecedoresAbertos = new Set();
     centralStatusFormAberto = new Set();
+    alternarAbaCentral('produtos'); // Fase 37: sempre abre na aba Produtos
     switchToScreen('screen-central-pedido', pedido);
     renderCentralPedidoCompleto(pedido);
 }
@@ -2817,6 +2877,17 @@ function renderCentralPedidoCompleto(pedido) {
     const nota = listaAnotacoes.find(a => a.pedido === pedido);
 
     document.getElementById('central-titulo-pedido').textContent = cotacao && cotacao.origem ? `${pedido} — ${cotacao.origem}` : pedido;
+    // Fase 34: subtítulo com o essencial do pedido + resumo de entrega.
+    // Fase 37: pedido sem cotação não tem o que separar em abas — mostra tudo junto, como antes.
+    document.getElementById('screen-central-pedido').classList.toggle('central-sem-abas', !cotacao);
+    const subEl = document.getElementById('central-subtitulo-pedido');
+    if (subEl) {
+        if (cotacao) {
+            const nForn = (cotacao.fornecedores || []).length;
+            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div>`;
+            subEl.style.display = 'block';
+        } else { subEl.innerHTML = ''; subEl.style.display = 'none'; }
+    }
 
     const headerCard = document.getElementById('central-header-card');
     const semCotacao = document.getElementById('central-sem-cotacao');
@@ -3806,6 +3877,7 @@ function processarXmlTexto(texto) {
 
     document.getElementById('xml-card-associacao').style.display = 'block';
     document.getElementById('xml-acoes-finais').style.display = 'flex';
+    document.getElementById('screen-xml-editor').classList.add('xml-carregada'); // Fase 33: importador compacto
     renderIdentificacaoXml(nfeIdentificacao);
 
     // Base da associação com a cotação (fase 2 do roadmap): já identifica o
@@ -3922,15 +3994,13 @@ function renderIdentificacaoXml(info) {
         ? `<div class="xml-estado-card pronto mb-3"><div class="xml-estado-linha"><span class="xml-item-badge pronto">✓ NF já processada</span><span class="txt-aux">salva em ${nfExistente.processadoEm ? formatarDataCompletaBR(nfExistente.processadoEm) : '—'}${nfExistente.pedido ? `, pedido ${nfExistente.pedido}` : ''} — salvar de novo atualiza a mesma NF, não duplica.</span></div></div>`
         : '';
 
+    // Fase 33: resumo compacto — quem entregou em destaque; NF, valor e itens numa leitura só.
+    const vencTxt = info.vencimentos.length ? ` · Venc. ${info.vencimentos.map(formatarDataCompletaBR).join(', ')}` : '';
     const linhas = [
-        info.fornecedor ? `<div><strong>Fornecedor:</strong> ${info.fornecedor}</div>` : '',
-        info.cnpjEmit ? `<div><strong>CNPJ:</strong> ${info.cnpjEmit}</div>` : '',
-        info.nNF ? `<div><strong>NF:</strong> ${info.nNF}</div>` : '',
-        info.serie ? `<div><strong>Série:</strong> ${info.serie}</div>` : '',
-        info.emissao ? `<div><strong>Emissão:</strong> ${formatarDataCompletaBR(info.emissao)}</div>` : '',
-        info.vencimentos.length ? `<div><strong>Vencimento${info.vencimentos.length > 1 ? 's' : ''}:</strong> ${info.vencimentos.map(formatarDataCompletaBR).join(', ')}</div>` : '',
-        info.valorTotal ? `<div><strong>Valor total:</strong> R$ ${formatarValorMonetarioBR(info.valorTotal)}</div>` : '',
-        `<div><strong>Itens:</strong> ${info.qtdItens}</div>`
+        info.fornecedor ? `<div class="xml-nf-fornecedor">${info.fornecedor}</div>` : '',
+        (info.nNF || info.serie || info.emissao) ? `<div class="xml-nf-linha">${info.nNF ? 'NF ' + info.nNF : ''}${info.serie ? ' · Série ' + info.serie : ''}${info.emissao ? ' · ' + formatarDataCompletaBR(info.emissao) : ''}</div>` : '',
+        `<div class="xml-nf-linha">${info.valorTotal ? 'R$ ' + formatarValorMonetarioBR(info.valorTotal) + ' · ' : ''}${info.qtdItens} ${info.qtdItens === 1 ? 'item' : 'itens'}${vencTxt}</div>`,
+        info.cnpjEmit ? `<div class="xml-nf-linha txt-aux">CNPJ ${info.cnpjEmit}</div>` : ''
     ].filter(Boolean).join('');
 
     container.innerHTML = avisoJaProcessadaHTML + (linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>');
@@ -4075,6 +4145,7 @@ function calcularResumoPendenciasXml() {
     const bloqueios = [];
     const alertas = [];
     const informativos = []; // nunca impedem o "tudo pronto" (verde) — só contexto, não pendência
+    const naoFaturados = []; // Fase 36: [{ pedido, nomes[] }] — itens da cotação deste fornecedor que ainda não vieram em NF nenhuma
 
     if (conflitoPedidoXmlInfo) {
         // Já foi resolvido sozinho (pedido principal + adicional(is), ver
@@ -4112,7 +4183,15 @@ function calcularResumoPendenciasXml() {
     // segunda. Só um alerta informativo, nunca bloqueia.
     // Roda pra cada cotação selecionada (normalmente só uma; numa NF com
     // itens de mais de um pedido, uma vez por pedido).
-    cotacoesSelecionadasXml().forEach(pedidoAlerta => {
+    // Fase 36: além do pedido escolhido no seletor, vale também o pedido das associações dos itens desta NF
+    // (a associação por item é o caminho mais comum e o aviso só aparecia com o pedido escolhido no seletor).
+    const pedidosParaAlerta = new Set(cotacoesSelecionadasXml());
+    itensXmlDetectados.forEach(it => {
+        if (it.semCotacao) return;
+        const a = bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, it.cProd)];
+        if (a && a.pedido) pedidosParaAlerta.add(a.pedido);
+    });
+    [...pedidosParaAlerta].forEach(pedidoAlerta => {
         const cotacaoSelecionada = listaCotacoes.find(c => c.pedido === pedidoAlerta);
         if (!cotacaoSelecionada) return;
         const validacaoFornecedorAlerta = validarFornecedorSpData(nfeInfoAtual.cnpjEmit);
@@ -4132,8 +4211,7 @@ function calcularResumoPendenciasXml() {
             return it ? (it.nomeOficial || it.descricao || cod) : cod;
         });
         if (codigosAusentes.length > 0) {
-            const rotuloPedido = cotacoesSelecionadasXml().length > 1 ? `do pedido ${pedidoAlerta} ` : '';
-            informativos.push(`${codigosAusentes.length} item(ns) da cotação ${rotuloPedido}deste fornecedor ainda não apareceram em nenhuma NF (${nomesAusentes.join(', ')}) — pode vir numa NF seguinte, não é um problema desta NF.`);
+            naoFaturados.push({ pedido: pedidoAlerta, nomes: nomesAusentes });
         }
 
         // Valor total cotado × faturado pra este fornecedor dentro do pedido —
@@ -4170,7 +4248,7 @@ function calcularResumoPendenciasXml() {
             const valorFaturadoFornecedor = valorOutrasNfsFornecedor + valorDestaNfFornecedor;
             const diffPercentual = Math.abs(valorFaturadoFornecedor - valorCotadoFornecedor) / valorCotadoFornecedor;
             if (diffPercentual > TOLERANCIA_VALOR_RECONCILIACAO_ERP) {
-                const rotuloPedido2 = cotacoesSelecionadasXml().length > 1 ? ` do pedido ${pedidoAlerta}` : '';
+                const rotuloPedido2 = pedidosParaAlerta.size > 1 ? ` do pedido ${pedidoAlerta}` : '';
                 const diferenca = Math.abs(valorFaturadoFornecedor - valorCotadoFornecedor);
                 // Se a diferença bate (mais ou menos) com o valor cotado dos
                 // itens que ainda não apareceram em nenhuma NF, é o esperado
@@ -4201,7 +4279,7 @@ function calcularResumoPendenciasXml() {
         totalItens: itensXmlDetectados.length,
         totalmentePronto, semAssociacao, semSpData, conversaoPendente,
         validacaoFornecedor: validarFornecedorSpData(nfeInfoAtual.cnpjEmit),
-        bloqueios, alertas, informativos,
+        bloqueios, alertas, informativos, naoFaturados,
         pronta: bloqueios.length === 0 && alertas.length === 0,
         podeSalvar: bloqueios.length === 0
     };
@@ -4232,14 +4310,21 @@ function renderResumoPendenciasXml() {
         corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pronto">✓ Pronta</span><strong>${resumo.totalItens} item(ns) — todos totalmente prontos. Pode salvar.</strong></div>`;
     } else if (!resumo.podeSalvar) {
         corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pendente">⛔ Bloqueado</span><strong>Resolva antes de salvar</strong></div>
-           <div class="xml-estado-lista">${resumo.bloqueios.map(p => '• ' + p).join('<br>')}</div>
-           ${resumo.alertas.length ? `<div class="xml-estado-lista">${resumo.alertas.map(p => '• ' + p).join('<br>')}</div>` : ''}`;
+           <div class="xml-pend-lista">${resumo.bloqueios.map(p => `<div class="xml-pend-linha"><span class="xml-pend-marca"></span><span>${p}</span></div>`).join('')}${resumo.alertas.map(p => `<div class="xml-pend-linha alerta"><span class="xml-pend-marca"></span><span>${p}</span></div>`).join('')}</div>`;
     } else {
         corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pendente">⚠ Pode salvar, com alerta(s)</span><strong>${resumo.totalmentePronto} de ${resumo.totalItens} totalmente pronto(s)</strong></div>
-           <div class="xml-estado-lista">${resumo.alertas.map(p => '• ' + p).join('<br>')}</div>`;
+           <div class="xml-pend-lista">${resumo.alertas.map(p => `<div class="xml-pend-linha alerta"><span class="xml-pend-marca"></span><span>${p}</span></div>`).join('')}</div>`;
     }
 
     el.innerHTML = corpoHTML + validacaoHTML;
+    // Fase 33: a barra de salvar (fixa embaixo) diz em uma linha o que falta.
+    const statusBarra = document.getElementById('xml-acoes-status');
+    if (statusBarra) {
+        statusBarra.textContent = resumo.pronta ? 'Tudo pronto para salvar'
+            : !resumo.podeSalvar ? `${resumo.bloqueios.length} pendência${resumo.bloqueios.length === 1 ? '' : 's'} para resolver antes de salvar`
+            : `Pode salvar · ${resumo.alertas.length} alerta${resumo.alertas.length === 1 ? '' : 's'}`;
+        statusBarra.className = 'xml-acoes-status ' + estadoClasse;
+    }
 
     // Informativos (recurso pelas cotações, itens de outro pedido já
     // resolvidos, itens que ainda podem vir numa próxima NF): nunca são uma
@@ -4247,9 +4332,17 @@ function renderResumoPendenciasXml() {
     // numa NF 100% pronta, sem tirar o "✓ Pronta" de verde.
     const elInfo = document.getElementById('xml-informativos-nf');
     if (elInfo) {
-        if (resumo.informativos.length) {
+        // Fase 36: itens da cotação deste fornecedor que ainda não vieram em NF nenhuma — em lista, com os nomes.
+        const naoFatHTML = (resumo.naoFaturados || []).map(g => `
+            <div class="xml-nao-faturado">
+                <div class="xml-nao-faturado-titulo">${g.nomes.length} item(ns) da cotação${(resumo.naoFaturados.length > 1) ? ' ' + escRel(g.pedido) : ''} ainda não faturado(s)</div>
+                ${g.nomes.map(n => `<div class="xml-nao-faturado-item">${escRel(n)}</div>`).join('')}
+                <div class="xml-nao-faturado-nota">Podem vir numa NF seguinte — não é um problema desta NF.</div>
+            </div>`).join('');
+        const infoHTML = resumo.informativos.length ? `<div class="xml-estado-lista txt-aux">${resumo.informativos.map(p => '• ' + p).join('<br>')}</div>` : '';
+        if (naoFatHTML || infoHTML) {
             elInfo.style.display = 'block';
-            elInfo.innerHTML = `<div class="xml-estado-lista txt-aux">${resumo.informativos.map(p => '• ' + p).join('<br>')}</div>`;
+            elInfo.innerHTML = naoFatHTML + infoHTML;
         } else {
             elInfo.style.display = 'none';
         }
@@ -4270,6 +4363,21 @@ function renderResumoPendenciasXml() {
 
 function renderTabelaItensXml() {
     renderAssociacaoCotacaoXml();
+}
+
+// Fase 33: um item aberto por vez. Só troca classes (sem redesenhar a lista), pra animação rodar
+// e inputs/painéis dos outros itens não serem perdidos.
+let itensXmlAbertos = new Set();
+let itemXmlNfInicializada = null;
+function alternarItemXmlAberto(idx) {
+    if (itensXmlAbertos.has(idx)) itensXmlAbertos.delete(idx); else itensXmlAbertos.add(idx);
+    document.querySelectorAll('#xml-associacao-container .xml-item-colapsavel').forEach(el => {
+        if (Number(el.dataset.xmlIdx) !== idx) return;
+        const abre = itensXmlAbertos.has(idx);
+        el.classList.toggle('aberto', abre);
+        const b = el.querySelector('.xml-item-resumo');
+        if (b) b.setAttribute('aria-expanded', abre ? 'true' : 'false');
+    });
 }
 
 function atualizarFatorXml(idx, valor) {
@@ -4705,6 +4813,11 @@ function renderAssociacaoCotacaoXml() {
     const itensParaExibir = (totalPendentes > 0 && filtroItensXml === 'pendencias')
         ? itensComStatus.filter(x => !x.status.pronto)
         : itensComStatus;
+    // Fase 33: a cada NF nova, abre sozinho o primeiro item com pendência (se houver); depois vale o que o usuário abrir/fechar.
+    if (itemXmlNfInicializada !== nfeInfoAtual) {
+        itemXmlNfInicializada = nfeInfoAtual;
+        itensXmlAbertos = new Set(itensComStatus.filter(x => !x.status.pronto).map(x => x.idx)); // Fase 36: todo item com pendência já abre, pra preencher direto
+    }
 
     // Prioriza os itens do fornecedor identificado por CNPJ (item 2/3 desta
     // rodada) — só como ORDEM/FILTRO PADRÃO da lista de seleção, nunca
@@ -4818,7 +4931,17 @@ function renderAssociacaoCotacaoXml() {
         // precisa mais comparar duas listas separadas pra entender um item.
         const codigoSaidaDiferente = item.cProdNovo && item.cProdNovo !== item.cProd;
         const recursoHTML = htmlRecursoItemXml(item, idx, status);
-        return `<div class="xml-item-linha ${status.pronto ? '' : 'pendente'}">
+        // Fase 33: cabeçalho sempre visível (nome · cód · quantidade · estado) e o resto recolhível;
+        // itens com pendência já nascem abertos (Fase 36). Todo o conteúdo antigo continua igual, só que dentro do corpo.
+        const abertoXml = itensXmlAbertos.has(idx);
+        const qtdResumo = `${item.qComOriginal}${item.uComEl && item.uComEl.textContent ? ' ' + escRel(item.uComEl.textContent) : ''}`;
+        return `<div class="xml-item-linha xml-item-colapsavel ${status.pronto ? '' : 'pendente'} ${abertoXml ? 'aberto' : ''}" data-xml-idx="${idx}">
+            <button type="button" class="xml-item-resumo" onclick="alternarItemXmlAberto(${idx})" aria-expanded="${abertoXml}">
+                <span class="xml-item-resumo-texto"><span class="xml-item-resumo-nome">${escRel(item.xProd)}</span><span class="xml-item-resumo-sub">Cód. ${escRel(item.cProdNovo || item.cProd)} · ${qtdResumo}${codigoSaidaDiferente ? ' · saída ' + escRel(item.cProdNovo) : ''}</span></span>
+                <span class="xml-item-badge ${status.pronto ? 'pronto' : 'pendente'}">${status.pronto ? '✓ Pronto' : escRel(status.motivos[0] || 'Pendente')}${(!status.pronto && status.motivos.length > 1) ? ' +' + (status.motivos.length - 1) : ''}</span>
+                <i class="fa-solid fa-chevron-down xml-item-seta"></i>
+            </button>
+            <div class="xml-item-corpo"><div class="xml-item-corpo-int">
             <div class="xml-item-topo">
                 <div>
                     <div class="xml-produto-nome">${item.xProd}${item.deExcecao ? ' <span class="badge-excecao">lembrado</span>' : ''}${item.deFatorFixo ? ' <span class="badge-excecao">fator fixo do produto</span>' : ''}</div>
@@ -4836,6 +4959,7 @@ function renderAssociacaoCotacaoXml() {
             ${acaoHTML ? `<div class="xml-item-acao">${acaoHTML}</div>` : ''}
             ${recursoHTML ? `<div class="xml-item-cotacao">${recursoHTML}</div>` : ''}
             ${item.semCotacao ? renderReaproveitamentoCodigoXml(item, idx) : renderPainelAssociacoesConhecidasXml(item, idx)}
+            </div></div>
         </div>`;
     }).join('');
 
@@ -5554,7 +5678,10 @@ function compararFontesPedido(pedido, opcoes) {
             }
             // Fase 28: fornecedor marcado como "já chegou" (sem NF no app) não gera "não faturado".
             // Item já lançado no ERP (entrada vinculada ao pedido) também não é "não faturado".
-            if (pedidoTemNf && !itensErp.length && !(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]) {
+            // Fase 36: só gera "não faturado" quando ESTE fornecedor já deu entrada de NF (XML do app) neste
+            // pedido e este item ficou de fora. Fornecedor que ainda não entregou nada = "aguardando", sem alarme.
+            const fornecedorJaDeuEntrada = pedidoTemNf && nfsDoPedido.some(nf => cnpjEmLista(entidadeDe(itemCotacao.cnpjFornecedor), nf.cnpjFornecedor));
+            if (fornecedorJaDeuEntrada && !itensErp.length && !(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]) {
                 divergencias.push({ tipo: 'nao_faturado', nome, quantidadeCotada: itemCotacao.quantidade });
             }
         } else {
@@ -6878,12 +7005,46 @@ function itensCorrespondentesCotacao(cotacao, termo) {
     );
 }
 
+// Fase 34: resumo de entrega do pedido (quantos fornecedores completos/parciais/aguardando).
+// Só leitura: usa as mesmas funções do card do fornecedor na Central (Fase 31). Nunca quebra a lista.
+function resumoEntregaCotacao(c) {
+    const r = { completa: 0, parcial: 0, erp: 0, aguardando: 0, divergencias: 0, total: 0 };
+    try {
+        const fornecedores = c.fornecedores || [];
+        if (!fornecedores.length || !(c.itens || []).length) return r;
+        const comp = compararFontesPedido(c.pedido);
+        r.divergencias = comp.filter(x => x.divergencias.some(d => d.tipo !== 'nao_faturado') && !x.resolvido).length; // Fase 36: "não faturado" já aparece como entrega parcial
+        fornecedores.forEach(f => {
+            const compForn = comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === normalizarCnpj(f.cnpj));
+            const e = calcularEntregaFornecedorPedido(c.pedido, f, compForn);
+            if (!e || !e.total) return;
+            r.total++;
+            if (e.estado === 'completa') r.completa++;
+            else if (e.estado === 'parcial') r.parcial++;
+            else if (e.estado === 'erp_sem_itens') r.erp++;
+            else r.aguardando++;
+        });
+    } catch (err) { console.warn('resumoEntregaCotacao', err); }
+    return r;
+}
+function chipsResumoEntrega(r) {
+    const chip = (classe, txt) => `<span class="xml-item-badge ${classe}">${txt}</span>`;
+    return [
+        r.completa ? chip('pronto', `✓ ${r.completa} completa${r.completa === 1 ? '' : 's'}`) : '',
+        r.parcial ? chip('pendente', `◐ ${r.parcial} parcial${r.parcial === 1 ? '' : 'is'}`) : '',
+        r.erp ? chip('neutro', `◐ ${r.erp} NF no ERP`) : '',
+        r.aguardando ? chip('neutro', `○ ${r.aguardando} aguardando`) : '',
+        r.divergencias ? chip('pendente', `${r.divergencias} divergência${r.divergencias === 1 ? '' : 's'}`) : ''
+    ].filter(Boolean).join('');
+}
 function renderCardCotacao(c) {
     const qtdFornecedores = (c.fornecedores || []).length;
     const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
+    const chips = chipsResumoEntrega(resumoEntregaCotacao(c));
     return `<div class="nota-item" onclick="abrirCentralPedido('${c.pedido}')">
-        <div class="nota-info">${c.pedido}${c.origem ? ' - ' + c.origem : ''}</div>
-        <div class="nota-detalhes">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · Limite: ' + dataLimite : ''}</div>
+        <div class="nota-info">${c.pedido}${c.origem ? ' · ' + c.origem : ''}</div>
+        <div class="nota-sub">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · limite ' + dataLimite : ''}</div>
+        ${chips ? `<div class="nota-chips">${chips}</div>` : ''}
     </div>`;
 }
 
@@ -7152,7 +7313,99 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: '31.1', nome: 'Entrega via ERP: só conta quando a quantidade é comparável com segurança', status: 'atual',
+        numero: 37, nome: 'Cotação individual em abas (Produtos · Anotações · Relatório · Dados)', status: 'atual',
+        implementado: [
+            'A cotação individual (Central do Pedido) agora tem abas, no mesmo estilo das abas de Relatórios, logo abaixo do resumo: Produtos (os fornecedores e seus itens, com o status de entrega), Anotações (Nova Auditoria, Texto/Anotação e a anotação do pedido), Relatório (Complementar com Relatório do SmartCompras) e Dados (origem, datas, observação, Atualizar via XML e Editar Fornecedores). Abre sempre na aba Produtos.',
+            'Os blocos recolhíveis da Fase 34 saíram: o que era "Dados do pedido" e "Complementar com Relatório" virou aba. Pedido sem cotação continua mostrando tudo junto (sem abas), como antes.',
+            'Tela Mais: a seção dos destinos tirados da barra passou a se chamar "Atalhos" (antes "Fora da barra").'
+        ],
+        mudou: [
+            'Nenhum campo, botão, regra ou dado mudou — só a organização da tela. Os mesmos ids e as mesmas funções continuam valendo.'
+        ],
+        testar: [
+            'Abrir um pedido: tocar em cada aba (Produtos, Anotações, Relatório, Dados) e conferir que os campos e botões de sempre estão na aba esperada.'
+        ]
+    },
+    {
+        numero: 36, nome: 'Ajustes e Mais reorganizados, "não faturado" sem excesso de avisos, itens abertos na Entrada de NF', status: 'concluida',
+        implementado: [
+            'Central do Pedido: corrigido o bug em que "Dados do pedido" e "Complementar com Relatório do SmartCompras" apareciam vazios/achatados quando o pedido tinha muitos fornecedores (a tela é uma coluna e o navegador comprimia os blocos). Agora mantêm o tamanho e abrem normalmente.',
+            '"Não faturado": deixa de ser gerado para fornecedor que ainda não deu entrada de nenhuma NF no pedido (ele fica só como "○ Aguardando entrega"). O aviso existe quando o fornecedor JÁ deu entrada de NF e um item da cotação dele ficou de fora. Os chips de divergência em Cotações e na Central não somam mais o "não faturado" (ele já aparece como entrega parcial).',
+            'Entrada de NF: um bloco destacado lista, por nome, os itens da cotação deste fornecedor que ainda não vieram em nenhuma NF ("podem vir numa NF seguinte"). Agora considera também o pedido das associações dos itens da NF, não só o pedido escolhido no seletor (antes o aviso só aparecia com o pedido escolhido).',
+            'Entrada de NF: todo item com pendência já abre sozinho (vários ao mesmo tempo), para preencher direto; itens prontos ficam recolhidos.',
+            'Gerenciar NF: ao editar uma nota, a lista local e a Saída de Texto são atualizadas na hora (como já era na edição em lote), sem depender do retorno do banco.',
+            'Navegação: o botão "Mais" agora é sempre ativo e guarda as ferramentas — "Importar Relatório (ERP)" saiu de Ajustes e vive em Mais, em "Ferramentas"; os destinos tirados da barra aparecem em "Atalhos". Ajustes ficou só com configurações. Telas abertas por "Mais" (inclusive Ajustes) ganham o Voltar para o próprio Mais. O Voltar agora é só o símbolo (como no iOS).'
+        ],
+        mudou: [
+            'Nenhuma regra de saída de texto, fator, associação, cProd, GTIN ou SP Data foi alterada. A regra de REMESSA da Saída de Texto (vencimento vira "REMESSA") continua como sempre.'
+        ],
+        testar: [
+            'Abrir um pedido com muitos fornecedores: "Dados do pedido" e "Complementar com Relatório" devem aparecer com título e abrir.',
+            'Dar entrada num XML de um fornecedor que tem mais itens na cotação: o bloco "ainda não faturado(s)" deve listar os que faltam. Em Cotações, fornecedor sem NF não deve mais gerar divergência.',
+            'Editar uma nota no Gerenciar NF e conferir a Saída de Texto logo em seguida.'
+        ]
+    },
+    {
+        numero: 35, nome: 'Cabeçalhos e títulos padronizados; barra de salvar da Entrada de NF deixa de ser fixa', status: 'concluida',
+        implementado: [
+            'Cabeçalho: o "Voltar" passou para a esquerda do título em todas as telas internas (padrão iOS), e o título ocupa o resto da linha sem quebrar. Ações do lado direito (sincronizar, selecionar em lote, contador) ficam sempre no mesmo lugar.',
+            'Títulos dentro das telas seguem uma escala única: título da tela na Central (18), título de cartão (16) e rótulo de seção (13). Os títulos que só repetiam o cabeçalho (Entrada de NF, Produtos SP Data, Fornecedores) saíram; os que tinham tamanhos soltos (15 e 16 px avulsos) passaram para o estilo de título de cartão.',
+            'Entrada de NF: os botões Salvar NF e Baixar XML Corrigido voltaram para o fim da lista (não ficam mais fixos cobrindo os itens); a frase do que falta continua acima deles. O nome do item recolhido mostra no máximo 2 linhas (nomes com lote e validade eram enormes) e aparece inteiro quando o item está aberto.'
+        ],
+        mudou: [
+            'Só apresentação: nenhuma função, regra ou dado mudou. O botão Voltar é o mesmo (mesmo id e mesma ação), apenas movido no cabeçalho.'
+        ],
+        testar: [
+            'Abrir Ajustes › qualquer tela interna: o Voltar fica à esquerda do título e funciona. Na Entrada de NF: rolar a lista e conferir que os botões de salvar só aparecem no fim.'
+        ]
+    },
+    {
+        numero: 34, nome: 'Cotações com resumo de entrega e Central do Pedido com blocos recolhíveis', status: 'concluida',
+        implementado: [
+            'Lista de Cotações: cada pedido agora mostra, em chips, a situação das entregas dos fornecedores (✓ completas, ◐ parciais, ◐ NF no ERP, ○ aguardando) e quantas divergências estão abertas — o mesmo cálculo do card do fornecedor na Central (XML do app + ERP), sem gravar nada. Título, fornecedores e limite ficaram em linhas separadas.',
+            'Central do Pedido: o topo ganhou um resumo (fornecedores, limite e os mesmos chips). Os Fornecedores subiram para logo abaixo do resumo, e "Dados do pedido" (origem, datas, observação, Atualizar via XML, Editar Fornecedores) e "Complementar com Relatório do SmartCompras" viraram blocos recolhíveis, fechados ao abrir o pedido, com a mesma animação suave dos outros cartões.'
+        ],
+        mudou: [
+            'Nenhum campo, botão, regra ou dado foi removido ou alterado: os mesmos campos continuam no mesmo documento e os mesmos botões continuam funcionando; só mudaram a ordem na tela e o recolher/abrir. Nova Auditoria, Texto/Anotação e a Anotação do pedido continuam no fim.'
+        ],
+        testar: [
+            'Abrir Cotações e conferir os chips de cada pedido; abrir um pedido e ver o resumo no topo, os fornecedores logo abaixo e, tocando em "Dados do pedido", os campos de sempre (editar origem/data deve continuar salvando).'
+        ]
+    },
+    {
+        numero: 33, nome: 'Entrada de NF mais enxuta: resumo, pendências em linhas, itens recolhíveis e barra de salvar', status: 'concluida',
+        implementado: [
+            'Depois que o XML é carregado, o bloco de importação vira uma linha curta (trocar o arquivo + unidade de dispensação) e o resumo da NF fica compacto: fornecedor em destaque, depois NF · série · data, valor · itens e CNPJ.',
+            'Cada item agora é uma linha recolhida com nome, código, quantidade e estado (✓ Pronto ou o 1º motivo da pendência). Um item abre por vez, com a mesma animação suave dos outros cartões; ao carregar uma NF, o primeiro item com pendência já abre sozinho. Dentro do item continua tudo: código do fornecedor, fator e Confirmar fator, cotação/SP Data, associações conhecidas, código já associado, recurso.',
+            'Os avisos de "Resolva antes de salvar" viraram uma lista de linhas (uma pendência por linha). O texto e as regras são os mesmos.',
+            'Os botões Salvar NF e Baixar XML Corrigido ficam fixos embaixo da tela, com uma linha que diz o que falta ("2 pendências para resolver antes de salvar", "Tudo pronto para salvar"). Salvar continua clicável e explicando o motivo quando bloqueado, como antes.',
+            'Gerenciar NF: o contador do cabeçalho ficou curto ("4 · 2 pend.", o texto completo aparece ao segurar) e o título "Gerenciar NF" não quebra mais em duas linhas.'
+        ],
+        mudou: [
+            'Nenhuma regra de pendência, bloqueio, fator, associação, cotação ou saída mudou — só a apresentação e o recolher/abrir dos itens. cProd, GTIN, SP Data e associações históricas não foram tocados.'
+        ],
+        testar: [
+            'Carregar um XML: o resumo deve ficar curto, o primeiro item com pendência abrir sozinho e, ao tocar em outro item, o anterior fechar. Confirmar um fator e conferir que a linha do item vira ✓ Pronto.',
+            'Conferir a barra fixa embaixo com Salvar NF / Baixar XML Corrigido e a frase de pendências.'
+        ]
+    },
+    {
+        numero: 32, nome: 'Barra de navegação configurável (com "Mais") e card compacto no Gerenciar NF', status: 'concluida',
+        implementado: [
+            'Barra inferior configurável: em Ajustes › Personalização › "Ordem dos Menus e barra inferior", cada destino ganhou a opção "Na barra". A quantidade é você quem escolhe: com todos marcados a barra mostra todos e o botão "Mais" não aparece; ao desmarcar algum, o botão "Mais" surge sozinho na barra e abre uma lista com os destinos que saíram. Os ícones de todos os destinos já existem (nos 4 estilos), então qualquer um pode voltar à barra quando quiser. A ordem continua com as setas de antes e vale para a barra e para o "Mais". O menu lateral (telas largas) continua mostrando tudo.',
+            'O botão "Mais" fica destacado quando a tela atual é um destino que está dentro dele.',
+            'Gerenciar NF: card mais limpo. Em cima ficam fornecedor · NF, valor · vencimento · recurso e uma etiqueta de prazo ("Venceu há 2 dias", "Vence hoje", "Vence em 3 dias"); abaixo, a aptidão para saída e os dados do pedido. Editar, Pendente/Retomar, Arquivar, Excluir, o painel de edição com a animação de abrir/fechar, a seleção em lote e a busca continuam exatamente como eram.'
+        ],
+        mudou: [
+            'Nenhum dado, regra ou saída de texto mudou. A escolha da barra é guardada no mesmo lugar da ordem dos menus (personalização). Instalações antigas começam com todos os destinos na barra, como já era.'
+        ],
+        testar: [
+            'Em Ajustes › Personalização, desmarcar "Na barra" de 2 destinos: o botão "Mais" aparece e lista os 2. Marcar de volta: o "Mais" some.',
+            'Gerenciar NF: abrir "Editar" numa nota (a animação e os campos devem ser os de sempre) e conferir a etiqueta de prazo.'
+        ]
+    },
+    {
+        numero: '31.1', nome: 'Entrega via ERP: só conta quando a quantidade é comparável com segurança', status: 'concluida',
         implementado: [
             'Correção da Fase 31: uma NF associada no ERP não faz mais o item contar como entregue automaticamente. O ERP traz a quantidade na unidade de dispensação (SP Data) e a cotação não guarda unidade nem fator, então a quantidade do ERP não pode ser comparada com a cotada "no escuro".',
             'A quantidade do ERP só é comparada quando TODAS as linhas do ERP daquele produto têm o mesmo valor unitário da cotação (mesmo critério já usado na Fase 8): preço por unidade igual significa mesma unidade. Nesse caso: quantidade do ERP >= cotada = item entregue; menor = item parcial (aparece "x/y" no card). Se o valor unitário não bate, o produto é do tipo "NF no ERP, sem como conferir a quantidade" e NÃO conta como entregue.',
