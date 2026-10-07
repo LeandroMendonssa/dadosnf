@@ -947,3 +947,17 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 /* pedido sem cotação: sem abas, tudo visível */
 .central-sem-abas .central-abas { display: none; }
 .central-sem-abas .central-aba-pane { display: block; }
+
+
+/* ===== Fase 38: Gerenciar NF (abas) + Controle de NFs ===== */
+#gerenciar-abas { margin: 0 0 12px; }
+.gerenciar-ver-todas { margin-top: 12px; border: 1px solid var(--border-color); border-radius: var(--r-md); background: var(--bg-secondary); color: var(--accent-text); flex-shrink: 0; }
+.controle-subtitulo { font-size: 13px; color: var(--text-light); margin: 0 4px 8px; }
+.controle-topo { display: flex; justify-content: flex-end; margin: -4px 0 4px; }
+.controle-barra-selecao { align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; margin-bottom: 8px; border: 1px solid var(--border-color); border-radius: var(--r-md); background: var(--bg-secondary); font-size: 14px; }
+.controle-item .controle-acoes { gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.controle-check { display: inline-flex; align-items: center; padding-right: 10px; }
+.controle-check input { width: 22px; height: 22px; }
+.xml-item-badge.azul { background: color-mix(in srgb, var(--accent-color) 18%, transparent); color: var(--accent-text); }
+#controle-abas .controle-cont { margin-left: 4px; font-weight: 700; }
+#gerenciar-abas span { margin-left: 4px; font-weight: 700; }

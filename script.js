@@ -150,6 +150,9 @@ const menuDetails = {
     'screen-add': { icon: 'fa-solid fa-plus-circle', material: 'add_circle', title: 'Adicionar', 
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/><path d="M13 11h3a1 1 0 0 1 0 2h-3v3a1 1 0 0 1-2 0v-3H8a1 1 0 0 1 0-2h3V8a1 1 0 0 1 2 0v3z"/></svg>`},
+    'screen-controle-nfs': { icon: 'fa-solid fa-list-check', material: 'fact_check', title: 'Controle de NFs',
+        outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"></path><rect x="4" y="4" width="16" height="16" rx="3"></rect></svg>`,
+        duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><rect opacity="0.4" x="3" y="3" width="18" height="18" rx="4"/><path d="M10.5 14.5l-2-2 1.2-1.2.8.8 3-3 1.2 1.2z"/></svg>`},
     'screen-manage': { icon: 'fa-solid fa-tasks', material: 'article', title: 'Gerenciar',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 15H8v-2h8v2zm0-4H8v-2h8v2zM14 9V4l5 5h-5z"/></svg>`},
@@ -177,6 +180,7 @@ const menuDetails = {
 };
 
 let destinoViaMais = null; // Fase 36: destino aberto pela tela "Mais" (ganha o Voltar para ela)
+let destinoRetorno = { para: 'screen-mais', titulo: 'Mais' }; // Fase 38: para onde o Voltar do destino acima leva
 const screenParentMap = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-mais', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-historico-mudancas': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const closeBtnBackScreen = { 'screen-personalizacao': 'screen-settings', 'screen-fornecedores': 'screen-settings', 'screen-observacoes': 'screen-settings', 'screen-import': 'screen-mais', 'screen-conta': 'screen-settings', 'screen-aprovacoes': 'screen-settings', 'screen-backup': 'screen-settings', 'screen-spdata': 'screen-settings', 'screen-historico-mudancas': 'screen-settings', 'screen-cotacao-editor': 'screen-central-pedido', 'screen-central-pedido': 'screen-cotacoes', 'screen-anotacoes-editor': 'screen-anotacoes', 'screen-auditoria-nova': 'screen-anotacoes' };
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
@@ -316,6 +320,13 @@ function alterarIconesAbas(valor) {
 }
 
 function aplicarPersonalizacoes() {
+    // Fase 38: destino novo (ex.: Controle de NFs) que não está na ordem salva entra no fim e começa em "Mais".
+    {
+        const cfgP = appConfig.personalizacao;
+        if (!Array.isArray(cfgP.menuHidden)) cfgP.menuHidden = [];
+        const novos = Object.keys(menuDetails).filter(id => !(cfgP.menuOrder || []).includes(id));
+        if (novos.length) { cfgP.menuOrder = [...(cfgP.menuOrder || []), ...novos]; cfgP.menuHidden = [...new Set([...cfgP.menuHidden, ...novos])]; }
+    }
     const { theme, iconTheme, font, animationSpeed, menuOrder, transicaoTela, densidade, mostrarIconesAbas } = appConfig.personalizacao;
     if (!Array.isArray(appConfig.personalizacao.menuHidden)) appConfig.personalizacao.menuHidden = [];
     document.documentElement.setAttribute('data-font', font); document.body.setAttribute('data-theme', theme); document.body.setAttribute('data-icon-theme', iconTheme);
@@ -348,7 +359,7 @@ function abaDaBarra(screenId) {
     if (pai === 'screen-mais') return 'screen-mais';
     return menuEscondidos().includes(pai) ? 'screen-mais' : pai;
 }
-function abrirDestinoPeloMais(id, title) { destinoViaMais = id; switchToScreen(id, title); }
+function abrirDestinoPeloMais(id, title) { destinoViaMais = id; destinoRetorno = { para: 'screen-mais', titulo: 'Mais' }; switchToScreen(id, title); }
 function renderTelaMais() {
     const lista = document.getElementById('mais-lista');
     if (!lista) return;
@@ -474,7 +485,7 @@ async function executaSalvamento(fornecedor, nf) {
         const checklistInicial = Object.keys(checklistDefinition).reduce((acc,key)=>({...acc,[key]:!1}),{});
         checklistInicial.tirarFoto = false; 
 
-        await notasCollection.add({
+        const novaNotaRef = await notasCollection.add({
             data: DOM.data.value.trim(),
             nf: nf,
             vencimento: DOM.venc.value.trim(),
@@ -487,7 +498,8 @@ async function executaSalvamento(fornecedor, nf) {
         });
 
         await adicionarFornecedor(fornecedor, true);
-        
+        await vincularNotaCriadaAoControle(novaNotaRef.id, nf); // Fase 38
+
         toast("✓ Nota salva com sucesso!")
         
         // Limpa tudo e foca na NF para a próxima nota
@@ -1235,7 +1247,7 @@ async function carregarEstado(){
         if (document.getElementById('lista-cotacoes-container')) renderListaCotacoes();
         if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
         renderAbaAtivaRelatorios();
-        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs();
+        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
     }, error => console.error("Erro ao carregar cotações:", error)));
 
     dataUnsubscribers.push(produtosSpDataCollection.onSnapshot(snapshot => {
@@ -1260,7 +1272,7 @@ async function carregarEstado(){
     // pela mesma chave natural (nf_serie) que as duas já usam.
     dataUnsubscribers.push(entradasErpCollection.onSnapshot(snapshot => {
         listaEntradasErp = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs();
+        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
     }, error => console.error("Erro ao carregar histórico de entradas do ERP:", error)));
 
     dataUnsubscribers.push(fornecedoresSpDataCollection.onSnapshot(snapshot => {
@@ -1272,7 +1284,7 @@ async function carregarEstado(){
     dataUnsubscribers.push(nfsProcessadasCollection.onSnapshot(snapshot => {
         listaNfsProcessadas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
-        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs();
+        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
     }, error => console.error("Erro ao carregar NFs processadas:", error)));
 
     dataUnsubscribers.push(relatorioGanhadoresCollection.onSnapshot(snapshot => {
@@ -1304,7 +1316,7 @@ async function carregarEstado(){
 
         renderListaAnotacoes();
         renderAbaAtivaRelatorios();
-        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs();
+        if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
     }, error => console.error("Erro ao carregar anotações:", error)));
 }
 
@@ -1322,6 +1334,7 @@ function handleSnapshotChanges(snapshot){
 
 // --- OUTRAS FUNÇÕES AUXILIARES ---
 function rebuildNotasPendentesList(){
+    renderControleSeAtivo(); // Fase 38
     if(!DOM.listaNotas) return;
 
     DOM.listaNotas.classList.toggle('selection-mode', selectionModeNotas);
@@ -1359,12 +1372,15 @@ function rebuildNotasPendentesList(){
         return `${checkboxHTML}<div class="nota-topo"><div><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-sub">${nota.valor||'N/A'} · Venc. ${nota.vencimento||'N/A'}${nota.obs ? ' · ' + nota.obs : ''}</div></div>${prazoHTML}</div><div class="nota-chips">${aptidaoHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}${arquivarChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
     };
 
-    const notasParaExibir = notasPendentes;
+    // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".
+    const notasParaExibir = notasPendentes.filter(n => abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera);
     if(notasParaExibir.length===0){
-        DOM.listaNotas.innerHTML=`<div class="empty-state">Nenhuma nota pendente.</div>`;
+        DOM.listaNotas.innerHTML=`<div class="empty-state">${abaGerenciar === 'espera' ? 'Nenhuma nota em espera.' : 'Nenhuma nota na relação para saída.'}</div>`;
         return;
     }
     
+    // Fase 38: tirar a mensagem de "vazio" de antes (ao trocar de aba ela ficava embaixo dos cartões)
+    DOM.listaNotas.querySelectorAll(':scope > .empty-state').forEach(el => el.remove());
     // Diffing simples
     const domNoteIds = new Set(Array.from(DOM.listaNotas.children).map(li=>li.dataset.noteId));
     const newNoteIds = new Set(notasParaExibir.map(n=>n.id));
@@ -1416,7 +1432,16 @@ function aplicarFiltroGerenciar() {
     });
 }
 
+let abaGerenciar = 'saida';
+function alternarAbaGerenciar(aba) {
+    abaGerenciar = aba;
+    rebuildNotasPendentesList();
+}
 function atualizarContadorGerenciar() {
+    const contSaida = document.getElementById('gerenciar-cont-saida'), contEspera = document.getElementById('gerenciar-cont-espera');
+    if (contSaida) contSaida.textContent = notasPendentes.filter(n => !n.emEspera).length;
+    if (contEspera) contEspera.textContent = notasPendentes.filter(n => n.emEspera).length;
+    document.querySelectorAll('#gerenciar-abas .xml-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.aba === abaGerenciar));
     const counterEl = document.getElementById('manage-counter');
     if (!counterEl) return;
     const total = notasPendentes.length;
@@ -1711,7 +1736,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-btn').addEventListener('click', () => {
         const activeScreen = document.querySelector('.app-screen.active');
         const activeId = activeScreen ? activeScreen.id : null;
-        if (activeId && activeId === destinoViaMais) { destinoViaMais = null; switchToScreen('screen-mais', 'Mais'); return; }
+        if (activeId && activeId === destinoViaMais) { destinoViaMais = null; const r = destinoRetorno; destinoRetorno = { para: 'screen-mais', titulo: 'Mais' }; switchToScreen(r.para, r.titulo); return; }
         if (activeId === 'screen-anotacoes-editor') {
             voltarParaListaAnotacoes();
             return;
@@ -2463,7 +2488,7 @@ function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a 
 
 
 // --- FUNÇÕES DE LISTAGEM/HISTÓRICO ---
-function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); if (screenId === 'screen-mais' || (menuDetails[screenId] && screenId !== destinoViaMais)) destinoViaMais = null; const subMenuScreens = Object.keys(closeBtnBackScreen).concat(destinoViaMais ? [destinoViaMais] : []); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); }); if (screenId === 'screen-mais') renderTelaMais(); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
+function switchToScreen(screenId, title) { if (!document.getElementById(screenId) || document.getElementById(screenId).classList.contains('active')) return; const telaAnterior = document.querySelector('.app-screen.active'); if (telaAnterior && telaAnterior.id === 'screen-anotacoes-editor' && screenId !== 'screen-anotacoes-editor') { clearTimeout(autoSaveAnotacaoTimeout); salvarAnotacaoAtual(false); } closeAllModals(); const headerTitle = document.getElementById('main-header-title'); if (screenId === 'screen-mais' || (menuDetails[screenId] && screenId !== destinoViaMais)) destinoViaMais = null; const subMenuScreens = Object.keys(closeBtnBackScreen).concat(destinoViaMais ? [destinoViaMais] : []); document.getElementById('sync-btn').style.display = subMenuScreens.includes(screenId) ? 'none' : 'flex'; document.getElementById('close-btn').style.display = subMenuScreens.includes(screenId) ? 'flex' : 'none'; const selectBtn = document.getElementById('select-mode-btn'); if (selectBtn) selectBtn.style.display = (screenId === 'screen-manage') ? 'flex' : 'none'; const counterEl = document.getElementById('manage-counter'); if (counterEl) counterEl.style.display = (screenId === 'screen-manage') ? 'inline-flex' : 'none'; if (screenId !== 'screen-manage' && selectionModeNotas) { selectionModeNotas = false; notasSelecionadas.clear(); if (selectBtn) selectBtn.classList.remove('active'); rebuildNotasPendentesList(); atualizarBulkBarNotas(); } headerTitle.classList.add('title-changing'); setTimeout(() => { headerTitle.textContent = title; headerTitle.classList.remove('title-changing'); }, 175); document.querySelectorAll('.app-screen.active').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); }); if (screenId === 'screen-mais') renderTelaMais(); if (screenId === 'screen-controle-nfs') renderControleNfs(); if (screenId === 'screen-cotacoes') renderListaCotacoes(); if (screenId === 'screen-historico-mudancas') renderHistoricoMudancas(); }
 function popularListaReordenar() { const list = document.getElementById('menu-reorder-list'); list.innerHTML = ''; const order = appConfig.personalizacao.menuOrder; const hidden = appConfig.personalizacao.menuHidden || []; order.forEach((screenId, index) => { const details = menuDetails[screenId]; if (details) { const naBarra = !hidden.includes(screenId); const li = document.createElement('div'); li.className = 'reorder-list-item' + (naBarra ? '' : ' fora-da-barra'); li.innerHTML = ` <div class="name"> <span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span> <span>${details.title}</span> </div> <div class="actions"> <label class="menu-barra-toggle" title="Mostrar na barra inferior"><input type="checkbox" ${naBarra ? 'checked' : ''} onchange="toggleMenuNaBarra('${screenId}', this.checked)"><span>${naBarra ? 'Na barra' : 'Em Mais'}</span></label> <button onclick="moveMenuItem('${screenId}', 'up')" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button> <button onclick="moveMenuItem('${screenId}', 'down')" ${index === order.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button> </div> `; list.appendChild(li); } }); }
 // Fase 32: escolher quais destinos ficam na barra inferior. Os que saem vão pra tela "Mais" (o botão aparece sozinho); todos na barra = sem "Mais".
 function toggleMenuNaBarra(screenId, naBarra) { const cfg = appConfig.personalizacao; const hidden = new Set(cfg.menuHidden || []); if (naBarra) hidden.delete(screenId); else hidden.add(screenId); cfg.menuHidden = [...hidden]; reordenarMenusDOM(cfg.menuOrder); popularListaReordenar(); salvarPersonalizacao(); }
@@ -2571,6 +2596,7 @@ async function arquivarNotaIndividual(id) {
         onConfirm: async () => {
             const { id: _id, ...notaData } = nota;
             notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+            registrarOrigemNaNotaArquivada(notaData, id); // Fase 38
             const batch = firestore.batch();
             batch.set(historicoCollection.doc(), notaData);
             batch.delete(notasCollection.doc(id));
@@ -2597,6 +2623,7 @@ async function limpar(){
             for (const nota of notasParaArquivar) {
                 const {id, ...notaData} = nota;
                 notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+                registrarOrigemNaNotaArquivada(notaData, id); // Fase 38
                 batch.set(historicoCollection.doc(), notaData);
                 batch.delete(notasCollection.doc(id));
                 // Se esta nota nasceu de uma entrada do relatório ERP
@@ -7313,7 +7340,24 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: 37, nome: 'Cotação individual em abas (Produtos · Anotações · Relatório · Dados)', status: 'atual',
+        numero: 38, nome: 'Gerenciar NF só com a relação de saída e novo Controle de NFs', status: 'atual',
+        implementado: [
+            'Gerenciar NF volta a ser só as NFs escolhidas para a Saída de Texto, com duas abas: "Para saída" e "Em espera" (as marcadas como Pendente). Um atalho no fim da lista leva ao Controle de NFs. A Saída de Texto, a edição, o arquivar e a seleção em lote não mudaram.',
+            'Controle de NFs (novo, em Mais › Atalhos; dá para trazer para a barra em Ajustes › Personalização): mostra o ciclo de cada NF com três abas. Em aberto = Recebida (já entrou por XML ou relatório ERP e ainda não está na relação) + Na relação + Em espera. Arquivadas = já foram para o financeiro, com a marca "Enviada ao financeiro". Diretas = NFs que não passam pelo financeiro. Cada NF mostra de onde veio (XML ✓ / ERP ✓ / só ERP).',
+            'NF Recebida tem duas ações: "Enviar para a relação" (abre o Adicionar já preenchido; ao salvar, a NF fica ligada à nota criada) e "Não vai ao financeiro" (vai para Diretas, sem apagar nada; "Voltar para Em aberto" desfaz). Também dá para marcar várias de uma vez em "Selecionar".',
+            '"Ignorar fornecedor ERP" agora vale também para as NFs desse fornecedor que já estavam esperando decisão: elas vão para Diretas automaticamente, e ao liberar o fornecedor voltam para Em aberto. Marcar uma NF só de XML como direta também vale quando o relatório ERP dela chegar.',
+            'Ao arquivar uma nota que veio de uma NF, o histórico guarda de qual NF ela veio, para a NF não aparecer duplicada em Arquivadas.'
+        ],
+        mudou: [
+            'Notas digitadas à mão não são cruzadas com XML/ERP por nome (não há chave confiável, como já registrado no Histórico): ficam como "Nota manual" e só se ligam a uma NF por vínculo explícito. Registros arquivados antes desta fase podem aparecer repetidos em Arquivadas.',
+            'Nenhuma regra de saída de texto, fator, associação, cProd, GTIN ou SP Data mudou. A entrada do ERP ganhou os campos valor, marcadaDireta e bloqueioFornecedor.'
+        ],
+        testar: [
+            'Em Gerenciar NF: trocar entre "Para saída" e "Em espera" e tocar em "Ver todas as NFs". No Controle: marcar uma NF Recebida como "Não vai ao financeiro", ver em Diretas e voltar; usar "Enviar para a relação" e salvar.'
+        ]
+    },
+    {
+        numero: 37, nome: 'Cotação individual em abas (Produtos · Anotações · Relatório · Dados)', status: 'concluida',
         implementado: [
             'A cotação individual (Central do Pedido) agora tem abas, no mesmo estilo das abas de Relatórios, logo abaixo do resumo: Produtos (os fornecedores e seus itens, com o status de entrega), Anotações (Nova Auditoria, Texto/Anotação e a anotação do pedido), Relatório (Complementar com Relatório do SmartCompras) e Dados (origem, datas, observação, Atualizar via XML e Editar Fornecedores). Abre sempre na aba Produtos.',
             'Os blocos recolhíveis da Fase 34 saíram: o que era "Dados do pedido" e "Complementar com Relatório" virou aba. Pedido sem cotação continua mostrando tudo junto (sem abas), como antes.',
@@ -9496,6 +9540,225 @@ let historicoNfExpandida = null;
 
 const NOMES_MESES_HISTORICO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+// ===================================================================
+// --- FASE 38: CONTROLE DE NFs ---
+// ===================================================================
+// Visão única do ciclo da NF, SÓ LEITURA do que já existe (nada de coleção nova):
+//   Em aberto  = Recebida (entrou por XML/relatório ERP e ainda não está na relação) + Na relação + Em espera
+//   Arquivadas = foi pro financeiro (ERP "arquivada" ou nota arquivada)
+//   Diretas    = não vai ao financeiro (fornecedor ignorado no ERP, ou marcada NF a NF)
+// Junta XML + ERP pela mesma chave nf_serie (igual ao Histórico). Nota digitada à mão NÃO é cruzada com
+// XML/ERP por nome (não existe chave confiável): ela só entra ligada a uma NF quando o vínculo é explícito
+// (notaVinculadaId, gravado ao importar do ERP ou ao "Enviar para a relação" daqui).
+let abaControle = 'aberto';
+let filtroControle = '';
+let selecaoControleAtiva = false;
+const selecionadasControle = new Set();
+let limiteControle = 60;
+let envioPendenteControle = null; // { chave, nf, erpId, nfId } — "Enviar para a relação" aguardando o Salvar do Adicionar
+
+function renderControleSeAtivo() {
+    const tela = document.getElementById('screen-controle-nfs');
+    if (tela && tela.classList.contains('active')) renderControleNfs();
+}
+
+function montarControleNfs() {
+    const itens = [];
+    const notasPorId = {};
+    notasPendentes.forEach(n => { notasPorId[n.id] = n; });
+    const notasLigadas = new Set();
+    const porChave = {};
+    listaNfsProcessadas.forEach(nf => { const ch = nf.serie ? `${nf.nf}_${nf.serie}` : nf.nf; if (!ch) return; (porChave[ch] = porChave[ch] || {}).nf = nf; });
+    listaEntradasErp.forEach(erp => { const ch = erp.serie ? `${erp.nf}_${erp.serie}` : erp.nf; if (!ch) return; (porChave[ch] = porChave[ch] || {}).erp = erp; });
+
+    Object.keys(porChave).forEach(ch => {
+        const { nf, erp } = porChave[ch];
+        const numeroNf = (nf && nf.nf) || (erp && erp.nf) || ch;
+        const cnpj = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
+        const docForn = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
+        const nomeFornecedor = docForn ? (docForn.nomeExibido || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '');
+        let dataISO = null;
+        if (erp && erp.data) dataISO = converterDataBRparaISO(erp.data);
+        if (!dataISO && nf && nf.emissao) dataISO = nf.emissao.slice(0, 10);
+        if (!dataISO && nf && nf.processadoEm) dataISO = nf.processadoEm.slice(0, 10);
+
+        let situacao = 'recebida', subtipo = null, nota = null;
+        const notaId = (erp && erp.notaVinculadaId) || (nf && nf.notaVinculadaId) || null;
+        if (erp && erp.statusFluxo === 'arquivada') situacao = 'arquivada';
+        else if (erp && erp.statusFluxo === 'historico_direto') { situacao = 'direta'; subtipo = erp.bloqueioFornecedor ? 'fornecedor' : (erp.marcadaDireta ? 'marcada' : 'fornecedor'); }
+        else if (!erp && nf && nf.semFinanceiro) { situacao = 'direta'; subtipo = 'marcada'; }
+        else if (notaId && notasPorId[notaId]) { nota = notasPorId[notaId]; notasLigadas.add(nota.id); situacao = nota.emEspera ? 'em_espera' : 'na_relacao'; }
+        else if (!erp && nf && nf.notaVinculadaId && historicoNotas.some(h => h.nfChave === nf.id)) situacao = 'arquivada'; // nota ligada já foi arquivada
+        // (nota ligada que sumiu sem ser arquivada = foi excluída: a NF volta a pedir decisão)
+        const valorTxt = (nota && nota.valor) || (erp && erp.valor) || (nf && nf.valorTotal ? formatarValorMonetarioBR(nf.valorTotal) : '');
+        const venc = (nota && nota.vencimento) || (erp && erp.vencimento) || '';
+        itens.push({ chave: 'nf:' + ch, tipo: 'nf', ch, numeroNf, serie: (nf && nf.serie) || (erp && erp.serie) || '', nomeFornecedor, cnpj, dataISO, situacao, subtipo, nota, nf, erp, valorTxt, venc,
+            pedido: (nf && nf.pedido) || (erp && erp.vinculo && erp.vinculo.status === 'confirmado' && erp.vinculo.pedido) || null });
+    });
+    // notas digitadas à mão (ou de outro caminho) que não estão ligadas a nenhuma NF
+    notasPendentes.forEach(n => {
+        if (notasLigadas.has(n.id)) return;
+        itens.push({ chave: 'nota:' + n.id, tipo: 'nota', numeroNf: n.nf || '(sem NF)', serie: '', nomeFornecedor: n.fornecedor, cnpj: null, dataISO: (n.dataCriacao || '').slice(0, 10) || null,
+            situacao: n.emEspera ? 'em_espera' : 'na_relacao', subtipo: null, nota: n, nf: null, erp: null, valorTxt: n.valor || '', venc: n.vencimento || '', pedido: null });
+    });
+    // notas já arquivadas; as que vieram de uma NF (erpChave/nfChave) já aparecem pela própria NF
+    montarHistoricoNotasLegado().forEach(l => {
+        const n = l.notaLegado;
+        if (n.erpChave || n.nfChave) return;
+        itens.push({ chave: l.chave, tipo: 'legado', numeroNf: l.numeroNf, serie: '', nomeFornecedor: l.nomeFornecedor, cnpj: null, dataISO: l.dataISO,
+            situacao: 'arquivada', subtipo: null, nota: n, nf: null, erp: null, valorTxt: n.valor || '', venc: n.vencimento || '', pedido: null });
+    });
+    itens.sort((a, b) => (b.dataISO || '').localeCompare(a.dataISO || ''));
+    return itens;
+}
+
+function abaDoItemControle(it) {
+    if (it.situacao === 'arquivada') return 'arquivadas';
+    if (it.situacao === 'direta') return 'diretas';
+    return 'aberto';
+}
+
+function alternarAbaControle(aba) { abaControle = aba; limiteControle = 60; selecionadasControle.clear(); renderControleNfs(); }
+function filtrarControle(texto) { filtroControle = texto || ''; limiteControle = 60; renderControleNfs(); }
+function carregarMaisControle() { limiteControle += 60; renderControleNfs(); }
+function alternarSelecaoControle() { selecaoControleAtiva = !selecaoControleAtiva; selecionadasControle.clear(); renderControleNfs(); }
+function toggleSelecionadaControle(chave) { if (selecionadasControle.has(chave)) selecionadasControle.delete(chave); else selecionadasControle.add(chave); renderControleNfs(); }
+
+function renderCardControleNf(it) {
+    const rotulos = { recebida: ['neutro', 'Recebida'], na_relacao: ['azul', 'Na relação'], em_espera: ['pendente', '⏳ Em espera'], arquivada: ['pronto', '✓ Enviada ao financeiro'], direta: ['neutro', 'Direta'] };
+    const [classe, rotulo] = rotulos[it.situacao];
+    const chips = [`<span class="xml-item-badge ${classe}">${rotulo}</span>`];
+    if (it.situacao === 'direta') chips.push(`<span class="xml-item-badge neutro">${it.subtipo === 'marcada' ? 'Marcada por você' : 'Fornecedor ignorado'}</span>`);
+    if (it.tipo === 'nf') {
+        if (it.nf) chips.push('<span class="xml-item-badge pronto">XML ✓</span>');
+        if (it.erp) chips.push(`<span class="xml-item-badge ${it.nf ? 'pronto' : 'neutro'}">${it.nf ? 'ERP ✓' : 'só ERP'}</span>`);
+        if (it.situacao === 'recebida' && it.erp && it.erp.avisoJaExisteNotaManual) chips.push('<span class="xml-item-badge pendente">Já tem nota manual na relação</span>');
+    } else if (it.tipo === 'nota') chips.push('<span class="xml-item-badge neutro">Nota manual</span>');
+    else chips.push('<span class="xml-item-badge neutro">Registro simples</span>');
+    const dataTxt = it.dataISO ? formatarDataBRSimples(it.dataISO) : '';
+    const sub = [it.valorTxt ? 'R$ ' + escRel(String(it.valorTxt).replace(/^R\$\s*/, '')) : '', it.venc ? 'Venc. ' + escRel(it.venc) : '', it.pedido ? 'Pedido ' + escRel(it.pedido) : ''].filter(Boolean).join(' · ');
+    const chaveJs = it.chave.replace(/'/g, "\\'");
+    let acoes = '';
+    if (it.tipo === 'nf' && it.situacao === 'recebida') {
+        acoes = `<button type="button" class="action-chip edit-chip" onclick="event.stopPropagation(); enviarNfParaRelacao('${chaveJs}')">Enviar para a relação</button><button type="button" class="action-chip" onclick="event.stopPropagation(); marcarNfDireta('${chaveJs}')">Não vai ao financeiro</button>`;
+    } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
+        acoes = `<button type="button" class="action-chip" onclick="event.stopPropagation(); verNoGerenciarNf('${chaveJs}')">Ver no Gerenciar NF</button>`;
+    } else if (it.situacao === 'direta' && it.subtipo === 'marcada') {
+        acoes = `<button type="button" class="action-chip" onclick="event.stopPropagation(); voltarNfParaAberto('${chaveJs}')">Voltar para Em aberto</button>`;
+    } else if (it.situacao === 'direta') {
+        acoes = `<div class="nota-data">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>`;
+    }
+    const selecionavel = selecaoControleAtiva && it.tipo === 'nf' && it.situacao === 'recebida';
+    const check = selecionavel ? `<label class="controle-check" onclick="event.stopPropagation()"><input type="checkbox" ${selecionadasControle.has(it.chave) ? 'checked' : ''} onchange="toggleSelecionadaControle('${chaveJs}')"></label>` : '';
+    return `<div class="nota-item controle-item" data-controle-chave="${escRel(it.chave)}">
+        <div class="nota-topo">${check}<div style="flex:1;min-width:0"><div class="nota-info">${escRel(it.nomeFornecedor || '(sem fornecedor)')} · NF ${escRel(it.numeroNf)}${it.serie ? '/' + escRel(it.serie) : ''}</div>
+            ${sub ? `<div class="nota-sub">${sub}</div>` : ''}</div>${dataTxt ? `<span class="nota-prazo">${dataTxt}</span>` : ''}</div>
+        <div class="nota-chips">${chips.join('')}</div>
+        ${acoes ? `<div class="actions-row controle-acoes">${acoes}</div>` : ''}
+    </div>`;
+}
+
+function renderControleNfs() {
+    const lista = document.getElementById('controle-lista');
+    if (!lista) return;
+    const todos = montarControleNfs();
+    const contagem = { aberto: 0, arquivadas: 0, diretas: 0 };
+    todos.forEach(it => { contagem[abaDoItemControle(it)]++; });
+    document.querySelectorAll('#controle-abas .xml-filtro-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.aba === abaControle);
+        const c = b.querySelector('.controle-cont'); if (c) c.textContent = contagem[b.dataset.aba];
+    });
+    const termo = normalizarBuscaRel(filtroControle);
+    let visiveis = todos.filter(it => abaDoItemControle(it) === abaControle);
+    if (termo) visiveis = visiveis.filter(it => normalizarBuscaRel([it.numeroNf, it.nomeFornecedor, it.pedido, it.cnpj].filter(Boolean).join(' ')).includes(termo));
+    const barra = document.getElementById('controle-barra-selecao');
+    if (barra) {
+        const podeSelecionar = abaControle === 'aberto' && visiveis.some(it => it.tipo === 'nf' && it.situacao === 'recebida');
+        document.getElementById('controle-btn-selecionar').style.display = podeSelecionar || selecaoControleAtiva ? '' : 'none';
+        document.getElementById('controle-btn-selecionar').textContent = selecaoControleAtiva ? 'Concluir' : 'Selecionar';
+        barra.style.display = selecaoControleAtiva ? 'flex' : 'none';
+        document.getElementById('controle-sel-info').textContent = `${selecionadasControle.size} selecionada(s)`;
+        document.getElementById('controle-sel-direta').disabled = selecionadasControle.size === 0;
+    }
+    const subtitulos = { aberto: 'Tudo que ainda não foi para o financeiro', arquivadas: 'NFs que já foram para o financeiro', diretas: 'NFs que não passam pelo financeiro' };
+    const vazios = { aberto: 'Nada em aberto.', arquivadas: 'Nenhuma NF arquivada ainda.', diretas: 'Nenhuma NF direta.' };
+    const pagina = visiveis.slice(0, limiteControle);
+    lista.innerHTML = `<div class="controle-subtitulo">${subtitulos[abaControle]}</div>` +
+        (pagina.length ? pagina.map(renderCardControleNf).join('') : `<div class="empty-state">${termo ? 'Nada encontrado para essa busca.' : vazios[abaControle]}</div>`) +
+        (visiveis.length > pagina.length ? `<div class="actions mt-3"><button type="button" class="actions-button is-neutral" onclick="carregarMaisControle()">Carregar mais (${visiveis.length - pagina.length} restante(s))</button></div>` : '');
+}
+
+function itemControlePorChave(chave) { return montarControleNfs().find(it => it.chave === chave); }
+
+async function marcarNfDireta(chave) {
+    const it = itemControlePorChave(chave); if (!it || it.tipo !== 'nf') return;
+    try {
+        if (it.erp) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'historico_direto', marcadaDireta: true, bloqueioFornecedor: false });
+        else if (it.nf) await nfsProcessadasCollection.doc(it.nf.id).update({ semFinanceiro: true });
+        toast('✓ NF marcada como direta — saiu de "Em aberto" (aba Diretas).');
+    } catch (e) { console.error('Erro ao marcar NF direta:', e); toast('✕ Erro ao marcar a NF.'); }
+}
+async function voltarNfParaAberto(chave) {
+    const it = itemControlePorChave(chave); if (!it || it.tipo !== 'nf') return;
+    try {
+        if (it.erp && it.erp.marcadaDireta) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'pre_selecao', marcadaDireta: false });
+        else if (!it.erp && it.nf) await nfsProcessadasCollection.doc(it.nf.id).update({ semFinanceiro: false });
+        toast('✓ NF de volta para "Em aberto".');
+    } catch (e) { console.error('Erro ao voltar NF:', e); toast('✕ Erro ao atualizar a NF.'); }
+}
+function marcarSelecionadasDiretas() {
+    const chaves = [...selecionadasControle];
+    if (!chaves.length) return;
+    showConfirmModal({
+        title: 'Não vai ao financeiro', message: `Marcar ${chaves.length} NF(s) como diretas? Elas saem de "Em aberto" e ficam na aba Diretas (dá para voltar depois).`,
+        confirmText: 'Marcar', confirmClass: 'warning',
+        onConfirm: async () => { for (const ch of chaves) await marcarNfDireta(ch); selecionadasControle.clear(); selecaoControleAtiva = false; renderControleNfs(); }
+    });
+}
+// "Enviar para a relação": abre o Adicionar já preenchido (a nota nasce do fluxo de sempre, com a checagem de
+// duplicidade) e, ao salvar, a NF fica ligada à nota (vincularNotaCriadaAoControle).
+function enviarNfParaRelacao(chave) {
+    const it = itemControlePorChave(chave); if (!it || it.tipo !== 'nf') return;
+    envioPendenteControle = { chave, nf: it.numeroNf, erpId: it.erp ? it.erp.id : null, nfId: it.nf ? it.nf.id : null };
+    limparFormularioPrincipal(false);
+    DOM.nf.value = it.numeroNf || '';
+    DOM.forn.value = (it.nomeFornecedor || '').toUpperCase();
+    DOM.venc.value = it.venc || '';
+    DOM.valor.value = it.valorTxt ? String(it.valorTxt).replace(/^R\$\s*/, '') : '';
+    switchToScreen('screen-add', 'Adicionar');
+    toast('Confira os dados e toque em Salvar para enviar a NF para a relação.');
+}
+async function vincularNotaCriadaAoControle(notaId, nfDigitada) {
+    const p = envioPendenteControle;
+    if (!p) return;
+    envioPendenteControle = null;
+    const norm = v => String(v || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    if (norm(p.nf) !== norm(nfDigitada)) return; // o usuário digitou outra NF — não liga nada por adivinhação
+    try {
+        if (p.erpId) await entradasErpCollection.doc(p.erpId).update({ statusFluxo: 'selecionada_financeiro', notaVinculadaId: notaId });
+        if (p.nfId) await nfsProcessadasCollection.doc(p.nfId).update({ notaVinculadaId: notaId });
+    } catch (e) { console.error('Erro ao ligar a NF à nota criada:', e); }
+}
+function registrarOrigemNaNotaArquivada(notaData, notaId) {
+    const e = listaEntradasErp.find(x => x.notaVinculadaId === notaId); if (e) notaData.erpChave = e.id;
+    const n = listaNfsProcessadas.find(x => x.notaVinculadaId === notaId); if (n) notaData.nfChave = n.id;
+}
+function verNoGerenciarNf(chave) {
+    const it = itemControlePorChave(chave); if (!it || !it.nota) return;
+    abaGerenciar = it.nota.emEspera ? 'espera' : 'saida';
+    switchToScreen('screen-manage', 'Gerenciar NF');
+    const campo = document.getElementById('gerenciar-search');
+    if (campo) campo.value = it.numeroNf || '';
+    filtroGerenciarTexto = it.numeroNf || '';
+    rebuildNotasPendentesList();
+    aplicarFiltroGerenciar();
+}
+function abrirControleNfs() {
+    destinoViaMais = 'screen-controle-nfs';
+    destinoRetorno = { para: 'screen-manage', titulo: 'Gerenciar NF' };
+    switchToScreen('screen-controle-nfs', 'Controle de NFs');
+}
+
 // Junta nfsProcessadas + entradasErp pela mesma chave (nf_serie). Cobre os 3
 // casos possíveis: NF processada por XML e já vinculada ao ERP; NF só
 // processada por XML (ERP ainda não chegou); e NF que entrou só pelo
@@ -10834,6 +11097,7 @@ async function salvarEntradasErp(blocosParsed) {
                 cnpjFornecedor: vinculo.cnpjFornecedor, // null até confirmado — nunca escolhido arbitrariamente
                 data: bloco.data,
                 vencimento: bloco.vencimento,
+                valor: bloco.valor, // Fase 38: pra pré-preencher "Enviar para a relação" no Controle de NFs
                 itens: itensEnriquecidos,
                 financeiro: bloco.financeiro,
                 parcelas: bloco.parcelasDetalhe,
@@ -10842,6 +11106,8 @@ async function salvarEntradasErp(blocosParsed) {
                 statusFluxo: fluxo.statusFluxo,
                 notaVinculadaId: fluxo.notaVinculadaId,
                 avisoJaExisteNotaManual: fluxo.avisoJaExisteNotaManual,
+                marcadaDireta: fluxo.marcadaDireta || false,           // Fase 38: "não vai ao financeiro" marcada numa NF
+                bloqueioFornecedor: fluxo.bloqueioFornecedor || false, // Fase 38: foi pro histórico por fornecedor ignorado
                 atualizadoEm: agora
             });
             salvos++;
@@ -10894,7 +11160,9 @@ function resolverStatusFluxoEntradaErp(bloco, vinculo, docExistente) {
         return {
             statusFluxo: docExistente.statusFluxo,
             notaVinculadaId: docExistente.notaVinculadaId || null,
-            avisoJaExisteNotaManual: docExistente.avisoJaExisteNotaManual || false
+            avisoJaExisteNotaManual: docExistente.avisoJaExisteNotaManual || false,
+            marcadaDireta: docExistente.marcadaDireta || false,
+            bloqueioFornecedor: docExistente.bloqueioFornecedor || false
         };
     }
 
@@ -10903,8 +11171,11 @@ function resolverStatusFluxoEntradaErp(bloco, vinculo, docExistente) {
         : (vinculo.cnpjsFornecedor && vinculo.cnpjsFornecedor.length ? vinculo.cnpjsFornecedor : resolverCnpjsFornecedorSpData(bloco.codigoFornecedorSpData));
 
     if (cnpjsPossiveis.some(c => fornecedoresIgnoradosCnpj.has(c))) {
-        return { statusFluxo: 'historico_direto', notaVinculadaId: null, avisoJaExisteNotaManual: false };
+        return { statusFluxo: 'historico_direto', notaVinculadaId: null, avisoJaExisteNotaManual: false, bloqueioFornecedor: true };
     }
+    // Fase 38: NF só de XML que já foi marcada como "não vai ao financeiro" — a entrada do ERP herda a marca.
+    const nfXmlMarcada = listaNfsProcessadas.find(n => n.semFinanceiro && n.nf === bloco.nf && (n.serie || '') === (bloco.serie || ''));
+    if (nfXmlMarcada) return { statusFluxo: 'historico_direto', notaVinculadaId: null, avisoJaExisteNotaManual: false, marcadaDireta: true };
 
     // Reaproveita a checagem de duplicidade já existente (fluxo manual de
     // Adicionar Nota) — pelo nome do fornecedor tal como veio no relatório
@@ -10933,6 +11204,19 @@ async function alternarBloqueioFornecedorCnpj(chave) {
     grupo.cnpjs.forEach(c => { if (algumBloqueado) novoConjunto.delete(c.cnpj); else novoConjunto.add(c.cnpj); });
     try {
         await settingsDocRef.set({ fornecedoresIgnoradosCnpj: Array.from(novoConjunto) }, { merge: true });
+        // Fase 38: vale também para as NFs deste fornecedor que já estavam esperando decisão (e desfaz só o que o bloqueio fez).
+        try {
+            const cnpjsGrupo = grupo.cnpjs.map(c => c.cnpj);
+            const batchB = firestore.batch(); let nAtualizadas = 0;
+            listaEntradasErp.forEach(e => {
+                const v = e.vinculo || {};
+                const doGrupo = [e.cnpjFornecedor, v.cnpjFornecedor, ...(v.cnpjsFornecedor || [])].filter(Boolean).some(c => cnpjsGrupo.some(g => mesmoCnpj(g, c)));
+                if (!doGrupo) return;
+                if (!algumBloqueado && e.statusFluxo === 'pre_selecao') { batchB.update(entradasErpCollection.doc(e.id), { statusFluxo: 'historico_direto', bloqueioFornecedor: true }); nAtualizadas++; }
+                if (algumBloqueado && e.statusFluxo === 'historico_direto' && e.bloqueioFornecedor) { batchB.update(entradasErpCollection.doc(e.id), { statusFluxo: 'pre_selecao', bloqueioFornecedor: false }); nAtualizadas++; }
+            });
+            if (nAtualizadas) await batchB.commit();
+        } catch (errB) { console.error('Erro ao reclassificar NFs do fornecedor bloqueado:', errB); }
         toast(algumBloqueado ? '✓ Fornecedor liberado — NFs do relatório ERP voltam a ser tratadas normalmente.' : '✓ Fornecedor bloqueado — NFs do relatório ERP vão direto pro Histórico.');
     } catch (e) {
         console.error('Erro ao alternar bloqueio de fornecedor:', e);

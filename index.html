@@ -166,7 +166,7 @@
             
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div id="lista-notas-pendentes" class="nota-list"></div> 
+                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <button type="button" class="mais-item gerenciar-ver-todas" onclick="abrirControleNfs()"><span class="mais-item-nome">Ver todas as NFs (Controle de NFs)</span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button> 
             </div>
             
             
@@ -644,7 +644,18 @@
                 </div>
             </div>
             
-            <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div> <div class="app-screen" id="screen-anotacoes" style="">
+            <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div>
+      <div class="app-screen" id="screen-controle-nfs">
+        <div class="campo mb-4"><input type="text" id="controle-busca" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarControle(this.value)"></div>
+        <div class="xml-filtro-toggle" id="controle-abas">
+          <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
+          <button type="button" class="xml-filtro-btn" data-aba="arquivadas" onclick="alternarAbaControle('arquivadas')">Arquivadas <span class="controle-cont">0</span></button>
+          <button type="button" class="xml-filtro-btn" data-aba="diretas" onclick="alternarAbaControle('diretas')">Diretas <span class="controle-cont">0</span></button>
+        </div>
+        <div class="controle-topo"><button type="button" id="controle-btn-selecionar" class="link-discreto" onclick="alternarSelecaoControle()">Selecionar</button></div>
+        <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div>
+        <div id="controle-lista" class="nota-list"></div>
+      </div> <div class="app-screen" id="screen-anotacoes" style="">
                 <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
                     <button class="actions-button is-primary" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
