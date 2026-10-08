@@ -961,3 +961,27 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 .xml-item-badge.azul { background: color-mix(in srgb, var(--accent-color) 18%, transparent); color: var(--accent-text); }
 #controle-abas .controle-cont { margin-left: 4px; font-weight: 700; }
 #gerenciar-abas span { margin-left: 4px; font-weight: 700; }
+
+
+/* ===== Fase 39: Entrada de NF em abas ===== */
+.xml-resumo-topo { margin-bottom: 12px; }
+.xml-resumo-topo .xml-trocar { margin-top: 6px; padding: 8px 0; }
+.xml-abas { margin: 0 0 12px; }
+.xml-aba-pane { display: none; }
+.xml-aba-pane.ativa { display: block; }
+.xml-aba-ponto { margin-left: 4px; font-size: 12px; color: var(--text-light); }
+.xml-aba-ponto.alerta { color: var(--danger); }
+/* antes de carregar o XML só existe o importador (aba NF) */
+#screen-xml-editor:not(.xml-carregada) .xml-abas { display: none; }
+#screen-xml-editor:not(.xml-carregada) .xml-aba-pane { display: none; }
+#screen-xml-editor:not(.xml-carregada) .xml-aba-pane[data-aba="nf"] { display: block; }
+#screen-xml-editor:not(.xml-carregada) #xml-card-identificacao { display: none; }
+/* pendências que levam à aba certa */
+.xml-pend-clicavel { cursor: pointer; align-items: center; }
+.xml-pend-texto { flex: 1; min-width: 0; }
+.xml-pend-aba { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--accent-text); white-space: nowrap; }
+.xml-pend-linha.info .xml-pend-marca { border-color: var(--text-light); }
+
+
+/* ===== Fase 40 ===== */
+.gerenciar-aviso-recursos { align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; margin: 0 0 12px; border: 1px solid var(--border-color); border-left: 3px solid var(--warning); border-radius: var(--r-md); background: var(--bg-secondary); font-size: 13px; color: var(--text-dark); }

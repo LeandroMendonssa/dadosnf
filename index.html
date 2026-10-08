@@ -166,7 +166,7 @@
             
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <button type="button" class="mais-item gerenciar-ver-todas" onclick="abrirControleNfs()"><span class="mais-item-nome">Ver todas as NFs (Controle de NFs)</span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button> 
+                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <button type="button" class="mais-item gerenciar-ver-todas" onclick="abrirControleNfs()"><span class="mais-item-nome">Ver todas as NFs (Controle de NFs)</span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button> 
             </div>
             
             
@@ -336,7 +336,27 @@
                 </div>
             </div>
             <div class="app-screen" id="screen-xml-editor">
-                <div class="card" id="xml-card-importar">
+                <div class="card xml-resumo-topo" id="xml-resumo-nf" style="display:none;"></div> <div class="xml-filtro-toggle xml-abas" id="xml-abas"> <button type="button" class="xml-filtro-btn active" data-aba="itens" onclick="alternarAbaXml('itens')">Itens <span class="xml-aba-cont"></span><span class="xml-aba-ponto"></span></button> <button type="button" class="xml-filtro-btn" data-aba="pedido" onclick="alternarAbaXml('pedido')">Pedido <span class="xml-aba-ponto"></span></button> <button type="button" class="xml-filtro-btn" data-aba="nf" onclick="alternarAbaXml('nf')">NF <span class="xml-aba-ponto"></span></button> </div> <div id="xml-estado-nf" class="mt-4" style="display:none"></div>  <div class="xml-aba-pane ativa" data-aba="itens"> <div class="card mt-4" id="xml-card-associacao" style="display:none"> <p class="desc-tela">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p> <div id="xml-associacao-container" class="mt-3"></div> </div>  </div> <div class="xml-aba-pane" data-aba="pedido"> <div class="card mt-4" id="xml-card-pedido"> <div class="campo">
+                        <label>Pedido/Cotação correspondente</label>
+                        <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
+                        <div id="xml-pedido-caption" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
+                        <div id="xml-cotacao-adicional-box" class="mt-3" style="display:none;"></div>
+                        <label class="mt-3" style="display:flex;gap:10px;align-items:center;font-size:13px;font-weight:600;color:var(--text-dark);">
+                            <input type="checkbox" id="xml-sem-cotacao-nf" onchange="alternarSemCotacaoNfXml(this.checked)" class="checkbox-grande">
+                            Esta NF não possui cotação do SmartCompras (compra direta)
+                        </label>
+                    </div>
+                    <div id="xml-destino-sem-cotacao" class="campo mt-3" style="display:none;">
+                        <label>Destino dos itens sem cotação</label>
+                        <select class="form-field" id="xml-destino-sem-cotacao-select" onchange="definirDestinoSemCotacaoXml(this.value)">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
+                    </div>
+                    <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div> </div> <div id="xml-informativos-nf" class="mt-4" style="display:none"></div>
+
+                 </div> <div class="xml-aba-pane" data-aba="nf"> <div class="card" id="xml-card-importar">
                     <p class="desc-tela">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
                     <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
                         <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
@@ -359,34 +379,7 @@
                     </div>
                 </div>
 
-                <div id="xml-estado-nf" class="mt-4" style="display:none"></div> <div id="xml-informativos-nf" class="mt-4" style="display:none"></div>
-
-                <div class="card mt-4" id="xml-card-associacao"  style="display:none">
-                    <h3 class="card-titulo card-titulo-sm">Itens da NF</h3>
-                    <p class="desc-tela">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p>
-                    <div class="campo">
-                        <label>Pedido/Cotação correspondente</label>
-                        <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
-                        <div id="xml-pedido-caption" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
-                        <div id="xml-cotacao-adicional-box" class="mt-3" style="display:none;"></div>
-                        <label class="mt-3" style="display:flex;gap:10px;align-items:center;font-size:13px;font-weight:600;color:var(--text-dark);">
-                            <input type="checkbox" id="xml-sem-cotacao-nf" onchange="alternarSemCotacaoNfXml(this.checked)" class="checkbox-grande">
-                            Esta NF não possui cotação do SmartCompras (compra direta)
-                        </label>
-                    </div>
-                    <div id="xml-destino-sem-cotacao" class="campo mt-3" style="display:none;">
-                        <label>Destino dos itens sem cotação</label>
-                        <select class="form-field" id="xml-destino-sem-cotacao-select" onchange="definirDestinoSemCotacaoXml(this.value)">
-                            <option value="">Selecione...</option>
-                            <option value="Santa Casa">Santa Casa</option>
-                            <option value="CTI">CTI</option>
-                        </select>
-                    </div>
-                    <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div>
-                    <div id="xml-associacao-container" class="mt-3"></div>
-                </div>
-
-                <div id="xml-resultado-salvar" class="mt-4" style="display:none"></div>
+                 </div> <div id="xml-resultado-salvar" class="mt-4" style="display:none"></div>
                 <div id="xml-sugestao-recurso" class="mt-4" style="display:none"></div>
 
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;"> <div id="xml-acoes-status" class="xml-acoes-status"></div>
@@ -813,7 +806,7 @@
                     <button onclick="bulkMarcarPendente(true)" title="Marcar como pendente" disabled><i class="fa-solid fa-clock"></i></button>
                     <button onclick="bulkMarcarPendente(false)" title="Remover pendência" disabled><i class="fa-solid fa-rotate-left"></i></button>
                     <button onclick="abrirEdicaoEmLoteNotas()" title="Editar em lote" disabled><i class="fa-solid fa-pen"></i></button>
-                    <button onclick="bulkExcluirNotas()" class="danger" title="Excluir selecionadas" disabled><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="bulkArquivarNotas()" title="Arquivar selecionadas" disabled><i class="fa-solid fa-box-archive"></i></button> <button onclick="bulkExcluirNotas()" class="danger" title="Excluir selecionadas" disabled><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
         </div>

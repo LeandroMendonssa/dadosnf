@@ -395,6 +395,15 @@ function reordenarMenusDOM(order) {
             sidebarLi.appendChild(sidebarA); sidebarNav.appendChild(sidebarLi);
         }
     });
+    // Fase 40: na tela larga a barra inferior some e o menu lateral é o único caminho — a ferramenta que vive em "Mais" precisa estar nele.
+    {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.title = 'Importar Relatório (ERP)';
+        a.innerHTML = '<span class="icon-wrapper"><i class="fa-solid fa-file-import"></i><span class="material-icons">upload_file</span></span><span>Importar Relatório (ERP)</span>';
+        a.addEventListener('click', (e) => { e.preventDefault(); switchToScreen('screen-import', 'Importar Relatório (ERP)'); });
+        li.appendChild(a); sidebarNav.appendChild(li);
+    }
     // Botão "Mais": sempre ativo — guarda as ferramentas (Importar Relatório ERP) e os destinos tirados da barra.
     {
         const mais = document.createElement('button'); mais.className = 'tab-item'; mais.dataset.screen = 'screen-mais'; mais.dataset.title = 'Mais';
@@ -410,21 +419,46 @@ function reordenarMenusDOM(order) {
 // --- LÓGICA DE DADOS E FIREBASE ---
 
 // Função Auxiliar: Verificar Duplicidade
-function verificarDuplicidade(novoForn, novaNF) {
+// Fase 41: cruzamento de NFs. O relatório do ERP corta o nome do fornecedor em ~30 caracteres e o nome digitado pode ser outro
+// (apelido), então comparar só o nome deixava passar a mesma NF como se fosse outra. Regras (todas determinísticas):
+//  1) mesma NF + nome igual (como sempre);
+//  2) mesma NF + um nome é o COMEÇO do outro (mín. 10 letras) — o caso do nome cortado;
+//  3) quando o valor é informado: mesmo nº de NF (sem zeros à esquerda) + MESMO VALOR (2 campos independentes).
+function normNfNumero(v) {
+    const t = String(v == null ? '' : v).trim();
+    const d = t.replace(/\D/g, '').replace(/^0+/, '');
+    return d || t.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+function normSerieNf(v) { return String(v == null ? '' : v).replace(/\D/g, '').replace(/^0+/, ''); }
+function valorNfNumerico(v) {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number') return isNaN(v) ? null : v;
+    let t = String(v).replace(/R\$/gi, '').replace(/\s/g, '');
+    if (!t) return null;
+    const n = t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t);
+    return isNaN(n) ? null : n;
+}
+function valoresNfIguais(a, b) {
+    const x = valorNfNumerico(a), y = valorNfNumerico(b);
+    return x !== null && y !== null && x > 0 && Math.abs(x - y) < 0.01;
+}
+function verificarDuplicidade(novoForn, novaNF, novoValor) {
     if (!novaNF) return null; // Se não tem NF, não verifica
-    
+
     // Normaliza strings para evitar erros por espaços ou minúsculas (ex: "ABC " == "abc")
     const normalize = (str) => str ? str.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
     const nfNormalizada = normalize(novaNF);
     const fornNormalizado = normalize(novoForn);
+    const nomesBatem = (a, b) => a === b || (a && b && Math.min(a.length, b.length) >= 10 && (a.startsWith(b) || b.startsWith(a)));
 
     const bate = (nota) => {
         const notaNF = normalize(nota.nf);
         const notaForn = normalize(nota.fornecedor);
-        // Regra: Mesmo fornecedor E (mesma NF ou NF parecida)
-        // Aqui usamos igualdade estrita na normalização, o que pega "123.456" igual a "123456"
-        return notaForn === fornNormalizado && notaNF === nfNormalizada;
+        // Regra: Mesmo fornecedor (ou nome cortado) E mesma NF. A comparação da NF é estrita na normalização,
+        // o que pega "123.456" igual a "123456".
+        return notaNF === nfNormalizada && nomesBatem(notaForn, fornNormalizado);
     };
+    const batePorValor = (nota) => novoValor !== undefined && normNfNumero(nota.nf) === normNfNumero(novaNF) && valoresNfIguais(nota.valor, novoValor);
 
     const pendente = notasPendentes.find(bate);
     if (pendente) return { nota: pendente, origem: 'pendente' };
@@ -434,6 +468,11 @@ function verificarDuplicidade(novoForn, novaNF) {
     // problema de "esquecer qual foi a última NF importada").
     const arquivada = historicoNotas.find(bate);
     if (arquivada) return { nota: arquivada, origem: 'historico' };
+
+    const pendenteValor = notasPendentes.find(batePorValor);
+    if (pendenteValor) return { nota: pendenteValor, origem: 'pendente', porValor: true };
+    const arquivadaValor = historicoNotas.find(batePorValor);
+    if (arquivadaValor) return { nota: arquivadaValor, origem: 'historico', porValor: true };
 
     return null;
 }
@@ -1339,6 +1378,7 @@ function rebuildNotasPendentesList(){
 
     DOM.listaNotas.classList.toggle('selection-mode', selectionModeNotas);
     atualizarContadorGerenciar();
+    atualizarAvisoRecursosGerenciar(); // Fase 40
 
     const createNotaHTML = nota => {
         const holdBadgeHTML = nota.emEspera ? `<span class="badge-pendente"><i class="fa-solid fa-clock"></i> Pendente</span>` : '';
@@ -1351,6 +1391,8 @@ function rebuildNotasPendentesList(){
         // CNPJ, destino, recurso confirmado) — sempre visível aqui, mesmo
         // fora do modo de seleção, só informativo, nunca bloqueia nada.
         const aptidao = calcularAptidaoSaidaNota(nota);
+        const recSugerido = (!nota.obs && aptidao.recursos && aptidao.recursos.length === 1) ? aptidao.recursos[0] : '';
+        const aplicarRecursoHTML = recSugerido ? `<button class="action-chip" onclick="event.stopPropagation(); aplicarRecursoSugeridoNota('${nota.id}')">Aplicar recurso: ${recSugerido}</button>` : '';
         const aptidaoHTML = `<span class="xml-item-badge ${aptidao.badge}" title="${aptidao.label.replace(/"/g, '&quot;')}">${aptidao.label}</span>`;
         const complementoPartes = [
             aptidao.pedido ? `Pedido ${aptidao.pedido}` : null,
@@ -1369,7 +1411,7 @@ function rebuildNotasPendentesList(){
             ? `<span class="nota-prazo atrasada">Venceu há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}</span>`
             : diasVenc === 0 ? `<span class="nota-prazo atrasada">Vence hoje</span>`
             : `<span class="nota-prazo ${diasVenc <= 3 ? 'proximo' : ''}">Vence em ${diasVenc} dia${diasVenc === 1 ? '' : 's'}</span>`;
-        return `${checkboxHTML}<div class="nota-topo"><div><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-sub">${nota.valor||'N/A'} · Venc. ${nota.vencimento||'N/A'}${nota.obs ? ' · ' + nota.obs : ''}</div></div>${prazoHTML}</div><div class="nota-chips">${aptidaoHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}${arquivarChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
+        return `${checkboxHTML}<div class="nota-topo"><div><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-sub">${nota.valor||'N/A'} · Venc. ${nota.vencimento||'N/A'}${nota.obs ? ' · ' + nota.obs : ''}</div></div>${prazoHTML}</div><div class="nota-chips">${aptidaoHTML}${aplicarRecursoHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}${arquivarChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
     };
 
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".
@@ -1435,6 +1477,7 @@ function aplicarFiltroGerenciar() {
 let abaGerenciar = 'saida';
 function alternarAbaGerenciar(aba) {
     abaGerenciar = aba;
+    if (notasSelecionadas.size) { notasSelecionadas.clear(); atualizarBulkBarNotas(); } // Fase 40: a seleção não atravessa abas
     rebuildNotasPendentesList();
 }
 function atualizarContadorGerenciar() {
@@ -1576,10 +1619,11 @@ function toggleNotaSelecionada(id) {
 }
 
 function selecionarTodasNotasToggle() {
-    if (notasSelecionadas.size === notasPendentes.length) {
+    const daAba = notasDaAbaGerenciar(); // Fase 40: "todas" = as da aba aberta (nunca as de outra aba, que estão escondidas)
+    if (daAba.length > 0 && daAba.every(n => notasSelecionadas.has(n.id))) {
         notasSelecionadas.clear();
     } else {
-        notasSelecionadas = new Set(notasPendentes.map(n => n.id));
+        notasSelecionadas = new Set(daAba.map(n => n.id));
     }
     rebuildNotasPendentesList();
     atualizarBulkBarNotas();
@@ -1593,9 +1637,88 @@ function atualizarBulkBarNotas() {
     const countEl = document.getElementById('bulk-count-notas');
     if (countEl) countEl.textContent = `${count} selecionada${count === 1 ? '' : 's'}`;
     const selectAllBtn = document.getElementById('bulk-select-all-notas');
-    if (selectAllBtn) selectAllBtn.textContent = (count === notasPendentes.length && count > 0) ? 'Nenhuma' : 'Todas';
+    const daAbaBulk = notasDaAbaGerenciar();
+    if (selectAllBtn) selectAllBtn.textContent = (daAbaBulk.length > 0 && daAbaBulk.every(n => notasSelecionadas.has(n.id))) ? 'Nenhuma' : 'Todas';
     document.querySelectorAll('#bulk-action-bar-notas .bulk-buttons button').forEach(b => b.disabled = count === 0);
 }
+
+// Fase 40: arquivar em massa as notas selecionadas (mesma lógica de arquivarNotaIndividual/limpar, em lotes).
+function bulkArquivarNotas() {
+    const ids = Array.from(notasSelecionadas).filter(id => notasPendentes.some(n => n.id === id));
+    if (ids.length === 0) return;
+    const comEspera = ids.filter(id => (notasPendentes.find(n => n.id === id) || {}).emEspera).length;
+    showConfirmModal({
+        title: 'Arquivar notas selecionadas?',
+        message: `Arquivar ${ids.length} nota(s)? Elas saem da relação ativa e vão para o Histórico.${comEspera ? ` Atenção: ${comEspera} delas está(ão) em espera (Pendente).` : ''}`,
+        confirmText: 'Arquivar',
+        confirmClass: 'success',
+        onConfirm: async () => {
+            try {
+                for (let i = 0; i < ids.length; i += 150) {
+                    const batch = firestore.batch();
+                    ids.slice(i, i + 150).forEach(id => {
+                        const nota = notasPendentes.find(n => n.id === id);
+                        if (!nota) return;
+                        const { id: _id, ...notaData } = nota;
+                        notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+                        registrarOrigemNaNotaArquivada(notaData, id);
+                        batch.set(historicoCollection.doc(), notaData);
+                        batch.delete(notasCollection.doc(id));
+                        const entradaVinculada = listaEntradasErp.find(e => e.notaVinculadaId === id);
+                        if (entradaVinculada) batch.update(entradasErpCollection.doc(entradaVinculada.id), { statusFluxo: 'arquivada' });
+                    });
+                    await batch.commit();
+                }
+                notasSelecionadas.clear();
+                if (selectionModeNotas) toggleSelectionModeNotas();
+                toast(`✓ ${ids.length} nota(s) arquivada(s).`);
+            } catch (e) {
+                console.error('Erro ao arquivar notas em lote:', e);
+                toast('✕ Erro ao arquivar as notas selecionadas.');
+            }
+        }
+    });
+}
+
+// Fase 40: o "Recurso: ..." do cartão vem do que foi confirmado na Entrada de NF (aptidao.recursos); a Saída de Texto e o campo
+// de edição usam nota.obs. Quando a nota não tem obs e a NF tem UM recurso só, ele pode ser aplicado (nunca adivinha se houver mais de um).
+function recursoSugeridoDaNota(nota) {
+    if (!nota || (nota.obs && String(nota.obs).trim())) return '';
+    try { const ap = calcularAptidaoSaidaNota(nota); return (ap.recursos && ap.recursos.length === 1) ? ap.recursos[0] : ''; } catch (e) { return ''; }
+}
+async function aplicarRecursoSugeridoNota(id) {
+    const nota = notasPendentes.find(n => n.id === id); if (!nota) return;
+    const rec = recursoSugeridoDaNota(nota); if (!rec) return toast('Sem recurso único conhecido para esta nota — escolha em Editar.');
+    try {
+        nota.obs = rec;
+        await notasCollection.doc(id).update({ obs: rec });
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        rebuildNotasPendentesList();
+        toast(`✓ Recurso aplicado: ${rec}`);
+    } catch (e) { console.error('Erro ao aplicar recurso:', e); toast('✕ Erro ao aplicar o recurso.'); }
+}
+async function aplicarRecursosSugeridosTodos() {
+    const alvos = notasPendentes.map(n => ({ n, rec: recursoSugeridoDaNota(n) })).filter(x => x.rec);
+    if (!alvos.length) return toast('Nenhuma nota sem recurso com recurso conhecido.');
+    try {
+        for (let i = 0; i < alvos.length; i += 400) {
+            const batch = firestore.batch();
+            alvos.slice(i, i + 400).forEach(({ n, rec }) => { n.obs = rec; batch.update(notasCollection.doc(n.id), { obs: rec }); });
+            await batch.commit();
+        }
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        rebuildNotasPendentesList();
+        toast(`✓ Recurso aplicado em ${alvos.length} nota(s).`);
+    } catch (e) { console.error('Erro ao aplicar recursos:', e); toast('✕ Erro ao aplicar os recursos.'); }
+}
+function atualizarAvisoRecursosGerenciar() {
+    const el = document.getElementById('gerenciar-aplicar-recursos'); if (!el) return;
+    const n = notasPendentes.filter(x => recursoSugeridoDaNota(x)).length;
+    el.style.display = n ? 'flex' : 'none';
+    const t = document.getElementById('gerenciar-aplicar-recursos-txt'); if (t) t.textContent = `${n} nota(s) sem recurso, mas o recurso já é conhecido pela Entrada de NF`;
+}
+
+function notasDaAbaGerenciar() { return notasPendentes.filter(n => abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera); }
 
 async function bulkMarcarPendente(valor) {
     const ids = Array.from(notasSelecionadas);
@@ -1864,7 +1987,7 @@ function traduzErroAuth(error) {
         'auth/network-request-failed': 'Falha de conexão. Verifique sua internet.',
         'auth/popup-closed-by-user': 'Login cancelado.',
         'auth/popup-blocked': 'O navegador bloqueou a janela de login. Tentando de outro jeito...',
-        'auth/operation-not-supported-in-this-environment': 'Este navegador não suporta esse tipo de login aqui.',
+        'auth/operation-not-supported-in-this-environment': 'O login não funciona com o app aberto como arquivo local (file://). Abra pelo endereço do app (https://) ou por um servidor local (http://localhost).',
         'auth/unauthorized-domain': 'Este domínio não está autorizado no Firebase (Authentication → Settings → Authorized domains).',
         'auth/invalid-phone-number': 'Número de telefone inválido. Use o formato +55 11 91234-5678.',
         'auth/invalid-verification-code': 'Código incorreto.',
@@ -3905,6 +4028,7 @@ function processarXmlTexto(texto) {
     document.getElementById('xml-card-associacao').style.display = 'block';
     document.getElementById('xml-acoes-finais').style.display = 'flex';
     document.getElementById('screen-xml-editor').classList.add('xml-carregada'); // Fase 33: importador compacto
+    alternarAbaXml('itens'); // Fase 39: cada XML novo abre na aba Itens
     renderIdentificacaoXml(nfeIdentificacao);
 
     // Base da associação com a cotação (fase 2 do roadmap): já identifica o
@@ -4030,7 +4154,16 @@ function renderIdentificacaoXml(info) {
         info.cnpjEmit ? `<div class="xml-nf-linha txt-aux">CNPJ ${info.cnpjEmit}</div>` : ''
     ].filter(Boolean).join('');
 
-    container.innerHTML = avisoJaProcessadaHTML + (linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>');
+    container.innerHTML = linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>';
+    // Fase 39: resumo sempre visível no topo (qualquer aba) + aviso de "NF já processada" + Trocar XML.
+    const resumoTopo = document.getElementById('xml-resumo-nf');
+    if (resumoTopo) {
+        resumoTopo.style.display = 'block';
+        resumoTopo.innerHTML = `${avisoJaProcessadaHTML}<div class="xml-nf-fornecedor">${info.fornecedor || ''}</div>
+            <div class="xml-nf-linha">${info.nNF ? 'NF ' + info.nNF : ''}${info.serie ? ' · Série ' + info.serie : ''}${info.emissao ? ' · ' + formatarDataCompletaBR(info.emissao) : ''}</div>
+            <div class="xml-nf-linha">${info.valorTotal ? 'R$ ' + formatarValorMonetarioBR(info.valorTotal) + ' · ' : ''}${info.qtdItens} ${info.qtdItens === 1 ? 'item' : 'itens'}</div>
+            <button type="button" class="link-discreto xml-trocar" onclick="document.getElementById('xml-file-input').click()">Trocar XML</button>`;
+    }
 
     // Informações adicionais/observações (infCpl) — só pra consulta humana.
     // Fornecedor às vezes escreve número de pedido ali, mas nunca é usado
@@ -4312,6 +4445,27 @@ function calcularResumoPendenciasXml() {
     };
 }
 
+// ===== Fase 39: Entrada de NF em abas (Itens · Pedido · NF) =====
+let abaXmlAtiva = 'itens';
+const ROTULO_ABA_XML = { itens: 'Itens', pedido: 'Pedido', nf: 'NF' };
+// Em qual aba se resolve cada pendência (só navegação; o texto e a regra da pendência não mudam).
+function abaDaPendenciaXml(texto) {
+    if (/^(Pedido\/cotação|Defina o destino|Valor total)/.test(texto)) return 'pedido';
+    if (/^CNPJ/.test(texto)) return 'nf';
+    return 'itens';
+}
+function linhaPendenciaXml(texto, alerta) {
+    const aba = abaDaPendenciaXml(texto);
+    return `<div class="xml-pend-linha xml-pend-clicavel ${alerta ? 'alerta' : ''}" onclick="alternarAbaXml('${aba}', true)"><span class="xml-pend-marca"></span><span class="xml-pend-texto">${texto}</span><span class="xml-pend-aba">${ROTULO_ABA_XML[aba]} ›</span></div>`;
+}
+function alternarAbaXml(aba, rolar) {
+    abaXmlAtiva = aba;
+    document.querySelectorAll('#screen-xml-editor .xml-aba-pane').forEach(p => p.classList.toggle('ativa', p.dataset.aba === aba));
+    document.querySelectorAll('#xml-abas .xml-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.aba === aba));
+    renderResumoPendenciasXml();
+    if (rolar) { const tela = document.getElementById('screen-xml-editor'); if (tela) tela.scrollTop = 0; }
+}
+
 function renderResumoPendenciasXml() {
     const el = document.getElementById('xml-estado-nf');
     if (!el) return;
@@ -4332,15 +4486,32 @@ function renderResumoPendenciasXml() {
             ? `<div class="xml-estado-validacao">⚠ Este CNPJ está cadastrado em mais de um fornecedor SP Data (${resumo.validacaoFornecedor.candidatos.map(c => c.codigo + ' — ' + c.nome).join(' / ')}) — ambíguo, confira manualmente.</div>`
             : `<div class="xml-estado-validacao">CNPJ não encontrado no cadastro de fornecedores SP Data (não impede a entrada, só não foi possível confirmar).</div>`;
 
+    // Fase 39: na aba Itens aparece o checklist completo; nas outras, só o que se resolve ali (+ atalho p/ o resto).
+    const todasPend = [...resumo.bloqueios.map(t => [t, false]), ...resumo.alertas.map(t => [t, true])];
+    const doAba = todasPend.filter(([t]) => abaXmlAtiva === 'itens' || abaDaPendenciaXml(t) === abaXmlAtiva);
+    const ocultas = todasPend.length - doAba.length;
+    const naoFatTotal = (resumo.naoFaturados || []).reduce((n, g) => n + g.nomes.length, 0);
+    const listaPendHTML = doAba.map(([t, al]) => linhaPendenciaXml(t, al)).join('')
+        + (ocultas ? `<div class="xml-pend-linha xml-pend-clicavel" onclick="alternarAbaXml('itens', true)"><span class="xml-pend-marca"></span><span class="xml-pend-texto">${ocultas} pendência(s) em outras abas</span><span class="xml-pend-aba">Itens ›</span></div>` : '')
+        + (naoFatTotal ? `<div class="xml-pend-linha xml-pend-clicavel info" onclick="alternarAbaXml('pedido', true)"><span class="xml-pend-marca"></span><span class="xml-pend-texto">${naoFatTotal} item(ns) da cotação ainda não faturado(s) — podem vir numa NF seguinte</span><span class="xml-pend-aba">Pedido ›</span></div>` : '');
+    // contagem e pontinhos nas abas
+    const pendPorAba = { itens: 0, pedido: 0, nf: 0 };
+    todasPend.forEach(([t]) => { pendPorAba[abaDaPendenciaXml(t)]++; });
+    document.querySelectorAll('#xml-abas .xml-filtro-btn').forEach(b => {
+        const ponto = b.querySelector('.xml-aba-ponto');
+        const n = pendPorAba[b.dataset.aba] || 0;
+        if (ponto) { ponto.textContent = n ? '●' : (b.dataset.aba === 'pedido' && naoFatTotal ? '○' : ''); ponto.className = 'xml-aba-ponto' + (n ? ' alerta' : ''); }
+        const c = b.querySelector('.xml-aba-cont'); if (c) c.textContent = resumo.totalItens;
+    });
     let corpoHTML;
     if (resumo.pronta) {
-        corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pronto">✓ Pronta</span><strong>${resumo.totalItens} item(ns) — todos totalmente prontos. Pode salvar.</strong></div>`;
+        corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pronto">✓ Pronta</span><strong>${resumo.totalItens} item(ns) — todos totalmente prontos. Pode salvar.</strong></div>${naoFatTotal ? `<div class="xml-pend-lista">${listaPendHTML}</div>` : ''}`;
     } else if (!resumo.podeSalvar) {
         corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pendente">⛔ Bloqueado</span><strong>Resolva antes de salvar</strong></div>
-           <div class="xml-pend-lista">${resumo.bloqueios.map(p => `<div class="xml-pend-linha"><span class="xml-pend-marca"></span><span>${p}</span></div>`).join('')}${resumo.alertas.map(p => `<div class="xml-pend-linha alerta"><span class="xml-pend-marca"></span><span>${p}</span></div>`).join('')}</div>`;
+           <div class="xml-pend-lista">${listaPendHTML}</div>`;
     } else {
         corpoHTML = `<div class="xml-estado-linha"><span class="xml-item-badge pendente">⚠ Pode salvar, com alerta(s)</span><strong>${resumo.totalmentePronto} de ${resumo.totalItens} totalmente pronto(s)</strong></div>
-           <div class="xml-pend-lista">${resumo.alertas.map(p => `<div class="xml-pend-linha alerta"><span class="xml-pend-marca"></span><span>${p}</span></div>`).join('')}</div>`;
+           <div class="xml-pend-lista">${listaPendHTML}</div>`;
     }
 
     el.innerHTML = corpoHTML + validacaoHTML;
@@ -5076,26 +5247,47 @@ function toggleHistoricoAssociacaoXml(chave) {
 // a vigente, use "Corrigir cotação"/"Corrigir SP Data" normalmente, que já
 // registra uma nova entrada sem apagar nada). Útil quando o histórico
 // acumula tentativas erradas/duplicadas que só atrapalham a leitura depois.
+// Fase 30.1: cada possibilidade é um par (produto SmartCompras × SP Data) e fica "antiga" por um de dois motivos — e o que se apaga
+// depende disso, pra nunca levar junto a entrada que dá a data de vigência da associação ATUAL:
+//  • o SmartCompras já não é o vigente deste código de fornecedor  -> apaga só as entradas desse SmartCompras no histórico DESTE código;
+//  • o SmartCompras é o vigente, mas o SP Data daquele par foi corrigido depois -> apaga só essa entrada antiga do SP Data no histórico
+//    do produto SmartCompras (vale pra todos os fornecedores que usam esse produto — o aviso do modal diz isso).
 async function excluirPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     const item = itensXmlDetectados[idx];
     if (!item || !item.associacoesConhecidas || !nfeInfoAtual) return;
     const p = item.associacoesConhecidas.possibilidades[possibilidadeIdx];
     if (!p || p.atual) return;
+    const cnpjsFornecedorAntigo = [...new Set(p.ocorrencias.filter(o => !o.atualParaFornecedor).map(o => o.cnpjFornecedor))];
+    const apagaSpData = !!p.spDataCodigo && p.ocorrencias.some(o => o.atualParaFornecedor && !o.atualParaSpData);
+    if (!cnpjsFornecedorAntigo.length && !apagaSpData) return;
+    const partes = [];
+    if (cnpjsFornecedorAntigo.length) partes.push(`Remove "SmartCompras ${p.codigoSmartCompras}" do histórico deste código de fornecedor (já não é a associação vigente).`);
+    if (apagaSpData) partes.push(`Remove "SP Data ${p.spDataCodigo}"${p.produtoNome ? ' — ' + p.produtoNome : ''} do histórico do produto SmartCompras ${p.codigoSmartCompras}. Isso vale para todos os fornecedores que usam esse produto.`);
     showConfirmModal({
         title: 'Excluir do histórico?',
-        message: `Remove "${p.spDataCodigo ? 'SP Data ' + p.spDataCodigo : 'SmartCompras ' + p.codigoSmartCompras}"${p.produtoNome ? ' — ' + p.produtoNome : ''} do histórico deste código de fornecedor. Isso não muda a associação vigente, só limpa uma entrada antiga do histórico. Não pode ser desfeito.`,
+        message: `${partes.join(' ')} A associação vigente hoje não muda e a data em que ela passou a valer é preservada.`,
         confirmText: 'Excluir',
         confirmClass: 'danger',
         onConfirm: async () => {
             try {
-                for (const cnpj of p.cnpjsQueConfirmaram) {
+                for (const cnpj of cnpjsFornecedorAntigo) {
                     const chave = chaveAssociacaoFornecedor(cnpj, item.cProd);
                     const doc = bancoAssociacoesFornecedor[chave];
-                    if (!doc || !doc.historico) continue;
+                    if (!doc || !doc.historico || doc.codigoSmartCompras === p.codigoSmartCompras) continue; // nunca o vigente
                     const novoHistorico = doc.historico.filter(h => h.codigoSmartCompras !== p.codigoSmartCompras);
                     if (novoHistorico.length === doc.historico.length) continue;
-                    await associacoesFornecedorCollection.doc(chave).set({ ...doc, historico: novoHistorico });
+                    await associacoesFornecedorCollection.doc(chave).update({ historico: novoHistorico });
                     bancoAssociacoesFornecedor[chave] = { ...doc, historico: novoHistorico };
+                }
+                if (apagaSpData) {
+                    const assoc = listaAssociacoesSpData.find(a => a.codigoSmartCompras === p.codigoSmartCompras);
+                    if (assoc && assoc.spDataCodigo !== p.spDataCodigo && assoc.historico) {
+                        const novoHistoricoSp = assoc.historico.filter(h => h.spDataCodigo !== p.spDataCodigo);
+                        if (novoHistoricoSp.length !== assoc.historico.length) {
+                            await associacoesSpDataCollection.doc(assoc.codigoSmartCompras).update({ historico: novoHistoricoSp });
+                            assoc.historico = novoHistoricoSp;
+                        }
+                    }
                 }
                 item.associacoesConhecidas = consultarAssociacoesConhecidasParaXml(nfeInfoAtual.cnpjEmit, item.cProd);
                 toast('✓ Removido do histórico.');
@@ -5728,6 +5920,25 @@ function compararFontesPedido(pedido, opcoes) {
             if (quantidadeLancada !== null && quantidadeLancada !== quantidadeFaturada) {
                 divergencias.push({ tipo: 'quantidade_nf_erp', nome, quantidadeFaturada, quantidadeLancada, nfs: nfsQueFaturaram });
             }
+            // Fase 42: valor NF × ERP. Os dois lados estão na unidade de DISPENSAÇÃO (NF = quantidade × fator, valor ÷ fator),
+            // então dá pra comparar direto. Qualquer diferença é divergência — desconto e IPI não são compensados (regra do hospital:
+            // no SPData eles se somam num item da NF). Total só é comparado quando as quantidades batem (senão a diferença de
+            // quantidade já explica a de total e não vale avisar duas vezes).
+            if (itensErp.length) {
+                const linhaNf = it => (Number.isFinite(it.quantidade) && Number.isFinite(it.valorUnitario)) ? it.quantidade * it.valorUnitario : null;
+                const linhaErp = it => (Number.isFinite(it.valorTotal) && it.valorTotal > 0) ? it.valorTotal : ((Number.isFinite(it.quantidade) && Number.isFinite(it.valorUnitario)) ? it.quantidade * it.valorUnitario : null);
+                const totaisNf = itensNf.map(linhaNf), totaisErp = itensErp.map(linhaErp);
+                if (totaisNf.every(v => v !== null) && totaisErp.every(v => v !== null) && quantidadeFaturada > 0 && quantidadeLancada > 0) {
+                    const valorTotalNf = totaisNf.reduce((a, b) => a + b, 0), valorTotalErp = totaisErp.reduce((a, b) => a + b, 0);
+                    const unitarioNf = valorTotalNf / quantidadeFaturada, unitarioErp = valorTotalErp / quantidadeLancada;
+                    const difUnitario = Math.abs(unitarioNf - unitarioErp) > 0.005;
+                    const mesmaQtd = Math.abs(quantidadeFaturada - quantidadeLancada) < 0.001;
+                    const difTotal = mesmaQtd && Math.abs(valorTotalNf - valorTotalErp) > Math.max(0.02, valorTotalNf * 0.0005);
+                    if (difUnitario || difTotal) {
+                        divergencias.push({ tipo: 'valor_nf_erp', nome, valorUnitarioNf: unitarioNf, valorUnitarioErp: unitarioErp, valorTotalNf, valorTotalErp, difUnitario, difTotal, nfs: nfsQueFaturaram });
+                    }
+                }
+            }
             if (!ignoraUnidade && valorUnitarioFaturado !== null && itemCotacao.precoUnitario) {
                 const cotado = parseFloat(itemCotacao.precoUnitario);
                 const fatorUltimoItem = itensNf[itensNf.length - 1].fatorAplicado || 1;
@@ -5894,6 +6105,13 @@ function textoDivergenciaNatural(div) {
             return `Foi pedido ${div.nome} na quantidade de ${div.quantidadeCotada}, porém foi faturado na quantidade de ${div.quantidadeFaturada}${div.nfs && div.nfs.length ? `, pela NF ${div.nfs.join(', ')}` : ''}.`;
         case 'quantidade_nf_erp':
             return `${div.nome} foi faturado com quantidade ${div.quantidadeFaturada}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}, mas foi lançado no ERP com quantidade ${div.quantidadeLancada}.`;
+        case 'valor_nf_erp': {
+            const fmt = v => (Math.round(v * 10000) / 10000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+            const partes = [];
+            if (div.difUnitario) partes.push(`valor unitário R$ ${fmt(div.valorUnitarioNf)} na NF × R$ ${fmt(div.valorUnitarioErp)} no ERP`);
+            if (div.difTotal) partes.push(`valor total R$ ${fmt(div.valorTotalNf)} na NF × R$ ${fmt(div.valorTotalErp)} no ERP`);
+            return `${div.nome}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}: ${partes.join('; ')}.`;
+        }
         case 'valor_cotado_nf':
             return `${div.nome} foi cotado a R$ ${div.valorCotado.toFixed(2)}, porém foi faturado a R$ ${div.valorFaturado.toFixed(2)}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
         default:
@@ -6157,7 +6375,7 @@ async function alterarChegadaFornecedorCotacao(pedido, cnpj, chegou, tipo) {
 
 // Mapa entre os tipos internos de compararFontesPedido e os tipos
 // estruturados que JÁ EXISTEM em TIPOS_DIVERGENCIA_AUDITORIA — nunca cria um
-// tipo novo, só liga o que os dois lados já têm. 'quantidade_nf_erp' fica
+// tipo novo, só liga o que os dois lados já têm. 'quantidade_nf_erp' (e 'valor_nf_erp', Fase 42) ficam
 // de fora de propósito: é uma comparação NF×ERP, não cotado×faturado, e
 // nenhum tipo estruturado atual descreve isso com precisão — forçar um
 // rótulo errado seria pior do que deixar 'outro' com o texto natural, que é
@@ -6340,7 +6558,7 @@ function verificarBloqueioEAvisar() {
     if (resumo && !resumo.podeSalvar) {
         showConfirmModal({
             title: 'NF ainda possui pendências que impedem continuar',
-            message: `Esta NF tem ${resumo.bloqueios.length} pendência(s) que precisam ser resolvidas antes:\n${resumo.bloqueios.map(p => '• ' + p).join('\n')}\n\nResolva na seção "Itens da NF" antes de continuar.`,
+            message: `Esta NF tem ${resumo.bloqueios.length} pendência(s) que precisam ser resolvidas antes:\n${resumo.bloqueios.map(p => '• ' + p).join('\n')}\n\nToque numa pendência do checklist (ou abra a aba Itens/Pedido) para resolver antes de continuar.`,
             confirmText: 'Entendi',
             confirmClass: 'warning',
             onConfirm: () => {}
@@ -7340,7 +7558,77 @@ const HISTORICO_FASES = [
         testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
     },
     {
-        numero: 38, nome: 'Gerenciar NF só com a relação de saída e novo Controle de NFs', status: 'atual',
+        numero: 42, nome: 'Divergência de valor entre a NF (XML) e o lançamento no ERP', status: 'atual',
+        implementado: [
+            'Novo tipo de divergência "valor NF × ERP": quando um item tem NF processada e também está lançado no ERP, o app compara o valor unitário e o valor total da linha. NF e ERP estão na mesma unidade (a de dispensação), então a comparação é direta, sem falso alarme por conversão. Qualquer diferença vira divergência, com a frase pronta para a auditoria ("… valor unitário R$ X na NF × R$ Y no ERP; valor total …").',
+            'Desconto e IPI não são compensados: seguindo a regra do hospital (no SPData eles são somados num item da NF), qualquer diferença de valor é divergência. O valor total só é comparado quando as quantidades da NF e do ERP batem — se a quantidade já difere, esse aviso ("quantidade NF × ERP") já explica a diferença de total e não se avisa duas vezes.'
+        ],
+        mudou: [
+            'Tolerância: meio centavo no valor unitário e o maior entre R$ 0,02 e 0,05% no total, só para arredondamento. A divergência segue as mesmas regras das outras: aparece no item da Central, conta na aptidão da nota, pode ser marcada como Resolvido e gerar auditoria. Itens só no ERP (sem NF) não são comparados, porque a cotação não guarda a unidade.'
+        ],
+        testar: [
+            'Numa NF processada e lançada no ERP com valor diferente, abrir a cotação (aba Produtos): o item deve mostrar a divergência de valor NF × ERP.'
+        ]
+    },
+    {
+        numero: '30.1', nome: 'Excluir do histórico não apaga mais a data da associação vigente', status: 'concluida',
+        implementado: [
+            'Correção do "Excluir do histórico" (painel "Associações conhecidas" da Entrada de NF): agora o app apaga só o que torna a possibilidade antiga. Se o SmartCompras daquela linha já não é o vigente deste código de fornecedor, remove só as entradas desse SmartCompras do histórico do código. Se o SmartCompras é o vigente e só o SP Data daquele par foi corrigido depois, remove só essa entrada antiga do SP Data no histórico do produto SmartCompras (o aviso do modal diz que isso vale para todos os fornecedores que usam o produto).',
+            'Antes, excluir uma linha antiga apagava junto a entrada que registra desde quando a associação atual vale, e a busca "Código de fornecedor já associado a este produto" passava a mostrar "data aproximada" e deixava de apontar a sugestão principal. Além disso, a linha excluída continuava aparecendo. Agora a linha some e a data de vigência é preservada.'
+        ],
+        mudou: [
+            'A associação vigente nunca é apagada nem alterada. A gravação usa atualização só do campo de histórico (não regrava o documento inteiro).'
+        ],
+        testar: [
+            'Num item com "Associações conhecidas" que tenha uma linha antiga: Ver histórico › Excluir do histórico. A linha deve sumir e o código de fornecedor vigente continuar aparecendo com "vigente desde …" (sem "data aproximada").'
+        ]
+    },
+    {
+        numero: 41, nome: 'Cruzamento de NFs: menos duplicatas entre ERP, XML e notas', status: 'concluida',
+        implementado: [
+            'Checagem de duplicidade mais firme (importação do ERP e Adicionar): além de "mesma NF + mesmo nome", agora vale "mesma NF + um nome é o começo do outro" (o relatório do ERP corta o nome do fornecedor em cerca de 30 caracteres, ex.: "GREYCE SILVA DE BARROS E CIA L" × "...LTDA") e, na importação, "mesmo número de NF (sem zeros à esquerda) + mesmo valor". A prévia e o status gravado da entrada do ERP passam a usar a mesma regra.',
+            'Controle de NFs: a mesma NF vinda do XML e do relatório ERP agora é unida num só registro mesmo quando o número vem com zeros à esquerda, a série está em branco de um lado ou o CNPJ do cadastro não foi resolvido — desde que haja um único candidato e uma evidência a mais (mesmo valor ou mesmo CNPJ).',
+            'Controle de NFs: uma NF "Recebida" que parece já existir como nota (mesmo número e mesmo valor, na relação ou arquivada) ganha o aviso "Parece já existir como nota…" e o botão "É a mesma nota — vincular" no lugar de "Enviar para a relação". Há também "Vincular todas" no topo, com confirmação. Nada é vinculado sem a sua ação e nada é apagado.'
+        ],
+        mudou: [
+            'O vínculo ERP × XML (vincularEntradaErpComNf), as associações de SP Data e a Saída de Texto não mudaram. A união por número + valor vale só para exibir e vincular no Controle.'
+        ],
+        testar: [
+            'Importar o relatório ERP: NFs que já estão como nota (inclusive com o nome do fornecedor cortado) devem vir marcadas como duplicadas. No Controle de NFs, conferir as que mostram "Parece já existir como nota" e usar "Vincular todas".'
+        ]
+    },
+    {
+        numero: 40, nome: 'Correções: importar relatório ERP, recurso das notas, menu lateral e arquivar em massa', status: 'concluida',
+        implementado: [
+            'Importar Relatório (ERP): corrigido o erro "Cannot access \'duplicata\' before initialization" que impedia a prévia de abrir (uma variável era usada antes de ser declarada). A importação volta a funcionar, inclusive o aviso de NF duplicada na relação ou no histórico.',
+            'Recurso: o "Recurso:" mostrado no cartão do Gerenciar NF vem da Entrada de NF, mas a Saída de Texto e o campo de edição usam o recurso da própria nota — que ficava vazio em notas importadas por versões antigas. Agora o cartão mostra o botão "Aplicar recurso: X" quando a nota não tem recurso e a NF tem um recurso só; no alto do Gerenciar há "Aplicar em todas". O campo de edição passa a mostrar o recurso da nota mesmo que não esteja na lista padrão (antes ficava em branco e podia ser apagado ao salvar) e já sugere o recurso conhecido.',
+            'Menu lateral (tela larga): o "Importar Relatório (ERP)", que agora fica em Mais, também aparece no menu lateral.',
+            'Gerenciar NF: a seleção em massa ganhou o botão Arquivar (confirma antes, move para o Histórico e sincroniza o ERP, como o arquivar individual). "Todas" passa a selecionar só as notas da aba aberta, e trocar de aba limpa a seleção, para nunca arquivar/excluir notas escondidas.',
+            'Login: a mensagem de erro "auth/operation-not-supported-in-this-environment" agora explica que o app foi aberto como arquivo local (file://) e que é preciso abrir pelo endereço https:// ou por um servidor local.'
+        ],
+        mudou: [
+            'Nenhuma regra da Saída de Texto mudou (getLinha continua igual). O recurso só é aplicado na nota quando você toca em "Aplicar", nunca em silêncio, e só quando a NF tem um recurso único.'
+        ],
+        testar: [
+            'Colar um relatório ERP em Mais › Importar Relatório (ERP) e tocar em Processar. No Gerenciar NF, conferir "Aplicar recurso" nas notas sem recurso e o botão de arquivar ao tocar em Selecionar.'
+        ]
+    },
+    {
+        numero: 39, nome: 'Entrada de NF em abas: Itens · Pedido · NF, com checklist no topo', status: 'concluida',
+        implementado: [
+            'Depois de carregar o XML, a Entrada de NF mostra no topo um resumo fixo (fornecedor, NF · série · data, valor · itens e "Trocar XML", além do aviso de "NF já processada" quando houver) e três abas: Itens (a lista de itens que você preenche, com Pendências/Todos), Pedido (seletor de pedido/cotação, cotação adicional, compra direta, destino, situação dos códigos e os itens da cotação ainda não faturados) e NF (dados do fornecedor, informações adicionais, unidade de dispensação e o importador).',
+            'O checklist "Antes de salvar" fica sempre logo abaixo das abas. Cada pendência vira uma linha que leva à aba certa (ex.: "Pedido/cotação ainda não identificado" → Pedido); na aba Itens aparece o checklist completo e nas outras só o que se resolve ali, com um atalho para o resto. Itens da cotação ainda não faturados aparecem como uma linha informativa que leva à aba Pedido.',
+            'As abas mostram a quantidade de itens e um ponto (●) quando há pendência naquela aba. Cada XML novo abre na aba Itens, com os itens pendentes já abertos. Salvar NF e Baixar XML Corrigido continuam no fim da tela.'
+        ],
+        mudou: [
+            'Nenhuma regra de pendência, fator, associação, cotação ou saída mudou — os mesmos campos e botões, só organizados em abas. O texto das pendências é o mesmo.'
+        ],
+        testar: [
+            'Carregar um XML: conferir o resumo no topo, tocar em cada aba e, no checklist, tocar numa pendência de pedido/cotação (deve abrir a aba Pedido). Selecionar o pedido e conferir que o ponto da aba some.'
+        ]
+    },
+    {
+        numero: 38, nome: 'Gerenciar NF só com a relação de saída e novo Controle de NFs', status: 'concluida',
         implementado: [
             'Gerenciar NF volta a ser só as NFs escolhidas para a Saída de Texto, com duas abas: "Para saída" e "Em espera" (as marcadas como Pendente). Um atalho no fim da lista leva ao Controle de NFs. A Saída de Texto, a edição, o arquivar e a seleção em lote não mudaram.',
             'Controle de NFs (novo, em Mais › Atalhos; dá para trazer para a barra em Ajustes › Personalização): mostra o ciclo de cada NF com três abas. Em aberto = Recebida (já entrou por XML ou relatório ERP e ainda não está na relação) + Na relação + Em espera. Arquivadas = já foram para o financeiro, com a marca "Enviada ao financeiro". Diretas = NFs que não passam pelo financeiro. Cada NF mostra de onde veio (XML ✓ / ERP ✓ / só ERP).',
@@ -9568,8 +9856,27 @@ function montarControleNfs() {
     notasPendentes.forEach(n => { notasPorId[n.id] = n; });
     const notasLigadas = new Set();
     const porChave = {};
-    listaNfsProcessadas.forEach(nf => { const ch = nf.serie ? `${nf.nf}_${nf.serie}` : nf.nf; if (!ch) return; (porChave[ch] = porChave[ch] || {}).nf = nf; });
-    listaEntradasErp.forEach(erp => { const ch = erp.serie ? `${erp.nf}_${erp.serie}` : erp.nf; if (!ch) return; (porChave[ch] = porChave[ch] || {}).erp = erp; });
+    // Fase 41: chave sem zeros à esquerda ("011925" = "11925"); a série em branco de um lado casa com qualquer série do outro.
+    const chaveNorm = (n, serie) => { const k = normNfNumero(n); if (!k) return null; const sr = normSerieNf(serie); return sr ? `${k}_${sr}` : k; };
+    listaNfsProcessadas.forEach(nf => { const ch = chaveNorm(nf.nf, nf.serie); if (!ch) return; (porChave[ch] = porChave[ch] || {}).nf = nf; });
+    listaEntradasErp.forEach(erp => { const ch = chaveNorm(erp.nf, erp.serie); if (!ch) return; (porChave[ch] = porChave[ch] || {}).erp = erp; });
+    // XML sem ERP + ERP sem XML do MESMO nº de NF: junta quando há 1 só candidato e uma evidência a mais (mesmo valor, ou mesmo CNPJ).
+    {
+        const soErp = {};
+        Object.keys(porChave).forEach(k => { const r = porChave[k]; if (r.erp && !r.nf) (soErp[normNfNumero(r.erp.nf)] = soErp[normNfNumero(r.erp.nf)] || []).push(k); });
+        Object.keys(porChave).forEach(k => {
+            const r = porChave[k]; if (!r || !r.nf || r.erp) return;
+            const cands = (soErp[normNfNumero(r.nf.nf)] || []).filter(ke => {
+                const e = porChave[ke] && porChave[ke].erp; if (!e || porChave[ke].nf) return false;
+                const sx = normSerieNf(r.nf.serie), se = normSerieNf(e.serie);
+                if (sx && se && sx !== se) return false;
+                const mesmoValor = valoresNfIguais(r.nf.valorTotal, e.valor);
+                const mesmoCnpj = r.nf.cnpjFornecedor && e.cnpjFornecedor && cnpjEmLista(cnpjsDaMesmaEntidadeFornecedor(e.cnpjFornecedor), r.nf.cnpjFornecedor);
+                return mesmoValor || mesmoCnpj;
+            });
+            if (cands.length === 1) { porChave[cands[0]].nf = r.nf; delete porChave[k]; }
+        });
+    }
 
     Object.keys(porChave).forEach(ch => {
         const { nf, erp } = porChave[ch];
@@ -9608,6 +9915,16 @@ function montarControleNfs() {
         itens.push({ chave: l.chave, tipo: 'legado', numeroNf: l.numeroNf, serie: '', nomeFornecedor: l.nomeFornecedor, cnpj: null, dataISO: l.dataISO,
             situacao: 'arquivada', subtipo: null, nota: n, nf: null, erp: null, valorTxt: n.valor || '', venc: n.vencimento || '', pedido: null });
     });
+    // Fase 41: NF "Recebida" que parece já existir como nota (mesmo nº + mesmo valor): sinaliza, nunca junta sozinho.
+    const legadosLivres = historicoNotas.filter(h => !h.erpChave && !h.nfChave);
+    itens.forEach(it => {
+        if (it.tipo !== 'nf' || it.situacao !== 'recebida') return;
+        const bate = n => normNfNumero(n.nf) === normNfNumero(it.numeroNf) && valoresNfIguais(n.valor, it.valorTxt);
+        const pend = notasPendentes.filter(n => !notasLigadas.has(n.id) && bate(n));
+        const hist = legadosLivres.filter(bate);
+        if (pend.length === 1) it.possivelNota = { tipo: 'pendente', nota: pend[0] };
+        else if (!pend.length && hist.length === 1) it.possivelNota = { tipo: 'historico', nota: hist[0] };
+    });
     itens.sort((a, b) => (b.dataISO || '').localeCompare(a.dataISO || ''));
     return itens;
 }
@@ -9633,6 +9950,7 @@ function renderCardControleNf(it) {
         if (it.nf) chips.push('<span class="xml-item-badge pronto">XML ✓</span>');
         if (it.erp) chips.push(`<span class="xml-item-badge ${it.nf ? 'pronto' : 'neutro'}">${it.nf ? 'ERP ✓' : 'só ERP'}</span>`);
         if (it.situacao === 'recebida' && it.erp && it.erp.avisoJaExisteNotaManual) chips.push('<span class="xml-item-badge pendente">Já tem nota manual na relação</span>');
+        if (it.possivelNota) chips.push(`<span class="xml-item-badge pendente">Parece já existir como nota ${it.possivelNota.tipo === 'pendente' ? 'na relação' : 'arquivada'} (mesmo nº e valor)</span>`);
     } else if (it.tipo === 'nota') chips.push('<span class="xml-item-badge neutro">Nota manual</span>');
     else chips.push('<span class="xml-item-badge neutro">Registro simples</span>');
     const dataTxt = it.dataISO ? formatarDataBRSimples(it.dataISO) : '';
@@ -9640,7 +9958,10 @@ function renderCardControleNf(it) {
     const chaveJs = it.chave.replace(/'/g, "\\'");
     let acoes = '';
     if (it.tipo === 'nf' && it.situacao === 'recebida') {
-        acoes = `<button type="button" class="action-chip edit-chip" onclick="event.stopPropagation(); enviarNfParaRelacao('${chaveJs}')">Enviar para a relação</button><button type="button" class="action-chip" onclick="event.stopPropagation(); marcarNfDireta('${chaveJs}')">Não vai ao financeiro</button>`;
+        const principal = it.possivelNota
+            ? `<button type="button" class="action-chip edit-chip" onclick="event.stopPropagation(); vincularNfANota('${chaveJs}')">É a mesma nota — vincular</button>`
+            : `<button type="button" class="action-chip edit-chip" onclick="event.stopPropagation(); enviarNfParaRelacao('${chaveJs}')">Enviar para a relação</button>`;
+        acoes = `${principal}<button type="button" class="action-chip" onclick="event.stopPropagation(); marcarNfDireta('${chaveJs}')">Não vai ao financeiro</button>`;
     } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
         acoes = `<button type="button" class="action-chip" onclick="event.stopPropagation(); verNoGerenciarNf('${chaveJs}')">Ver no Gerenciar NF</button>`;
     } else if (it.situacao === 'direta' && it.subtipo === 'marcada') {
@@ -9683,12 +10004,49 @@ function renderControleNfs() {
     const subtitulos = { aberto: 'Tudo que ainda não foi para o financeiro', arquivadas: 'NFs que já foram para o financeiro', diretas: 'NFs que não passam pelo financeiro' };
     const vazios = { aberto: 'Nada em aberto.', arquivadas: 'Nenhuma NF arquivada ainda.', diretas: 'Nenhuma NF direta.' };
     const pagina = visiveis.slice(0, limiteControle);
-    lista.innerHTML = `<div class="controle-subtitulo">${subtitulos[abaControle]}</div>` +
+    const nProvaveis = todos.filter(it => it.possivelNota).length;
+    const avisoProvaveis = (abaControle === 'aberto' && nProvaveis && !termo) ? `<div class="gerenciar-aviso-recursos" style="display:flex;"><span>${nProvaveis} NF(s) parecem já existir como nota (mesmo nº e valor)</span><button type="button" class="action-chip" onclick="vincularTodasProvaveis()">Vincular todas</button></div>` : '';
+    lista.innerHTML = `<div class="controle-subtitulo">${subtitulos[abaControle]}</div>` + avisoProvaveis +
         (pagina.length ? pagina.map(renderCardControleNf).join('') : `<div class="empty-state">${termo ? 'Nada encontrado para essa busca.' : vazios[abaControle]}</div>`) +
         (visiveis.length > pagina.length ? `<div class="actions mt-3"><button type="button" class="actions-button is-neutral" onclick="carregarMaisControle()">Carregar mais (${visiveis.length - pagina.length} restante(s))</button></div>` : '');
 }
 
 function itemControlePorChave(chave) { return montarControleNfs().find(it => it.chave === chave); }
+
+// Fase 41: "É a mesma nota" — liga a NF (XML/ERP) à nota que já existe. Só por ação sua (ou "Vincular todas", com confirmação).
+async function vincularItemControle(it) {
+    if (!it || !it.possivelNota) return false;
+    const { tipo, nota } = it.possivelNota;
+    if (tipo === 'pendente') {
+        if (it.erp) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'selecionada_financeiro', notaVinculadaId: nota.id });
+        if (it.nf) await nfsProcessadasCollection.doc(it.nf.id).update({ notaVinculadaId: nota.id });
+    } else {
+        const marca = {}; if (it.erp) marca.erpChave = it.erp.id; if (it.nf) marca.nfChave = it.nf.id;
+        await historicoCollection.doc(nota.id).update(marca);
+        if (it.erp) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'arquivada' });
+        if (it.nf && !it.erp) await nfsProcessadasCollection.doc(it.nf.id).update({ notaVinculadaId: nota.id });
+    }
+    return true;
+}
+async function vincularNfANota(chave) {
+    try {
+        if (await vincularItemControle(itemControlePorChave(chave))) toast('✓ NF vinculada à nota existente.');
+    } catch (e) { console.error('Erro ao vincular NF à nota:', e); toast('✕ Erro ao vincular a NF.'); }
+}
+function vincularTodasProvaveis() {
+    const alvos = montarControleNfs().filter(it => it.possivelNota);
+    if (!alvos.length) return;
+    showConfirmModal({
+        title: 'Vincular NFs às notas existentes?',
+        message: `${alvos.length} NF(s) têm o mesmo número e o mesmo valor de uma nota que já existe (na relação ou arquivada). Vincular cada uma à sua nota? Nada é apagado.`,
+        confirmText: 'Vincular todas', confirmClass: 'success',
+        onConfirm: async () => {
+            let n = 0;
+            for (const it of alvos) { try { if (await vincularItemControle(it)) n++; } catch (e) { console.error('Erro ao vincular', it.chave, e); } }
+            toast(`✓ ${n} NF(s) vinculada(s).`);
+        }
+    });
+}
 
 async function marcarNfDireta(chave) {
     const it = itemControlePorChave(chave); if (!it || it.tipo !== 'nf') return;
@@ -10054,7 +10412,7 @@ function popularListaHistorico(){
     if (!DOM.listaHistorico || !DOM.historicoActions) return;
     DOM.listaHistorico.innerHTML='';if(historicoNotas.length===0){DOM.listaHistorico.innerHTML=`<div class="empty-state">O histórico está vazio.</div>`;DOM.historicoActions.style.display='none'}else{DOM.historicoActions.style.display='grid';historicoNotas.forEach(nota=>{const div=document.createElement('div');div.classList.add('nota-item');div.innerHTML=`<div class="nota-info">${nota.fornecedor} ${nota.nf||''}</div><div class="nota-detalhes">Venc: ${nota.vencimento||'N/A'} | Valor: ${nota.valor||'N/A'} | Obs: ${nota.obs||'N/A'}</div><div class="nota-data">Arquivado em: ${nota.dataHistorico}</div>`;DOM.listaHistorico.appendChild(div)})}
 }
-async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="actions"><button class="actions-button is-success" onclick="salvarEdicao('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button></div></div>`;painelEdicao.querySelector('.obsEdit').value=nota.obs||'';}
+async function reconstruirPainelFotosEdit(notaId){const nota=notasPendentes.find(n=>n.id===notaId);if(!nota)return;const painelEdicao=document.querySelector(`div[data-note-id="${notaId}"] .edit-panel`);painelEdicao.innerHTML=`<div class="panel-content"><div class="campo"><label>Fornecedor</label><input type="text" class="fornEdit" value="${nota.fornecedor||''}"></div><div class="campo"><label>NF</label><input type="text" class="nfEdit" value="${nota.nf||''}"></div><div class="campo"><label>Vencimento</label><input type="text" class="vencEdit" value="${nota.vencimento||''}" oninput="formatarDataInput(this)"></div><div class="campo"><label>Valor</label><input type="text" class="valorEdit" value="${nota.valor||''}" onblur="formatarValorBlur(event)"></div><div class="campo"><label>Observações</label><select class="obsEdit">${DOM.obs.innerHTML}</select></div><div class="actions"><button class="actions-button is-success" onclick="salvarEdicao('${nota.id}')"><span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar</button></div></div>`;const selObs=painelEdicao.querySelector('.obsEdit');const recAtual=nota.obs||'';if(recAtual&&![...selObs.options].some(o=>o.value===recAtual)){selObs.insertAdjacentHTML('beforeend',`<option value="${recAtual.replace(/"/g,'&quot;')}">${recAtual}</option>`);}selObs.value=recAtual||recursoSugeridoDaNota(nota)||'';}
 async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())return toast("Nada para compartilhar.");if(navigator.share){await navigator.share({title:'Relação de Notas Fiscais',text:texto})}else{await navigator.clipboard.writeText(texto);toast("Copiado!")}}
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
@@ -11180,7 +11538,7 @@ function resolverStatusFluxoEntradaErp(bloco, vinculo, docExistente) {
     // Reaproveita a checagem de duplicidade já existente (fluxo manual de
     // Adicionar Nota) — pelo nome do fornecedor tal como veio no relatório
     // ERP, já que é isso que o cadastro manual também usa.
-    const duplicata = verificarDuplicidade(bloco.fornecedor, bloco.nf);
+    const duplicata = verificarDuplicidade(bloco.fornecedor, bloco.nf, bloco.valor); // Fase 41: também por nº + valor
     if (duplicata && duplicata.origem === 'historico') {
         // A mesma NF já foi processada e arquivada manualmente antes — não
         // cria um segundo registro pedindo decisão de novo, só reconhece que
@@ -11371,9 +11729,9 @@ function renderPreviewImportacao() {
         // uma situação válida — por isso trava o checkbox, não só avisa.
         // Duplicata contra o HISTÓRICO (já arquivada) continua só um aviso,
         // porque reimportar algo já resolvido antes pode ser legítimo.
-        const duplicataAtiva = !!(duplicata && duplicata.origem === 'pendente');
         const fornecedorExibido = (typeof apelidoEncontrado === 'string' && apelidoEncontrado) || (typeof nota.fornecedor === 'string' && nota.fornecedor) || 'Fornecedor não identificado';
-        const duplicata = verificarDuplicidade(fornecedorExibido, nota.nf);
+        const duplicata = verificarDuplicidade(fornecedorExibido, nota.nf, nota.valor); // Fase 41: também por nº + valor
+        const duplicataAtiva = !!(duplicata && duplicata.origem === 'pendente'); // Fase 40: tinha que vir DEPOIS de "duplicata" (ReferenceError ao importar o relatório ERP)
         const ignorado = fornecedoresIgnorados.has(fornecedorExibido) || fornecedoresIgnorados.has(nota.fornecedor);
 
         let status = 'novo';
