@@ -331,6 +331,10 @@
                     <button class="actions-button is-primary" onclick="baixarBackupCompleto()"><span class="icon-wrapper"><i class="fa-solid fa-cloud-arrow-down"></i></span> Baixar Backup (JSON)</button>
                     <div id="backup-status" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
                 </div>
+                <div class="card mt-4">
+                    <p class="desc-tela">Exporta TODOS os dados do app (NFs processadas, entradas do ERP, cotações, associações, fornecedores, exceções de conversão e o resto) num único arquivo, para analisar casos reais fora do app. Só lê os dados; não altera nada.</p>
+                    <button class="actions-button" onclick="baixarDadosDiagnostico()"><span class="icon-wrapper"><i class="fa-solid fa-file-export"></i></span> Exportar dados para diagnóstico (JSON)</button>
+                </div>
                 <div class="card mt-4" >
                     <p class="desc-tela">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
                 </div>
@@ -862,7 +866,26 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   
-  <script src="script.js"></script>
+  <!-- v2.0.1: script dividido em arquivos comuns (sem import/export). A ORDEM importa: cada arquivo continua de onde o anterior parou. -->
+  <script src="js/01-nucleo-config-estado.js"></script>
+  <script src="js/02-layout-setup.js"></script>
+  <script src="js/03-dados-notas.js"></script>
+  <script src="js/04-relatorios-base.js"></script>
+  <script src="js/05-listeners-dados.js"></script>
+  <script src="js/06-exportar-pdf.js"></script>
+  <script src="js/07-login-conta-backup.js"></script>
+  <script src="js/08-fornecedores-logo.js"></script>
+  <script src="js/09-anotacoes.js"></script>
+  <script src="js/10-entrada-nf-xml.js"></script>
+  <script src="js/11-central-pedido.js"></script>
+  <script src="js/12-recurso-lote-rastro.js"></script>
+  <script src="js/13-relatorios-divergencias.js"></script>
+  <script src="js/14-historico-mudancas.js"></script>
+  <script src="js/15-ganhadores-cotacoes.js"></script>
+  <script src="js/16-spdata-textos.js"></script>
+  <script src="js/17-historico-controle-nfs.js"></script>
+  <script src="js/18-erp-fornecedores-spdata.js"></script>
+  <script src="js/19-erp-reconciliacao.js"></script>
 
 </body>
 </html>
