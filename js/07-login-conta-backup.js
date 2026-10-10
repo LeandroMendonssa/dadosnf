@@ -390,6 +390,55 @@ function salvarNomeConta() {
 // Busca tudo direto do Firestore (não confia só no que já está em memória, pra
 // garantir que o backup reflita o estado real e completo do banco) e gera um
 // arquivo .json pra download local — não depende do Firebase pra existir.
+// 2.0.6: exporta TODAS as coleções do app (inclui NFs processadas, entradas do ERP, cotações, associações, fornecedores e exceções
+// de conversão, que o backup comum não leva) num único JSON — para análise de casos reais fora do app. Só lê; não altera nada.
+async function baixarDadosDiagnostico() {
+    const statusEl = document.getElementById('backup-status');
+    statusEl.textContent = 'Lendo todas as coleções...';
+    try {
+        const colecoes = {
+            notas: notasCollection, historico: historicoCollection, anotacoesTexto: anotacoesTextoCollection, xmlExcecoes: xmlExcecoesCollection,
+            cotacoes: cotacoesCollection, produtosSpData: produtosSpDataCollection, associacoesSpData: associacoesSpDataCollection,
+            associacoesFornecedor: associacoesFornecedorCollection, entradasErp: entradasErpCollection, fornecedoresSpData: fornecedoresSpDataCollection,
+            nfsProcessadas: nfsProcessadasCollection, relatorioGanhadores: relatorioGanhadoresCollection
+        };
+        const serializar = v => {
+            if (v === undefined) return null;
+            if (v && typeof v.toDate === 'function') return v.toDate().toISOString();
+            if (Array.isArray(v)) return v.map(serializar);
+            if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, serializar(x)]));
+            return v;
+        };
+        const nomes = Object.keys(colecoes);
+        const [configSnap, ...snaps] = await Promise.all([settingsDocRef.get(), ...nomes.map(n => colecoes[n].get())]);
+        const dados = {
+            formato: 'diagnostico-app-v1',
+            geradoEm: new Date().toISOString(),
+            versaoApp: (typeof HISTORICO_FASES !== 'undefined' && HISTORICO_FASES[0]) ? String(HISTORICO_FASES[0].numero) : null,
+            configuracoes: configSnap.exists ? serializar(configSnap.data()) : {},
+            contagens: {},
+            colecoes: {}
+        };
+        nomes.forEach((n, i) => {
+            dados.contagens[n] = snaps[i].size;
+            dados.colecoes[n] = snaps[i].docs.map(d => ({ id: d.id, ...serializar(d.data()) }));
+        });
+        const texto = JSON.stringify(dados);
+        const blob = new Blob([texto], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `diagnostico-app-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        const resumo = nomes.map(n => `${n}: ${dados.contagens[n]}`).join(' · ');
+        statusEl.textContent = `✓ Arquivo gerado (${(texto.length / 1048576).toFixed(1)} MB). ${resumo}`;
+    } catch (e) {
+        console.error('Erro ao exportar dados de diagnóstico:', e);
+        statusEl.textContent = '✕ Não foi possível gerar o arquivo: ' + (e && e.message ? e.message : 'erro desconhecido');
+    }
+}
+
 async function baixarBackupCompleto() {
     const statusEl = document.getElementById('backup-status');
     statusEl.textContent = 'Preparando backup...';

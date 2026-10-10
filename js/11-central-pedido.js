@@ -552,7 +552,19 @@ function compararFontesPedido(pedido, opcoes) {
         const nfsQueFaturaram = [...new Set(itensNf.map(it => it.nfNumero))];
 
         const entradasErpDoItem = codigoSpDataNf ? entradasErpDoPedido : entradasErpDoPedido.filter(e => cnpjEmLista(entidadeDe(itemCotacao.cnpjFornecedor), e.vinculo.cnpjFornecedor || e.cnpjFornecedor));
-        const itensErp = codigoSpData ? entradasErpDoItem.flatMap(e => (e.itens || []).filter(it => it.codigoSpData === codigoSpData)) : [];
+        // 2.0.5: com NF do app no item, o ERP só conta se for da MESMA NF (mesmo número) — antes somava as entradas de TODAS as NFs
+        // do pedido e gerava "divergência fantasma" (ex.: NF de 30 un. contra 70 lançadas, sendo 40 de outra NF). E a mesma NF
+        // importada duas vezes no ERP entra uma vez só.
+        const numerosNfDoItem = new Set(itensNf.map(x => normNfNumero(x.nfNumero)));
+        const vistasErp = new Set();
+        const entradasErpComparaveis = itensNf.length
+            ? entradasErpDoItem.filter(e => {
+                const num = normNfNumero(e.nf); if (!numerosNfDoItem.has(num)) return false;
+                const k = num + '|' + normalizarCnpj(e.cnpjFornecedor || (e.vinculo && e.vinculo.cnpjFornecedor) || '');
+                if (vistasErp.has(k)) return false; vistasErp.add(k); return true;
+            })
+            : entradasErpDoItem;
+        const itensErp = codigoSpData ? entradasErpComparaveis.flatMap(e => (e.itens || []).filter(it => it.codigoSpData === codigoSpData)) : [];
         const quantidadeLancada = itensErp.length ? itensErp.reduce((s, it) => s + it.quantidade, 0) : null;
 
         const divergencias = [];
@@ -892,10 +904,19 @@ function calcularAptidaoSaidaNota(nota) {
 function renderComparacaoFornecedorHTML(pedido, cnpjFornecedor) {
     const itens = compararFontesPedido(pedido).filter(item => normalizarCnpj(item.cnpjFornecedor) === normalizarCnpj(cnpjFornecedor) && (item.temNf || item.temErp || item.divergencias.length));
     if (itens.length === 0) return '<div class="central-item-vazio">Nenhuma NF processada ainda pra este fornecedor neste pedido.</div>';
-    return itens.map(item => renderComparacaoItemHTML(pedido, item, false)).join('');
+    const nfsDoFornecedor = [...new Set(itens.flatMap(item => item.nfs || []))];
+    const cabecalhoNfs = nfsDoFornecedor.length
+        ? `<div class="xml-item-acao"><span class="xml-item-meta">NF(s) por XML:</span> ${nfsDoFornecedor.map(n => `<button type="button" class="central-status-toggle" onclick="abrirNfDaDivergencia('${pedido}', '${escRel(String(n))}')">Abrir NF ${escRel(String(n))}</button>`).join(' ')}</div>` : '';
+    return cabecalhoNfs + itens.map(item => renderComparacaoItemHTML(pedido, item, false)).join('');
 }
 // compacto = true: usado dentro da linha unificada do produto (o nome e o
 // status já estão no cabeçalho da linha, então não se repetem).
+// 2.0.6: todo item que tem NF (XML do app) ganha o link pra NF — não só os que têm divergência.
+function htmlBotoesNfItem(pedido, item) {
+    const nfs = (item.nfs || []).filter(n => n !== undefined && n !== null && String(n) !== '');
+    if (!nfs.length) return '';
+    return `<div class="xml-item-acao">${nfs.map(n => `<button type="button" class="central-status-toggle" onclick="abrirNfDaDivergencia('${pedido}', '${escRel(String(n))}')">Abrir NF ${escRel(String(n))}</button>`).join(' ')}</div>`;
+}
 function renderComparacaoItemHTML(pedido, item, compacto) {
     {
         const resolvido = !!(item.divergencias.length && item.resolvido);
@@ -912,6 +933,7 @@ function renderComparacaoItemHTML(pedido, item, compacto) {
                 ${statusHTML}
             </div>`}
             <div class="xml-item-meta">${fontesHTML}</div>
+            ${htmlBotoesNfItem(pedido, item)}
             ${item.divergencias.length ? `<div class="xml-item-cotacao">${item.divergencias.map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div>
             <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${pedido}', '${item.codProduto}')">Gerar auditoria</button>${resolvido
                 ? ` <button type="button" class="central-status-toggle" onclick="alterarResolvidoItemComparacao('${pedido}', '${item.codProduto}', false)">Reabrir</button> <span class="xml-item-meta">Resolvido em ${formatarDataBRSimples(item.resolvido.data)}</span>`

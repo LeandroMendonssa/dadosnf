@@ -9,7 +9,64 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.0.2', nome: 'Banco de dados sob demanda: o app abre só com o essencial', status: 'atual',
+        numero: '2.0.6', nome: 'Exportar dados para diagnóstico, link da NF em toda cotação e fator de conversão livre', status: 'atual',
+        implementado: [
+            'Backup dos Dados: novo botão "Exportar dados para diagnóstico (JSON)". Gera um único arquivo com TODAS as coleções do app (notas, histórico, anotações, exceções de conversão, cotações, produtos e associações do SP Data, associações de fornecedor, entradas do ERP, fornecedores, NFs processadas e fornecedores ganhadores) mais as configurações, com contagem por coleção. Só lê os dados; não altera nada.',
+            'Central do pedido: todo item que tem NF por XML agora mostra "Abrir NF nnnnn", não só os itens com divergência. Cada fornecedor também ganha, no topo do bloco, a lista das NFs por XML do pedido.',
+            'Histórico de NFs (card da NF): em cada item há o campo "Fator" com o botão "Aplicar fator", para colocar qualquer fator de conversão (ex.: 1, 10, 0,5) sem precisar subir o XML de novo. O app mostra o antes e depois da quantidade e do valor unitário e pede confirmação; o total da NF não muda.',
+            'O fator aplicado fica lembrado para as próximas NFs do mesmo produto e fornecedor (mesma memória usada pela Entrada de NF).'
+        ],
+        mudou: [
+            'A memória do fator usa o código do produto do fornecedor; se o XML tinha código de barras real, a Entrada de NF pode usar outra chave e não aproveitar a memória (a NF salva é corrigida normalmente).',
+            'Arquivos alterados: index.html, js/07-login-conta-backup.js, js/11-central-pedido.js, js/17-historico-controle-nfs.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Em Backup dos Dados, tocar em "Exportar dados para diagnóstico" e conferir que o arquivo é baixado e que o resumo mostra as contagens. Abrir uma cotação com NF por XML (sem divergência) e ver o "Abrir NF". No Histórico, em um item de NF, aplicar um fator e conferir quantidade e valor.']
+    },
+    {
+        numero: '2.0.5', nome: 'Fim das divergências fantasmas do ERP e da NF duplicada: o número da NF manda', status: 'concluida',
+        implementado: [
+            'Divergência fantasma "faturado × lançado no ERP": a comparação somava as entradas do ERP de TODAS as NFs do pedido e comparava com a NF do app (ex.: NF de 30 un. contra 70 lançadas, sendo 40 de outra NF do mesmo pedido). Agora, quando o item tem NF no app, só conta o ERP da mesma NF (mesmo número), e a mesma NF importada duas vezes no ERP vale uma vez só. Se o ERP da própria NF tiver mesmo uma quantidade diferente, a divergência continua aparecendo.',
+            'Uma regra única para juntar NF de XML, NF do relatório do ERP e nota digitada em "Adicionar": mesmo número (sem zeros à esquerda, série ignorada) é a mesma NF. O fornecedor só confirma: nota e NF de fornecedores diferentes com o mesmo número só ficam separadas se o CNPJ, o nome e o valor divergirem (nome cortado pelo ERP, apelido e razão social contam como o mesmo fornecedor).',
+            'Controle de NFs: a nota digitada em "Adicionar" (pendente ou já arquivada) passa a se juntar sozinha à NF "Recebida" de mesmo número, em vez de aparecer em duas linhas. ERP importado duas vezes com séries diferentes vira uma linha só.',
+            'Histórico de NFs: passa a usar o mesmo pareamento do Controle, então XML e ERP da mesma NF não aparecem mais separados na busca pelo número.'
+        ],
+        mudou: [
+            'Nada é apagado ou alterado no banco: as linhas repetidas são só agrupadas na tela (os registros extras continuam guardados). A ligação nota ↔ NF feita pela tela vale enquanto a nota estiver pendente ou arquivada com o mesmo número.',
+            'Arquivos alterados: js/11-central-pedido.js, js/17-historico-controle-nfs.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir a cotação da MEDICAMENTAL (NF 156906): o alerta de "lançado no ERP: 70" deve sumir. No Controle de NFs e no Histórico, buscar uma NF que antes aparecia repetida (XML, ERP e nota digitada) e ver se agora é uma linha só.']
+    },
+    {
+        numero: '2.0.4', nome: 'Da divergência da cotação direto até a NF, com correção da conversão em um toque', status: 'concluida',
+        implementado: [
+            'Nas divergências da cotação (Central do pedido, comparação por item) aparece um botão "Abrir NF nnnnn" para cada NF citada. Ele abre o Histórico de NFs direto naquela NF, já com os itens à mostra.',
+            'No card da NF, cada item mostra de onde veio a quantidade ("XML: 34 × fator 100") e, quando o app enxerga um erro de conversão, oferece a correção pronta: "Voltar à quantidade do XML" e/ou "Igualar à cotação". Basta tocar e confirmar; não precisa digitar nada.',
+            'A correção ajusta quantidade, valor unitário (o total da NF não muda) e fator do item na NF salva. Se o mesmo fator errado estiver memorizado para aquele produto e fornecedor (e vale para as próximas NFs), ele é corrigido junto.',
+            'Corrigida a quantidade, a divergência some sozinha da cotação, sem precisar marcar "Marcar como resolvido" para algo que na verdade não foi lançado errado.'
+        ],
+        mudou: [
+            'A correção altera só o registro da NF salva no app; o XML original não é modificado. Itens sem fator aplicado (fator 1) só ganham a opção "Igualar à cotação" se existir um fator redondo que faça as quantidades baterem; senão a diferença é real e fica como divergência.',
+            'Arquivos alterados: js/11-central-pedido.js, js/17-historico-controle-nfs.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir uma cotação com divergência de quantidade (como a da água para injeção), tocar em "Abrir NF" e conferir se o Histórico abre na NF certa. No item, tocar na correção, confirmar e voltar à cotação para ver a divergência sumir.']
+    },
+    {
+        numero: '2.0.3', nome: 'Lote e validade do texto entram no XML sozinhos (sem confirmar nem digitar)', status: 'concluida',
+        implementado: [
+            'O app lê lote e validade escritos no nome do produto (ou no infAdProd) e já coloca o <rastro> (nLote, qLote, dVal) no XML corrigido, sem pedir confirmação. O qLote acompanha a quantidade de saída, já convertida pelo fator.',
+            'Novos formatos entendidos, incluindo o da BMG ("Lote * Data Venc..: N1154 * 30/06/2031"): rótulo de lote e de validade juntos antes dos valores; "LOTE: x DT VAL: dd/mm/aaaa"; "LT:"; "VENCIMENTO"; "Lote Nº"; validade só com mês e ano (vale o último dia do mês) e ano com 2 dígitos.',
+            'Validade impossível (ano fora de 2000–2099, data que não existe ou anterior à emissão) não entra no XML; o item mostra só um aviso, sem campo para preencher.',
+            'Cada item mostra "✓ Lote entra no XML" com lote e validade, e um "Remover" (e "Aplicar" para voltar atrás) para o raro caso de não querer aquele lote. O checklist traz uma linha informativa com a contagem.'
+        ],
+        mudou: [
+            'Saíram os botões e campos "Confirmar", "Confirmar todos", "Editar", "Ignorar" e "Informar lote e validade". Lote e validade que não estão no texto continuam sendo lançados por você direto no SPData.',
+            'Itens que já têm <rastro> no XML do fornecedor continuam como estavam ("Lote no XML").',
+            'Arquivos alterados: js/10-entrada-nf-xml.js, js/12-recurso-lote-rastro.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir o XML da BMG (NF 30921) na Entrada de NF: os 2 itens devem aparecer com "✓ Lote entra no XML" (N1154 · 30/06/2031 e 15C24 · 01/02/2029). Salvar/baixar o XML corrigido e importar no SPData para ver o lote e a validade. Repetir com o XML da CBS (a cânula com ano 3000 deve ficar só com aviso).']
+    },
+    {
+        numero: '2.0.2', nome: 'Banco de dados sob demanda: o app abre só com o essencial', status: 'concluida',
         implementado: [
             'Na abertura o app agora assina só 4 leituras do banco: configurações, notas pendentes, histórico e cadastro de fornecedores (as que a primeira tela e o Adicionar usam). Antes eram 13.',
             'As outras 9 (cotações, NFs processadas, entradas do ERP, associações de SP Data e de fornecedor, produtos SP Data, fornecedores ganhadores, anotações e exceções de XML) sobem quando você abre a tela que as usa (Controle de NFs, Histórico, Entrada de NF, Cotações, Central do pedido, SP Data, Anotações, Importação, Backup, Relatórios).',

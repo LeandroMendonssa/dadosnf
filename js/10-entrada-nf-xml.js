@@ -141,11 +141,10 @@ function processarXmlTexto(texto) {
                 nLote: r.getElementsByTagName('nLote')[0]?.textContent || '',
                 dVal: r.getElementsByTagName('dVal')[0]?.textContent || ''
             })),
-            // Fase 43: lote/validade escritos em texto livre (xProd ou infAdProd) — só viram <rastro> depois de confirmação manual.
+            // Fase 43 / 2.0.3: lote/validade escritos em texto livre (xProd ou infAdProd) viram <rastro> automaticamente quando válidos.
             loteCandidato: null,
             rastroDecidido: null,   // { lote, validadeISO, origem: 'texto' | 'manual' }
             rastroEl: null,         // <rastro> criado por nós no XML de saída (idempotente)
-            loteEditando: false,
             // Substituição controlada de código (Editor XML, base de
             // histórico): cProd nunca é sobrescrito — cProdNovo é o único
             // campo usado na hora de gerar a saída (ver
@@ -162,6 +161,8 @@ function processarXmlTexto(texto) {
         if (!item.rastros.length) {
             const infAdProd = detEl.getElementsByTagName('infAdProd')[0]?.textContent || '';
             item.loteCandidato = extrairLoteValidadeTexto(xProd, 'xProd', nfeIdentificacao.emissao) || extrairLoteValidadeTexto(infAdProd, 'infAdProd', nfeIdentificacao.emissao);
+            // 2.0.3: lote e validade válidos lidos do texto entram no XML sozinhos (sem confirmação).
+            if (item.loteCandidato && item.loteCandidato.valida) item.rastroDecidido = { lote: item.loteCandidato.lote, validadeISO: item.loteCandidato.validadeISO, origem: 'texto' };
         }
         const chave = chaveExcecaoXml(cnpjEmit, item);
         item.chaveExcecao = chave;
@@ -656,10 +657,11 @@ function renderResumoPendenciasXml() {
     const ocultas = todasPend.length - doAba.length;
     const naoFatTotal = (resumo.naoFaturados || []).reduce((n, g) => n + g.nomes.length, 0);
     // Fase 43: lote/validade achados no texto (informativo — nunca bloqueia nem impede o "pronto")
-    const nLoteCand = itensXmlDetectados.filter(it => !it.rastros.length && !it.rastroDecidido && it.loteCandidato && it.loteCandidato.valida).length;
+    const nLoteAuto = itensXmlDetectados.filter(it => !it.rastros.length && it.rastroDecidido && it.rastroDecidido.origem === 'texto').length;
     const nLoteRuim = itensXmlDetectados.filter(it => !it.rastros.length && !it.rastroDecidido && it.loteCandidato && !it.loteCandidato.valida).length;
-    const linhaLoteHTML = (nLoteCand || nLoteRuim)
-        ? `<div class="xml-pend-linha xml-pend-clicavel info" onclick="alternarAbaXml('itens', true)"><span class="xml-pend-marca"></span><span class="xml-pend-texto">${nLoteCand ? `${nLoteCand} item(ns) com lote e validade no texto — confirme para entrarem no XML` : ''}${nLoteCand && nLoteRuim ? '; ' : ''}${nLoteRuim ? `${nLoteRuim} com validade que parece errada` : ''}</span><span class="xml-pend-aba">${nLoteCand ? '<button type="button" class="action-chip" onclick="event.stopPropagation(); confirmarTodosLotesXml()">Confirmar todos</button>' : 'Itens ›'}</span></div>`
+    const nLoteCand = nLoteAuto; // (nome mantido: usado abaixo no resumo de "pronta")
+    const linhaLoteHTML = (nLoteAuto || nLoteRuim)
+        ? `<div class="xml-pend-linha info"><span class="xml-pend-marca"></span><span class="xml-pend-texto">${nLoteAuto ? `${nLoteAuto} item(ns) com lote e validade lidos do texto — já entram no XML` : ''}${nLoteAuto && nLoteRuim ? '; ' : ''}${nLoteRuim ? `${nLoteRuim} com validade impossível no texto — não entram no XML` : ''}</span></div>`
         : '';
     const listaPendHTML = doAba.map(([t, al]) => linhaPendenciaXml(t, al)).join('')
         + (ocultas ? `<div class="xml-pend-linha xml-pend-clicavel" onclick="alternarAbaXml('itens', true)"><span class="xml-pend-marca"></span><span class="xml-pend-texto">${ocultas} pendência(s) em outras abas</span><span class="xml-pend-aba">Itens ›</span></div>` : '')

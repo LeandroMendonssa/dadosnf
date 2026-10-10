@@ -78,23 +78,44 @@ function recursoPrevistoItemXml(item, status) {
 // ===================================================================
 // --- FASE 43: LOTE E VALIDADE ESCRITOS EM TEXTO (xProd / infAdProd) ---
 // ===================================================================
-// O SPData só lê <rastro><nLote/><qLote/><dVal/></rastro>. Muitos fornecedores escrevem "LOTE: x DT VAL: dd/mm/aaaa" no fim do
-// nome do produto. Aqui o app ENCONTRA esse texto e propõe o rastro, mas NADA entra no XML sem a sua confirmação (por item ou
-// "Confirmar todos"). Data impossível (ex.: ano 3000) nunca é aceita sozinha: pede a data certa. Quando o item já tem <rastro>
-// no XML, nada é proposto. infCpl (texto geral da NF) não é usado: não dá pra saber a qual item o lote pertence.
+// O SPData só lê <rastro><nLote/><qLote/><dVal/></rastro>. Muitos fornecedores escrevem lote e validade em texto livre no fim do
+// nome do produto (ex.: "LOTE: X DT VAL: dd/mm/aaaa" ou "Lote * Data Venc..: X * dd/mm/aaaa"). Desde a 2.0.3 o app LÊ esse texto e
+// já coloca o <rastro> no XML sozinho — sem pedir confirmação nem digitação. Só ficam de fora (com aviso) os casos em que a validade
+// é impossível (ex.: ano 3000, data que não existe, anterior à emissão). Quando o item já tem <rastro> no XML, nada é mexido.
+// infCpl (texto geral da NF) não é usado: não dá pra saber a qual item o lote pertence.
 function extrairLoteValidadeTexto(texto, fonte, emissaoISO) {
     const t = String(texto || '').replace(/\s+/g, ' ').trim();
     if (!t) return null;
-    const mLote = t.match(/\bLOTE\b\s*[:\-.]?\s*([A-Za-z0-9][A-Za-z0-9\/\-._]*)/i);
-    const mVal = t.match(/\b(?:DT\.?\s*VAL(?:IDADE)?|VAL(?:IDADE)?|VENCIMENTO|DT\.?\s*VENC)\b\s*[:\-.]?\s*(\d{2})\/(\d{2})\/(\d{4})\b/i);
-    if (!mLote || !mVal) return null;
-    const lote = mLote[1].replace(/[.\-_\/]+$/, '');
-    if (!lote || /^(DT|VAL|VALIDADE)$/i.test(lote)) return null;
-    const dia = Number(mVal[1]), mes = Number(mVal[2]), ano = Number(mVal[3]);
-    const validadeBR = `${mVal[1]}/${mVal[2]}/${mVal[3]}`;
-    const iso = `${mVal[3]}-${mVal[2]}-${mVal[1]}`;
-    const d = new Date(Date.UTC(ano, mes - 1, dia));
-    const calendarioOk = d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
+    const DATA = '(\\d{1,2})[\\/.\\-](\\d{1,2})[\\/.\\-](\\d{4}|\\d{2})(?![\\d])';
+    const MESANO = '(\\d{1,2})[\\/.\\-](\\d{4})(?![\\d\\/])';
+    const LOTE_TOKEN = '([A-Za-z0-9][A-Za-z0-9\\/\\-._]*)';
+    const ROTULO_LOTE = '(?:LOTE|LT)\\b\\.?';
+    const ROTULO_VAL = '(?:DT\\.?\\s*|DATA\\s*(?:DE\\s*)?)?(?:VENCIMENTO|VENC|VALIDADE|VALID|VAL)\\w*\\.*';
+    let lote = null, d = null, m;
+    // 1) rótulos juntos e valores juntos: "Lote * Data Venc..: N1154 * 30/06/2031"
+    m = t.match(new RegExp('\\b' + ROTULO_LOTE + '[\\s*|;:/\\-]*' + ROTULO_VAL + '[\\s.:*|;\\-]*' + LOTE_TOKEN + '\\s*[*|;,/\\-]*\\s*' + DATA, 'i'));
+    if (m) { lote = m[1]; d = { dia: m[2], mes: m[3], ano: m[4] }; }
+    // 2) rótulo e valor lado a lado: "LOTE: X ... DT VAL: dd/mm/aaaa" (ou mm/aaaa)
+    if (!lote) {
+        const mL = t.match(new RegExp('\\b' + ROTULO_LOTE + '[\\s*|;:#\\-]*(?:N[º°o]\\.?\\s*)?' + LOTE_TOKEN, 'i'));
+        const mV = t.match(new RegExp('\\b' + ROTULO_VAL + '[\\s.:*|;\\-]*' + DATA, 'i'));
+        const mM = !mV ? t.match(new RegExp('\\b' + ROTULO_VAL + '[\\s.:*|;\\-]*' + MESANO, 'i')) : null;
+        if (mL && (mV || mM)) {
+            lote = mL[1];
+            if (mV) d = { dia: mV[1], mes: mV[2], ano: mV[3] };
+            else { const ult = new Date(Date.UTC(Number(mM[2]), Number(mM[1]), 0)).getUTCDate(); d = { dia: String(ult), mes: mM[1], ano: mM[2] }; }
+        }
+    }
+    if (!lote || !d) return null;
+    lote = lote.replace(/[.\-_\/]+$/, '');
+    if (!lote || /^(DT|VAL|VALIDADE|VENC|VENCIMENTO|DATA|N)$/i.test(lote)) return null;
+    let ano = Number(d.ano); if (d.ano.length === 2) ano += 2000;
+    const dia = Number(d.dia), mes = Number(d.mes);
+    const dd = String(dia).padStart(2, '0'), mm = String(mes).padStart(2, '0');
+    const validadeBR = `${dd}/${mm}/${ano}`;
+    const iso = `${ano}-${mm}-${dd}`;
+    const dt = new Date(Date.UTC(ano, mes - 1, dia));
+    const calendarioOk = dt.getUTCFullYear() === ano && dt.getUTCMonth() === mes - 1 && dt.getUTCDate() === dia;
     let motivo = null;
     if (!calendarioOk) motivo = 'data inexistente';
     else if (ano < 2000 || ano > 2099) motivo = `ano ${ano} fora do esperado`;
@@ -126,36 +147,14 @@ function aplicarRastroDecididoNoXml(item) {
     item.rastroEl = r;
 }
 
-function confirmarLoteXml(idx) {
-    const item = itensXmlDetectados[idx]; if (!item || !item.loteCandidato || !item.loteCandidato.valida) return;
-    item.rastroDecidido = { lote: item.loteCandidato.lote, validadeISO: item.loteCandidato.validadeISO, origem: 'texto' };
-    item.loteEditando = false;
+// 2.0.3: o lote lido do texto entra no XML automaticamente (ver detecção em 10-entrada-nf-xml.js). Aqui só há o resultado e,
+// se você não quiser aquele lote, um "Remover" (e "Aplicar" para voltar atrás). Nenhum campo para digitar.
+function aplicarLoteXml(idx) {
+    const it = itensXmlDetectados[idx]; if (!it || !it.loteCandidato || !it.loteCandidato.valida) return;
+    it.rastroDecidido = { lote: it.loteCandidato.lote, validadeISO: it.loteCandidato.validadeISO, origem: 'texto' };
     renderAssociacaoCotacaoXml();
 }
-function confirmarTodosLotesXml() {
-    let n = 0;
-    itensXmlDetectados.forEach(it => { if (!it.rastros.length && !it.rastroDecidido && it.loteCandidato && it.loteCandidato.valida) { it.rastroDecidido = { lote: it.loteCandidato.lote, validadeISO: it.loteCandidato.validadeISO, origem: 'texto' }; n++; } });
-    renderAssociacaoCotacaoXml();
-    toast(n ? `✓ Lote e validade confirmados em ${n} item(ns).` : 'Nenhum item com lote/validade válidos para confirmar.');
-}
-function editarLoteXml(idx) { const it = itensXmlDetectados[idx]; if (!it) return; it.loteEditando = true; renderAssociacaoCotacaoXml(); }
-function cancelarEdicaoLoteXml(idx) { const it = itensXmlDetectados[idx]; if (!it) return; it.loteEditando = false; renderAssociacaoCotacaoXml(); }
-function salvarEdicaoLoteXml(idx) {
-    const it = itensXmlDetectados[idx]; if (!it) return;
-    const lote = (document.getElementById(`lote-in-${idx}`) || {}).value;
-    const val = (document.getElementById(`val-in-${idx}`) || {}).value; // yyyy-mm-dd (input date)
-    const loteLimpo = String(lote || '').trim();
-    if (!loteLimpo) return toast('Informe o lote.');
-    const m = String(val || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!m) return toast('Informe a validade.');
-    const ano = Number(m[1]);
-    if (ano < 2000 || ano > 2099) return toast(`Validade com ano ${ano} não é aceita. Confira a data.`);
-    it.rastroDecidido = { lote: loteLimpo, validadeISO: val, origem: (it.loteCandidato && it.loteCandidato.valida && it.loteCandidato.lote === loteLimpo && it.loteCandidato.validadeISO === val) ? 'texto' : 'manual' };
-    it.loteEditando = false;
-    renderAssociacaoCotacaoXml();
-}
-function removerLoteXml(idx) { const it = itensXmlDetectados[idx]; if (!it) return; it.rastroDecidido = null; it.loteEditando = false; renderAssociacaoCotacaoXml(); }
-function ignorarLoteXml(idx) { const it = itensXmlDetectados[idx]; if (!it) return; it.loteCandidato = null; it.loteEditando = false; renderAssociacaoCotacaoXml(); }
+function removerLoteXml(idx) { const it = itensXmlDetectados[idx]; if (!it) return; it.rastroDecidido = null; renderAssociacaoCotacaoXml(); }
 
 function htmlLoteXml(item, idx) {
     const chip = (classe, txt) => `<span class="xml-item-badge ${classe}">${txt}</span>`;
@@ -163,27 +162,18 @@ function htmlLoteXml(item, idx) {
         const r = item.rastros[0];
         return `<div class="xml-item-lote">${chip('pronto', 'Lote no XML')} <span class="xml-item-meta">${escRel(r.nLote)}${r.dVal ? ' · validade ' + escRel(dataISOParaBR(r.dVal) || r.dVal) : ''}${item.rastros.length > 1 ? ` (+${item.rastros.length - 1} lote(s))` : ''}</span></div>`;
     }
-    const form = (lote, valISO) => `<div class="xml-lote-form">
-        <label>Lote <input type="text" id="lote-in-${idx}" value="${escRel(lote)}" autocomplete="off"></label>
-        <label>Validade <input type="date" id="val-in-${idx}" value="${escRel(valISO || '')}" min="2000-01-01" max="2099-12-31"></label>
-        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="salvarEdicaoLoteXml(${idx})">Usar este lote</button><button type="button" class="link-discreto" onclick="cancelarEdicaoLoteXml(${idx})">Cancelar</button></div></div>`;
     if (item.rastroDecidido) {
         const d = item.rastroDecidido;
-        if (item.loteEditando) return `<div class="xml-item-lote">${form(d.lote, d.validadeISO)}</div>`;
-        return `<div class="xml-item-lote">${chip('pronto', '✓ Lote entra no XML')} <span class="xml-item-meta">${escRel(d.lote)} · validade ${dataISOParaBR(d.validadeISO)}${d.origem === 'manual' ? ' · informado por você' : ''}</span>
-            <div class="xml-item-acao"><button type="button" class="link-discreto" onclick="editarLoteXml(${idx})">Editar</button><button type="button" class="link-discreto" onclick="removerLoteXml(${idx})">Remover</button></div></div>`;
+        return `<div class="xml-item-lote">${chip('pronto', '✓ Lote entra no XML')} <span class="xml-item-meta">${escRel(d.lote)} · validade ${dataISOParaBR(d.validadeISO)}</span>
+            <div class="xml-item-acao"><button type="button" class="link-discreto" onclick="removerLoteXml(${idx})">Remover</button></div></div>`;
     }
     const c = item.loteCandidato;
-    if (c) {
-        if (item.loteEditando || !c.valida) {
-            const aviso = !c.valida ? `<div class="xml-item-meta xml-lote-aviso">Encontrei "lote ${escRel(c.lote)} · validade ${escRel(c.validadeBR)}" no texto do produto, mas a validade não parece certa (${escRel(c.motivo)}). Informe a data correta ou ignore.</div>` : '';
-            return `<div class="xml-item-lote">${chip('pendente', 'Conferir lote e validade')} ${aviso}${form(c.lote, c.valida ? c.validadeISO : '')}${!c.valida ? `<div class="xml-item-acao"><button type="button" class="link-discreto" onclick="ignorarLoteXml(${idx})">Ignorar</button></div>` : ''}</div>`;
-        }
-        return `<div class="xml-item-lote">${chip('neutro', 'Lote e validade no texto')} <span class="xml-item-meta">${escRel(c.lote)} · validade ${escRel(c.validadeBR)}</span>
-            <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="confirmarLoteXml(${idx})">Confirmar</button><button type="button" class="link-discreto" onclick="editarLoteXml(${idx})">Editar</button><button type="button" class="link-discreto" onclick="ignorarLoteXml(${idx})">Ignorar</button></div></div>`;
+    if (c && c.valida) {
+        return `<div class="xml-item-lote">${chip('neutro', 'Lote removido')} <span class="xml-item-meta">${escRel(c.lote)} · validade ${escRel(c.validadeBR)}</span>
+            <div class="xml-item-acao"><button type="button" class="link-discreto" onclick="aplicarLoteXml(${idx})">Aplicar</button></div></div>`;
     }
-    if (item.loteEditando) return `<div class="xml-item-lote">${form('', '')}</div>`;
-    return `<div class="xml-item-lote"><button type="button" class="link-discreto" onclick="editarLoteXml(${idx})">Informar lote e validade</button></div>`;
+    if (c) return `<div class="xml-item-lote"><div class="xml-item-meta xml-lote-aviso">Lote ${escRel(c.lote)} / validade ${escRel(c.validadeBR)} no texto do produto não entraram no XML: ${escRel(c.motivo)}.</div></div>`;
+    return '';
 }
 
 function htmlRecursoItemXml(item, idx, status) {

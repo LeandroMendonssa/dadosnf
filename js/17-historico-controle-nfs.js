@@ -64,28 +64,9 @@ function montarControleNfs() {
     const notasPorId = {};
     notasPendentes.forEach(n => { notasPorId[n.id] = n; });
     const notasLigadas = new Set();
-    const porChave = {};
-    // Fase 41: chave sem zeros à esquerda ("011925" = "11925"); a série em branco de um lado casa com qualquer série do outro.
+    // 2.0.5: pareamento pelo número da NF (ver parearNfsEErps) — XML + ERP da mesma NF viram uma linha só.
     const chaveNorm = (n, serie) => { const k = normNfNumero(n); if (!k) return null; const sr = normSerieNf(serie); return sr ? `${k}_${sr}` : k; };
-    listaNfsProcessadas.forEach(nf => { const ch = chaveNorm(nf.nf, nf.serie); if (!ch) return; (porChave[ch] = porChave[ch] || {}).nf = nf; });
-    listaEntradasErp.forEach(erp => { const ch = chaveNorm(erp.nf, erp.serie); if (!ch) return; (porChave[ch] = porChave[ch] || {}).erp = erp; });
-    // XML sem ERP + ERP sem XML do MESMO nº de NF: junta quando há 1 só candidato e uma evidência a mais (mesmo valor, ou mesmo CNPJ).
-    {
-        const soErp = {};
-        Object.keys(porChave).forEach(k => { const r = porChave[k]; if (r.erp && !r.nf) (soErp[normNfNumero(r.erp.nf)] = soErp[normNfNumero(r.erp.nf)] || []).push(k); });
-        Object.keys(porChave).forEach(k => {
-            const r = porChave[k]; if (!r || !r.nf || r.erp) return;
-            const cands = (soErp[normNfNumero(r.nf.nf)] || []).filter(ke => {
-                const e = porChave[ke] && porChave[ke].erp; if (!e || porChave[ke].nf) return false;
-                const sx = normSerieNf(r.nf.serie), se = normSerieNf(e.serie);
-                if (sx && se && sx !== se) return false;
-                const mesmoValor = valoresNfIguais(r.nf.valorTotal, e.valor);
-                const mesmoCnpj = r.nf.cnpjFornecedor && e.cnpjFornecedor && cnpjEmLista(cnpjsDaMesmaEntidadeFornecedor(e.cnpjFornecedor), r.nf.cnpjFornecedor);
-                return mesmoValor || mesmoCnpj;
-            });
-            if (cands.length === 1) { porChave[cands[0]].nf = r.nf; delete porChave[k]; }
-        });
-    }
+    const porChave = parearNfsEErps(listaNfsProcessadas, listaEntradasErp, (nf, erp) => { const r = nf || erp; return chaveNorm(r.nf, r.serie); });
 
     Object.keys(porChave).forEach(ch => {
         const { nf, erp } = porChave[ch];
@@ -114,6 +95,28 @@ function montarControleNfs() {
         itens.push({ chave: 'nf:' + ch, tipo: 'nf', ch, numeroNf, serie: (nf && nf.serie) || (erp && erp.serie) || '', nomeFornecedor, cnpj, dataISO, situacao, subtipo, nota, nf, erp, valorTxt, venc,
             pedido: (nf && nf.pedido) || (erp && erp.vinculo && erp.vinculo.status === 'confirmado' && erp.vinculo.pedido) || null });
     });
+    // 2.0.5: nota digitada em "Adicionar" (ou já arquivada) com o MESMO nº de uma NF "Recebida" é a mesma NF: junta na linha
+    // da NF em vez de aparecer duas vezes. O fornecedor só confirma (mesma regra do pareamento acima).
+    const nfsRecebidas = itens.filter(it => it.tipo === 'nf' && it.situacao === 'recebida');
+    const acharNfDaNota = (numero, nomeForn, valor) => {
+        const num = normNfNumero(numero); if (!num) return null;
+        const descNota = descFornecedor(null, nomeForn);
+        let melhor = null, forca = 0;
+        nfsRecebidas.forEach(it => {
+            if (it.nota || it.notaLegado || normNfNumero(it.numeroNf) !== num) return;
+            const descNf = descFornecedor(it.cnpj, it.nomeFornecedor, it.nf && it.nf.fornecedor, it.erp && it.erp.fornecedorNomeRelatorio);
+            const f = forcaMesmoFornecedor(descNota, descNf, valor, it.valorTxt);
+            if (f > forca) { forca = f; melhor = it; }
+        });
+        return melhor;
+    };
+    notasPendentes.forEach(n => {
+        if (notasLigadas.has(n.id)) return;
+        const alvo = acharNfDaNota(n.nf, n.fornecedor, n.valor);
+        if (!alvo) return;
+        alvo.nota = n; alvo.situacao = n.emEspera ? 'em_espera' : 'na_relacao'; notasLigadas.add(n.id);
+        if (!alvo.valorTxt) alvo.valorTxt = n.valor || ''; if (!alvo.venc) alvo.venc = n.vencimento || '';
+    });
     // notas digitadas à mão (ou de outro caminho) que não estão ligadas a nenhuma NF
     notasPendentes.forEach(n => {
         if (notasLigadas.has(n.id)) return;
@@ -124,6 +127,8 @@ function montarControleNfs() {
     montarHistoricoNotasLegado().forEach(l => {
         const n = l.notaLegado;
         if (n.erpChave || n.nfChave) return;
+        const alvoLegado = acharNfDaNota(l.numeroNf, l.nomeFornecedor, n.valor);
+        if (alvoLegado) { alvoLegado.notaLegado = n; alvoLegado.situacao = 'arquivada'; return; } // 2.0.5: já era esta NF
         itens.push({ chave: l.chave, tipo: 'legado', numeroNf: l.numeroNf, serie: '', nomeFornecedor: l.nomeFornecedor, cnpj: null, dataISO: l.dataISO,
             situacao: 'arquivada', subtipo: null, nota: n, nf: null, erp: null, valorTxt: n.valor || '', venc: n.vencimento || '', pedido: null });
     });
@@ -392,25 +397,84 @@ function abrirControleNfs() {
 // de identificação/pré-seleção/bloqueio é da Fase 5, do agente 1; aqui só
 // exibimos o resultado, não alteramos como ele chega) — os três ficam
 // marcados com uma origem diferente, sem se confundir.
+// ===================================================================
+// --- 2.0.5: O NÚMERO DA NF MANDA; O FORNECEDOR SÓ CONFIRMA ---
+// ===================================================================
+// A mesma NF chega por até 3 caminhos (XML do app, relatório do ERP, nota digitada em "Adicionar") e antes cada tela
+// casava de um jeito. Agora há uma regra só: mesmo número (sem zeros à esquerda, série ignorada) = mesma NF, a não ser que o
+// fornecedor CONTRADIGA (CNPJ de outra empresa e nome diferente e valor diferente) — aí são NFs de fornecedores distintos
+// que por acaso têm o mesmo número, e ficam separadas.
+const PALAVRAS_GENERICAS_FORNECEDOR = new Set(['LTDA', 'EPP', 'ME', 'EIRELI', 'SA', 'CIA', 'DE', 'DO', 'DA', 'DOS', 'DAS', 'E', 'COM', 'COMERCIO', 'IND', 'INDUSTRIA', 'PRODUTOS', 'HOSPITALAR', 'HOSPITALARES', 'DISTRIBUIDORA', 'DIST', 'MEDICAMENTOS', 'MEDICOS']);
+function tokensFornecedor(nome) {
+    const t = String(nome == null ? '' : nome).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ');
+    return t.split(/\s+/).filter(w => w.length >= 2 && !PALAVRAS_GENERICAS_FORNECEDOR.has(w));
+}
+// true = parecem o mesmo fornecedor · false = parecem diferentes · null = sem como comparar
+function nomesFornecedorCompativeis(a, b) {
+    const ta = tokensFornecedor(a), tb = tokensFornecedor(b);
+    if (!ta.length || !tb.length) return null;
+    const ja = ta.join(' '), jb = tb.join(' ');
+    if (ja === jb) return true;
+    if (ja.length >= 6 && jb.length >= 6 && (ja.startsWith(jb) || jb.startsWith(ja))) return true; // nome cortado pelo ERP
+    const menor = Math.min(ta.length, tb.length);
+    const comuns = ta.filter(w => tb.includes(w)).length;
+    return comuns >= Math.min(2, menor) && comuns / menor >= 0.5;
+}
+function descFornecedor(cnpj, ...nomes) {
+    const doc = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
+    const todos = nomes.concat(doc ? [doc.nomeExibido, doc.nomeReal] : []).map(nomeTextoSeguro).filter(Boolean);
+    return { cnpj: cnpj || null, nomes: todos };
+}
+// Força da evidência de que dois registros são do mesmo fornecedor: 3 = CNPJ (mesma entidade) · 2 = nome compatível ·
+// 1 = nada contradiz (falta informação ou o valor é igual) · 0 = contradição.
+function forcaMesmoFornecedor(a, b, valorA, valorB) {
+    if (a.cnpj && b.cnpj && cnpjEmLista(cnpjsDaMesmaEntidadeFornecedor(a.cnpj), b.cnpj)) return 3;
+    let nomeConflito = false;
+    for (const x of a.nomes) for (const y of b.nomes) {
+        const r = nomesFornecedorCompativeis(x, y);
+        if (r === true) return 2;
+        if (r === false) nomeConflito = true;
+    }
+    if (valoresNfIguais(valorA, valorB)) return 1;
+    if (!nomeConflito && !(a.cnpj && b.cnpj)) return 1;
+    return 0;
+}
+// Junta NFs do app e entradas do ERP pelo número. Devolve { chave: { nf, erp, nfExtras, erpExtras } }; quando há mais de um
+// registro da mesma NF (ex.: ERP importado duas vezes com séries diferentes) um é o principal e os demais ficam em *Extras.
+function parearNfsEErps(nfs, erps, chaveFn) {
+    const clusters = [], porNumero = {};
+    const adicionar = (tipo, reg, desc, valor) => {
+        const num = normNfNumero(reg.nf); if (!num) return;
+        const lista = porNumero[num] = porNumero[num] || [];
+        let melhor = null, forca = 0;
+        lista.forEach(c => {
+            const f = Math.max(...c.membros.map(m => forcaMesmoFornecedor(m.desc, desc, m.valor, valor)));
+            if (f > forca) { forca = f; melhor = c; }
+        });
+        if (!melhor) { melhor = { membros: [], nfs: [], erps: [] }; lista.push(melhor); clusters.push(melhor); }
+        melhor.membros.push({ desc, valor });
+        (tipo === 'nf' ? melhor.nfs : melhor.erps).push(reg);
+    };
+    nfs.forEach(nf => adicionar('nf', nf, descFornecedor(nf.cnpjFornecedor, nf.fornecedor), nf.valorTotal));
+    erps.forEach(e => adicionar('erp', e, descFornecedor(e.cnpjFornecedor, e.fornecedorNomeRelatorio), e.valor));
+    const resultado = {};
+    clusters.forEach(c => {
+        const nfsOrd = [...c.nfs].sort((a, b) => String(b.processadoEm || '').localeCompare(String(a.processadoEm || '')));
+        const pontos = e => (e.vinculo && e.vinculo.status === 'confirmado' ? 2 : 0) + (e.statusFluxo && e.statusFluxo !== 'pre_selecao' ? 1 : 0);
+        const erpsOrd = [...c.erps].sort((a, b) => pontos(b) - pontos(a));
+        const nf = nfsOrd[0] || null, erp = erpsOrd[0] || null;
+        let chave = chaveFn(nf, erp), n = 2;
+        while (resultado[chave]) chave = `${chaveFn(nf, erp)}#${n++}`;
+        resultado[chave] = { nf, erp, nfExtras: nfsOrd.slice(1), erpExtras: erpsOrd.slice(1) };
+    });
+    return resultado;
+}
+
 function montarHistoricoNfs() {
-    const porChave = {};
-    listaNfsProcessadas.forEach(nf => {
-        const chave = nf.serie ? `${nf.nf}_${nf.serie}` : nf.nf;
-        if (!chave) return;
-        porChave[chave] = porChave[chave] || {};
-        porChave[chave].nf = nf;
-    });
-    listaEntradasErp.forEach(erp => {
-        // Entrada ainda em pré-seleção (Fase 5) é uma decisão pendente do
-        // usuário — não é um registro concluído, então não deve aparecer na
-        // linha do tempo do Histórico ainda. Some some depois de decidida
-        // (arquivada, historico_direto ou selecionada_financeiro).
-        if (erp.statusFluxo === 'pre_selecao') return;
-        const chave = erp.serie ? `${erp.nf}_${erp.serie}` : erp.nf;
-        if (!chave) return;
-        porChave[chave] = porChave[chave] || {};
-        porChave[chave].erp = erp;
-    });
+    // Entrada do ERP ainda em pré-seleção (Fase 5) é decisão pendente — não aparece na linha do tempo até ser decidida.
+    // 2.0.5: pareamento pelo número da NF (ver parearNfsEErps).
+    const porChave = parearNfsEErps(listaNfsProcessadas, listaEntradasErp.filter(e => e.statusFluxo !== 'pre_selecao'),
+        (nf, erp) => { const r = nf || erp; return r.serie ? `${r.nf}_${r.serie}` : String(r.nf); });
 
     return Object.keys(porChave).map(chave => {
         const { nf, erp } = porChave[chave];
@@ -541,6 +605,91 @@ function toggleDetalheHistoricoNf(chave) {
     renderHistoricoNfs();
 }
 
+// ===================================================================
+// --- 2.0.4: DA COTAÇÃO ATÉ A NF, E CORREÇÃO DA CONVERSÃO EM UM TOQUE ---
+// ===================================================================
+// "Abrir NF" nas divergências da cotação leva direto ao card da NF no Histórico (já aberto, com os itens).
+function abrirNfNoHistorico(chave, numeroNf) {
+    historicoAnoSelecionado = null; historicoMesSelecionado = null;
+    historicoFiltroTexto = String(numeroNf || '');
+    historicoNfExpandida = chave;
+    limiteExibicaoHistorico = LOTE_HISTORICO;
+    const busca = document.getElementById('historico-busca'); if (busca) busca.value = historicoFiltroTexto;
+    switchToScreen('screen-history', (menuDetails['screen-history'] && menuDetails['screen-history'].title) || 'Histórico');
+    renderHistoricoNfsAgora();
+    window.scrollTo({ top: 0 });
+}
+function abrirNfDaDivergencia(pedido, numeroNf) {
+    const alvo = String(numeroNf);
+    const nf = listaNfsProcessadas.find(n => String(n.nf) === alvo && (n.pedido === pedido || (n.pedidos || []).includes(pedido)))
+        || listaNfsProcessadas.find(n => String(n.nf) === alvo);
+    if (!nf) return toast('NF não encontrada no histórico.');
+    abrirNfNoHistorico(nf.serie ? `${nf.nf}_${nf.serie}` : String(nf.nf), nf.nf);
+}
+function numeroLimpo(v) { return parseFloat(Number(v).toFixed(4)); }
+// Propostas de correção para um item da NF salva — calculadas pelo app, o usuário só toca:
+//  - voltar à quantidade que está no XML (fator 1), quando algum fator foi aplicado;
+//  - igualar à quantidade da cotação, quando existe um fator "redondo" que faz as duas baterem.
+function propostasCorrecaoConversao(item, i) {
+    const fator = Number(i.fatorAplicado) || 1;
+    const qXml = Number(i.quantidade) / fator;
+    if (!(qXml > 0)) return [];
+    const propostas = [];
+    if (fator !== 1) propostas.push({ fator: 1, qtd: numeroLimpo(qXml), rotulo: `Voltar à quantidade do XML (${numeroLimpo(qXml)})` });
+    const cot = item.cotacao || (item.pedido ? listaCotacoes.find(c => c.pedido === item.pedido) : null);
+    const itemCot = cot && i.codigoSmartCompras ? (cot.itens || []).find(c => c.codProduto === i.codigoSmartCompras) : null;
+    const cotado = itemCot ? parseFloat(itemCot.quantidade) : NaN;
+    if (cotado > 0 && Math.abs(cotado - Number(i.quantidade)) > 0.0001) {
+        const f = cotado / qXml;
+        const redondo = Number.isFinite(f) && f > 0 && Math.abs(f * 1e6 - Math.round(f * 1e6)) < 1e-3;
+        if (redondo && !propostas.some(p => Math.abs(p.fator - f) < 1e-9)) propostas.push({ fator: parseFloat(f.toFixed(6)), qtd: numeroLimpo(cotado), rotulo: `Igualar à cotação (${numeroLimpo(cotado)}, fator ${parseFloat(f.toFixed(6))})` });
+    }
+    return propostas;
+}
+function htmlCorrecaoConversaoNfItem(item, i, idx) {
+    if (!item.nf) return '';
+    const fator = Number(i.fatorAplicado) || 1;
+    const resumo = ` <span class="txt-aux">(XML: ${numeroLimpo(Number(i.quantidade) / fator)} × fator ${fator})</span>`;
+    const botoes = propostasCorrecaoConversao(item, i).map(p =>
+        `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); corrigirConversaoNfItem('${item.nf.id}', ${idx}, ${p.fator})">${escRel(p.rotulo)}</button>`).join(' ');
+    // 2.0.6: qualquer fator pode ser aplicado, sem precisar subir o XML de novo.
+    const idCampo = `fator-nf-${item.nf.id}-${idx}`.replace(/[^\w-]/g, '_');
+    const manual = `<span class="xml-item-meta">Fator:</span> <input type="text" inputmode="decimal" id="${idCampo}" value="${fator}" style="width:70px" onclick="event.stopPropagation()">
+        <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); aplicarFatorManualNfItem('${item.nf.id}', ${idx}, '${idCampo}')">Aplicar fator</button>`;
+    return resumo + `<div class="xml-item-acao">${botoes ? botoes + ' ' : ''}${manual}</div>`;
+}
+function aplicarFatorManualNfItem(nfId, idx, idCampo) {
+    const campo = document.getElementById(idCampo); if (!campo) return;
+    const f = parseFloat(String(campo.value).replace(',', '.'));
+    if (!Number.isFinite(f) || f <= 0) return toast('Informe um fator maior que zero (ex.: 1, 10, 0,5).');
+    corrigirConversaoNfItem(nfId, idx, parseFloat(f.toFixed(6)));
+}
+function corrigirConversaoNfItem(nfId, idx, novoFator) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId);
+    const it = nf && nf.itens && nf.itens[idx];
+    if (!it) return toast('Item não encontrado.');
+    const fatorAnt = Number(it.fatorAplicado) || 1;
+    const qXml = Number(it.quantidade) / fatorAnt, vXml = Number(it.valorUnitario) * fatorAnt;
+    const novaQtd = numeroLimpo(qXml * novoFator), novoValor = numeroLimpo(vXml / novoFator);
+    // O fator também pode estar memorizado para este produto/fornecedor (vale para as próximas NFs): se for o mesmo errado, corrige junto.
+    const chaveExc = `${nf.cnpjFornecedor}::${it.cProd}`.replace(/\//g, '_');
+    const jaMemorizado = bancoExcecoesXml[chaveExc] !== undefined;
+    if (novoFator === fatorAnt) return toast('Esse já é o fator aplicado.');
+    showConfirmModal({
+        title: 'Corrigir conversão',
+        message: `NF ${nf.nf} — ${it.xProd}\nQuantidade: ${it.quantidade} → ${novaQtd}\nValor unitário: ${it.valorUnitario} → ${novoValor}\nFator: ${fatorAnt} → ${novoFator}\nO fator ${novoFator} será lembrado para as próximas NFs deste produto deste fornecedor.\n\nCorrige só o registro da NF salva (o XML original não é alterado).`,
+        confirmText: 'Corrigir', confirmClass: 'warning',
+        onConfirm: async () => {
+            try {
+                const novos = nf.itens.map((x, k) => k !== idx ? x : { ...x, quantidade: novaQtd, valorUnitario: novoValor, fatorAplicado: novoFator });
+                await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
+                await xmlExcecoesCollection.doc(chaveExc).set({ fator: novoFator, atualizadoEm: new Date().toISOString() }, { merge: true });
+                toast(`✓ Conversão corrigida: ${novaQtd}.`);
+            } catch (e) { console.error('Erro ao corrigir conversão:', e); toast('✕ Erro ao corrigir a conversão.'); }
+        }
+    });
+}
+
 function renderCardHistoricoNf(item) {
     if (item.tipo === 'nota_legado') {
         const n = item.notaLegado;
@@ -558,7 +707,7 @@ function renderCardHistoricoNf(item) {
     let detalheHTML = '';
     if (expandido) {
         const itensHTML = (item.nf && item.nf.itens && item.nf.itens.length)
-            ? item.nf.itens.map(i => `<div class="central-item-linha">${escRel(i.xProd)} — cód. fornecedor ${escRel(i.cProd)}${i.codigoSmartCompras ? ' · SmartCompras ' + escRel(i.codigoSmartCompras) : ''}${i.codigoSpData ? ' · SP Data ' + escRel(i.codigoSpData) : ''} · qtd ${i.quantidade}</div>`).join('')
+            ? item.nf.itens.map((i, idxItem) => `<div class="central-item-linha">${escRel(i.xProd)} — cód. fornecedor ${escRel(i.cProd)}${i.codigoSmartCompras ? ' · SmartCompras ' + escRel(i.codigoSmartCompras) : ''}${i.codigoSpData ? ' · SP Data ' + escRel(i.codigoSpData) : ''} · qtd ${i.quantidade}${htmlCorrecaoConversaoNfItem(item, i, idxItem)}</div>`).join('')
             : '<div class="nota-detalhes"><em>Sem itens de XML processados pra esta NF.</em></div>';
 
         const vinculoLabels = { confirmado: 'confirmado', sugerido: 'sugerido — precisa de confirmação', sem_associacao: 'sem associação' };
