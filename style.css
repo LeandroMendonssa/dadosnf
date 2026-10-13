@@ -1,6 +1,6 @@
 :root {
     /* Font Variables */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
     --font-serif: 'Roboto Slab', serif;
     --font-mono: 'Source Code Pro', monospace;
     --font-montserrat: 'Montserrat', sans-serif;
@@ -785,6 +785,13 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 .hmud-item { margin-bottom: var(--space-3); }
 .hmud-item .nota-detalhes { margin-top: var(--space-2); }
 .hmud-atual { border-color: var(--accent-color); background: color-mix(in srgb, var(--accent-color) 5%, var(--bg-secondary)); }
+.hmud-grupo-v1 { margin-bottom: var(--space-3); padding: 0; }
+.hmud-grupo-v1 > summary { cursor: pointer; padding: var(--space-3); list-style: none; font-size: 0.95em; color: var(--text-light); }
+.hmud-grupo-v1 > summary::-webkit-details-marker { display: none; }
+.hmud-grupo-v1 > summary::before { content: '▸ '; }
+.hmud-grupo-v1[open] > summary::before { content: '▾ '; }
+.hmud-grupo-v1[open] > summary { border-bottom: 1px solid var(--border-color); }
+.hmud-grupo-v1 > .hmud-item { margin: var(--space-3); }
 
 /* =====================================================================
    FASE 17.3 — Etapa 4: áreas de uso frequente (Entrada de NF/XML, SP Data,
@@ -830,6 +837,11 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 .central-prod-cab{cursor:pointer}
 .central-prod-badges{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
 .central-fornecedor-resumo{display:block;font-weight:400;font-size:11px;color:var(--text-light);margin-top:2px}
+/* 2.0.9: destaque por estado do fornecedor — verde (entregue e sem divergência), vermelho (divergência/auditoria em aberto), amarelo (em andamento). */
+.central-fornecedor-resumo strong{font-weight:700}
+.central-fornecedor-resumo .rs-ok{color:var(--success-text)}
+.central-fornecedor-resumo .rs-erro{color:var(--danger)}
+.central-fornecedor-resumo .rs-pend{color:var(--warning-text)}
 @media (prefers-reduced-motion:reduce){.central-colapso{transition:none}}
 
 .central-chegada{margin:6px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -985,3 +997,202 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 
 /* ===== Fase 40 ===== */
 .gerenciar-aviso-recursos { align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; margin: 0 0 12px; border: 1px solid var(--border-color); border-left: 3px solid var(--warning); border-radius: var(--r-md); background: var(--bg-secondary); font-size: 13px; color: var(--text-dark); }
+
+
+/* ===== Fase 43: lote e validade ===== */
+.xml-item-lote { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color); }
+.xml-lote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.xml-lote-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-light); }
+.xml-lote-form input { min-height: 44px; font-size: 16px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: var(--r-sm, 10px); background: var(--bg-secondary); color: var(--text-dark); }
+.xml-lote-aviso { color: var(--danger); margin: 6px 0; }
+
+/* 2.1.1: aba Itens do Editor da NF com cara de DANFE */
+.nf-danfe-wrap{overflow-x:auto;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:10px}
+.nf-danfe{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+.nf-danfe th{text-align:left;font-weight:600;color:var(--text-light);border-bottom:1px solid var(--border-color);padding:8px 6px;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.nf-danfe td{padding:9px 6px;border-bottom:1px solid var(--border-color);vertical-align:top;color:var(--text-dark)}
+.nf-danfe .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nf-danfe .nf-desc{font-weight:600;line-height:1.3}
+.nf-danfe .nf-sub{font-size:11px;color:var(--text-light);margin-top:3px}
+.nf-danfe tr.nf-linha{cursor:pointer}
+.nf-danfe tr.nf-linha:active{background:var(--bg-tertiary)}
+.nf-danfe tr.nf-edit td{background:var(--bg-tertiary);padding:12px 10px}
+.nf-danfe tr.nf-total td{border-bottom:0;padding-top:10px;font-size:13px}
+
+/* 2.1.2: seletor único com busca (.sb) e blocos do Editor da NF (.nfe-*) — identidade do app */
+.sb{position:relative}
+.sb-campo{display:flex;align-items:center;background:var(--bg-secondary);border:1.5px solid var(--border-color);border-radius:12px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.sb-campo:focus-within{border-color:var(--accent-color);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent-color) 18%,transparent)}
+.sb input.sb-input{flex:1;min-width:0;width:auto;border:0;background:transparent;padding:13px 14px;font-size:16px;color:var(--text-dark);outline:0;border-radius:0}
+.sb-seta{flex:0 0 auto;border:0;background:transparent;color:var(--text-light);font-size:15px;padding:0 14px;height:46px;cursor:pointer}
+.sb-lista{margin-top:6px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 8px 22px rgba(0,0,0,.10)}
+.sb-lista[hidden]{display:none}
+.sb-op{padding:11px 14px;border-bottom:1px solid var(--border-color);cursor:pointer}
+.sb-op:last-child{border-bottom:0}
+.sb-op:active{background:color-mix(in srgb,var(--accent-color) 10%,var(--bg-secondary))}
+.sb-op-titulo{font-size:13.5px;font-weight:600;color:var(--text-dark);line-height:1.3}
+.sb-op-sub{font-size:11.5px;color:var(--text-light);margin-top:2px;line-height:1.3}
+.sb-op-especial .sb-op-titulo{color:var(--accent-color)}
+.sb-op-atual{box-shadow:inset 3px 0 0 var(--accent-color);background:color-mix(in srgb,var(--accent-color) 6%,var(--bg-secondary))}
+.sb-aviso,.sb-vazio{padding:10px 14px;font-size:12px;color:var(--text-light)}
+/* as listas antigas de SP Data (Central/Entrada) ganham a mesma aparência */
+.central-spdata-busca{background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:12px;padding:10px}
+.central-spdata-busca>input.form-field{background:var(--bg-secondary);border:1.5px solid var(--border-color);border-radius:12px;font-size:16px;margin-bottom:8px}
+.central-spdata-busca>input.form-field:focus{border-color:var(--accent-color);outline:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent-color) 18%,transparent)}
+.central-spdata-opcoes{max-height:46vh;gap:0;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;-webkit-overflow-scrolling:touch}
+.central-spdata-opcao{padding:11px 14px;border-radius:0;border:0;border-bottom:1px solid var(--border-color);font-size:13px;line-height:1.3;background:transparent}
+.central-spdata-opcao:last-child{border-bottom:0}
+.central-spdata-opcao:active{background:color-mix(in srgb,var(--accent-color) 10%,var(--bg-secondary))}
+/* cabeçalho do Editor da NF */
+.nfe-topo{padding:var(--space-4)}
+.nfe-topo-linha{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.nfe-titulo{font-size:21px;font-weight:700;color:var(--text-dark);line-height:1.15;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nfe-serie{font-size:12px;font-weight:600;color:var(--text-light);background:var(--bg-tertiary);padding:2px 8px;border-radius:999px}
+.nfe-forn{margin-top:6px;font-weight:600;font-size:14px;color:var(--text-dark)}
+.nfe-cnpj{font-size:12px;color:var(--text-light);margin-top:1px}
+.nfe-valor{text-align:right;flex:0 0 auto}
+.nfe-valor strong{display:block;font-size:19px;font-variant-numeric:tabular-nums;color:var(--text-dark)}
+.nfe-rot{display:block;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-light);font-weight:700;margin-bottom:2px}
+.nfe-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding:12px;background:var(--bg-tertiary);border-radius:10px}
+.nfe-grade strong{font-size:14px;color:var(--text-dark)}
+.nfe-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.nfe-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.nfe-trocar{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-color)}
+.nfe-trocar .nfe-rot{margin-bottom:6px}
+.nfe-alerta{border-color:var(--button-warning);background:color-mix(in srgb,var(--button-warning) 10%,var(--bg-secondary))}
+.nfe-alerta-tit{font-weight:700;font-size:13px;color:var(--text-dark)}
+.nfe-alerta-txt{font-size:12.5px;color:var(--text-dark);margin-top:4px;line-height:1.4}
+/* edição do item (área que expande) */
+.nfe-sec{margin-bottom:16px}
+.nfe-sec:last-child{margin-bottom:0}
+.nfe-sec-tit{font-size:11px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;color:var(--text-light);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.nfe-atual{padding:10px 12px;border-radius:10px;background:var(--bg-secondary);border:1px solid var(--border-color);box-shadow:inset 3px 0 0 var(--accent-color);font-size:13px;font-weight:600;margin-bottom:8px;line-height:1.35;color:var(--text-dark)}
+.nfe-atual.falta{box-shadow:inset 3px 0 0 var(--button-warning);color:var(--text-light);font-weight:500}
+.nfe-atual small{display:block;font-weight:400;font-size:11.5px;color:var(--text-light);margin-top:2px}
+.nfe-fator-linha{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.nfe-fator-campo{display:flex;align-items:center;background:var(--bg-secondary);border:1.5px solid var(--border-color);border-radius:12px;overflow:hidden}
+.nfe-fator-campo:focus-within{border-color:var(--accent-color);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent-color) 18%,transparent)}
+.nfe-fator-campo span{padding:0 2px 0 14px;color:var(--text-light);font-weight:700}
+.nfe-fator-campo input{width:84px;border:0;background:transparent;padding:12px 10px 12px 6px;font-size:16px;font-weight:600;outline:0;border-radius:0}
+.nfe-btn{border:0;border-radius:12px;padding:0 18px;min-height:46px;background:var(--accent-color);color:#fff;font-weight:600;font-size:14px;cursor:pointer}
+.nfe-btn:active{background:var(--accent-color-hover)}
+.nfe-dica{font-size:11.5px;color:var(--text-light);margin-top:6px}
+
+/* 2.1.3: card do fornecedor — ações sempre visíveis fora da parte que expande; seletor com grupos */
+.cf-detalhes{padding:0 0 10px;font-size:12px;color:var(--text-light);border-bottom:1px dashed var(--border-color);margin-bottom:10px}
+.sb-grupo{padding:8px 14px 5px;font-size:11px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;color:var(--text-light);background:var(--bg-tertiary);border-bottom:1px solid var(--border-color)}
+.nfe-link{border:0;background:transparent;color:var(--accent-color);font-weight:600;font-size:12.5px;padding:8px 2px 0;cursor:pointer;text-decoration:underline}
+
+/* 2.1.4: card do fornecedor no padrão do Gerenciar NF (fundo branco, seções com divisor, chips de ação) */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.central-fornecedor{position:relative;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--r-md);box-shadow:var(--shadow-sm);margin-bottom:12px;overflow:hidden}
+.central-fornecedor::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--border-color);z-index:2}
+.central-fornecedor.st-ok::before{background:var(--success)}
+.central-fornecedor.st-erro::before{background:var(--danger)}
+.central-fornecedor.st-pend::before{background:var(--warning)}
+.central-fornecedor-header{align-items:flex-start;gap:10px;padding:14px 16px 12px 21px;font-size:14px}
+.cf-topo-info{flex:1;min-width:0}
+.cf-nome{font-size:15px;font-weight:700;line-height:1.25;color:var(--text-dark);word-break:break-word}
+.cf-cnpj{font-size:12px;font-weight:400;color:var(--text-light);margin-top:2px}
+.central-fornecedor-header>i{flex:0 0 auto;width:auto;margin-top:4px;font-size:12px}
+.central-fornecedor-resumo{margin-top:6px;font-size:12.5px;line-height:1.4}
+.central-fornecedor-acoes{padding:12px 16px 14px 21px;border-top:1px solid var(--border-color)}
+.cf-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cf-status-txt{font-size:12.5px;color:var(--text-light);line-height:1.4}
+.cf-botoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cf-botoes .action-chip{height:34px;padding:0 14px}
+.central-fornecedor-body{padding:12px 16px 16px 21px;border-top:1px solid var(--border-color)}
+
+/* ====================================================================================================
+   2.2.0 — LINGUAGEM APPLE: Liquid Glass na camada de NAVEGAÇÃO (dock e cabeçalho), movimento com mola
+   Seguindo as diretrizes da Apple: o vidro fica só nos controles/navegação que flutuam sobre o conteúdo; os cards
+   (camada de conteúdo) continuam opacos. Com "reduzir transparência", "aumentar contraste" ou sem suporte a blur,
+   o vidro vira cor sólida. O movimento é curto e some com "reduzir movimento".
+   ==================================================================================================== */
+body{
+  --glass-tint: color-mix(in srgb, var(--bg-secondary) 58%, transparent);
+  --glass-tint-strong: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+  --glass-edge: rgba(255,255,255,.72);
+  --glass-edge-soft: rgba(255,255,255,.38);
+  --glass-shadow: 0 12px 32px rgba(15,23,42,.16), 0 2px 6px rgba(15,23,42,.08);
+  --dock-h: 64px; --dock-b: max(10px, env(safe-area-inset-bottom));
+  --dock-clear: 0px;
+  --spring: linear(0, .18 5%, .55 13%, .88 23%, 1.04 33%, 1.06 41%, 1.02 54%, .995 68%, 1);
+  --spring-soft: cubic-bezier(.32, 1.2, .5, 1);
+}
+:root{ --header-h: 61px; }
+body[data-theme="dark"], body[data-theme="wine"]{
+  --glass-edge: rgba(255,255,255,.17); --glass-edge-soft: rgba(255,255,255,.08);
+  --glass-shadow: 0 12px 32px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.35);
+}
+body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: rgba(28,28,30,.86); }
+
+/* ---- cabeçalho: vidro por cima do conteúdo (o conteúdo rola por baixo) ---- */
+.main-content > .header{
+  position:absolute; top:0; left:0; right:0; z-index:30;
+  background-color:var(--glass-tint-strong);
+  -webkit-backdrop-filter:blur(22px) saturate(180%); backdrop-filter:blur(22px) saturate(180%);
+  border-bottom:1px solid transparent;
+  transition:border-color .25s ease;
+}
+.main-content > .header.scrolled{ border-bottom-color:color-mix(in srgb, var(--border-color) 85%, transparent); }
+.app-screen{ padding-top:calc(var(--header-h) + 16px); }
+.rte-toolbar{ top:var(--header-h); }
+
+/* ---- dock: cápsula flutuante de vidro (somente telas estreitas; no desktop vale o menu lateral) ---- */
+@media (max-width:899px){
+  body{ --dock-clear: calc(var(--dock-h) + var(--dock-b)); }
+  body[data-theme] .tab-bar{
+    position:relative; z-index:30; flex-shrink:0; align-items:stretch; gap:2px;
+    height:var(--dock-h); padding:6px;
+    margin:calc(-1 * (var(--dock-h) + var(--dock-b))) 12px var(--dock-b);
+    border-radius:calc(var(--dock-h) / 2);
+    border:1px solid var(--glass-edge);
+    background-color:var(--glass-tint);
+    -webkit-backdrop-filter:blur(24px) saturate(190%); backdrop-filter:blur(24px) saturate(190%);
+    box-shadow:var(--glass-shadow), inset 0 1px 0 var(--glass-edge), inset 0 -1px 0 var(--glass-edge-soft);
+  }
+  .tab-item{ position:relative; z-index:1; min-height:0; font-size:10.5px; padding:4px 2px; border-radius:999px; }
+  .tab-item.active{ background:none; }
+  .app-screen{ padding-bottom:calc(var(--dock-clear) + 20px); }
+  #screen-anotacoes, #screen-settings{ padding-bottom:calc(var(--dock-clear) + 24px); }
+  body.keyboard-open .app-screen{ padding-bottom:24px; }
+}
+/* pílula que desliza até a aba ativa (posicionada pelo JS) */
+.dock-pill{
+  position:absolute; left:0; top:0; z-index:0; width:0; height:0; pointer-events:none; border-radius:999px;
+  background:color-mix(in srgb, var(--accent-color) 14%, transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 22%, transparent), inset 0 1px 0 var(--glass-edge-soft);
+  transition:transform .5s var(--spring), width .5s var(--spring), height .5s var(--spring);
+}
+
+/* ---- movimento com mola nas folhas (sheets) e no feedback de toque ---- */
+@media (max-width:680px){
+  .modal-screen.active .modal-content{ animation-duration:.42s; animation-timing-function:var(--spring-soft); }
+}
+/* alertas e confirmações: vidro "regular" (mais opaco, legível) */
+#confirm-modal .modal-content{
+  background-color:var(--glass-tint-strong);
+  -webkit-backdrop-filter:blur(30px) saturate(180%); backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--glass-edge);
+}
+.action-chip, .central-status-toggle, .nfe-btn, .actions-button{ transition:transform .25s var(--spring-soft), background-color .2s ease, color .2s ease, border-color .2s ease; }
+.action-chip:active, .central-status-toggle:active, .nfe-btn:active{ transform:scale(.96); }
+
+/* ---- acessibilidade: sem blur → cor sólida ---- */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  body{ --glass-tint:var(--bg-secondary); --glass-tint-strong:var(--bg-secondary); }
+}
+@media (prefers-reduced-transparency:reduce){
+  body{ --glass-tint:var(--bg-secondary); --glass-tint-strong:var(--bg-secondary); }
+  body[data-theme] .tab-bar, .main-content > .header, #confirm-modal .modal-content{ -webkit-backdrop-filter:none; backdrop-filter:none; }
+}
+@media (prefers-contrast:more){
+  body{ --glass-tint:var(--bg-secondary); --glass-tint-strong:var(--bg-secondary); --text-light:#48484a; --border-color:#8e8e93; }
+  body[data-theme="dark"]{ --text-light:#d1d1d6; }
+  body[data-theme] .tab-bar, .main-content > .header, #confirm-modal .modal-content{ -webkit-backdrop-filter:none; backdrop-filter:none; border-color:var(--border-color); }
+}
+@media (prefers-reduced-motion:reduce){
+  .dock-pill, .action-chip, .central-status-toggle, .nfe-btn, .actions-button, .main-content > .header{ transition:none !important; }
+  .modal-screen.active .modal-content{ animation:none !important; }
+}
