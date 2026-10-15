@@ -119,7 +119,7 @@ function handleRelatorioGanhadoresFileUpload(event) {
     const reader = new FileReader();
     reader.onload = (e) => {
         document.getElementById('ganhadores-textarea').value = decodificarArquivoTexto(e.target.result);
-        toast('Arquivo carregado! Clique em "Processar".');
+        toast('Arquivo carregado. Use o botão "Processar".');
     };
     reader.onerror = () => toast('Erro ao ler o arquivo.');
     reader.readAsArrayBuffer(file);

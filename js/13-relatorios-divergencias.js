@@ -286,7 +286,7 @@ function renderListaCotacoes() {
 
     if (!termo) {
         if (lista.length === 0) {
-            container.innerHTML = '<div class="empty-state">Nenhuma cotação cadastrada ainda.</div>';
+            container.innerHTML = '<div class="empty-state">Nenhuma cotação cadastrada ainda. Importe o arquivo da primeira cotação para começar.</div>';
             return;
         }
         container.innerHTML = lista.map(renderCardCotacao).join('');

@@ -12,6 +12,7 @@
 // ============================================================
 
 let xmlDocAtual = null;
+let xmlTextoAtual = null; // 2.1.0: texto original do XML (guardado junto da NF)
 let nomeArquivoXmlOriginal = 'nfe-corrigida.xml';
 let itensXmlDetectados = [];
 let bancoExcecoesXml = {};
@@ -79,6 +80,7 @@ function handleArquivoXml(file) {
 function processarXmlTexto(texto) {
     const parser = new DOMParser();
     xmlDocAtual = parser.parseFromString(texto, 'application/xml');
+    xmlTextoAtual = texto;
     if (xmlDocAtual.querySelector('parsererror')) {
         toast('✕ Esse arquivo não é um XML válido.');
         xmlDocAtual = null;
@@ -121,6 +123,7 @@ function processarXmlTexto(texto) {
         const xProd = get('xProd');
         const item = {
             prod,
+            nItem: detEl.getAttribute('nItem') || '', // 2.1.0: liga o item salvo ao <det> do XML
             xProd,
             cProd: get('cProd'),
             cEAN: get('cEAN'),
@@ -814,6 +817,12 @@ function limparBancoExcecoesXml() {
 // relatório de fornecedores ganhadores usam os 14 dígitos. Nada é reescrito no
 // banco: só a comparação ignora a pontuação (igualdade exata dos dígitos — nunca
 // aproximada). Toda comparação nova envolvendo CNPJ deve usar estes helpers.
+// 2.1.3: matriz e filiais da mesma empresa compartilham os 8 primeiros dígitos do CNPJ (a raiz). A NF pode sair por uma filial
+// enquanto a cotação registra a matriz; para "itens deste fornecedor" vale a raiz.
+function mesmaRaizCnpj(a, b) {
+    const x = String(a == null ? '' : a).replace(/\D/g, ''), y = String(b == null ? '' : b).replace(/\D/g, '');
+    return x.length >= 8 && y.length >= 8 && x.slice(0, 8) === y.slice(0, 8);
+}
 function normalizarCnpj(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
 // Identidade: só é "o mesmo" se os dois tiverem CNPJ e os dígitos forem idênticos.
 function mesmoCnpj(a, b) { const x = normalizarCnpj(a); return x !== '' && x === normalizarCnpj(b); }
@@ -1054,16 +1063,6 @@ function alternarOutrosFornecedoresXml() {
 // nome/parte do nome) — determinística, sem fuzzy match: só esconde/mostra
 // as opções via correspondência de substring no texto já renderizado
 // (código, nome, fabricante, embalagem, quantidade já estão nesse texto).
-function filtrarOpcoesItemXml(chave, termo) {
-    const select = document.getElementById(`assoc-forn-select-${chave}`);
-    if (!select) return;
-    const t = termo.trim().toUpperCase();
-    Array.from(select.options).forEach(opt => {
-        if (!opt.value || opt.value === SEM_COTACAO_VALOR) { opt.style.display = ''; return; }
-        opt.style.display = (!t || opt.textContent.toUpperCase().includes(t)) ? '' : 'none';
-    });
-}
-
 function toggleCorrecaoAssociacaoFornecedor(chave) {
     if (associacaoFornecedorBuscaAberta.has(chave)) associacaoFornecedorBuscaAberta.delete(chave);
     else associacaoFornecedorBuscaAberta.add(chave);
@@ -1199,7 +1198,7 @@ function renderAssociacaoCotacaoXml() {
     const cnpjsFornecedorIdentificado = validacaoFornecedorXml.encontrado
         ? [nfeInfoAtual.cnpjEmit, ...validacaoFornecedorXml.cnpjsRelacionados]
         : [nfeInfoAtual.cnpjEmit];
-    const itensDoFornecedorIdentificado = itensDaCotacao.filter(it => cnpjEmLista(cnpjsFornecedorIdentificado, it.cnpjFornecedor));
+    const itensDoFornecedorIdentificado = itensDaCotacao.filter(it => cnpjEmLista(cnpjsFornecedorIdentificado, it.cnpjFornecedor) || mesmaRaizCnpj(nfeInfoAtual.cnpjEmit, it.cnpjFornecedor));
     const restringeFornecedor = itensDoFornecedorIdentificado.length > 0 && itensDoFornecedorIdentificado.length < itensDaCotacao.length;
     const itensParaOpcoes = (restringeFornecedor && !mostrarOutrosFornecedoresXml) ? itensDoFornecedorIdentificado : itensDaCotacao;
 
@@ -1214,25 +1213,23 @@ function renderAssociacaoCotacaoXml() {
         } else if (!cotacaoAtual && !status.associacao) {
             cotacaoSpDataHTML = 'Selecione o pedido acima pra associar este item à cotação (ou marque "Esta NF não possui cotação do SmartCompras").';
         } else {
-            const opcoesHTML = itensParaOpcoes.map(it => {
+            const opcoesSeletor = [{ valor: SEM_COTACAO_VALOR, titulo: 'Sem cotação do SmartCompras (compra direta)', especial: true }].concat(itensParaOpcoes.map(it => {
                 const cotItem = it._cotacao || cotacaoAtual;
                 const fornecedorIt = (cotItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor));
                 const nomeForn = fornecedorIt ? nomeExibicaoFornecedor(fornecedorIt.razaoSocial, fornecedorIt.cnpj) : (it.cnpjFornecedor || 'fornecedor não identificado');
                 const detalhes = [it.fabricante && it.fabricante !== '---' ? it.fabricante : '', it.embalagem || '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ');
-                // Valor da opção: só carrega o pedido quando há mais de uma cotação
-                // selecionada (evita ambiguidade se o mesmo código existir nas duas);
-                // com uma cotação só, é idêntico a antes.
+                // Valor da opção: só carrega o pedido quando há mais de uma cotação selecionada (evita ambiguidade).
                 const valorOpcao = multiPedido ? `${it._pedido}::${it.codProduto}` : it.codProduto;
                 const rotuloPedido = multiPedido ? `[Pedido ${it._pedido}] ` : '';
-                return `<option value="${escRel(valorOpcao)}">${rotuloPedido}${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'} (${nomeForn})${detalhes ? ' — ' + detalhes : ''}</option>`;
-            }).join('');
+                return { valor: valorOpcao, titulo: `${rotuloPedido}${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'}`, sub: [nomeForn, detalhes].filter(Boolean).join(' · ') };
+            }));
+            // 2.1.2: seletor único (busca + lista no mesmo campo), igual ao do Editor da NF
             const buscaHTML = `<div class="central-spdata-busca" onclick="event.stopPropagation()">
-                <input type="text" class="form-field" placeholder="Buscar por código ou nome..." oninput="filtrarOpcoesItemXml('${status.chave}', this.value)">
-                <select class="form-field" id="assoc-forn-select-${status.chave}" size="6" onchange="confirmarSelecaoAssociacaoFornecedor('${status.chave}')">
-                    <option value="">Selecione o item da cotação...</option>
-                    <option value="${SEM_COTACAO_VALOR}">— Sem cotação do SmartCompras (compra direta) —</option>
-                    ${opcoesHTML}
-                </select>
+                ${htmlSeletorBusca('assoc-' + status.chave, {
+                    placeholder: 'Buscar item da cotação por código ou nome…', opcoes: opcoesSeletor,
+                    // 2.1.3: sugestões pelo nome do item do XML no topo da lista (mesma regra dos botões "Usar:")
+                    sugestoes: () => { const r = item.xProd ? sugestoesItemCotacao(item.xProd, itensParaOpcoes) : { itens: [], aproximado: false }; const vs = new Set(r.itens.map(x => String(multiPedido ? `${x._pedido}::${x.codProduto}` : x.codProduto))); return opcoesSeletor.filter(o => vs.has(String(o.valor))).map(o => r.aproximado ? { ...o, grupo: 'Parecidos pelo nome — confira' } : o); },
+                    aoEscolher: valor => confirmarSelecaoAssociacaoFornecedor(status.chave, valor) })}
                 ${restringeFornecedor ? `<button type="button" class="central-status-toggle" onclick="alternarOutrosFornecedoresXml()">${mostrarOutrosFornecedoresXml ? 'Mostrar só do fornecedor identificado' : 'Mostrar itens de outros fornecedores'}</button>` : ''}
             </div>`;
 

@@ -314,7 +314,15 @@ function renderCentralPedidoCompleto(pedido) {
             const chegada = (cotacao.chegadasPorFornecedor || {})[normalizarCnpj(f.cnpj)] || null;
             // Fase 31: status de entrega CALCULADO (XML do app + ERP + itens); a marca manual é exceção.
             const entrega = calcularEntregaFornecedorPedido(pedido, f, compForn);
-            const chegadaHTML = renderEntregaFornecedorHTML(pedido, f, entrega);
+            // 2.1.3: botões (chegou / abrir NF / associar NF) ficam FORA da parte que expande, sempre visíveis no card.
+            const dadosEnt = dadosEntregaFornecedor(pedido, f, entrega);
+            const botoesCard = [dadosEnt ? dadosEnt.botoes : '', htmlBotaoAssociarNf(pedido, f.cnpj)].filter(Boolean).join(' ');
+            const acoesHTML = `<div class="central-fornecedor-acoes">
+                ${dadosEnt ? `<div class="cf-status">${dadosEnt.badge}${dadosEnt.curta ? `<span class="cf-status-txt">${dadosEnt.curta}</span>` : ''}</div>` : ''}
+                <div class="cf-botoes">${botoesCard}</div>
+                ${htmlPainelAssociarNf(pedido, f.cnpj)}
+            </div>`;
+            const detalhesEntregaHTML = ((dadosEnt && dadosEnt.detalhes) || '') + htmlVinculadasNf(pedido, f.cnpj);
 
             // Fase 27: cada divergência da auditoria vai pra linha do PRIMEIRO
             // produto cujo nome bate EXATAMENTE (sem aproximação) com um dos
@@ -325,7 +333,7 @@ function renderCentralPedidoCompleto(pedido) {
             const divSoltas = [];
             divergenciasForn.forEach(x => {
                 const nomes = (x.d.materiais || []).map(m => normNome(m.produto)).filter(Boolean);
-                const alvo = nomes.length ? produtos.find(it => nomes.includes(normNome(it.nomeOficial || it.descricao || it.codProduto))) : null;
+                const alvo = nomes.length ? produtos.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) : null; // 2.0.9: mesmo critério da comparação
                 if (alvo) (divPorProduto[alvo.codProduto] = divPorProduto[alvo.codProduto] || []).push(x);
                 else divSoltas.push(x);
             });
@@ -347,18 +355,33 @@ function renderCentralPedidoCompleto(pedido) {
                 ? `<div class="central-secao-titulo">Outras divergências deste fornecedor</div>${divSoltas.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join('')}`
                 : '';
 
-            const nComDiv = compForn.filter(c => c.divergencias.length).length;
+            // 2.0.9: "com divergência" conta só o que está EM ABERTO (item sem auditoria resolvida/encerrada).
+            const nComDiv = compForn.filter(c => c.divergencias.length && !c.resolvido).length;
             const nPend = divergenciasForn.filter(x => (x.d.status || 'pendente') === 'pendente').length;
-            const resumo = [`${produtos.length} item(ns)`, entrega ? rotuloEntregaFornecedor(entrega).curto : '', nComDiv ? `${nComDiv} com divergência` : '', nPend ? `${nPend} auditoria(s) pendente(s)` : ''].filter(Boolean).join(' · ');
+            const emErro = nComDiv > 0 || nPend > 0;
+            const entregaOk = !!(entrega && entrega.estado === 'completa');
+            const classeFornecedor = emErro ? 'st-erro' : (entregaOk ? 'st-ok' : 'st-pend');
+            const rot = entrega ? rotuloEntregaFornecedor(entrega) : null;
+            const classeEntrega = rot ? (rot.classe === 'pronto' ? 'rs-ok' : rot.classe === 'pendente' ? 'rs-pend' : '') : '';
+            const partesResumo = [
+                `<span>${produtos.length} item(ns)</span>`,
+                nComDiv ? `<strong class="rs-erro">${nComDiv} com divergência em aberto</strong>` : '',
+                nPend ? `<strong class="rs-erro">${nPend} auditoria(s) pendente(s)</strong>` : ''
+            ].filter(Boolean);
+            const resumo = partesResumo.join(' · ');
 
-            return `<div class="central-fornecedor${aberto ? ' aberto' : ''}">
+            return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
+                    <div class="cf-topo-info">
+                        <div class="cf-nome">${nomeExibicao}</div>
+                        ${f.cnpj ? `<div class="cf-cnpj">CNPJ ${formatarCnpjExibicao(f.cnpj)}</div>` : ''}
+                        <div class="central-fornecedor-resumo">${resumo}</div>
+                    </div>
                     <i class="fa-solid fa-chevron-right"></i>
-                    <span>${nomeExibicao}${f.cnpj ? ` <span style="font-weight:400;color:var(--text-light);font-size:12px;">— CNPJ ${formatarCnpjExibicao(f.cnpj)}</span>` : ''}<span class="central-fornecedor-resumo">${resumo}</span></span>
                 </div>
+                ${acoesHTML}
                 <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
-                    ${chegadaHTML}
-                    ${renderAssociarNfFornecedorHTML(pedido, f.cnpj)}
+                    ${detalhesEntregaHTML ? `<div class="cf-detalhes">${detalhesEntregaHTML}</div>` : ''}
                     ${produtosHTML}
                     ${soltasHTML}
                 </div></div></div>
@@ -369,8 +392,8 @@ function renderCentralPedidoCompleto(pedido) {
         const abertoSem = centralFornecedoresAbertos.has('_sem_cnpj');
         const semFornecedorHTML = semFornecedor.length ? `<div class="central-fornecedor${abertoSem ? ' aberto' : ''}">
             <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('_sem_cnpj', this)">
+                <div class="cf-topo-info"><div class="cf-nome">Outras ocorrências</div><div class="cf-cnpj">sem fornecedor identificado na cotação</div></div>
                 <i class="fa-solid fa-chevron-right"></i>
-                <span>Outras ocorrências (sem fornecedor identificado na cotação)</span>
             </div>
             <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
                 ${semFornecedor.map(x => `<div style="margin-bottom:6px;font-size:12px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')}

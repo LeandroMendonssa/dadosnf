@@ -258,6 +258,7 @@ const DADOS_TODOS_TELAS = ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associa
 const DADOS_POR_TELA = {
     'screen-reports': ['cotacoes', 'anotacoes'],
     'screen-history': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
+    'screen-nf-editor': ['nfsProcessadas', 'entradasErp', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'xmlExcecoes'],
     'screen-controle-nfs': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
     'screen-xml-editor': ['nfsProcessadas', 'xmlExcecoes', 'associacoesFornecedor', 'associacoesSpData', 'cotacoes', 'produtosSpData', 'entradasErp'],
     'screen-spdata': ['produtosSpData', 'associacoesSpData'],
@@ -361,7 +362,9 @@ function rebuildNotasPendentesList(){
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".
     const notasParaExibir = notasPendentes.filter(n => abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera);
     if(notasParaExibir.length===0){
-        DOM.listaNotas.innerHTML=`<div class="empty-state">${abaGerenciar === 'espera' ? 'Nenhuma nota em espera.' : 'Nenhuma nota na relação para saída.'}</div>`;
+        DOM.listaNotas.innerHTML = abaGerenciar === 'espera'
+            ? `<div class="empty-state">Nenhuma nota em espera. As notas que você colocar em espera aparecem aqui.</div>`
+            : `<div class="empty-state">Nenhuma nota na relação para saída.<div class="actions-row"><button type="button" class="action-chip edit-chip" onclick="switchToScreen('screen-add', 'Adicionar')">Adicionar nota</button></div></div>`;
         return;
     }
     

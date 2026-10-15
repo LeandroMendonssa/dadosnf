@@ -91,9 +91,16 @@ function vincularEntradaErpComNf(bloco) {
 
         // Localiza a cotação/pedido a partir do(s) item(ns) já confirmados.
         const codigosSmartCompras = [...new Set(associacoesCorrespondentes.map(a => a.codigoSmartCompras))];
-        let pedido = null;
-        for (const cotacao of listaCotacoes) {
-            if ((cotacao.itens || []).some(it => codigosSmartCompras.includes(it.codProduto))) { pedido = cotacao.pedido; break; }
+        // 2.0.8 (causa das "divergências fantasma"): o pedido de uma NF com XML processado é o que está gravado NA NF. Antes o app
+        // pegava a primeira cotação (a mais recente) que tivesse QUALQUER item em comum — e era frequente cair no pedido errado.
+        const nfDoXml = listaNfsProcessadas.find(n => n.pedido && normNfNumero(n.nf) === normNfNumero(bloco.nf) && cnpjsFornecedor.includes(n.cnpjFornecedor));
+        let pedido = nfDoXml ? String(nfDoXml.pedido) : null;
+        if (!pedido) { // sem NF encontrada: escolhe a cotação que cobre MAIS itens associados (não a primeira)
+            let melhor = 0;
+            for (const cotacao of listaCotacoes) {
+                const n = (cotacao.itens || []).filter(it => codigosSmartCompras.includes(it.codProduto)).length;
+                if (n > melhor) { melhor = n; pedido = cotacao.pedido; }
+            }
         }
 
         return {
@@ -176,6 +183,42 @@ function vincularEntradaErpComNf(bloco) {
 // entre candidatos empatados) — nunca automático. Preserva o registro
 // original (evidências, motivo) e só substitui o status/pedido. Reaproveita
 // o mesmo doc de entradasErp, nunca cria uma segunda estrutura.
+// 2.0.8: o pedido de uma entrada do ERP que tem a NF/XML no app é o pedido da NF (a NF vale mais que o vínculo gravado, que pode
+// estar desatualizado). Cache por troca de lista; pareamento pelo número da NF (ver parearNfsEErps).
+let cachePedidoErpPelaNf = { nfs: null, erps: null, mapa: new Map() };
+function mapaPedidoErpPelaNf() {
+    if (cachePedidoErpPelaNf.nfs !== listaNfsProcessadas || cachePedidoErpPelaNf.erps !== listaEntradasErp) {
+        const mapa = new Map();
+        const pares = parearNfsEErps(listaNfsProcessadas, listaEntradasErp, (nf, erp) => { const r = nf || erp; return String(r.nf) + '_' + String(r.serie || ''); });
+        Object.values(pares).forEach(p => {
+            if (!p.nf || !p.nf.pedido) return;
+            [p.erp, ...(p.erpExtras || [])].filter(Boolean).forEach(e => mapa.set(e.id, String(p.nf.pedido)));
+        });
+        cachePedidoErpPelaNf = { nfs: listaNfsProcessadas, erps: listaEntradasErp, mapa };
+    }
+    return cachePedidoErpPelaNf.mapa;
+}
+function pedidoDoErpConfirmado(e) {
+    if (!e || !e.vinculo || e.vinculo.status !== 'confirmado') return null;
+    return mapaPedidoErpPelaNf().get(e.id) || (e.vinculo.pedido ? String(e.vinculo.pedido) : null);
+}
+// Grava de verdade o alinhamento (uma vez por sessão): vínculos confirmados do ERP cujo pedido difere do pedido da NF/XML.
+let alinhamentoVinculosErpFeito = false;
+async function alinharVinculosErpComNfs() {
+    if (alinhamentoVinculosErpFeito || !dadosAppInscritos) return;
+    if (!listaNfsProcessadas.length || !listaEntradasErp.length) return; // ainda carregando: tenta de novo na próxima atualização
+    alinhamentoVinculosErpFeito = true;
+    const mapa = mapaPedidoErpPelaNf();
+    const desalinhadas = listaEntradasErp.filter(e => e.vinculo && e.vinculo.status === 'confirmado' && mapa.has(e.id) && String(e.vinculo.pedido) !== mapa.get(e.id));
+    if (!desalinhadas.length) return;
+    try {
+        for (const e of desalinhadas) {
+            await entradasErpCollection.doc(e.id).update({ vinculo: { ...e.vinculo, pedidoAnterior: e.vinculo.pedido || null, pedido: mapa.get(e.id), alinhadoComNfEm: new Date().toISOString() } });
+        }
+        toast(`✓ ${desalinhadas.length} vínculo(s) do ERP alinhado(s) ao pedido da NF.`);
+    } catch (err) { console.error('Erro ao alinhar vínculos do ERP:', err); alinhamentoVinculosErpFeito = false; }
+}
+
 async function confirmarVinculoErpComPedido(chave, pedidoEscolhido) {
     const entrada = listaEntradasErp.find(e => e.id === chave);
     if (!entrada || !pedidoEscolhido) return;
@@ -489,7 +532,7 @@ function handleImportFileUpload(event) {
     reader.onload = (e) => {
         const texto = decodificarArquivoTexto(e.target.result);
         document.getElementById('import-textarea').value = texto;
-        toast('Arquivo carregado! Clique em "Processar Relatório".');
+        toast('Arquivo carregado. Use o botão "Processar Relatório".');
     };
     reader.onerror = () => toast('Erro ao ler o arquivo.');
     reader.readAsArrayBuffer(file);

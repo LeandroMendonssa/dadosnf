@@ -348,7 +348,7 @@ function handleFornecedoresSpDataFileUpload(event) {
     const reader = new FileReader();
     reader.onload = (e) => {
         document.getElementById('import-fornspdata-textarea').value = decodificarArquivoTexto(e.target.result);
-        toast('Arquivo carregado! Clique em "Processar Cadastro".');
+        toast('Arquivo carregado. Use o botão "Processar Cadastro".');
     };
     reader.onerror = () => toast('Erro ao ler o arquivo.');
     reader.readAsArrayBuffer(file);

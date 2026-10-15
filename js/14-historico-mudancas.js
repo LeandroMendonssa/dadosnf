@@ -9,7 +9,163 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.0.6', nome: 'Exportar dados para diagnóstico, link da NF em toda cotação e fator de conversão livre', status: 'atual',
+        numero: '2.2.1', nome: 'Ícone do app, instalação na tela de início e textos mais claros', status: 'atual',
+        implementado: [
+            'Ícone novo do app, desenhado nas orientações da Apple: um conceito só (a nota fiscal com o selo de conferido), figura centralizada, fundo em gradiente azul sem transparência, camadas sobrepostas e nenhum texto. Fica legível até no tamanho pequeno. Está na pasta icones/, nos tamanhos 180 (iPhone), 192 e 512 px.',
+            'Instalação na tela de início: o app ganhou o manifesto (manifest.webmanifest) e os metadados de cor e barra de status. Ao adicionar à tela de início no Safari, abre em tela cheia, sem a barra do navegador, com o ícone e o nome "Minhas Notas".',
+            'Textos: as mensagens "Arquivo carregado! Clique em ..." viraram "Arquivo carregado. Use o botão ...", que serve para toque e para mouse. Estados vazios passaram a dizer o próximo passo: Gerenciar (nenhuma nota na relação), Controle de NFs (nada em aberto, nenhuma NF arquivada) e Cotações, com botão de atalho onde cabe.'
+        ],
+        mudou: [
+            'O ícone da tela de início do iPhone é guardado em cache: para ver o novo, remova o app da tela de início e adicione de novo pelo Safari.',
+            'Os ícones da interface continuam em um estilo só (Font Awesome sólido); o estilo dos ícones do dock segue sendo uma opção em Personalização.',
+            'Não mexi no tamanho de texto que acompanha o ajuste do iPhone (Dynamic Type): o app usa tamanhos fixos em px em quase todas as telas, e a troca é grande e arriscada para o ganho. Fica como possibilidade futura.',
+            'Arquivos novos: manifest.webmanifest e a pasta icones/. Arquivos alterados: index.html, js/05-listeners-dados.js, js/13-relatorios-divergencias.js, js/14-historico-mudancas.js, js/15-ganhadores-cotacoes.js, js/17-historico-controle-nfs.js, js/18-erp-fornecedores-spdata.js e js/19-erp-reconciliacao.js.'
+        ],
+        testar: ['Colocar a pasta icones/ e o manifest.webmanifest junto do index.html. No Safari do iPhone: Compartilhar > Adicionar à Tela de Início e abrir pelo ícone novo. Conferir os estados vazios em Gerenciar (aba Relação) e em Controle de NFs (aba Em aberto, com as listas vazias).']
+    },
+    {
+        numero: '2.2.0', nome: 'Linguagem Apple: Liquid Glass no dock e no cabeçalho, movimento com mola e tipografia do sistema', status: 'concluida',
+        implementado: [
+            'Dock em vidro líquido (telas estreitas): vira uma cápsula flutuante, com desfoque, borda de luz e sombra, e o conteúdo das telas rola por baixo dela. Uma pílula translúcida desliza até a aba ativa com movimento de mola, e o dock rola sozinho para manter a aba ativa à vista. No computador continua o menu lateral.',
+            'Cabeçalho em vidro: o conteúdo rola por baixo do título e, quando isso acontece, aparece uma linha fina de separação. As telas passam a começar logo abaixo do cabeçalho e terminam acima do dock, sem nada escondido.',
+            'Seguindo as diretrizes da Apple, o vidro fica só na camada de navegação (dock, cabeçalho e confirmações). Os cards e listas continuam opacos, para a leitura não depender do que passa por trás.',
+            'Alertas e confirmações usam vidro mais opaco, para manter a leitura; o toque nos botões ganhou resposta curta de mola.',
+            'Fonte do sistema primeiro: no iPhone e no Mac o app passa a usar a SF Pro, a fonte da Apple (Inter continua como reserva em outros aparelhos). Rótulos que estavam em 10 px subiram para 11 px, o mínimo recomendado.',
+            'Acessibilidade: com "Reduzir transparência" ou "Aumentar contraste" ligados no aparelho, o vidro vira cor sólida e as bordas ficam mais fortes; com "Reduzir movimento", as animações de mola são desligadas. Sem suporte a desfoque o app também usa cor sólida.'
+        ],
+        mudou: [
+            'O dock e o cabeçalho deixam de ocupar espaço próprio: o conteúdo passa por baixo deles. Se alguma tela tiver algo escondido atrás do cabeçalho ou do dock, me diga qual.',
+            'Fica para as próximas versões: ícone do app e instalação na tela de início, ícones em um único estilo, padronização dos textos (por exemplo "Toque" em vez de "Clique") e tamanho de texto que acompanha o ajuste do iPhone.',
+            'Arquivos alterados: index.html, style.css, js/14-historico-mudancas.js e o novo js/22-vidro-liquido.js.'
+        ],
+        testar: ['No iPhone, abrir o app e rolar uma lista: o conteúdo deve passar por baixo do título e do dock. Trocar de aba e ver a pílula deslizar. Conferir o tema escuro e, em Ajustes > Acessibilidade, "Reduzir transparência" e "Reduzir movimento".']
+    },
+    {
+        numero: '2.1.4', nome: 'Card do fornecedor no padrão do Gerenciar NF', status: 'concluida',
+        implementado: [
+            'Card do fornecedor na Central do pedido refeito no estilo do card do Gerenciar NF: fundo branco para se destacar do fundo da tela, cantos arredondados e sombra leve, e seções separadas por divisórias (identificação, entrega e ações, detalhes).',
+            'Barra colorida da lateral agora cobre a altura inteira do card, inclusive quando ele está expandido: verde (entregue e sem divergência em aberto), vermelha (divergência ou auditoria em aberto) ou amarela (em andamento). Antes ela cobria só o cabeçalho.',
+            'Cabeçalho organizado em linhas: nome do fornecedor, CNPJ e resumo (itens e divergências em aberto), com a seta de expandir à direita. A palavra "entrega completa" saiu do resumo do topo porque o selo de entrega já aparece logo abaixo.',
+            'Botões ("Desfazer marca manual"/"Marcar como já chegou", "Abrir NF" e "Associar NF do histórico") passaram a usar os mesmos chips do Gerenciar NF, alinhados à esquerda com espaçamento igual. O espaçamento aleatório vinha de uma regra antiga do botão que o empurrava para a borda.',
+            'Correção de tamanho de fonte no iPhone: nomes de fornecedor que quebravam em duas linhas apareciam maiores que os outros, porque o Safari aumentava o texto sozinho. Foi desligado esse ajuste automático.'
+        ],
+        mudou: [
+            'Só aparência: nenhuma regra de entrega, divergência ou associação mudou.',
+            'Arquivos alterados: style.css, js/09-anotacoes.js, js/11-central-pedido.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Cotações > pedido 1726: conferir os cards dos fornecedores (fundo branco, barra colorida inteira, botões alinhados) e expandir a SUPERMED para ver detalhes e itens. Conferir também no tema escuro, se usar.']
+    },
+    {
+        numero: '2.1.3', nome: 'Seletor só com os itens do fornecedor, sugestão pelo nome do XML e card do fornecedor com ações à vista', status: 'concluida',
+        implementado: [
+            'Editor da NF: o seletor do item da cotação agora lista só os itens que aquele fornecedor ganhou (antes, quando o CNPJ da NF não batia, caía na cotação inteira). Para achar o fornecedor vale o CNPJ cadastrado, os CNPJs do mesmo fornecedor no SP Data e a raiz do CNPJ (matriz e filiais). O botão "Mostrar itens de outros fornecedores" amplia a lista quando precisar. O mesmo critério de raiz do CNPJ passou a valer na Entrada de NF.',
+            'Sugestão pelo nome do item do XML, como já existe para o SP Data: ao abrir a lista (Editor da NF e Entrada de NF) as sugestões vêm no topo. Primeiro a regra estrita que o app já usava; se ela não achar nada, uma regra por parecença (números pesam mais, aceita abreviações como CIL = CILIND), só dentro dos itens do fornecedor, no máximo 3 e identificados como "Parecidos pelo nome — confira". No Editor, quando só há sugestão estrita e o item ainda não tem associação, aparecem botões "Usar: ...".',
+            'Medido no seu histórico real (398 itens já associados): a regra estrita sugeriu em 167 itens e acertou 99%; com a parecença o app sugere em 287 itens e o item certo estava entre as sugestões em 99% deles (71% de todos os itens, contra 49% antes). Marca contra princípio ativo (ex.: CINETOL, FENTANEST) continua sem sugestão, porque o nome do XML não traz o princípio.',
+            'Card do fornecedor na Central do pedido: o selo de entrega e os botões ("Marcar como já chegou" / "Desfazer marca manual", "Abrir NF" e "Associar NF do histórico") ficaram fora da parte que expande, sempre visíveis, no mesmo modelo do Gerenciar NF. Dentro do card, ao expandir, ficam os detalhes da entrega, os itens (cada um recolhido) e as divergências. O painel de busca da NF abre logo abaixo dos botões.',
+            'O seletor ganhou grupos na lista ("Sugestões pelo nome do item", "Todos os itens", "Outras opções"), com a compra direta sempre no fim.'
+        ],
+        mudou: [
+            'Para NFs cuja empresa não ganhou nenhum item no pedido (ex.: SOMA SP quando quem ganhou foi a SOMA MG) a lista fica sem itens e mostra o aviso com o botão para ver os de outros fornecedores.',
+            'As sugestões nunca são escolhidas sozinhas: sempre dependem do seu toque.',
+            'Arquivos alterados: style.css, js/09-anotacoes.js, js/10-entrada-nf-xml.js, js/11-central-pedido.js, js/14-historico-mudancas.js, js/20-editor-nf.js e js/21-seletor-busca.js.'
+        ],
+        testar: ['Controle de NFs > NF da BIOLINE (pedido 1733) > Abrir editor da NF > tocar em um item > seletor do item da cotação: deve listar só os 10 itens da BIOLINE, com sugestões no topo. Cotações > pedido 1733: conferir o card do fornecedor com os botões visíveis e os itens/divergências ao expandir. Entrada de NF: abrir a lista de associação e ver as sugestões no topo.']
+    },
+    {
+        numero: '2.1.2', nome: 'Seletor único com busca e Editor da NF reorganizado', status: 'concluida',
+        implementado: [
+            'Novo seletor único para o app todo: um campo só. Ao tocar nele abre a lista completa logo abaixo e, a cada letra digitada, a lista filtra na hora (sem precisar apertar Enter e sem o segundo campo/caixa nativa do celular). Ignora acentos, aceita várias palavras e mostra o item atual destacado. O Enter escolhe o melhor resultado digitado, nunca a opção especial.',
+            'Entrada de NF: a associação do item com a cotação passou a usar o seletor único (a lista nativa foi retirada). A opção "Sem cotação do SmartCompras (compra direta)" continua lá, destacada e no fim da lista quando você digita.',
+            'Editor da NF: associação com a cotação, produto SP Data e "mover para outro pedido" usam o mesmo seletor, sem os botões soltos "Buscar", "Associar" e "Mover". Escolher já abre a confirmação.',
+            'Editor da NF, cabeçalho: número e série, fornecedor e CNPJ, valor total em destaque, quadro com emissão, 1º vencimento e pedido, selos de situação e botões de ação, cada coisa em seu bloco.',
+            'Editor da NF, área que expande: três seções com título (Item da cotação, Produto SP Data, Fator de conversão), cada uma mostrando o valor atual numa caixa e o campo logo abaixo, com campos e botões no padrão visual do app. O item aberto continua aberto depois de uma edição, e a tela não é redesenhada enquanto você digita.',
+            'As listas de SP Data da Central do pedido ganharam a mesma aparência do seletor.'
+        ],
+        mudou: [
+            'Correção de um erro da 2.0.7: a busca de SP Data do Editor da NF chamava uma função que não devolve lista (ela só filtra a tela de SP Data), então a busca não funcionava. Agora usa a mesma busca da Central.',
+            'Ficou de fora desta versão: os seletores de fornecedor da tela de importação do ERP (vincular fornecedor) e o seletor de cotação adicional, que continuam como estavam.',
+            'Arquivos alterados: index.html, style.css, js/10-entrada-nf-xml.js, js/11-central-pedido.js, js/14-historico-mudancas.js, js/20-editor-nf.js e o novo js/21-seletor-busca.js.'
+        ],
+        testar: ['Entrada de NF: abrir um item, tocar em "Corrigir" a associação e digitar parte do nome ou código: a lista deve filtrar na hora. Editor da NF (pelo Controle de NFs): conferir o cabeçalho e, ao tocar em um item, as 3 seções; trocar o SP Data digitando o nome, e o pedido pelo campo "Mover esta NF para outro pedido".']
+    },
+    {
+        numero: '2.1.1', nome: 'Aba Itens do Editor da NF no formato de DANFE', status: 'concluida',
+        implementado: [
+            'A aba Itens virou uma tabela como a da nota fiscal: código, descrição (com lote, validade e fabricação), NCM, CFOP, unidade, quantidade, valor unitário e valor total, com os valores do XML. Abaixo da tabela aparece o total dos produtos do XML.',
+            'Cada item abre ao tocar na linha: associação com a cotação, SP Data, fator de conversão e a conferência com o ERP ficam ali, sem poluir a tabela.',
+            'Quando o fator é diferente de 1, a linha mostra a quantidade que entra no estoque.'
+        ],
+        mudou: [
+            'Os controles não mudaram de função: associar, buscar SP Data e aplicar fator continuam gravando do mesmo jeito.',
+            'Em NFs antigas, sem XML completo, a tabela usa os valores salvos (já convertidos pelo fator) e não mostra NCM, CFOP nem o total do XML.',
+            'Arquivos alterados: js/20-editor-nf.js, style.css e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir uma NF do Controle de NFs e conferir a aba Itens: colunas, valores, lote e validade. Tocar em um item para abrir a associação e o fator, e tocar de novo para recolher.']
+    },
+    {
+        numero: '2.1.0', nome: 'Editor da NF completo: todos os dados do XML, em abas, e acesso a partir do Controle de NFs', status: 'concluida',
+        implementado: [
+            'Ao salvar uma NF, o app passa a guardar o XML completo junto dela: cabeçalho (chave, natureza, modelo, tipo, datas), emitente e destinatário com endereço, totais e tributos, transportadora, duplicatas e pagamentos, impostos de cada item (ICMS, IPI, PIS, COFINS), NCM, CFOP, CEST, EAN, unidade e quantidades do XML, lote e validade, e o texto original do XML.',
+            'O Editor da NF ganhou o mesmo padrão de abas da Entrada de NF: Itens (divergências da NF, associação com a cotação, SP Data, fator, lote e validade, dados fiscais de cada item), Financeiro (duplicatas, pagamento, totais e a situação na relação/ERP), Fiscal (tributos da nota e por item), Emitente/Dest. (endereços), Transporte e XML (chave, informações complementares e o XML original para ler).',
+            'O card de cada NF no Controle de NFs ganhou o botão "Abrir editor da NF", então o editor fica acessível a partir do Controle sem passar pela cotação ou pelo Histórico.'
+        ],
+        mudou: [
+            'NFs processadas antes desta versão não têm o XML completo guardado: o editor mostra um aviso nas abas que dependem dele, e para completar basta reprocessar o XML na Entrada de NF. Itens, pedido, fator, associações e divergências já funcionam nessas NFs.',
+            'O XML original é guardado dentro da NF (até cerca de 500 KB; acima disso fica sem o texto e os demais dados são guardados).',
+            'Arquivos alterados: js/10-entrada-nf-xml.js, js/11-central-pedido.js, js/14-historico-mudancas.js, js/17-historico-controle-nfs.js e js/20-editor-nf.js.'
+        ],
+        testar: ['Processar um XML novo na Entrada de NF e salvar. No Controle de NFs, abrir o card dessa NF e tocar em "Abrir editor da NF": conferir as abas Financeiro (vencimento e parcelas), Fiscal (impostos), Emitente/Dest., Transporte e XML. Em NF antiga, conferir o aviso e que Itens continua funcionando. Confirmar que lote e validade aparecem em cada item.']
+    },
+    {
+        numero: '2.0.9', nome: 'Resolvido em um lugar só: a auditoria manda e o cabeçalho do fornecedor mostra o estado por cor', status: 'concluida',
+        implementado: [
+            'Antes havia dois núcleos: o "Marcar como resolvido" do item (comparação) e o status da auditoria (Anotações). Agora, quando uma auditoria do pedido cobre o item, o status dela decide: resolvida ou encerrada = item resolvido; pendente = item aberto. Não é preciso marcar de novo.',
+            'A auditoria é ligada ao item pelo nome do produto (mesmos três primeiros termos, ex.: "NIMESULIDA 100MG" ↔ "NIMESULIDA 100MG COMP") e pelo fornecedor, quando a auditoria tem CNPJ. As de "não foi faturado" (sem CNPJ) são ligadas só pelo nome, dentro do mesmo pedido.',
+            'Nos itens com auditoria ligada, some o botão "Marcar como resolvido" e aparece "✓ Tratado na auditoria" ou "Em aberto na auditoria", com o status de cada uma. Itens sem auditoria continuam com o botão manual, como antes.',
+            'Cabeçalho do fornecedor na Central do pedido: borda verde (entregue e sem divergência em aberto), vermelha (divergência em aberto ou auditoria pendente) ou amarela (entrega em andamento). A legenda está em negrito e colorida: "✓ entrega completa", "N com divergência em aberto", "N auditoria(s) pendente(s)".',
+            'O contador "com divergência" conta só o que ainda está em aberto; os resolvidos saem da contagem.'
+        ],
+        mudou: [
+            'Um item que tinha "Marcar como resolvido" manual e que também tem auditoria ligada passa a seguir a auditoria. Se a auditoria estiver pendente, o item aparece aberto mesmo que tenha sido marcado à mão antes: resolva a auditoria (Alterar status) e o item fecha sozinho.',
+            'Arquivos alterados: js/09-anotacoes.js, js/11-central-pedido.js, js/14-historico-mudancas.js e style.css.'
+        ],
+        testar: ['Pedido 1713: a NIMESULIDA deve aparecer resolvida sem clicar em nada, e o fornecedor NIMESULIDA/CMP sem a legenda "com divergência em aberto". Pedido 1726: a SONDA NASOG (auditoria pendente) segue aberta até você alterar o status na auditoria; conferir as cores dos cards de fornecedor.']
+    },
+    {
+        numero: '2.0.8', nome: 'Causa das divergências fantasma: NF do ERP vinculada ao pedido errado', status: 'concluida',
+        implementado: [
+            'Causa encontrada: ao importar o relatório do ERP, para uma NF que já tinha XML no app o pedido era escolhido como "a primeira cotação (a mais recente) que tivesse qualquer item em comum" — e não o pedido gravado na própria NF. Era comum cair no pedido errado (nos dados reais, 9 NFs: ex. a NF 390653 da SOMA SP estava no pedido 1726 e a entrada do ERP foi vinculada ao 1731), e daí vinham as divergências "fantasma" de quantidade e valor. Agora o pedido vem da NF; sem NF, vale a cotação que cobre MAIS itens associados.',
+            'Comparações, entregas por fornecedor e "Associar NF do histórico" passam a usar o pedido da NF para as entradas do ERP que têm XML no app (pedido efetivo), mesmo que o vínculo gravado esteja antigo.',
+            'Correção automática dos dados: uma vez por sessão, os vínculos do ERP cujo pedido difere do pedido da NF/XML são regravados com o pedido da NF (o pedido anterior fica guardado em pedidoAnterior). Aparece um aviso com a quantidade corrigida.',
+            'Pedido possivelmente errado: se uma NF foi gravada num pedido onde menos da metade dos itens está na cotação e outro pedido tem pelo menos 75% dos itens, o app avisa no Editor da NF, no card do Histórico e no bloco do fornecedor da Central do pedido, com o botão "Mover para o pedido X" (um toque). Se mais de um pedido encaixar igualmente, mostra as opções.',
+            'No Editor da NF há também "Trocar pedido" (lista de pedidos) para mover a NF para qualquer pedido. Mover grava a NF e o vínculo da entrada do ERP, e as comparações passam a usar o pedido novo.'
+        ],
+        mudou: [
+            'Mover uma NF de pedido não altera auditorias que já foram geradas para o pedido antigo, nem associações de SP Data que o preenchimento automático (Fase 8) possa ter criado a partir do pedido errado: se alguma associação parecer estranha, corrija no Editor da NF.',
+            'Divergências NF×ERP que continuam aparecendo nos seus dados (ex.: papel SMS NF 947054, 400 na NF contra 300 no ERP; metaraminol NF 35925, 50 contra 48) são diferenças reais entre NF e lançamento, e merecem conferência.',
+            'Arquivos alterados: js/11-central-pedido.js, js/17-historico-controle-nfs.js, js/19-erp-reconciliacao.js, js/20-editor-nf.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir o app e esperar uns segundos: deve aparecer o aviso "9 vínculo(s) do ERP alinhado(s) ao pedido da NF" (só na primeira vez). Conferir o pedido 1731 (a NF 390653 não deve mais aparecer lá) e o pedido 1726 (NF 390653 no lugar certo). No Editor de qualquer NF, ver o seletor "Trocar pedido".']
+    },
+    {
+        numero: '2.0.7', nome: 'Editor da NF, link único da NF na cotação e fim das NFs repetidas no Histórico', status: 'concluida',
+        implementado: [
+            'Editor da NF (tela nova): cabeçalho com fornecedor, CNPJ, número/série, emissão, valor, vencimento, pedido e situação (XML, ERP e nota), mais os dados de pagamento/ERP e as divergências SÓ daquela NF (antes aparecia a auditoria do pedido inteiro). Cada item mostra o fator, a quantidade convertida, o valor unitário e a conferência com o ERP.',
+            'No Editor, cada item permite trocar a associação com a cotação (só itens do fornecedor da NF), trocar o produto SP Data (busca por nome ou código) e aplicar qualquer fator de conversão. Tudo é gravado na própria NF salva e na memória de associações (fornecedor e SP Data), então Histórico, Controle, Cotações e Central do pedido mostram o mesmo dado, com a NF recebida, na relação ou arquivada.',
+            'Cotação / Central do pedido: o botão "Abrir NF" agora aparece uma vez só, no topo do bloco de cada fornecedor (sempre visível, sem abrir item), e abre o Editor da NF. Saiu a repetição do botão em cada item. O "voltar" do Editor leva de volta à tela de onde você veio.',
+            'Histórico de NFs: o registro simples arquivado da mesma NF deixou de aparecer como segunda linha; entra dentro do card da NF ("Nota de pagamento arquivada em..."). Casa pela ligação gravada (nfChave/erpChave) ou, sem ela, pelo número da NF com o fornecedor confirmando; a mesma nota arquivada duas vezes também entra na mesma NF. O card tem o botão "Abrir editor da NF".',
+            'Controle de NFs: o mesmo agrupamento vale para NFs arquivadas, não só para as recebidas.'
+        ],
+        mudou: [
+            'Com os seus dados reais (exportação de 10/10): 110 registros repetidos do Histórico viraram parte da NF correspondente, a divergência "lançado 70" da ENOXAPARINA 80MG (NF 156906) não existe mais (eram 30 da NF + 40 de outra NF, da SOMA SP, no mesmo pedido) e o pedido 1731 ficou sem divergências indevidas.',
+            'O campo "Fator" e os botões de correção que estavam no card do Histórico (2.0.6) foram para o Editor da NF.',
+            'Linhas que continuam separadas de propósito: notas arquivadas com valor diferente do da NF (ex.: uma nota que juntou duas NFs) e notas arquivadas de fornecedores diferentes com o mesmo número.',
+            'Arquivos alterados: index.html, js/01-nucleo-config-estado.js, js/05-listeners-dados.js, js/11-central-pedido.js, js/17-historico-controle-nfs.js, js/14-historico-mudancas.js e o novo js/20-editor-nf.js.'
+        ],
+        testar: ['Em Cotações > pedido 1735 > BMG: tocar em "Abrir NF 30921" e conferir o cabeçalho, as divergências só dessa NF e os itens. No Editor, testar "Aplicar fator", "Associar" e a busca de SP Data (cada uma pede confirmação). Depois, no Histórico, buscar 31335: deve aparecer uma linha só.']
+    },
+    {
+        numero: '2.0.6', nome: 'Exportar dados para diagnóstico, link da NF em toda cotação e fator de conversão livre', status: 'concluida',
         implementado: [
             'Backup dos Dados: novo botão "Exportar dados para diagnóstico (JSON)". Gera um único arquivo com TODAS as coleções do app (notas, histórico, anotações, exceções de conversão, cotações, produtos e associações do SP Data, associações de fornecedor, entradas do ERP, fornecedores, NFs processadas e fornecedores ganhadores) mais as configurações, com contagem por coleção. Só lê os dados; não altera nada.',
             'Central do pedido: todo item que tem NF por XML agora mostra "Abrir NF nnnnn", não só os itens com divergência. Cada fornecedor também ganha, no topo do bloco, a lista das NFs por XML do pedido.',

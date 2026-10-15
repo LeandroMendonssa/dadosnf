@@ -57,6 +57,9 @@ function renderControleSeAtivo() {
         const tela = document.getElementById('screen-controle-nfs');
         if (tela && tela.classList.contains('active')) renderControleNfs();
     });
+
+    renderEditorNfSeAtivo(); // 2.0.7: o Editor da NF acompanha qualquer mudança de dado
+    agendarRender('alinharVinculosErp', alinharVinculosErpComNfs, 3000); // 2.0.8: corrige vínculos do ERP desatualizados
 }
 
 function montarControleNfs() {
@@ -98,11 +101,11 @@ function montarControleNfs() {
     // 2.0.5: nota digitada em "Adicionar" (ou já arquivada) com o MESMO nº de uma NF "Recebida" é a mesma NF: junta na linha
     // da NF em vez de aparecer duas vezes. O fornecedor só confirma (mesma regra do pareamento acima).
     const nfsRecebidas = itens.filter(it => it.tipo === 'nf' && it.situacao === 'recebida');
-    const acharNfDaNota = (numero, nomeForn, valor) => {
+    const acharNfDaNota = (numero, nomeForn, valor, universo = nfsRecebidas) => {
         const num = normNfNumero(numero); if (!num) return null;
         const descNota = descFornecedor(null, nomeForn);
         let melhor = null, forca = 0;
-        nfsRecebidas.forEach(it => {
+        universo.forEach(it => {
             if (it.nota || it.notaLegado || normNfNumero(it.numeroNf) !== num) return;
             const descNf = descFornecedor(it.cnpj, it.nomeFornecedor, it.nf && it.nf.fornecedor, it.erp && it.erp.fornecedorNomeRelatorio);
             const f = forcaMesmoFornecedor(descNota, descNf, valor, it.valorTxt);
@@ -127,8 +130,15 @@ function montarControleNfs() {
     montarHistoricoNotasLegado().forEach(l => {
         const n = l.notaLegado;
         if (n.erpChave || n.nfChave) return;
-        const alvoLegado = acharNfDaNota(l.numeroNf, l.nomeFornecedor, n.valor);
-        if (alvoLegado) { alvoLegado.notaLegado = n; alvoLegado.situacao = 'arquivada'; return; } // 2.0.5: já era esta NF
+        // 2.0.5/2.0.7: o registro simples arquivado da MESMA NF (qualquer situação dela) entra na linha da NF, não vira outra linha.
+        const alvoLegado = acharNfDaNota(l.numeroNf, l.nomeFornecedor, n.valor, itens.filter(it => it.tipo === 'nf'));
+        if (alvoLegado) { alvoLegado.notaLegado = n; if (alvoLegado.situacao === 'recebida') alvoLegado.situacao = 'arquivada'; return; }
+        // a mesma nota arquivada duas vezes (mesmo nº, fornecedor e valor): o 2º registro também entra na NF, sem virar outra linha
+        const descLeg = descFornecedor(null, l.nomeFornecedor);
+        const alvoRepetido = itens.find(it => it.tipo === 'nf' && it.notaLegado && normNfNumero(it.numeroNf) === normNfNumero(l.numeroNf)
+            && valoresNfIguais(n.valor, it.notaLegado.valor)
+            && forcaMesmoFornecedor(descLeg, descFornecedor(it.cnpj, it.nomeFornecedor, it.nf && it.nf.fornecedor, it.erp && it.erp.fornecedorNomeRelatorio), n.valor, it.valorTxt) >= 2);
+        if (alvoRepetido) { (alvoRepetido.notasLegadoExtras = alvoRepetido.notasLegadoExtras || []).push(n); return; }
         itens.push({ chave: l.chave, tipo: 'legado', numeroNf: l.numeroNf, serie: '', nomeFornecedor: l.nomeFornecedor, cnpj: null, dataISO: l.dataISO,
             situacao: 'arquivada', subtipo: null, nota: n, nf: null, erp: null, valorTxt: n.valor || '', venc: n.vencimento || '', pedido: null });
     });
@@ -187,6 +197,8 @@ function renderCardControleNf(it) {
         acoes = `<div class="nota-data">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>`;
     }
     const selecionavel = selecaoControleAtiva && it.tipo === 'nf' && it.situacao === 'recebida';
+    // 2.1.0: editor completo da NF a partir do Controle (qualquer situação, com NF salva)
+    if (it.nf) acoes += `<button type="button" class="action-chip" onclick="event.stopPropagation(); abrirEditorNf('${it.nf.id}')">Abrir editor da NF</button>`;
     const check = selecionavel ? `<label class="controle-check" onclick="event.stopPropagation()"><input type="checkbox" ${selecionadasControle.has(it.chave) ? 'checked' : ''} onchange="toggleSelecionadaControle('${chaveJs}')"></label>` : '';
     return `<div class="nota-item controle-item" data-controle-chave="${escRel(it.chave)}">
         <div class="nota-topo">${check}<div style="flex:1;min-width:0"><div class="nota-info">${escRel(it.nomeFornecedor || '(sem fornecedor)')} · NF ${escRel(it.numeroNf)}${it.serie ? '/' + escRel(it.serie) : ''}</div>
@@ -219,7 +231,11 @@ function renderControleNfs() {
         document.getElementById('controle-sel-direta').disabled = selecionadasControle.size === 0;
     }
     const subtitulos = { aberto: 'Tudo que ainda não foi para o financeiro', arquivadas: 'NFs que já foram para o financeiro', diretas: 'NFs que não passam pelo financeiro' };
-    const vazios = { aberto: 'Nada em aberto.', arquivadas: 'Nenhuma NF arquivada ainda.', diretas: 'Nenhuma NF direta.' };
+    const vazios = {
+        aberto: `Nada em aberto. Processe um XML na Entrada de NF ou importe o relatório do ERP.<div class="actions-row"><button type="button" class="action-chip edit-chip" onclick="switchToScreen('screen-xml-editor', 'Entrada de NF')">Abrir Entrada de NF</button></div>`,
+        arquivadas: 'Nenhuma NF arquivada ainda. As NFs aparecem aqui depois que a nota é arquivada.',
+        diretas: 'Nenhuma NF direta.'
+    };
     const pagina = visiveis.slice(0, limiteControle);
     const nProvaveis = todos.filter(it => it.possivelNota).length;
     const avisoProvaveis = (abaControle === 'aberto' && nProvaveis && !termo) ? `<div class="gerenciar-aviso-recursos" style="display:flex;"><span>${nProvaveis} NF(s) parecem já existir como nota (mesmo nº e valor)</span><button type="button" class="action-chip" onclick="vincularTodasProvaveis()">Vincular todas</button></div>` : '';
@@ -539,7 +555,34 @@ function montarHistoricoNotasLegado() {
 // (Fase 6) e notas simples arquivadas (legado) convivem juntas, ordenadas
 // só por data, cada uma com sua própria identificação visual.
 function montarLinhaDoTempoHistorico() {
-    return [...montarHistoricoNfs(), ...montarHistoricoNotasLegado()];
+    // 2.0.7: o registro simples arquivado (nota digitada/arquivada) da MESMA NF não vira uma segunda linha: entra no card da NF.
+    // Casa pela ligação gravada (nfChave/erpChave) ou, sem ela, pelo número da NF com o fornecedor confirmando.
+    const nfsItens = montarHistoricoNfs();
+    const soltos = [];
+    montarHistoricoNotasLegado().forEach(l => {
+        const n = l.notaLegado;
+        let alvo = nfsItens.find(it => !it.notaLegado && ((n.nfChave && it.nf && it.nf.id === n.nfChave) || (n.erpChave && it.erp && it.erp.id === n.erpChave)));
+        if (!alvo && !n.nfChave && !n.erpChave) {
+            const num = normNfNumero(l.numeroNf);
+            if (num) {
+                const descNota = descFornecedor(null, l.nomeFornecedor);
+                let forca = 0;
+                nfsItens.forEach(it => {
+                    if (it.notaLegado || normNfNumero(it.numeroNf) !== num) return;
+                    const f = forcaMesmoFornecedor(descNota, descFornecedor(it.cnpjFornecedor, it.nomeFornecedor, it.nf && it.nf.fornecedor, it.erp && it.erp.fornecedorNomeRelatorio), n.valor, (it.nf && it.nf.valorTotal) || (it.erp && it.erp.valor));
+                    if (f > forca) { forca = f; alvo = it; }
+                });
+            }
+        }
+        if (!alvo && normNfNumero(l.numeroNf)) { // a mesma nota arquivada duas vezes entra na mesma NF
+            const descLeg = descFornecedor(null, l.nomeFornecedor);
+            alvo = nfsItens.find(it => it.notaLegado && normNfNumero(it.numeroNf) === normNfNumero(l.numeroNf) && valoresNfIguais(n.valor, it.notaLegado.valor)
+                && forcaMesmoFornecedor(descLeg, descFornecedor(it.cnpjFornecedor, it.nomeFornecedor, it.nf && it.nf.fornecedor, it.erp && it.erp.fornecedorNomeRelatorio), n.valor, (it.nf && it.nf.valorTotal) || (it.erp && it.erp.valor)) >= 2);
+            if (alvo) { (alvo.notasLegadoExtras = alvo.notasLegadoExtras || []).push(n); return; }
+        }
+        if (alvo) alvo.notaLegado = n; else soltos.push(l);
+    });
+    return [...nfsItens, ...soltos];
 }
 
 function textoBuscavelHistoricoNf(item) {
@@ -547,7 +590,7 @@ function textoBuscavelHistoricoNf(item) {
         return normalizarBuscaRel([item.numeroNf, item.nomeFornecedor, item.notaLegado.obs].filter(Boolean).join(' '));
     }
     const partes = [
-        item.numeroNf, item.serie, item.nomeFornecedor, item.cnpjFornecedor, item.pedido,
+        item.numeroNf, item.serie, item.nomeFornecedor, item.cnpjFornecedor, item.pedido, (item.notaLegado && item.notaLegado.obs) || '',
         item.cotacao ? item.cotacao.origem : '',
         ...(item.nf ? item.nf.itens.map(i => `${i.cProd} ${i.xProd} ${i.codigoSmartCompras || ''} ${i.codigoSpData || ''}`) : []),
         ...(item.erp ? (item.erp.itens || []).map(i => `${i.codigoSpData || ''} ${i.nome || ''}`) : [])
@@ -620,11 +663,11 @@ function abrirNfNoHistorico(chave, numeroNf) {
     window.scrollTo({ top: 0 });
 }
 function abrirNfDaDivergencia(pedido, numeroNf) {
-    const alvo = String(numeroNf);
-    const nf = listaNfsProcessadas.find(n => String(n.nf) === alvo && (n.pedido === pedido || (n.pedidos || []).includes(pedido)))
-        || listaNfsProcessadas.find(n => String(n.nf) === alvo);
+    const alvo = normNfNumero(numeroNf);
+    const nf = listaNfsProcessadas.find(n => normNfNumero(n.nf) === alvo && (n.pedido === pedido || (n.pedidos || []).includes(pedido)))
+        || listaNfsProcessadas.find(n => normNfNumero(n.nf) === alvo);
     if (!nf) return toast('NF não encontrada no histórico.');
-    abrirNfNoHistorico(nf.serie ? `${nf.nf}_${nf.serie}` : String(nf.nf), nf.nf);
+    abrirEditorNf(nf.id); // 2.0.7: abre o Editor da NF
 }
 function numeroLimpo(v) { return parseFloat(Number(v).toFixed(4)); }
 // Propostas de correção para um item da NF salva — calculadas pelo app, o usuário só toca:
@@ -645,18 +688,6 @@ function propostasCorrecaoConversao(item, i) {
         if (redondo && !propostas.some(p => Math.abs(p.fator - f) < 1e-9)) propostas.push({ fator: parseFloat(f.toFixed(6)), qtd: numeroLimpo(cotado), rotulo: `Igualar à cotação (${numeroLimpo(cotado)}, fator ${parseFloat(f.toFixed(6))})` });
     }
     return propostas;
-}
-function htmlCorrecaoConversaoNfItem(item, i, idx) {
-    if (!item.nf) return '';
-    const fator = Number(i.fatorAplicado) || 1;
-    const resumo = ` <span class="txt-aux">(XML: ${numeroLimpo(Number(i.quantidade) / fator)} × fator ${fator})</span>`;
-    const botoes = propostasCorrecaoConversao(item, i).map(p =>
-        `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); corrigirConversaoNfItem('${item.nf.id}', ${idx}, ${p.fator})">${escRel(p.rotulo)}</button>`).join(' ');
-    // 2.0.6: qualquer fator pode ser aplicado, sem precisar subir o XML de novo.
-    const idCampo = `fator-nf-${item.nf.id}-${idx}`.replace(/[^\w-]/g, '_');
-    const manual = `<span class="xml-item-meta">Fator:</span> <input type="text" inputmode="decimal" id="${idCampo}" value="${fator}" style="width:70px" onclick="event.stopPropagation()">
-        <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); aplicarFatorManualNfItem('${item.nf.id}', ${idx}, '${idCampo}')">Aplicar fator</button>`;
-    return resumo + `<div class="xml-item-acao">${botoes ? botoes + ' ' : ''}${manual}</div>`;
 }
 function aplicarFatorManualNfItem(nfId, idx, idCampo) {
     const campo = document.getElementById(idCampo); if (!campo) return;
@@ -707,7 +738,7 @@ function renderCardHistoricoNf(item) {
     let detalheHTML = '';
     if (expandido) {
         const itensHTML = (item.nf && item.nf.itens && item.nf.itens.length)
-            ? item.nf.itens.map((i, idxItem) => `<div class="central-item-linha">${escRel(i.xProd)} — cód. fornecedor ${escRel(i.cProd)}${i.codigoSmartCompras ? ' · SmartCompras ' + escRel(i.codigoSmartCompras) : ''}${i.codigoSpData ? ' · SP Data ' + escRel(i.codigoSpData) : ''} · qtd ${i.quantidade}${htmlCorrecaoConversaoNfItem(item, i, idxItem)}</div>`).join('')
+            ? item.nf.itens.map((i, idxItem) => `<div class="central-item-linha">${escRel(i.xProd)} — cód. fornecedor ${escRel(i.cProd)}${i.codigoSmartCompras ? ' · SmartCompras ' + escRel(i.codigoSmartCompras) : ''}${i.codigoSpData ? ' · SP Data ' + escRel(i.codigoSpData) : ''} · qtd ${i.quantidade}</div>`).join('')
             : '<div class="nota-detalhes"><em>Sem itens de XML processados pra esta NF.</em></div>';
 
         const vinculoLabels = { confirmado: 'confirmado', sugerido: 'sugerido — precisa de confirmação', sem_associacao: 'sem associação' };
@@ -748,8 +779,10 @@ function renderCardHistoricoNf(item) {
 
         detalheHTML = `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border-color);" onclick="event.stopPropagation()">
             <div class="nota-detalhes"><strong>Itens</strong></div>
+            ${item.nf ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="abrirEditorNf('${item.nf.id}')">Abrir editor da NF</button></div>` : ''}
             ${itensHTML}
             ${erpHTML}
+            ${item.notaLegado ? `<div class="nota-detalhes">Nota de pagamento arquivada em ${escRel(item.notaLegado.dataHistorico || '-')} · Venc: ${escRel(item.notaLegado.vencimento) || 'N/A'} · Valor: ${escRel(item.notaLegado.valor) || 'N/A'}${item.notaLegado.obs ? ' · Obs: ' + escRel(item.notaLegado.obs) : ''}</div>` : ''}
             ${reabrirErpHTML}
             <div class="nota-detalhes" style="margin-top:6px;"><strong>Auditoria/Divergências</strong></div>
             ${divergHTML}
@@ -759,7 +792,7 @@ function renderCardHistoricoNf(item) {
 
     return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;cursor:pointer;" onclick="toggleDetalheHistoricoNf('${item.chave}')">
         <div class="nota-info">NF ${escRel(item.numeroNf)}${item.serie ? '/' + escRel(item.serie) : ''} ${item.nomeFornecedor ? '— ' + escRel(item.nomeFornecedor) : ''}</div>
-        <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}</div>
+        <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}${(() => { const an = item.nf ? analisarPedidoDaNf(item.nf, item.erp) : null; return an ? ' · <strong>⚠ parece ser do pedido ' + an.candidatos.map(c => escRel(c.pedido)).join(' ou ') + '</strong>' : ''; })()}</div>
         ${detalheHTML}
     </div>`;
 }
