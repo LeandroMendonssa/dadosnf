@@ -199,6 +199,7 @@ function renderCardControleNf(it) {
     const selecionavel = selecaoControleAtiva && it.tipo === 'nf' && it.situacao === 'recebida';
     // 2.1.0: editor completo da NF a partir do Controle (qualquer situação, com NF salva)
     if (it.nf) acoes += `<button type="button" class="action-chip" onclick="event.stopPropagation(); abrirEditorNf('${it.nf.id}')">Abrir editor da NF</button>`;
+    else if (it.erp) acoes += `<button type="button" class="action-chip" onclick="event.stopPropagation(); abrirEditorNf('${String(it.erp.id).replace(/'/g, "\\'")}')">Abrir editor da NF</button>`; // 2.3.1: NF só do ERP (sem XML)
     const check = selecionavel ? `<label class="controle-check" onclick="event.stopPropagation()"><input type="checkbox" ${selecionadasControle.has(it.chave) ? 'checked' : ''} onchange="toggleSelecionadaControle('${chaveJs}')"></label>` : '';
     return `<div class="nota-item controle-item" data-controle-chave="${escRel(it.chave)}">
         <div class="nota-topo">${check}<div style="flex:1;min-width:0"><div class="nota-info">${escRel(it.nomeFornecedor || '(sem fornecedor)')} · NF ${escRel(it.numeroNf)}${it.serie ? '/' + escRel(it.serie) : ''}</div>
@@ -792,7 +793,7 @@ function renderCardHistoricoNf(item) {
 
     return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;cursor:pointer;" onclick="toggleDetalheHistoricoNf('${item.chave}')">
         <div class="nota-info">NF ${escRel(item.numeroNf)}${item.serie ? '/' + escRel(item.serie) : ''} ${item.nomeFornecedor ? '— ' + escRel(item.nomeFornecedor) : ''}</div>
-        <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}${(() => { const an = item.nf ? analisarPedidoDaNf(item.nf, item.erp) : null; return an ? ' · <strong>⚠ parece ser do pedido ' + an.candidatos.map(c => escRel(c.pedido)).join(' ou ') + '</strong>' : ''; })()}</div>
+        <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}${(() => { const an = item.nf ? analisarPedidoDaNf(item.nf, item.erp) : null; return an ? ' · <strong>⚠ parece ser do pedido ' + an.candidatos.map(c => escRel(c.pedido)).join(' ou ') + '</strong>' : ''; })()}${item.nf && nfSemPedidoPendente(item.nf) ? ' · <strong>⚠ sem pedido</strong>' : ''}</div>
         ${detalheHTML}
     </div>`;
 }

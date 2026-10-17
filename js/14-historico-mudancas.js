@@ -1,6 +1,7 @@
 // 14-historico-mudancas.js — Histórico de mudanças do aplicativo
 // Parte do script do app (v2.0.1). Arquivo comum, carregado em ordem pelo index.html; compartilha funções e variáveis globais com os demais.
 // --- CONFIGURAÇÕES → HISTÓRICO DE MUDANÇAS DO APLICATIVO ---
+// (2.3.1: campos opcionais por versão para o popup de novidades — novidades: [frases curtas] e testarLinks: [{ rotulo, acao, arg }])
 // ===================================================================
 // Registro funcional/documental do desenvolvimento — não é versionamento
 // técnico nem log automático de código. É estático dentro do app (sem
@@ -9,7 +10,54 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.2.1', nome: 'Ícone do app, instalação na tela de início e textos mais claros', status: 'atual',
+        numero: '2.3.1', nome: 'Editor da NF para NF que veio só do ERP e popup de novidades a cada versão', status: 'atual',
+        novidades: [
+            'NFs que vieram só do relatório do ERP (sem XML) agora abrem no Editor da NF: pelo botão "Abrir editor da NF" no Controle de NFs e pelo "Abrir NF" do bloco amarelo de itens fora do pedido.',
+            'Dá para trocar o pedido dessas NFs. O app sugere o pedido pelos itens que o fornecedor ganhou ("Mover para o pedido X", sempre com confirmação) e há uma busca para escolher outro pedido.',
+            'Este aviso: a cada versão nova o app mostra as melhorias e atalhos para as telas a testar. Aparece uma vez por versão em cada aparelho.'
+        ],
+        implementado: [
+            'Editor da NF para NF só do ERP: mostra fornecedor, valor, emissão, 1º vencimento, pedido e os itens lançados, cada um conferido com a cotação do pedido (não está na cotação, ganho por outra empresa ou ganho por este fornecedor, reconhecendo empresas do mesmo grupo).',
+            'Troca de pedido para NF só do ERP: o aviso "Pedido possivelmente errado" (quando menos da metade dos itens está na cotação do pedido gravado e outro pedido tem pelo menos 75%) e a sugestão para NF sem pedido (pelo menos metade dos itens ganhos pelo fornecedor) usam os códigos dos itens do ERP. A confirmação grava o vínculo do ERP com o pedido escolhido e preenche as associações de SP Data que ficarem certas, como já acontecia.',
+            'Controle de NFs: o botão "Abrir editor da NF" passa a aparecer também nas NFs só do ERP. No bloco "itens fora do pedido" da Central do pedido, o "Abrir NF" passa a aparecer também para itens que vêm só do ERP.',
+            'Popup de novidades: ao abrir o app numa versão que você ainda não viu naquele aparelho, aparece uma janela com as melhorias e botões que levam direto às telas a testar. Botões "Entendi" e "Ver histórico completo". O conteúdo vem da entrada mais recente deste histórico (campos novidades e testarLinks).'
+        ],
+        mudou: [
+            'Caso real: a NF 387951 da SOMA MG estava vinculada ao pedido 1726 (22/09) apesar de ser de 10/09 e de seus três itens terem sido ganhos pela SOMA MG no pedido 1713. O vínculo antigo foi gravado pela regra de antes da 2.0.8 (primeiro pedido com qualquer item em comum) e nunca foi reavaliado por não haver XML. Agora o Editor da NF dessa entrada oferece "Mover para o pedido 1713".',
+            'Valores, vencimento e associação item a item continuam disponíveis só para NF com XML processado: para essas NFs só do ERP, processe o XML na Entrada de NF.',
+            'Nada é alterado sozinho: o vínculo com o pedido só muda quando você confirma.',
+            'Arquivos novos: js/24-novidades-versao.js. Arquivos alterados: index.html, style.css, js/14-historico-mudancas.js, js/17-historico-controle-nfs.js, js/20-editor-nf.js e js/23-conferencia-automatica.js.'
+        ],
+        testar: [
+            'Ao recarregar o app com os arquivos novos, deve aparecer o popup "Versão 2.3.1". Toque em "Entendi" e recarregue: ele não deve voltar.',
+            'Controle de NFs: procurar a NF 387951 (SOMA MG), tocar em "Abrir editor da NF" e conferir o aviso de pedido possivelmente errado com o botão "Mover para o pedido 1713". Conferir os itens e, se concordar, confirmar a mudança; depois abrir o pedido 1726 e ver que o aviso dessa NF saiu.',
+            'Repetir a conferência com as outras NFs apontadas na 2.3.0 (BMG 30484 no 1653, SUTURMEDIC 20646 no 1698, DUO MED 1536 no 1700) e me dizer o que era real.'
+        ],
+        testarLinks: [
+            { rotulo: 'Abrir a NF 387951 (SOMA MG)', acao: 'nf-erp', arg: '387951_1' },
+            { rotulo: 'Controle de NFs', acao: 'controle-nfs' },
+            { rotulo: 'Pedido 1726', acao: 'pedido', arg: '1726' },
+            { rotulo: 'Pedido 1713', acao: 'pedido', arg: '1713' }
+        ]
+    },
+    {
+        numero: '2.3.0', nome: 'Conferência automática: NF repetida no Adicionar, NF sem pedido e itens fora do pedido', status: 'concluida',
+        implementado: [
+            'Adicionar: ao digitar o número da NF, o app avisa na hora se ela já existe (XML processado ou só no relatório do ERP), mostrando o fornecedor e o pedido, com botão para abrir a NF. Zeros à esquerda não escondem a NF. Se você já digitou o fornecedor e ele for outro, o aviso some (o número pode se repetir entre fornecedores). O aviso aparece junto das sugestões do histórico que já existiam.',
+            'NF sem pedido: o Editor da NF e o card do Histórico passam a apontar "NF sem pedido". O app sugere o pedido pelos nomes dos itens do XML, só entre os itens que o fornecedor ganhou em cada cotação (medido nas 56 NFs que já têm pedido: nenhuma sugestão errada) e oferece "Vincular ao pedido X". Há também "Marcar como compra direta" para o que não tem cotação. NFs já marcadas como compra direta não são apontadas.',
+            'Itens fora do pedido: na Central do pedido aparece um bloco no topo, e o Editor da NF mostra um cartão, quando um item faturado ou lançado não está na cotação do pedido, ou foi ganho por outra empresa. Vale para NFs com XML e para entradas do ERP sem XML.',
+            'Reconhece empresas do mesmo grupo: mesma raiz de CNPJ, CNPJs do mesmo fornecedor no SP Data, ou a mesma primeira palavra do nome (SOMA SP e SOMA MG). Nos seus dados isso eliminou 13 alarmes falsos de itens da SOMA SP que a SOMA MG ganhou.'
+        ],
+        mudou: [
+            'Nos seus dados de 10/10 o bloco "itens fora do pedido" aponta 10 itens: NF 30484 da BMG no pedido 1653 (4 itens), NF 20646 da SUTURMEDIC no 1698 (2), NF 1536 da DUO MED no 1700 (1) e NF 387951 da SOMA MG no 1726 (3). Em geral indicam NF ligada ao pedido errado; abra a NF (ou, para as só do ERP, o Controle de NFs) e confira. A NF 33669 (MINAS SUL) está sem pedido e sem compra direta; nenhuma cotação combina com ela, então provavelmente é compra direta.',
+            'Os avisos só informam: nada é alterado sozinho. Mover pedido, vincular e marcar compra direta pedem confirmação.',
+            'Fica de fora: gerar auditoria direto a partir de um item fora do pedido (hoje o caminho é abrir a NF e conferir o pedido).',
+            'Arquivos novos: js/23-conferencia-automatica.js. Arquivos alterados: index.html, style.css, js/03-dados-notas.js, js/09-anotacoes.js, js/14-historico-mudancas.js, js/17-historico-controle-nfs.js e js/20-editor-nf.js.'
+        ],
+        testar: ['Em Adicionar, digitar 30921 no campo NF: deve aparecer o aviso "Esta NF já existe no app" com o botão Abrir NF. Abrir o pedido 1726 em Cotações e ver o bloco amarelo no topo. Abrir a NF 33669 no Editor da NF e conferir o alerta "NF sem pedido".']
+    },
+    {
+        numero: '2.2.1', nome: 'Ícone do app, instalação na tela de início e textos mais claros', status: 'concluida',
         implementado: [
             'Ícone novo do app, desenhado nas orientações da Apple: um conceito só (a nota fiscal com o selo de conferido), figura centralizada, fundo em gradiente azul sem transparência, camadas sobrepostas e nenhum texto. Fica legível até no tamanho pequeno. Está na pasta icones/, nos tamanhos 180 (iPhone), 192 e 512 px.',
             'Instalação na tela de início: o app ganhou o manifesto (manifest.webmanifest) e os metadados de cor e barra de status. Ao adicionar à tela de início no Safari, abre em tela cheia, sem a barra do navegador, com o ícone e o nome "Minhas Notas".',

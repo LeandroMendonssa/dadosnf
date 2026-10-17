@@ -160,10 +160,10 @@ function atualizarSugestoesNf() {
                 sugestoesNfAtuais.push(n);
             });
     }
-    box.innerHTML = sugestoesNfAtuais.length
+    box.innerHTML = (typeof htmlNfExistenteAdicionar === 'function' ? htmlNfExistenteAdicionar() : '') + (sugestoesNfAtuais.length
         ? `<div class="nota-detalhes" style="margin:4px 0;">Já no histórico com esta NF — toque para preencher:</div>` + sugestoesNfAtuais.map((n, i) =>
             `<button type="button" class="central-status-toggle" style="display:block;width:100%;text-align:left;margin-bottom:6px;white-space:normal;" onclick="aplicarSugestaoNf(${i})">${escRel(n.fornecedor || '—')}${n.valor ? ' · R$ ' + escRel(n.valor) : ''}${n.vencimento ? ' · venc. ' + escRel(n.vencimento) : ''}${n.obs ? ' · ' + escRel(n.obs) : ''}</button>`).join('')
-        : '';
+        : '');
 }
 function aplicarSugestaoNf(i) {
     const n = sugestoesNfAtuais[i];

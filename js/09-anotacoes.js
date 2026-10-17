@@ -400,7 +400,7 @@ function renderCentralPedidoCompleto(pedido) {
             </div></div></div>
         </div>` : '';
 
-        container.innerHTML = fornecedoresHTML + semFornecedorHTML;
+        container.innerHTML = htmlItensForaDoPedido(pedido) + fornecedoresHTML + semFornecedorHTML; // 2.3.0
     } else if (nota) {
         // Sem cotação cadastrada, mas já existem ocorrências registradas (ex:
         // auditorias antigas de antes da cotação existir) — mostra tudo junto,

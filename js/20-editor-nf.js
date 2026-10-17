@@ -1,4 +1,4 @@
-// 20-editor-nf.js — Editor da NF (2.0.7)
+// 20-editor-nf.js — Editor da NF (2.0.7; 2.3.1: também abre NF que veio só do ERP)
 // Parte do script do app (v2.0.7). Arquivo comum, carregado em ordem pelo index.html; compartilha funções e variáveis globais com os demais.
 // ===================================================================
 // --- 2.0.7: EDITOR DA NF ---
@@ -12,12 +12,13 @@ let nfEditorId = null;
 function abrirEditorNf(nfId) {
     if (nfId !== nfEditorId) { nfEditorAbertos.clear(); nfEditorMostrarOutros = false; }
     const nf = listaNfsProcessadas.find(n => n.id === nfId);
-    if (!nf) return toast('NF não encontrada.');
+    const erpSo = !nf ? listaEntradasErp.find(e => e.id === nfId) : null; // 2.3.1: NF que veio só do relatório do ERP (sem XML)
+    if (!nf && !erpSo) return toast('NF não encontrada.');
     nfEditorId = nfId;
     const ativa = document.querySelector('.app-screen.active');
     const origem = ativa && ativa.id !== 'screen-nf-editor' ? ativa.id : (screenParentMap['screen-nf-editor'] || 'screen-history');
     screenParentMap['screen-nf-editor'] = origem; closeBtnBackScreen['screen-nf-editor'] = origem; // o "voltar" leva de volta a quem abriu
-    switchToScreen('screen-nf-editor', `NF ${nf.nf}`);
+    switchToScreen('screen-nf-editor', `NF ${nf ? nf.nf : erpSo.nf}`);
     renderEditorNf();
 }
 function renderEditorNfSeAtivo() {
@@ -217,6 +218,7 @@ const MODFRETE_XML = { '0': 'Por conta do emitente', '1': 'Por conta do destinat
 function renderEditorNf() {
     const el = document.getElementById('nf-editor-conteudo'); if (!el) return;
     const nf = listaNfsProcessadas.find(n => n.id === nfEditorId);
+    if (!nf) { const erpSo = listaEntradasErp.find(e => e.id === nfEditorId); if (erpSo) return renderEditorNfErp(erpSo, el); }
     if (!nf) { el.innerHTML = '<div class="card"><p class="desc-tela">Esta NF não existe mais.</p></div>'; return; }
     const xd = nf.xmlDados || null;
     const ctrl = montarControleNfs().find(it => it.nf && it.nf.id === nf.id) || {};
@@ -469,7 +471,12 @@ function renderEditorNf() {
             <pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;max-height:320px;overflow:auto">${escRel(xd.xmlOriginal || '')}</pre>
         </details></div>`;
 
-    el.innerHTML = alertaPedido + cabecalho + tabs +
+    // 2.3.0: itens fora do pedido desta NF e NF sem pedido
+    const foraNf = nf.pedido ? itensForaDoPedido(nf.pedido).filter(x => x.nfId === nf.id) : [];
+    const alertaFora = foraNf.length ? `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ ${foraNf.length} item(ns) fora do pedido ${escRel(nf.pedido)}</div>
+        ${foraNf.map(x => `<div class="nfe-alerta-txt" style="margin-top:8px"><strong>${escRel(x.nome)}</strong> — ${x.tipo === 'fora_cotacao' ? 'não está na cotação deste pedido' : 'na cotação foi ganho por ' + escRel(x.ganhador)}</div>`).join('')}
+        <div class="nfe-dica" style="margin-top:8px">Se a NF for de outro pedido, mova-a em "Mover esta NF para outro pedido".</div></div>` : '';
+    el.innerHTML = htmlNfSemPedido(nf) + alertaPedido + alertaFora + cabecalho + tabs +
         pane('itens', paneItens) + pane('fin', paneFin) + pane('fiscal', paneFiscal) + pane('partes', panePartes) + pane('transp', paneTransp) + pane('xml', paneXml);
 }
 function qdtFmt(v) { return String(numeroLimpo(Number(v))); }
@@ -523,4 +530,102 @@ function definirSpDataNfItem(nfId, idx, codigo) {
             } catch (e) { console.error('Erro ao trocar SP Data:', e); toast('✕ Erro ao trocar o produto SP Data.'); }
         }
     });
+}
+
+
+// ===================================================================
+// --- 2.3.1: EDITOR DA NF PARA NF QUE VEIO SÓ DO ERP (sem XML) ---
+// ===================================================================
+// A NF só existe no relatório do ERP: não há XML para editar valores/vencimento (isso exige processar o XML na Entrada de NF).
+// Aqui dá para ver os itens, conferir com a cotação e, principalmente, TROCAR O PEDIDO ao qual a NF está vinculada.
+function pedidoDoErpSo(erp) { return erp && erp.vinculo && erp.vinculo.status === 'confirmado' && erp.vinculo.pedido ? String(erp.vinculo.pedido) : null; }
+// Pedido provável pelos códigos dos itens: quantos itens da NF o fornecedor (ou empresa do mesmo grupo) GANHOU em cada cotação.
+function sugerirPedidoErp(erp) {
+    const codigos = [...new Set((erp.itens || []).map(i => i.codigoSmartComprasRelacionado).filter(Boolean).map(String))];
+    const cn = erp.cnpjFornecedor; if (!codigos.length || !cn) return [];
+    const r = [];
+    listaCotacoes.forEach(c => {
+        const ganhos = new Set((c.itens || []).filter(i => normalizarCnpj(i.cnpjFornecedor) === normalizarCnpj(cn) || mesmaRaizCnpj(cn, i.cnpjFornecedor)).map(i => String(i.codProduto)));
+        const n = codigos.filter(x => ganhos.has(x)).length;
+        if (n) r.push({ pedido: String(c.pedido), itens: n, total: codigos.length });
+    });
+    r.sort((a, b) => b.itens - a.itens);
+    if (!r.length || r[0].itens / codigos.length < 0.5) return [];
+    return r.filter(x => x.itens === r[0].itens);
+}
+function moverErpParaPedido(erpId, pedidoNovo) {
+    const erp = listaEntradasErp.find(e => e.id === erpId); if (!erp || !pedidoNovo) return;
+    const atual = pedidoDoErpSo(erp);
+    if (atual === String(pedidoNovo)) return toast('A NF já está nesse pedido.');
+    showConfirmModal({
+        title: atual ? 'Mover NF para outro pedido' : 'Vincular NF a um pedido',
+        message: `NF ${erp.nf} — ${erp.fornecedorNomeRelatorio || ''}\nPedido: ${atual || '(nenhum)'} → ${pedidoNovo}\n\nA NF passa a ser comparada com a cotação do pedido ${pedidoNovo}. Auditorias já geradas para o pedido anterior não são alteradas.`,
+        confirmText: atual ? 'Mover' : 'Vincular', confirmClass: 'warning',
+        onConfirm: () => confirmarVinculoErpComPedido(erpId, String(pedidoNovo))
+    });
+}
+function renderEditorNfErp(erp, el) {
+    const ctrl = montarControleNfs().find(it => it.erp && it.erp.id === erp.id) || {};
+    const pedido = pedidoDoErpSo(erp);
+    const cot = pedido ? listaCotacoes.find(c => String(c.pedido) === pedido) : null;
+    const badge = (cls, txt) => `<span class="xml-item-badge ${cls}">${txt}</span>`;
+    const fin = erp.financeiro || {};
+    const valor = formatValorBR(fin.totalNota != null ? fin.totalNota : (fin.totalLancamentos || 0));
+    const venc = (erp.parcelas && erp.parcelas[0] && erp.parcelas[0].data) || erp.vencimento || '';
+    const fornNome = ctrl.nomeFornecedor || erp.fornecedorNomeRelatorio || '';
+    const codigos = (erp.itens || []).map(i => i.codigoSmartComprasRelacionado).filter(Boolean);
+
+    // ---- pedido provável (vínculo gravado não bate com os itens) ----
+    const analise = pedido ? analisarPedidoDaNf({ pedido, cnpjFornecedor: erp.cnpjFornecedor, itens: [] }, erp) : null;
+    const sugestao = !pedido ? sugerirPedidoErp(erp) : [];
+    const botoesMover = ps => ps.map(p => `<button type="button" class="central-status-toggle" onclick="moverErpParaPedido('${escRel(erp.id)}', '${escRel(p)}')">${pedido ? 'Mover para' : 'Vincular ao'} pedido ${escRel(p)}</button>`).join(' ');
+    const alerta = analise ? `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Pedido possivelmente errado</div>
+            <div class="nfe-alerta-txt">${escRel(textoPedidoProvavel(analise))}</div><div class="nfe-acoes">${botoesMover(analise.candidatos.map(c => c.pedido))}</div></div>`
+        : (sugestao.length ? `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ NF sem pedido confirmado</div>
+            <div class="nfe-alerta-txt">Pelos itens que o fornecedor ganhou, esta NF parece ser de um destes pedidos. Confira antes de vincular.</div><div class="nfe-acoes">${botoesMover(sugestao.map(s => s.pedido))}</div></div>` : '');
+
+    // ---- troca de pedido manual ----
+    const opcoes = listaCotacoes.map(c => String(c.pedido)).filter(p => p !== pedido).sort((x, y) => y.localeCompare(x, undefined, { numeric: true }))
+        .map(p => { const c = listaCotacoes.find(x => String(x.pedido) === p); return { valor: p, titulo: `Pedido ${p}`, sub: c ? `${(c.itens || []).length} itens cotados` : '' }; });
+    const troca = opcoes.length ? `<div class="nfe-trocar"><span class="nfe-rot">${pedido ? 'Mover esta NF para outro pedido' : 'Vincular esta NF a um pedido'}</span>
+        ${htmlSeletorBusca('nfed-pedido', { placeholder: 'Buscar pedido…', opcoes, aoEscolher: valor => moverErpParaPedido(erp.id, valor) })}</div>` : '';
+
+    // ---- cabeçalho ----
+    const cabecalho = `<div class="card nfe-topo">
+        <div class="nfe-topo-linha"><div class="nfe-id"><div class="nfe-titulo">NF ${escRel(erp.nf)}${erp.serie ? `<span class="nfe-serie">série ${escRel(erp.serie)}</span>` : ''}</div>
+            <div class="nfe-forn">${escRel(fornNome)}</div>${erp.cnpjFornecedor ? `<div class="nfe-cnpj">CNPJ ${escRel(erp.cnpjFornecedor)}</div>` : ''}</div>
+            <div class="nfe-valor"><span class="nfe-rot">Valor total</span><strong>R$ ${escRel(valor)}</strong></div></div>
+        <div class="nfe-grade">
+            <div><span class="nfe-rot">Emissão</span><strong>${escRel(erp.data || '—')}</strong></div>
+            <div><span class="nfe-rot">1º vencimento</span><strong>${escRel(venc || '—')}</strong></div>
+            <div><span class="nfe-rot">Pedido</span><strong>${escRel(pedido || '—')}</strong></div></div>
+        <div class="nfe-chips">${badge('pendente', 'Só no relatório do ERP')} ${badge('pronto', 'ERP: ' + escRel(ROTULO_STATUS_ERP[erp.statusFluxo] || erp.statusFluxo || 'importada'))} ${badge('neutro', escRel(ROTULO_SITUACAO_NF[ctrl.situacao] || '—'))}</div>
+        <div class="nfe-acoes">${pedido ? `<button type="button" class="central-status-toggle" onclick="abrirCentralPedido('${escRel(pedido)}')">Abrir pedido ${escRel(pedido)}</button>` : ''}
+            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button></div>
+        ${troca}
+    </div>`;
+
+    // ---- itens (conferência com a cotação do pedido) ----
+    const nomeGanhador = i => { const f = cot && (cot.fornecedores || []).find(f => normalizarCnpj(f.cnpj) === normalizarCnpj(i.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : (i.cnpjFornecedor || ''); };
+    const linhas = (erp.itens || []).map(it => {
+        const cod = it.codigoSmartComprasRelacionado ? String(it.codigoSmartComprasRelacionado) : '';
+        let chip = badge('neutro', pedido ? 'sem item da cotação associado' : 'sem pedido');
+        let cotTxt = '';
+        if (cot && cod) {
+            const doCod = (cot.itens || []).filter(i => String(i.codProduto) === cod);
+            if (!doCod.length) chip = badge('pendente', 'não está na cotação do pedido ' + escRel(pedido));
+            else {
+                cotTxt = nomeItemCotacao(doCod[0]);
+                chip = doCod.some(i => mesmoGrupoFornecedor(erp.fornecedorNomeRelatorio || '', erp.cnpjFornecedor, nomeGanhador(i), i.cnpjFornecedor))
+                    ? badge('pronto', 'na cotação, ganho por este fornecedor')
+                    : badge('pendente', 'na cotação, ganho por ' + escRel([...new Set(doCod.map(nomeGanhador))].join(' / ')));
+            }
+        }
+        return `<div class="xml-item-linha"><div class="xml-produto-nome">${escRel(it.nome)}</div>
+            <div class="xml-item-meta">${escRel(qdtFmt(it.quantidade))} ${escRel(it.unidade || '')} × R$ ${escRel(formatValorBR(it.valorUnitario || 0))} = R$ ${escRel(formatValorBR(it.valorTotal || 0))}</div>
+            ${cotTxt ? `<div class="xml-item-cotacao">Cotação: ${escRel(cotTxt)}</div>` : ''}<div style="margin-top:6px">${chip}</div></div>`;
+    }).join('');
+    const itens = `<div class="card"><div class="xml-item-meta"><strong>Itens lançados no ERP (${(erp.itens || []).length})</strong></div>${linhas || '<div class="xml-item-meta">Sem itens no relatório.</div>'}</div>`;
+    const aviso = `<div class="card"><div class="xml-item-meta">Esta NF veio só do relatório do ERP, sem XML. Aqui você confere os itens e troca o pedido; para editar valores, vencimento e associação item a item, processe o XML dela na Entrada de NF.</div></div>`;
+    el.innerHTML = alerta + cabecalho + aviso + itens;
 }
