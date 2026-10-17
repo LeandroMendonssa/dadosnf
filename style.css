@@ -1193,7 +1193,7 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
   body[data-theme] .tab-bar, .main-content > .header, #confirm-modal .modal-content{ -webkit-backdrop-filter:none; backdrop-filter:none; border-color:var(--border-color); }
 }
 @media (prefers-reduced-motion:reduce){
-  .dock-pill, .action-chip, .central-status-toggle, .nfe-btn, .actions-button, .main-content > .header{ transition:none !important; }
+  .action-chip, .central-status-toggle, .nfe-btn, .actions-button, .main-content > .header{ transition:none !important; }
   .modal-screen.active .modal-content{ animation:none !important; }
 }
 
@@ -1217,3 +1217,55 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
 .novidades-testar{border-top:1px solid var(--border-color,rgba(128,128,128,.25));padding-top:12px;margin-bottom:16px;font-size:14px}
 .novidades-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 #novidades-modal .confirm-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+
+/* ===== 2.3.2: dock de vidro líquido (variante "regular": desfoca, ajusta a luminosidade e segura o contraste) ===== */
+:root{ --dock-esp:.6; --dock-dur:.5s; --dock-mov:cubic-bezier(.45,.05,.2,1); }
+.dock-label-linha{ display:flex; justify-content:space-between; align-items:center; }
+.dock-opcoes-titulo{ margin-top:6px; padding-top:10px; border-top:1px solid var(--border-color); }
+@media (max-width:899px){
+  body[data-theme]:not([data-dock="classico"]) .tab-bar{
+    --dock-scrim:calc(36% + 42% * var(--dock-esp));
+    --dock-ajuste:brightness(1.06);
+    border:1px solid transparent;
+    background:
+      radial-gradient(120% 140% at 12% 0%, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 46%),
+      color-mix(in srgb, var(--bg-secondary) var(--dock-scrim), transparent);
+    -webkit-backdrop-filter:blur(20px) saturate(165%) var(--dock-ajuste); backdrop-filter:blur(20px) saturate(165%) var(--dock-ajuste);
+    box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.7), inset -1px -1px 0 rgba(255,255,255,.36), inset 0 0 0 1px rgba(255,255,255,.14), 0 10px 28px rgba(15,23,42,.22), 0 1px 4px rgba(0,0,0,.14);
+    transform-origin:50% 100%;
+    transition:transform calc(var(--dock-dur) * .9) var(--dock-mov);
+  }
+  body[data-theme="dark"]:not([data-dock="classico"]) .tab-bar, body[data-theme="wine"]:not([data-dock="classico"]) .tab-bar{
+    --dock-scrim:calc(44% + 38% * var(--dock-esp));
+    --dock-ajuste:brightness(.8);
+    background:
+      radial-gradient(120% 140% at 12% 0%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 46%),
+      color-mix(in srgb, var(--bg-secondary) var(--dock-scrim), transparent);
+    box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.42), inset -1px -1px 0 rgba(255,255,255,.2), inset 0 0 0 1px rgba(255,255,255,.08), 0 10px 28px rgba(0,0,0,.6), 0 1px 4px rgba(0,0,0,.4);
+  }
+  /* rótulos "vibrantes": cor forte do tema, nunca cinza claro sobre o vidro; a aba ativa mistura o destaque com a cor do texto */
+  body[data-theme]:not([data-dock="classico"]) .tab-item{ color:color-mix(in srgb, var(--text-dark) 88%, transparent); transition:color .34s ease-in-out, transform .15s ease; }
+  body[data-theme]:not([data-dock="classico"]) .tab-item.active{ color:color-mix(in srgb, var(--accent-color) 78%, var(--text-dark)); }
+  /* rótulos longos ("Entrada de NF", "Controle de NFs") quebram em até 2 linhas dentro da própria aba, sem invadir a vizinha */
+  body[data-theme]:not([data-dock="classico"]) .tab-item{ font-size:10px; gap:2px; }
+  body[data-theme]:not([data-dock="classico"]) .tab-item > span:not(.icon-wrapper){ width:100%; max-height:22px; overflow:hidden; text-align:center; line-height:10.5px; white-space:normal; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; transition:max-height calc(var(--dock-dur) * .7) var(--dock-mov), opacity .2s ease; }
+  /* pílula de seleção: preenchimento fino e liso; só desliza, sem esticar e sem mola */
+  body[data-theme]:not([data-dock="classico"]) .dock-pill{
+    background:color-mix(in srgb, var(--text-dark) 13%, transparent);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform var(--dock-dur) var(--dock-mov), width var(--dock-dur) var(--dock-mov), height var(--dock-dur) var(--dock-mov), opacity .2s ease, background-color .2s ease;
+  }
+  body[data-theme]:not([data-dock="classico"]) .tab-bar.dock-toque .dock-pill{ background:color-mix(in srgb, var(--text-dark) 22%, transparent); }
+  /* dock compacta ao rolar para baixo (opcional): encolhe e esconde os rótulos */
+  body[data-theme]:not([data-dock="classico"]):not([data-dock-encolher="nao"]) .tab-bar.compacta{ transform:scale(.86) translateY(4px); }
+  body[data-theme]:not([data-dock="classico"]):not([data-dock-encolher="nao"]) .tab-bar.compacta .tab-item > span:not(.icon-wrapper){ max-height:0; opacity:0; }
+}
+/* "Reduzir Movimento" do aparelho: a pílula não desliza, mas troca com fusão suave (não com corte seco) */
+@media (prefers-reduced-motion:reduce){
+  body:not([data-dock-mov="sempre"]) .dock-pill{ transition:opacity .22s ease, background-color .2s ease !important; }
+  body:not([data-dock-mov="sempre"]) .tab-bar{ transition:none !important; }
+  body:not([data-dock-mov="sempre"]) .tab-item{ transition:color .3s ease !important; }
+}
+.tab-bar.dock-redim .dock-pill{ transition:none !important; }
+/* arrastar o dedo pela dock escolhe a aba (só quando a barra não precisa rolar na horizontal) */
+.tab-bar.dock-sem-rolagem{ touch-action:none; }
