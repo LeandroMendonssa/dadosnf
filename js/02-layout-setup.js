@@ -132,6 +132,7 @@ function alterarIconesAbas(valor) {
     salvarPersonalizacao();
 }
 
+let ultimaSigMenuDOM = null, ultimaSigLogoDOM = null;
 function aplicarPersonalizacoes() {
     // Fase 38: destino novo (ex.: Controle de NFs) que não está na ordem salva entra no fim e começa em "Mais".
     {
@@ -142,19 +143,25 @@ function aplicarPersonalizacoes() {
     }
     const { theme, iconTheme, font, animationSpeed, menuOrder, transicaoTela, densidade, mostrarIconesAbas } = appConfig.personalizacao;
     if (!Array.isArray(appConfig.personalizacao.menuHidden)) appConfig.personalizacao.menuHidden = [];
-    document.documentElement.setAttribute('data-font', font); document.body.setAttribute('data-theme', theme); document.body.setAttribute('data-icon-theme', iconTheme);
-    document.body.setAttribute('data-transition', transicaoTela || 'fade');
-    document.body.setAttribute('data-density', densidade || 'confortavel');
-    document.body.setAttribute('data-tab-icons', mostrarIconesAbas || 'on');
-    document.documentElement.style.setProperty('--transition-duration', speedValueMap[animationSpeed]);
+    // 2.3.3: só mexe no que mudou de verdade (trocar atributo/variável do documento inteiro à toa refaz o estilo de tudo e engasga)
+    const defAttr = (el, nome, v) => { v = String(v); if (el.getAttribute(nome) !== v) el.setAttribute(nome, v); };
+    defAttr(document.documentElement, 'data-font', font); defAttr(document.body, 'data-theme', theme); defAttr(document.body, 'data-icon-theme', iconTheme);
+    defAttr(document.body, 'data-transition', transicaoTela || 'fade');
+    defAttr(document.body, 'data-density', densidade || 'confortavel');
+    defAttr(document.body, 'data-tab-icons', mostrarIconesAbas || 'on');
+    if (document.documentElement.style.getPropertyValue('--transition-duration') !== speedValueMap[animationSpeed]) document.documentElement.style.setProperty('--transition-duration', speedValueMap[animationSpeed]);
     document.querySelector('#theme-select').value = theme; document.querySelector('#icon-theme-select').value = iconTheme; document.querySelector('#font-select').value = font;
     document.querySelector('#animation-speed-slider').value = animationSpeed;
     document.getElementById('animation-speed-value').textContent = speedTextMap[animationSpeed];
     atualizarSelecaoTransicao(transicaoTela || 'fade');
+    if (typeof aplicarDockPersonalizacao === 'function') aplicarDockPersonalizacao(); // 2.3.2: opções da dock
     document.querySelector('#density-select').value = densidade || 'confortavel';
     document.querySelector('#tab-icons-select').value = mostrarIconesAbas || 'on';
-    reordenarMenusDOM(menuOrder || Object.keys(menuDetails)); popularListaReordenar();
-    atualizarPreviewLogo();
+    // menus e logo só são refeitos quando mudam (reordenar recria a barra inferior, o menu lateral e a tela "Mais")
+    const sigMenu = JSON.stringify([menuOrder, appConfig.personalizacao.menuHidden]);
+    if (sigMenu !== ultimaSigMenuDOM) { ultimaSigMenuDOM = sigMenu; reordenarMenusDOM(menuOrder || Object.keys(menuDetails)); popularListaReordenar(); }
+    const sigLogo = assinaturaCampoPersonalizacao(appConfig.personalizacao.logoBase64);
+    if (sigLogo !== ultimaSigLogoDOM) { ultimaSigLogoDOM = sigLogo; atualizarPreviewLogo(); }
     const currentActiveScreen = document.querySelector('.app-screen.active');
     if (currentActiveScreen) { const screenId = currentActiveScreen.id;
         const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); });

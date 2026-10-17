@@ -1,11 +1,60 @@
 // 05-listeners-dados.js — Listeners do Firestore e lista de notas pendentes
 // Parte do script do app (v2.0.1). Arquivo comum, carregado em ordem pelo index.html; compartilha funções e variáveis globais com os demais.
 // --- LISTENERS DE DADOS ---
+// 2.3.3: ajustes de compatibilidade da ordem do menu (antes ficavam dentro do ouvinte; agora também valem no caminho leve)
+function migrarMenuOrderConfig() {
+    // --- CORREÇÃO: FORÇA A INCLUSÃO DA NOVA ABA 'RELATÓRIOS' ---
+    // Se o usuário já tinha uma ordem salva sem 'screen-reports', insere ela agora.
+    if (appConfig.personalizacao.menuOrder && !appConfig.personalizacao.menuOrder.includes('screen-reports')) {
+        // Insere 'screen-reports' na posição 2 (logo após Gerenciar)
+        appConfig.personalizacao.menuOrder.splice(2, 0, 'screen-reports');
+    }
+    // ------------------------------------------------------------
+
+    // --- CORREÇÃO: FORÇA A INCLUSÃO DE 'COTAÇÕES' E 'ENTRADA DE NF' ---
+    // Essas duas telas deixaram de ser subitens de Ajustes e viraram abas
+    // principais; quem já tinha uma ordem salva sem elas precisa recebê-las
+    // agora, senão ficam inacessíveis pelo menu principal.
+    if (appConfig.personalizacao.menuOrder) {
+        if (!appConfig.personalizacao.menuOrder.includes('screen-cotacoes')) {
+            appConfig.personalizacao.menuOrder.unshift('screen-cotacoes');
+        }
+        if (!appConfig.personalizacao.menuOrder.includes('screen-xml-editor')) {
+            appConfig.personalizacao.menuOrder.splice(1, 0, 'screen-xml-editor');
+        }
+    }
+    // ------------------------------------------------------------
+
+    // --- REFINO FASE 12: 'Seleção Saída' deixou de ser uma aba
+    // própria (unificada dentro de Gerenciar NF) — remove a entrada
+    // de quem já tinha recebido essa migração antes, senão fica um
+    // item "fantasma" (inofensivo, mas sem tela) na ordem salva.
+    if (appConfig.personalizacao.menuOrder) {
+        const idx = appConfig.personalizacao.menuOrder.indexOf('screen-selecao-saida');
+        if (idx !== -1) appConfig.personalizacao.menuOrder.splice(idx, 1);
+    }
+    // ------------------------------------------------------------
+}
+let ultimaSigConfigResto = null;
 function iniciarListenerConfiguracoes() { 
     return settingsDocRef.onSnapshot(doc => { 
       try {
         if (doc.exists) { 
             const data = doc.data(); 
+            // 2.3.3: se SÓ a personalização mudou (ex.: o eco da gravação que você acabou de fazer), não refaz as listas de fornecedores,
+            // apelidos e observações (era isso que fazia cada toque numa opção da Personalização engasgar): só reaplica a aparência.
+            {
+                const { personalizacao: persRecebida, ...restoCfg } = data;
+                const sigResto = JSON.stringify(restoCfg);
+                if (!isInitialLoad && sigResto === ultimaSigConfigResto) {
+                    appConfig.personalizacao = { ...appConfig.personalizacao, ...(persRecebida || {}) };
+                    migrarMenuOrderConfig();
+                    semearAssinaturaPersonalizacao();
+                    aplicarPersonalizacoes();
+                    return;
+                }
+                ultimaSigConfigResto = sigResto;
+            }
             // Sanitiza: remove entradas que não sejam texto (ex: null/undefined que
             // possam ter ficado na lista por algum motivo), pra nunca travar a tela
             // de carregamento por causa de um item inválido na lista de fornecedores.
@@ -43,38 +92,8 @@ function iniciarListenerConfiguracoes() {
                 auditoriaTextos: { ...AUDITORIA_TEXTOS_DEFAULT, ...(data.auditoriaTextos || {}) },
             }; 
 
-            // --- CORREÇÃO: FORÇA A INCLUSÃO DA NOVA ABA 'RELATÓRIOS' ---
-            // Se o usuário já tinha uma ordem salva sem 'screen-reports', insere ela agora.
-            if (appConfig.personalizacao.menuOrder && !appConfig.personalizacao.menuOrder.includes('screen-reports')) {
-                // Insere 'screen-reports' na posição 2 (logo após Gerenciar)
-                appConfig.personalizacao.menuOrder.splice(2, 0, 'screen-reports');
-            }
-            // ------------------------------------------------------------
-
-            // --- CORREÇÃO: FORÇA A INCLUSÃO DE 'COTAÇÕES' E 'ENTRADA DE NF' ---
-            // Essas duas telas deixaram de ser subitens de Ajustes e viraram abas
-            // principais; quem já tinha uma ordem salva sem elas precisa recebê-las
-            // agora, senão ficam inacessíveis pelo menu principal.
-            if (appConfig.personalizacao.menuOrder) {
-                if (!appConfig.personalizacao.menuOrder.includes('screen-cotacoes')) {
-                    appConfig.personalizacao.menuOrder.unshift('screen-cotacoes');
-                }
-                if (!appConfig.personalizacao.menuOrder.includes('screen-xml-editor')) {
-                    appConfig.personalizacao.menuOrder.splice(1, 0, 'screen-xml-editor');
-                }
-            }
-            // ------------------------------------------------------------
-
-            // --- REFINO FASE 12: 'Seleção Saída' deixou de ser uma aba
-            // própria (unificada dentro de Gerenciar NF) — remove a entrada
-            // de quem já tinha recebido essa migração antes, senão fica um
-            // item "fantasma" (inofensivo, mas sem tela) na ordem salva.
-            if (appConfig.personalizacao.menuOrder) {
-                const idx = appConfig.personalizacao.menuOrder.indexOf('screen-selecao-saida');
-                if (idx !== -1) appConfig.personalizacao.menuOrder.splice(idx, 1);
-            }
-            // ------------------------------------------------------------
-
+            migrarMenuOrderConfig();
+            semearAssinaturaPersonalizacao();
         } else { 
             settingsDocRef.set({ observacoes: appConfig.observacoes }, { merge: true }); 
         } 

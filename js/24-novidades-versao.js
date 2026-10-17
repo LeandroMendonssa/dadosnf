@@ -6,12 +6,13 @@
 // Ao abrir o app numa versão que a pessoa ainda não viu (neste aparelho), aparece uma janela com as melhorias e atalhos para as
 // telas a testar. O conteúdo vem da entrada mais recente de HISTORICO_FASES (14-historico-mudancas.js):
 //   novidades:   ['frase curta', ...]                       (se faltar, usa o começo de "implementado")
-//   testarLinks: [{ rotulo: 'Texto do botão', acao: 'controle-nfs' | 'pedido' | 'nf-erp' | 'historico-mudancas', arg: 'valor' }]
+//   testarLinks: [{ rotulo: 'Texto do botão', acao: 'controle-nfs' | 'pedido' | 'nf-erp' | 'historico-mudancas' | 'personalizacao', arg: 'valor' }]
 // "Visto" fica só neste aparelho (localStorage); se o navegador bloquear o armazenamento, o popup aparece de novo na próxima abertura.
 const CHAVE_VERSAO_NOVIDADES = 'app.versaoNovidadesVista';
 const ACOES_NOVIDADE = {
     'controle-nfs': () => abrirControleNfs(),
     'historico-mudancas': () => switchToScreen('screen-historico-mudancas', 'Histórico de Mudanças'),
+    'personalizacao': () => switchToScreen('screen-personalizacao', 'Personalização'),
     'pedido': arg => abrirCentralPedido(String(arg)),
     'nf-erp': arg => abrirEditorNf(String(arg))
 };

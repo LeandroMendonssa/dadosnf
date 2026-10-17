@@ -220,7 +220,24 @@ function popularListaReordenar() { const list = document.getElementById('menu-re
 // Fase 32: escolher quais destinos ficam na barra inferior. Os que saem vão pra tela "Mais" (o botão aparece sozinho); todos na barra = sem "Mais".
 function toggleMenuNaBarra(screenId, naBarra) { const cfg = appConfig.personalizacao; const hidden = new Set(cfg.menuHidden || []); if (naBarra) hidden.delete(screenId); else hidden.add(screenId); cfg.menuHidden = [...hidden]; reordenarMenusDOM(cfg.menuOrder); popularListaReordenar(); salvarPersonalizacao(); }
 function moveMenuItem(screenId, direction) { const order = appConfig.personalizacao.menuOrder; const index = order.indexOf(screenId); if (index === -1) return; if (direction === 'up' && index > 0) { [order[index], order[index - 1]] = [order[index - 1], order[index]]; } else if (direction === 'down' && index < order.length - 1) { [order[index], order[index + 1]] = [order[index + 1], order[index]]; } salvarPersonalizacao(); }
-function salvarPersonalizacao() { settingsDocRef.set({ personalizacao: appConfig.personalizacao }, { merge: true }).catch(error => console.error("Erro ao salvar personalização: ", error)); }
+// 2.3.3: grava SÓ os campos da personalização que mudaram (antes ia tudo junto, inclusive a logo em base64, a cada toque numa opção).
+// "personalizacaoSalvaJson" guarda a assinatura do último valor enviado/recebido de cada campo.
+const personalizacaoSalvaJson = {};
+function assinaturaCampoPersonalizacao(v) {
+    if (typeof v === 'string' && v.length > 2000) return v.length + ':' + v.slice(0, 40) + v.slice(-40); // logo grande: assinatura barata
+    try { return JSON.stringify(v === undefined ? null : v); } catch (e) { return String(v); }
+}
+function semearAssinaturaPersonalizacao() {
+    const p = appConfig.personalizacao || {};
+    Object.keys(p).forEach(k => { personalizacaoSalvaJson[k] = assinaturaCampoPersonalizacao(p[k]); });
+}
+function salvarPersonalizacao() {
+    const p = appConfig.personalizacao || {}, mudou = {};
+    Object.keys(p).forEach(k => { if (personalizacaoSalvaJson[k] !== assinaturaCampoPersonalizacao(p[k])) mudou[k] = p[k] === undefined ? null : p[k]; });
+    if (!Object.keys(mudou).length) return;
+    Object.keys(mudou).forEach(k => { personalizacaoSalvaJson[k] = assinaturaCampoPersonalizacao(mudou[k]); });
+    settingsDocRef.set({ personalizacao: mudou }, { merge: true }).catch(error => { console.error("Erro ao salvar personalização:", error); Object.keys(mudou).forEach(k => { delete personalizacaoSalvaJson[k]; }); });
+}
 
 // ===================================================================
 // --- FASE 14: LOGO DA INSTITUIÇÃO (usada nos PDFs da aba Exportar) ---

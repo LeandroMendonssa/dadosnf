@@ -10,7 +10,62 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.3.1', nome: 'Editor da NF para NF que veio só do ERP e popup de novidades a cada versão', status: 'atual',
+        numero: '2.3.3', nome: 'Nomes da dock sem sobreposição e Personalização sem engasgos', status: 'atual',
+        novidades: [
+            'Os nomes das abas da dock (Entrada de NF, Controle de NFs) agora quebram em duas linhas dentro da própria aba e não invadem mais a vizinha.',
+            'Personalização mais leve: trocar fonte, tema, movimento ou qualquer opção da dock não deve mais engasgar.'
+        ],
+        implementado: [
+            'Dock: rótulos longos passam a ocupar até 2 linhas dentro da largura da aba (cortam com reticências só se passarem disso). A fonte dos rótulos da dock ficou em 10 px.',
+            'Personalização, causa do engasgo: cada toque numa opção gravava a personalização inteira (inclusive a logo, em texto grande) e, quando a gravação voltava do servidor, o app refazia tudo: listas de fornecedores, apelidos e observações, o menu lateral, a barra inferior e a tela "Mais". Isso acontecia duas vezes por toque (eco local e confirmação do servidor).',
+            'Agora só vai para o banco o campo que mudou; quando a única novidade é a própria personalização, o app só reaplica a aparência e não refaz listas nem menus (menus e logo só são refeitos se de fato mudarem); atributos e variáveis do documento só são trocados se o valor mudou; e a espessura e a velocidade da dock ficam guardadas na própria barra, não no documento inteiro, o que também deixa o controle de espessura mais fluido.'
+        ],
+        mudou: [
+            'Se outro aparelho mudar a ordem dos menus, ela continua sendo aplicada aqui na hora.',
+            'Arquivos alterados: style.css, js/02-layout-setup.js, js/05-listeners-dados.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js e js/22-vidro-liquido.js.'
+        ],
+        testar: [
+            'Na dock, conferir se "Entrada de NF" e "Controle de NFs" aparecem em duas linhas, sem encostar nas abas vizinhas, no tema claro e no escuro.',
+            'Em Personalização: trocar fonte, tema, movimento da dock, velocidade e arrastar a espessura. A troca deve ser imediata, sem travar. Se ainda travar, me diga qual opção.',
+            'Conferir que a logo da instituição, a ordem dos menus e "Na barra" continuam funcionando (mudar, recarregar e ver se ficou salvo).'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.3.2', nome: 'Dock de vidro líquido: troca de aba suave, mais contraste e opções na Personalização', status: 'concluida',
+        novidades: [
+            'A dock (barra inferior) ganhou o vidro líquido: desfoque, brilho fino nas bordas e rótulos com bem mais contraste, no tema claro e no escuro.',
+            'A troca de aba agora desliza de forma suave (sem mola e sem esticar) e já começa quando o dedo encosta. Dá para arrastar o dedo pela dock.',
+            'A dock encolhe ao rolar para baixo e volta ao tamanho normal ao subir ou ao tocar nela.',
+            'Em Configurações > Personalização, na seção "Dock", dá para ajustar estilo, espessura do vidro, velocidade, encolher ao rolar e o comportamento com "Reduzir Movimento".'
+        ],
+        implementado: [
+            'Vidro "regular" da Apple na dock: fundo desfocado, luminosidade ajustada (clareia no tema claro, escurece no escuro) e um véu da cor do tema para segurar o contraste. Rótulos em cor forte do tema; a aba ativa mistura a cor de destaque com a cor do texto. Pílula de seleção lisa, neutra e fina.',
+            'Troca de aba: a pílula desliza com curva suave (início e fim macios, sem ultrapassar o destino), em 0,5 s por padrão. Ela começa a mover quando o dedo encosta e acompanha se você arrastar pela dock; ao soltar, a aba sob o dedo fica ativa.',
+            'Dock compacta ao rolar para baixo: a dock encolhe e os rótulos somem; volta ao subir, ao trocar de tela ou ao tocar. Não encolhe com ícones desligados nem com a opção desativada.',
+            '"Reduzir Movimento" do aparelho: antes, a pílula trocava de lugar sem nenhuma animação quando o ajuste estava ligado. Agora ela troca com fusão suave (some e reaparece), e a dock não encolhe. A opção "Sempre animar" ignora o ajuste.',
+            'Personalização > Dock: estilo (vidro líquido ou clássico da 2.2.0), espessura do vidro (0 a 100%), velocidade (rápida, normal, lenta), encolher ao rolar e movimento reduzido. Tudo vem ligado por padrão e é guardado junto das demais opções de personalização.'
+        ],
+        mudou: [
+            'Se o seu iPhone está com "Reduzir Movimento" ligado (Ajustes > Acessibilidade > Movimento), a troca de aba é uma fusão e a dock não encolhe. Para ver o deslize, escolha "Sempre animar" na Personalização ou desligue o ajuste no iPhone.',
+            'O estilo Clássico mantém a dock da 2.2.0 como estava (a única mudança que vale para ele é a troca com fusão quando o movimento reduzido está ligado).',
+            'Arquivos alterados: index.html, style.css, js/02-layout-setup.js, js/14-historico-mudancas.js, js/22-vidro-liquido.js e js/24-novidades-versao.js.'
+        ],
+        testar: [
+            'Tocar nas abas da dock e ver se a pílula desliza de forma suave. Arrastar o dedo pela dock.',
+            'Rolar uma tela longa para baixo (dock encolhe) e para cima (volta). Conferir no tema claro e no escuro se os rótulos ficam fáceis de ler sobre conteúdo colorido.',
+            'Em Personalização > Dock: mudar a espessura, a velocidade, desligar o encolher e trocar para Clássico, vendo o efeito na hora.',
+            'Ler a frase de diagnóstico em "Se o aparelho estiver com Reduzir Movimento": ela diz se o ajuste está ligado no seu iPhone.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização (Dock)', acao: 'personalizacao' },
+            { rotulo: 'Pedido 1726 (tela longa para rolar)', acao: 'pedido', arg: '1726' }
+        ]
+    },
+    {
+        numero: '2.3.1', nome: 'Editor da NF para NF que veio só do ERP e popup de novidades a cada versão', status: 'concluida',
         novidades: [
             'NFs que vieram só do relatório do ERP (sem XML) agora abrem no Editor da NF: pelo botão "Abrir editor da NF" no Controle de NFs e pelo "Abrir NF" do bloco amarelo de itens fora do pedido.',
             'Dá para trocar o pedido dessas NFs. O app sugere o pedido pelos itens que o fornecedor ganhou ("Mover para o pedido X", sempre com confirmação) e há uma busca para escolher outro pedido.',
