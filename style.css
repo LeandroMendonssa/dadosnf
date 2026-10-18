@@ -1,5 +1,6 @@
 :root {
     /* Font Variables */
+    --font-arial: Arial, 'Helvetica Neue', Helvetica, sans-serif;
     --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
     --font-serif: 'Roboto Slab', serif;
     --font-mono: 'Source Code Pro', monospace;
@@ -53,6 +54,7 @@ body[data-theme="plum"] { --bg-primary: #f3e5f5; --bg-secondary: #ffffff; --bg-t
 body[data-theme="wine"] { --bg-primary: #4c1d2e; --bg-secondary: #5c2a3e; --bg-tertiary: #6b374e; --text-dark: #fcefee; --text-light: #e0c5d0; --border-color: #7a445d; --accent-color: #e75480; --accent-contrast: #1d1d1f; --accent-text: color-mix(in srgb, var(--accent-color) 55%, #ffffff); --success-text: #32d74b; --warning-text: #ffd60a; }
 
 /* Estilos de Fonte */
+html[data-font="arial"] body { font-family: var(--font-arial); }
 html[data-font="sans"] body { font-family: var(--font-sans); }
 html[data-font="serif"] body { font-family: var(--font-serif); }
 html[data-font="mono"] body { font-family: var(--font-mono); }
@@ -135,21 +137,50 @@ input, select, textarea, button { font-family: inherit; transition: background-c
 .main-content { flex-grow: 1; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .screen-wrapper { flex-grow: 1; position: relative; overflow: hidden; }
 
-.app-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-primary); visibility: hidden; opacity: 0; transition: opacity var(--transition-duration) ease, visibility 0s linear var(--transition-duration); z-index: 1; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.app-screen.active { visibility: visible; opacity: 1; z-index: 2; transition: opacity var(--transition-duration) ease; }
+.app-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-primary); visibility: hidden; z-index: 1; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.app-screen.active { visibility: visible; z-index: 2; }
 
-/* Variantes de transição entre telas, escolhidas em Personalização */
-body[data-transition="slide"] .app-screen { transform: translateX(28px); transition: opacity var(--transition-duration) ease, transform var(--transition-duration) var(--ease-out), visibility 0s linear var(--transition-duration); }
-body[data-transition="slide"] .app-screen.active { transform: translateX(0); transition: opacity var(--transition-duration) ease, transform var(--transition-duration) var(--ease-out); }
-
-body[data-transition="slide-up"] .app-screen { transform: translateY(24px); transition: opacity var(--transition-duration) ease, transform var(--transition-duration) var(--ease-out), visibility 0s linear var(--transition-duration); }
-body[data-transition="slide-up"] .app-screen.active { transform: translateY(0); transition: opacity var(--transition-duration) ease, transform var(--transition-duration) var(--ease-out); }
-
-body[data-transition="zoom"] .app-screen { transform: scale(0.94); transition: opacity var(--transition-duration) ease, transform var(--transition-duration) var(--ease-out), visibility 0s linear var(--transition-duration); }
-body[data-transition="zoom"] .app-screen.active { transform: scale(1); transition: opacity var(--transition-duration) ease, transform var(--transition-duration) var(--ease-out); }
-
-body[data-transition="none"] .app-screen { transition: none; }
-body[data-transition="none"] .app-screen.active { transition: none; }
+/* 2.7.0: transições de tela no estilo do iPhone (protótipo "Minhas Notas · transições").
+   Entrar/voltar de telas internas: empurra com recuo de 28% e escurece a tela de baixo; duração fixa de 440 ms, curva de mola do iOS.
+   Trocar de aba: a tela nova entra deslizando 20% com leve zoom, e a duração é a escolhida em Personalização (padrão 360 ms). */
+:root { --aba-dur: 360ms; --push-dur: 440ms; --ios-curva: cubic-bezier(.32, .72, 0, 1); }
+.app-screen.saindo { visibility: visible; z-index: 1; pointer-events: none; }
+.app-screen.swipe-pre { visibility: visible; z-index: 1; }
+.app-screen.t-ent, .app-screen.saindo { animation-timing-function: var(--ios-curva); animation-fill-mode: both; will-change: transform; }
+.app-screen.t-ent { pointer-events: none; }
+@keyframes t-dir-in   { from { transform: translate3d(100%,0,0); } to { transform: translate3d(0,0,0); } }
+@keyframes t-dir-out  { from { transform: translate3d(0,0,0); filter: brightness(1); } to { transform: translate3d(-28%,0,0); filter: brightness(.7); } }
+@keyframes t-esq-in   { from { transform: translate3d(-28%,0,0); filter: brightness(.7); } to { transform: translate3d(0,0,0); filter: brightness(1); } }
+@keyframes t-esq-out  { from { transform: translate3d(0,0,0); } to { transform: translate3d(100%,0,0); } }
+@keyframes t-aba-in   { from { transform: translate3d(calc(var(--dir, 1) * 20%),0,0) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes t-aba-out  { from { transform: none; } to { transform: translate3d(calc(var(--dir, 1) * -8%),0,0) scale(.98); } }
+@keyframes t-par-in   { from { transform: translate3d(calc(var(--dir, 1) * 100%),0,0); } to { transform: none; } }
+@keyframes t-par-out  { from { transform: none; } to { transform: translate3d(calc(var(--dir, 1) * -100%),0,0); } }
+@keyframes t-sobe-in  { from { transform: translate3d(0,100%,0); } to { transform: none; } }
+@keyframes t-zoom-in  { 0% { transform: scale(.94); opacity: 0; } 55% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes t-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+body[data-transition="ios"] .t-ent.t-frente { animation: t-dir-in var(--push-dur) var(--ios-curva) both; z-index: 3; box-shadow: -10px 0 30px rgba(0,0,0,.14); }
+body[data-transition="ios"] .saindo.t-frente { animation: t-dir-out var(--push-dur) var(--ios-curva) both; }
+body[data-transition="ios"] .t-ent.t-volta { animation: t-esq-in var(--push-dur) var(--ios-curva) both; }
+body[data-transition="ios"] .saindo.t-volta { animation: t-esq-out var(--push-dur) var(--ios-curva) both; z-index: 3; box-shadow: -10px 0 30px rgba(0,0,0,.14); }
+/* Trocar de aba: efeito escolhido em Personalização (data-aba-efeito). A tela antiga fica inteira por baixo, sem esmaecer,
+   para não aparecer duas telas misturadas. Entrar/voltar de submenus nunca usa estes efeitos. */
+body[data-transition="ios"] .t-ent.t-troca { animation-duration: var(--aba-dur); animation-timing-function: var(--ios-curva); animation-fill-mode: both; z-index: 3; }
+body[data-transition="ios"] .saindo.t-troca { animation-duration: var(--aba-dur); animation-timing-function: var(--ios-curva); animation-fill-mode: both; }
+body[data-transition="ios"][data-aba-efeito="padrao"] .t-ent.t-troca { animation-name: t-aba-in; }
+body[data-transition="ios"][data-aba-efeito="padrao"] .saindo.t-troca { animation-name: t-aba-out; }
+body[data-transition="ios"][data-aba-efeito="esmaecer"] .t-ent.t-troca { animation-name: t-fade-in; }
+body[data-transition="ios"][data-aba-efeito="deslizar"] .t-ent.t-troca { animation-name: t-par-in; }
+body[data-transition="ios"][data-aba-efeito="deslizar"] .saindo.t-troca { animation-name: t-par-out; }
+body[data-transition="ios"][data-aba-efeito="subir"] .t-ent.t-troca { animation-name: t-sobe-in; box-shadow: 0 -12px 32px rgba(0,0,0,.16); }
+body[data-transition="ios"][data-aba-efeito="zoom"] .t-ent.t-troca { animation-name: t-zoom-in; }
+body[data-transition="ios"][data-aba-efeito="nenhum"] .t-ent.t-troca, body[data-transition="ios"][data-aba-efeito="nenhum"] .saindo.t-troca { animation: none; }
+body[data-transition="none"] .t-ent, body[data-transition="none"] .saindo { animation: none; }
+/* "Reduzir Movimento" do aparelho: o iOS troca empurrando por uma dissolução curta */
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-transition="none"]) .app-screen.t-ent { animation: t-fade-in .2s ease-out both !important; z-index: 3; box-shadow: none !important; }
+  body:not([data-transition="none"]) .app-screen.saindo { animation: none !important; filter: none !important; }
+}
 
 .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); position: relative; z-index: 10; }
 .header-actions{display:flex;align-items:center;gap:6px}
@@ -180,7 +211,7 @@ body[data-theme="dark"] .tab-bar { background-color: rgba(28, 28, 30, 0.85); }
    arrastar pra ver os que não cabem. Não é um menu novo, é a mesma
    .tab-bar/.tab-item só com o comportamento de estouro trocado. */
 @media (max-width: 480px) {
-    .tab-bar { justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tab-bar { justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; }
     .tab-bar::-webkit-scrollbar { display: none; }
     .tab-item { flex: 0 0 auto; width: 64px; max-width: none; }
 }
@@ -207,11 +238,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-color); b
     box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.3) !important;
 }
 
-#animation-speed-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: var(--bg-primary); border-radius: 4px; outline: none; }
-#animation-speed-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: var(--accent-color); border-radius: 50%; cursor: pointer; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-#animation-speed-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
-#animation-speed-slider::-moz-range-thumb { width: 20px; height: 20px; background: var(--accent-color); border-radius: 50%; cursor: pointer; border: none; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-#animation-speed-slider::-moz-range-thumb:active { transform: scale(1.2); }
 
 .transition-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .transition-option{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border:1.5px solid var(--border-color);border-radius:12px;background:var(--bg-secondary);color:var(--text-dark);font-size:13px;font-weight:600;cursor:pointer;transition:transform .15s var(--ease-out), border-color .15s ease, background-color .15s ease}
@@ -234,16 +260,7 @@ body[data-density="compacta"] .campo,body[data-density="compacta"] .modal-campo{
 /* Ícones na barra de navegação */
 body[data-tab-icons="off"] .tab-item .icon-wrapper{display:none}
 body[data-tab-icons="off"] .tab-item{font-size:11px;padding:10px 4px}
-#animation-speed-label { display: flex; justify-content: space-between; align-items: center; }
-#animation-speed-value { font-weight: 600; color: var(--text-dark); background-color: var(--bg-primary); padding: 2px 8px; border-radius: 8px; font-size: 12px; }
 
-.reorder-list { list-style: none; padding: 0; margin: 0; border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; }
-.reorder-list-item { padding: 10px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-secondary); }
-.reorder-list-item:last-child { border-bottom: none; }
-.reorder-list-item .name { display: flex; align-items: center; gap: 16px; font-weight: 400; }
-.reorder-list-item .actions button { background: transparent; border: 1.5px solid currentColor; color: var(--text-light); width: 32px; height: 32px; border-radius: 980px; cursor: pointer; transition: background-color .15s ease; }
-.reorder-list-item .actions button:disabled { opacity: 0.3; cursor: not-allowed; }
-.reorder-list-item .actions button:not(:disabled):active { background-color: color-mix(in srgb, currentColor 12%, transparent); color: var(--accent-text); }
 
 #screen-anotacoes { display: flex; flex-direction: column; gap: 16px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); transition: padding-bottom 0.2s ease-out; }
 .anotacao-item{cursor:pointer}
@@ -855,9 +872,6 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 .mais-item-nome { flex: 1; }
 .mais-item-seta { font-size: 12px; color: var(--text-light); }
 .campo-dica { font-size: 12px; color: var(--text-light); margin: 2px 0 8px; }
-.reorder-list-item.fora-da-barra .name { opacity: .6; }
-.menu-barra-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-light); min-height: 36px; padding: 0 6px; }
-.menu-barra-toggle input { width: 20px; height: 20px; accent-color: var(--accent-color); }
 .nota-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .nota-topo .nota-info { margin-bottom: 2px; }
 .nota-sub { font-size: 14px; color: var(--text-light); margin-bottom: 6px; }
@@ -1234,6 +1248,7 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
     box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.7), inset -1px -1px 0 rgba(255,255,255,.36), inset 0 0 0 1px rgba(255,255,255,.14), 0 10px 28px rgba(15,23,42,.22), 0 1px 4px rgba(0,0,0,.14);
     transform-origin:50% 100%;
     transition:transform calc(var(--dock-dur) * .9) var(--dock-mov);
+    will-change:transform; /* 2.4.2: a barra encolhe/expande na GPU, sem repintar o vidro a cada quadro */
   }
   body[data-theme="dark"]:not([data-dock="classico"]) .tab-bar, body[data-theme="wine"]:not([data-dock="classico"]) .tab-bar{
     --dock-scrim:calc(44% + 38% * var(--dock-esp));
@@ -1254,6 +1269,7 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
     background:color-mix(in srgb, var(--text-dark) 13%, transparent);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
     transition:transform var(--dock-dur) var(--dock-mov), width var(--dock-dur) var(--dock-mov), height var(--dock-dur) var(--dock-mov), opacity .2s ease, background-color .2s ease;
+    will-change:transform;
   }
   body[data-theme]:not([data-dock="classico"]) .tab-bar.dock-toque .dock-pill{ background:color-mix(in srgb, var(--text-dark) 22%, transparent); }
   /* dock compacta ao rolar para baixo (opcional): encolhe e esconde os rótulos */
@@ -1269,3 +1285,60 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
 .tab-bar.dock-redim .dock-pill{ transition:none !important; }
 /* arrastar o dedo pela dock escolhe a aba (só quando a barra não precisa rolar na horizontal) */
 .tab-bar.dock-sem-rolagem{ touch-action:none; }
+
+/* 2.3.4: troca de aparência sem animar centenas de elementos de uma vez (ver suspenderTransicoesPorUmInstante) */
+html.sem-transicao *, html.sem-transicao *::before, html.sem-transicao *::after{ transition:none !important; }
+
+/* 2.4.1: respiro entre os cartões das telas Personalização e Aprovações de Acesso */
+
+/* ===== 2.6.0: organizador de menus (uma linha por destino, tudo alinhado), submenus da Personalização e espaçamento padrão ===== */
+.reorder-list { border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; background: var(--bg-secondary); }
+.reorder-list-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; column-gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
+.reorder-list-item:last-child { border-bottom: none; }
+.reorder-list-item .name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.reorder-list-item .name .icon-wrapper { flex: 0 0 26px; width: 26px; justify-content: center; font-size: 18px; }
+.reorder-list-item .nome-bloco { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.reorder-list-item .nome-t { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reorder-list-item .nome-sub { font-size: 12px; color: var(--text-light); }
+.reorder-list-item.fora-da-barra .name { opacity: .6; }
+.reorder-list-item .rl-btn { background: transparent; border: 1.5px solid currentColor; color: var(--text-light); width: 34px; height: 34px; border-radius: 980px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; font-size: 13px; transition: background-color .15s ease; }
+.reorder-list-item .rl-btn:disabled { opacity: .3; cursor: not-allowed; }
+.reorder-list-item .rl-btn:not(:disabled):active { background-color: color-mix(in srgb, currentColor 12%, transparent); color: var(--accent-text); }
+.menu-barra-toggle { position: relative; display: inline-block; width: 46px; height: 28px; flex: 0 0 auto; margin: 0; }
+.menu-barra-toggle input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.menu-barra-toggle .sw { position: absolute; inset: 0; border-radius: 999px; background: var(--bg-tertiary, #d1d5db); transition: background-color .2s ease; }
+.menu-barra-toggle .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s var(--ios-curva); }
+.menu-barra-toggle input:checked + .sw { background: var(--accent-color); }
+.menu-barra-toggle input:checked + .sw::after { transform: translateX(18px); }
+
+/* Espaçamento padrão entre blocos de uma tela: vale para qualquer tela nova ou reorganizada */
+.app-screen > .card + .card, .app-screen > .card + .settings-list-group, .app-screen > .settings-list-group + .card, .app-screen > .settings-list-group + .settings-list-group,
+.app-screen > .card + .campo, .app-screen > .settings-list-group + .campo { margin-top: 14px; }
+.pz-grupo-titulo { margin: 22px 4px 8px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-light); }
+.pz-grupo-titulo:first-child { margin-top: 4px; }
+.pz-campo-sep { height: 1px; background: var(--border-color); margin: 4px 0 18px; }
+.settings-list-group .pz-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; font-weight: 600; }
+.settings-list-group .pz-txt small { font-weight: 400; font-size: 12px; color: var(--text-light); }
+.transition-demo-screen { visibility: hidden; }
+.transition-demo-screen.demo-on, .transition-demo-screen.saindo { visibility: inherit; z-index: 2; }
+
+/* ===== 2.7.0: voltar arrastando da borda, carregamento em blocos com brilho ===== */
+#edge-voltar { position: absolute; left: 0; top: 0; bottom: 0; width: 22px; z-index: 60; touch-action: none; }
+#edge-voltar[hidden] { display: none; }
+.ld { position: absolute; inset: 0; z-index: 15; background: var(--bg-primary); padding: inherit; overflow: hidden; pointer-events: none; }
+.ld::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 60%; background: linear-gradient(100deg, transparent, var(--shine, rgba(255,255,255,.7)) 50%, transparent); transform: translateX(-100%) skewX(-12deg); animation: ld-onda 1.6s cubic-bezier(.4, 0, .2, 1) infinite; }
+@keyframes ld-onda { to { transform: translateX(260%) skewX(-12deg); } }
+body[data-theme="dark"], body[data-theme="wine"] { --shine: rgba(255,255,255,.08); }
+.ld-sk { display: flex; flex-direction: column; gap: 12px; }
+.ld-b { background: var(--bg-tertiary, #e9ecef); border-radius: 8px; }
+.ld-lista { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden; }
+.ld-linha { display: flex; gap: 12px; align-items: center; padding: 13px 14px; border-bottom: 1px solid var(--border-color); }
+.ld-linha:last-child { border-bottom: 0; }
+.ld-texto { position: absolute; top: 44%; left: 0; right: 0; text-align: center; color: var(--text-light); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .ld::after { animation: none; display: none; } }
+
+/* ===== 2.7.1: busca em Ajustes ===== */
+.ajustes-busca { margin-bottom: 14px; }
+.ajustes-busca input { width: 100%; }
+@keyframes ajuste-destaque { 0% { box-shadow: 0 0 0 0 transparent; background-color: color-mix(in srgb, var(--accent-color) 16%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; background-color: transparent; } }
+.campo.ajuste-destaque { animation: ajuste-destaque 1.8s ease-out; border-radius: 12px; }

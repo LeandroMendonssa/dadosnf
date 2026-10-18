@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-font="sans" style="--app-height: 100vh; --transition-duration: 0.35s;">
+<html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -256,7 +256,9 @@
             </div>
 
             <div class="app-screen" id="screen-settings">
-                <ul class="settings-list-group">
+                <div class="campo ajustes-busca"><input type="search" id="ajustes-busca" class="form-field" placeholder="Buscar em Ajustes..." autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Buscar em Ajustes"></div>
+                <ul class="settings-list-group" id="ajustes-resultados" style="display:none;"></ul>
+                <ul class="settings-list-group" id="ajustes-lista">
                     <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -597,6 +599,17 @@
             </div>
             <div class="app-screen" id="screen-aprovacoes">
                 <div class="card">
+                    <p class="desc-tela"><strong>Criar conta</strong> (e-mail e senha). A pessoa já entra aprovada; você continua conectado.</p>
+                    <div class="modal-campo"><label for="nova-conta-email">E-mail</label><input type="email" id="nova-conta-email" class="form-field" autocomplete="off" autocapitalize="off" placeholder="pessoa@exemplo.com"></div>
+                    <div class="modal-campo"><label for="nova-conta-nome">Nome (opcional)</label><input type="text" id="nova-conta-nome" class="form-field" autocomplete="off" placeholder="Nome de quem vai usar"></div>
+                    <div class="modal-campo"><label for="nova-conta-senha">Senha temporária (mín. 6 caracteres)</label><input type="password" id="nova-conta-senha" class="form-field" autocomplete="new-password"></div>
+                    <div class="actions-row" style="gap:8px;">
+                        <button class="actions-button" type="button" onclick="preencherSenhaTemporaria()"><span class="icon-wrapper"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar senha</button>
+                        <button class="actions-button is-primary" type="button" id="nova-conta-btn" onclick="criarContaNoApp()"><span class="icon-wrapper"><i class="fa-solid fa-user-plus"></i></span> Criar conta</button>
+                    </div>
+                    <p id="nova-conta-resultado" class="desc-tela" style="display:none;margin-top:10px;"></p>
+                </div>
+                <div class="card">
                     <p class="desc-tela">Pessoas que entraram pelo Google ou telefone aparecem aqui. Aprove para liberar o acesso delas ao app.</p>
                     <ul id="lista-aprovacoes" class="approval-list"><li class="empty-state">Carregando...</li></ul>
                 </div>
@@ -610,6 +623,83 @@
             </div>
             <div class="app-screen" id="screen-personalizacao">
                 <div class="card">
+                    <p class="desc-tela">Tema, fonte, menus, dock e as demais opções destas telas valem <strong>só para a sua conta</strong> e acompanham você em qualquer aparelho. A logo da instituição é a mesma para todos.</p>
+                </div>
+                <ul class="settings-list-group">
+                    <li><a data-screen="screen-pz-aparencia" data-title="Aparência"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> <span class="pz-txt">Aparência<small>Tema, ícones, fonte e densidade das listas</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-animacoes" data-title="Animações e Transições"><i class="icon fa-solid fa-wand-magic-sparkles" style="background-color: #af52de;"></i> <span class="pz-txt">Animações e Transições<small>Velocidade e efeito ao trocar de tela</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-dock" data-title="Dock e Navegação"><i class="icon fa-solid fa-table-cells-large" style="background-color: #007aff;"></i> <span class="pz-txt">Dock e Navegação<small>Vidro, recolhimento e ícones da barra</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-menus" data-title="Menus e Barra Inferior"><i class="icon fa-solid fa-bars-staggered" style="background-color: #34c759;"></i> <span class="pz-txt">Menus e Barra Inferior<small>Ordem e o que fica na barra ou em "Mais"</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-logo" data-title="Logo da Instituição"><i class="icon fa-solid fa-image" style="background-color: #f5a623;"></i> <span class="pz-txt">Logo da Instituição<small>Aparece nos PDFs e é a mesma para todos</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                </ul>
+            </div>
+            <div class="app-screen" id="screen-pz-aparencia">
+                <div class="card">
+                    <div class="campo"> <label for="theme-select">Tema do Aplicativo</label> <select id="theme-select"> <option value="light">Claro</option> <option value="dark">Escuro</option> <option value="ocean">Oceano</option> <option value="sunset">Pôr do Sol</option> <option value="forest">Floresta</option> <option value="plum">Ameixa</option> <option value="wine">Vinho</option> </select> </div>
+                    <div class="campo"> <label for="icon-theme-select">Estilo dos Ícones</label> <select id="icon-theme-select"> <option value="solid">Sólido (Padrão)</option> <option value="material">Material (Google)</option> <option value="outline">Contorno (Leve)</option> <option value="duotone">Duplo Tom</option> </select> </div>
+                    <div class="campo"> <label for="font-select">Fonte do Aplicativo</label> <select id="font-select"> <option value="arial">Arial (padrão)</option> <option value="sans">Sistema (SF / Inter)</option> <option value="serif">Serif (Roboto Slab)</option> <option value="mono">Mono (Source Code)</option> <option value="montserrat">Montserrat</option> </select> </div>
+                    <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-animacoes">
+                <div class="card">
+                    <div class="campo"> <label for="animation-speed-slider" class="dock-label-linha"> <span>Velocidade das Animações</span> <span id="animation-speed-value">Normal</span> </label> <input type="range" id="animation-speed-slider" min="0" max="3" step="1" value="2"> </div>
+                    <div class="campo"> <label for="tab-duracao-slider" class="dock-label-linha"> <span>Duração da troca de aba</span> <span id="tab-duracao-valor">360 ms</span> </label> <input type="range" id="tab-duracao-slider" min="120" max="700" step="20" value="360"> </div>
+                    <div class="campo">
+                        <label>Efeito ao trocar de aba</label>
+                        <div class="transition-options" id="aba-efeito-options">
+                            <button class="transition-option" data-value="padrao" onclick="escolherEfeitoAba('padrao')">Padrão (iPhone)</button>
+                            <button class="transition-option" data-value="esmaecer" onclick="escolherEfeitoAba('esmaecer')">Esmaecer</button>
+                            <button class="transition-option" data-value="deslizar" onclick="escolherEfeitoAba('deslizar')">Deslizar</button>
+                            <button class="transition-option" data-value="subir" onclick="escolherEfeitoAba('subir')">Subir</button>
+                            <button class="transition-option" data-value="zoom" onclick="escolherEfeitoAba('zoom')">Zoom</button>
+                            <button class="transition-option" data-value="nenhum" onclick="escolherEfeitoAba('nenhum')">Instantâneo</button>
+                        </div>
+                        <div class="campo-dica">Vale só ao trocar de aba. Entrar e voltar de submenus sempre usa o deslizar do iPhone, fixo.</div>
+                    </div>
+                    <div class="campo">
+                        <label>Pré-visualizar</label>
+                        <div class="transition-demo-stage">
+                            <div class="app-screen transition-demo-screen demo-on" id="transition-demo-a">Tela A</div>
+                            <div class="app-screen transition-demo-screen" id="transition-demo-b">Tela B</div>
+                        </div>
+                        <div class="actions-row" style="gap:8px;margin-top:12px;">
+                            <button class="actions-button" onclick="testarTransicaoTela('troca')"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Trocar de aba</button>
+                            <button class="actions-button" onclick="testarTransicaoTela('submenu')"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Entrar e voltar</button>
+                        </div>
+                    </div>
+                    <div class="pz-campo-sep"></div>
+                    <div class="campo">
+                        <label>Carregamento</label>
+                        <div class="transition-options" id="carregamento-options">
+                            <button class="transition-option" data-value="blocos" onclick="escolherCarregamento('blocos')">Blocos com brilho</button>
+                            <button class="transition-option" data-value="texto" onclick="escolherCarregamento('texto')">Texto</button>
+                        </div>
+                        <div class="campo-dica">Mostrado na primeira vez que você abre uma tela enquanto os dados dela chegam.</div>
+                        <button class="actions-button mt-3" onclick="testarCarregamento()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Carregamento</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="app-screen" id="screen-pz-dock">
+                <div class="card">
+                    <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
+<div class="pz-campo-sep"></div>
+<div class="campo-dica" style="margin:0 0 16px">Estilo, contraste e movimento da barra de navegação. Tudo vem ligado por padrão.</div>
+                    <div class="campo"> <label for="dock-estilo">Estilo da dock</label> <select id="dock-estilo" onchange="alterarDockOpcao('dockEstilo', this.value)"> <option value="liquido">Vidro líquido (padrão)</option> <option value="classico">Clássico (versão 2.2.0)</option> </select> </div>
+                    <div class="campo"> <label for="dock-espessura" class="dock-label-linha"> <span>Espessura do vidro</span> <span id="dock-espessura-valor">60%</span> </label> <input type="range" id="dock-espessura" min="0" max="100" step="5" value="60" oninput="previaDockEspessura(this.value)" onchange="alterarDockOpcao('dockEspessura', parseInt(this.value, 10))"> <div class="campo-dica">Esquerda: mais fino, deixa ver mais o fundo. Direita: mais grosso, rótulos com mais contraste.</div> </div>
+                    <div class="campo"> <label for="dock-velocidade">Velocidade da troca de aba</label> <select id="dock-velocidade" onchange="alterarDockOpcao('dockVelocidade', this.value)"> <option value="rapida">Rápida</option> <option value="normal">Normal (padrão)</option> <option value="lenta">Lenta</option> </select> </div>
+                    <div class="campo"> <label for="dock-encolher">Recolher a dock fora da troca de aba</label> <select id="dock-encolher" onchange="alterarDockOpcao('dockEncolher', this.value)"> <option value="sim">Sim (padrão)</option> <option value="nao">Não, sempre expandida</option> </select> <div class="campo-dica">Recolhida, ela expande ao tocar, trocar de aba ou rolar para cima.</div> </div>
+                    <div class="campo"> <label for="dock-movimento">Se o aparelho estiver com "Reduzir Movimento"</label> <select id="dock-movimento" onchange="alterarDockOpcao('dockMovimento', this.value)"> <option value="respeitar">Respeitar o aparelho (padrão)</option> <option value="sempre">Sempre animar</option> </select> <div class="campo-dica" id="dock-movimento-diag"></div> </div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-menus">
+                <div class="card">
+                    <div class="campo"> <label>Ordem dos Menus e barra inferior</label> <div class="campo-dica">Desmarque "Na barra" para mandar um destino para a tela "Mais". O botão "Mais" fica sempre na barra, com as ferramentas (ex.: Importar Relatório ERP).</div> <div id="menu-reorder-list" class="reorder-list"></div> </div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-logo">
+                <div class="card">
                     <div class="campo">
                         <label>Logo da Instituição (aparece no cabeçalho do PDF da aba Exportar)</label>
                         <div id="logo-preview-container" style="margin:8px 0;display:none;"><img id="logo-preview-img" style="max-width:160px;max-height:80px;display:block;"></div>
@@ -620,41 +710,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="campo"> <label for="theme-select">Tema do Aplicativo</label> <select id="theme-select"> <option value="light">Claro</option> <option value="dark">Escuro</option> <option value="ocean">Oceano</option> <option value="sunset">Pôr do Sol</option> <option value="forest">Floresta</option> <option value="plum">Ameixa</option> <option value="wine">Vinho</option> </select> </div>
-                    <div class="campo"> <label for="icon-theme-select">Estilo dos Ícones</label> <select id="icon-theme-select"> <option value="solid">Sólido (Padrão)</option> <option value="material">Material (Google)</option> <option value="outline">Contorno (Leve)</option> <option value="duotone">Duplo Tom</option> </select> </div>
-                    <div class="campo"> <label for="font-select">Fonte do Aplicativo</label> <select id="font-select"> <option value="sans">Padrão (Inter)</option> <option value="serif">Serif (Roboto Slab)</option> <option value="mono">Mono (Source Code)</option> <option value="montserrat">Montserrat</option> </select> </div>
-                    <div class="campo"> <label id="animation-speed-label" for="animation-speed-slider"> <span>Velocidade das Animações</span> <span id="animation-speed-value">Normal</span> </label> <input type="range" id="animation-speed-slider" min="0" max="3" step="1" value="2"> </div>
-                    <div class="campo">
-                        <label>Transição entre Telas</label>
-                        <div class="transition-options" id="transition-options">
-                            <button class="transition-option" data-value="fade" onclick="escolherTransicaoTela('fade')">Esmaecer</button>
-                            <button class="transition-option" data-value="slide" onclick="escolherTransicaoTela('slide')">Deslizar</button>
-                            <button class="transition-option" data-value="slide-up" onclick="escolherTransicaoTela('slide-up')">Subir</button>
-                            <button class="transition-option" data-value="zoom" onclick="escolherTransicaoTela('zoom')">Zoom</button>
-                            <button class="transition-option" data-value="none" onclick="escolherTransicaoTela('none')" style="grid-column: span 2;">Instantâneo (sem animação)</button>
-                        </div>
-                    </div>
-                    <div class="campo">
-                        <label>Pré-visualizar Transição</label>
-                        <div class="transition-demo-stage">
-                            <div class="app-screen transition-demo-screen active" id="transition-demo-a">Tela A</div>
-                            <div class="app-screen transition-demo-screen" id="transition-demo-b">Tela B</div>
-                        </div>
-                        <button class="actions-button mt-3"  onclick="testarTransicaoTela()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Agora</button>
-                    </div>
-                    <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
-                    <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
-                    <div class="campo dock-opcoes-titulo"><label>Dock (barra inferior)</label><div class="campo-dica">Estilo, contraste e movimento da barra de navegação. Tudo vem ligado por padrão.</div></div>
-                    <div class="campo"> <label for="dock-estilo">Estilo da dock</label> <select id="dock-estilo" onchange="alterarDockOpcao('dockEstilo', this.value)"> <option value="liquido">Vidro líquido (padrão)</option> <option value="classico">Clássico (versão 2.2.0)</option> </select> </div>
-                    <div class="campo"> <label for="dock-espessura" class="dock-label-linha"> <span>Espessura do vidro</span> <span id="dock-espessura-valor">60%</span> </label> <input type="range" id="dock-espessura" min="0" max="100" step="5" value="60" oninput="previaDockEspessura(this.value)" onchange="alterarDockOpcao('dockEspessura', parseInt(this.value, 10))"> <div class="campo-dica">Esquerda: mais fino, deixa ver mais o fundo. Direita: mais grosso, rótulos com mais contraste.</div> </div>
-                    <div class="campo"> <label for="dock-velocidade">Velocidade da troca de aba</label> <select id="dock-velocidade" onchange="alterarDockOpcao('dockVelocidade', this.value)"> <option value="rapida">Rápida</option> <option value="normal">Normal (padrão)</option> <option value="lenta">Lenta</option> </select> </div>
-                    <div class="campo"> <label for="dock-encolher">Encolher ao rolar para baixo</label> <select id="dock-encolher" onchange="alterarDockOpcao('dockEncolher', this.value)"> <option value="sim">Sim (padrão)</option> <option value="nao">Não</option> </select> </div>
-                    <div class="campo"> <label for="dock-movimento">Se o aparelho estiver com "Reduzir Movimento"</label> <select id="dock-movimento" onchange="alterarDockOpcao('dockMovimento', this.value)"> <option value="respeitar">Respeitar o aparelho: troca com fusão suave (padrão)</option> <option value="sempre">Sempre animar: deslizar e encolher</option> </select> <div class="campo-dica" id="dock-movimento-diag"></div> </div>
-                    <div class="campo"> <label>Ordem dos Menus e barra inferior</label> <div class="campo-dica">Desmarque "Na barra" para mandar um destino para a tela "Mais". O botão "Mais" fica sempre na barra, com as ferramentas (ex.: Importar Relatório ERP).</div> <div id="menu-reorder-list" class="reorder-list"></div> </div>
-                </div>
             </div>
+
             
+            <div class="app-screen" id="screen-equipamentos">
+                <div id="equipamentos-status" class="card" style="margin:16px;">⚠ O módulo de Equipamentos não carregou. Confira se <strong>js/26-equipamentos.js</strong> e <strong>js/27-equipamentos-ponte.js</strong> estão na pasta <strong>js</strong> e se este é o <strong>index.html</strong> novo (versão 2.5.x).</div>
+                <div id="equipamentos-root"></div>
+            </div>
             <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div>
       <div class="app-screen" id="screen-controle-nfs">
         <div class="campo mb-4"><input type="text" id="controle-busca" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarControle(this.value)"></div>
@@ -917,6 +979,11 @@
   <script src="js/22-vidro-liquido.js"></script>
   <script src="js/23-conferencia-automatica.js"></script>
   <script src="js/24-novidades-versao.js"></script>
+  <script src="js/25-contas-admin.js"></script>
+  <script src="js/26-equipamentos.js"></script>
+  <script src="js/27-equipamentos-ponte.js"></script>
+  <script src="js/28-transicoes-ios.js"></script>
+  <script src="js/29-busca-ajustes.js"></script>
 
 </body>
 </html>
