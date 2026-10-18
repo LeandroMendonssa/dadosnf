@@ -98,26 +98,59 @@ const setupKeyboardListener = () => {
     });
 };
 
+// 2.6.0: quem ainda tem a escolha antiga (antes das transições estilo iPhone) passa a usar o estilo iPhone até escolher outro
+function tipoTransicaoEfetivo() {
+    const pz = appConfig.personalizacao || {};
+    // 2.7.0: só existem o movimento do iPhone e o instantâneo; escolhas antigas (deslizar, subir, zoom, esmaecer) viram iPhone
+    // "Off" na velocidade das animações desliga tudo; o efeito da troca de aba é escolhido à parte (abaEfeito)
+    return pz.animationSpeed === 0 ? 'none' : 'ios';
+}
 function escolherTransicaoTela(tipo) {
     appConfig.personalizacao.transicaoTela = tipo;
+    appConfig.personalizacao.transicaoVersao = 2;
     document.body.setAttribute('data-transition', tipo);
     atualizarSelecaoTransicao(tipo);
     salvarPersonalizacao();
 }
 
 function atualizarSelecaoTransicao(tipo) {
-    document.querySelectorAll('.transition-option').forEach(btn => {
+    document.querySelectorAll('#transition-options .transition-option').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.value === tipo);
     });
 }
 
 let transicaoDemoAlternada = false;
-function testarTransicaoTela() {
+function testarTransicaoTela(modo) {
     const a = document.getElementById('transition-demo-a');
     const b = document.getElementById('transition-demo-b');
     transicaoDemoAlternada = !transicaoDemoAlternada;
-    a.classList.toggle('active', !transicaoDemoAlternada);
-    b.classList.toggle('active', transicaoDemoAlternada);
+    const dir = transicaoDemoAlternada ? 1 : -1;
+    const direcao = modo === 'submenu' ? (transicaoDemoAlternada ? 'frente' : 'volta') : 'troca';
+    if (transicaoDemoAlternada) trocarTelaAnimada(a, b, direcao, 'demo-on', dir);
+    else trocarTelaAnimada(b, a, direcao, 'demo-on', dir);
+}
+
+// 2.6.0: troca de tela com o movimento do iPhone. "direcao": 'frente' (entrar), 'volta' (voltar) ou 'troca' (trocar de aba).
+// Só mexe em classes; o movimento em si é CSS (keyframes em style.css). A tela antiga fica visível por baixo até o fim.
+let trocaTelaTimer = null;
+function trocarTelaAnimada(de, para, direcao, classeAtiva, dirAba) {
+    classeAtiva = classeAtiva || 'active';
+    const limpa = el => { el.classList.remove('saindo', 't-ent', 't-frente', 't-volta', 't-troca'); el.style.removeProperty('--dir'); };
+    document.querySelectorAll('.app-screen.saindo, .app-screen.t-ent').forEach(limpa);
+    clearTimeout(trocaTelaTimer);
+    document.querySelectorAll('.app-screen.' + classeAtiva).forEach(s => s.classList.remove(classeAtiva));
+    const pulou = window.__semAnimacaoTela === true; window.__semAnimacaoTela = false; // o gesto de arrastar da borda já fez o movimento
+    const semAnimacao = pulou || !de || de === para || document.body.getAttribute('data-transition') === 'none' || document.documentElement.classList.contains('sem-transicao');
+    if (!semAnimacao) {
+        de.style.setProperty('--dir', dirAba || 1); para.style.setProperty('--dir', dirAba || 1);
+        de.classList.add('saindo', 't-' + direcao);
+        para.classList.add('t-ent', 't-' + direcao);
+    }
+    para.classList.add(classeAtiva);
+    if (semAnimacao) return;
+    let ms = 0;
+    [para, de].forEach(el => { const d = parseFloat(getComputedStyle(el).animationDuration) || 0; ms = Math.max(ms, d * 1000); });
+    trocaTelaTimer = setTimeout(() => { limpa(de); limpa(para); }, ms + 80);
 }
 
 function alterarDensidade(valor) {
@@ -132,7 +165,19 @@ function alterarIconesAbas(valor) {
     salvarPersonalizacao();
 }
 
-let ultimaSigMenuDOM = null, ultimaSigLogoDOM = null;
+let ultimaSigMenuDOM = null, ultimaSigLogoDOM = null, ultimaSigAparencia = null;
+// 2.3.4: trocar tema/fonte/etc. fazia ~360 elementos animarem a cor ao mesmo tempo (o navegador recalculava o estilo a cada quadro e engasgava).
+// Durante a troca as transições ficam suspensas por um instante; o resultado visual é o mesmo, sem o custo.
+let semTransicaoTimer = null;
+function suspenderTransicoesPorUmInstante() {
+    const html = document.documentElement;
+    html.classList.add('sem-transicao');
+    clearTimeout(semTransicaoTimer);
+    semTransicaoTimer = setTimeout(() => {
+        void document.body.offsetWidth; // fecha o recálculo de estilo ainda sem transições
+        requestAnimationFrame(() => requestAnimationFrame(() => html.classList.remove('sem-transicao')));
+    }, 60);
+}
 function aplicarPersonalizacoes() {
     // Fase 38: destino novo (ex.: Controle de NFs) que não está na ordem salva entra no fim e começa em "Mais".
     {
@@ -142,19 +187,26 @@ function aplicarPersonalizacoes() {
         if (novos.length) { cfgP.menuOrder = [...(cfgP.menuOrder || []), ...novos]; cfgP.menuHidden = [...new Set([...cfgP.menuHidden, ...novos])]; }
     }
     const { theme, iconTheme, font, animationSpeed, menuOrder, transicaoTela, densidade, mostrarIconesAbas } = appConfig.personalizacao;
+    {
+        const pz = appConfig.personalizacao;
+        const sigAp = [theme, iconTheme, font, tipoTransicaoEfetivo(), densidade, mostrarIconesAbas, pz.dockEstilo, pz.dockEspessura, pz.dockVelocidade, pz.dockEncolher, pz.dockMovimento].join('|');
+        if (ultimaSigAparencia !== null && sigAp !== ultimaSigAparencia) suspenderTransicoesPorUmInstante();
+        ultimaSigAparencia = sigAp;
+    }
     if (!Array.isArray(appConfig.personalizacao.menuHidden)) appConfig.personalizacao.menuHidden = [];
     // 2.3.3: só mexe no que mudou de verdade (trocar atributo/variável do documento inteiro à toa refaz o estilo de tudo e engasga)
     const defAttr = (el, nome, v) => { v = String(v); if (el.getAttribute(nome) !== v) el.setAttribute(nome, v); };
     defAttr(document.documentElement, 'data-font', font); defAttr(document.body, 'data-theme', theme); defAttr(document.body, 'data-icon-theme', iconTheme);
-    defAttr(document.body, 'data-transition', transicaoTela || 'fade');
+    defAttr(document.body, 'data-transition', tipoTransicaoEfetivo());
     defAttr(document.body, 'data-density', densidade || 'confortavel');
     defAttr(document.body, 'data-tab-icons', mostrarIconesAbas || 'on');
     if (document.documentElement.style.getPropertyValue('--transition-duration') !== speedValueMap[animationSpeed]) document.documentElement.style.setProperty('--transition-duration', speedValueMap[animationSpeed]);
     document.querySelector('#theme-select').value = theme; document.querySelector('#icon-theme-select').value = iconTheme; document.querySelector('#font-select').value = font;
     document.querySelector('#animation-speed-slider').value = animationSpeed;
     document.getElementById('animation-speed-value').textContent = speedTextMap[animationSpeed];
-    atualizarSelecaoTransicao(transicaoTela || 'fade');
+    atualizarSelecaoTransicao(tipoTransicaoEfetivo());
     if (typeof aplicarDockPersonalizacao === 'function') aplicarDockPersonalizacao(); // 2.3.2: opções da dock
+    if (typeof aplicarTransicoesExtras === 'function') aplicarTransicoesExtras(); // 2.7.0: duração da troca de aba e tipo de carregamento
     document.querySelector('#density-select').value = densidade || 'confortavel';
     document.querySelector('#tab-icons-select').value = mostrarIconesAbas || 'on';
     // menus e logo só são refeitos quando mudam (reordenar recria a barra inferior, o menu lateral e a tela "Mais")

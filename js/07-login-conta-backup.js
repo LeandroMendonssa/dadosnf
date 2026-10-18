@@ -81,6 +81,7 @@ function traduzErroAuth(error) {
         'auth/invalid-verification-code': 'Código incorreto.',
         'auth/code-expired': 'Código expirado. Envie um novo.',
         'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+        'auth/email-already-in-use': 'Já existe uma conta com esse e-mail.',
         'auth/requires-recent-login': 'Por segurança, verifique sua senha novamente.',
         'auth/captcha-check-failed': 'A verificação do reCAPTCHA falhou. Tente novamente.',
         'auth/argument-error': 'Configuração inválida para este tipo de login.',
@@ -105,7 +106,20 @@ function mostrarLoaderApp(mostrar) {
 // Database → acessosAutorizados → o documento da pessoa → aprovado: true).
 async function verificarAprovacaoAcesso(user) {
     const provedores = user.providerData.map(p => p.providerId);
-    if (provedores.includes('password')) return true;
+    if (provedores.includes('password')) {
+        // 2.4.0: contas criadas no app podem ser revogadas; contas antigas (sem registro na lista) continuam entrando normalmente
+        if (!isContaAdmin(user)) {
+            try {
+                const s = await firestore.collection('acessosAutorizados').doc(user.uid).get();
+                if (s.exists && s.data().aprovado === false) {
+                    await auth.signOut();
+                    mostrarEtapaPendente('Seu acesso foi revogado. Peça para o administrador liberar novamente.');
+                    return false;
+                }
+            } catch (e) { /* sem leitura da lista: segue como antes (conta de e-mail e senha = aprovada) */ }
+        }
+        return true;
+    }
     try {
         const ref = firestore.collection('acessosAutorizados').doc(user.uid);
         const snap = await ref.get();
@@ -443,11 +457,14 @@ async function baixarBackupCompleto() {
     const statusEl = document.getElementById('backup-status');
     statusEl.textContent = 'Preparando backup...';
     try {
-        const [notasSnap, historicoSnap, anotacoesSnap, configSnap] = await Promise.all([
+        const [notasSnap, historicoSnap, anotacoesSnap, configSnap, equipSnap, equipSetoresSnap] = await Promise.all([
             notasCollection.get(),
             historicoCollection.get(),
             anotacoesTextoCollection.get(),
-            settingsDocRef.get()
+            settingsDocRef.get(),
+            // 2.5.0: equipamentos entram no backup; se as regras do Firebase ainda não liberarem, o backup continua sem eles
+            firestore.collection('equipamentos').get().catch(() => null),
+            firestore.collection('equipamentosConfig').doc('setores').get().catch(() => null)
         ]);
 
         // Timestamps do Firestore não viram JSON puro sozinhos — convertemos pra
@@ -466,7 +483,9 @@ async function baixarBackupCompleto() {
             notasPendentes: notasSnap.docs.map(d => ({ id: d.id, ...serializar(d.data()) })),
             historico: historicoSnap.docs.map(d => ({ id: d.id, ...serializar(d.data()) })),
             anotacoes: anotacoesSnap.docs.map(d => ({ id: d.id, ...serializar(d.data()) })),
-            configuracoes: configSnap.exists ? serializar(configSnap.data()) : {}
+            configuracoes: configSnap.exists ? serializar(configSnap.data()) : {},
+            equipamentos: equipSnap ? equipSnap.docs.map(d => ({ id: d.id, ...d.data() })) : [],
+            equipamentosSetores: (equipSetoresSnap && equipSetoresSnap.exists) ? (equipSetoresSnap.data().lista || []) : []
         };
 
         const nomeArquivo = `backup-notas-fiscais-${new Date().toISOString().slice(0, 10)}.json`;
@@ -480,7 +499,7 @@ async function baixarBackupCompleto() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        const total = backup.notasPendentes.length + backup.historico.length + backup.anotacoes.length;
+        const total = backup.notasPendentes.length + backup.historico.length + backup.anotacoes.length + backup.equipamentos.length;
         statusEl.textContent = `✓ Backup baixado — ${total} registro(s) no total.`;
         toast('✓ Backup baixado!');
     } catch (e) {

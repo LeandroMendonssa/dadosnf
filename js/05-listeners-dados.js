@@ -35,6 +35,29 @@ function migrarMenuOrderConfig() {
     }
     // ------------------------------------------------------------
 }
+// 2.4.0: personalização por usuário. As opções de aparência (tema, fonte, menu, dock…) ficam em config/prefs_{uid}, só da conta logada;
+// o que está no documento compartilhado (config/appSettings) vira o padrão de quem ainda não personalizou. A logo continua única para todos.
+const PERSONALIZACAO_PADRAO_INICIAL = JSON.parse(JSON.stringify(appConfig.personalizacao));
+let prefsUsuario = {};
+let prefsUsuarioIndisponivel = false; // true se as regras do Firebase não deixarem ler/gravar o documento da pessoa (volta ao modo antigo, compartilhado)
+function prefsUsuarioDocRef() { return firestore.collection('config').doc('prefs_' + auth.currentUser.uid); }
+function iniciarListenerPrefsUsuario() {
+    const u = auth.currentUser;
+    if (!u) return () => {};
+    return firestore.collection('config').doc('prefs_' + u.uid).onSnapshot(doc => {
+        try {
+            prefsUsuarioIndisponivel = false;
+            prefsUsuario = (doc.exists && doc.data() && doc.data().personalizacao) || {};
+            appConfig.personalizacao = { ...appConfig.personalizacao, ...prefsUsuario };
+            migrarMenuOrderConfig();
+            semearAssinaturaPersonalizacao();
+            aplicarPersonalizacoes();
+        } catch (e) { console.error('Erro ao aplicar personalização do usuário:', e); }
+    }, error => {
+        console.warn('Personalização por usuário indisponível (regras do Firebase?):', error);
+        prefsUsuarioIndisponivel = true;
+    });
+}
 let ultimaSigConfigResto = null;
 function iniciarListenerConfiguracoes() { 
     return settingsDocRef.onSnapshot(doc => { 
@@ -47,7 +70,7 @@ function iniciarListenerConfiguracoes() {
                 const { personalizacao: persRecebida, ...restoCfg } = data;
                 const sigResto = JSON.stringify(restoCfg);
                 if (!isInitialLoad && sigResto === ultimaSigConfigResto) {
-                    appConfig.personalizacao = { ...appConfig.personalizacao, ...(persRecebida || {}) };
+                    appConfig.personalizacao = { ...appConfig.personalizacao, ...(persRecebida || {}), ...prefsUsuario };
                     migrarMenuOrderConfig();
                     semearAssinaturaPersonalizacao();
                     aplicarPersonalizacoes();
@@ -81,7 +104,7 @@ function iniciarListenerConfiguracoes() {
             appConfig = { 
                 ...appConfig, 
                 ...data, 
-                personalizacao: { ...appConfig.personalizacao, ...(data.personalizacao || {}) }, 
+                personalizacao: { ...appConfig.personalizacao, ...(data.personalizacao || {}), ...prefsUsuario }, 
                 // BUG CORRIGIDO: auditoriaTextos não tinha merge profundo com os
                 // padrões (diferente de personalizacao, que já tinha). Se o Firestore
                 // guardava um objeto parcial (ex: só a chave alterada uma vez, antes
@@ -137,6 +160,10 @@ function iniciarDadosAppSeNecessario() {
 
 function pararDadosApp() {
     dadosAppInscritos = false;
+    // 2.4.0: ao sair, a próxima conta não herda a aparência desta
+    prefsUsuario = {}; prefsUsuarioIndisponivel = false;
+    appConfig.personalizacao = JSON.parse(JSON.stringify(PERSONALIZACAO_PADRAO_INICIAL));
+    Object.keys(personalizacaoSalvaJson).forEach(k => { delete personalizacaoSalvaJson[k]; });
     dataUnsubscribers.forEach(unsub => { try { unsub(); } catch (e) {} });
     dataUnsubscribers = [];
     assinaturasFeitas = {};
@@ -279,6 +306,7 @@ const DADOS_POR_TELA = {
     'screen-history': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
     'screen-nf-editor': ['nfsProcessadas', 'entradasErp', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'xmlExcecoes'],
     'screen-controle-nfs': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
+    'screen-equipamentos': ['nfsProcessadas', 'entradasErp'],
     'screen-xml-editor': ['nfsProcessadas', 'xmlExcecoes', 'associacoesFornecedor', 'associacoesSpData', 'cotacoes', 'produtosSpData', 'entradasErp'],
     'screen-spdata': ['produtosSpData', 'associacoesSpData'],
     'screen-cotacoes': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
@@ -319,6 +347,7 @@ function agendarAssinaturasSegundoPlano() {
 
 async function carregarEstado(){
     dataUnsubscribers.push(iniciarListenerConfiguracoes());
+    dataUnsubscribers.push(iniciarListenerPrefsUsuario());
     DADOS_ESSENCIAIS.forEach(assinarDados);
     agendarAssinaturasSegundoPlano();
 }

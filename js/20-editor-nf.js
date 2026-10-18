@@ -263,7 +263,7 @@ function renderEditorNf() {
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(nf.pedido || '—')}</strong></div>
         </div>
         <div class="nfe-chips">${badge('pronto', 'XML ✓')} ${badgeErp} ${badge('neutro', escRel(situacaoTxt))}${xd ? '' : ' ' + badge('pendente', 'XML completo não guardado')}</div>
-        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Histórico</button></div>
+        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Histórico</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
         ${trocaPedido}
     </div>`;
 
@@ -601,7 +601,7 @@ function renderEditorNfErp(erp, el) {
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(pedido || '—')}</strong></div></div>
         <div class="nfe-chips">${badge('pendente', 'Só no relatório do ERP')} ${badge('pronto', 'ERP: ' + escRel(ROTULO_STATUS_ERP[erp.statusFluxo] || erp.statusFluxo || 'importada'))} ${badge('neutro', escRel(ROTULO_SITUACAO_NF[ctrl.situacao] || '—'))}</div>
         <div class="nfe-acoes">${pedido ? `<button type="button" class="central-status-toggle" onclick="abrirCentralPedido('${escRel(pedido)}')">Abrir pedido ${escRel(pedido)}</button>` : ''}
-            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button></div>
+            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(erp.id)}')">Cadastrar equipamento desta NF</button></div>
         ${troca}
     </div>`;
 

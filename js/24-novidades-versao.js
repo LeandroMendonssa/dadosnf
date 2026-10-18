@@ -13,6 +13,8 @@ const ACOES_NOVIDADE = {
     'controle-nfs': () => abrirControleNfs(),
     'historico-mudancas': () => switchToScreen('screen-historico-mudancas', 'Histórico de Mudanças'),
     'personalizacao': () => switchToScreen('screen-personalizacao', 'Personalização'),
+    'equipamentos': () => switchToScreen('screen-equipamentos', 'Equipamentos'),
+    'aprovacoes': () => switchToScreen('screen-aprovacoes', 'Aprovações de Acesso'),
     'pedido': arg => abrirCentralPedido(String(arg)),
     'nf-erp': arg => abrirEditorNf(String(arg))
 };

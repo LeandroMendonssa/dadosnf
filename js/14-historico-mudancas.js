@@ -10,7 +10,287 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.3.3', nome: 'Nomes da dock sem sobreposição e Personalização sem engasgos', status: 'atual',
+        numero: '2.7.1', nome: 'Fim da tela fantasma nas transições, efeitos de aba de volta e busca em Ajustes', status: 'atual',
+        novidades: [
+            'Corrigido o "fantasma" durante as transições: a caixa azul "Tela A" da pré-visualização aparecia por cima de outras telas. Ela agora só existe dentro da própria tela.',
+            'Entrar e voltar de submenus é só o deslizar do iPhone, sem nenhum esmaecer. Os efeitos Esmaecer, Deslizar, Subir e Zoom voltaram, mas valem apenas para a troca de aba (junto com Padrão e Instantâneo), e a duração continua escolhida por você.',
+            'Na troca de aba, a tela antiga fica inteira por baixo, sem esmaecer junto, para não misturar duas telas.',
+            'A cascata dos itens agora pega também os itens de dentro das listas e cartões, só os que aparecem na primeira tela.',
+            'Nova busca no topo de Ajustes: procura nas telas de Ajustes e em todas as opções da Personalização (tema, fonte, dock, animações, carregamento, logo etc.), ignora acentos e abre a opção já destacada.'
+        ],
+        implementado: [
+            'Pré-visualização: agora há dois botões, "Trocar de aba" (usa o efeito escolhido) e "Entrar e voltar" (deslizar do iPhone).',
+            'A velocidade das animações em "Off" desliga todas as animações de tela.',
+            'Busca: aceita várias palavras (todas precisam aparecer), mostra o caminho de cada resultado e abre o primeiro com Enter.'
+        ],
+        mudou: [
+            'Transição entre telas e Ajustes; dados e regras não mudaram.',
+            'Arquivo novo: js/29-busca-ajustes.js (precisa ficar na pasta js; o index.html já o carrega).',
+            'Arquivos alterados: index.html, style.css, js/02-layout-setup.js, js/14-historico-mudancas.js, js/28-transicoes-ios.js.'
+        ],
+        testar: [
+            'Trocar de aba pela Dock com cada efeito (Personalização > Animações e Transições): não deve aparecer outra tela misturada.',
+            'Entrar e voltar de submenus: só o deslizar do iPhone, sem esmaecer.',
+            'Ajustes > buscar "tema", "dock", "senha", "carregamento": tocar num resultado deve abrir a tela e destacar a opção.',
+            'Abrir telas como Ajustes e Controle de NFs e ver se a cascata aparece nos primeiros itens.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.7.0', nome: 'Transições do protótipo, carregamento em blocos, Dock sem engasgo e Arial', status: 'concluida',
+        novidades: [
+            'Entrar numa tela interna agora empurra a tela de baixo com recuo de 28% e escurecimento, com duração fixa, como no iPhone. Voltar faz o inverso, e dá para voltar arrastando da borda esquerda da tela.',
+            'A troca de aba desliza com leve zoom, e você escolhe a duração (120 a 700 ms) em Personalização > Animações e Transições.',
+            'Os primeiros itens de cada tela entram em cascata sutil.',
+            'Carregamento na primeira vez que abre uma tela: blocos cinza com onda de brilho no formato da tela, ou só o texto "Carregando…". A escolha e o botão de teste ficam em Animações e Transições.',
+            'Fonte padrão passou a ser Arial (as demais continuam disponíveis).',
+            'Dock: sem o engasgo ao arrastar até a ponta e soltar, ou ao tocar no primeiro e no último ícone.'
+        ],
+        implementado: [
+            'Transições: movimento do iOS (curva de mola) para entrar/voltar; escurecimento da tela de baixo; sombra na tela que desliza. Os estilos Deslizar, Subir, Zoom e Esmaecer foram retirados; ficam "iPhone (padrão)" e "Instantâneo". Com "Reduzir Movimento" no aparelho, vira uma dissolução curta.',
+            'Voltar pela borda: arrastar a partir de 22 px da borda esquerda acompanha o dedo e conclui ao passar de um terço da tela ou com um arrasto rápido; soltar antes cancela. Não vale nas telas de edição de anotação e de cotação.',
+            'Carregamento: só aparece quando a tela ainda está esperando a primeira resposta do Firebase e some assim que ela chega (no mínimo 0,35 s e no máximo 6 s). Quando os dados já estão na memória, a tela abre direto.',
+            'Dock: a pílula é posicionada separadamente da rolagem; a rolagem até a aba ativa só acontece uma vez por troca de aba e nunca durante o dedo, a inércia ou o elástico da ponta; ao encostar na dock rolável, a animação espera 110 ms para saber se é toque ou arrasto; barra e pílula passam a usar a GPU no encolher/expandir.',
+            'Fonte: nova opção "Arial (padrão)" para quem não tinha escolhido outra. Quem já escolheu uma fonte mantém a sua.'
+        ],
+        mudou: [
+            'Transição entre telas, carregamento, Dock e fonte padrão; dados e regras não mudaram.',
+            'Arquivo novo: js/28-transicoes-ios.js (precisa ficar na pasta js; o index.html já o carrega).',
+            'Arquivos alterados: index.html, style.css, js/01-nucleo-config-estado.js, js/02-layout-setup.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js e js/22-vidro-liquido.js.'
+        ],
+        testar: [
+            'Entrar e sair de submenus (Ajustes > Personalização > qualquer item): empurra com recuo e escurece. Teste também arrastar da borda esquerda, soltando antes da metade e depois da metade.',
+            'Trocar de aba pela Dock e mudar a duração em Animações e Transições para sentir a diferença.',
+            'Testar Carregamento (blocos e texto) e abrir uma tela pela primeira vez, como Controle de NFs, para ver o carregamento real.',
+            'Dock: arrastar até a ponta e soltar; tocar no primeiro e no último ícone; rolar a tela para recolher e voltar a expandir.',
+            'Se a borda esquerda atrapalhar o gesto de voltar do próprio navegador do iPhone, me avise.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.6.0', nome: 'Personalização em submenus, transições estilo iPhone e padronização visual', status: 'concluida',
+        novidades: [
+            'A Personalização virou um menu com 5 submenus: Aparência, Animações e Transições, Dock e Navegação, Menus e Barra Inferior e Logo da Instituição.',
+            'Novo efeito padrão de troca de tela, igual ao do iPhone: a tela nova empurra a antiga com paralaxe e a curva de mola do iOS, sem fade em cima do movimento. Voltar faz o movimento inverso.',
+            'O seletor de velocidade das animações agora tem o mesmo estilo do seletor de espessura do vidro.',
+            'O organizador de menus foi refeito: uma linha por destino, com interruptor "Na barra / Em Mais" e setas alinhados.',
+            'Equipamentos: sumiram as linhas coladas nas listas (Equipamentos e Setores).'
+        ],
+        implementado: [
+            'Transições: trocar de aba só esmaece a tela nova, rápido, por cima da antiga; entrar e voltar de telas internas usa o empurrar do iOS. Os estilos Deslizar, Subir (folha) e Zoom também ficaram sem o fade lento. Com "Reduzir Movimento" ligado no aparelho, vira uma dissolução curta, como no iOS.',
+            'Quem tinha a escolha antiga passa a usar o estilo iPhone; é só escolher outro em Animações e Transições para trocar.',
+            'Espaçamento padrão entre blocos (cartões e listas) em qualquer tela, para telas novas não nascerem coladas. A varredura nas 32 telas não achou mais nenhum separador colado.',
+            'A pré-visualização da transição não interfere mais no resto do app (ela mantinha uma tela "ativa" falsa).',
+            'Textos longos dos seletores da dock foram encurtados, com a explicação em uma dica logo abaixo.',
+            'Botões do módulo de Equipamentos não quebram mais o texto em duas linhas.'
+        ],
+        mudou: [
+            'Visual e navegação da Personalização, transição entre telas e espaçamento geral; dados e regras não mudaram.',
+            'Arquivos alterados: index.html, style.css, js/01-nucleo-config-estado.js, js/02-layout-setup.js, js/06-exportar-pdf.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js e js/26-equipamentos.js.'
+        ],
+        testar: [
+            'Ajustes > Personalização: abrir cada submenu e voltar pela seta; o título e a volta devem fazer sentido.',
+            'Navegar entre telas (entrar em Ajustes, voltar, trocar de aba): o movimento deve ser o do iPhone, sem fade lento. Teste também Animações e Transições > Testar Agora com cada estilo.',
+            'Menus e Barra Inferior: ligar/desligar "Na barra" e mexer nas setas; as linhas devem ficar alinhadas.',
+            'Equipamentos: conferir as abas Equipamentos e Setores sem linhas coladas.',
+            'Se ainda sentir lentidão ao trocar tema/fonte, me diga em qual opção exatamente.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' },
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.3', nome: 'Equipamentos: estoque principal passa a se chamar Almoxarifado', status: 'concluida',
+        novidades: [
+            'O estoque principal do módulo de Equipamentos agora se chama "Almoxarifado" (antes "Estoque TI").',
+            'Todo equipamento cadastrado, inclusive o que vem de uma NF, entra direto no Almoxarifado; só vai para outro setor se você escolher em "Local atual".'
+        ],
+        implementado: [
+            'Nome do estoque principal trocado no módulo (cadastro, movimentações, devoluções, relatórios e lista de setores).',
+            'Migração automática ao carregar: itens, histórico e lista de setores que tinham "Estoque TI" passam a mostrar "Almoxarifado". Os dados no Firebase são atualizados na próxima gravação.',
+            'O Almoxarifado continua fixo: não pode ser renomeado nem excluído, porque o módulo depende dele como estoque principal. O código/CDC dele pode ser editado.'
+        ],
+        mudou: [
+            'Só o módulo de Equipamentos mudou.',
+            'Arquivos alterados: js/14-historico-mudancas.js e js/26-equipamentos.js.'
+        ],
+        testar: [
+            'Abrir Equipamentos > Setores: o primeiro deve ser "Almoxarifado", e os aparelhos que estavam no estoque devem aparecer nele.',
+            'Cadastrar um equipamento (ou usar "Cadastrar equipamento desta NF"): o "Local atual" deve vir como Almoxarifado.',
+            'Abrir o histórico de um aparelho antigo: onde constava "Estoque TI" deve constar "Almoxarifado".'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.2', nome: 'Equipamentos: leitor de código de barras reforçado', status: 'concluida',
+        novidades: [
+            'O leitor de código de barras foi refeito para ler melhor em etiquetas: câmera em alta resolução, mais formatos de código, leitura de código invertido e quadro de mira na tela.',
+            'Novo botão "Tirar foto do código": se a câmera ao vivo não ler, a foto tirada pela câmera do aparelho (com foco automático) é lida em seguida.',
+            'Lanterna (quando o aparelho permite), dicas na tela se demorar a ler e vibração ao ler.'
+        ],
+        implementado: [
+            'Leitura ao vivo: pede vídeo em até 1920×1080 (antes ficava na resolução padrão, baixa para código de barras de etiqueta), lê a imagem inteira e um recorte central (mais pixels por barra) em quadros alternados e também tenta o código invertido. Formatos: Code 128, Code 39, Code 93, EAN-13, EAN-8, UPC-A, UPC-E, ITF, Codabar, QR, Data Matrix, PDF417 e Aztec, com modo "tentar mais".',
+            'iPhone/iPad usam sempre a biblioteca ZXing (o leitor nativo do navegador não existe no Safari); Android/Chrome usa o leitor nativo quando disponível e cai para o ZXing se falhar.',
+            'Foto do código: lê a foto inteira, o recorte central e a imagem girada 90°, normal e invertida.',
+            'Se a biblioteca não baixar de um endereço, tenta outro; se a câmera for bloqueada ou não existir, a janela explica o que fazer e o campo de digitar continua funcionando. A câmera é liberada ao fechar a janela.'
+        ],
+        mudou: [
+            'Só o leitor de código de barras mudou; o resto do módulo de Equipamentos segue igual.',
+            'Arquivos alterados: js/14-historico-mudancas.js e js/26-equipamentos.js.'
+        ],
+        testar: [
+            'No cadastro ou na movimentação, tocar no ícone do código de barras e apontar a câmera para a etiqueta (boa luz, afastar ou aproximar até ficar nítido). Deve ler e preencher o campo.',
+            'Se não ler, usar "Tirar foto do código" com a etiqueta bem enquadrada.',
+            'Se mesmo assim não ler, me diga o aparelho (iPhone ou Android) e o tipo de código da etiqueta (barras ou QR) e, se possível, mande uma foto da etiqueta.'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.1', nome: 'Equipamentos: avisos na própria tela e abertura mais segura', status: 'concluida',
+        novidades: [
+            'A tela Equipamentos agora mostra, no topo, uma faixa explicando qualquer problema (módulo não carregado, Firebase sem permissão ou erro de conexão), em vez de ficar em branco.'
+        ],
+        implementado: [
+            'Faixa de status dentro da tela Equipamentos: se os arquivos do módulo não carregaram, ela avisa quais conferir; se o Firebase negar a leitura ou a gravação, avisa que é preciso liberar as coleções "equipamentos" e "equipamentosConfig" nas regras; qualquer outro erro mostra o código.',
+            'A tela passa a montar sozinha quando fica ativa (não depende mais só do gancho no switchToScreen) e um erro ao montar vira aviso na tela.'
+        ],
+        mudou: [
+            'Nada muda no uso normal; só aparecem avisos mais claros quando algo está errado.',
+            'Arquivos alterados: index.html, js/14-historico-mudancas.js e js/27-equipamentos-ponte.js.'
+        ],
+        testar: [
+            'Abrir Mais, Equipamentos: a faixa de aviso do topo deve sumir sozinha quando tudo carrega bem.',
+            'Se a faixa continuar aparecendo, me diga o texto exato que ela mostra.'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.0', nome: 'Gestão de Equipamentos', status: 'concluida',
+        novidades: [
+            'Nova tela Equipamentos: cadastro de aparelhos (patrimônio, série, marca, modelo e NF), movimentação (troca, entrega nova, extravio, transferência, manutenção e baixa), setores/CDC e rastro de cada aparelho.',
+            'Leitura de código de barras pela câmera e exportação em planilha, PDF e TXT, com filtros por tipo, período e "só novidades".',
+            'Ligação com o Controle de NFs: o número da NF no equipamento abre a nota, e no Editor da NF há o botão "Cadastrar equipamento desta NF".',
+            'A tela aparece em Mais; se quiser na barra inferior, use Personalização, "Na barra".'
+        ],
+        implementado: [
+            'Módulo Equipamentos (js/26) isolado do restante do app: a interface tem o próprio visual e usa as cores do tema atual (claro, escuro e os demais).',
+            'Persistência no Firebase: coleção "equipamentos" (um documento por aparelho) e "equipamentosConfig/setores". Só grava o que mudou e nunca grava antes de carregar com sucesso, para uma falha de leitura não apagar os setores.',
+            'NFs: a lista de notas sugerida no cadastro junta as NFs com XML e as que vieram só do ERP (sem duplicar). Abrir uma NF leva ao Editor da NF; o Editor ganhou o botão "Cadastrar equipamento desta NF", que abre o cadastro já com número, data, fornecedor e valor.',
+            'Backup: o backup completo passa a incluir os equipamentos e os setores (se o Firebase ainda não liberar a leitura, o backup sai como antes, sem eles).',
+            'O termo de responsabilidade e o de extravio/perda são assinados no papel: o app deixou de gerar o popup de termo ao registrar a movimentação. A movimentação continua registrada e identificada como entrega, troca ou extravio.'
+        ],
+        mudou: [
+            'Nova entrada "Equipamentos" no menu (começa em "Mais"). Quem já personalizou a barra continua com a barra como está.',
+            'É preciso liberar nas regras do Firestore as coleções "equipamentos" e "equipamentosConfig" para quem usa o app; sem isso aparece o aviso "O Firebase não liberou as coleções de equipamentos".',
+            'Arquivos alterados: index.html, js/01-nucleo-config-estado.js, js/05-listeners-dados.js, js/07-login-conta-backup.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js, js/20-editor-nf.js, js/24-novidades-versao.js e os arquivos novos js/26-equipamentos.js e js/27-equipamentos-ponte.js.'
+        ],
+        testar: [
+            'Abrir Mais, Equipamentos (ou puxar para a barra em Personalização). A tela deve abrir nos temas claro e escuro, e as janelas aparecem por cima da dock.',
+            'Cadastrar um equipamento (pode deixar campos em branco; patrimônio ou série repetidos devem ser barrados). Recarregar o app e conferir que continua lá.',
+            'Digitar o número de uma NF no cadastro: devem aparecer notas reais (com XML e só ERP). Tocar no número da NF no equipamento e usar "Abrir no Controle de NFs".',
+            'Abrir uma NF no Editor da NF e usar "Cadastrar equipamento desta NF".',
+            'Fazer uma troca, uma entrega nova e um extravio: não deve abrir popup de termo; o rastro do aparelho deve registrar o evento.',
+            'Exportar a relação de um setor (planilha, PDF e TXT) e as entregas e trocas.',
+            'Testar a câmera do código de barras no iPhone (precisa de HTTPS; se negar a permissão, o campo de digitar continua funcionando).',
+            'Se aparecer o aviso do Firebase, me diga: é preciso liberar as coleções nas regras de segurança.'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.4.1', nome: 'Dock que só expande quando você vai trocar de aba e cartões com respiro', status: 'concluida',
+        novidades: [
+            'A dock agora fica recolhida (só os ícones) na maior parte do tempo e expande, com os nomes, quando você vai trocar de aba: ao tocar nela, ao trocar de tela ou ao rolar a página para cima com vontade. Sem interação, ela recolhe sozinha depois de alguns segundos; ao digitar num campo ela recolhe na hora.',
+            'Os cartões de Personalização e de Aprovações de Acesso não ficam mais colados uns nos outros.'
+        ],
+        implementado: [
+            'Dock: abre completa ao entrar no app e recolhe sozinha depois de cerca de 3 segundos sem mexer. Expande ao tocar na dock, ao trocar de tela e ao rolar para cima mais de uns 60 px seguidos; rolar para baixo ou digitar num campo de texto recolhe. Rolar um pouquinho para cima não expande. Campos de marcar, seletores e a barra de espessura da própria dock não contam como digitação.',
+            'A opção da Personalização foi renomeada para "Recolher a dock quando não estou trocando de aba" (padrão: sim). Com "Não", a dock fica sempre expandida, como antes. Continua respeitando "Reduzir Movimento" do aparelho.',
+            'Espaçamento de 14 px entre os cartões das telas Personalização e Aprovações de Acesso.'
+        ],
+        mudou: [
+            'Antes a dock só recolhia ao rolar para baixo e voltava ao rolar para cima; agora o padrão é recolhida, e ela expande por intenção (toque, troca de tela, rolagem para cima com vontade) e recolhe sozinha.',
+            'Arquivos alterados: index.html, style.css, js/14-historico-mudancas.js e js/22-vidro-liquido.js.'
+        ],
+        testar: [
+            'Abrir o app e não mexer: a dock deve começar completa e recolher sozinha em cerca de 3 segundos.',
+            'Tocar na dock ou trocar de aba: ela expande com os nomes e recolhe de novo sem interação.',
+            'Numa lista longa: rolar para baixo recolhe; rolar para cima com vontade expande; um pequeno vaivém não deve expandir.',
+            'Tocar num campo de texto para digitar: a dock recolhe na hora.',
+            'Em Personalização: "Recolher a dock quando não estou trocando de aba" = Não deixa a dock sempre expandida. Conferir o espaço entre os cartões e em Aprovações de Acesso.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' },
+            { rotulo: 'Aprovações de Acesso', acao: 'aprovacoes' }
+        ]
+    },
+    {
+        numero: '2.4.0', nome: 'Personalização por usuário e criação de contas dentro do app', status: 'concluida',
+        novidades: [
+            'A personalização agora é individual: tema, fonte, ícones, menus, dock e as demais opções valem só para a sua conta e acompanham você em qualquer aparelho. A logo da instituição continua sendo a mesma para todos.',
+            'Quem tem acesso especial cria contas de e-mail e senha direto em Aprovações de Acesso, sem abrir o Firebase. A pessoa já entra aprovada e você continua conectado.'
+        ],
+        implementado: [
+            'Personalização por usuário: as opções de aparência são gravadas em config/prefs_{id da conta}. O que já estava salvo antes vira o padrão de quem ainda não personalizou, então ninguém perde o visual atual. A logo (usada nos PDFs e nos futuros relatórios de equipamentos) continua no documento compartilhado.',
+            'Se as regras do Firebase não liberarem o documento pessoal, o app avisa uma vez e volta a gravar para todos, como era antes, sem perder nenhuma opção.',
+            'Ao sair da conta, a aparência da conta anterior não é herdada pela próxima que entrar.',
+            'Criar conta: em Aprovações de Acesso há um bloco com e-mail, nome opcional e senha temporária (com botão "Gerar senha"). A conta é criada numa instância separada do Firebase para você não ser desconectado, e fica registrada na lista de acessos como aprovada.',
+            'Revogar acesso agora vale também para contas de e-mail e senha criadas no app (antes só valia para Google e telefone). Contas antigas, que não estão na lista, continuam entrando normalmente, e as contas com acesso especial nunca são bloqueadas.'
+        ],
+        mudou: [
+            'Quem já personalizou o visual continua vendo o mesmo; a partir de agora cada mudança fica só na própria conta.',
+            'A conta nova entra com a senha temporária e pode trocá-la em Conta, Alterar Senha.',
+            'Arquivos alterados: index.html, js/05-listeners-dados.js, js/07-login-conta-backup.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js, js/24-novidades-versao.js e o arquivo novo js/25-contas-admin.js.'
+        ],
+        testar: [
+            'Em Personalização: mudar o tema e a fonte e recarregar o app; as escolhas devem continuar. Se aparecer o aviso "o Firebase não liberou a personalização individual", me avise (é preciso liberar a coleção config nas regras).',
+            'Entrar com a conta de teste: ela deve começar com o visual padrão e, ao mudar o tema lá, a sua conta principal não pode mudar (e vice-versa).',
+            'Em Aprovações de Acesso: criar uma conta de verdade (use "Gerar senha"), entrar com ela em outra janela ou aparelho e conferir que você continua conectado na conta principal.',
+            'Revogar essa conta nova em Aprovações de Acesso e tentar entrar de novo: deve avisar que o acesso foi revogado. Depois, aprovar de novo.',
+            'Conferir que a logo da instituição é a mesma nas duas contas.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' },
+            { rotulo: 'Aprovações de Acesso', acao: 'aprovacoes' }
+        ]
+    },
+    {
+        numero: '2.3.4', nome: 'Troca de tema, fonte e opções sem engasgo (de verdade)', status: 'concluida',
+        novidades: [
+            'Trocar tema, fonte, estilo de ícones, densidade e as opções da dock agora é bem mais leve: o app não trava mais no momento da troca.'
+        ],
+        implementado: [
+            'Causa real do engasgo: cerca de 360 elementos do app têm animação de cor. Ao trocar o tema (ou outra opção de aparência), todos começavam a animar ao mesmo tempo e o navegador refazia o cálculo de estilo a cada quadro durante a animação. Em teste isso custava cerca de 4 vezes mais do que o necessário.',
+            'Agora, no instante da troca, as animações de transição são suspensas por uma fração de segundo e voltam logo depois. A troca fica direta (sem o esmaecer lento de cores) e as animações normais do app, da dock e das telas continuam como antes.',
+            'A correção vale para qualquer mudança de aparência: tema, ícones, fonte, densidade, ícones das abas, transição de telas e todas as opções da dock. Não afeta o carregamento inicial.'
+        ],
+        mudou: [
+            'Ao trocar de tema, as cores passam para o novo tema na hora, sem o esmaecimento suave de antes. As outras animações do app não mudaram.',
+            'Arquivos alterados: style.css, js/02-layout-setup.js e js/14-historico-mudancas.js.'
+        ],
+        testar: [
+            'Em Personalização: trocar o tema várias vezes (claro, escuro, Oceano…). A troca deve ser imediata. Esse é o teste principal.',
+            'Trocar a fonte, o estilo de ícones, a densidade e o movimento da dock: nenhuma deve travar. Se alguma ainda travar, me diga qual.',
+            'Navegar entre as abas e abrir menus: as animações normais devem continuar iguais.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.3.3', nome: 'Nomes da dock sem sobreposição e Personalização sem engasgos', status: 'concluida',
         novidades: [
             'Os nomes das abas da dock (Entrada de NF, Controle de NFs) agora quebram em duas linhas dentro da própria aba e não invadem mais a vizinha.',
             'Personalização mais leve: trocar fonte, tema, movimento ou qualquer opção da dock não deve mais engasgar.'

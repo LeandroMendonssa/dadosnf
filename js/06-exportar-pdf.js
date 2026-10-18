@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (centralPedidoAtual) { abrirCentralPedido(centralPedidoAtual); return; }
         }
         const voltarPara = closeBtnBackScreen[activeId] || 'screen-settings';
-        const tituloVoltar = voltarPara === 'screen-mais' ? 'Mais' : ((menuDetails[voltarPara] && menuDetails[voltarPara].title) || 'Ajustes');
+        const tituloVoltar = voltarPara === 'screen-mais' ? 'Mais' : voltarPara === 'screen-personalizacao' ? 'Personalização' : ((menuDetails[voltarPara] && menuDetails[voltarPara].title) || 'Ajustes');
         switchToScreen(voltarPara, tituloVoltar);
     });
     
