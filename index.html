@@ -649,13 +649,14 @@
                         <label>Efeito ao trocar de aba</label>
                         <div class="transition-options" id="aba-efeito-options">
                             <button class="transition-option" data-value="padrao" onclick="escolherEfeitoAba('padrao')">Padrão (iPhone)</button>
+                            <button class="transition-option" data-value="empurrar" onclick="escolherEfeitoAba('empurrar')">Entrar e voltar</button>
                             <button class="transition-option" data-value="esmaecer" onclick="escolherEfeitoAba('esmaecer')">Esmaecer</button>
                             <button class="transition-option" data-value="deslizar" onclick="escolherEfeitoAba('deslizar')">Deslizar</button>
                             <button class="transition-option" data-value="subir" onclick="escolherEfeitoAba('subir')">Subir</button>
                             <button class="transition-option" data-value="zoom" onclick="escolherEfeitoAba('zoom')">Zoom</button>
-                            <button class="transition-option" data-value="nenhum" onclick="escolherEfeitoAba('nenhum')">Instantâneo</button>
+                            <button class="transition-option" data-value="nenhum" onclick="escolherEfeitoAba('nenhum')" style="grid-column: span 2;">Instantâneo</button>
                         </div>
-                        <div class="campo-dica">Vale só ao trocar de aba. Entrar e voltar de submenus sempre usa o deslizar do iPhone, fixo.</div>
+                        <div class="campo-dica">Vale só ao trocar de aba. "Entrar e voltar" usa o mesmo deslizar do iPhone dos submenus (para a direita ao ir a uma aba mais à direita, e o inverso ao voltar). Entrar e voltar de submenus é sempre o deslizar do iPhone, fixo.</div>
                     </div>
                     <div class="campo">
                         <label>Pré-visualizar</label>
@@ -668,6 +669,7 @@
                             <button class="actions-button" onclick="testarTransicaoTela('submenu')"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Entrar e voltar</button>
                         </div>
                     </div>
+                    <div class="campo"> <label for="cascata-select">Cascata dos itens</label> <select id="cascata-select" onchange="escolherCascata(this.value)"> <option value="sim">Ligada (padrão)</option> <option value="nao">Desligada</option> </select> <div class="campo-dica">Os primeiros itens de cada tela entram um após o outro. Desligue se achar cansativo.</div> </div>
                     <div class="pz-campo-sep"></div>
                     <div class="campo">
                         <label>Carregamento</label>
@@ -723,10 +725,9 @@
         <div class="xml-filtro-toggle" id="controle-abas">
           <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
           <button type="button" class="xml-filtro-btn" data-aba="arquivadas" onclick="alternarAbaControle('arquivadas')">Arquivadas <span class="controle-cont">0</span></button>
-          <button type="button" class="xml-filtro-btn" data-aba="diretas" onclick="alternarAbaControle('diretas')">Diretas <span class="controle-cont">0</span></button>
         </div>
         <div class="controle-topo"><button type="button" id="controle-btn-selecionar" class="link-discreto" onclick="alternarSelecaoControle()">Selecionar</button></div>
-        <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div>
+        <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><div class="ctl-selbtns"><button type="button" id="controle-sel-fin" class="action-chip" onclick="marcarSelecionadasEnviadas()" disabled>Enviada ao financeiro</button><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div></div>
         <div id="controle-lista" class="nota-list"></div>
       </div> <div class="app-screen" id="screen-anotacoes" style="">
                 <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>

@@ -1263,7 +1263,7 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
   body[data-theme]:not([data-dock="classico"]) .tab-item.active{ color:color-mix(in srgb, var(--accent-color) 78%, var(--text-dark)); }
   /* rótulos longos ("Entrada de NF", "Controle de NFs") quebram em até 2 linhas dentro da própria aba, sem invadir a vizinha */
   body[data-theme]:not([data-dock="classico"]) .tab-item{ font-size:10px; gap:2px; }
-  body[data-theme]:not([data-dock="classico"]) .tab-item > span:not(.icon-wrapper){ width:100%; max-height:22px; overflow:hidden; text-align:center; line-height:10.5px; white-space:normal; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; transition:max-height calc(var(--dock-dur) * .7) var(--dock-mov), opacity .2s ease; }
+  body[data-theme]:not([data-dock="classico"]) .tab-item > span:not(.icon-wrapper){ width:100%; max-height:22px; overflow:hidden; text-align:center; line-height:10.5px; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; transition:max-height calc(var(--dock-dur) * .7) var(--dock-mov), opacity .2s ease; }
   /* pílula de seleção: preenchimento fino e liso; só desliza, sem esticar e sem mola */
   body[data-theme]:not([data-dock="classico"]) .dock-pill{
     background:color-mix(in srgb, var(--text-dark) 13%, transparent);
@@ -1342,3 +1342,90 @@ body[data-theme="dark"], body[data-theme="wine"] { --shine: rgba(255,255,255,.08
 .ajustes-busca input { width: 100%; }
 @keyframes ajuste-destaque { 0% { box-shadow: 0 0 0 0 transparent; background-color: color-mix(in srgb, var(--accent-color) 16%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; background-color: transparent; } }
 .campo.ajuste-destaque { animation: ajuste-destaque 1.8s ease-out; border-radius: 12px; }
+
+/* ===== 2.7.2: dock com nomes inteiros; "Entrar e voltar" também na troca de aba ===== */
+@media (max-width: 480px) {
+  /* 2.7.4: largura FIXA e igual para todas as abas (nada muda de tamanho ao recolher/expandir);
+     nomes de uma palavra só ganham fonte um pouco menor para caber inteiros */
+  .tab-bar .tab-item, .tab-bar .tab-item.uma-palavra { width: 60px; min-width: 60px; padding-left: 1px; padding-right: 1px; }
+  body[data-theme]:not([data-dock="classico"]) .tab-item.uma-palavra > span:not(.icon-wrapper) { font-size: 9px; letter-spacing: -.2px; }
+}
+.tab-item.uma-palavra > span:not(.icon-wrapper) { white-space: nowrap !important; }
+.tab-item:not(.uma-palavra) > span:not(.icon-wrapper) { white-space: normal; }
+body[data-transition="ios"][data-aba-efeito="empurrar"] .t-ent.t-troca { animation-name: t-dir-in; box-shadow: -10px 0 30px rgba(0,0,0,.14); }
+body[data-transition="ios"][data-aba-efeito="empurrar"] .saindo.t-troca { animation-name: t-dir-out; }
+body[data-transition="ios"][data-aba-efeito="empurrar"] .t-ent.t-troca.dir-neg { animation-name: t-esq-in; box-shadow: none; }
+body[data-transition="ios"][data-aba-efeito="empurrar"] .saindo.t-troca.dir-neg { animation-name: t-esq-out; z-index: 3; box-shadow: -10px 0 30px rgba(0,0,0,.14); }
+
+/* ===== 2.8.0: Editor da NF — hierarquia, centralização e espaçamento ===== */
+.nfe-titulo{font-size:22px;font-weight:700;line-height:1.2;display:block;word-break:break-word}
+.nfe-sub{font-size:13px;color:var(--text-light);margin-top:4px}
+.nfe-forn{margin-top:2px;font-weight:500;font-size:12px;color:var(--text-light)}
+.nfe-grade{text-align:center}
+.nfe-grade > div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.nfe-grade .nfe-rot{margin-bottom:0}
+.nfe-topo{margin-bottom:12px}
+.nfe-acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.nfe-acoes .central-status-toggle,.nfe-acoes .action-chip{width:100%;min-height:40px;justify-content:center;text-align:center;white-space:normal;line-height:1.2;margin:0}
+#screen-nf-editor .card{margin-bottom:12px}
+#screen-nf-editor .xml-aba-pane > .card:last-child{margin-bottom:0}
+#screen-nf-editor .xml-abas{display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 0 12px}
+#screen-nf-editor .xml-abas::-webkit-scrollbar{display:none}
+#screen-nf-editor .xml-abas .xml-filtro-btn{flex:1 0 auto;white-space:nowrap;padding:0 14px}
+
+/* ===== 2.9.0: Controle de NFs — cartão novo, meses recolhíveis ===== */
+.ctl-mes{margin:0 0 6px}
+.ctl-mes-h{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin:14px 0 8px;padding:2px 4px;border:0;background:transparent;color:var(--text-dark);font:inherit;text-align:left;cursor:pointer}
+.ctl-mes-h b{font-size:16px}
+.ctl-mes-h span{font-size:13px;color:var(--text-light);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.ctl-chev{width:8px;height:8px;border-right:2px solid var(--text-light);border-bottom:2px solid var(--text-light);transform:rotate(-45deg);transition:transform .3s var(--ease-out);flex:none}
+.ctl-mes.aberto .ctl-chev{transform:rotate(45deg)}
+.ctl-mes .central-colapso-inner{padding-bottom:2px}
+.ctl-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:18px;padding:16px;margin-bottom:12px}
+.ctl-card.selecionavel{cursor:pointer}
+.ctl-card.sel{border-color:var(--accent-color);background:color-mix(in srgb,var(--accent-color) 7%,var(--bg-secondary))}
+.ctl-top{display:flex;align-items:center;gap:12px}
+.ctl-av{flex:none;position:relative;width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--accent-color) 80%,#fff);color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center}
+.ctl-card.sel .ctl-av:after{content:"✓";position:absolute;inset:0;border-radius:50%;background:var(--accent-color);display:flex;align-items:center;justify-content:center;font-size:20px}
+.ctl-nm{flex:1;min-width:0}
+.ctl-nm b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:17px;line-height:1.2;color:var(--text-dark)}
+.ctl-nm small{display:block;margin-top:2px;font-size:13px;color:var(--text-light)}
+.ctl-st{flex:none;font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;background:color-mix(in srgb,var(--accent-color) 13%,transparent);color:var(--accent-text);text-align:center}
+.ctl-st.m{background:var(--bg-tertiary);color:var(--text-light)}
+.ctl-st.ok{background:color-mix(in srgb,var(--button-success) 18%,transparent);color:var(--button-success)}
+.ctl-dd{display:grid;grid-template-columns:repeat(3,1fr);margin-top:14px;padding-bottom:13px;border-bottom:1px solid var(--border-color)}
+.ctl-dd>div{padding:0 10px;border-left:1px solid var(--border-color);min-width:0}
+.ctl-dd>div:first-child{padding-left:0;border-left:0}
+.ctl-dd span{display:block;font-size:12px;color:var(--text-light)}
+.ctl-dd strong{display:block;margin-top:2px;font-size:15px;color:var(--text-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctl-vl{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+.ctl-vl b{font-size:24px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text-dark)}
+.ctl-pd{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--danger) 11%,transparent);color:var(--danger);white-space:nowrap}
+.ctl-pd i{width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;font-style:normal;font-size:12px;line-height:18px;text-align:center}
+.ctl-pd.ok{background:color-mix(in srgb,var(--button-success) 14%,transparent);color:var(--button-success)}
+.ctl-pd.ok i{background:var(--button-success)}
+.ctl-inf{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--bg-tertiary);font-size:13px;line-height:1.35;color:var(--text-dark)}
+.ctl-bar{display:grid;margin-top:12px;padding-top:6px;border-top:1px solid var(--border-color)}
+.ctl-bar button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 2px 4px;border:0;background:transparent;color:var(--accent-text);font:inherit;font-size:12px;font-weight:600;line-height:1.15;text-align:center;cursor:pointer}
+.ctl-bar button:active{opacity:.55}
+.ctl-bar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ctl-selbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* ===== 2.9.0: Gerenciar NF e Cotações por fornecedor no padrão de cartão ===== */
+#lista-notas-pendentes .nota-item{border-radius:18px;padding:16px;margin-bottom:12px}
+#lista-notas-pendentes .nota-item .ctl-bar{margin-top:12px}
+.ctl-dd strong.atr{color:var(--danger)}
+.ctl-dd strong.pro{color:var(--warning-text,var(--warning))}
+.ctl-st.err{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger)}
+/* cotações por fornecedor */
+.central-fornecedor{border-radius:18px}
+.central-fornecedor::before{display:none}
+.central-fornecedor-header{align-items:center;padding:16px 16px 0}
+.central-fornecedor-header>i{margin-top:0}
+.central-fornecedor-header .ctl-av{flex:none}
+.cf-dd{margin:14px 16px 0}
+.cf-inf{margin:12px 16px 0}
+.central-fornecedor-acoes{padding:12px 16px 14px;margin-top:12px}
+.central-fornecedor-body{padding:12px 16px 16px}
+.ctl-vl b{white-space:nowrap}
+.ctl-vl .xml-item-badge{white-space:normal;text-align:center;max-width:56%;line-height:1.25}
