@@ -426,6 +426,25 @@ function carregarMaisFornecedores() {
 // reimportação do relatório nunca mais sobrescreve o apelido (ver
 // salvarCadastroFornecedoresSpData).
 let fornecedorEditando = new Set();
+// 2.9.2: cartões de fornecedor recolhidos por padrão; só guarda quais estão abertos.
+let fornecedoresCardAbertos = new Set();
+function toggleFornecedorCard(chave, el) {
+    const abrir = !fornecedoresCardAbertos.has(chave);
+    if (abrir) fornecedoresCardAbertos.add(chave); else fornecedoresCardAbertos.delete(chave);
+    const card = el && el.closest ? el.closest('.frn-card') : null;
+    if (card) card.classList.toggle('aberto', abrir);
+}
+function cartaoFornecedorHTML(chave, nome, subHTML, chipHTML, corpoHTML, aberto) {
+    return `<div class="ctl-card frn-card${aberto ? ' aberto' : ''}">
+        <div class="frn-h" onclick="toggleFornecedorCard('${chave}', this)">
+            <div class="ctl-av">${iniciaisControle(nome)}</div>
+            <div class="ctl-nm"><b>${nome}</b>${subHTML ? `<small>${subHTML}</small>` : ''}</div>
+            ${chipHTML}
+            <span class="ctl-chev"></span>
+        </div>
+        <div class="central-colapso"><div class="central-colapso-inner"><div class="frn-corpo">${corpoHTML}</div></div></div>
+    </div>`;
+}
 function toggleEditarApelidoFornecedor(chave) {
     if (fornecedorEditando.has(chave)) fornecedorEditando.delete(chave);
     else fornecedorEditando.add(chave);
@@ -519,6 +538,67 @@ async function vincularFornecedorLegadoAoCadastro(nomeLegado, idFornecedor) {
     }
 }
 
+// 2.9.5: busca e sugestões para o "Vincular" (antes era uma lista com todos os fornecedores).
+const PALAVRAS_FRACAS_FORNECEDOR = new Set(['ltda','epp','eireli','sa','me','mei','cia','de','da','do','das','dos','e','comercio','comercial','industria','ind','distribuidora','distribuicao','servicos','produtos','materiais','hospitalares','hospitalar']);
+function nomeNucleoFornecedor(nome) {
+    return tokensSugestaoNome(nome).filter(t => !PALAVRAS_FRACAS_FORNECEDOR.has(t)).join(' ');
+}
+function opcaoVinculoFornecedor(d, motivo) {
+    const cnpj = (d.cnpjs && d.cnpjs[0]) ? formatarCnpjExibicao(d.cnpjs[0].cnpj) + (d.cnpjs.length > 1 ? ` (+${d.cnpjs.length - 1})` : '') : 'sem CNPJ';
+    const ap = apelidoFornecedorDoc(d).nome;
+    return { valor: d.id, titulo: d.nomeReal || ap || d.id, sub: [motivo, ap && ap !== d.nomeReal ? ap : '', cnpj, d.codigo ? 'cód. ' + d.codigo : ''].filter(Boolean).join(' · ') };
+}
+function sugestoesVinculoFornecedor(docsOrigem, nomeOrigem, idsExcluir) {
+    const nucleo = nomeNucleoFornecedor(nomeOrigem);
+    const raizes = new Set();
+    docsOrigem.forEach(d => (d.cnpjs || []).forEach(c => { if (c.cnpj && c.cnpj.length >= 8) raizes.add(c.cnpj.slice(0, 8)); }));
+    const out = [];
+    listaFornecedoresSpData.forEach(d => {
+        if (idsExcluir.has(d.id)) return;
+        const mesmaRaiz = (d.cnpjs || []).some(c => c.cnpj && raizes.has(c.cnpj.slice(0, 8)));
+        const p = nucleo ? Math.max(pontuarParecidoNome(nucleo, nomeNucleoFornecedor(d.nomeReal)), pontuarParecidoNome(nucleo, nomeNucleoFornecedor(apelidoFornecedorDoc(d).nome))) : 0;
+        if (mesmaRaiz) out.push({ d, score: 2 + p, motivo: 'mesmo CNPJ base (matriz/filial)' });
+        else if (p >= 0.6) out.push({ d, score: p, motivo: 'nome parecido' });
+    });
+    return out.sort((a, b) => b.score - a.score).slice(0, 5).map(x => opcaoVinculoFornecedor(x.d, x.motivo));
+}
+function buscarFornecedoresVinculo(texto, idsExcluir) {
+    const t = sbNorm(texto).trim();
+    if (!t) return [];
+    const dig = t.replace(/\D/g, '');
+    const tokens = t.split(/\s+/).filter(Boolean);
+    return listaFornecedoresSpData.filter(d => {
+        if (idsExcluir.has(d.id)) return false;
+        const base = sbNorm([d.nomeReal, d.nomeExibido, d.codigo].join(' '));
+        if (tokens.every(tk => base.includes(tk))) return true;
+        return dig.length >= 4 && (d.cnpjs || []).some(c => (c.cnpj || '').includes(dig));
+    }).slice(0, 60).map(d => opcaoVinculoFornecedor(d));
+}
+function seletorVinculoFornecedorHTML(chave, docsOrigem, nomeOrigem, idsExcluir, aoEscolher) {
+    return htmlSeletorBusca('vinc-' + chave, {
+        placeholder: 'Buscar por nome ou CNPJ…', minimo: 2, grupoSugestoes: 'Sugestões', vazio: 'Nenhum fornecedor encontrado. Digite parte do nome ou do CNPJ.',
+        sugestoes: () => sugestoesVinculoFornecedor(docsOrigem, nomeOrigem, idsExcluir),
+        fonte: txt => buscarFornecedoresVinculo(txt, idsExcluir),
+        aoEscolher
+    });
+}
+function confirmarVinculoEntidade(idPrincipal, idEscolhido, nomeEscolhido, nomeOrigem) {
+    showConfirmModal({
+        title: 'Vincular fornecedores',
+        message: `Vincular "${nomeEscolhido}" e "${nomeOrigem}" como o mesmo fornecedor? Nenhum CNPJ é apagado ou movido, e o apelido passa a valer para os dois.`,
+        confirmText: 'Vincular', confirmClass: 'success',
+        onConfirm: () => vincularEntidadesFornecedor(idPrincipal, idEscolhido)
+    });
+}
+function confirmarVinculoLegado(nomeLegado, idEscolhido, nomeEscolhido) {
+    showConfirmModal({
+        title: 'Vincular fornecedor',
+        message: `Vincular o cadastro simples "${nomeLegado}" ao fornecedor "${nomeEscolhido}"? Não apaga o registro simples.`,
+        confirmText: 'Vincular', confirmClass: 'success',
+        onConfirm: () => vincularFornecedorLegadoAoCadastro(nomeLegado, idEscolhido)
+    });
+}
+
 // Vincula dois fornecedores com CNPJ já cadastrados como sendo a MESMA
 // entidade/empresa (ex.: matriz e filial, cada uma com seu próprio CNPJ).
 // Nunca é automático — só acontece quando o usuário escolhe explicitamente.
@@ -609,6 +689,18 @@ async function garantirFornecedorPorCnpjXml(cnpj, razaoSocialXml) {
             origemCadastro: 'xml',
             atualizadoEm: agora
         }, { merge: true });
+        // 2.9.5: se já existe fornecedor cadastrado com a mesma raiz de CNPJ (8 primeiros dígitos = mesma empresa: matriz/filial),
+        // vincula automaticamente — o apelido já configurado passa a valer para este CNPJ novo.
+        const irmaos = listaFornecedoresSpData.filter(f => f.id !== 'xml-' + cnpj && (f.cnpjs || []).some(c => mesmaRaizCnpj(c.cnpj, cnpj)));
+        if (irmaos.length) {
+            const batch = firestore.batch();
+            irmaos.forEach(f => {
+                batch.update(fornecedoresSpDataCollection.doc('xml-' + cnpj), { entidadesRelacionadas: firebase.firestore.FieldValue.arrayUnion(f.id) });
+                batch.update(fornecedoresSpDataCollection.doc(f.id), { entidadesRelacionadas: firebase.firestore.FieldValue.arrayUnion('xml-' + cnpj) });
+            });
+            await batch.commit();
+            toast(`✓ Fornecedor novo vinculado automaticamente a "${irmaos[0].nomeReal}" (mesmo CNPJ base).`);
+        }
     } catch (e) {
         // Não interrompe o salvamento da NF por causa disso — só loga.
         console.error('Erro ao cadastrar fornecedor automaticamente a partir do XML:', e);
@@ -659,16 +751,13 @@ function renderListaFornecedoresUnificada() {
 
     container.innerHTML = visiveis.map(f => {
         if (f.origem === 'legado') {
-            const vincularHTML = `<div class="central-spdata-busca" style="margin-top:6px;" onclick="event.stopPropagation()">
-                <label class="txt-aux">É o mesmo fornecedor que um já cadastrado com CNPJ? Vincule aqui (não apaga este registro):</label>
-                <select class="form-field" id="vincular-select-${f.chave}"><option value="">Selecione o fornecedor cadastrado...</option>${opcoesLegadoHTML}</select>
-                <button type="button" class="central-status-toggle" onclick="vincularFornecedorLegadoSelecionado('${f.chave}', '${escRel(f.nomeReal)}')">Vincular</button>
+            const vincularHTML = `<div class="central-spdata-busca" onclick="event.stopPropagation()">
+                <label class="txt-aux">Mesmo fornecedor de um já cadastrado com CNPJ? Busque e vincule (não apaga este registro):</label>
+                ${seletorVinculoFornecedorHTML(f.chave, [], f.nomeReal, new Set(), (id, op) => confirmarVinculoLegado(f.nomeReal, id, op.titulo))}
             </div>`;
-            return `<div class="nota-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:4px;">
-                <div class="nota-info">${f.nomeReal} <span class="txt-aux">(cadastro simples)</span></div>
-                <div class="nota-detalhes"><em>Cadastro simples, sem código/CNPJ — importe o relatório oficial de fornecedores pra identificação automática por CNPJ.</em></div>
-                ${vincularHTML}
-            </div>`;
+            return cartaoFornecedorHTML(f.chave, f.nomeReal, 'Cadastro simples, sem CNPJ', '<span class="ctl-st m">Sem CNPJ</span>',
+                `<div class="frn-txt">Importe o relatório oficial de fornecedores para identificar por CNPJ.</div>${vincularHTML}`,
+                fornecedoresCardAbertos.has(f.chave));
         }
 
         // Fornecedor com CNPJ (origem spdata/xml) — pode ter mais de um
@@ -686,16 +775,17 @@ function renderListaFornecedoresUnificada() {
         // pré-seleção/financeiro. Opera sobre todos os CNPJs do grupo.
         const bloqueado = f.cnpjs.length > 0 && f.cnpjs.some(c => fornecedoresIgnoradosCnpj.has(c.cnpj));
         const bloqueioHTML = f.cnpjs.length > 0
-            ? `<div class="nota-detalhes">${bloqueado ? '🔒 Bloqueado — NFs do ERP vão direto pro Histórico' : 'NFs do ERP são tratadas normalmente'} <button type="button" class="central-status-toggle" onclick="alternarBloqueioFornecedorCnpj('${f.chave}')">${bloqueado ? 'Desbloquear' : 'Bloquear do financeiro'}</button></div>`
+            ? `<div class="frn-lin"><span>${bloqueado ? '🔒 Bloqueado: NFs do ERP vão direto pro Histórico' : 'NFs do ERP tratadas normalmente'}</span><button type="button" class="central-status-toggle" onclick="alternarBloqueioFornecedorCnpj('${f.chave}')">${bloqueado ? 'Desbloquear' : 'Bloquear do financeiro'}</button></div>`
             : '';
 
         const subDocsHTML = f.docs.map(doc => {
             const chaveDoc = 'sp:' + doc.id;
             const cnpjsDoc = doc.cnpjs || [];
             const cnpjsHTML = cnpjsDoc.length
-                ? cnpjsDoc.map(c => formatarCnpjExibicao(c.cnpj)).join('<br>')
-                : '<em>Sem CNPJ cadastrado — associações por este código ficam pendentes.</em>';
+                ? cnpjsDoc.map(c => formatarCnpjExibicao(c.cnpj)).join(' · ')
+                : '<em>Sem CNPJ cadastrado: associações por este código ficam pendentes.</em>';
             const editando = fornecedorEditando.has(chaveDoc);
+            const apelidoEf = apelidoFornecedorDoc(doc);
             const edicaoHTML = editando
                 ? `<div class="central-spdata-busca" onclick="event.stopPropagation()">
                     <label class="txt-aux">Razão social</label>
@@ -707,27 +797,24 @@ function renderListaFornecedoresUnificada() {
                     <input type="text" class="form-field" id="novo-cnpj-input-${chaveDoc}" placeholder="Só números">
                     <button type="button" class="central-status-toggle" onclick="adicionarCnpjFornecedorManual('${doc.id}')">+ Adicionar CNPJ</button>
                 </div>`
-                : `<div class="nota-detalhes">Nome no app: ${doc.nomeExibido || '<em>(usa a razão social)</em>'}${doc.apelidoEditadoManualmente ? ' <span class="badge-excecao">editado</span>' : ''} <button type="button" class="central-status-toggle" onclick="toggleEditarApelidoFornecedor('${chaveDoc}')">Editar</button></div>`;
-            return `<div style="padding:8px 0;${f.docs.length > 1 ? 'border-top:1px solid var(--border-color);' : ''}">
-                <div class="nota-detalhes"><strong>${doc.codigo ? doc.codigo + ' — ' : (doc.origemCadastro === 'xml' ? 'Identificado por XML — ' : '')}CNPJ(s): ${cnpjsDoc.length}</strong><br>${cnpjsHTML}</div>
+                : `<div class="frn-lin"><span>Nome no app: <b>${apelidoEf.nome || '<em>(usa a razão social)</em>'}</b>${apelidoEf.herdado ? ' <span class="txt-aux">(do grupo)</span>' : ''}${doc.apelidoEditadoManualmente ? ' <span class="badge-excecao">editado</span>' : ''}</span><button type="button" class="central-status-toggle" onclick="toggleEditarApelidoFornecedor('${chaveDoc}')">Editar</button></div>`;
+            return `<div class="frn-doc">
+                <div class="frn-txt"><strong>${doc.codigo ? doc.codigo + ' · ' : (doc.origemCadastro === 'xml' ? 'Identificado por XML · ' : '')}CNPJ: </strong>${cnpjsHTML}</div>
                 ${edicaoHTML}
             </div>`;
         }).join('');
 
-        const aliasesHTML = f.aliasesLegado.length ? `<div class="nota-detalhes">Também conhecido como: ${f.aliasesLegado.map(escRel).join(', ')}</div>` : '';
-        const vincularEntidadeHTML = `<div class="central-spdata-busca" style="margin-top:6px;" onclick="event.stopPropagation()">
-            <label class="txt-aux">É a mesma empresa que outro CNPJ já cadastrado (matriz/filial/CD)? Vincule aqui (nenhum CNPJ é apagado ou movido):</label>
-            <select class="form-field" id="vincular-entidade-select-${f.chave}"><option value="">Selecione outro fornecedor cadastrado...</option>${opcoesVincularEntidadeHTML}</select>
-            <button type="button" class="central-status-toggle" onclick="vincularEntidadeSelecionada('${f.chave}', '${principalId}')">Vincular</button>
+        const aliasesHTML = f.aliasesLegado.length ? `<div class="frn-txt">Também conhecido como: ${f.aliasesLegado.map(escRel).join(', ')}</div>` : '';
+        const vincularEntidadeHTML = `<div class="central-spdata-busca" onclick="event.stopPropagation()">
+            <label class="txt-aux">Mesma empresa de outro CNPJ (matriz/filial/CD)? Busque e vincule (nenhum CNPJ é apagado):</label>
+            ${seletorVinculoFornecedorHTML(f.chave, f.docs, f.nomeReal, idsDoGrupo, (id, op) => confirmarVinculoEntidade(principalId, id, op.titulo, f.nomeReal))}
         </div>`;
 
-        return `<div class="nota-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:4px;">
-            <div class="nota-info">${f.nomeReal}${f.docs.length > 1 ? ` <span class="txt-aux">(${f.docs.length} CNPJs vinculados)</span>` : ''}</div>
-            ${bloqueioHTML}
-            ${subDocsHTML}
-            ${aliasesHTML}
-            ${vincularEntidadeHTML}
-        </div>`;
+        const cnpjPrincipal = f.cnpjs.length ? 'CNPJ ' + formatarCnpjExibicao(f.cnpjs[0].cnpj) + (f.cnpjs.length > 1 ? ` · +${f.cnpjs.length - 1}` : '') : 'Sem CNPJ';
+        const chip = bloqueado ? '<span class="ctl-st err">Bloqueado</span>' : '';
+        const abertoCard = fornecedoresCardAbertos.has(f.chave) || f.docs.some(d => fornecedorEditando.has('sp:' + d.id));
+        return cartaoFornecedorHTML(f.chave, f.nomeReal, cnpjPrincipal, chip,
+            `${bloqueioHTML}${subDocsHTML}${aliasesHTML}${vincularEntidadeHTML}`, abertoCard);
     }).join('');
 
     if (lista.length > visiveis.length) {

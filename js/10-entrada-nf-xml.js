@@ -381,7 +381,7 @@ function validarFornecedorSpData(cnpjEmit) {
     const doc = docs[0];
     return {
         encontrado: true, ambiguo: false,
-        codigo: doc.codigo, nomeReal: doc.nomeReal, nomeExibido: doc.nomeExibido,
+        codigo: doc.codigo, nomeReal: doc.nomeReal, nomeExibido: apelidoFornecedorDoc(doc).nome || doc.nomeExibido,
         cnpjsRelacionados: doc.cnpjs.map(c => c.cnpj)
     };
 }
@@ -1009,7 +1009,7 @@ function consultarAssociacoesConhecidasParaXml(cnpjEmit, codigoFornecedor) {
     return {
         cnpjConsultado: cnpjEmit,
         codigoFornecedor,
-        fornecedorNome: docFornecedor ? (docFornecedor.nomeExibido || docFornecedor.nomeReal) : null,
+        fornecedorNome: docFornecedor ? (apelidoFornecedorDoc(docFornecedor).nome || docFornecedor.nomeReal) : null,
         cnpjsConsiderados,
         temAssociacaoConhecida: possibilidades.length > 0,
         possibilidades,

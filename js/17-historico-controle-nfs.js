@@ -77,7 +77,7 @@ function montarControleNfs() {
         const numeroNf = (nf && nf.nf) || (erp && erp.nf) || ch;
         const cnpj = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
         const docForn = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
-        const nomeFornecedor = nomeTextoSeguro(docForn ? (docForn.nomeExibido || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || ''));
+        const nomeFornecedor = nomeTextoSeguro(docForn ? (apelidoFornecedorDoc(docForn).nome || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || ''));
         let dataISO = null;
         if (erp && erp.data) dataISO = converterDataBRparaISO(erp.data);
         if (!dataISO && nf && nf.emissao) dataISO = nf.emissao.slice(0, 10);
@@ -621,7 +621,7 @@ function montarHistoricoNfs() {
         const cnpjFornecedor = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
         const nomeFornecedorBruto = (nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '';
         const docFornecedor = cnpjFornecedor ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpjFornecedor)) : null;
-        const nomeFornecedor = docFornecedor ? (docFornecedor.nomeExibido || docFornecedor.nomeReal) : nomeFornecedorBruto;
+        const nomeFornecedor = docFornecedor ? (apelidoFornecedorDoc(docFornecedor).nome || docFornecedor.nomeReal) : nomeFornecedorBruto;
         const pedido = (nf && nf.pedido) || (erp && erp.vinculo && erp.vinculo.status === 'confirmado' && erp.vinculo.pedido) || null;
         const cotacao = pedido ? listaCotacoes.find(c => c.pedido === pedido) : null;
         const anotacao = pedido ? listaAnotacoes.find(a => a.pedido === pedido) : null;

@@ -853,7 +853,14 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     }).join('');
     const botoesNf = e.nfsApp.map(n => `<button type="button" class="action-chip edit-chip" onclick="abrirNfDaDivergencia('${pedido}', '${escRel(n.nf)}')">Abrir NF ${escRel(n.nf)}</button>`).join(' ');
     const origemLinha = linhas.length && /^(Calculado|Marcado|Parcial)/.test(linhas[0]) ? linhas.shift() : '';
+    // 2.9.3: ações em formato de dados (ícone + rótulo + função) para a barra de ações do cartão.
+    const acoes = e.nfsApp.map(n => ({ i: 'dir', t: `Abrir NF ${n.nf}`, fn: `abrirNfDaDivergencia('${pedido}', '${escRel(n.nf)}')` }));
+    acoes.push(acaoAssociarNf(pedido, fornecedor.cnpj));
+    if (e.manual) acoes.push({ i: 'reab', t: 'Desfazer marca manual', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
+    else if (e.estadoAuto === 'parcial') acoes.push({ i: 'fin', t: 'Marcar parcial resolvida', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true, 'parcial_resolvida')` });
+    else if (e.estadoAuto !== 'completa') acoes.push({ i: 'fin', t: 'Marcar como já chegou', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` });
     return {
+        acoes,
         badge: `<span class="xml-item-badge ${r.classe}">${r.texto}</span>`,
         botoes: [botoes, botoesNf].filter(Boolean).join(' '),
         curta: origemLinha,
@@ -1044,6 +1051,11 @@ function htmlBotaoAssociarNf(pedido, cnpj) {
     const aberto = centralAssociarNfAberto.has(cnpj);
     const vinculadas = entradasErpDoFornecedorCentral(cnpj).filter(e => pedidoDoErpConfirmado(e) === String(pedido));
     return `<button type="button" class="action-chip edit-chip" onclick="toggleAssociarNfCentral('${cnpj}')">${aberto ? 'Fechar' : (vinculadas.length ? 'Associar outra NF do histórico' : 'Associar NF do histórico')}</button>`;
+}
+function acaoAssociarNf(pedido, cnpj) {
+    const aberto = centralAssociarNfAberto.has(cnpj);
+    const vinculadas = entradasErpDoFornecedorCentral(cnpj).filter(e => pedidoDoErpConfirmado(e) === String(pedido));
+    return { i: 'rel', t: aberto ? 'Fechar' : (vinculadas.length ? 'Associar outra NF' : 'Associar NF'), fn: `toggleAssociarNfCentral('${cnpj}')` };
 }
 function htmlPainelAssociarNf(pedido, cnpj) {
     if (!centralAssociarNfAberto.has(cnpj)) return '';

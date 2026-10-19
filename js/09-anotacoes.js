@@ -316,12 +316,10 @@ function renderCentralPedidoCompleto(pedido) {
             const entrega = calcularEntregaFornecedorPedido(pedido, f, compForn);
             // 2.1.3: botões (chegou / abrir NF / associar NF) ficam FORA da parte que expande, sempre visíveis no card.
             const dadosEnt = dadosEntregaFornecedor(pedido, f, entrega);
-            const botoesCard = [dadosEnt ? dadosEnt.botoes : '', htmlBotaoAssociarNf(pedido, f.cnpj)].filter(Boolean).join(' ');
-            const acoesHTML = `<div class="central-fornecedor-acoes">
-                ${dadosEnt ? `<div class="cf-status">${dadosEnt.badge}${dadosEnt.curta ? `<span class="cf-status-txt">${dadosEnt.curta}</span>` : ''}</div>` : ''}
-                <div class="cf-botoes">${botoesCard}</div>
-                ${htmlPainelAssociarNf(pedido, f.cnpj)}
-            </div>`;
+            // 2.9.3: fechado, o cartão mostra só o cabeçalho e a barra de ações; faixa de entrega e números ficam no topo da parte que expande.
+            const acoesLista = dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)];
+            const acoesHTML = `<div class="ctl-bar cf-bar">${acoesLista.map(a => `<button type="button" onclick="event.stopPropagation(); ${a.fn}">${ICONES_CTRL[a.i] || ''}<span>${a.t}</span></button>`).join('')}</div>
+                ${htmlPainelAssociarNf(pedido, f.cnpj)}`;
             const detalhesEntregaHTML = ((dadosEnt && dadosEnt.detalhes) || '') + htmlVinculadasNf(pedido, f.cnpj);
 
             // Fase 27: cada divergência da auditoria vai pra linha do PRIMEIRO
@@ -374,6 +372,7 @@ function renderCentralPedidoCompleto(pedido) {
             const valorCot = (typeof valorTotalCotacaoPorFornecedor === 'function') ? valorTotalCotacaoPorFornecedor(cotacao, f.cnpj) : 0;
             const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', 'Entregue'] : ['m', 'Aguardando']);
             const pendTxt = [nComDiv ? `${nComDiv} item(ns) com divergência em aberto` : '', nPend ? `${nPend} auditoria(s) pendente(s)` : ''].filter(Boolean).join(' · ');
+            const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('');
             return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
                     <div class="ctl-av">${iniciaisControle(nomeExibicao)}</div>
@@ -384,10 +383,10 @@ function renderCentralPedidoCompleto(pedido) {
                     <span class="ctl-st ${emErro ? 'err' : stRot[0]}">${stRot[1]}</span>
                     <i class="fa-solid fa-chevron-right"></i>
                 </div>
-                <div class="ctl-dd cf-dd"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div><span>Divergências</span><strong>${nComDiv + nPend}</strong></div></div>
-                ${pendTxt ? `<div class="ctl-inf cf-inf">${pendTxt}</div>` : ''}
                 ${acoesHTML}
                 <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
+                    ${faixaHTML}
+                    <div class="cf-tiles"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div><span>Divergências</span><strong class="${(nComDiv + nPend) ? 'e' : ''}">${nComDiv + nPend}</strong></div></div>
                     ${detalhesEntregaHTML ? `<div class="cf-detalhes">${detalhesEntregaHTML}</div>` : ''}
                     ${produtosHTML}
                     ${soltasHTML}

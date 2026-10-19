@@ -10,7 +10,89 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.9.1', nome: 'Gerenciar NF e Cotações por fornecedor no novo padrão de cartão', status: 'atual',
+        numero: '2.9.5', nome: 'Vincular fornecedores com busca e sugestões, e vínculo automático por XML', status: 'atual',
+        novidades: [
+            'Fornecedores > Vincular: no lugar da lista com todos os fornecedores, agora há um campo de busca por nome (qualquer parte) ou CNPJ. Ao tocar no campo aparecem só sugestões: fornecedores com o mesmo CNPJ base (matriz/filial) e com nome parecido.',
+            'Ao escolher um fornecedor, o app pede confirmação antes de vincular. O mesmo vale para vincular um cadastro simples (sem CNPJ) a um fornecedor cadastrado.',
+            'Entrada de NF por XML: quando o CNPJ do emitente é novo e já existe um fornecedor cadastrado com a mesma raiz de CNPJ (8 primeiros dígitos, ou seja, a mesma empresa), o novo CNPJ é vinculado automaticamente a ele e passa a usar o mesmo apelido.'
+        ],
+        implementado: [
+            'A parecença de nome ignora palavras comuns (LTDA, ME, COMERCIAL, DISTRIBUIDORA etc.) para sugerir pelo nome de verdade.',
+            'O vínculo automático só acontece pela raiz do CNPJ, que é um dado certo; nome parecido só gera sugestão, nunca vínculo automático.'
+        ],
+        mudou: [
+            'Antes: lista única com todos os fornecedores e nenhum vínculo automático.',
+            'Arquivos alterados: js/14, js/18.'
+        ],
+        testar: [
+            'Fornecedores: abrir um fornecedor, tocar em Vincular e conferir as sugestões; digitar parte do nome ou do CNPJ e escolher um resultado (confirmar).',
+            'Subir um XML de uma filial nova (mesma raiz de CNPJ de um fornecedor já cadastrado) e conferir o aviso de vínculo automático e o apelido herdado.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.4', nome: 'O apelido do fornecedor vale para todos os CNPJs associados', status: 'concluida',
+        novidades: [
+            'Quando você cria um apelido (nome de exibição) para um CNPJ, ele passa a valer em todo o app para todos os CNPJs associados a ele como o mesmo fornecedor (matriz, filial, CD), inclusive os associados depois.',
+            'Em Fornecedores, o campo "Nome no app" dos CNPJs que herdam o apelido mostra "(do grupo)".'
+        ],
+        implementado: [
+            'Regra de prioridade: apelido editado à mão neste CNPJ, depois apelido editado à mão em outro CNPJ do grupo, depois o nome de exibição do relatório deste CNPJ, depois o de outro CNPJ do grupo. Sem apelido em nenhum, usa a razão social.',
+            'Nada foi gravado nem alterado nos cadastros: a regra só muda como o nome é exibido, então vale também para o que já estava associado.'
+        ],
+        mudou: [
+            'Antes o apelido só valia para o CNPJ em que foi criado; os associados apareciam com a razão social.',
+            'Arquivos alterados: js/14, js/18.'
+        ],
+        testar: [
+            'Em Fornecedores, escolha um fornecedor com mais de um CNPJ associado e crie ou edite o apelido em um deles; confira que o outro mostra o mesmo nome (do grupo) e que o título das NFs e das cotações também usa o apelido.',
+            'Associe um CNPJ novo, sem apelido, a um fornecedor que já tem apelido e confira que ele passa a usar o mesmo apelido.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.3', nome: 'Cartão do fornecedor em Cotações: fechado só com cabeçalho e ações', status: 'concluida',
+        novidades: [
+            'Cotações por fornecedor: fechado, o cartão mostra só o cabeçalho (iniciais, nome, CNPJ, status) e a barra de ações com ícone (Abrir NF, Associar NF, Marcar como já chegou / parcial resolvida / Desfazer marca manual), todas lado a lado quando cabem.',
+            'A faixa de entrega e os três quadros Itens / Valor cotado / Divergências passaram para o topo da parte que expande, acima da lista de itens.',
+            'A informação de entrega deixou de aparecer duas vezes: ficou só o status do cabeçalho e a faixa (como foi calculado).'
+        ],
+        implementado: [
+            '"Associar outra NF do histórico" virou "Associar outra NF" (ou "Associar NF" quando ainda não há nenhuma).',
+            'O painel de busca de NF para associar continua abrindo logo abaixo da barra de ações.'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/09, js/11, js/14.'
+        ],
+        testar: [
+            'Cotações > abrir um pedido: conferir o cartão fechado (cabeçalho + ações) e tocar nele para ver faixa, quadros e itens.',
+            'Testar Abrir NF, Associar NF (abre a busca), Marcar como já chegou / parcial resolvida e Desfazer marca manual.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.2', nome: 'Linha duplicada nas cotações e cartões de Fornecedores mais enxutos', status: 'concluida',
+        novidades: [
+            'Cotações por fornecedor: removida a linha duplicada que aparecia entre Itens/Valor cotado/Divergências e a área de ações.',
+            'Fornecedores: cada fornecedor agora é um cartão compacto (iniciais, nome, CNPJ principal e, se houver, "+N" CNPJs e a marca "Bloqueado"). Ao tocar, abre com a animação de sempre e mostra Bloquear do financeiro, Nome no app (Editar), CNPJs e Vincular.'
+        ],
+        implementado: [
+            'Todos os cartões de Fornecedores começam recolhidos; o cartão em edição permanece aberto.',
+            'Cadastros simples (sem CNPJ) usam o mesmo cartão, com a marca "Sem CNPJ".'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/14, js/18.'
+        ],
+        testar: [
+            'Cotações > abrir um pedido: conferir que existe uma única linha entre os dados do fornecedor e as ações.',
+            'Fornecedores: conferir a lista, abrir um cartão, testar Editar nome, Bloquear/Desbloquear e Vincular; testar a busca.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.1', nome: 'Gerenciar NF e Cotações por fornecedor no novo padrão de cartão', status: 'concluida',
         novidades: [
             'Gerenciar NF: cada nota agora usa o mesmo cartão do Controle de NFs — iniciais do fornecedor, título "APELIDO 1234", status (Na relação / Em espera), vencimento, prazo, pedido, valor e aptidão para a saída — com as ações Editar, Em espera (ou Retomar), Arquivar e Excluir com nome completo.',
             'Cotações por fornecedor (Central do Pedido): o mesmo cartão, com iniciais, nome, CNPJ, status, itens, valor cotado e divergências; o aviso de pendência aparece em uma faixa e as ações continuam logo abaixo.'
@@ -1608,14 +1690,41 @@ async function salvarMinimosCotacoes() {
 // não cadastrado, cai pro nome exato no mesmo cadastro e, por último, pro
 // alias antigo por texto (encontrarApelidoFornecedor) — mantido só como
 // último recurso, sem apagar nada do que já existia.
+// 2.9.4: todos os cadastros ligados a um (matriz/filial/CD associados) — só leitura, inclui o próprio.
+function docsDaMesmaEntidadeSpData(doc) {
+    if (!doc) return [];
+    const porId = {};
+    listaFornecedoresSpData.forEach(f => { porId[f.id] = f; });
+    const visitado = new Set(), pilha = [doc.id], docs = [];
+    while (pilha.length) {
+        const id = pilha.pop();
+        if (visitado.has(id) || !porId[id]) continue;
+        visitado.add(id);
+        docs.push(porId[id]);
+        (porId[id].entidadesRelacionadas || []).forEach(o => { if (!visitado.has(o)) pilha.push(o); });
+    }
+    return docs;
+}
+// 2.9.4: o apelido vale para todos os CNPJs associados. Prioridade: apelido editado à mão neste cadastro > apelido editado
+// à mão em outro cadastro do grupo > nome de exibição do relatório deste > de outro do grupo. Nada é gravado.
+function apelidoFornecedorDoc(doc) {
+    if (!doc) return { nome: '', herdado: false };
+    const grupo = docsDaMesmaEntidadeSpData(doc).filter(d => d.id !== doc.id);
+    if (doc.nomeExibido && doc.apelidoEditadoManualmente) return { nome: doc.nomeExibido, herdado: false };
+    const manual = grupo.find(d => d.nomeExibido && d.apelidoEditadoManualmente);
+    if (manual) return { nome: manual.nomeExibido, herdado: true };
+    if (doc.nomeExibido) return { nome: doc.nomeExibido, herdado: false };
+    const outro = grupo.find(d => d.nomeExibido);
+    return outro ? { nome: outro.nomeExibido, herdado: true } : { nome: '', herdado: false };
+}
 function nomeExibicaoFornecedor(razaoSocial, cnpj) {
     if (cnpj) {
         const doc = listaFornecedoresSpData.find(f => f.cnpjs.some(c => mesmoCnpj(c.cnpj, cnpj)));
-        if (doc) return doc.nomeExibido || doc.nomeReal || razaoSocial || '';
+        if (doc) return apelidoFornecedorDoc(doc).nome || doc.nomeReal || razaoSocial || '';
     }
     if (!razaoSocial) return '';
     const porNome = listaFornecedoresSpData.find(f => (f.nomeReal || '').toUpperCase() === razaoSocial.toUpperCase());
-    if (porNome) return porNome.nomeExibido || porNome.nomeReal;
+    if (porNome) return apelidoFornecedorDoc(porNome).nome || porNome.nomeReal;
     return encontrarApelidoFornecedor(razaoSocial) || razaoSocial;
 }
 
