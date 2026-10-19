@@ -110,12 +110,12 @@ function htmlNfExistenteAdicionar() {
     const itens = [];
     listaNfsProcessadas.forEach(nf => {
         if (normNfNumero(nf.nf) !== num || !compat(nf.cnpjFornecedor, nf.fornecedor, nf.valorTotal)) return;
-        itens.push({ txt: `NF ${nf.nf} · ${nf.fornecedor || ''} · XML processado${nf.pedido ? ' (pedido ' + nf.pedido + ')' : ''}`, acao: `abrirEditorNf('${nf.id}')`, rotulo: 'Abrir NF' });
+        itens.push({ txt: `${tituloFornNf(nf.fornecedor, nf.cnpjFornecedor, nf.nf)} · XML processado${nf.pedido ? ' (pedido ' + nf.pedido + ')' : ''}`, acao: `abrirEditorNf('${nf.id}')`, rotulo: 'Abrir NF' });
     });
     const pareadas = mapaPedidoErpPelaNf();
     listaEntradasErp.forEach(e => {
         if (normNfNumero(e.nf) !== num || pareadas.has(e.id) || !compat(e.cnpjFornecedor, e.fornecedorNomeRelatorio, e.valor)) return;
-        itens.push({ txt: `NF ${e.nf} · ${e.fornecedorNomeRelatorio || ''} · só no relatório do ERP`, acao: 'abrirControleNfs()', rotulo: 'Ver no Controle de NFs' });
+        itens.push({ txt: `${tituloFornNf(e.fornecedorNomeRelatorio, e.cnpjFornecedor, e.nf)} · só no relatório do ERP`, acao: 'abrirControleNfs()', rotulo: 'Ver no Controle de NFs' });
     });
     if (!itens.length) return '';
     return `<div class="aviso-nf"><div class="aviso-nf-tit">Esta NF já existe no app</div>

@@ -370,15 +370,22 @@ function renderCentralPedidoCompleto(pedido) {
             ].filter(Boolean);
             const resumo = partesResumo.join(' · ');
 
+            // 2.9.0: cartão no padrão do app — iniciais, nome, status, itens/valor/pendências e (abaixo) as ações; o corpo continua recolhível.
+            const valorCot = (typeof valorTotalCotacaoPorFornecedor === 'function') ? valorTotalCotacaoPorFornecedor(cotacao, f.cnpj) : 0;
+            const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', 'Entregue'] : ['m', 'Aguardando']);
+            const pendTxt = [nComDiv ? `${nComDiv} item(ns) com divergência em aberto` : '', nPend ? `${nPend} auditoria(s) pendente(s)` : ''].filter(Boolean).join(' · ');
             return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
+                    <div class="ctl-av">${iniciaisControle(nomeExibicao)}</div>
                     <div class="cf-topo-info">
                         <div class="cf-nome">${nomeExibicao}</div>
                         ${f.cnpj ? `<div class="cf-cnpj">CNPJ ${formatarCnpjExibicao(f.cnpj)}</div>` : ''}
-                        <div class="central-fornecedor-resumo">${resumo}</div>
                     </div>
+                    <span class="ctl-st ${emErro ? 'err' : stRot[0]}">${stRot[1]}</span>
                     <i class="fa-solid fa-chevron-right"></i>
                 </div>
+                <div class="ctl-dd cf-dd"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div><span>Divergências</span><strong>${nComDiv + nPend}</strong></div></div>
+                ${pendTxt ? `<div class="ctl-inf cf-inf">${pendTxt}</div>` : ''}
                 ${acoesHTML}
                 <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
                     ${detalhesEntregaHTML ? `<div class="cf-detalhes">${detalhesEntregaHTML}</div>` : ''}

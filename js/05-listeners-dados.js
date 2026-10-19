@@ -34,6 +34,10 @@ function migrarMenuOrderConfig() {
         if (idx !== -1) appConfig.personalizacao.menuOrder.splice(idx, 1);
     }
     // ------------------------------------------------------------
+
+    // --- 2.9.0: o Histórico de NFs foi unido ao Controle de NFs — tira a entrada antiga da ordem e das escondidas ---
+    if (appConfig.personalizacao.menuOrder) appConfig.personalizacao.menuOrder = appConfig.personalizacao.menuOrder.filter(id => id !== 'screen-history');
+    if (appConfig.personalizacao.menuHidden) appConfig.personalizacao.menuHidden = appConfig.personalizacao.menuHidden.filter(id => id !== 'screen-history');
 }
 // 2.4.0: personalização por usuário. As opções de aparência (tema, fonte, menu, dock…) ficam em config/prefs_{uid}, só da conta logada;
 // o que está no documento compartilhado (config/appSettings) vira o padrão de quem ainda não personalizou. A logo continua única para todos.
@@ -398,13 +402,24 @@ function rebuildNotasPendentesList(){
         // Checkbox da seleção em lote (edição)
         const checkboxHTML = `<label class="nota-select-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${notasSelecionadas.has(nota.id) ? 'checked' : ''} onchange="toggleNotaSelecionada('${nota.id}')"></label>`;
 
-        // Fase 32: cabeçalho compacto (quem · NF / valor · vencimento / prazo) + chips; o resto continua igual.
+        // 2.9.0: cartão no padrão do app (iniciais, título "APELIDO 1234", status, datas, valor, aptidão e ações com nome completo).
         const diasVenc = calcularDiasParaVencimento(nota.vencimento);
-        const prazoHTML = diasVenc === null ? '' : diasVenc < 0
-            ? `<span class="nota-prazo atrasada">Venceu há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}</span>`
-            : diasVenc === 0 ? `<span class="nota-prazo atrasada">Vence hoje</span>`
-            : `<span class="nota-prazo ${diasVenc <= 3 ? 'proximo' : ''}">Vence em ${diasVenc} dia${diasVenc === 1 ? '' : 's'}</span>`;
-        return `${checkboxHTML}<div class="nota-topo"><div><div class="nota-info">${nota.fornecedor} ${nota.nf||''} ${holdBadgeHTML}</div><div class="nota-sub">${nota.valor||'N/A'} · Venc. ${nota.vencimento||'N/A'}${nota.obs ? ' · ' + nota.obs : ''}</div></div>${prazoHTML}</div><div class="nota-chips">${aptidaoHTML}${aplicarRecursoHTML}</div>${complementoHTML}<div class="nota-data">Criada em: ${(new Date(nota.dataCriacao)).toLocaleString('pt-BR')}</div><div class="actions-row"><button class="action-chip edit-chip" onclick="toggleEditPanel(this, '${nota.id}')"><i class="fa-solid fa-pen"></i> Editar</button>${holdChipHTML}${arquivarChipHTML}<button class="action-chip delete-chip" onclick="deletarNota('${nota.id}')"><i class="fa-solid fa-trash"></i> Excluir</button></div><div class="edit-panel"></div>`;
+        const prazoTxt = diasVenc === null ? '—' : diasVenc < 0 ? `há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}` : diasVenc === 0 ? 'hoje' : `em ${diasVenc} dia${diasVenc === 1 ? '' : 's'}`;
+        const prazoCls = diasVenc !== null && diasVenc <= 0 ? ' atr' : (diasVenc !== null && diasVenc <= 3 ? ' pro' : '');
+        const IC = (typeof ICONES_CTRL !== 'undefined') ? ICONES_CTRL : {};
+        const bt = (icone, rotulo, fn) => `<button type="button" onclick="${fn}">${IC[icone] || ''}<span>${rotulo}</span></button>`;
+        const titulo = tituloFornNf(nota.fornecedor, aptidao.cnpjFornecedor, nota.nf);
+        const venc = String(nota.vencimento || '').replace(/^(\d{2}\/\d{2}\/)\d{2}(\d{2})$/, '$1$2') || '—';
+        const valorTxt = nota.valor ? 'R$ ' + String(nota.valor).replace(/^R\$\s*/, '') : '—';
+        const infPartes = [...complementoPartes.filter(p => !/^Pedido /.test(p))];
+        const infHTML = (infPartes.length || aplicarRecursoHTML) ? `<div class="ctl-inf">${infPartes.join(' · ')}${aplicarRecursoHTML ? `<div style="margin-top:8px">${aplicarRecursoHTML}</div>` : ''}</div>` : '';
+        return `${checkboxHTML}<div class="ctl-top"><div class="ctl-av">${iniciaisControle(nota.fornecedor)}</div>
+            <div class="ctl-nm"><b>${titulo}</b><small>Criada em ${(new Date(nota.dataCriacao)).toLocaleDateString('pt-BR')}</small></div>
+            <span class="ctl-st ${nota.emEspera ? 'm' : ''}">${nota.emEspera ? 'Em espera' : 'Na relação'}</span></div>
+        <div class="ctl-dd"><div><span>Vencimento</span><strong>${venc}</strong></div><div><span>Prazo</span><strong class="${prazoCls.trim()}">${prazoTxt}</strong></div><div><span>Pedido</span><strong>${aptidao.pedido || '—'}</strong></div></div>
+        <div class="ctl-vl"><b>${valorTxt}</b>${aptidaoHTML}</div>
+        ${infHTML}
+        <div class="ctl-bar" style="grid-template-columns:repeat(4,1fr)">${bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;
     };
 
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".

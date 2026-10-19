@@ -16,9 +16,10 @@ function abrirEditorNf(nfId) {
     if (!nf && !erpSo) return toast('NF não encontrada.');
     nfEditorId = nfId;
     const ativa = document.querySelector('.app-screen.active');
-    const origem = ativa && ativa.id !== 'screen-nf-editor' ? ativa.id : (screenParentMap['screen-nf-editor'] || 'screen-history');
+    const origem = ativa && ativa.id !== 'screen-nf-editor' ? ativa.id : (screenParentMap['screen-nf-editor'] || 'screen-controle-nfs');
     screenParentMap['screen-nf-editor'] = origem; closeBtnBackScreen['screen-nf-editor'] = origem; // o "voltar" leva de volta a quem abriu
-    switchToScreen('screen-nf-editor', `NF ${nf ? nf.nf : erpSo.nf}`);
+    const tituloTela = nf ? tituloFornNf(nf.fornecedor || (nf.xmlDados && nf.xmlDados.emit && nf.xmlDados.emit.xNome), nf.cnpjFornecedor, nf.nf) : tituloFornNf(erpSo.fornecedorNomeRelatorio, erpSo.cnpjFornecedor, erpSo.nf);
+    switchToScreen('screen-nf-editor', tituloTela || `NF ${nf ? nf.nf : erpSo.nf}`);
     renderEditorNf();
 }
 function renderEditorNfSeAtivo() {
@@ -251,9 +252,9 @@ function renderEditorNf() {
     const cabecalho = `<div class="card nfe-topo">
         <div class="nfe-topo-linha">
             <div class="nfe-id">
-                <div class="nfe-titulo">NF ${escRel(nf.nf)}${nf.serie ? `<span class="nfe-serie">série ${escRel(nf.serie)}</span>` : ''}</div>
-                <div class="nfe-forn">${escRel(fornecedorNome)}</div>
-                ${cnpjFor ? `<div class="nfe-cnpj">CNPJ ${escRel(cnpjFor)}</div>` : ''}
+                <div class="nfe-titulo">${escRel(tituloFornNf(fornecedorNome, cnpjFor, nf.nf))}</div>
+                <div class="nfe-sub">NF ${escRel(nf.nf)}${nf.serie ? ' · série ' + escRel(nf.serie) : ''}${cnpjFor ? ' · CNPJ ' + escRel(cnpjFor) : ''}</div>
+                ${(nomeExibicaoFornecedor(fornecedorNome, cnpjFor) || fornecedorNome) !== fornecedorNome ? `<div class="nfe-forn">${escRel(fornecedorNome)}</div>` : ''}
             </div>
             <div class="nfe-valor"><span class="nfe-rot">Valor total</span><strong>R$ ${escRel(valorTopo)}</strong></div>
         </div>
@@ -263,7 +264,7 @@ function renderEditorNf() {
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(nf.pedido || '—')}</strong></div>
         </div>
         <div class="nfe-chips">${badge('pronto', 'XML ✓')} ${badgeErp} ${badge('neutro', escRel(situacaoTxt))}${xd ? '' : ' ' + badge('pendente', 'XML completo não guardado')}</div>
-        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Histórico</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
+        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
         ${trocaPedido}
     </div>`;
 
@@ -592,8 +593,9 @@ function renderEditorNfErp(erp, el) {
 
     // ---- cabeçalho ----
     const cabecalho = `<div class="card nfe-topo">
-        <div class="nfe-topo-linha"><div class="nfe-id"><div class="nfe-titulo">NF ${escRel(erp.nf)}${erp.serie ? `<span class="nfe-serie">série ${escRel(erp.serie)}</span>` : ''}</div>
-            <div class="nfe-forn">${escRel(fornNome)}</div>${erp.cnpjFornecedor ? `<div class="nfe-cnpj">CNPJ ${escRel(erp.cnpjFornecedor)}</div>` : ''}</div>
+        <div class="nfe-topo-linha"><div class="nfe-id"><div class="nfe-titulo">${escRel(tituloFornNf(fornNome, erp.cnpjFornecedor, erp.nf))}</div>
+            <div class="nfe-sub">NF ${escRel(erp.nf)}${erp.serie ? ' · série ' + escRel(erp.serie) : ''}${erp.cnpjFornecedor ? ' · CNPJ ' + escRel(erp.cnpjFornecedor) : ''}</div>
+            ${(nomeExibicaoFornecedor(fornNome, erp.cnpjFornecedor) || fornNome) !== fornNome ? `<div class="nfe-forn">${escRel(fornNome)}</div>` : ''}</div>
             <div class="nfe-valor"><span class="nfe-rot">Valor total</span><strong>R$ ${escRel(valor)}</strong></div></div>
         <div class="nfe-grade">
             <div><span class="nfe-rot">Emissão</span><strong>${escRel(erp.data || '—')}</strong></div>

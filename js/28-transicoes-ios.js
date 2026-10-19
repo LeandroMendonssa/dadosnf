@@ -22,18 +22,23 @@
         const ef = efeitoAba();
         if (document.body.getAttribute('data-aba-efeito') !== ef) document.body.setAttribute('data-aba-efeito', ef);
         document.querySelectorAll('#aba-efeito-options .transition-option').forEach(b => b.classList.toggle('active', b.dataset.value === ef));
+        const cs = document.getElementById('cascata-select'); if (cs) cs.value = pz.cascata === 'nao' ? 'nao' : 'sim';
         const modo = pz.carregamento === 'texto' ? 'texto' : 'blocos';
         document.querySelectorAll('#carregamento-options .transition-option').forEach(b => b.classList.toggle('active', b.dataset.value === modo));
     };
     // efeito da troca de aba: escolha nova (abaEfeito) ou, para quem tinha marcado "Instantâneo" antes, instantâneo
     function efeitoAba() {
         const pz = (typeof appConfig !== 'undefined' && appConfig.personalizacao) || {};
-        if (['padrao', 'esmaecer', 'deslizar', 'subir', 'zoom', 'nenhum'].includes(pz.abaEfeito)) return pz.abaEfeito;
+        if (['padrao', 'empurrar', 'esmaecer', 'deslizar', 'subir', 'zoom', 'nenhum'].includes(pz.abaEfeito)) return pz.abaEfeito;
         return (pz.transicaoVersao === 2 && pz.transicaoTela === 'none') ? 'nenhum' : 'padrao';
     }
     window.escolherEfeitoAba = function (v) {
         appConfig.personalizacao.abaEfeito = v;
         aplicarTransicoesExtras();
+        salvarPersonalizacao();
+    };
+    window.escolherCascata = function (v) {
+        appConfig.personalizacao.cascata = v === 'nao' ? 'nao' : 'sim';
         salvarPersonalizacao();
     };
     window.escolherCarregamento = function (modo) {
@@ -55,7 +60,7 @@
 
     // ---------- cascata sutil: os primeiros itens da tela entram um após o outro ----------
     function cascata(screenId, direcao) {
-        if (RM.matches || sempre()) return;
+        if (RM.matches || sempre() || (appConfig.personalizacao && appConfig.personalizacao.cascata === 'nao')) return;
         requestAnimationFrame(() => { // depois de a tela desenhar a própria lista (renderTelaMais etc.)
             const tela = document.getElementById(screenId);
             if (!tela || !tela.classList.contains('active')) return;

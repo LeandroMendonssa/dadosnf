@@ -50,6 +50,7 @@ let filtroControle = '';
 let selecaoControleAtiva = false;
 const selecionadasControle = new Set();
 let limiteControle = 60;
+const mesesControleAbertos = new Set(), mesesControleFechados = new Set(); // 2.9.0: só o mês atual abre sozinho
 let envioPendenteControle = null; // { chave, nf, erpId, nfId } — "Enviar para a relação" aguardando o Salvar do Adicionar
 
 function renderControleSeAtivo() {
@@ -87,6 +88,7 @@ function montarControleNfs() {
         if (erp && erp.statusFluxo === 'arquivada') situacao = 'arquivada';
         else if (erp && erp.statusFluxo === 'historico_direto') { situacao = 'direta'; subtipo = erp.bloqueioFornecedor ? 'fornecedor' : (erp.marcadaDireta ? 'marcada' : 'fornecedor'); }
         else if (!erp && nf && nf.semFinanceiro) { situacao = 'direta'; subtipo = 'marcada'; }
+        else if (!erp && nf && nf.enviadoFinanceiro) situacao = 'arquivada'; // 2.9.0: "Enviada ao financeiro" marcada direto no Controle
         else if (notaId && notasPorId[notaId]) { nota = notasPorId[notaId]; notasLigadas.add(nota.id); situacao = nota.emEspera ? 'em_espera' : 'na_relacao'; }
         else if (!erp && nf && nf.notaVinculadaId && historicoNotas.some(h => h.nfChave === nf.id)) situacao = 'arquivada'; // nota ligada já foi arquivada
         // (nota ligada que sumiu sem ser arquivada = foi excluída: a NF volta a pedir decisão)
@@ -157,8 +159,8 @@ function montarControleNfs() {
 }
 
 function abaDoItemControle(it) {
-    if (it.situacao === 'arquivada') return 'arquivadas';
-    if (it.situacao === 'direta') return 'diretas';
+    // 2.9.0: a aba "Diretas" saiu — as diretas ficam em Arquivadas, com a etiqueta "Direta".
+    if (it.situacao === 'arquivada' || it.situacao === 'direta') return 'arquivadas';
     return 'aberto';
 }
 
@@ -168,52 +170,104 @@ function carregarMaisControle() { limiteControle += 60; renderControleNfs(); }
 function alternarSelecaoControle() { selecaoControleAtiva = !selecaoControleAtiva; selecionadasControle.clear(); renderControleNfs(); }
 function toggleSelecionadaControle(chave) { if (selecionadasControle.has(chave)) selecionadasControle.delete(chave); else selecionadasControle.add(chave); renderControleNfs(); }
 
-function renderCardControleNf(it) {
-    const rotulos = { recebida: ['neutro', 'Recebida'], na_relacao: ['azul', 'Na relação'], em_espera: ['pendente', '⏳ Em espera'], arquivada: ['pronto', '✓ Enviada ao financeiro'], direta: ['neutro', 'Direta'] };
-    const [classe, rotulo] = rotulos[it.situacao];
-    const chips = [`<span class="xml-item-badge ${classe}">${rotulo}</span>`];
-    if (it.situacao === 'direta') chips.push(`<span class="xml-item-badge neutro">${it.subtipo === 'marcada' ? 'Marcada por você' : 'Fornecedor ignorado'}</span>`);
+// ---- 2.9.0: cartão do Controle (padrão novo) ----
+const ICONES_CTRL = {
+    fin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
+    dir: '<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+    rel: '<svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+    ed: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+    reab: '<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg>',
+    esp: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    del: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
+    arq: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>',
+    ger: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>'
+};
+function iniciaisControle(nome) {
+    return String(nome || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+}
+function dataCurtaControle(iso) {
+    return iso && /^\d{4}-\d{2}-\d{2}/.test(iso) ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}` : '—';
+}
+function vencCurtoControle(br) {
+    const m = String(br || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? `${m[1]}/${m[2]}/${m[3].slice(2)}` : (br || '—');
+}
+function pendenciasDoItemControle(it) {
+    const p = [];
+    if (abaDoItemControle(it) !== 'aberto') return p;
+    if (it.possivelNota) p.push(`parece já existir como nota ${it.possivelNota.tipo === 'pendente' ? 'na relação' : 'arquivada'}`);
+    if (it.situacao === 'recebida' && it.erp && it.erp.avisoJaExisteNotaManual) p.push('já tem nota manual na relação');
     if (it.tipo === 'nf') {
-        if (it.nf) chips.push('<span class="xml-item-badge pronto">XML ✓</span>');
-        if (it.erp) chips.push(`<span class="xml-item-badge ${it.nf ? 'pronto' : 'neutro'}">${it.nf ? 'ERP ✓' : 'só ERP'}</span>`);
-        if (it.situacao === 'recebida' && it.erp && it.erp.avisoJaExisteNotaManual) chips.push('<span class="xml-item-badge pendente">Já tem nota manual na relação</span>');
-        if (it.possivelNota) chips.push(`<span class="xml-item-badge pendente">Parece já existir como nota ${it.possivelNota.tipo === 'pendente' ? 'na relação' : 'arquivada'} (mesmo nº e valor)</span>`);
-    } else if (it.tipo === 'nota') chips.push('<span class="xml-item-badge neutro">Nota manual</span>');
-    else chips.push('<span class="xml-item-badge neutro">Registro simples</span>');
-    const dataTxt = it.dataISO ? formatarDataBRSimples(it.dataISO) : '';
-    const sub = [it.valorTxt ? 'R$ ' + escRel(String(it.valorTxt).replace(/^R\$\s*/, '')) : '', it.venc ? 'Venc. ' + escRel(it.venc) : '', it.pedido ? 'Pedido ' + escRel(it.pedido) : ''].filter(Boolean).join(' · ');
-    const chaveJs = it.chave.replace(/'/g, "\\'");
-    let acoes = '';
-    if (it.tipo === 'nf' && it.situacao === 'recebida') {
-        const principal = it.possivelNota
-            ? `<button type="button" class="action-chip edit-chip" onclick="event.stopPropagation(); vincularNfANota('${chaveJs}')">É a mesma nota — vincular</button>`
-            : `<button type="button" class="action-chip edit-chip" onclick="event.stopPropagation(); enviarNfParaRelacao('${chaveJs}')">Enviar para a relação</button>`;
-        acoes = `${principal}<button type="button" class="action-chip" onclick="event.stopPropagation(); marcarNfDireta('${chaveJs}')">Não vai ao financeiro</button>`;
-    } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
-        acoes = `<button type="button" class="action-chip" onclick="event.stopPropagation(); verNoGerenciarNf('${chaveJs}')">Ver no Gerenciar NF</button>`;
-    } else if (it.situacao === 'direta' && it.subtipo === 'marcada') {
-        acoes = `<button type="button" class="action-chip" onclick="event.stopPropagation(); voltarNfParaAberto('${chaveJs}')">Voltar para Em aberto</button>`;
-    } else if (it.situacao === 'direta') {
-        acoes = `<div class="nota-data">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>`;
+        if (!it.nf) p.push('sem XML processado');
+        if (!it.erp) p.push('sem vínculo com o ERP');
     }
-    const selecionavel = selecaoControleAtiva && it.tipo === 'nf' && it.situacao === 'recebida';
-    // 2.1.0: editor completo da NF a partir do Controle (qualquer situação, com NF salva)
-    if (it.nf) acoes += `<button type="button" class="action-chip" onclick="event.stopPropagation(); abrirEditorNf('${it.nf.id}')">Abrir editor da NF</button>`;
-    else if (it.erp) acoes += `<button type="button" class="action-chip" onclick="event.stopPropagation(); abrirEditorNf('${String(it.erp.id).replace(/'/g, "\\'")}')">Abrir editor da NF</button>`; // 2.3.1: NF só do ERP (sem XML)
-    const check = selecionavel ? `<label class="controle-check" onclick="event.stopPropagation()"><input type="checkbox" ${selecionadasControle.has(it.chave) ? 'checked' : ''} onchange="toggleSelecionadaControle('${chaveJs}')"></label>` : '';
-    return `<div class="nota-item controle-item" data-controle-chave="${escRel(it.chave)}">
-        <div class="nota-topo">${check}<div style="flex:1;min-width:0"><div class="nota-info">${escRel(it.nomeFornecedor || '(sem fornecedor)')} · NF ${escRel(it.numeroNf)}${it.serie ? '/' + escRel(it.serie) : ''}</div>
-            ${sub ? `<div class="nota-sub">${sub}</div>` : ''}</div>${dataTxt ? `<span class="nota-prazo">${dataTxt}</span>` : ''}</div>
-        <div class="nota-chips">${chips.join('')}</div>
-        ${acoes ? `<div class="actions-row controle-acoes">${acoes}</div>` : ''}
+    if (it.situacao === 'em_espera') p.push('em espera');
+    const dias = calcularDiasParaVencimento(it.venc);
+    if (dias !== null && dias < 0) p.push(`vencida há ${Math.abs(dias)} dia${Math.abs(dias) === 1 ? '' : 's'}`);
+    return p;
+}
+// Como reabrir uma NF arquivada/direta: 'controle' (marcada aqui), 'direta' (marcada direta), 'erp' (arquivada pelo fluxo da relação) ou null.
+function modoReabrirControle(it) {
+    if (it.tipo !== 'nf') return null;
+    if (it.situacao === 'direta') return it.subtipo === 'marcada' ? 'direta' : null;
+    if (it.situacao !== 'arquivada') return null;
+    if ((it.erp && it.erp.arquivadoPeloControle) || (!it.erp && it.nf && it.nf.enviadoFinanceiro)) return 'controle';
+    if (it.erp && it.erp.statusFluxo === 'arquivada') return 'erp';
+    return null;
+}
+function renderCardControleNf(it) {
+    const chaveJs = it.chave.replace(/'/g, "\\'");
+    const aba = abaDoItemControle(it);
+    const rotulos = { recebida: ['', 'Recebida'], na_relacao: ['', 'Na relação'], em_espera: ['m', 'Em espera'], arquivada: ['ok', 'Enviada ao financeiro'], direta: ['m', 'Direta'] };
+    const [classeSt, rotuloSt] = rotulos[it.situacao];
+    const titulo = tituloFornNf(it.nomeFornecedor || '(sem fornecedor)', it.cnpj, it.numeroNf);
+    const sub = it.tipo === 'nota' ? 'Nota manual' : it.tipo === 'legado' ? 'Registro simples' : (it.serie ? 'Série ' + escRel(it.serie) : 'Sem série');
+    const valor = it.valorTxt ? 'R$ ' + escRel(String(it.valorTxt).replace(/^R\$\s*/, '')) : '—';
+    const pend = pendenciasDoItemControle(it);
+    const btn = (icone, rotulo, fn) => `<button type="button" onclick="event.stopPropagation(); ${fn}">${ICONES_CTRL[icone]}<span>${rotulo}</span></button>`;
+    const editor = it.nf ? btn('ed', 'Editar NF', `abrirEditorNf('${it.nf.id}')`)
+        : it.erp ? btn('ed', 'Editar NF', `abrirEditorNf('${String(it.erp.id).replace(/'/g, "\\'")}')`) : '';
+    let botoes = [];
+    if (aba === 'aberto') {
+        if (it.tipo === 'nf' || it.tipo === 'nota') botoes.push(btn('fin', 'Enviada ao financeiro', `enviarNfAoFinanceiro('${chaveJs}')`));
+        if (it.tipo === 'nf' && it.situacao === 'recebida') {
+            botoes.push(btn('dir', 'Não vai ao financeiro', `marcarNfDireta('${chaveJs}')`));
+            botoes.push(it.possivelNota ? btn('rel', 'É a mesma nota — vincular', `vincularNfANota('${chaveJs}')`) : btn('rel', 'Enviar à relação', `enviarNfParaRelacao('${chaveJs}')`));
+        } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
+            botoes.push(btn('ger', 'Ver no Gerenciar NF', `verNoGerenciarNf('${chaveJs}')`));
+        }
+    } else {
+        const modo = modoReabrirControle(it);
+        if (modo) botoes.push(btn('reab', 'Voltar para Em aberto', `voltarNfParaAberto('${chaveJs}')`));
+    }
+    if (editor) botoes.push(editor);
+    const sel = selecaoControleAtiva && it.tipo === 'nf' && aba === 'aberto';
+    const marcado = sel && selecionadasControle.has(it.chave);
+    const notaAdv = (it.situacao === 'direta' && it.subtipo === 'fornecedor') ? '<div class="ctl-inf">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>' : '';
+    return `<div class="ctl-card controle-item${marcado ? ' sel' : ''}${sel ? ' selecionavel' : ''}" data-controle-chave="${escRel(it.chave)}"${sel ? ` onclick="toggleSelecionadaControle('${chaveJs}')"` : ''}>
+        <div class="ctl-top"><div class="ctl-av">${escRel(iniciaisControle(it.nomeFornecedor))}</div>
+            <div class="ctl-nm"><b>${escRel(titulo)}</b><small>${sub}</small></div>
+            <span class="ctl-st ${classeSt}">${rotuloSt}</span></div>
+        <div class="ctl-dd"><div><span>Lançada</span><strong>${dataCurtaControle(it.dataISO)}</strong></div><div><span>Vencimento</span><strong>${escRel(vencCurtoControle(it.venc))}</strong></div><div><span>Pedido</span><strong>${escRel(it.pedido || '—')}</strong></div></div>
+        <div class="ctl-vl"><b>${valor}</b>${aba === 'aberto' ? (pend.length ? `<span class="ctl-pd"><i>!</i>${pend.length} pendência${pend.length > 1 ? 's' : ''}</span>` : '<span class="ctl-pd ok"><i>✓</i>Em dia</span>') : ''}</div>
+        ${pend.length ? `<div class="ctl-inf">${pend.map(escRel).join(' · ')}</div>` : ''}${notaAdv}
+        ${botoes.length && !sel ? `<div class="ctl-bar" style="grid-template-columns:repeat(${Math.min(botoes.length, 4)},1fr)">${botoes.join('')}</div>` : ''}
     </div>`;
 }
 
+function valorNumericoItemControle(it) { return valorNfNumerico(it.valorTxt) || 0; }
+function alternarMesControle(chaveMes, atual) {
+    const el = document.querySelector(`.ctl-mes[data-mes="${chaveMes}"]`); if (!el) return;
+    const abrir = !el.classList.contains('aberto');
+    el.classList.toggle('aberto', abrir);
+    if (atual) { abrir ? mesesControleFechados.delete(chaveMes) : mesesControleFechados.add(chaveMes); }
+    else { abrir ? mesesControleAbertos.add(chaveMes) : mesesControleAbertos.delete(chaveMes); }
+}
 function renderControleNfs() {
     const lista = document.getElementById('controle-lista');
     if (!lista) return;
     const todos = montarControleNfs();
-    const contagem = { aberto: 0, arquivadas: 0, diretas: 0 };
+    const contagem = { aberto: 0, arquivadas: 0 };
     todos.forEach(it => { contagem[abaDoItemControle(it)]++; });
     document.querySelectorAll('#controle-abas .xml-filtro-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.aba === abaControle);
@@ -221,28 +275,44 @@ function renderControleNfs() {
     });
     const termo = normalizarBuscaRel(filtroControle);
     let visiveis = todos.filter(it => abaDoItemControle(it) === abaControle);
-    if (termo) visiveis = visiveis.filter(it => normalizarBuscaRel([it.numeroNf, it.nomeFornecedor, it.pedido, it.cnpj].filter(Boolean).join(' ')).includes(termo));
+    if (termo) visiveis = visiveis.filter(it => normalizarBuscaRel([it.numeroNf, it.nomeFornecedor, it.pedido, it.cnpj, tituloFornNf(it.nomeFornecedor, it.cnpj, it.numeroNf)].filter(Boolean).join(' ')).includes(termo));
     const barra = document.getElementById('controle-barra-selecao');
     if (barra) {
-        const podeSelecionar = abaControle === 'aberto' && visiveis.some(it => it.tipo === 'nf' && it.situacao === 'recebida');
+        const podeSelecionar = abaControle === 'aberto' && visiveis.some(it => it.tipo === 'nf');
         document.getElementById('controle-btn-selecionar').style.display = podeSelecionar || selecaoControleAtiva ? '' : 'none';
         document.getElementById('controle-btn-selecionar').textContent = selecaoControleAtiva ? 'Concluir' : 'Selecionar';
         barra.style.display = selecaoControleAtiva ? 'flex' : 'none';
         document.getElementById('controle-sel-info').textContent = `${selecionadasControle.size} selecionada(s)`;
         document.getElementById('controle-sel-direta').disabled = selecionadasControle.size === 0;
+        const fin = document.getElementById('controle-sel-fin'); if (fin) fin.disabled = selecionadasControle.size === 0;
     }
-    const subtitulos = { aberto: 'Tudo que ainda não foi para o financeiro', arquivadas: 'NFs que já foram para o financeiro', diretas: 'NFs que não passam pelo financeiro' };
+    const subtitulos = { aberto: 'Tudo que ainda não foi para o financeiro', arquivadas: 'NFs que já foram para o financeiro ou que não vão a ele (diretas)' };
     const vazios = {
-        aberto: `Nada em aberto. Processe um XML na Entrada de NF ou importe o relatório do ERP.<div class="actions-row"><button type="button" class="action-chip edit-chip" onclick="switchToScreen('screen-xml-editor', 'Entrada de NF')">Abrir Entrada de NF</button></div>`,
-        arquivadas: 'Nenhuma NF arquivada ainda. As NFs aparecem aqui depois que a nota é arquivada.',
-        diretas: 'Nenhuma NF direta.'
+        aberto: `Nada em aberto. Processe um XML na Entrada de NF ou importe o relatório do ERP.<div class="actions-row"><button type="button" class="action-chip edit-chip" onclick="switchToScreen('screen-xml-editor', 'Entrada de NF')">Entrada de NF</button></div>`,
+        arquivadas: 'Nenhuma NF arquivada ainda. As NFs aparecem aqui depois que são enviadas ao financeiro.'
     };
     const pagina = visiveis.slice(0, limiteControle);
     const nProvaveis = todos.filter(it => it.possivelNota).length;
-    const avisoProvaveis = (abaControle === 'aberto' && nProvaveis && !termo) ? `<div class="gerenciar-aviso-recursos" style="display:flex;"><span>${nProvaveis} NF(s) parecem já existir como nota (mesmo nº e valor)</span><button type="button" class="action-chip" onclick="vincularTodasProvaveis()">Vincular todas</button></div>` : '';
+    const avisoProvaveis = (abaControle === 'aberto' && nProvaveis && !termo) ? `<div class="gerenciar-aviso-recursos" style="display:flex;"><span>${nProvaveis} NF(s) parecem já existir como nota (mesmo nº e valor)</span><button type="button" class="action-chip edit-chip" onclick="vincularTodasProvaveis()">Vincular todas</button></div>` : '';
+    // agrupa por mês (data de lançamento, nunca vencimento): só o mês atual abre sozinho
+    const hoje = new Date(); const mesHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    const grupos = {};
+    pagina.forEach(it => { const k = it.dataISO ? it.dataISO.slice(0, 7) : 'sem-data'; (grupos[k] = grupos[k] || []).push(it); });
+    const chavesMes = Object.keys(grupos).sort().reverse();
+    const htmlGrupos = chavesMes.map(k => {
+        const itens = grupos[k], atual = k === mesHoje, chaveMes = k + '|' + abaControle;
+        const aberto = termo ? true : (atual ? !mesesControleFechados.has(chaveMes) : mesesControleAbertos.has(chaveMes));
+        const nome = k === 'sem-data' ? 'Sem data' : `${NOMES_MESES_HISTORICO[parseInt(k.slice(5), 10) - 1]} ${k.slice(0, 4)}`;
+        const total = itens.reduce((t, it) => t + valorNumericoItemControle(it), 0);
+        return `<div class="ctl-mes${aberto ? ' aberto' : ''}" data-mes="${chaveMes}">
+            <button type="button" class="ctl-mes-h" onclick="alternarMesControle('${chaveMes}', ${atual})"><b>${nome}</b><span>${itens.length} NF · R$ ${formatarValorMonetarioBR(total)}<i class="ctl-chev"></i></span></button>
+            <div class="central-colapso"><div class="central-colapso-inner">${itens.map(renderCardControleNf).join('')}</div></div></div>`;
+    }).join('');
+    const acaoLegado = (abaControle === 'arquivadas' && !termo && historicoNotas.length)
+        ? `<div class="acao-legado"><button type="button" class="central-status-toggle is-danger" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>` : '';
     lista.innerHTML = `<div class="controle-subtitulo">${subtitulos[abaControle]}</div>` + avisoProvaveis +
-        (pagina.length ? pagina.map(renderCardControleNf).join('') : `<div class="empty-state">${termo ? 'Nada encontrado para essa busca.' : vazios[abaControle]}</div>`) +
-        (visiveis.length > pagina.length ? `<div class="actions mt-3"><button type="button" class="actions-button is-neutral" onclick="carregarMaisControle()">Carregar mais (${visiveis.length - pagina.length} restante(s))</button></div>` : '');
+        (pagina.length ? htmlGrupos : `<div class="empty-state">${termo ? 'Nada encontrado para essa busca.' : vazios[abaControle]}</div>`) +
+        (visiveis.length > pagina.length ? `<div class="actions mt-3"><button type="button" class="actions-button is-neutral" onclick="carregarMaisControle()">Carregar mais (${visiveis.length - pagina.length} restante(s))</button></div>` : '') + acaoLegado;
 }
 
 function itemControlePorChave(chave) { return montarControleNfs().find(it => it.chave === chave); }
@@ -287,22 +357,73 @@ async function marcarNfDireta(chave) {
     try {
         if (it.erp) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'historico_direto', marcadaDireta: true, bloqueioFornecedor: false });
         else if (it.nf) await nfsProcessadasCollection.doc(it.nf.id).update({ semFinanceiro: true });
-        toast('✓ NF marcada como direta — saiu de "Em aberto" (aba Diretas).');
+        toast('✓ NF marcada como "Não vai ao financeiro" — está em Arquivadas, com a etiqueta Direta.');
     } catch (e) { console.error('Erro ao marcar NF direta:', e); toast('✕ Erro ao marcar a NF.'); }
 }
 async function voltarNfParaAberto(chave) {
     const it = itemControlePorChave(chave); if (!it || it.tipo !== 'nf') return;
+    const modo = modoReabrirControle(it);
     try {
-        if (it.erp && it.erp.marcadaDireta) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'pre_selecao', marcadaDireta: false });
+        if (modo === 'erp') { abrirEntradaErpComConfirmacao(it.erp.id, () => {}); return; }
+        if (modo === 'controle') {
+            if (it.erp) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'pre_selecao', arquivadoPeloControle: false });
+            else await nfsProcessadasCollection.doc(it.nf.id).update({ enviadoFinanceiro: false });
+        } else if (it.erp && it.erp.marcadaDireta) await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'pre_selecao', marcadaDireta: false });
         else if (!it.erp && it.nf) await nfsProcessadasCollection.doc(it.nf.id).update({ semFinanceiro: false });
         toast('✓ NF de volta para "Em aberto".');
     } catch (e) { console.error('Erro ao voltar NF:', e); toast('✕ Erro ao atualizar a NF.'); }
 }
-function marcarSelecionadasDiretas() {
-    const chaves = [...selecionadasControle];
-    if (!chaves.length) return;
+// 2.9.0: "Enviada ao financeiro" direto do Controle, NF por NF. Se a NF tem nota na relação, SÓ essa nota vai pro histórico
+// (mesmo caminho de "Arquivar" do Gerenciar, para uma nota só); as outras notas da relação não são tocadas.
+async function arquivarItemControle(it) {
+    if (it.nota) {
+        const { id, ...notaData } = it.nota;
+        notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+        registrarOrigemNaNotaArquivada(notaData, id);
+        const batch = firestore.batch();
+        batch.set(historicoCollection.doc(), notaData);
+        batch.delete(notasCollection.doc(id));
+        const entradaVinculada = listaEntradasErp.find(e => e.notaVinculadaId === id);
+        if (entradaVinculada) batch.update(entradasErpCollection.doc(entradaVinculada.id), { statusFluxo: 'arquivada' });
+        await batch.commit();
+    } else if (it.erp) {
+        await entradasErpCollection.doc(it.erp.id).update({ statusFluxo: 'arquivada', arquivadoPeloControle: true });
+    } else if (it.nf) {
+        await nfsProcessadasCollection.doc(it.nf.id).update({ enviadoFinanceiro: true });
+    }
+}
+function enviarNfAoFinanceiro(chave) {
+    const it = itemControlePorChave(chave); if (!it) return;
+    const titulo = tituloFornNf(it.nomeFornecedor, it.cnpj, it.numeroNf);
     showConfirmModal({
-        title: 'Não vai ao financeiro', message: `Marcar ${chaves.length} NF(s) como diretas? Elas saem de "Em aberto" e ficam na aba Diretas (dá para voltar depois).`,
+        title: 'Enviada ao financeiro?',
+        message: `${titulo} vai para Arquivadas.${it.nota ? ' Só esta nota sai da relação; as outras continuam como estão.' : ' As notas da relação não são afetadas.'}`,
+        confirmText: 'Sim, já foi', confirmClass: 'success',
+        onConfirm: async () => {
+            try { await arquivarItemControle(it); toast('✓ NF enviada ao financeiro — está em Arquivadas.'); }
+            catch (e) { console.error('Erro ao marcar NF como enviada ao financeiro:', e); toast('✕ Erro ao arquivar a NF.'); }
+        }
+    });
+}
+function marcarSelecionadasEnviadas() {
+    const itens = [...selecionadasControle].map(itemControlePorChave).filter(Boolean);
+    if (!itens.length) return;
+    showConfirmModal({
+        title: 'Enviada ao financeiro', message: `Marcar ${itens.length} NF(s) como enviadas ao financeiro? Elas vão para Arquivadas (dá para voltar depois). Só as NFs selecionadas saem da relação.`,
+        confirmText: 'Marcar', confirmClass: 'success',
+        onConfirm: async () => {
+            let n = 0;
+            for (const it of itens) { try { await arquivarItemControle(it); n++; } catch (e) { console.error('Erro ao arquivar', it.chave, e); } }
+            selecionadasControle.clear(); selecaoControleAtiva = false; renderControleNfs();
+            toast(`✓ ${n} NF(s) enviada(s) ao financeiro.`);
+        }
+    });
+}
+function marcarSelecionadasDiretas() {
+    const chaves = [...selecionadasControle].filter(ch => { const it = itemControlePorChave(ch); return it && it.situacao === 'recebida'; });
+    if (!chaves.length) { toast('Só NFs "Recebidas" podem ir como "Não vai ao financeiro".'); return; }
+    showConfirmModal({
+        title: 'Não vai ao financeiro', message: `Marcar ${chaves.length} NF(s) como diretas? Elas saem de "Em aberto" e ficam em Arquivadas, com a etiqueta Direta (dá para voltar depois).`,
         confirmText: 'Marcar', confirmClass: 'warning',
         onConfirm: async () => { for (const ch of chaves) await marcarNfDireta(ch); selecionadasControle.clear(); selecaoControleAtiva = false; renderControleNfs(); }
     });
@@ -654,14 +775,14 @@ function toggleDetalheHistoricoNf(chave) {
 // ===================================================================
 // "Abrir NF" nas divergências da cotação leva direto ao card da NF no Histórico (já aberto, com os itens).
 function abrirNfNoHistorico(chave, numeroNf) {
-    historicoAnoSelecionado = null; historicoMesSelecionado = null;
-    historicoFiltroTexto = String(numeroNf || '');
-    historicoNfExpandida = chave;
-    limiteExibicaoHistorico = LOTE_HISTORICO;
-    const busca = document.getElementById('historico-busca'); if (busca) busca.value = historicoFiltroTexto;
-    switchToScreen('screen-history', (menuDetails['screen-history'] && menuDetails['screen-history'].title) || 'Histórico');
-    renderHistoricoNfsAgora();
-    window.scrollTo({ top: 0 });
+    // 2.9.0: o Histórico foi unido ao Controle de NFs — abre o Controle já buscando essa NF.
+    const alvo = normNfNumero(numeroNf);
+    const it = montarControleNfs().find(x => normNfNumero(x.numeroNf) === alvo);
+    abaControle = it ? abaDoItemControle(it) : 'aberto';
+    filtroControle = String(numeroNf || ''); selecionadasControle.clear(); selecaoControleAtiva = false; limiteControle = 60;
+    const busca = document.getElementById('controle-busca'); if (busca) busca.value = filtroControle;
+    switchToScreen('screen-controle-nfs', 'Controle de NFs');
+    renderControleNfs();
 }
 function abrirNfDaDivergencia(pedido, numeroNf) {
     const alvo = normNfNumero(numeroNf);
@@ -792,7 +913,7 @@ function renderCardHistoricoNf(item) {
     }
 
     return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;cursor:pointer;" onclick="toggleDetalheHistoricoNf('${item.chave}')">
-        <div class="nota-info">NF ${escRel(item.numeroNf)}${item.serie ? '/' + escRel(item.serie) : ''} ${item.nomeFornecedor ? '— ' + escRel(item.nomeFornecedor) : ''}</div>
+        <div class="nota-info">${escRel(tituloFornNf(item.nomeFornecedor, item.cnpj, item.numeroNf))}${item.serie ? '<span class="txt-aux"> /' + escRel(item.serie) + '</span>' : ''}</div>
         <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}${(() => { const an = item.nf ? analisarPedidoDaNf(item.nf, item.erp) : null; return an ? ' · <strong>⚠ parece ser do pedido ' + an.candidatos.map(c => escRel(c.pedido)).join(' ou ') + '</strong>' : ''; })()}${item.nf && nfSemPedidoPendente(item.nf) ? ' · <strong>⚠ sem pedido</strong>' : ''}</div>
         ${detalheHTML}
     </div>`;

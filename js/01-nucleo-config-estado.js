@@ -118,8 +118,8 @@ const AUDITORIA_TEXTOS_DEFAULT = {
 
 let appConfig = {
     personalizacao: { 
-        theme: 'light', iconTheme: 'solid', font: 'arial', animationSpeed: 2, transicaoTela: 'ios', transicaoVersao: 2, tabDuracao: 360, carregamento: 'blocos', densidade: 'confortavel', mostrarIconesAbas: 'on',
-        menuOrder: ['screen-add', 'screen-manage', 'screen-export', 'screen-reports', 'screen-history', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'],
+        theme: 'light', iconTheme: 'solid', font: 'arial', animationSpeed: 2, transicaoTela: 'ios', transicaoVersao: 2, tabDuracao: 360, carregamento: 'blocos', cascata: 'sim', densidade: 'confortavel', mostrarIconesAbas: 'on',
+        menuOrder: ['screen-add', 'screen-manage', 'screen-export', 'screen-reports', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'],
         // Fase 32: destinos tirados da barra inferior (vão pra tela "Mais"). Vazio = todos na barra.
         menuHidden: []
     },
@@ -167,9 +167,6 @@ const menuDetails = {
     'screen-export': { icon: 'fa-solid fa-file-export', material: 'ios_share', title: 'Exportar',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 15V3l4 5h-3v7h-2z"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4h2v4a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-4h2z"/></svg>`},
-    'screen-history': { icon: 'fa-solid fa-history', material: 'history', title: 'Histórico',
-        outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`,
-        duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M3.51 15A9 9 0 1 0 12 3a9 9 0 0 0-8.49 6H1l6 6V9H1a10 10 0 0 1 .1-2.06z"/><path d="M12 7v5l3.5 2-1 1.73L11 13.73V7h1z"/></svg>`},
     'screen-anotacoes': { icon: 'fa-solid fa-sticky-note', material: 'note_alt', title: 'Anotações',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M20 9h-7V2l7 7z"/><path d="M6 2h7.5L20 8.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`},

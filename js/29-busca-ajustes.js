@@ -26,6 +26,7 @@
         ['Duração da troca de aba', 'duracao tempo transicao aba milissegundos', 'screen-pz-animacoes', 'Animações e Transições', 'tab-duracao-slider'],
         ['Efeito ao trocar de aba', 'efeito transicao esmaecer deslizar subir zoom instantaneo', 'screen-pz-animacoes', 'Animações e Transições', 'aba-efeito-options'],
         ['Pré-visualizar transição', 'testar previa transicao', 'screen-pz-animacoes', 'Animações e Transições', 'transition-demo-a'],
+        ['Cascata dos itens', 'cascata itens animacao entrada ligar desligar cansativo', 'screen-pz-animacoes', 'Animações e Transições', 'cascata-select'],
         ['Carregamento', 'carregando blocos brilho esqueleto texto', 'screen-pz-animacoes', 'Animações e Transições', 'carregamento-options'],
         ['Ícones na Navegação', 'icones barra navegacao mostrar ocultar texto', 'screen-pz-dock', 'Dock e Navegação', 'tab-icons-select'],
         ['Estilo da dock', 'dock barra inferior vidro liquido classico', 'screen-pz-dock', 'Dock e Navegação', 'dock-estilo'],

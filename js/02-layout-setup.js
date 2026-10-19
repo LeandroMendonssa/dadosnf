@@ -135,7 +135,7 @@ function testarTransicaoTela(modo) {
 let trocaTelaTimer = null;
 function trocarTelaAnimada(de, para, direcao, classeAtiva, dirAba) {
     classeAtiva = classeAtiva || 'active';
-    const limpa = el => { el.classList.remove('saindo', 't-ent', 't-frente', 't-volta', 't-troca'); el.style.removeProperty('--dir'); };
+    const limpa = el => { el.classList.remove('saindo', 't-ent', 't-frente', 't-volta', 't-troca', 'dir-neg'); el.style.removeProperty('--dir'); };
     document.querySelectorAll('.app-screen.saindo, .app-screen.t-ent').forEach(limpa);
     clearTimeout(trocaTelaTimer);
     document.querySelectorAll('.app-screen.' + classeAtiva).forEach(s => s.classList.remove(classeAtiva));
@@ -145,6 +145,7 @@ function trocarTelaAnimada(de, para, direcao, classeAtiva, dirAba) {
         de.style.setProperty('--dir', dirAba || 1); para.style.setProperty('--dir', dirAba || 1);
         de.classList.add('saindo', 't-' + direcao);
         para.classList.add('t-ent', 't-' + direcao);
+        if (dirAba < 0) { de.classList.add('dir-neg'); para.classList.add('dir-neg'); } // aba à esquerda: o movimento inverte (como "voltar")
     }
     para.classList.add(classeAtiva);
     if (semAnimacao) return;
@@ -256,7 +257,7 @@ function reordenarMenusDOM(order) {
         if (details) {
             const iconHTML = `<span class="icon-wrapper"><i class="${details.icon}"></i><span class="material-icons">${details.material}</span>${details.outlineSvg || ''}${details.duotoneSvg || ''}</span>`;
             if (!escondidos.includes(screenId)) {
-                const tabButton = document.createElement('button'); tabButton.className = 'tab-item'; tabButton.dataset.screen = screenId; tabButton.dataset.title = details.title;
+                const tabButton = document.createElement('button'); tabButton.className = 'tab-item' + (/\s/.test(String(details.title).trim()) ? '' : ' uma-palavra'); tabButton.dataset.screen = screenId; tabButton.dataset.title = details.title;
                 tabButton.innerHTML = `${iconHTML}<span>${details.title}</span>`;
                 tabButton.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(screenId, details.title); });
                 tabBar.appendChild(tabButton);
@@ -278,7 +279,7 @@ function reordenarMenusDOM(order) {
     }
     // Botão "Mais": sempre ativo — guarda as ferramentas (Importar Relatório ERP) e os destinos tirados da barra.
     {
-        const mais = document.createElement('button'); mais.className = 'tab-item'; mais.dataset.screen = 'screen-mais'; mais.dataset.title = 'Mais';
+        const mais = document.createElement('button'); mais.className = 'tab-item uma-palavra'; mais.dataset.screen = 'screen-mais'; mais.dataset.title = 'Mais';
         mais.innerHTML = `<span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i><span class="material-icons">more_horiz</span><svg class="icon-svg-outline" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span><span>Mais</span>`;
         mais.addEventListener('click', (e) => { e.preventDefault(); switchToScreen('screen-mais', 'Mais'); });
         tabBar.appendChild(mais);

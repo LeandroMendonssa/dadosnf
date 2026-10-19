@@ -10,7 +10,141 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.7.1', nome: 'Fim da tela fantasma nas transições, efeitos de aba de volta e busca em Ajustes', status: 'atual',
+        numero: '2.9.1', nome: 'Gerenciar NF e Cotações por fornecedor no novo padrão de cartão', status: 'atual',
+        novidades: [
+            'Gerenciar NF: cada nota agora usa o mesmo cartão do Controle de NFs — iniciais do fornecedor, título "APELIDO 1234", status (Na relação / Em espera), vencimento, prazo, pedido, valor e aptidão para a saída — com as ações Editar, Em espera (ou Retomar), Arquivar e Excluir com nome completo.',
+            'Cotações por fornecedor (Central do Pedido): o mesmo cartão, com iniciais, nome, CNPJ, status, itens, valor cotado e divergências; o aviso de pendência aparece em uma faixa e as ações continuam logo abaixo.'
+        ],
+        implementado: [
+            'O recolher e expandir dos itens do fornecedor continua com a animação que já existia.',
+            'O painel de edição do Gerenciar NF, a seleção em lote, a busca e o "Aplicar recurso sugerido" continuam funcionando como antes.'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/05, js/09, js/14, js/17.'
+        ],
+        testar: [
+            'Gerenciar NF: conferir o cartão novo e testar Editar (abre o painel), Em espera/Retomar, Arquivar e Excluir; testar também a seleção em lote.',
+            'Cotações > abrir um pedido: conferir o cartão de cada fornecedor e tocar nele para recolher/expandir os itens.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.0', nome: 'Controle de NFs unido ao Histórico, com cartão novo e "Enviada ao financeiro" por NF', status: 'concluida',
+        novidades: [
+            'O Histórico de NFs foi unido ao Controle de NFs: uma tela só, com Em aberto e Arquivadas, separadas por mês. Só o mês atual abre sozinho; os outros ficam recolhidos e abrem com a animação de sempre.',
+            'A aba "Diretas" saiu. As NFs diretas ficam em Arquivadas com a etiqueta "Direta".',
+            'Novo botão em cada NF: "Enviada ao financeiro". Arquiva só aquela NF, sem passar pela relação; se ela estiver na relação, só ela sai, e as demais continuam sendo editadas.',
+            'Cartão novo da NF (iniciais do fornecedor, status, datas, valor, pendências e ações com nome completo): Enviada ao financeiro, Não vai ao financeiro, Enviar à relação e Editar NF.',
+            'Na seleção em massa os botões agora têm nome completo: "Enviada ao financeiro" e "Não vai ao financeiro".'
+        ],
+        implementado: [
+            'Arquivadas mostra o botão "Voltar para Em aberto" quando a NF pode voltar (marcada pelo Controle, marcada como direta, ou arquivada pelo ERP, com confirmação).',
+            'A busca do Controle acha pelo "APELIDO 1234", nome, número, pedido ou CNPJ e abre todos os meses.',
+            'O item "Histórico" saiu do menu e da Personalização; qualquer link antigo para ele abre o Controle de NFs já buscando a NF. O botão do Editor virou "Ver no Controle de NFs".',
+            'O botão "Limpar registros simples arquivados (legado)" fica no fim de Arquivadas.'
+        ],
+        mudou: [
+            'Dados: duas marcas novas e opcionais — "arquivadoPeloControle" na entrada do ERP e "enviadoFinanceiro" na NF só-XML. Nada existente é alterado.',
+            'Arquivos alterados: index.html, style.css, js/01, js/05, js/14, js/17, js/20.'
+        ],
+        testar: [
+            'Controle de NFs: só o mês atual aberto; tocar nos outros meses abre e fecha com animação.',
+            'Em uma NF Recebida, tocar em "Enviada ao financeiro" e confirmar: ela vai para Arquivadas. Depois "Voltar para Em aberto".',
+            'Em uma NF que está na relação: "Enviada ao financeiro" tira só ela da relação (confira no Gerenciar NF que as outras continuam).',
+            'Selecionar: marcar várias NFs e conferir os botões "Enviada ao financeiro" e "Não vai ao financeiro".',
+            'Conferir que "Histórico" sumiu do menu e que "Ver no Controle de NFs" no Editor abre a NF certa.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.8.0', nome: 'Título "APELIDO 1234" e Editor da NF mais organizado', status: 'concluida',
+        novidades: [
+            'Padrão novo em todo o app: NFs aparecem como "APELIDO + NÚMERO DA NF" (ex.: BMG 30922); sem apelido, usa o nome completo do fornecedor.',
+            'Editor da NF: o título da tela e o cabeçalho trazem o fornecedor, com a hierarquia fornecedor+NF em destaque, série e CNPJ logo abaixo e o nome completo só quando difere do apelido.'
+        ],
+        implementado: [
+            'Nova função tituloFornNf (js/14) usada no Editor da NF, no Controle de NFs, no Histórico e na Conferência automática.',
+            'Quadro cinza (Emissão, 1º vencimento, Pedido) com rótulo e valor centralizados.',
+            'Espaçamento de 12 px entre os blocos do Editor; botões do cabeçalho em grade com largura igual.',
+            'Abas (Itens, Financeiro, Fiscal…) em uma única linha, rolando na horizontal quando não cabem.'
+        ],
+        mudou: [
+            'Textos e visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/14, js/17, js/20, js/23.'
+        ],
+        testar: [
+            'Abrir uma NF no Editor: título da tela "FORNECEDOR 1234", cabeçalho com hierarquia, quadro cinza centralizado, blocos espaçados e abas em uma linha.',
+            'Conferir o Controle de NFs e o Histórico: cada NF aparece como "APELIDO 1234".'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.7.4', nome: 'Dock: abas de largura fixa (corrige toque e animação ao recolher)', status: 'concluida',
+        novidades: [
+            'Corrigido: ao recolher a Dock, as abas não se recentralizam mais, o toque no canto abre a aba certa e o seletor não "pula" para outra aba.'
+        ],
+        implementado: [
+            'Todas as abas têm a mesma largura (60 px) com a Dock aberta ou recolhida, então nada é remedido durante a animação; só o ícone encolhe e o nome some.',
+            'Nomes de uma palavra só (como "Equipamentos") usam letra um pouco menor para caber inteiros; nomes com mais palavras quebram a linha entre as palavras.',
+            'Substitui a mudança de largura da 2.7.3, que causava o salto.'
+        ],
+        mudou: [
+            'Somente visual da Dock; dados e regras não mudaram.',
+            'Arquivos alterados: style.css e js/14-historico-mudancas.js.'
+        ],
+        testar: [
+            'Abrir "Equipamentos" (última aba), rolar a tela para a Dock recolher e conferir: sem salto, seletor no lugar e ícones sem recentralizar.',
+            'Tocar nas abas do canto com a Dock recolhida e expandida: deve abrir a aba tocada.',
+            'Conferir se "Equipamentos" aparece inteiro com a Dock aberta.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.7.3', nome: 'Dock recolhida com espaçamento uniforme', status: 'concluida',
+        novidades: [
+            'Com a Dock recolhida, todas as abas (inclusive "Equipamentos") ficam com a mesma largura e mais juntas entre si.'
+        ],
+        implementado: [
+            'A largura maior dos nomes de uma palavra só vale apenas com a Dock aberta (nomes visíveis); recolhida, cada aba usa 50 px e o vão entre elas some.'
+        ],
+        mudou: [
+            'Somente visual da Dock; dados e regras não mudaram.',
+            'Arquivos alterados: style.css e js/14-historico-mudancas.js.'
+        ],
+        testar: [
+            'Rolar uma tela para a Dock recolher: conferir que todas as abas ficam alinhadas, com o mesmo vão, e "Equipamentos" não sobra mais largo.',
+            'Voltar a Dock ao normal (subir a tela) e conferir que o nome inteiro de "Equipamentos" continua aparecendo.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.7.2', nome: 'Opção para desligar a cascata, "Entrar e voltar" nas abas e nomes inteiros na Dock', status: 'concluida',
+        novidades: [
+            'Nova opção "Cascata dos itens" em Personalização > Animações e Transições. Continua ligada por padrão; é só desligar se achar cansativo.',
+            'Novo efeito de troca de aba "Entrar e voltar": o mesmo deslizar do iPhone dos submenus, com a duração que você escolhe. Para uma aba mais à direita empurra para a esquerda; para uma aba mais à esquerda, faz o movimento de voltar.',
+            'Dock: nomes de uma palavra só (como "Equipamentos") aumentam a pílula para caber inteiros; nomes com mais de uma palavra (como "Controle de NFs") quebram a linha entre as palavras, nunca no meio de uma palavra.'
+        ],
+        implementado: [
+            'A cascata respeita a opção nova e continua desligada quando o aparelho está com "Reduzir Movimento".',
+            'A busca de Ajustes também encontra "Cascata dos itens".',
+            'Dock: cada aba de uma palavra ganha largura automática (mínimo de 64 px) e o texto não quebra; as demais mantêm 64 px com quebra só entre palavras.'
+        ],
+        mudou: [
+            'Transições, Personalização e Dock; dados e regras não mudaram.',
+            'Arquivos alterados: index.html, style.css, js/01-nucleo-config-estado.js, js/02-layout-setup.js, js/14-historico-mudancas.js, js/28-transicoes-ios.js e js/29-busca-ajustes.js.'
+        ],
+        testar: [
+            'Personalização > Animações e Transições: desligar e ligar a "Cascata dos itens" e abrir algumas telas.',
+            'Escolher o efeito "Entrar e voltar" e trocar de aba indo para a direita e para a esquerda.',
+            'Dock: conferir "Equipamentos" inteiro e nomes com duas palavras quebrando entre as palavras. Se a barra ficar larga demais, ela rola na horizontal como antes.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.7.1', nome: 'Fim da tela fantasma nas transições, efeitos de aba de volta e busca em Ajustes', status: 'concluida',
         novidades: [
             'Corrigido o "fantasma" durante as transições: a caixa azul "Tela A" da pré-visualização aparecia por cima de outras telas. Ela agora só existe dentro da própria tela.',
             'Entrar e voltar de submenus é só o deslizar do iPhone, sem nenhum esmaecer. Os efeitos Esmaecer, Deslizar, Subir e Zoom voltaram, mas valem apenas para a troca de aba (junto com Padrão e Instantâneo), e a duração continua escolhida por você.',
@@ -1483,6 +1617,13 @@ function nomeExibicaoFornecedor(razaoSocial, cnpj) {
     const porNome = listaFornecedoresSpData.find(f => (f.nomeReal || '').toUpperCase() === razaoSocial.toUpperCase());
     if (porNome) return porNome.nomeExibido || porNome.nomeReal;
     return encontrarApelidoFornecedor(razaoSocial) || razaoSocial;
+}
+
+// 2.8.0: padrão único de título de NF em todo o app — "APELIDO 1234" (apelido do fornecedor, ou o nome completo
+// quando não há apelido, seguido do número da NF).
+function tituloFornNf(fornecedor, cnpj, numeroNf) {
+    const nome = (nomeExibicaoFornecedor(fornecedor || '', cnpj) || fornecedor || '').trim();
+    return [nome, numeroNf ? String(numeroNf).trim() : ''].filter(Boolean).join(' ');
 }
 
 // Anotação "resumo vivo" do pedido — criada automaticamente na primeira
