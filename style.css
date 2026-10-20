@@ -1460,3 +1460,101 @@ body[data-transition="ios"][data-aba-efeito="empurrar"] .saindo.t-troca.dir-neg 
 .cf-tiles strong{display:block;margin-top:2px;font-size:15px;color:var(--text-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cf-tiles strong.e{color:var(--danger)}
 .central-fornecedor .cf-bar{grid-template-columns:repeat(auto-fit,minmax(86px,1fr))}
+.ctl-vl .xml-item-badge{font-size:12px;text-transform:none;letter-spacing:0;padding:7px 12px;border-radius:12px;max-width:60%}
+
+/* ===== 2.9.7: alvo com destaque (estilo "achar na página") e elementos tocáveis que levam ao lugar certo ===== */
+.alvo-destaque{animation:alvoDestaque 2.8s ease-out;scroll-margin-top:calc(var(--header-h,60px) + 24px)}
+@keyframes alvoDestaque{
+  0%{box-shadow:0 0 0 4px rgba(255,204,0,.95),0 0 18px 4px rgba(255,204,0,.55);background-color:rgba(255,214,10,.30)}
+  55%{box-shadow:0 0 0 4px rgba(255,204,0,.75),0 0 14px 3px rgba(255,204,0,.35);background-color:rgba(255,214,10,.22)}
+  100%{box-shadow:0 0 0 4px rgba(255,204,0,0),0 0 0 0 rgba(255,204,0,0)}
+}
+@media (prefers-reduced-motion:reduce){.alvo-destaque{animation-duration:1.2s}}
+.ctl-link{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ctl-link:active{opacity:.6}
+.ctl-pd.ctl-link:after,.ctl-st.ctl-link:after{content:" ›";font-weight:800}
+.ctl-dd>div.ctl-link strong{text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.xml-item-badge.ctl-link:after{content:" ›";font-weight:800}
+.ctl-pend-link{color:var(--accent-text);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer}
+
+/* ===== 2.9.8: cartões da lista de Cotações ===== */
+.cot-card{cursor:pointer}
+.cot-card:active{opacity:.75}
+.cot-card .ctl-dd{padding-bottom:0;border-bottom:0}
+
+/* 2.9.9 — Recurso da NF inteira (Entrada de NF) */
+.xml-recurso-todos { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 12px 14px; margin: 0 0 12px; border: 1px solid var(--border, rgba(128,128,128,.25)); border-radius: 14px; background: var(--card-bg, transparent); }
+.xml-recurso-todos-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 13px; }
+.xml-recurso-todos-txt span { color: var(--text-light); font-size: 12px; }
+.xml-recurso-todos-bt { display: flex; gap: 8px; flex-wrap: wrap; }
+.xml-recurso-todos-bt .central-status-toggle { margin: 0; }
+
+/* 2.9.9 — MODO WEB: movimento no estilo macOS (computador). Sem mola, sem deslizar a tela inteira, sem dock que encolhe.
+   Princípios: o conteúdo novo só dissolve (opacity) com um recuo de 6 px / escala de 0,5%; entrada ~180 ms com curva de saída
+   (começa rápido, termina suave); saída instantânea sob a tela nova; janelas (modais) dissolvem com escala 0,97 → 1 em ~160 ms;
+   botões e itens da lista reagem ao mouse (hover) em ~120 ms. Respeita "Reduzir movimento". */
+:root { --mac-curva: cubic-bezier(.22, .61, .36, 1); --mac-dur: 180ms; }
+@keyframes mac-tela-in { from { opacity: 0; transform: translate3d(0, 6px, 0) scale(.995); } to { opacity: 1; transform: none; } }
+@keyframes mac-janela-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes mac-fundo-in { from { opacity: 0; } to { opacity: 1; } }
+html body[data-plataforma="web"]:not([data-transition="none"]) .app-screen.t-ent { animation: mac-tela-in var(--mac-dur) var(--mac-curva) both; z-index: 3; box-shadow: none; filter: none; }
+html body[data-plataforma="web"]:not([data-transition="none"]) .app-screen.saindo { animation: none; filter: none; box-shadow: none; }
+html body[data-plataforma="web"][data-aba-efeito="nenhum"] .app-screen.t-ent.t-troca { animation: none; }
+/* dock: nunca encolhe no computador */
+body[data-plataforma="web"] .tab-bar.compacta { transform: none !important; }
+body[data-plataforma="web"] .tab-bar.compacta .tab-item > span:not(.icon-wrapper) { max-height: none !important; opacity: 1 !important; }
+/* janelas: dissolver + escala mínima, no lugar da folha com mola */
+body[data-plataforma="web"] .modal-screen.active { animation: mac-fundo-in 140ms ease-out both; }
+body[data-plataforma="web"] .modal-screen.active .modal-content { transition: none; animation: mac-janela-in 160ms var(--mac-curva) both; transform: none; }
+/* feedback ao passar o mouse */
+@media (hover: hover) and (pointer: fine) {
+  body[data-plataforma="web"] .nota-item, body[data-plataforma="web"] .ctl-card, body[data-plataforma="web"] .central-fornecedor { transition: background-color 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out; }
+  body[data-plataforma="web"] .ctl-card:hover, body[data-plataforma="web"] .nota-item:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  body[data-plataforma="web"] .tab-item, body[data-plataforma="web"] .header-action, body[data-plataforma="web"] .central-status-toggle, body[data-plataforma="web"] button { transition: background-color 120ms ease-out, color 120ms ease-out, opacity 120ms ease-out; }
+  body[data-plataforma="web"] .header-action:hover { background-color: var(--bg-primary); }
+  body[data-plataforma="web"] .tab-item:hover { opacity: .85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body[data-plataforma="web"] .app-screen.t-ent { animation: t-fade-in .12s linear both; }
+  body[data-plataforma="web"] .modal-screen.active, body[data-plataforma="web"] .modal-screen.active .modal-content { animation: none; }
+}
+
+/* 2.10.0 — Ajuda do app */
+.aj-cat { margin: 16px 4px 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-light); }
+.aj-li { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.aj-li small { color: var(--text-light); font-size: 12px; font-weight: 400; }
+#ajuda-conteudo .settings-list-group a { cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.aj-tut-card { margin: 12px 0; display: flex; flex-direction: column; gap: 10px; }
+.aj-tut-tit { font-weight: 700; font-size: 16px; }
+.aj-resumo { color: var(--text-light); font-size: 14px; line-height: 1.4; }
+.aj-h { margin: 4px 0 6px; font-size: 20px; line-height: 1.25; color: var(--text-dark); }
+.aj-voltar { margin: 4px 0 8px; font-size: 15px; }
+.aj-passos { margin: 12px 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.45; }
+.aj-dicas { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--bg-primary); font-size: 14px; line-height: 1.4; }
+.aj-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.aj-versao { margin-top: 14px; font-size: 12px; color: var(--text-light); }
+.aj-tut-ov { position: fixed; inset: 0; z-index: 10050; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.45); }
+.aj-tut-box { width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; background: var(--bg-secondary); border-radius: var(--r-lg, 16px); padding: 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-lg); }
+.aj-tut-topo { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-light); }
+.aj-demo { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px dashed var(--border-color); border-radius: 14px; background: var(--bg-primary); }
+.aj-demo .card { margin: 0; }
+.aj-item { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+.aj-item:last-child { border-bottom: 0; }
+.aj-item > div { display: flex; flex-direction: column; min-width: 0; }
+.aj-item small { color: var(--text-light); font-size: 12px; }
+.aj-rec { width: 100%; color: var(--accent-text); }
+.aj-pre { margin: 0; white-space: pre-wrap; font-size: 13px; }
+.aj-alvo { outline: 3px solid #ffcc00; outline-offset: 2px; border-radius: 12px; box-shadow: 0 0 0 6px rgba(255,204,0,.25); }
+.aj-dica-acao { font-size: 13px; color: var(--accent-text); }
+.aj-tut-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
+
+/* 2.10.2 — Tutoriais guiados: campos de exemplo */
+.aj-campo { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+.aj-campo small { color: var(--text-light); font-size: 12px; }
+.aj-input { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-secondary); font-size: 14px; }
+.aj-area { white-space: pre-wrap; font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
+.aj-ok { font-size: 12px; color: var(--button-success, #34c759); }
+.aj-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.aj-sel { outline: 2px solid var(--accent-text); }
+.aj-abas { font-size: 13px; margin-bottom: 6px; color: var(--text-light); }
+.aj-btns { display: flex; flex-wrap: wrap; gap: 8px; }

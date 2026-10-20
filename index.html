@@ -247,14 +247,6 @@
                 <div id="relatorios-conteudo-aba" class="nota-list"></div>
             </div>
 
-            <div class="app-screen" id="screen-history">
-                <input type="text" id="historico-busca" class="form-field" placeholder="Buscar NF, fornecedor, CNPJ, pedido..." oninput="filtrarHistoricoNfs(this.value)">
-                <div id="historico-nfs-navegacao" class="mt-3"></div>
-                <div id="historico-nfs-lista" class="nota-list mt-3" ></div>
-                <div id="lista-historico" style="display:none;"></div>
-                <div id="historico-actions" style="display:none;"></div>
-            </div>
-
             <div class="app-screen" id="screen-settings">
                 <div class="campo ajustes-busca"><input type="search" id="ajustes-busca" class="form-field" placeholder="Buscar em Ajustes..." autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Buscar em Ajustes"></div>
                 <ul class="settings-list-group" id="ajustes-resultados" style="display:none;"></ul>
@@ -263,6 +255,7 @@
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-ajuda" data-title="Ajuda" onclick="prepararAjuda()"><i class="icon fa-solid fa-circle-question" style="background-color: #007aff;"></i> Ajuda <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -329,6 +322,10 @@
                     <ul id="lista-fornecedores-manage" class="manage-list"></ul>
                 </div>
             </div>
+            <div class="app-screen" id="screen-ajuda">
+                <div id="ajuda-conteudo"></div>
+            </div>
+
             <div class="app-screen" id="screen-historico-mudancas">
                 <div id="historico-mudancas-lista"></div>
             </div>
@@ -985,6 +982,8 @@
   <script src="js/27-equipamentos-ponte.js"></script>
   <script src="js/28-transicoes-ios.js"></script>
   <script src="js/29-busca-ajustes.js"></script>
+  <script src="js/30-navegacao.js"></script>
+  <script src="js/31-ajuda.js"></script>
 
 </body>
 </html>
