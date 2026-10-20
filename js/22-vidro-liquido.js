@@ -87,7 +87,7 @@
     }
     function encolherAtivo() {
         const b = document.body;
-        return b.getAttribute('data-dock') !== 'classico' && b.getAttribute('data-dock-encolher') !== 'nao' && b.getAttribute('data-tab-icons') !== 'off' && !reduzMovimento();
+        return b.getAttribute('data-plataforma') !== 'web' && b.getAttribute('data-dock') !== 'classico' && b.getAttribute('data-dock-encolher') !== 'nao' && b.getAttribute('data-tab-icons') !== 'off' && !reduzMovimento();
     }
     function agendarRecolher() {
         clearTimeout(timerRecolher);

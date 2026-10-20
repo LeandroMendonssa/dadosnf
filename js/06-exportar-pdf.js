@@ -365,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-btn').addEventListener('click', () => {
         const activeScreen = document.querySelector('.app-screen.active');
         const activeId = activeScreen ? activeScreen.id : null;
+        if (voltarPelaPilha()) return; // 2.9.7: volta ao ponto exato de onde veio por um link
         if (activeId && activeId === destinoViaMais) { destinoViaMais = null; const r = destinoRetorno; destinoRetorno = { para: 'screen-mais', titulo: 'Mais' }; switchToScreen(r.para, r.titulo); return; }
         if (activeId === 'screen-anotacoes-editor') {
             voltarParaListaAnotacoes();

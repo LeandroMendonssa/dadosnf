@@ -406,7 +406,7 @@ function renderEditorNf() {
     if (nota) linhasPag.push(`Nota ${nota.emEspera ? 'em espera' : 'na relação'}: valor ${escRel(nota.valor || '—')} · vencimento ${escRel(nota.vencimento || '—')}${nota.obs ? ' · ' + escRel(nota.obs) : ''}`);
     if (legado) linhasPag.push(`Nota arquivada em ${escRel(legado.dataHistorico || '—')}: valor ${escRel(legado.valor || '—')} · vencimento ${escRel(legado.vencimento || '—')}${legado.obs ? ' · ' + escRel(legado.obs) : ''}`);
     if (erp) linhasPag.push(`ERP: lançada em ${escRel(erp.data || '—')}${erp.vencimento ? ' · vencimento ' + escRel(erp.vencimento) : ''}${erp.financeiro && erp.financeiro.totalNota ? ' · total ' + escRel(formatarValorMonetarioBR(erp.financeiro.totalNota)) : ''}`);
-    const pagHTML = linhasPag.length ? `<div class="card"><div class="xml-item-meta"><strong>Pagamento e ERP</strong></div>${linhasPag.map(l => `<div class="xml-item-meta">${l}</div>`).join('')}</div>` : '';
+    const pagHTML = linhasPag.length ? `<div class="card" data-alvo="erp"><div class="xml-item-meta"><strong>Pagamento e ERP</strong></div>${linhasPag.map(l => `<div class="xml-item-meta">${l}</div>`).join('')}</div>` : '';
     const paneFin = !xd ? semXml : `
         <div class="card"><div class="xml-item-meta"><strong>Duplicatas (cobrança)</strong>${xd.cobranca.nFat ? ' · fatura ' + escRel(xd.cobranca.nFat) : ''}</div>
             ${xd.cobranca.duplicatas.length ? xd.cobranca.duplicatas.map(dp => `<div class="xml-item-meta">Parcela ${escRel(dp.nDup || '—')} · vence <strong>${escRel(fmtDataXml(dp.dVenc))}</strong> · ${escRel(fmtMoedaXml(dp.vDup))}</div>`).join('') : '<div class="xml-item-meta">Sem duplicatas no XML.</div>'}
@@ -628,6 +628,6 @@ function renderEditorNfErp(erp, el) {
             ${cotTxt ? `<div class="xml-item-cotacao">Cotação: ${escRel(cotTxt)}</div>` : ''}<div style="margin-top:6px">${chip}</div></div>`;
     }).join('');
     const itens = `<div class="card"><div class="xml-item-meta"><strong>Itens lançados no ERP (${(erp.itens || []).length})</strong></div>${linhas || '<div class="xml-item-meta">Sem itens no relatório.</div>'}</div>`;
-    const aviso = `<div class="card"><div class="xml-item-meta">Esta NF veio só do relatório do ERP, sem XML. Aqui você confere os itens e troca o pedido; para editar valores, vencimento e associação item a item, processe o XML dela na Entrada de NF.</div></div>`;
+    const aviso = `<div class="card" data-alvo="sem-xml"><div class="xml-item-meta">Esta NF veio só do relatório do ERP, sem XML. Aqui você confere os itens e troca o pedido; para editar valores, vencimento e associação item a item, processe o XML dela na Entrada de NF.</div></div>`;
     el.innerHTML = alerta + cabecalho + aviso + itens;
 }

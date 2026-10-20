@@ -10,7 +10,169 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.9.5', nome: 'Vincular fornecedores com busca e sugestões, e vínculo automático por XML', status: 'atual',
+        numero: '2.10.2', nome: 'Ajuda: mais dois tutoriais guiados', status: 'atual',
+        novidades: [
+            'Dois tutoriais novos com dados de exemplo: "Registrar uma auditoria" (dados, tipo de divergência, material, gerar e salvar como anotação) e "Importar o relatório do ERP" (colar, revisar, aplicar recurso às marcadas e confirmar).',
+            'A lista da Ajuda agora mostra todos os tutoriais no topo; os artigos de Nova Auditoria e Importar relatório do ERP têm botão para o tutorial.'
+        ],
+        implementado: ['Como antes, nada do tutorial é gravado: é uma janela de demonstração.'],
+        mudou: ['Só conteúdo de ajuda; o funcionamento do app não mudou.', 'Arquivos alterados: style.css, js/14 e js/31.'],
+        testar: ['Ajustes → Ajuda: rodar os três tutoriais até o fim, tocando nos botões destacados.', 'Conferir se os passos batem com o app real e me dizer o que ajustar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.1', nome: 'Ajuda do app (etapa 2): todas as funções', status: 'concluida',
+        novidades: [
+            'A Ajuda agora cobre o app inteiro, com 25 artigos: além dos anteriores, Importar relatório do ERP, Editor da NF, Pedido (Central do Pedido), Relatórios, Anotações, Nova Auditoria, Equipamentos, Produtos SP Data, cadastro de Fornecedores, Análise de Cotações, Observações, Conta e acesso, Histórico de mudanças e Toques/Voltar ao ponto exato.',
+            'Nova categoria Equipamentos.'
+        ],
+        implementado: [
+            'Cada artigo novo traz passos, dicas, botão para abrir a tela e o selo "Revisado na versão 2.10.1".',
+            'Continua valendo a regra: mudou um procedimento, a Ajuda é atualizada na mesma entrega.'
+        ],
+        mudou: [
+            'Só conteúdo de ajuda; o funcionamento do app não mudou.',
+            'Arquivos alterados: js/14 e js/31.'
+        ],
+        testar: [
+            'Ajustes → Ajuda: ler os artigos novos (Equipamentos, Importar relatório do ERP, Nova Auditoria) e dizer o que não bate com o seu uso.',
+            'Testar a busca com palavras como "recurso", "extravio" e "senha".'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.0', nome: 'Ajuda do app (etapa 1): artigos e tutorial guiado', status: 'concluida',
+        novidades: [
+            'Novo item Ajuda em Ajustes, com busca e artigos "como fazer" por categoria. Primeira etapa: abas do app, Adicionar, Entrada de NF (XML), Gerenciar, Saída de Texto, Controle de NFs, Recurso, Cotações, Fornecedores, Backup e Personalização/modo web.',
+            'Tutorial guiado "Da NF em XML até a Saída de Texto": percorre o caminho completo com dados de exemplo; você toca nos botões para ver o efeito. Nada é gravado.',
+            'Cada artigo mostra "Revisado na versão X" e tem botão para abrir a tela correspondente.'
+        ],
+        implementado: [
+            'Regra de manutenção: toda entrega que mudar um procedimento atualiza o artigo da Ajuda (e a versão de revisão) e registra aqui.',
+            'As próximas etapas completam os artigos das demais funções (Equipamentos, Anotações/Auditoria, Importação do ERP, Relatórios etc.).'
+        ],
+        mudou: [
+            'Só acréscimo; nada do que existia mudou.',
+            'Arquivos alterados: index.html, style.css, js/01, js/14, js/29 e js/31 (novo).'
+        ],
+        testar: [
+            'Ajustes → Ajuda: conferir a lista, a busca e abrir alguns artigos (botão "Abrir" e Voltar).',
+            'Iniciar o tutorial guiado, tocar nos botões de recurso e de salvar e ir até o fim.',
+            'Conferir se os textos batem com o jeito que você usa o app e me dizer o que ajustar.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.10', nome: 'Modo web com movimento no estilo macOS', status: 'concluida',
+        novidades: [
+            'No computador (mouse + tela larga) o app entra em "modo web" sozinho: a dock deixa de encolher, as telas não deslizam mais como no iPhone e a cascata dos itens some.',
+            'Movimento estilo macOS: a tela nova só dissolve (com um recuo mínimo de 6 px), em cerca de 180 ms, sem mola; a tela antiga sai na hora por baixo. Janelas (modais) dissolvem com um leve zoom de 0,97 para 1 em ~160 ms.',
+            'Reação ao mouse: cartões, itens, botões e abas mudam de cor/sombra em ~120 ms ao passar o ponteiro.'
+        ],
+        implementado: [
+            'No iPhone/iPad nada muda: continua o movimento atual.',
+            'Para testar no celular como se fosse computador, abra o endereço com ?plataforma=web (e ?plataforma=aparelho para voltar).',
+            'Respeita "Reduzir movimento" do sistema e a opção "sem animação" de Personalização.'
+        ],
+        mudou: [
+            'Só movimento e visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/14, js/22, js/28, js/30.'
+        ],
+        testar: [
+            'No computador: trocar de aba e abrir/voltar telas internas e ver a dissolução curta; abrir uma janela (modal); passar o mouse nos cartões.',
+            'No iPhone: conferir que continua igual (dock encolhe, telas deslizam).',
+            'Opcional: no iPhone, abrir com ?plataforma=web para ver o modo web.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.9', nome: 'Recurso da NF inteira e ligação com a Saída de Texto', status: 'concluida',
+        novidades: [
+            'Entrada de NF: novo quadro "Recurso da NF inteira" acima dos itens, com um botão para C/C e outro para Recurso Próprio. Um toque aplica o recurso a todos os itens que têm base (cotação com Origem ou destino definido); o quadro também diz como estão os itens (todos iguais, diferentes ou sem recurso).',
+            'Saída de Texto: corrigida a ligação que às vezes não reconhecia o recurso. A importação do ERP e o Controle de NFs comparavam o número da NF como texto literal (000123 ≠ 123) e ignoravam o CNPJ; agora comparam normalizado e priorizam o fornecedor certo.'
+        ],
+        implementado: [
+            'Se o item da NF já salva está em outro recurso, o botão da NF inteira também grava na hora (cotação ou NF direta), igual ao botão individual.',
+            'Itens sem base (sem Origem na cotação ou sem destino) não são tocados e o aviso informa quantos ficaram de fora.',
+            'Continua sem adivinhar: se a NF tem mais de um recurso, ou duas NFs com o mesmo número discordam, o campo Recurso fica em branco para decisão manual.'
+        ],
+        mudou: [
+            'Antes só dava para definir o recurso item por item.',
+            'Arquivos alterados: style.css, js/10, js/12, js/14, js/16, js/17.'
+        ],
+        testar: [
+            'Entrada de NF: carregar um XML com vários itens associados, usar "Recurso da NF inteira" e conferir que todos os itens mudam; salvar a NF.',
+            'Importar o relatório ERP de uma NF com zeros à esquerda e conferir se o Recurso já vem preenchido.',
+            'Gerenciar NF / Saída de Texto: conferir que a nota sai com o recurso.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.8', nome: 'Cartões da lista de Cotações no padrão novo', status: 'concluida',
+        novidades: [
+            'Lista de Cotações: cada pedido agora é um cartão no padrão do app — iniciais da origem, número do pedido, origem, status (Aguardando, Em andamento, Completo ou N divergências), três quadros (Fornecedores, Limite, Itens) e uma faixa com o resumo da entrega. O limite vencido aparece em vermelho.',
+            'Resultado da busca por produto: o item encontrado também usa o cartão (produto, pedido, origem, quantidade, valor unitário, código e fornecedor).'
+        ],
+        implementado: [
+            'Sem botões, como combinado: tocar no cartão abre o pedido.'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/13, js/14.'
+        ],
+        testar: [
+            'Cotações: conferir os cartões da lista (status, quadros, faixa) e tocar em um para abrir o pedido.',
+            'Buscar por um produto e conferir o cartão do resultado.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.7', nome: 'Voltar ao ponto exato e toques que levam direto ao alvo', status: 'concluida',
+        novidades: [
+            'Voltar ao ponto exato: quando você sai de uma tela por um link dentro do app (Editor da NF → Pedido, Pedido → NF, Controle → Editor etc.), o Voltar (botão e gesto) leva de volta para exatamente onde você estava: a mesma NF aberta, o mesmo pedido, as mesmas seções abertas e a mesma posição da tela. Pode encadear vários saltos e voltar um por um. Trocar de aba pela barra zera esse caminho.',
+            'Destaque do alvo, como o "achar na página" da Apple: ao chegar por um toque, a tela rola até o ponto certo e ele pisca em amarelo por alguns segundos.',
+            'Toques que levam direto ao lugar de resolver: no Controle de NFs, o selo "N pendências" e cada pendência do texto abaixo (sem vínculo com o ERP → Editor da NF na aba Financeiro; sem XML processado → Editor da NF; em espera / já existe na relação → Gerenciar NF); no Gerenciar NF, o selo de aptidão (Conferida, Divergência...) e o número do pedido abrem o pedido no fornecedor e no item com divergência; no pedido, o selo "Com pendência" e o quadro Divergências do fornecedor abrem o item com divergência.'
+        ],
+        implementado: [
+            'Itens tocáveis ganham uma seta (›) ou sublinhado pontilhado para você saber que levam a algum lugar.',
+            '"Ver no Gerenciar NF" também destaca a nota encontrada.'
+        ],
+        mudou: [
+            'Antes o Voltar ia sempre para a tela-pai fixa (por exemplo, do Pedido para a lista de Cotações), mesmo vindo do Editor de uma NF.',
+            'Arquivos alterados: index.html, style.css, js/01, 05, 06, 08, 09, 14, 17, 20, 28 e o novo js/30-navegacao.js.'
+        ],
+        testar: [
+            'Abra uma NF no Editor, toque em "Abrir pedido", depois em Voltar: deve voltar para a mesma NF (e Voltar de novo leva ao Controle).',
+            'No Controle de NFs, toque no selo vermelho de pendências e no texto da pendência: deve abrir o Editor da NF no ponto certo, com destaque amarelo.',
+            'No Gerenciar NF, toque no selo de aptidão e no número do pedido; no pedido, toque em "Com pendência" ou em Divergências.',
+            'Troque de aba pela barra e confira que o Voltar volta a ser o de sempre.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.6', nome: 'Desvincular fornecedor, vínculo automático na importação e ajustes de layout', status: 'concluida',
+        novidades: [
+            'Fornecedores: botão "Desvincular este CNPJ" nos fornecedores com mais de um CNPJ vinculado. Tira só aquele cadastro do grupo, com confirmação; nenhum CNPJ é apagado.',
+            'Importação do relatório oficial de fornecedores: cadastro NOVO com a mesma raiz de CNPJ (8 primeiros dígitos) de outro já cadastrado é vinculado automaticamente, e o aviso da importação informa quantos vínculos foram feitos. Cadastros já existentes não são mexidos.',
+            'Gerenciar NF: o selo de aptidão ficou curto (por exemplo "✓ Conferida") em vez de um texto de até 3 linhas em letras minúsculas; o texto completo continua ao manter o toque no selo.'
+        ],
+        implementado: [
+            'Revisão de layout das telas alteradas (Controle de NFs, Gerenciar NF, pedido em Cotações, Fornecedores e Histórico de mudanças) em tela larga e estreita (390 e 320 px), em tema claro e escuro: sem rolagem lateral nem texto cortado.',
+            'Removida a tela antiga "Histórico" (já sem uso desde o 2.9.0); as funções que o Controle de NFs ainda usa foram mantidas.'
+        ],
+        mudou: [
+            'Só visual e de vínculo de fornecedores; NFs e notas não mudaram.',
+            'Arquivos alterados: index.html, style.css, js/05, js/14, js/18.'
+        ],
+        testar: [
+            'Fornecedores: abrir um fornecedor com mais de um CNPJ vinculado, tocar em "Desvincular este CNPJ" e confirmar; conferir que ele passa a aparecer separado.',
+            'Gerenciar NF: conferir o selo curto no cartão.',
+            'Importação de fornecedores: se houver cadastro novo com a mesma raiz de CNPJ de um existente, conferir o aviso de vínculo automático.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.5', nome: 'Vincular fornecedores com busca e sugestões, e vínculo automático por XML', status: 'concluida',
         novidades: [
             'Fornecedores > Vincular: no lugar da lista com todos os fornecedores, agora há um campo de busca por nome (qualquer parte) ou CNPJ. Ao tocar no campo aparecem só sugestões: fornecedores com o mesmo CNPJ base (matriz/filial) e com nome parecido.',
             'Ao escolher um fornecedor, o app pede confirmação antes de vincular. O mesmo vale para vincular um cadastro simples (sem CNPJ) a um fornecedor cadastrado.',

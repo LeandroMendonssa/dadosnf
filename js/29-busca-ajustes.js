@@ -9,6 +9,7 @@
         'screen-observacoes': 'observacao texto padrao nota',
         'screen-spdata': 'produtos sp data sku catalogo',
         'screen-config-analise-cotacoes': 'analise cotacao ganhador preco regra',
+        'screen-ajuda': 'ajuda tutorial como fazer passo a passo duvida ensinar',
         'screen-historico-mudancas': 'historico mudanca versao novidade atualizacao',
         'screen-personalizacao': 'aparencia tema personalizar visual',
         'screen-backup': 'backup copia seguranca dados restaurar exportar',

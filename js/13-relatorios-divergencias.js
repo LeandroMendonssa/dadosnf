@@ -230,13 +230,29 @@ function chipsResumoEntrega(r) {
     ].filter(Boolean).join('');
 }
 function renderCardCotacao(c) {
+    // 2.9.8: cartão no padrão do app (iniciais, título, status, 3 quadros e faixa de resumo) — sem botões: tocar abre o pedido.
     const qtdFornecedores = (c.fornecedores || []).length;
-    const dataLimite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '';
-    const chips = chipsResumoEntrega(resumoEntregaCotacao(c));
-    return `<div class="nota-item" onclick="abrirCentralPedido('${c.pedido}')">
-        <div class="nota-info">${c.pedido}${c.origem ? ' · ' + c.origem : ''}</div>
-        <div class="nota-sub">${qtdFornecedores} fornecedor${qtdFornecedores === 1 ? '' : 'es'}${dataLimite ? ' · limite ' + dataLimite : ''}</div>
-        ${chips ? `<div class="nota-chips">${chips}</div>` : ''}
+    const r = resumoEntregaCotacao(c);
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    const vencida = !!c.dataLimite && c.dataLimite < hojeISO;
+    const limite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '—';
+    let st = ['m', 'Aguardando'];
+    if (r.divergencias) st = ['err', `${r.divergencias} divergência${r.divergencias === 1 ? '' : 's'}`];
+    else if (r.total && r.completa === r.total) st = ['ok', 'Completo'];
+    else if (r.completa || r.parcial || r.erp) st = ['', 'Em andamento'];
+    const partes = [
+        r.completa ? `✓ ${r.completa} completa${r.completa === 1 ? '' : 's'}` : '',
+        r.parcial ? `◐ ${r.parcial} parcial${r.parcial === 1 ? '' : 'is'}` : '',
+        r.erp ? `◐ ${r.erp} NF no ERP` : '',
+        r.aguardando ? `○ ${r.aguardando} aguardando` : ''
+    ].filter(Boolean);
+    const iniciais = (typeof iniciaisControle === 'function') ? iniciaisControle(c.origem || '#') : '#';
+    return `<div class="ctl-card cot-card" onclick="abrirCentralPedido('${c.pedido}')">
+        <div class="ctl-top"><div class="ctl-av">${escRel(iniciais)}</div>
+            <div class="ctl-nm"><b>${escRel(c.pedido)}</b><small>${escRel(c.origem || 'Sem origem')}</small></div>
+            <span class="ctl-st ${st[0]}">${st[1]}</span></div>
+        <div class="ctl-dd"><div><span>Fornecedores</span><strong>${qtdFornecedores}</strong></div><div><span>Limite</span><strong class="${vencida ? 'atr' : ''}">${limite}</strong></div><div><span>Itens</span><strong>${(c.itens || []).length}</strong></div></div>
+        ${partes.length ? `<div class="ctl-inf">${partes.join(' · ')}</div>` : ''}
     </div>`;
 }
 
@@ -260,9 +276,12 @@ function renderCardResultadoItem(cotacao, item) {
         item.precoUnitario ? `R$ ${item.precoUnitario}` : '',
         produtoSpData ? `SP Data ${produtoSpData.codigo}` : ''
     ].filter(Boolean).join(' · ');
-    return `<div class="nota-item" onclick="abrirCentralPedido('${cotacao.pedido}')">
-        <div class="nota-info">${nomeProduto}</div>
-        <div class="nota-detalhes">Pedido ${cotacao.pedido}${cotacao.origem ? ' - ' + cotacao.origem : ''} · ${nomeFornecedor}${detalhes ? ' · ' + detalhes : ''}</div>
+    const iniciaisP = (typeof iniciaisControle === 'function') ? iniciaisControle(nomeProduto) : '';
+    return `<div class="ctl-card cot-card" onclick="abrirCentralPedido('${cotacao.pedido}')">
+        <div class="ctl-top"><div class="ctl-av">${escRel(iniciaisP)}</div>
+            <div class="ctl-nm"><b>${escRel(nomeProduto)}</b><small>Pedido ${escRel(cotacao.pedido)}${cotacao.origem ? ' · ' + escRel(cotacao.origem) : ''}</small></div></div>
+        <div class="ctl-dd"><div><span>Quantidade</span><strong>${escRel(item.quantidade || '—')}</strong></div><div><span>Valor unit.</span><strong>${item.precoUnitario ? 'R$ ' + escRel(item.precoUnitario) : '—'}</strong></div><div><span>Cód.</span><strong>${escRel(item.codProduto || '—')}</strong></div></div>
+        <div class="ctl-inf">${escRel([nomeFornecedor, item.fabricante && item.fabricante !== '---' ? item.fabricante : '', item.embalagem || '', produtoSpData ? 'SP Data ' + produtoSpData.codigo : ''].filter(Boolean).join(' · '))}</div>
     </div>`;
 }
 

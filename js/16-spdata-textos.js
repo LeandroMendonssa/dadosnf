@@ -93,15 +93,25 @@ async function salvarNomeProdutoSpData(codigo) {
 // nem decidido do zero. Só sugere quando todos os itens da NF concordam no
 // mesmo recurso; havendo mais de um, fica em branco pra decisão manual.
 function sugerirRecursoImportacaoErp(nota) {
-    const nfSalva = listaNfsProcessadas.find(nf => nf.nf === nota.nf && (nf.serie || '') === (nota.serie || ''));
-    if (!nfSalva || !(nfSalva.itens || []).length) return '';
-    const recursos = new Set((nfSalva.itens || []).map(it => {
+    // 2.9.9: compara o número da NF normalizado (sem zeros à esquerda/pontuação) — antes era texto literal ("000123" ≠ "123")
+    // e o recurso não era reconhecido. Série só conta se as duas existirem. Com CNPJ conhecido, só vale a NF daquele fornecedor;
+    // se mais de uma NF processada bater e elas não concordarem, não sugere (nunca adivinha).
+    const nn = v => String(v == null ? '' : v).replace(/[^a-zA-Z0-9]/g, '').toUpperCase().replace(/^0+(?=.)/, '');
+    const numero = nn(nota.nf); if (!numero) return '';
+    const serie = nn(nota.serie);
+    const cnpj = typeof normalizarCnpj === 'function' ? normalizarCnpj(nota.cnpj || nota.cnpjFornecedor || '') : '';
+    let cands = listaNfsProcessadas.filter(nf => nn(nf.nf) === numero && (!serie || !nn(nf.serie) || nn(nf.serie) === serie)
+        && (nf.itens || []).length);
+    if (cnpj) { const porCnpj = cands.filter(nf => normalizarCnpj(nf.cnpjFornecedor || '') === cnpj); if (porCnpj.length) cands = porCnpj; }
+    if (!cands.length) return '';
+    const recursosDe = nfSalva => new Set((nfSalva.itens || []).map(it => {
         if (it.semCotacao) return it.recurso || null;
         if (!it.codigoSmartCompras) return null;
         const cot = listaCotacoes.find(c => c.pedido === (it.pedidoItem || nfSalva.pedido));
         return cot && cot.recursosPorItem ? (cot.recursosPorItem[it.codigoSmartCompras] || null) : null;
     }).filter(Boolean));
-    return recursos.size === 1 ? [...recursos][0] : '';
+    const todos = new Set(); cands.forEach(nf => recursosDe(nf).forEach(r => todos.add(r)));
+    return todos.size === 1 ? [...todos][0] : '';
 }
 async function alternarIgnorarDivergenciaProdutoSpData(codigo) {
     const produto = listaProdutosSpData.find(p => p.codigo === codigo);

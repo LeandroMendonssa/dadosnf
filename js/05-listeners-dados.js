@@ -307,7 +307,6 @@ const DADOS_TODOS_TELAS = ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associa
 // Quais coleções cada tela precisa. Telas que não aparecem aqui usam só o que já sobe na abertura.
 const DADOS_POR_TELA = {
     'screen-reports': ['cotacoes', 'anotacoes'],
-    'screen-history': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
     'screen-nf-editor': ['nfsProcessadas', 'entradasErp', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'xmlExcecoes'],
     'screen-controle-nfs': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
     'screen-equipamentos': ['nfsProcessadas', 'entradasErp'],
@@ -390,7 +389,9 @@ function rebuildNotasPendentesList(){
         const aptidao = calcularAptidaoSaidaNota(nota);
         const recSugerido = (!nota.obs && aptidao.recursos && aptidao.recursos.length === 1) ? aptidao.recursos[0] : '';
         const aplicarRecursoHTML = recSugerido ? `<button class="action-chip" onclick="event.stopPropagation(); aplicarRecursoSugeridoNota('${nota.id}')">Aplicar recurso: ${recSugerido}</button>` : '';
-        const aptidaoHTML = `<span class="xml-item-badge ${aptidao.badge}" title="${aptidao.label.replace(/"/g, '&quot;')}">${aptidao.label}</span>`;
+        // 2.9.6: no cartão o selo é curto (o texto completo fica no title); antes ocupava até 3 linhas em letras minúsculas.
+        const aptidaoCurta = { apta: '✓ Conferida', sem_cotacao: '✓ Compra direta', sem_pedido: 'Sem pedido vinculado', auditoria_pendente: '⚠ Auditoria pendente', divergencia_com_auditoria_resolvida: 'Divergência resolvida', divergencia_sem_auditoria: '⚠ Divergência' }[aptidao.status] || aptidao.label;
+        const aptidaoHTML = `<span class="xml-item-badge ${aptidao.badge} ctl-link" title="${aptidao.label.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); irParaAptidaoNota('${nota.id}')">${aptidaoCurta}</span>`;
         const complementoPartes = [
             aptidao.pedido ? `Pedido ${aptidao.pedido}` : null,
             aptidao.destino || null,
@@ -416,7 +417,7 @@ function rebuildNotasPendentesList(){
         return `${checkboxHTML}<div class="ctl-top"><div class="ctl-av">${iniciaisControle(nota.fornecedor)}</div>
             <div class="ctl-nm"><b>${titulo}</b><small>Criada em ${(new Date(nota.dataCriacao)).toLocaleDateString('pt-BR')}</small></div>
             <span class="ctl-st ${nota.emEspera ? 'm' : ''}">${nota.emEspera ? 'Em espera' : 'Na relação'}</span></div>
-        <div class="ctl-dd"><div><span>Vencimento</span><strong>${venc}</strong></div><div><span>Prazo</span><strong class="${prazoCls.trim()}">${prazoTxt}</strong></div><div><span>Pedido</span><strong>${aptidao.pedido || '—'}</strong></div></div>
+        <div class="ctl-dd"><div><span>Vencimento</span><strong>${venc}</strong></div><div><span>Prazo</span><strong class="${prazoCls.trim()}">${prazoTxt}</strong></div><div${aptidao.pedido ? ` class="ctl-link" onclick="event.stopPropagation(); irParaPedidoFornecedor('${aptidao.pedido}', '${aptidao.cnpjFornecedor || ''}')"` : ''}><span>Pedido</span><strong>${aptidao.pedido || '—'}</strong></div></div>
         <div class="ctl-vl"><b>${valorTxt}</b>${aptidaoHTML}</div>
         ${infHTML}
         <div class="ctl-bar" style="grid-template-columns:repeat(4,1fr)">${bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;

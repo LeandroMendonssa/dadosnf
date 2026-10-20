@@ -192,20 +192,23 @@ function vencCurtoControle(br) {
     const m = String(br || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     return m ? `${m[1]}/${m[2]}/${m[3].slice(2)}` : (br || '—');
 }
-function pendenciasDoItemControle(it) {
+// 2.9.7: cada pendência sabe onde se resolve (tipo): 'erp' e 'xml' abrem o Editor da NF no ponto certo, 'gerenciar' abre a nota
+// na relação, 'divergencia' abre o pedido no item com divergência. Sem tipo = só informação (ex.: vencida).
+function pendenciasDetalhadasControle(it) {
     const p = [];
     if (abaDoItemControle(it) !== 'aberto') return p;
-    if (it.possivelNota) p.push(`parece já existir como nota ${it.possivelNota.tipo === 'pendente' ? 'na relação' : 'arquivada'}`);
-    if (it.situacao === 'recebida' && it.erp && it.erp.avisoJaExisteNotaManual) p.push('já tem nota manual na relação');
+    if (it.possivelNota) p.push({ txt: `parece já existir como nota ${it.possivelNota.tipo === 'pendente' ? 'na relação' : 'arquivada'}`, tipo: it.possivelNota.tipo === 'pendente' && it.nota ? 'gerenciar' : null });
+    if (it.situacao === 'recebida' && it.erp && it.erp.avisoJaExisteNotaManual) p.push({ txt: 'já tem nota manual na relação', tipo: null });
     if (it.tipo === 'nf') {
-        if (!it.nf) p.push('sem XML processado');
-        if (!it.erp) p.push('sem vínculo com o ERP');
+        if (!it.nf) p.push({ txt: 'sem XML processado', tipo: 'xml' });
+        if (!it.erp) p.push({ txt: 'sem vínculo com o ERP', tipo: it.nf ? 'erp' : null });
     }
-    if (it.situacao === 'em_espera') p.push('em espera');
+    if (it.situacao === 'em_espera') p.push({ txt: 'em espera', tipo: it.nota ? 'gerenciar' : null });
     const dias = calcularDiasParaVencimento(it.venc);
-    if (dias !== null && dias < 0) p.push(`vencida há ${Math.abs(dias)} dia${Math.abs(dias) === 1 ? '' : 's'}`);
+    if (dias !== null && dias < 0) p.push({ txt: `vencida há ${Math.abs(dias)} dia${Math.abs(dias) === 1 ? '' : 's'}`, tipo: null });
     return p;
 }
+function pendenciasDoItemControle(it) { return pendenciasDetalhadasControle(it).map(x => x.txt); }
 // Como reabrir uma NF arquivada/direta: 'controle' (marcada aqui), 'direta' (marcada direta), 'erp' (arquivada pelo fluxo da relação) ou null.
 function modoReabrirControle(it) {
     if (it.tipo !== 'nf') return null;
@@ -223,7 +226,8 @@ function renderCardControleNf(it) {
     const titulo = tituloFornNf(it.nomeFornecedor || '(sem fornecedor)', it.cnpj, it.numeroNf);
     const sub = it.tipo === 'nota' ? 'Nota manual' : it.tipo === 'legado' ? 'Registro simples' : (it.serie ? 'Série ' + escRel(it.serie) : 'Sem série');
     const valor = it.valorTxt ? 'R$ ' + escRel(String(it.valorTxt).replace(/^R\$\s*/, '')) : '—';
-    const pend = pendenciasDoItemControle(it);
+    const pendDet = pendenciasDetalhadasControle(it), pend = pendDet.map(x => x.txt);
+    const primeiroAlvo = pendDet.find(x => x.tipo);
     const btn = (icone, rotulo, fn) => `<button type="button" onclick="event.stopPropagation(); ${fn}">${ICONES_CTRL[icone]}<span>${rotulo}</span></button>`;
     const editor = it.nf ? btn('ed', 'Editar NF', `abrirEditorNf('${it.nf.id}')`)
         : it.erp ? btn('ed', 'Editar NF', `abrirEditorNf('${String(it.erp.id).replace(/'/g, "\\'")}')`) : '';
@@ -249,8 +253,8 @@ function renderCardControleNf(it) {
             <div class="ctl-nm"><b>${escRel(titulo)}</b><small>${sub}</small></div>
             <span class="ctl-st ${classeSt}">${rotuloSt}</span></div>
         <div class="ctl-dd"><div><span>Lançada</span><strong>${dataCurtaControle(it.dataISO)}</strong></div><div><span>Vencimento</span><strong>${escRel(vencCurtoControle(it.venc))}</strong></div><div><span>Pedido</span><strong>${escRel(it.pedido || '—')}</strong></div></div>
-        <div class="ctl-vl"><b>${valor}</b>${aba === 'aberto' ? (pend.length ? `<span class="ctl-pd"><i>!</i>${pend.length} pendência${pend.length > 1 ? 's' : ''}</span>` : '<span class="ctl-pd ok"><i>✓</i>Em dia</span>') : ''}</div>
-        ${pend.length ? `<div class="ctl-inf">${pend.map(escRel).join(' · ')}</div>` : ''}${notaAdv}
+        <div class="ctl-vl"><b>${valor}</b>${aba === 'aberto' ? (pend.length ? `<span class="ctl-pd${primeiroAlvo && !sel ? ' ctl-link' : ''}"${primeiroAlvo && !sel ? ` onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', '${primeiroAlvo.tipo}')"` : ''}><i>!</i>${pend.length} pendência${pend.length > 1 ? 's' : ''}</span>` : '<span class="ctl-pd ok"><i>✓</i>Em dia</span>') : ''}</div>
+        ${pend.length ? `<div class="ctl-inf">${pendDet.map(x => x.tipo && !sel ? `<a class="ctl-pend-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', '${x.tipo}')">${escRel(x.txt)}</a>` : escRel(x.txt)).join(' · ')}</div>` : ''}${notaAdv}
         ${botoes.length && !sel ? `<div class="ctl-bar" style="grid-template-columns:repeat(${Math.min(botoes.length, 4)},1fr)">${botoes.join('')}</div>` : ''}
     </div>`;
 }
@@ -444,7 +448,7 @@ function dadosEnvioNfParaRelacao(it) {
         nf: String(it.numeroNf || '').trim(),
         valor: it.valorTxt ? String(it.valorTxt).replace(/^R\$\s*/, '').trim() : '',
         vencimento: String(it.venc || '').trim(),
-        obs: sugerirRecursoImportacaoErp({ nf: it.numeroNf, serie: it.serie }) || '',
+        obs: sugerirRecursoImportacaoErp({ nf: it.numeroNf, serie: it.serie, cnpj: it.cnpj || (it.erp && it.erp.cnpjFornecedor) || '' }) || '',
         data: `${String(hoje.getDate()).padStart(2, '0')}/${String(hoje.getMonth() + 1).padStart(2, '0')}/${hoje.getFullYear()}`
     };
 }
@@ -520,6 +524,7 @@ function verNoGerenciarNf(chave) {
     filtroGerenciarTexto = it.numeroNf || '';
     rebuildNotasPendentesList();
     aplicarFiltroGerenciar();
+    destacarAlvo(() => document.querySelector('#lista-notas-pendentes .nota-item')); // 2.9.7
 }
 function abrirControleNfs() {
     destinoViaMais = 'screen-controle-nfs';

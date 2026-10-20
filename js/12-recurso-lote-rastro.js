@@ -196,6 +196,49 @@ function htmlRecursoItemXml(item, idx, status) {
         + `<button type="button" class="central-status-toggle" onclick="definirRecursoNfXml(${idx}, 'proprio')">${escRel(r.proprio)}</button>`;
 }
 
+// 2.9.9: UM botão para o recurso da NF inteira. Aplica a mesma escolha (C/C ou Próprio) a todos os itens que têm base
+// (cotação com Origem, ou destino definido nos itens diretos); os que não têm base ficam como estão e são avisados.
+function alvosRecursoTodosXml() {
+    if (!nfeInfoAtual) return [];
+    return itensXmlDetectados
+        .map((item, idx) => ({ item, idx, r: recursoPrevistoItemXml(item, statusItemXml(item)) }))
+        .filter(x => x.r && !x.r.semDestino && !x.r.semOrigem && x.r.cc && x.r.proprio);
+}
+function htmlRecursoTodosNfXml() {
+    const alvos = alvosRecursoTodosXml();
+    if (alvos.length < 2) return '';
+    const valores = new Set(alvos.map(a => a.r.valor || ''));
+    const mesmaOrigem = new Set(alvos.map(a => a.r.cc)).size === 1;
+    const rotCC = mesmaOrigem ? alvos[0].r.cc : 'C/C', rotPR = mesmaOrigem ? alvos[0].r.proprio : 'Recurso Próprio';
+    let resumo;
+    if (valores.size === 1 && [...valores][0]) resumo = `Os ${alvos.length} itens estão em <strong>${escRel([...valores][0])}</strong>.`;
+    else if (valores.has('')) resumo = `${alvos.filter(a => !a.r.valor).length} de ${alvos.length} itens ainda sem recurso.`;
+    else resumo = `Os ${alvos.length} itens estão com recursos diferentes.`;
+    return `<div class="xml-recurso-todos"><div class="xml-recurso-todos-txt"><strong>Recurso da NF inteira</strong><span>${resumo}</span></div>`
+        + `<div class="xml-recurso-todos-bt"><button type="button" class="central-status-toggle" onclick="definirRecursoTodosNfXml('cc')">${escRel(rotCC)}</button>`
+        + `<button type="button" class="central-status-toggle" onclick="definirRecursoTodosNfXml('proprio')">${escRel(rotPR)}</button></div></div>`;
+}
+async function definirRecursoTodosNfXml(tipo) {
+    const alvos = alvosRecursoTodosXml();
+    if (!alvos.length) return toast('Nenhum item com base para definir o recurso.');
+    const porCotacao = new Map(); let direto = false;
+    alvos.forEach(({ r }) => {
+        const oficial = tipo === 'cc' ? r.cc : r.proprio;
+        recursosRascunhoXml[r.chaveRec] = oficial;
+        if (r.direto) direto = true;
+        else if (r.cotacao) { if (!porCotacao.has(r.cotacao)) porCotacao.set(r.cotacao, {}); porCotacao.get(r.cotacao)[r.codigo] = oficial; }
+    });
+    if (nfSalvaXml) {
+        try {
+            for (const [cot, novos] of porCotacao) await gravarRecursoCotacaoXml(cot, novos);
+            if (direto) await salvarNfProcessada();
+        } catch (e) { console.error('Erro ao salvar o recurso da NF:', e); toast('✕ Erro ao salvar o recurso. Tente novamente.'); }
+    }
+    const fora = itensXmlDetectados.length - alvos.length;
+    toast(`✓ Recurso aplicado a ${alvos.length} iten(s)${fora > 0 ? ` — ${fora} sem base (cotação/destino) ficaram como estavam` : ''}.`);
+    renderAssociacaoCotacaoXml();
+}
+
 async function gravarRecursoCotacaoXml(cotacao, novos) {
     await cotacoesCollection.doc(cotacao.pedido).set({ recursosPorItem: novos }, { merge: true });
     cotacao.recursosPorItem = { ...(cotacao.recursosPorItem || {}), ...novos };

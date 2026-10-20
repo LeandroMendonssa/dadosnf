@@ -322,7 +322,33 @@ async function salvarCadastroFornecedoresSpData(registrosNovos) {
         });
         await batch.commit();
     }
-    return { novos, atualizados, cnpjsNovos, ignorados };
+    // 2.9.6: cadastro NOVO com a mesma raiz de CNPJ (8 primeiros dígitos = mesma empresa) de outro já cadastrado vira o mesmo
+    // fornecedor automaticamente (matriz/filial). Só vale para cadastros criados agora; os já existentes não são mexidos.
+    let vinculadosAuto = 0;
+    try {
+        const idsNovos = codigos.filter(c => !existenteMap[c]);
+        if (idsNovos.length) {
+            const cnpjsDoDoc = {};
+            listaFornecedoresSpData.forEach(d => { cnpjsDoDoc[d.id] = (d.cnpjs || []).map(c => c.cnpj); });
+            idsNovos.forEach(c => { cnpjsDoDoc[c] = porCodigo[c].map(r => r.cnpj).filter(Boolean); });
+            const porRaiz = {};
+            Object.keys(cnpjsDoDoc).forEach(id => cnpjsDoDoc[id].forEach(cn => { if (cn && cn.length >= 8) { const r = cn.slice(0, 8); (porRaiz[r] = porRaiz[r] || new Set()).add(id); } }));
+            const pares = new Set();
+            idsNovos.forEach(id => cnpjsDoDoc[id].forEach(cn => { if (cn && cn.length >= 8) porRaiz[cn.slice(0, 8)].forEach(outro => { if (outro !== id) pares.add([id, outro].sort().join('|')); }); }));
+            const lista = [...pares];
+            for (let i = 0; i < lista.length; i += 200) {
+                const batch = firestore.batch();
+                lista.slice(i, i + 200).forEach(par => {
+                    const [a, b] = par.split('|');
+                    batch.set(fornecedoresSpDataCollection.doc(a), { entidadesRelacionadas: firebase.firestore.FieldValue.arrayUnion(b) }, { merge: true });
+                    batch.set(fornecedoresSpDataCollection.doc(b), { entidadesRelacionadas: firebase.firestore.FieldValue.arrayUnion(a) }, { merge: true });
+                });
+                await batch.commit();
+            }
+            vinculadosAuto = lista.length;
+        }
+    } catch (e) { console.error('Erro ao vincular automaticamente por raiz de CNPJ:', e); }
+    return { novos, atualizados, cnpjsNovos, ignorados, vinculadosAuto };
 }
 
 // Retorna os CNPJs válidos cadastrados pra um código de fornecedor do SP
@@ -391,7 +417,7 @@ async function confirmarImportacaoCadastroFornecedoresSpData() {
     if (!cadastroFornecedoresSpDataPreview.length) return;
     try {
         const r = await salvarCadastroFornecedoresSpData(cadastroFornecedoresSpDataPreview);
-        toast(`✓ ${r.novos} novo(s), ${r.atualizados} atualizado(s), ${r.cnpjsNovos} CNPJ(s) novo(s)${r.ignorados ? `, ${r.ignorados} ignorado(s)` : ''}.`);
+        toast(`✓ ${r.novos} novo(s), ${r.atualizados} atualizado(s), ${r.cnpjsNovos} CNPJ(s) novo(s)${r.ignorados ? `, ${r.ignorados} ignorado(s)` : ''}${r.vinculadosAuto ? `, ${r.vinculadosAuto} vínculo(s) automático(s) por CNPJ base` : ''}.`);
         cadastroFornecedoresSpDataPreview = [];
         document.getElementById('import-fornspdata-preview').innerHTML = '';
         document.getElementById('import-fornspdata-textarea').value = '';
@@ -619,6 +645,33 @@ async function vincularEntidadesFornecedor(idA, idB) {
     }
 }
 
+// 2.9.6: tira UM cadastro do grupo de fornecedores vinculados (desfaz o vínculo dele com todos os outros). Nenhum CNPJ é
+// apagado nem movido; só deixa de ser exibido/buscado junto e deixa de herdar o apelido do grupo.
+function confirmarDesvincularEntidade(idDoc) {
+    const doc = listaFornecedoresSpData.find(d => d.id === idDoc);
+    if (!doc) return;
+    showConfirmModal({
+        title: 'Desvincular fornecedor',
+        message: `Tirar "${doc.nomeReal || idDoc}" do grupo de fornecedores vinculados? Nenhum CNPJ é apagado; ele passa a aparecer separado e deixa de usar o apelido do grupo.`,
+        confirmText: 'Desvincular', confirmClass: 'warning',
+        onConfirm: () => desvincularEntidadeFornecedor(idDoc)
+    });
+}
+async function desvincularEntidadeFornecedor(idDoc) {
+    try {
+        const batch = firestore.batch();
+        listaFornecedoresSpData.forEach(d => {
+            if (d.id !== idDoc && (d.entidadesRelacionadas || []).includes(idDoc)) batch.update(fornecedoresSpDataCollection.doc(d.id), { entidadesRelacionadas: firebase.firestore.FieldValue.arrayRemove(idDoc) });
+        });
+        batch.update(fornecedoresSpDataCollection.doc(idDoc), { entidadesRelacionadas: [] });
+        await batch.commit();
+        toast('✓ Fornecedor desvinculado. Nenhum CNPJ foi apagado.');
+    } catch (e) {
+        console.error('Erro ao desvincular fornecedor:', e);
+        toast('✕ Erro ao desvincular.');
+    }
+}
+
 async function salvarApelidoFornecedor(chave) {
     const nomeRealInput = document.getElementById(`nomereal-input-${chave}`);
     const apelidoInput = document.getElementById(`apelido-input-${chave}`);
@@ -798,9 +851,11 @@ function renderListaFornecedoresUnificada() {
                     <button type="button" class="central-status-toggle" onclick="adicionarCnpjFornecedorManual('${doc.id}')">+ Adicionar CNPJ</button>
                 </div>`
                 : `<div class="frn-lin"><span>Nome no app: <b>${apelidoEf.nome || '<em>(usa a razão social)</em>'}</b>${apelidoEf.herdado ? ' <span class="txt-aux">(do grupo)</span>' : ''}${doc.apelidoEditadoManualmente ? ' <span class="badge-excecao">editado</span>' : ''}</span><button type="button" class="central-status-toggle" onclick="toggleEditarApelidoFornecedor('${chaveDoc}')">Editar</button></div>`;
+            const desvinculoHTML = f.docs.length > 1 ? `<div class="frn-lin"><span></span><button type="button" class="central-status-toggle" onclick="confirmarDesvincularEntidade('${doc.id}')">Desvincular este CNPJ</button></div>` : '';
             return `<div class="frn-doc">
                 <div class="frn-txt"><strong>${doc.codigo ? doc.codigo + ' · ' : (doc.origemCadastro === 'xml' ? 'Identificado por XML · ' : '')}CNPJ: </strong>${cnpjsHTML}</div>
                 ${edicaoHTML}
+                ${desvinculoHTML}
             </div>`;
         }).join('');
 

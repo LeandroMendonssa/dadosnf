@@ -373,20 +373,20 @@ function renderCentralPedidoCompleto(pedido) {
             const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', 'Entregue'] : ['m', 'Aguardando']);
             const pendTxt = [nComDiv ? `${nComDiv} item(ns) com divergência em aberto` : '', nPend ? `${nPend} auditoria(s) pendente(s)` : ''].filter(Boolean).join(' · ');
             const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('');
-            return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}">
+            return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}" data-cnpj="${f.cnpj}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
                     <div class="ctl-av">${iniciaisControle(nomeExibicao)}</div>
                     <div class="cf-topo-info">
                         <div class="cf-nome">${nomeExibicao}</div>
                         ${f.cnpj ? `<div class="cf-cnpj">CNPJ ${formatarCnpjExibicao(f.cnpj)}</div>` : ''}
                     </div>
-                    <span class="ctl-st ${emErro ? 'err' : stRot[0]}">${stRot[1]}</span>
+                    <span class="ctl-st ${emErro ? 'err ctl-link' : stRot[0]}"${emErro ? ` onclick="event.stopPropagation(); irParaDivergenciaCartao('${f.cnpj}')"` : ''}>${stRot[1]}</span>
                     <i class="fa-solid fa-chevron-right"></i>
                 </div>
                 ${acoesHTML}
                 <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
                     ${faixaHTML}
-                    <div class="cf-tiles"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div><span>Divergências</span><strong class="${(nComDiv + nPend) ? 'e' : ''}">${nComDiv + nPend}</strong></div></div>
+                    <div class="cf-tiles"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div${(nComDiv + nPend) ? ` class="ctl-link" onclick="irParaDivergenciaCartao('${f.cnpj}')"` : ''}><span>Divergências</span><strong class="${(nComDiv + nPend) ? 'e' : ''}">${nComDiv + nPend}</strong></div></div>
                     ${detalhesEntregaHTML ? `<div class="cf-detalhes">${detalhesEntregaHTML}</div>` : ''}
                     ${produtosHTML}
                     ${soltasHTML}

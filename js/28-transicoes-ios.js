@@ -60,7 +60,7 @@
 
     // ---------- cascata sutil: os primeiros itens da tela entram um após o outro ----------
     function cascata(screenId, direcao) {
-        if (RM.matches || sempre() || (appConfig.personalizacao && appConfig.personalizacao.cascata === 'nao')) return;
+        if (RM.matches || sempre() || document.body.getAttribute('data-plataforma') === 'web' || (appConfig.personalizacao && appConfig.personalizacao.cascata === 'nao')) return;
         requestAnimationFrame(() => { // depois de a tela desenhar a própria lista (renderTelaMais etc.)
             const tela = document.getElementById(screenId);
             if (!tela || !tela.classList.contains('active')) return;
@@ -145,7 +145,9 @@
         const at = document.querySelector('.app-screen.active');
         if (!at || SEM_GESTO.includes(at.id)) return null;
         let id = null;
-        if (typeof destinoViaMais !== 'undefined' && at.id === destinoViaMais) id = destinoRetorno && destinoRetorno.para;
+        const topoRet = typeof topoDaPilhaPara === 'function' ? topoDaPilhaPara(at.id) : null;
+        if (topoRet) id = topoRet.telaId;
+        else if (typeof destinoViaMais !== 'undefined' && at.id === destinoViaMais) id = destinoRetorno && destinoRetorno.para;
         else if (typeof closeBtnBackScreen !== 'undefined') id = closeBtnBackScreen[at.id];
         const prev = id && document.getElementById(id);
         return prev && prev !== at ? { at, prev } : null;
