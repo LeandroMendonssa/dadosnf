@@ -750,7 +750,7 @@
                     <datalist id="datalist-fornecedores-cotacao"></datalist>
                     <datalist id="datalist-produtos-cotacao"></datalist>
                     <div class="campo"><label>Data da Auditoria</label><input type="date" id="aud-data" class="form-field"></div>
-                    <div class="campo"><label>Destinatário do E-mail</label><input type="text" id="aud-destinatario" class="form-field" value="Marisa" placeholder="Marisa"></div>
+                    <div class="campo"><label>Destinatário do E-mail</label><input type="text" id="aud-destinatario" class="form-field" value="" placeholder="Nome de quem recebe (opcional)"></div>
                     <div class="campo"><label>Observação Geral</label><textarea id="aud-obs-geral" class="form-field" placeholder="Ex: inicialmente havia faltado um volume, mas foi encontrado depois..."></textarea></div>
                 </div>
 
@@ -769,9 +769,13 @@
                     </div>
                     <div id="config-textos-body" class="mt-4" style="display:none">
                         <p style="color:var(--text-light);font-size:12px;margin-top:0;">Ajuste o tom das frases usadas na geração. Use {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} na abertura — são substituídas automaticamente.</p>
+                        <div class="campo"><label>Destinatário padrão do e-mail (opcional)</label><input type="text" id="cfg-destinatario" class="form-field" placeholder="Em branco: a saudação sai sem nome"></div>
                         <div class="campo"><label>Abertura do E-mail</label><textarea id="cfg-saudacao" class="form-field"></textarea></div>
                         <div class="campo"><label>Frase — Fotos em Anexo</label><input type="text" id="cfg-fotosAnexo" class="form-field"></div>
                         <div class="campo"><label>Fechamento do E-mail</label><input type="text" id="cfg-fechamento" class="form-field"></div>
+                        <div class="campo"><label>Modelos por tipo de divergência</label>
+                            <p style="color:var(--text-light);font-size:12px;margin:0 0 8px;">Escreva como cada tipo aparece no texto. Use <b>{campo}</b> para o valor digitado (vazio vira "?") e <b>[[ trecho ]]</b> para algo que só aparece se os campos dentro dele estiverem preenchidos. Os campos de cada tipo estão sob o modelo.</p>
+                            <div id="cfg-modelos"></div></div>
                         <div class="actions-row"><button class="actions-button is-neutral" onclick="restaurarTextosPadrao()">Restaurar Padrão</button></div>
                     </div>
                 </div>

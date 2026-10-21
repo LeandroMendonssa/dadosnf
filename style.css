@@ -1558,3 +1558,13 @@ body[data-plataforma="web"] .modal-screen.active .modal-content { transition: no
 .aj-sel { outline: 2px solid var(--accent-text); }
 .aj-abas { font-size: 13px; margin-bottom: 6px; color: var(--text-light); }
 .aj-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 2.10.3 — modo web: a ordem dos menus não tem "Na barra / Em Mais" */
+body[data-plataforma="web"] .menu-barra-toggle, body[data-plataforma="web"] .reorder-list-item .nome-sub { display: none; }
+body[data-plataforma="web"] .reorder-list-item.fora-da-barra .name { opacity: 1; }
+
+/* 2.10.3 — Auditoria: vínculo do produto com a cotação */
+.aud-vinculo { margin-top: 4px; font-size: 12px; color: var(--text-light); line-height: 1.4; }
+.aud-vinculo.ok { color: var(--button-success, #34c759); }
+.aud-vinculo a { cursor: pointer; text-decoration: underline; }
+.aud-vinculo select { width: 100%; padding: 6px 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-dark); }
