@@ -203,12 +203,7 @@ function abrirCentralPedido(pedido) {
 // (Central do Pedido via linhasDeMateriais, e a saída da Auditoria via
 // gerarCorpoAuditoria) — um ajusta, o outro acompanha automaticamente.
 function textoOcorrenciaUnica(tipo, c) {
-    if (tipo === 'fornecedor_nao_entregou') {
-        return `${c.fornecedorNome ? upAud(c.fornecedorNome) + ': ' : ''}ainda não entregou o pedido${c.diasEmAberto ? ', já são ' + c.diasEmAberto + ' dias em aberto' : ''}.${c.observacao ? ' ' + c.observacao : ''}`;
-    }
-    if (tipo === 'frete_indevido') {
-        return `A cotação foi aprovada com frete ${c.condicaoCotada ? upAud(c.condicaoCotada) : '?'}, porém o fornecedor cobrou frete${c.valorFrete ? ' no valor de ' + c.valorFrete : ''}${c.condicaoCobrada ? ' (' + upAud(c.condicaoCobrada) + ')' : ''}, em desacordo com a condição aprovada.${c.observacao ? ' ' + c.observacao : ''}`;
-    }
+    if (tipo === 'fornecedor_nao_entregou' || tipo === 'frete_indevido') return aplicarModeloAuditoria(modeloDoTipo(tipo), c || {}, {});
     return '';
 }
 
@@ -331,7 +326,8 @@ function renderCentralPedidoCompleto(pedido) {
             const divSoltas = [];
             divergenciasForn.forEach(x => {
                 const nomes = (x.d.materiais || []).map(m => normNome(m.produto)).filter(Boolean);
-                const alvo = nomes.length ? produtos.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) : null; // 2.0.9: mesmo critério da comparação
+                const codsRef = (x.d.materiais || []).map(m => m.codProduto).filter(Boolean);
+                const alvo = produtos.find(it => codsRef.includes(it.codProduto)) || (nomes.length ? produtos.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) : null); // 2.0.9: mesmo critério da comparação
                 if (alvo) (divPorProduto[alvo.codProduto] = divPorProduto[alvo.codProduto] || []).push(x);
                 else divSoltas.push(x);
             });

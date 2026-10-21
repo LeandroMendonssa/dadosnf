@@ -223,6 +223,7 @@ function aplicarPersonalizacoes() {
     
 // Fase 32: destinos fora da barra (aparecem na tela "Mais"). Na ordem do menu.
 function menuEscondidos(order) {
+    if (document.body && document.body.getAttribute('data-plataforma') === 'web') return []; // 2.10.3: no computador não existe dock x "Mais": todas as abas ficam juntas, na ordem escolhida
     const hidden = (appConfig.personalizacao && appConfig.personalizacao.menuHidden) || [];
     return (order || appConfig.personalizacao.menuOrder || []).filter(id => hidden.includes(id) && menuDetails[id]);
 }
@@ -276,6 +277,11 @@ function reordenarMenusDOM(order) {
         a.innerHTML = '<span class="icon-wrapper"><i class="fa-solid fa-file-import"></i><span class="material-icons">upload_file</span></span><span>Importar Relatório (ERP)</span>';
         a.addEventListener('click', (e) => { e.preventDefault(); switchToScreen('screen-import', 'Importar Relatório (ERP)'); });
         li.appendChild(a); sidebarNav.appendChild(li);
+    }
+    // 2.10.3: a ferramenta Importar não fica separada embaixo do Ajustes: entra logo antes dele
+    {
+        const lis = [...sidebarNav.children], imp = lis.find(l => l.querySelector('.sidebar-item[data-title="Importar Relatório (ERP)"]')), conf = lis.find(l => l.querySelector('.sidebar-item[data-screen="screen-settings"]'));
+        if (imp && conf && imp !== conf) sidebarNav.insertBefore(imp, conf);
     }
     // Botão "Mais": sempre ativo — guarda as ferramentas (Importar Relatório ERP) e os destinos tirados da barra.
     {

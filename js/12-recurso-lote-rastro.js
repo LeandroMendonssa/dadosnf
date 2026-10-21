@@ -424,7 +424,7 @@ function limparFormularioAuditoria() {
     contadorDivergenciaId = 0;
     ['aud-pedido', 'aud-nf', 'aud-obs-geral'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('aud-fornecedor').value = '';
-    document.getElementById('aud-destinatario').value = 'Marisa';
+    document.getElementById('aud-destinatario').value = (appConfig.auditoriaTextos && appConfig.auditoriaTextos.destinatario) || '';
     document.getElementById('aud-data').value = new Date().toISOString().slice(0, 10);
     cotacaoEncontradaAuditoria = null;
     atualizarInfoCotacaoAuditoria();
@@ -472,11 +472,33 @@ function atualizarDatalistFornecedoresAuditoria() {
 // isso; a Observação/descrição do SmartCompras só entra como fallback,
 // quando o item ainda não tem SP Data associado (nunca cria uma terceira
 // associação nova pra isso).
+// 2.10.3: ordem para chegar ao nome REAL do produto: SP Data associado → nome oficial do SmartCompras → nome do produto na NF (xProd) já
+// processada deste pedido → por último a descrição/observação do SmartCompras (que nem sempre é o nome).
+function nomeNfDoItemCotacao(it, pedido) {
+    if (!it || !it.codProduto) return '';
+    for (const nf of (typeof listaNfsProcessadas !== 'undefined' ? listaNfsProcessadas : [])) {
+        if (pedido && nf.pedido && String(nf.pedido) !== String(pedido)) continue;
+        const x = (nf.itens || []).find(i => i.codigoSmartCompras === it.codProduto && i.xProd);
+        if (x) return x.xProd;
+    }
+    return '';
+}
 function nomeConhecidoItemCotacao(it) {
     const assoc = it.codProduto ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === it.codProduto) : null;
     const produtoSpData = assoc ? listaProdutosSpData.find(p => p.codigo === assoc.spDataCodigo) : null;
-    return produtoSpData ? produtoSpData.nome : (it.descricao || '');
+    if (produtoSpData && produtoSpData.nome) return produtoSpData.nome;
+    return it.nomeOficial || nomeNfDoItemCotacao(it, cotacaoEncontradaAuditoria && cotacaoEncontradaAuditoria.pedido) || it.descricao || '';
 }
+// Itens da cotação encontrada (todos os fornecedores), sem repetir código — base do vínculo do produto na auditoria.
+function itensCotacaoAuditoria() {
+    const vistos = new Set(), r = [];
+    ((cotacaoEncontradaAuditoria && cotacaoEncontradaAuditoria.itens) || []).forEach(it => {
+        if (!it.codProduto || vistos.has(it.codProduto)) return; vistos.add(it.codProduto); r.push(it);
+    });
+    return r;
+}
+function itemCotacaoAuditoriaPorCodigo(cod) { return itensCotacaoAuditoria().find(i => i.codProduto === cod) || null; }
+function itemCotacaoAuditoriaPorNome(nome) { const alvo = upAud(nome).trim(); return alvo ? itensCotacaoAuditoria().find(i => upAud(nomeConhecidoItemCotacao(i)) === alvo) || null : null; }
 
 // Datalist de produtos filtrada pelo fornecedor já digitado no campo
 // Fornecedor (se bater com algum da cotação) — senão mostra todos os

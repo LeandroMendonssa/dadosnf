@@ -113,7 +113,21 @@ let relatoriosFiltroStatusDivergencia = 'pendente'; // 'pendente' | 'resolvida' 
 const AUDITORIA_TEXTOS_DEFAULT = {
     saudacao: '{DESTINATARIO}, boa tarde!\n\nRecebemos do fornecedor {FORNECEDOR} os materiais referentes à NF {NF}, do pedido do SmartCompras número {PEDIDO}.',
     fotosAnexo: 'Seguem em anexo as fotos para comprovação.',
-    fechamento: 'Atenciosamente,'
+    fechamento: 'Atenciosamente,',
+    // 2.10.3: nome de quem recebe o e-mail (vazio = a saudação sai sem nome) e modelos de frase por tipo de divergência.
+    destinatario: '',
+    modelo_nao_faturado: '{produto}, quantidade {quantidade}, não foi faturado.',
+    modelo_nao_entregue: '{produto}, quantidade {quantidade}, não foi entregue.',
+    modelo_nao_cotado: '{produto}, quantidade {quantidade}, não constava na cotação.',
+    modelo_produto_diferente: 'Solicitamos {produtoPedido}[[, {quantidade}[[ {unidade}]]]], porém foi faturado {produtoFaturado}.',
+    modelo_quantidade_diferente: '{produto}: cotado {quantidadeCotada}[[ {unidade}]], porém faturado {quantidadeFaturada}[[ {unidade}]].',
+    modelo_avariado: 'Gostaria de informar que, no dia {data}, após recebermos os materiais do fornecedor {fornecedor} foram identificadas {quantidade} {unidade} danificadas ({tipoDano}) do medicamento {produto}, referente ao Pedido nº {pedido}, N.F. {nf}.[[\n\nAs {unidade} pertencem ao lote {lote}, com validade para {validade}.]]\n\nSegue em anexo o registro fotográfico das unidades avariadas.',
+    modelo_solicitar_carta_correcao: '{produto}: solicitamos carta de correção, lote informado {loteInformado} e recebido {loteRecebido}, validade informada {validadeInformada} e recebida {validadeRecebida}.',
+    modelo_valor_diferente: '{produto}, quantidade {quantidade}: cotado a {valorCotado}, faturado a {valorFaturado}.',
+    modelo_desacordo_especificacao: '{produto}: pedimos especificação {especificacaoEsperada}, porém recebemos {especificacaoRecebida}.',
+    modelo_fornecedor_nao_entregou: '[[{fornecedorNome}: ]]ainda não entregou o pedido[[, já são {diasEmAberto} dias em aberto]].[[ {observacao}]]',
+    modelo_frete_indevido: 'A cotação foi aprovada com frete {condicaoCotada}, porém o fornecedor cobrou frete[[ no valor de {valorFrete}]][[ ({condicaoCobrada})]], em desacordo com a condição aprovada.[[ {observacao}]]',
+    modelo_outro: '[[{produto}: ]]{observacao}'
 };
 
 let appConfig = {

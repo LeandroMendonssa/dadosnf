@@ -10,7 +10,41 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.10.2', nome: 'Ajuda: mais dois tutoriais guiados', status: 'atual',
+        numero: '2.10.4', nome: 'Ajuda: artigo de Backup completo', status: 'atual',
+        novidades: ['O artigo de Backup da Ajuda agora explica os dois botões: o backup simples (cópia de segurança) e a exportação completa para diagnóstico, e o motivo de ela existir.'],
+        implementado: ['Corrigido o texto anterior, que falava em restaurar: o app só gera os arquivos, não restaura.'],
+        mudou: ['Só texto de ajuda. Arquivos alterados: js/14 e js/31.'],
+        testar: ['Ajustes → Ajuda → Backup dos dados: ler o artigo e conferir se bate com a tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.3', nome: 'Voltar da Ajuda, menu do computador e Auditoria personalizável', status: 'concluida',
+        novidades: [
+            'Ajuda: removido o segundo botão "Todos os artigos". O botão Voltar do topo sobe um nível por vez: do artigo para a lista da Ajuda e, na lista, para Ajustes.',
+            'Computador: não existe mais a divisão "Na barra / Em Mais". Todas as abas ficam juntas no menu, na ordem escolhida (a tela de organizar abas esconde essa opção no computador), e Importar Relatório (ERP) fica antes do Ajustes.',
+            'Auditoria sem nomes próprios: o Destinatário do E-mail começa em branco (a saudação sai sem nome) e há um "Destinatário padrão" opcional em Configurar Textos Padrão.',
+            'Auditoria: cada tipo de divergência tem agora um modelo de frase editável em Configurar Textos Padrão. {campo} entra com o valor digitado e [[ trecho ]] só aparece se os campos dentro dele estiverem preenchidos. "Restaurar este modelo" volta ao padrão de um tipo.',
+            'Auditoria: o produto fica ligado ao item da cotação por um vínculo próprio. Renomear o texto não perde o vínculo; aparece "Ligado ao item… com o nome real", "usar este nome" e "desligar". Produto sem ligação ganha um seletor para ligar a um item da cotação.',
+            'Nome real do produto: agora vem do SP Data, depois do nome oficial do SmartCompras, depois do nome na NF processada (xProd) e só então da observação do SmartCompras.'
+        ],
+        implementado: [
+            'O vínculo é salvo junto da auditoria e passa a ser usado para ligar a divergência ao item certo no pedido (antes só pelo nome).',
+            'Os textos gerados continuam iguais aos de antes enquanto você não editar os modelos.'
+        ],
+        mudou: [
+            'Arquivos alterados: index.html, style.css, js/01, js/02, js/06, js/09, js/11, js/12, js/13, js/14, js/16, js/28, js/30, js/31.'
+        ],
+        testar: [
+            'Ajuda: abrir um artigo e tocar no Voltar do topo (vai para a lista) e de novo (vai para Ajustes).',
+            'Computador: conferir o menu lateral com todas as abas juntas e Ajustes–Personalização–Ordem dos menus sem "Na barra/Em Mais".',
+            'Nova Auditoria: conferir o Destinatário em branco; gerar o e-mail com e sem nome.',
+            'Configurar Textos Padrão: editar o modelo de um tipo, gerar a auditoria e ver a frase nova; testar "restaurar este modelo".',
+            'Escolher um produto da cotação, renomear o texto e conferir que continua "Ligado ao item"; testar um produto sem ligação.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.2', nome: 'Ajuda: mais dois tutoriais guiados', status: 'concluida',
         novidades: [
             'Dois tutoriais novos com dados de exemplo: "Registrar uma auditoria" (dados, tipo de divergência, material, gerar e salvar como anotação) e "Importar o relatório do ERP" (colar, revisar, aplicar recurso às marcadas e confirmar).',
             'A lista da Ajuda agora mostra todos os tutoriais no topo; os artigos de Nova Auditoria e Importar relatório do ERP têm botão para o tutorial.'

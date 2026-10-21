@@ -345,7 +345,25 @@ function toggleConfigTextos() {
     const abrindo = body.style.display === 'none';
     body.style.display = abrindo ? 'block' : 'none';
     chevron.style.transform = abrindo ? 'rotate(180deg)' : 'rotate(0)';
-    if (abrindo) preencherCamposConfigTextos();
+    if (abrindo) { montarCamposModelosAuditoria(); preencherCamposConfigTextos(); }
+}
+// 2.10.3: um campo de modelo por tipo de divergência, com a lista dos {campos} disponíveis e restaurar individual.
+function montarCamposModelosAuditoria() {
+    const el = document.getElementById('cfg-modelos'); if (!el || el.dataset.pronto) return;
+    el.dataset.pronto = '1';
+    const corpo = document.getElementById('config-textos-body'); if (corpo) corpo.addEventListener('focusout', () => salvarCamposConfigTextos()); // salva ao sair de cada campo
+    el.innerHTML = Object.entries(TIPOS_DIVERGENCIA_AUDITORIA).map(([tipo, def]) => {
+        const campos = def.campos.map(c => '{' + c.key + '}').join(' ');
+        const extra = tipo === 'avariado' ? ' {data} {fornecedor} {pedido} {nf}' : '';
+        return `<div class="campo"><label>${def.label}</label><textarea id="cfg-modelo_${tipo}" class="form-field" rows="3"></textarea>
+            <div style="color:var(--text-light);font-size:11px;margin-top:2px;">Campos: ${campos}${extra} · <a onclick="restaurarModeloAuditoria('${tipo}')" style="cursor:pointer;text-decoration:underline;">restaurar este modelo</a></div></div>`;
+    }).join('');
+}
+function restaurarModeloAuditoria(tipo) {
+    const el = document.getElementById('cfg-modelo_' + tipo); if (!el) return;
+    el.value = AUDITORIA_TEXTOS_DEFAULT['modelo_' + tipo] || '';
+    salvarCamposConfigTextos();
+    toast('✓ Modelo restaurado.');
 }
 function preencherCamposConfigTextos() {
     configTextosCarregados = true;
@@ -384,44 +402,41 @@ function restaurarTextosPadrao() {
 // Linha natural por MATERIAL (não mais por ocorrência inteira) — cada tipo
 // define sua própria frase, seguindo o padrão pedido: sem aspas, sem
 // parênteses artificiais, como uma mensagem real de trabalho.
-function linhaMaterial(tipo, m) {
-    switch (tipo) {
-        case 'nao_faturado':
-            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}, não foi faturado.`;
-        case 'nao_entregue':
-            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}, não foi entregue.`;
-        case 'nao_cotado':
-            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}, não constava na cotação.`;
-        case 'produto_diferente':
-            return `Solicitamos ${upAud(m.produtoPedido)}${m.quantidade ? ', ' + m.quantidade + (m.unidade ? ' ' + m.unidade : '') : ''}, porém foi faturado ${upAud(m.produtoFaturado)}.`;
-        case 'quantidade_diferente':
-            return `${upAud(m.produto)}: cotado ${m.quantidadeCotada || '?'}${m.unidade ? ' ' + m.unidade : ''}, porém faturado ${m.quantidadeFaturada || '?'}${m.unidade ? ' ' + m.unidade : ''}.`;
-        case 'solicitar_carta_correcao':
-            return `${upAud(m.produto)}: solicitamos carta de correção, lote informado ${m.loteInformado || '?'} e recebido ${m.loteRecebido || '?'}, validade informada ${m.validadeInformada || '?'} e recebida ${m.validadeRecebida || '?'}.`;
-        case 'valor_diferente':
-            return `${upAud(m.produto)}, quantidade ${m.quantidade || '?'}: cotado a ${m.valorCotado || '?'}, faturado a ${m.valorFaturado || '?'}.`;
-        case 'desacordo_especificacao':
-            return `${upAud(m.produto)}: pedimos especificação ${m.especificacaoEsperada || '?'}, porém recebemos ${m.especificacaoRecebida || '?'}.`;
-        case 'outro':
-            return `${m.produto ? upAud(m.produto) + ': ' : ''}${m.observacao || ''}`;
-        default:
-            return '';
+// 2.10.3: os textos agora vêm de MODELOS editáveis (Configurar Textos Padrão → Modelos por tipo de divergência).
+// {campo} = valor do campo (vazio vira "?"); [[ trecho ]] = só aparece se TODOS os {campos} dentro dele estiverem preenchidos (pode aninhar);
+// \n = linha em branco. Nomes de produto/fornecedor saem em MAIÚSCULAS, como antes.
+const CAMPOS_MAIUSCULOS_MODELO = ['produto', 'produtoPedido', 'produtoFaturado', 'fornecedorNome', 'condicaoCotada', 'condicaoCobrada'];
+function aplicarModeloAuditoria(tpl, campos, ctx) {
+    const vals = Object.assign({}, campos || {}, ctx || {});
+    const valor = k => {
+        let v = vals[k]; v = (v == null ? '' : String(v)).trim();
+        return v && CAMPOS_MAIUSCULOS_MODELO.includes(k) ? upAud(v) : v;
+    };
+    let t = String(tpl == null ? '' : tpl).replace(/\\n/g, '\n');
+    const reOpc = /\[\[([^\[\]]*)\]\]/;
+    let guard = 0;
+    while (reOpc.test(t) && guard++ < 50) {
+        t = t.replace(reOpc, (_, inner) => {
+            const ks = [...inner.matchAll(/\{(\w+)\}/g)].map(x => x[1]);
+            return ks.every(k => valor(k)) ? inner : '';
+        });
     }
+    return t.replace(/\{(\w+)\}/g, (_, k) => valor(k) || '?').replace(/[ \t]+\n/g, '\n').trim();
+}
+function modeloDoTipo(tipo) {
+    const t = (appConfig.auditoriaTextos || {})['modelo_' + tipo];
+    return (t && String(t).trim()) ? t : (AUDITORIA_TEXTOS_DEFAULT['modelo_' + tipo] || '');
+}
+function linhaMaterial(tipo, m) {
+    const tpl = modeloDoTipo(tipo);
+    return tpl ? aplicarModeloAuditoria(tpl, m, {}) : '';
 }
 
-// Avaria gera um PARÁGRAFO PRÓPRIO por material (não uma linha de lista),
-// seguindo exatamente o modelo de referência fornecido — não o formato
-// genérico de bullet usado pelos outros tipos.
+// Avaria gera um PARÁGRAFO PRÓPRIO por material (não uma linha de lista).
 function paragrafoAvaria(m, ctx) {
-    const dataFmt = ctx.data ? formatarDataBRSimples(ctx.data) : '[DATA]';
-    const unidade = m.unidade || 'unidades';
-    const tipoDano = m.tipoDano || 'avariadas';
-    let texto = `Gostaria de informar que, no dia ${dataFmt}, após recebermos os materiais do fornecedor ${ctx.fornecedor || '[FORNECEDOR]'} foram identificadas ${m.quantidade || '?'} ${unidade} danificadas (${tipoDano}) do medicamento ${upAud(m.produto)}, referente ao Pedido nº ${ctx.pedido || '[PEDIDO]'}, N.F. ${ctx.nf || '[NF]'}.`;
-    if (m.lote || m.validade) {
-        texto += `\n\nAs ${unidade} pertencem ao lote ${m.lote || '?'}, com validade para ${m.validade || '?'}.`;
-    }
-    texto += '\n\nSegue em anexo o registro fotográfico das unidades avariadas.';
-    return texto;
+    const campos = Object.assign({}, m, { unidade: m.unidade || 'unidades', tipoDano: m.tipoDano || 'avariadas' });
+    const c = { data: ctx.data ? formatarDataBRSimples(ctx.data) : '[DATA]', fornecedor: ctx.fornecedor || '[FORNECEDOR]', pedido: ctx.pedido || '[PEDIDO]', nf: ctx.nf || '[NF]' };
+    return aplicarModeloAuditoria(modeloDoTipo('avariado'), campos, c);
 }
 
 function contextoAuditoriaAtual() {
@@ -474,7 +489,7 @@ function gerarAnotacaoOuWhatsappAuditoria() {
 }
 function gerarEmailAuditoria() {
     const t = appConfig.auditoriaTextos;
-    const destinatario = document.getElementById('aud-destinatario').value.trim() || 'Marisa';
+    const destinatario = document.getElementById('aud-destinatario').value.trim() || (t.destinatario || '').trim();
     const ctx = contextoAuditoriaAtual();
     const obsGeral = document.getElementById('aud-obs-geral').value.trim();
 
@@ -483,7 +498,9 @@ function gerarEmailAuditoria() {
     // agrupamento por tipo, duplicando praticamente o mesmo conteúdo com uma
     // formatação diferente. Agora o e-mail é: saudação + os mesmos blocos +
     // anexo de fotos (se houver avaria) + fechamento.
-    let partes = [t.saudacao.replace(/{DESTINATARIO}/g, destinatario).replace(/{FORNECEDOR}/g, ctx.fornecedor || '[FORNECEDOR]').replace(/{NF}/g, ctx.nf || '[NF]').replace(/{PEDIDO}/g, ctx.pedido || '[PEDIDO]')];
+    // sem destinatário, a saudação sai sem nome ("boa tarde!" em vez de ", boa tarde!")
+    const saud = destinatario ? t.saudacao : t.saudacao.replace(/\{DESTINATARIO\}[,\s]*/g, '').replace(/^\s*[a-zà-ú]/, c => c.toUpperCase());
+    let partes = [saud.replace(/{DESTINATARIO}/g, destinatario).replace(/{FORNECEDOR}/g, ctx.fornecedor || '[FORNECEDOR]').replace(/{NF}/g, ctx.nf || '[NF]').replace(/{PEDIDO}/g, ctx.pedido || '[PEDIDO]')];
     if (obsGeral) partes.push(obsGeral);
 
     partes.push(...gerarCorpoAuditoria());
@@ -594,7 +611,7 @@ async function salvarAuditoriaComoAnotacao() {
             historico: [{ tipo: 'identificacao', data: dataAud || new Date().toISOString().slice(0, 10), observacao: '' }]
         };
         if (def && def.multiMaterial) {
-            return { tipo: d.tipo, materiais: (d.materiais || []).map(m => ({ ...m.campos })), observacao: d.observacao || '', ...statusEHistorico };
+            return { tipo: d.tipo, materiais: (d.materiais || []).map(m => ({ ...m.campos, ...(m.ref ? { codProduto: m.ref } : {}) })), observacao: d.observacao || '', ...statusEHistorico };
         }
         return { tipo: d.tipo, campos: { ...d.campos }, ...statusEHistorico };
     });

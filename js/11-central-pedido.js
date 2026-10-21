@@ -527,7 +527,8 @@ function divergenciasAuditoriaDoItem(pedido, item) {
         if (cnpjOc && cnpjOc !== cnpj) return;
         (oc.divergencias || []).forEach((d, divIdx) => {
             const nomes = [...(d.materiais || []).map(m => m.produto), d.campos && d.campos.produto].filter(Boolean);
-            if (nomes.some(n => nomesProdutoCombinam(n, item.nome))) achadas.push({ d, ocIdx, divIdx });
+            const porCodigo = item.codProduto && (d.materiais || []).some(m => m.codProduto && m.codProduto === item.codProduto);
+            if (porCodigo || nomes.some(n => nomesProdutoCombinam(n, item.nome))) achadas.push({ d, ocIdx, divIdx });
         });
     });
     return achadas;

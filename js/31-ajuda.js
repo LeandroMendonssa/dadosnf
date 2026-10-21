@@ -117,19 +117,25 @@ const AJUDA_ARTIGOS = [
         'Para separar um CNPJ do grupo, use "Desvincular este CNPJ".'
       ],
       dicas: [], tutorial: null },
-    { id: 'backup', cat: 'Ajustes e dados', titulo: 'Backup dos dados', versao: '2.10.0',
-      resumo: 'Copiar e restaurar os dados do app.',
-      palavras: 'backup copia seguranca restaurar exportar dados',
+    { id: 'backup', cat: 'Ajustes e dados', titulo: 'Backup dos dados e exportação para diagnóstico', versao: '2.10.4',
+      resumo: 'Duas cópias dos dados: o backup simples e a exportação completa para análise.',
+      palavras: 'backup copia seguranca exportar dados json diagnostico completo cotacoes divergencias',
       tela: [{ id: 'screen-backup', titulo: 'Backup dos Dados', rotulo: 'Abrir Backup' }],
-      passos: ['Abra Ajustes → Backup dos Dados e siga as opções da tela para gerar ou restaurar a cópia.'],
-      dicas: ['Faça um backup antes de mudanças grandes.'], tutorial: null },
-    { id: 'aparencia-web', cat: 'Ajustes e dados', titulo: 'Personalização e modo web', versao: '2.10.0',
+      passos: [
+        'Abra Ajustes → Backup dos Dados. A tela tem dois botões.',
+        'Baixar Backup (JSON), o de cima: baixa um arquivo com as notas pendentes, o histórico, as anotações, os fornecedores, as configurações e os equipamentos. É uma cópia de segurança que fica no seu aparelho, independente do Firebase.',
+        'Exportar dados para diagnóstico (JSON), o de baixo: exporta TODOS os dados do app (NFs processadas, entradas do ERP, cotações, associações, fornecedores, exceções de conversão e o resto) num único arquivo. Só lê os dados; não altera nada.',
+        'Aguarde a mensagem de status abaixo dos botões: ela mostra o andamento e avisa se algo deu errado.'
+      ],
+      dicas: ['A exportação para diagnóstico nasceu de uma investigação das divergências apontadas pela auditoria: serve para analisar casos reais fora do app. No dia a dia você não precisa dela.',
+              'O app só gera os arquivos; não há botão para restaurar a partir deles.'], tutorial: null },
+    { id: 'aparencia-web', cat: 'Ajustes e dados', titulo: 'Personalização e modo web', versao: '2.10.3',
       resumo: 'Tema, menus, animações e o comportamento no computador.',
       palavras: 'personalizacao tema animacao dock menu web computador mac',
       tela: [{ id: 'screen-personalizacao', titulo: 'Personalização', rotulo: 'Abrir Personalização' }],
       passos: [
         'Em Ajustes → Personalização você escolhe aparência, animações, dock, menus e logo.',
-        'No computador (mouse e tela larga) o app entra em modo web: sem dock que encolhe nem telas deslizando; só dissolve curto, estilo macOS.',
+        'No computador (mouse e tela larga) o app entra em modo web: sem dock que encolhe nem telas deslizando; só dissolve curto, estilo macOS. Todas as abas ficam juntas no menu, na ordem escolhida (não existe "Na barra / Em Mais" no computador).',
         'Para ver o modo web no celular, abra o app com ?plataforma=web no endereço (?plataforma=aparelho volta ao normal).'
       ],
       dicas: [], tutorial: null },
@@ -191,7 +197,7 @@ const AJUDA_ARTIGOS = [
         '"Exportar Relatório" gera o relatório das anotações.'
       ],
       dicas: [], tutorial: null },
-    { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.10.1',
+    { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.10.3',
       resumo: 'Um formulário gera a mensagem e o e-mail sem digitar duas vezes.',
       palavras: 'auditoria nova divergencia pedido nf fornecedor destinatario email mensagem gerar textos padrao copiar compartilhar salvar anotacao',
       tela: [{ id: 'screen-auditoria-nova', titulo: 'Nova Auditoria', rotulo: 'Abrir Nova Auditoria' }],
@@ -199,7 +205,9 @@ const AJUDA_ARTIGOS = [
         'Em Anotações, toque em Nova Auditoria.',
         'Preencha Pedido SmartCompras (ao digitar, o app procura a cotação e sugere fornecedor e produtos), Nota Fiscal, Fornecedor, Data da Auditoria e Destinatário do E-mail.',
         'Toque em "Adicionar Divergência", escolha o tipo (não faturado, não entregue, avariado, valor diferente etc.) e preencha os campos; vários materiais cabem na mesma ocorrência.',
-        'Use Observação Geral se precisar. Em "Configurar Textos Padrão" ajuste a abertura, a frase de fotos e o fechamento; {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} são substituídos sozinhos.',
+        'No campo de produto, escolha da lista da cotação: o produto fica ligado ao item (aparece "Ligado ao item…" com o nome real). Pode renomear o texto à vontade que a ligação continua; "usar este nome" volta ao nome real e "desligar" remove a ligação. Se o produto não está ligado, use "Sem ligação com a cotação — ligar a um item…".',
+        'O Destinatário do E-mail é opcional: em branco, a saudação sai sem nome.',
+        'Use Observação Geral se precisar. Em "Configurar Textos Padrão" ajuste o destinatário padrão, a abertura, a frase de fotos, o fechamento e o modelo de frase de cada tipo de divergência: {campo} entra com o valor digitado e [[ trecho ]] só aparece se os campos dentro dele estiverem preenchidos. {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} são substituídos sozinhos na abertura.',
         'Toque em "Gerar Auditoria": o resultado traz as abas Mensagem e E-mail, com Copiar e Compartilhar.',
         '"Salvar como Anotação" guarda a ocorrência para acompanhar depois.'
       ],
@@ -325,7 +333,7 @@ const TUTORIAIS = {
                   : [['Produto', 'LUVA NITRÍLICA M'], ['Quantidade', '5']];
               return `<div class="card${A('campos')}"><strong>${TIPOS_DEMO[t]}</strong>${campos.map(c => `<div class="aj-campo"><small>${c[0]}</small><div class="aj-input">${c[1]}</div></div>`).join('')}</div>`; } },
         { t: 'Gere a auditoria', d: 'Toque em "Gerar Auditoria": o app monta a Mensagem e o E-mail sozinho, com as frases padrão (que você ajusta em "Configurar Textos Padrão").', alvo: 'gerar', acao: v => !!v.gerado,
-          mock: (e, A) => `<button type="button" class="manage-toolbar-btn${A('gerar')}" onclick="tutorialSet('gerado',true)">Gerar Auditoria</button>${e.gerado ? `<div class="card"><div class="aj-abas"><b>Mensagem</b> · E-mail</div><pre class="aj-pre">Olá, Marisa! Na NF 4512 da DISTRIBUIDORA EXEMPLO (pedido 12345) encontramos: ${TIPOS_DEMO[e.tipo || 'nao_entregue']}. Segue em anexo o registro.</pre></div>` : ''}` },
+          mock: (e, A) => `<button type="button" class="manage-toolbar-btn${A('gerar')}" onclick="tutorialSet('gerado',true)">Gerar Auditoria</button>${e.gerado ? `<div class="card"><div class="aj-abas"><b>Mensagem</b> · E-mail</div><pre class="aj-pre">Boa tarde! Na NF 4512 da DISTRIBUIDORA EXEMPLO (pedido 12345) encontramos: ${TIPOS_DEMO[e.tipo || 'nao_entregue']}. Segue em anexo o registro.</pre></div>` : ''}` },
         { t: 'Copie, compartilhe e salve', d: 'Com o resultado pronto você pode Copiar, Compartilhar e "Salvar como Anotação" para acompanhar a ocorrência depois, em Anotações. (Texto ilustrativo.)', alvo: 'salvar', acao: v => !!v.salvaAnot,
           mock: (e, A) => `<div class="aj-btns"><button type="button" class="manage-toolbar-btn">Copiar</button><button type="button" class="manage-toolbar-btn">Compartilhar</button><button type="button" class="manage-toolbar-btn${A('salvar')}" onclick="tutorialSet('salvaAnot',true)">${e.salvaAnot ? '✓ Salva (demonstração)' : 'Salvar como Anotação'}</button></div>` }
     ] },
@@ -376,8 +384,7 @@ function voltarListaAjuda() { ajudaEstado.aberto = null; renderAjuda(); }
 function htmlArtigoAjuda(a) {
     const botoes = (a.tela || []).map(t => `<button type="button" class="manage-toolbar-btn" onclick="switchToScreen('${t.id}','${ajEsc(t.titulo)}')">${ajEsc(t.rotulo)}</button>`).join('')
         + (a.tutorial ? `<button type="button" class="manage-toolbar-btn" onclick="iniciarTutorial('${a.tutorial}')">Ver o tutorial guiado</button>` : '');
-    return `<button type="button" class="link-discreto aj-voltar" onclick="voltarListaAjuda()">‹ Todos os artigos</button>
-        <div class="card aj-artigo"><div class="aj-cat">${ajEsc(a.cat)}</div><h2 class="aj-h">${ajEsc(a.titulo)}</h2>
+    return `<div class="card aj-artigo"><div class="aj-cat">${ajEsc(a.cat)}</div><h2 class="aj-h">${ajEsc(a.titulo)}</h2>
         <div class="aj-resumo">${ajEsc(a.resumo)}</div>
         <ol class="aj-passos">${a.passos.map(p => `<li>${ajEsc(p)}</li>`).join('')}</ol>
         ${a.dicas && a.dicas.length ? `<div class="aj-dicas">${a.dicas.map(d => `<div><strong>Dica:</strong> ${ajEsc(d)}</div>`).join('')}</div>` : ''}
@@ -412,3 +419,7 @@ function renderTutorial() {
         <div class="aj-demo">${p.mock(e, A)}</div>${dica}
         <div class="aj-tut-nav"><button type="button" class="manage-toolbar-btn" onclick="tutorialPasso(-1)" ${e.i === 0 ? 'disabled' : ''}>Voltar</button><button type="button" class="manage-toolbar-btn" onclick="tutorialPasso(1)">${e.i === n - 1 ? 'Concluir' : 'Próximo'}</button></div></div>`;
 }
+
+// O botão Voltar do topo (js/06) pergunta aqui antes: com um artigo aberto, sobe só para a lista; na lista, volta para Ajustes como sempre.
+function voltarInternoDisponivel() { const at = document.querySelector('.app-screen.active'); return !!(at && at.id === 'screen-ajuda' && ajudaEstado.aberto); }
+function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; voltarListaAjuda(); return true; }

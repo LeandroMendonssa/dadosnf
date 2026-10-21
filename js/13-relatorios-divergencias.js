@@ -59,16 +59,51 @@ function atualizarCampoMaterial(divergenciaId, materialId, key, valor, maiusculo
     // Item 12: se o produto digitado bate com um item da cotação encontrada
     // pro pedido, preenche a quantidade automaticamente — só se o campo
     // ainda estiver vazio, pra nunca sobrescrever uma correção manual.
+    // 2.10.3: o vínculo com o item da cotação (m.ref) é guardado À PARTE do texto: escolher da lista cria o vínculo; renomear mantém;
+    // só apagar o campo ou "Desvincular" tira.
     if (key === 'produto' || key === 'produtoPedido') {
+        if (!String(valor).trim()) m.ref = null;
+        else { const it = itemCotacaoAuditoriaPorNome(valor); if (it) m.ref = it.codProduto; }
         preencherQuantidadeDaCotacao(m, valor);
         renderDivergenciasAuditoria();
     }
+}
+function vincularProdutoMaterial(divergenciaId, materialId, cod) {
+    const d = divergenciasAuditoria.find(x => x.id === divergenciaId); if (!d) return;
+    const m = d.materiais.find(x => x.id === materialId); if (!m) return;
+    m.ref = cod || null;
+    const it = cod ? itemCotacaoAuditoriaPorCodigo(cod) : null;
+    const chave = (TIPOS_DIVERGENCIA_AUDITORIA[d.tipo].campos.find(c => c.key === 'produto' || c.key === 'produtoPedido') || {}).key;
+    if (it && chave && !m.campos[chave]) m.campos[chave] = upAud(nomeConhecidoItemCotacao(it));
+    if (it && !m.campos.quantidade && it.quantidade) m.campos.quantidade = it.quantidade;
+    renderDivergenciasAuditoria();
+}
+function usarNomeRealMaterial(divergenciaId, materialId) {
+    const d = divergenciasAuditoria.find(x => x.id === divergenciaId); if (!d) return;
+    const m = d.materiais.find(x => x.id === materialId); if (!m || !m.ref) return;
+    const it = itemCotacaoAuditoriaPorCodigo(m.ref); if (!it) return;
+    const chave = (TIPOS_DIVERGENCIA_AUDITORIA[d.tipo].campos.find(c => c.key === 'produto' || c.key === 'produtoPedido') || {}).key;
+    if (chave) m.campos[chave] = upAud(nomeConhecidoItemCotacao(it));
+    renderDivergenciasAuditoria();
+}
+// Faixa sob o campo de produto: mostra com qual item da cotação ele está ligado (e o nome real), ou deixa ligar.
+function htmlVinculoProdutoMaterial(d, m, key) {
+    if (!(key === 'produto' || key === 'produtoPedido') || !cotacaoEncontradaAuditoria) return '';
+    const itens = itensCotacaoAuditoria(); if (!itens.length) return '';
+    const it = m.ref ? itemCotacaoAuditoriaPorCodigo(m.ref) : null;
+    if (it) {
+        const real = upAud(nomeConhecidoItemCotacao(it));
+        const igual = upAud(m.campos[key] || '') === real;
+        return `<div class="aud-vinculo ok">🔗 Ligado ao item <b>${escRel(it.codProduto)}</b> da cotação: ${escRel(real)}${igual ? '' : ` · <a onclick="usarNomeRealMaterial(${d.id},${m.id})">usar este nome</a>`} · <a onclick="vincularProdutoMaterial(${d.id},${m.id},'')">desligar</a></div>`;
+    }
+    const opcoes = itens.map(i => `<option value="${escRel(i.codProduto)}">${escRel(i.codProduto)} — ${escRel(nomeConhecidoItemCotacao(i))}</option>`).join('');
+    return `<div class="aud-vinculo"><select onchange="vincularProdutoMaterial(${d.id},${m.id},this.value)"><option value="">Sem ligação com a cotação — ligar a um item…</option>${opcoes}</select></div>`;
 }
 function preencherQuantidadeDaCotacao(material, nomeProduto) {
     if (!cotacaoEncontradaAuditoria || material.campos.quantidade) return;
     const alvo = upAud(nomeProduto).trim();
     if (!alvo) return;
-    const item = (cotacaoEncontradaAuditoria.itens || []).find(it => upAud(nomeConhecidoItemCotacao(it)) === alvo);
+    const item = (material.ref && itemCotacaoAuditoriaPorCodigo(material.ref)) || (cotacaoEncontradaAuditoria.itens || []).find(it => upAud(nomeConhecidoItemCotacao(it)) === alvo);
     if (item && item.quantidade) material.campos.quantidade = item.quantidade;
 }
 function renderDivergenciasAuditoria() {
@@ -87,13 +122,13 @@ function renderDivergenciasAuditoria() {
         const opcoesTipo = Object.entries(TIPOS_DIVERGENCIA_AUDITORIA).map(([key, val]) =>
             `<option value="${key}" ${d.tipo === key ? 'selected' : ''}>${val.label}</option>`).join('');
 
-        const renderCampo = (c, valor, onBlurAttr) => {
+        const renderCampo = (c, valor, onBlurAttr, mat) => {
             const listaAttr = (c.key === 'produto' || c.key === 'produtoPedido' || c.key === 'produtoFaturado') ? ' list="datalist-produtos-cotacao"' : '';
             const labelTexto = c.obrigatorio ? `${c.label} *` : c.label;
             if (c.textarea) {
                 return `<div class="campo"><label>${labelTexto}</label><textarea class="form-field" ${onBlurAttr}>${valor}</textarea></div>`;
             }
-            return `<div class="campo"><label>${labelTexto}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}"${listaAttr} ${onBlurAttr}></div>`;
+            return `<div class="campo"><label>${labelTexto}</label><input type="text" class="form-field ${c.maiusculo ? 'uppercase-field' : ''}" placeholder="${c.placeholder || ''}" value="${valor}"${listaAttr} ${onBlurAttr}>${mat ? htmlVinculoProdutoMaterial(d, mat, c.key) : ''}</div>`;
         };
 
         let corpoCampos = '';
@@ -102,7 +137,7 @@ function renderDivergenciasAuditoria() {
                 const camposMaterial = def.campos.map(c => {
                     const valor = m.campos[c.key] || '';
                     const onBlurAttr = `onblur="atualizarCampoMaterial(${d.id}, ${m.id}, '${c.key}', this.value, ${!!c.maiusculo})"`;
-                    return renderCampo(c, valor, onBlurAttr);
+                    return renderCampo(c, valor, onBlurAttr, m);
                 }).join('');
                 return `<div class="material-divergencia">
                     <div class="material-divergencia-header">

@@ -196,6 +196,10 @@ function irParaPendenciaControle(chave, tipo) {
         const v = plataforma();
         if (document.body.getAttribute('data-plataforma') !== v) document.body.setAttribute('data-plataforma', v);
         if (typeof window.dockAtualizarRecolhimento === 'function') window.dockAtualizarRecolhimento();
+        if (aplicar.ultima !== v) { // trocou de modo (ou primeira vez): redesenha a barra/menu lateral e a lista de ordem sem a divisão dock x Mais
+            aplicar.ultima = v;
+            try { if (typeof reordenarMenusDOM === 'function' && typeof appConfig !== 'undefined' && appConfig.personalizacao && appConfig.personalizacao.menuOrder) { reordenarMenusDOM(appConfig.personalizacao.menuOrder); if (document.getElementById('menu-reorder-list') && typeof popularListaReordenar === 'function') popularListaReordenar(); } } catch (e) { }
+        }
     }
     window.aplicarPlataforma = aplicar;
     if (document.body) aplicar(); else document.addEventListener('DOMContentLoaded', aplicar);

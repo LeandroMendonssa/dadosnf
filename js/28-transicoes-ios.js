@@ -144,6 +144,7 @@
     function alvoVoltar() {
         const at = document.querySelector('.app-screen.active');
         if (!at || SEM_GESTO.includes(at.id)) return null;
+        if (typeof voltarInternoDisponivel === 'function' && voltarInternoDisponivel()) return null; // artigo da Ajuda aberto: o Voltar sobe um nível, sem gesto de tela
         let id = null;
         const topoRet = typeof topoDaPilhaPara === 'function' ? topoDaPilhaPara(at.id) : null;
         if (topoRet) id = topoRet.telaId;
