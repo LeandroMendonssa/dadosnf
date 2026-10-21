@@ -1463,11 +1463,12 @@ body[data-transition="ios"][data-aba-efeito="empurrar"] .saindo.t-troca.dir-neg 
 .ctl-vl .xml-item-badge{font-size:12px;text-transform:none;letter-spacing:0;padding:7px 12px;border-radius:12px;max-width:60%}
 
 /* ===== 2.9.7: alvo com destaque (estilo "achar na página") e elementos tocáveis que levam ao lugar certo ===== */
-.alvo-destaque{animation:alvoDestaque 2.8s ease-out;scroll-margin-top:calc(var(--header-h,60px) + 24px)}
+.alvo-destaque{animation:alvoDestaque 2.6s ease-out;scroll-margin-top:calc(var(--header-h,60px) + 24px)}
+/* 2.10.5: destaque suave, só DENTRO do cartão: um tom de amarelo que dissolve de volta ao normal (sem brilho em volta) */
 @keyframes alvoDestaque{
-  0%{box-shadow:0 0 0 4px rgba(255,204,0,.95),0 0 18px 4px rgba(255,204,0,.55);background-color:rgba(255,214,10,.30)}
-  55%{box-shadow:0 0 0 4px rgba(255,204,0,.75),0 0 14px 3px rgba(255,204,0,.35);background-color:rgba(255,214,10,.22)}
-  100%{box-shadow:0 0 0 4px rgba(255,204,0,0),0 0 0 0 rgba(255,204,0,0)}
+  0%{box-shadow:inset 0 0 0 100vmax rgba(255,204,0,.26),inset 0 0 0 1px rgba(255,204,0,.6)}
+  45%{box-shadow:inset 0 0 0 100vmax rgba(255,204,0,.16),inset 0 0 0 1px rgba(255,204,0,.35)}
+  100%{box-shadow:inset 0 0 0 100vmax rgba(255,204,0,0),inset 0 0 0 1px rgba(255,204,0,0)}
 }
 @media (prefers-reduced-motion:reduce){.alvo-destaque{animation-duration:1.2s}}
 .ctl-link{cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1568,3 +1569,17 @@ body[data-plataforma="web"] .reorder-list-item.fora-da-barra .name { opacity: 1;
 .aud-vinculo.ok { color: var(--button-success, #34c759); }
 .aud-vinculo a { cursor: pointer; text-decoration: underline; }
 .aud-vinculo select { width: 100%; padding: 6px 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-dark); }
+
+/* 2.10.6 — Ajuda: transição artigo ⇄ lista, botão Sair do tutorial; Controle de NFs: Selecionar no padrão */
+@keyframes aj-in-frente { from { opacity: 0; transform: translate3d(36px,0,0); } to { opacity: 1; transform: none; } }
+@keyframes aj-in-volta { from { opacity: 0; transform: translate3d(-36px,0,0); } to { opacity: 1; transform: none; } }
+.aj-anim-frente { animation: aj-in-frente 340ms var(--ios-curva, cubic-bezier(.32,.72,0,1)) both; }
+.aj-anim-volta { animation: aj-in-volta 340ms var(--ios-curva, cubic-bezier(.32,.72,0,1)) both; }
+body[data-plataforma="web"] .aj-anim-frente, body[data-plataforma="web"] .aj-anim-volta { animation: mac-tela-in var(--mac-dur, 180ms) var(--mac-curva, ease-out) both; }
+body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-anim-volta { animation: none; }
+@media (prefers-reduced-motion: reduce) { .aj-anim-frente, .aj-anim-volta { animation: t-fade-in .15s linear both !important; } }
+.aj-sair { flex: none; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--bg-primary); color: var(--text-dark); font-size: 13px; font-weight: 600; line-height: 1.2; cursor: pointer; }
+.aj-sair:active { opacity: .6; }
+.aj-tut-topo { gap: 10px; }
+.aj-tut-topo > span { min-width: 0; }
+.controle-topo { margin: 0 0 12px; justify-content: flex-start; }

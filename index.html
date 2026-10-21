@@ -442,8 +442,8 @@
                     </select>
                 </div>
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
-                    <button class="actions-button is-primary" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Cotação</button>
-                    <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Importar XML SmartCompras</button>
+                    <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
+                    <button class="actions-button is-neutral" id="btn-complementar-relatorio" onclick="alternarComplementarRelatorio()"><span class="icon-wrapper"><i class="fa-solid fa-file-circle-plus"></i></span> Complementar com relatório</button>
                 </div>
                 <input type="file" id="cotacao-xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
 
@@ -457,7 +457,7 @@
                     </div>
                 </div>
 
-                <div class="card mb-4" >
+                <div class="card mb-4" id="card-complementar-relatorio" style="display:none;">
                     <h3 class="card-titulo card-titulo-sm">Relatório de Fornecedores Ganhadores</h3>
                     <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">Complementa a cotação com a quantidade de fornecedores que participaram de cada item (nunca decide recurso/pagamento sozinho). Cole o texto ou envie o arquivo do relatório.</p>
                     <textarea id="ganhadores-textarea" class="form-field import-textarea" placeholder="Cole aqui o relatório de fornecedores ganhadores..."></textarea>
@@ -519,7 +519,7 @@
 
                 <div class="card" id="central-sem-cotacao" style="display:none;">
                     <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma cotação cadastrada para este pedido ainda.</p>
-                    <button class="actions-button is-primary" onclick="abrirNovaCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar Cotação</button>
+                    <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click(); switchToScreen('screen-cotacoes','Cotações')"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
                 </div>
 
                 <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="relatorio" onclick="alternarAbaCentral('relatorio')">Relatório</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
@@ -723,7 +723,7 @@
           <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
           <button type="button" class="xml-filtro-btn" data-aba="arquivadas" onclick="alternarAbaControle('arquivadas')">Arquivadas <span class="controle-cont">0</span></button>
         </div>
-        <div class="controle-topo"><button type="button" id="controle-btn-selecionar" class="link-discreto" onclick="alternarSelecaoControle()">Selecionar</button></div>
+        <div class="actions-row controle-topo"><button type="button" id="controle-btn-selecionar" class="actions-button" onclick="alternarSelecaoControle()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button></div>
         <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><div class="ctl-selbtns"><button type="button" id="controle-sel-fin" class="action-chip" onclick="marcarSelecionadasEnviadas()" disabled>Enviada ao financeiro</button><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div></div>
         <div id="controle-lista" class="nota-list"></div>
       </div> <div class="app-screen" id="screen-anotacoes" style="">
