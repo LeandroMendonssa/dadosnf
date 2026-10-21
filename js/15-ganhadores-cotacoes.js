@@ -126,8 +126,18 @@ function handleRelatorioGanhadoresFileUpload(event) {
     event.target.value = '';
 }
 
+// 2.10.6: o campo do relatório fica escondido; o botão "Complementar com relatório" abre e fecha.
+function alternarComplementarRelatorio(abrir) {
+    const card = document.getElementById('card-complementar-relatorio'), btn = document.getElementById('btn-complementar-relatorio');
+    if (!card) return;
+    const mostrar = typeof abrir === 'boolean' ? abrir : card.style.display === 'none';
+    card.style.display = mostrar ? '' : 'none';
+    if (btn) btn.classList.toggle('active', mostrar);
+    if (mostrar) { try { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { } }
+}
 function cancelarImportacaoGanhadores() {
     relatorioGanhadoresPendente = null;
+    alternarComplementarRelatorio(false);
     document.getElementById('ganhadores-preview').style.display = 'none';
     document.getElementById('ganhadores-textarea').value = '';
 }

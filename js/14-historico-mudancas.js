@@ -10,7 +10,47 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.10.4', nome: 'Ajuda: artigo de Backup completo', status: 'atual',
+        numero: '2.10.6', nome: 'Ajuda com transição e gesto, Cotações enxuta e botão Selecionar padronizado', status: 'atual',
+        novidades: [
+            'Ajuda: abrir um artigo e voltar para a lista agora têm transição (no computador, a dissolução curta do modo web), e o gesto de arrastar da borda esquerda volta do artigo para a lista.',
+            'Tutorial guiado: o botão Sair virou um botão compacto no canto, dentro do layout.',
+            'Cotações: sobraram dois botões, "Adicionar cotação (XML)" e "Complementar com relatório". O campo do relatório de fornecedores ganhadores fica escondido e abre pelo botão. Saiu "Nova Cotação", que não fazia sentido sem o XML.',
+            'Pedido sem cotação: o botão agora é "Adicionar cotação (XML)".',
+            'Controle de NFs: o botão Selecionar passou para o mesmo padrão do de Anotações (botão com ícone).'
+        ],
+        implementado: ['O cadastro manual de cotação continua no código, mas sem botão na tela.', 'O botão Selecionar não troca mais o texto para "Concluir": como em Anotações, só muda o estado.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/14, js/15, js/17, js/31.'],
+        testar: [
+            'Ajuda: abrir um artigo, ver a transição, voltar pelo botão e pelo gesto da borda esquerda.',
+            'Iniciar um tutorial e conferir o botão Sair.',
+            'Cotações: conferir os dois botões; abrir e fechar "Complementar com relatório"; adicionar uma cotação pelo XML.',
+            'Controle de NFs: conferir o botão Selecionar e o modo de seleção.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.5', nome: 'Relatórios: divergência leva ao produto, registros antigos e destaque suave', status: 'concluida',
+        novidades: [
+            'Relatórios → Divergências: tocar no cartão abre o pedido já no fornecedor e no produto da divergência (antes abria a cotação inteira).',
+            'Destaque mais suave: em vez do brilho amarelo em volta, um tom de amarelo dentro do cartão que dissolve de volta ao normal.',
+            'Registros antigos de auditoria agora mostram o produto. Antes eles eram lidos num formato que o relatório não entendia: três divergências diferentes do pedido 1698 (Fentanest, Agulha e Seringa) apareciam idênticas, sem produto.',
+            'Divergência antiga sem situação gravada deixou de ficar "Pendente" para sempre: anotação concluída = Resolvida; item marcado como resolvido na cotação = Resolvida.',
+            'A mesma divergência registrada mais de uma vez (mesmo pedido, tipo e produto, como antes, uma por etapa) aparece como uma só, com "N registros", valendo a mais recente.'
+        ],
+        implementado: [
+            'Divergências de tipos que não existem mais (ex.: quantidade física divergente) passam a mostrar produto e quantidades gravadas.',
+            'Os dados guardados não foram alterados: a correção é só na leitura.'
+        ],
+        mudou: ['Arquivos alterados: style.css, js/04, js/09, js/11, js/14, js/30, js/31.'],
+        testar: [
+            'Relatórios → Divergências: conferir o pedido 1698 (três cartões distintos, agora Resolvida) e tocar num cartão para ir ao fornecedor/produto.',
+            'Ver o destaque suave dentro do cartão.',
+            'Procurar se sobrou alguma pendência antiga que não deveria estar pendente e me avisar.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.4', nome: 'Ajuda: artigo de Backup completo', status: 'concluida',
         novidades: ['O artigo de Backup da Ajuda agora explica os dois botões: o backup simples (cópia de segurança) e a exportação completa para diagnóstico, e o motivo de ela existir.'],
         implementado: ['Corrigido o texto anterior, que falava em restaurar: o app só gera os arquivos, não restaura.'],
         mudou: ['Só texto de ajuda. Arquivos alterados: js/14 e js/31.'],

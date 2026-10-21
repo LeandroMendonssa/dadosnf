@@ -123,7 +123,7 @@ function abrirItemComDivergenciaNoCartao(card) {
     }
     return prod.querySelector('.central-divergencia-bloco') || prod;
 }
-function irParaDivergenciaPedido(pedido, cnpj) {
+function irParaDivergenciaPedido(pedido, cnpj, codProduto) {
     if (!pedido) return toast('Esta NF não tem pedido vinculado.');
     abrirCentralPedido(String(pedido));
     const chave = chaveFornecedorNoPedido(pedido, cnpj);
@@ -133,8 +133,28 @@ function irParaDivergenciaPedido(pedido, cnpj) {
         const card = chave ? cards.find(c => c.dataset.cnpj === chave) : cards.find(c => c.querySelector('.central-prod .xml-item-badge.pendente'));
         if (!card) return null;
         if (!card.classList.contains('aberto')) card.classList.add('aberto');
+        if (codProduto) { const p = abrirProdutoNoCartao(card, codProduto); if (p) return p; }
         return abrirItemComDivergenciaNoCartao(card);
     });
+}
+// Abre (se estiver fechado) o produto com este código dentro do cartão do fornecedor e devolve o elemento dele.
+function abrirProdutoNoCartao(card, codProduto) {
+    const prod = [...card.querySelectorAll('.central-prod')].find(p => { const cab = p.querySelector('.central-prod-cab'); return cab && (cab.getAttribute('onclick') || '').includes("'" + codProduto + "'"); });
+    if (!prod) return null;
+    if (!prod.classList.contains('aberto')) { centralProdutosExpandidos.add(codProduto); prod.classList.add('aberto'); }
+    return prod;
+}
+// Relatórios → Divergências: abre o pedido já no fornecedor e no produto da divergência (ou só no fornecedor, se não tem produto).
+function abrirDivergenciaRelatorio(i) {
+    const x = relDivCache[i]; if (!x || !x.pedido) return;
+    let cnpj = x.fornecedorCnpj || '';
+    if (!cnpj && x.fornecedor) {
+        const cot = listaCotacoes.find(c => String(c.pedido) === String(x.pedido));
+        const alvo = upAud(x.fornecedor);
+        const f = cot && (cot.fornecedores || []).find(f => upAud(nomeExibicaoFornecedor(f.razaoSocial, f.cnpj)) === alvo || upAud(f.razaoSocial || '') === alvo);
+        if (f) cnpj = f.cnpj;
+    }
+    irParaDivergenciaPedido(x.pedido, cnpj, x.codProduto);
 }
 // Toque no selo/chip/quadro de divergências do cartão do fornecedor (já dentro do pedido).
 function irParaDivergenciaCartao(cnpj) {

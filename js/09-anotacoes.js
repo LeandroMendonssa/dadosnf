@@ -207,10 +207,23 @@ function textoOcorrenciaUnica(tipo, c) {
     return '';
 }
 
+// 2.10.5: auditorias ANTIGAS guardavam o produto em d.campos (um só) em vez de d.materiais[]. Sem isso, o relatório não mostrava o produto
+// e três divergências diferentes pareciam a mesma. Esta função devolve sempre a lista de materiais, qualquer que seja o formato gravado.
+function materiaisDaDivergencia(d) {
+    if (!d) return [];
+    if (Array.isArray(d.materiais) && d.materiais.length) return d.materiais;
+    const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+    const c = d.campos || {};
+    const temProduto = c.produto || c.produtoPedido || c.produtoFaturado;
+    if ((!def || def.multiMaterial) && temProduto) return [c];
+    return [];
+}
 function linhasDeMateriais(d) {
     const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
-    if (!def) return [];
-    if (def.multiMaterial) return (d.materiais || []).map(m => d.tipo === 'avariado' ? `${upAud(m.produto)} — material avariado` : linhaMaterial(d.tipo, m)).filter(Boolean);
+    if (!def) { // tipo que não existe mais: mostra o que foi gravado, sem inventar
+        return materiaisDaDivergencia(d).map(m => [m.produto, m.quantidadePedida && 'pedida ' + m.quantidadePedida, m.quantidadeFaturada && 'faturada ' + m.quantidadeFaturada, m.quantidadeFisica && 'física ' + m.quantidadeFisica].filter(Boolean).join(' · ')).filter(Boolean);
+    }
+    if (def.multiMaterial) return materiaisDaDivergencia(d).map(m => (d.tipo === 'desacordo_especificacao' && !m.especificacaoEsperada && !m.especificacaoRecebida) ? `${upAud(m.produto)}: desacordo de especificação.` : d.tipo === 'avariado' ? `${upAud(m.produto)} — material avariado` : linhaMaterial(d.tipo, m)).filter(Boolean);
     const texto = textoOcorrenciaUnica(d.tipo, d.campos || {});
     return texto ? [texto] : [];
 }
@@ -325,8 +338,8 @@ function renderCentralPedidoCompleto(pedido) {
             const divPorProduto = {};
             const divSoltas = [];
             divergenciasForn.forEach(x => {
-                const nomes = (x.d.materiais || []).map(m => normNome(m.produto)).filter(Boolean);
-                const codsRef = (x.d.materiais || []).map(m => m.codProduto).filter(Boolean);
+                const nomes = materiaisDaDivergencia(x.d).map(m => normNome(m.produto || m.produtoPedido)).filter(Boolean);
+                const codsRef = materiaisDaDivergencia(x.d).map(m => m.codProduto).filter(Boolean);
                 const alvo = produtos.find(it => codsRef.includes(it.codProduto)) || (nomes.length ? produtos.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) : null); // 2.0.9: mesmo critério da comparação
                 if (alvo) (divPorProduto[alvo.codProduto] = divPorProduto[alvo.codProduto] || []).push(x);
                 else divSoltas.push(x);

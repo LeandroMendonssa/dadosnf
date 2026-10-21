@@ -226,17 +226,20 @@ function renderRelatorioDivergencias(container) {
         return;
     }
 
-    container.innerHTML = rankingsHTML + filtradas.map(x => {
+    relDivCache = filtradas;
+    container.innerHTML = rankingsHTML + filtradas.map((x, i) => {
         const def = TIPOS_DIVERGENCIA_AUDITORIA[x.tipo];
         const badgeTexto = x.status === 'pendente' ? 'Pendente' : x.status === 'resolvida' ? 'Resolvida' : 'Encerrada';
         const linhasHTML = x.linhas.length ? x.linhas.map(l => `<div class="central-item-linha">${escRel(l)}</div>`).join('') : '';
-        return `<div class="nota-item" ${x.pedido ? `style="cursor:pointer;" onclick="abrirCentralPedido('${x.pedido}')"` : ''}>
+        const rep = x.registros > 1 ? ` · ${x.registros} registros` : '';
+        return `<div class="nota-item${x.pedido ? ' ctl-link' : ''}" ${x.pedido ? `style="cursor:pointer;" onclick="abrirDivergenciaRelatorio(${i})"` : ''}>
             <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span class="txt-suave">— ${escRel(upAud(x.fornecedor))}</span>` : ''} <span class="central-status-badge status-${x.status}">${badgeTexto}</span></div>
-            <div class="nota-detalhes">${def ? escRel(def.label) : escRel(x.tipo)}${x.notaFiscal ? ` | NF ${escRel(x.notaFiscal)}` : ''}</div>
+            <div class="nota-detalhes">${def ? escRel(def.label) : escRel(x.tipo)}${x.notaFiscal ? ` | NF ${escRel(x.notaFiscal)}` : ''}${rep}</div>
             ${linhasHTML}
         </div>`;
     }).join('');
 }
+let relDivCache = [];
 
 // ===================================================================
 // --- FASE 15: INDICADORES E FILTROS DO RELATÓRIOS ---
@@ -350,8 +353,8 @@ function pedidoCasaTermoRel(c, termo) {
 // (materiais estruturados). Tipos sem produto ficam fora do ranking de produtos.
 function produtosDivergenciaRel(d) {
     const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
-    const nomes = def && def.multiMaterial
-        ? (d.materiais || []).map(m => m.produto || m.produtoPedido)
+    const nomes = (!def || def.multiMaterial)
+        ? materiaisDaDivergencia(d).map(m => m.produto || m.produtoPedido)
         : [(d.campos || {}).produto];
     return [...new Set(nomes.map(n => (n || '').toString().trim().toUpperCase()).filter(Boolean))];
 }
@@ -360,7 +363,7 @@ function auditoriasBaseRel() {
     const f = relatoriosFiltros;
     const lista = [];
     listaAnotacoes.forEach(a => (a.ocorrencias || []).forEach(oc => {
-        const x = { pedido: a.pedido || '', fornecedor: oc.fornecedor || '', notaFiscal: oc.notaFiscal || '', data: dataRel(oc.data) ? oc.data : (oc.criadoEm || ''), observacaoGeral: oc.observacaoGeral || '', divergencias: oc.divergencias || [] };
+        const x = { pedido: a.pedido || '', anotStatus: a.status || '', fornecedorCnpj: oc.fornecedorCnpj || '', fornecedor: oc.fornecedor || '', notaFiscal: oc.notaFiscal || '', data: dataRel(oc.data) ? oc.data : (oc.criadoEm || ''), observacaoGeral: oc.observacaoGeral || '', divergencias: oc.divergencias || [] };
         if (!dentroPeriodoRel(x.data) || !fornecedorCasaRel(x.fornecedor)) return;
         if (f.destino) { const cot = listaCotacoes.find(c => c.pedido === x.pedido); if (!cot || cot.origem !== f.destino) return; }
         lista.push(x);
@@ -378,12 +381,41 @@ function auditoriasRel() {
     const base = auditoriasBaseRel();
     return (f.tipo || f.produto) ? base.filter(x => x.divergencias.some(divPassaFiltrosRel)) : base;
 }
+// 2.10.5: item da cotação a que a divergência se refere (pelo vínculo de código ou pelo nome do produto), se houver.
+function itemCotacaoDaDivergenciaRel(pedido, d, cnpj) {
+    const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido)); if (!cot) return null;
+    const mats = materiaisDaDivergencia(d);
+    const cods = mats.map(m => m.codProduto).filter(Boolean);
+    const nomes = mats.map(m => m.produto || m.produtoPedido).filter(Boolean);
+    const itens = (cot.itens || []).filter(it => !cnpj || !it.cnpjFornecedor || normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(cnpj));
+    return itens.find(it => cods.includes(it.codProduto)) || itens.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) || null;
+}
+// Situação "de verdade": a gravada na divergência; se é registro antigo (sem situação), vale o que o app já sabe — anotação concluída ou
+// item marcado como resolvido na cotação — em vez de ficar "Pendente" para sempre.
+function statusEfetivoDivergenciaRel(d, x, item) {
+    if (d.status) return d.status;
+    if (x.anotStatus === 'concluido') return 'resolvida';
+    const cot = listaCotacoes.find(c => String(c.pedido) === String(x.pedido));
+    if (item && cot && (cot.resolvidosPorItem || {})[item.codProduto]) return 'resolvida';
+    return 'pendente';
+}
 function divergenciasRel() {
     const todas = [];
     auditoriasBaseRel().forEach(x => x.divergencias.filter(divPassaFiltrosRel).forEach(d => {
-        todas.push({ pedido: x.pedido, fornecedor: x.fornecedor, notaFiscal: x.notaFiscal, tipo: d.tipo, status: d.status || 'pendente', linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d) });
+        const item = itemCotacaoDaDivergenciaRel(x.pedido, d, x.fornecedorCnpj);
+        todas.push({ pedido: x.pedido, fornecedor: x.fornecedor, fornecedorCnpj: x.fornecedorCnpj || (item && item.cnpjFornecedor) || '', notaFiscal: x.notaFiscal, tipo: d.tipo, data: x.data, status: statusEfetivoDivergenciaRel(d, x, item), linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d), codProduto: item ? item.codProduto : '', registros: 1 });
     }));
-    return todas;
+    // Registro refeito a cada etapa (identificação, depois resolução...) do MESMO pedido + tipo + produto vira UMA divergência: vale o mais recente.
+    const mapa = new Map(), resultado = [];
+    todas.forEach(x => {
+        if (!x.produtos.length) { resultado.push(x); return; }
+        const k = [x.pedido, x.tipo, x.produtos.join('|')].join('::');
+        const ant = mapa.get(k);
+        if (!ant) { mapa.set(k, x); resultado.push(x); return; }
+        ant.registros++;
+        if (String(x.data) >= String(ant.data)) { const r = ant.registros; Object.assign(ant, x, { registros: r }); }
+    });
+    return resultado;
 }
 function auditoriaCasaTermoRel(x, termo) {
     return normalizarBuscaRel(x.pedido).includes(termo) || normalizarBuscaRel(x.fornecedor).includes(termo) || normalizarBuscaRel(x.notaFiscal).includes(termo);

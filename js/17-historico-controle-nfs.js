@@ -284,7 +284,7 @@ function renderControleNfs() {
     if (barra) {
         const podeSelecionar = abaControle === 'aberto' && visiveis.some(it => it.tipo === 'nf');
         document.getElementById('controle-btn-selecionar').style.display = podeSelecionar || selecaoControleAtiva ? '' : 'none';
-        document.getElementById('controle-btn-selecionar').textContent = selecaoControleAtiva ? 'Concluir' : 'Selecionar';
+        document.getElementById('controle-btn-selecionar').classList.toggle('active', !!selecaoControleAtiva); // mesmo padrão do botão Selecionar de Anotações
         barra.style.display = selecaoControleAtiva ? 'flex' : 'none';
         document.getElementById('controle-sel-info').textContent = `${selecionadasControle.size} selecionada(s)`;
         document.getElementById('controle-sel-direta').disabled = selecionadasControle.size === 0;

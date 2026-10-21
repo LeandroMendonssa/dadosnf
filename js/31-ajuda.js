@@ -71,7 +71,7 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['O recurso de cada nota no texto é o campo Recurso dela. Se uma nota sai sem recurso, aplique o recurso em Gerenciar ou edite a nota.',
               'Próximos Vencimentos lista as notas que vencem nos próximos 7 dias.'], tutorial: 'xml-ao-texto' },
-    { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.10.0',
+    { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.10.6',
       resumo: 'Ver todas as NFs e resolver o que falta tocando na pendência.',
       palavras: 'controle nfs pendencia erp xml vinculo cartao divergencia editor',
       tela: [{ id: 'screen-controle-nfs', titulo: 'Controle de NFs', rotulo: 'Abrir Controle de NFs' }],
@@ -79,6 +79,7 @@ const AJUDA_ARTIGOS = [
         'Cada NF é um cartão com iniciais do fornecedor, situação, valor, vencimento e uma faixa de pendências.',
         'Toque numa pendência (texto vermelho ou o selo "N pendências"): o app abre o lugar certo e destaca o ponto em amarelo.',
         'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Gerenciar.',
+        'O botão Selecionar (igual ao de Anotações) permite marcar várias NFs em aberto e marcá-las como enviadas ao financeiro.',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
@@ -94,13 +95,13 @@ const AJUDA_ARTIGOS = [
         'Ao importar o relatório do ERP, o campo Recurso da nota vem preenchido com o recurso da NF (quando ele é único).'
       ],
       dicas: ['Itens sem Origem na cotação ou sem destino não são alterados pelo botão da NF inteira.'], tutorial: 'xml-ao-texto' },
-    { id: 'cotacoes', cat: 'Cotações e recurso', titulo: 'Cotações: importar e acompanhar pedidos', versao: '2.10.0',
+    { id: 'cotacoes', cat: 'Cotações e recurso', titulo: 'Cotações: importar e acompanhar pedidos', versao: '2.10.6',
       resumo: 'Importar o XML do SmartCompras e o relatório de ganhadores.',
       palavras: 'cotacoes smartcompras importar xml ganhadores pedido fornecedores divergencia previa',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
       passos: [
-        'Em Cotações, use "Importar XML SmartCompras" (ou "Nova Cotação"), confira a Prévia da Importação e confirme.',
-        'Importe o Relatório de Fornecedores Ganhadores (cole o texto ou envie o arquivo, "Processar" e confirme): ele informa quantos fornecedores participaram de cada item.',
+        'Em Cotações, toque em "Adicionar cotação (XML)", escolha o XML do SmartCompras, confira a Prévia da Importação e confirme. A cotação só nasce do XML.',
+        'Para complementar com o Relatório de Fornecedores Ganhadores, toque em "Complementar com relatório": o campo abre, você cola o texto ou envia o arquivo, toca em Processar e confirma. Ele informa quantos fornecedores participaram de cada item e fecha sozinho ao terminar.',
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
@@ -175,7 +176,7 @@ const AJUDA_ARTIGOS = [
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'
       ],
       dicas: ['O cálculo da entrega usa as NFs processadas no app; a marca manual existe para quando o recebimento não passou por ele.'], tutorial: null },
-    { id: 'relatorios', cat: 'Cotações e recurso', titulo: 'Relatórios: pedidos, notas, divergências e auditorias', versao: '2.10.1',
+    { id: 'relatorios', cat: 'Cotações e recurso', titulo: 'Relatórios: pedidos, notas, divergências e auditorias', versao: '2.10.5',
       resumo: 'Consultar com filtros e achar o item que você procura.',
       palavras: 'relatorios filtros periodo fornecedor destino recurso tipo divergencia pedidos notas auditorias',
       tela: [{ id: 'screen-reports', titulo: 'Relatórios', rotulo: 'Abrir Relatórios' }],
@@ -183,6 +184,9 @@ const AJUDA_ARTIGOS = [
         'Escolha a visão: Pedidos, Notas, Divergências ou Auditorias.',
         'Abra "Filtros" para limitar por período (De/Até), fornecedor, destino (Santa Casa ou CTI), recurso e tipo de divergência.',
         'Nas listas de auditorias use os filtros de situação (Pendentes, Resolvidas, Encerradas, Todas).',
+        'Em Divergências, cada cartão mostra pedido, fornecedor, situação, tipo, NF e os produtos envolvidos. Toque no cartão: o app abre o pedido já no fornecedor e no produto da divergência, e o ponto pisca suavemente em amarelo dentro do cartão.',
+        'Registros antigos (de antes dos produtos ligados à cotação) agora mostram o produto. Se não têm situação gravada, valem: anotação concluída = Resolvida; item marcado como resolvido na cotação = Resolvida; senão, Pendente.',
+        'A mesma divergência registrada várias vezes (mesmo pedido, tipo e produto, por exemplo uma por etapa) aparece como uma só, com "N registros", valendo o registro mais recente.',
         'Os cartões de pedido seguem o padrão do app; tocar abre o pedido.'
       ],
       dicas: [], tutorial: null },
@@ -291,7 +295,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'link tocar destaque amarelo voltar ponto exato gesto pendencia divergencia',
       passos: [
         'Selos, pendências e quadros com seta (›) ou sublinhado pontilhado são tocáveis.',
-        'Ao tocar, o app abre a tela certa, rola até o ponto e o destaca em amarelo por alguns segundos.',
+        'Ao tocar, o app abre a tela certa, rola até o ponto e o destaca: um tom de amarelo dentro do cartão que dissolve de volta ao normal.',
         'O Voltar (botão ou gesto da borda) devolve você exatamente ao ponto de onde saiu: a mesma NF, o mesmo pedido e a mesma rolagem.',
         'Trocar de aba pela barra zera esse caminho de volta.'
       ],
@@ -363,6 +367,8 @@ function abrirAjuda(artigoId) {
 function renderAjuda() {
     const el = document.getElementById('ajuda-conteudo'); if (!el) return;
     const art = ajudaEstado.aberto ? AJUDA_ARTIGOS.find(a => a.id === ajudaEstado.aberto) : null;
+    const anim = ajudaEstado.anim || ''; ajudaEstado.anim = '';
+    el.className = ''; if (anim) { void el.offsetWidth; el.className = 'aj-anim-' + anim; } // transição ao entrar no artigo / voltar à lista
     if (art) { el.innerHTML = htmlArtigoAjuda(art); return; }
     const q = ajNorm(ajudaEstado.busca).trim();
     const lista = q ? AJUDA_ARTIGOS.filter(a => ajNorm(a.titulo + ' ' + a.resumo + ' ' + a.palavras + ' ' + a.cat + ' ' + a.passos.join(' ')).includes(q)) : AJUDA_ARTIGOS;
@@ -379,8 +385,8 @@ function renderAjuda() {
     if (inp && q) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
 function buscarAjuda(v) { ajudaEstado.busca = v; renderAjuda(); }
-function abrirArtigoAjuda(id) { ajudaEstado.aberto = id; renderAjuda(); const s = document.getElementById('screen-ajuda'); if (s) s.scrollTop = 0; }
-function voltarListaAjuda() { ajudaEstado.aberto = null; renderAjuda(); }
+function abrirArtigoAjuda(id) { ajudaEstado.aberto = id; ajudaEstado.anim = 'frente'; renderAjuda(); const s = document.getElementById('screen-ajuda'); if (s) s.scrollTop = 0; }
+function voltarListaAjuda() { ajudaEstado.aberto = null; ajudaEstado.anim = 'volta'; renderAjuda(); }
 function htmlArtigoAjuda(a) {
     const botoes = (a.tela || []).map(t => `<button type="button" class="manage-toolbar-btn" onclick="switchToScreen('${t.id}','${ajEsc(t.titulo)}')">${ajEsc(t.rotulo)}</button>`).join('')
         + (a.tutorial ? `<button type="button" class="manage-toolbar-btn" onclick="iniciarTutorial('${a.tutorial}')">Ver o tutorial guiado</button>` : '');
@@ -414,7 +420,7 @@ function renderTutorial() {
     const A = k => p.alvo === k ? ' aj-alvo' : '';
     const pendente = p.acao && !p.acao(e);
     const dica = pendente ? '<div class="aj-dica-acao">Toque no botão destacado para ver o efeito (é só demonstração).</div>' : '';
-    ov.innerHTML = `<div class="aj-tut-box"><div class="aj-tut-topo"><span>${ajEsc(T.titulo)} · passo ${e.i + 1} de ${n}</span><button type="button" class="link-discreto" onclick="sairTutorial()">Sair</button></div>
+    ov.innerHTML = `<div class="aj-tut-box"><div class="aj-tut-topo"><span>${ajEsc(T.titulo)} · passo ${e.i + 1} de ${n}</span><button type="button" class="aj-sair" onclick="sairTutorial()">Sair</button></div>
         <h3 class="aj-h">${ajEsc(p.t)}</h3><div class="aj-resumo">${ajEsc(p.d)}</div>
         <div class="aj-demo">${p.mock(e, A)}</div>${dica}
         <div class="aj-tut-nav"><button type="button" class="manage-toolbar-btn" onclick="tutorialPasso(-1)" ${e.i === 0 ? 'disabled' : ''}>Voltar</button><button type="button" class="manage-toolbar-btn" onclick="tutorialPasso(1)">${e.i === n - 1 ? 'Concluir' : 'Próximo'}</button></div></div>`;
@@ -423,3 +429,14 @@ function renderTutorial() {
 // O botão Voltar do topo (js/06) pergunta aqui antes: com um artigo aberto, sobe só para a lista; na lista, volta para Ajustes como sempre.
 function voltarInternoDisponivel() { const at = document.querySelector('.app-screen.active'); return !!(at && at.id === 'screen-ajuda' && ajudaEstado.aberto); }
 function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; voltarListaAjuda(); return true; }
+
+// Gesto de voltar (arrastar da borda esquerda) também dentro do artigo da Ajuda: sobe para a lista.
+(function () {
+    let g = null;
+    document.addEventListener('pointerdown', e => { g = (e.clientX <= 28 && voltarInternoDisponivel()) ? { x: e.clientX, y: e.clientY } : null; }, true);
+    document.addEventListener('pointerup', e => {
+        if (g && e.clientX - g.x > 70 && Math.abs(e.clientY - g.y) < 90 && voltarInternoDisponivel()) voltarListaAjuda();
+        g = null;
+    }, true);
+    document.addEventListener('pointercancel', () => { g = null; }, true);
+})();
