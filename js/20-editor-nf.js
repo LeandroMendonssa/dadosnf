@@ -477,7 +477,7 @@ function renderEditorNf() {
     const alertaFora = foraNf.length ? `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ ${foraNf.length} item(ns) fora do pedido ${escRel(nf.pedido)}</div>
         ${foraNf.map(x => `<div class="nfe-alerta-txt" style="margin-top:8px"><strong>${escRel(x.nome)}</strong> — ${x.tipo === 'fora_cotacao' ? 'não está na cotação deste pedido' : 'na cotação foi ganho por ' + escRel(x.ganhador)}</div>`).join('')}
         <div class="nfe-dica" style="margin-top:8px">Se a NF for de outro pedido, mova-a em "Mover esta NF para outro pedido".</div></div>` : '';
-    el.innerHTML = htmlNfSemPedido(nf) + alertaPedido + alertaFora + cabecalho + tabs +
+    el.innerHTML = htmlNfSemPedido(nf) + alertaPedido + alertaFora + cabecalho + alertaCodigosRepetidosNf(nf) + htmlDadosNf(nf, fornecedorNome) + tabs +
         pane('itens', paneItens) + pane('fin', paneFin) + pane('fiscal', paneFiscal) + pane('partes', panePartes) + pane('transp', paneTransp) + pane('xml', paneXml);
 }
 function qdtFmt(v) { return String(numeroLimpo(Number(v))); }
@@ -643,7 +643,7 @@ function htmlDadosNfErp(erp, fornNome, pedido) {
             <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorErpSo('${id}')">Salvar</button></div>
             <div class="xml-item-meta">O nome fica lembrado: nas próximas importações do ERP com este nome, o fornecedor já vem certo.</div></div>
         <div class="nfe-trocar"><span class="nfe-rot">Recurso</span>${sel}</div>
-        <div class="nfe-trocar"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" ${erp.semPedido && !pedido ? 'checked' : ''} ${pedido ? 'disabled' : ''} onchange="definirSemPedidoErpSo('${id}', this.checked)"> <span>Esta NF não tem pedido (compra direta)</span></label>${pedido ? '<div class="xml-item-meta">Há pedido vinculado; para marcar “sem pedido”, mova a NF para nenhum pedido primeiro.</div>' : ''}</div></div>`;
+        <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${erp.semPedido && !pedido ? 'checked' : ''} ${pedido ? 'disabled' : ''} onchange="definirSemPedidoErpSo('${id}', this.checked)"> <span>Esta NF não tem pedido (compra direta)</span></label>${pedido ? '<div class="xml-item-meta">Há pedido vinculado; para marcar “sem pedido”, mova a NF para nenhum pedido primeiro.</div>' : ''}</div></div>`;
 }
 async function definirRecursoErpSo(id, valor) {
     try { await entradasErpCollection.doc(id).update({ recursoManual: valor || '' }); toast(valor ? '✓ Recurso definido.' : '✓ Recurso removido.'); }
@@ -668,4 +668,93 @@ async function salvarNomeFornecedorErpSo(id) {
         }
         toast('✓ Nome do fornecedor salvo.');
     } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
+}
+
+
+// ===================================================================
+// 2.10.8: "Dados desta NF" também para NF com XML — nome do fornecedor, recurso da NF inteira e compra direta (sem cotação).
+// ===================================================================
+function destinoDaNfSalva(nf) {
+    const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
+    return (cot && cot.origem) || nf.destino || null;
+}
+function recursosAtuaisDaNf(nf) {
+    const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
+    return [...new Set((nf.itens || []).map(it => it.semCotacao ? it.recurso : (cot && it.codigoSmartCompras ? (cot.recursosPorItem || {})[it.codigoSmartCompras] : null)).filter(Boolean))];
+}
+function htmlDadosNf(nf, fornecedorNome) {
+    const id = escRel(nf.id);
+    const atuais = recursosAtuaisDaNf(nf);
+    const destino = destinoDaNfSalva(nf);
+    const rotCC = destino ? calcularRecursoOficial(destino, 'cc') : 'C/C', rotPR = destino ? calcularRecursoOficial(destino, 'proprio') : 'Recurso Próprio';
+    const resumo = atuais.length === 0 ? 'Nenhum item com recurso definido.' : (atuais.length === 1 ? `Todos os itens com recurso: <strong>${escRel(atuais[0])}</strong>.` : `Itens com recursos diferentes: ${atuais.map(escRel).join(', ')}.`);
+    const direta = !!(nf.semCotacaoSmartCompras || (nf.itens || []).some(i => i.semCotacao));
+    return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
+        <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
+            <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornecedorNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorNfSalva('${id}')">Salvar</button></div>
+            <div class="xml-item-meta">O nome fica lembrado nas próximas importações.</div></div>
+        <div class="nfe-trocar"><span class="nfe-rot">Recurso da NF inteira</span><div class="xml-item-meta">${resumo}${destino ? '' : ' Defina antes a origem (destino) da cotação do pedido.'}</div>
+            <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'cc')">${escRel(rotCC)}</button> <button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'proprio')">${escRel(rotPR)}</button></div></div>
+        <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${direta ? 'checked' : ''} onchange="definirCompraDiretaNf('${id}', this.checked)"> <span>Esta NF não tem cotação (compra direta)</span></label>
+            <div class="xml-item-meta">Marcar tira o pedido da NF e ela deixa de aparecer como "sem pedido".</div></div></div>`;
+}
+async function salvarNomeFornecedorNfSalva(id) {
+    const nf = listaNfsProcessadas.find(n => n.id === id); const inp = document.getElementById('nfed-nome-forn'); if (!nf || !inp) return;
+    const novo = nomeTextoSeguro(inp.value).trim().toUpperCase(); if (!novo) return toast('Digite o nome do fornecedor.');
+    try {
+        await nfsProcessadasCollection.doc(id).update({ fornecedorNomeEditado: novo });
+        const original = nomeTextoSeguro(nf.fornecedor || (nf.xmlDados && nf.xmlDados.emit && nf.xmlDados.emit.xNome) || '').trim().toUpperCase();
+        if (original && original !== novo) {
+            apelidosFornecedores[original] = novo;
+            await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
+            await adicionarFornecedor(novo, true);
+        }
+        toast('✓ Nome do fornecedor salvo.');
+    } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
+}
+async function definirRecursoNfSalva(id, tipo) {
+    const nf = listaNfsProcessadas.find(n => n.id === id); if (!nf) return;
+    const destino = destinoDaNfSalva(nf);
+    if (!destino) return toast('Sem origem (destino) definida para esta NF: defina na cotação do pedido.');
+    const oficial = calcularRecursoOficial(destino, tipo); if (!oficial) return toast('Origem sem recurso configurado.');
+    try {
+        const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
+        const novosCot = {}; let diretos = false;
+        const itens = (nf.itens || []).map(it => {
+            if (it.semCotacao) { diretos = true; return { ...it, recurso: oficial }; }
+            if (cot && it.codigoSmartCompras) novosCot[it.codigoSmartCompras] = oficial;
+            return it;
+        });
+        if (Object.keys(novosCot).length) { await gravarRecursoCotacaoXml(cot, novosCot); }
+        if (diretos) await nfsProcessadasCollection.doc(id).update({ itens });
+        toast(Object.keys(novosCot).length || diretos ? `✓ Recurso da NF definido: ${oficial}.` : 'Nenhum item com base para definir o recurso.');
+        renderEditorNf();
+    } catch (e) { console.error(e); toast('✕ Erro ao salvar o recurso.'); }
+}
+function definirCompraDiretaNf(id, marcado) {
+    const nf = listaNfsProcessadas.find(n => n.id === id); if (!nf) return;
+    if (!marcado) {
+        nfsProcessadasCollection.doc(id).update({ semCotacaoSmartCompras: false }).then(() => toast('✓ Marca de compra direta removida.')).catch(() => toast('✕ Erro ao salvar.'));
+        return;
+    }
+    showConfirmModal({
+        title: 'Marcar como compra direta',
+        message: `NF ${nf.nf}${nf.pedido ? ' — hoje no pedido ' + nf.pedido : ''}\nEla passa a ser tratada como compra sem cotação do SmartCompras${nf.pedido ? ' e sai do pedido' : ''}. Auditorias já geradas não são alteradas.`,
+        confirmText: 'Marcar', confirmClass: 'warning',
+        onConfirm: async () => {
+            try { await nfsProcessadasCollection.doc(id).update({ semCotacaoSmartCompras: true, pedido: null, pedidos: [] }); toast('✓ NF marcada como compra direta.'); }
+            catch (e) { console.error(e); toast('✕ Erro ao salvar.'); renderEditorNf(); }
+        },
+    });
+    const cb = document.querySelector('[data-alvo="dados-nf"] input[type="checkbox"]'); if (cb) cb.checked = false; // só vale depois de confirmar
+}
+// 2.10.8: itens diferentes da MESMA NF presos ao mesmo código do SmartCompras (a quantidade deles é somada como se fosse um produto só).
+function alertaCodigosRepetidosNf(nf) {
+    const porCod = new Map();
+    (nf.itens || []).forEach(it => { const c = it.codigoSmartCompras; if (!c || it.semCotacao) return; if (!porCod.has(c)) porCod.set(c, []); porCod.get(c).push(it); });
+    const grupos = [...porCod.entries()].filter(([c, l]) => new Set(l.map(i => String(i.cProd || i.xProd))).size > 1);
+    if (!grupos.length) return '';
+    const txt = grupos.map(([c, l]) => `código ${escRel(c)}: ${l.map(i => escRel(String(i.xProd || i.cProd).split(' (')[0].slice(0, 40)) + ' (' + escRel(String(i.quantidade)) + ')').join(' + ')}`).join('; ');
+    return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
+        <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }

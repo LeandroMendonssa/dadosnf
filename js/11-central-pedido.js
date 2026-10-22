@@ -1156,6 +1156,44 @@ async function alterarResolvidoItemComparacao(pedido, codProduto, resolver) {
         toast('✕ Erro ao salvar. Tente novamente.');
     }
 }
+// 2.10.8: marca (ou desfaz) a chegada manual de TODOS os fornecedores da cotação de uma vez.
+function cnpjsFornecedoresDaCotacao(cot) {
+    return [...new Set((cot.fornecedores || []).map(f => normalizarCnpj(f.cnpj)).filter(Boolean))];
+}
+function htmlBotaoTodosChegaram(cotacao) {
+    const cnpjs = cnpjsFornecedoresDaCotacao(cotacao); if (!cnpjs.length) return '';
+    const mapa = cotacao.chegadasPorFornecedor || {};
+    const faltam = cnpjs.filter(c => !mapa[c]).length;
+    const p = escRel(String(cotacao.pedido));
+    return faltam
+        ? `<button type="button" class="action-chip edit-chip" onclick="marcarTodosChegaramCotacao('${p}', true)">Marcar toda a cotação como entregue</button>`
+        : `<button type="button" class="action-chip edit-chip" onclick="marcarTodosChegaramCotacao('${p}', false)">Desfazer marcas de entrega de todos</button>`;
+}
+function marcarTodosChegaramCotacao(pedido, chegou) {
+    const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido)); if (!cot) return;
+    const cnpjs = cnpjsFornecedoresDaCotacao(cot);
+    const mapa0 = cot.chegadasPorFornecedor || {};
+    const alvos = chegou ? cnpjs.filter(c => !mapa0[c]) : cnpjs.filter(c => mapa0[c]);
+    if (!alvos.length) return;
+    showConfirmModal({
+        title: chegou ? 'Marcar toda a cotação como entregue' : 'Desfazer marcas de entrega',
+        message: chegou ? `Marcar ${alvos.length} fornecedor(es) do pedido ${pedido} como "já chegou" (manual)? Dá para desfazer depois, todos de uma vez ou um a um.` : `Remover a marca manual de ${alvos.length} fornecedor(es) do pedido ${pedido}?`,
+        confirmText: chegou ? 'Marcar todos' : 'Desfazer', confirmClass: chegou ? 'warning' : 'danger',
+        onConfirm: async () => {
+            try {
+                const upd = {}, mapa = { ...mapa0 };
+                alvos.forEach(c => {
+                    if (chegou) { const v = { data: dataLocalISO() }; upd[c] = v; mapa[c] = v; }
+                    else { upd[c] = firebase.firestore.FieldValue.delete(); delete mapa[c]; }
+                });
+                await cotacoesCollection.doc(String(cot.pedido)).set({ chegadasPorFornecedor: upd }, { merge: true });
+                cot.chegadasPorFornecedor = mapa;
+                toast(chegou ? `✓ ${alvos.length} fornecedor(es) marcados como já chegou.` : '✓ Marcas removidas.');
+                if (centralPedidoAtual === pedido) renderCentralPedidoCompleto(pedido);
+            } catch (e) { console.error('Erro ao marcar todos:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+        }
+    });
+}
 async function alterarChegadaFornecedorCotacao(pedido, cnpj, chegou, tipo) {
     const cot = listaCotacoes.find(c => c.pedido === pedido);
     const chave = normalizarCnpj(cnpj);

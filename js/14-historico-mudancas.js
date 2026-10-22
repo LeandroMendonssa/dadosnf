@@ -10,7 +10,25 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.10.7', nome: 'Fornecedor ERP reconhecido certo, Editor da NF só-ERP, divergência que sai da pendência e exclusão', status: 'atual',
+        numero: '2.10.8', nome: 'Dados da NF também com XML, toda a cotação como entregue e aviso de produto repetido', status: 'atual',
+        novidades: [
+            'Editor da NF (com XML): novo cartão "Dados desta NF" com nome do fornecedor, recurso da NF inteira e a opção "Esta NF não tem cotação (compra direta)".',
+            'Pedido: botão "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez; depois vira "Desfazer marcas de entrega de todos".',
+            'Editor da NF: aviso quando itens diferentes da mesma NF estão associados ao mesmo produto da cotação (a quantidade é somada e gera divergência falsa, como a LANCETA 28G da NF 1067970).',
+            'Corrigido o espaçamento da caixa de seleção "não tem pedido" no Editor da NF.'
+        ],
+        implementado: ['Marcar compra direta tira o pedido da NF (com confirmação). Desmarcar só remove a marca.', 'O recurso da NF inteira grava na cotação (itens com cotação) e na própria NF (itens diretos), usando a origem do pedido.'],
+        mudou: ['Arquivos alterados: style.css, js/09, js/11, js/14, js/17, js/20, js/31.'],
+        testar: [
+            'Editor da NF com XML: editar nome, escolher o recurso e marcar/desmarcar compra direta.',
+            'Editor da NF da NF 1067970: ver o aviso do código repetido (lanceta + nifedipino).',
+            'Pedido: tocar em "Marcar toda a cotação como entregue" e depois em desfazer.',
+            'Editor da NF só do ERP: conferir o espaçamento da caixa "não tem pedido".'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.7', nome: 'Fornecedor ERP reconhecido certo, Editor da NF só-ERP, divergência que sai da pendência e exclusão', status: 'concluida',
         novidades: [
             'Fornecedor do ERP: uma palavra genérica (como "artefatos") no meio do nome não identifica mais um fornecedor conhecido. "ACRILZANO ARTEFATOS DE ACRILIC" deixa de virar "artefatos".',
             'Editor da NF (NF só do ERP): novo cartão "Dados desta NF" para editar o nome do fornecedor (fica lembrado nas próximas importações), definir o recurso e marcar "não tem pedido".',

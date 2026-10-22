@@ -280,7 +280,7 @@ function renderCentralPedidoCompleto(pedido) {
     if (subEl) {
         if (cotacao) {
             const nForn = (cotacao.fornecedores || []).length;
-            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div>`;
+            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div><div class="actions-row" style="margin-top:8px">${htmlBotaoTodosChegaram(cotacao)}</div>`;
             subEl.style.display = 'block';
         } else { subEl.innerHTML = ''; subEl.style.display = 'none'; }
     }

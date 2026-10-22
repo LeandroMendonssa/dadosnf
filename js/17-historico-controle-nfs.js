@@ -77,7 +77,7 @@ function montarControleNfs() {
         const numeroNf = (nf && nf.nf) || (erp && erp.nf) || ch;
         const cnpj = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
         const docForn = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
-        const nomeFornecedor = nomeTextoSeguro((erp && erp.fornecedorNomeEditado) || (docForn ? (apelidoFornecedorDoc(docForn).nome || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '')));
+        const nomeFornecedor = nomeTextoSeguro((erp && erp.fornecedorNomeEditado) || (nf && nf.fornecedorNomeEditado) || (docForn ? (apelidoFornecedorDoc(docForn).nome || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '')));
         let dataISO = null;
         if (erp && erp.data) dataISO = converterDataBRparaISO(erp.data);
         if (!dataISO && nf && nf.emissao) dataISO = nf.emissao.slice(0, 10);

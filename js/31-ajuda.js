@@ -153,7 +153,7 @@ const AJUDA_ARTIGOS = [
         'Use Marcar Todas / Desmarcar Todas, a busca e "Mostrar Apenas Novas" para filtrar, e confirme a importação.'
       ],
       dicas: ['Duas notas com o mesmo fornecedor e NF ativas ao mesmo tempo são sempre tratadas como erro: o app trava a importação da repetida.'], tutorial: 'importar-erp' },
-    { id: 'editor-nf', cat: 'Notas fiscais', titulo: 'Editor da NF: abas e situação', versao: '2.10.7',
+    { id: 'editor-nf', cat: 'Notas fiscais', titulo: 'Editor da NF: abas e situação', versao: '2.10.8',
       resumo: 'Ver e corrigir tudo sobre uma NF em um só lugar.',
       palavras: 'editor nf abas itens financeiro fiscal emitente destinatario transporte xml erp chips',
       passos: [
@@ -161,10 +161,12 @@ const AJUDA_ARTIGOS = [
         'No topo, os selos mostram a situação: XML processado, vínculo com o ERP e se o XML completo está guardado.',
         'As abas organizam os dados: Itens, Financeiro (pagamento e ERP), Fiscal, Emitente/Dest., Transporte e XML.',
         'NFs que só existem no relatório do ERP mostram um aviso de "sem XML" e o cartão "Dados desta NF": ali você edita o nome do fornecedor (o app lembra para as próximas importações), escolhe o recurso e marca "não tem pedido" (compra direta).',
+        'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (C/C ou próprio, conforme a origem do pedido) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
+        'Se aparecer o aviso "Itens diferentes com o mesmo produto da cotação", dois itens da NF estão associados ao mesmo produto: corrija a associação na aba Itens.',
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.10.7',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.10.8',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
       palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
@@ -173,6 +175,7 @@ const AJUDA_ARTIGOS = [
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
         'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou ou Desfazer a marca manual.',
         'Em Associar NF, a lista mostra as NFs da mesma entidade do fornecedor. Se ele entregou por outro CNPJ, digite o número da NF: a busca passa a valer para todos os fornecedores e indica o nome e "outro CNPJ".',
+        'No topo do pedido, "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez como "já chegou" (manual); o mesmo botão passa a "Desfazer marcas de entrega de todos".',
         'O quadro Divergências, quando maior que zero, é tocável e leva ao item divergente.',
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'
       ],
