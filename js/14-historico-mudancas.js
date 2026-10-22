@@ -10,7 +10,27 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.10.6', nome: 'Ajuda com transição e gesto, Cotações enxuta e botão Selecionar padronizado', status: 'atual',
+        numero: '2.10.7', nome: 'Fornecedor ERP reconhecido certo, Editor da NF só-ERP, divergência que sai da pendência e exclusão', status: 'atual',
+        novidades: [
+            'Fornecedor do ERP: uma palavra genérica (como "artefatos") no meio do nome não identifica mais um fornecedor conhecido. "ACRILZANO ARTEFATOS DE ACRILIC" deixa de virar "artefatos".',
+            'Editor da NF (NF só do ERP): novo cartão "Dados desta NF" para editar o nome do fornecedor (fica lembrado nas próximas importações), definir o recurso e marcar "não tem pedido".',
+            'Relatórios: divergência "não faturado" sai da pendência quando o item chegou (marcado como já chegou, NF do app ou NF do ERP associada ao pedido).',
+            'Associar NF no pedido: ao digitar o número, a busca vale para todos os fornecedores (entrega por outro CNPJ).',
+            'Relatórios: botão Excluir em cada divergência, inclusive as antigas sem produto da cotação.'
+        ],
+        implementado: ['Campos novos na entrada do ERP: nome editado, recurso e "sem pedido". O Controle de NFs usa esses dados e o envio à relação aproveita o recurso.', 'Excluir remove também os registros repetidos da mesma divergência; o texto já gerado na anotação não muda.'],
+        mudou: ['Arquivos alterados: js/04, js/08, js/11, js/14, js/17, js/20, js/31.'],
+        testar: [
+            'Reimportar (ou conferir) a NF da ACRILZANO: o nome não deve virar "artefatos".',
+            'Controle de NFs → Editar NF de uma NF só do ERP: editar o nome, escolher o recurso, marcar "não tem pedido".',
+            'Relatórios → Divergências: a "sonda gastrostomia 20FR" não deve mais aparecer pendente.',
+            'Pedido → Associar NF: digitar o número de uma NF de outro CNPJ e associar.',
+            'Relatórios → Divergências: excluir a pendência do Tidimar (?).'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.6', nome: 'Ajuda com transição e gesto, Cotações enxuta e botão Selecionar padronizado', status: 'concluida',
         novidades: [
             'Ajuda: abrir um artigo e voltar para a lista agora têm transição (no computador, a dissolução curta do modo web), e o gesto de arrastar da borda esquerda volta do artigo para a lista.',
             'Tutorial guiado: o botão Sair virou um botão compacto no canto, dentro do layout.',

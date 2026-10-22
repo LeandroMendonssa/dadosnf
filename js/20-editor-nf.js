@@ -573,12 +573,12 @@ function renderEditorNfErp(erp, el) {
     const fin = erp.financeiro || {};
     const valor = formatValorBR(fin.totalNota != null ? fin.totalNota : (fin.totalLancamentos || 0));
     const venc = (erp.parcelas && erp.parcelas[0] && erp.parcelas[0].data) || erp.vencimento || '';
-    const fornNome = ctrl.nomeFornecedor || erp.fornecedorNomeRelatorio || '';
+    const fornNome = erp.fornecedorNomeEditado || ctrl.nomeFornecedor || erp.fornecedorNomeRelatorio || '';
     const codigos = (erp.itens || []).map(i => i.codigoSmartComprasRelacionado).filter(Boolean);
 
     // ---- pedido provável (vínculo gravado não bate com os itens) ----
     const analise = pedido ? analisarPedidoDaNf({ pedido, cnpjFornecedor: erp.cnpjFornecedor, itens: [] }, erp) : null;
-    const sugestao = !pedido ? sugerirPedidoErp(erp) : [];
+    const sugestao = (!pedido && !erp.semPedido) ? sugerirPedidoErp(erp) : [];
     const botoesMover = ps => ps.map(p => `<button type="button" class="central-status-toggle" onclick="moverErpParaPedido('${escRel(erp.id)}', '${escRel(p)}')">${pedido ? 'Mover para' : 'Vincular ao'} pedido ${escRel(p)}</button>`).join(' ');
     const alerta = analise ? `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Pedido possivelmente errado</div>
             <div class="nfe-alerta-txt">${escRel(textoPedidoProvavel(analise))}</div><div class="nfe-acoes">${botoesMover(analise.candidatos.map(c => c.pedido))}</div></div>`
@@ -629,5 +629,43 @@ function renderEditorNfErp(erp, el) {
     }).join('');
     const itens = `<div class="card"><div class="xml-item-meta"><strong>Itens lançados no ERP (${(erp.itens || []).length})</strong></div>${linhas || '<div class="xml-item-meta">Sem itens no relatório.</div>'}</div>`;
     const aviso = `<div class="card" data-alvo="sem-xml"><div class="xml-item-meta">Esta NF veio só do relatório do ERP, sem XML. Aqui você confere os itens e troca o pedido; para editar valores, vencimento e associação item a item, processe o XML dela na Entrada de NF.</div></div>`;
-    el.innerHTML = alerta + cabecalho + aviso + itens;
+    el.innerHTML = alerta + cabecalho + htmlDadosNfErp(erp, fornNome, pedido) + aviso + itens;
+}
+
+// 2.10.7: edição dos dados da NF que só veio do ERP — nome do fornecedor, recurso e "sem pedido".
+function htmlDadosNfErp(erp, fornNome, pedido) {
+    const id = escRel(erp.id);
+    const opcoesRec = (typeof observacoesSugeridas !== 'undefined' ? observacoesSugeridas : []).filter(Boolean);
+    const atual = erp.recursoManual || '';
+    const sel = `<select class="input-box" onchange="definirRecursoErpSo('${id}', this.value)"><option value="">(não definido)</option>${opcoesRec.map(o => `<option value="${escRel(o)}"${o === atual ? ' selected' : ''}>${escRel(o)}</option>`).join('')}</select>`;
+    return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
+        <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
+            <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorErpSo('${id}')">Salvar</button></div>
+            <div class="xml-item-meta">O nome fica lembrado: nas próximas importações do ERP com este nome, o fornecedor já vem certo.</div></div>
+        <div class="nfe-trocar"><span class="nfe-rot">Recurso</span>${sel}</div>
+        <div class="nfe-trocar"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" ${erp.semPedido && !pedido ? 'checked' : ''} ${pedido ? 'disabled' : ''} onchange="definirSemPedidoErpSo('${id}', this.checked)"> <span>Esta NF não tem pedido (compra direta)</span></label>${pedido ? '<div class="xml-item-meta">Há pedido vinculado; para marcar “sem pedido”, mova a NF para nenhum pedido primeiro.</div>' : ''}</div></div>`;
+}
+async function definirRecursoErpSo(id, valor) {
+    try { await entradasErpCollection.doc(id).update({ recursoManual: valor || '' }); toast(valor ? '✓ Recurso definido.' : '✓ Recurso removido.'); }
+    catch (e) { console.error(e); toast('✕ Erro ao salvar o recurso.'); }
+}
+async function definirSemPedidoErpSo(id, marcado) {
+    try { await entradasErpCollection.doc(id).update({ semPedido: !!marcado }); toast(marcado ? '✓ Marcada como sem pedido.' : '✓ Marca de “sem pedido” removida.'); }
+    catch (e) { console.error(e); toast('✕ Erro ao salvar.'); }
+}
+async function salvarNomeFornecedorErpSo(id) {
+    const erp = listaEntradasErp.find(e => e.id === id); const inp = document.getElementById('nfed-nome-forn');
+    if (!erp || !inp) return;
+    const novo = nomeTextoSeguro(inp.value).trim().toUpperCase();
+    if (!novo) return toast('Digite o nome do fornecedor.');
+    try {
+        await entradasErpCollection.doc(id).update({ fornecedorNomeEditado: novo });
+        const original = nomeTextoSeguro(erp.fornecedorNomeRelatorio).trim().toUpperCase();
+        if (original && original !== novo) {
+            apelidosFornecedores[original] = novo;
+            await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
+            await adicionarFornecedor(novo, true);
+        }
+        toast('✓ Nome do fornecedor salvo.');
+    } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
 }

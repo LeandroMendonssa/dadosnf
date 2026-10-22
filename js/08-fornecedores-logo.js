@@ -164,6 +164,7 @@ function escapeRegex(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const PALAVRAS_GENERICAS_APELIDO = ['ARTEFATOS','PRODUTOS','COMERCIO','COMERCIAL','INDUSTRIA','DISTRIBUIDORA','DISTRIBUICAO','MEDICAL','HOSPITALAR','MEDICA','MEDICOS','MATERIAIS','EQUIPAMENTOS','SERVICOS','LTDA','EIRELI','ME','EPP','DE','DO','DA','E','GLOBAL','MUNDIAL','CENTER','PORT','VISUAL','REAL'];
 function encontrarApelidoFornecedor(nomeOrigem) {
     const nome = (nomeOrigem || '').trim().toUpperCase();
     if (!nome) return null;
@@ -187,7 +188,14 @@ function encontrarApelidoFornecedor(nomeOrigem) {
     const candidatos = fornecedoresSugeridos.filter(f => {
         if (!f || typeof f !== 'string' || f.length < 3) return false; // evita siglas de 1-2 letras darem falso positivo
         const regex = new RegExp('\\b' + escapeRegex(f) + '\\b');
-        return regex.test(nome);
+        if (!regex.test(nome)) return false;
+        // 2.10.7: palavra genérica sozinha (ex: "ARTEFATOS") não identifica fornecedor
+        // quando aparece no meio/fim do nome do ERP ("ACRILZANO ARTEFATOS DE ACRILIC").
+        // Só vale se for o começo do nome.
+        const palavras = f.toUpperCase().split(/\s+/);
+        const generica = palavras.every(w => PALAVRAS_GENERICAS_APELIDO.includes(w));
+        if (generica && !nome.startsWith(f.toUpperCase())) return false;
+        return true;
     });
     if (candidatos.length > 0) {
         candidatos.sort((a, b) => b.length - a.length);

@@ -77,7 +77,7 @@ function montarControleNfs() {
         const numeroNf = (nf && nf.nf) || (erp && erp.nf) || ch;
         const cnpj = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
         const docForn = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
-        const nomeFornecedor = nomeTextoSeguro(docForn ? (apelidoFornecedorDoc(docForn).nome || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || ''));
+        const nomeFornecedor = nomeTextoSeguro((erp && erp.fornecedorNomeEditado) || (docForn ? (apelidoFornecedorDoc(docForn).nome || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '')));
         let dataISO = null;
         if (erp && erp.data) dataISO = converterDataBRparaISO(erp.data);
         if (!dataISO && nf && nf.emissao) dataISO = nf.emissao.slice(0, 10);
@@ -448,7 +448,7 @@ function dadosEnvioNfParaRelacao(it) {
         nf: String(it.numeroNf || '').trim(),
         valor: it.valorTxt ? String(it.valorTxt).replace(/^R\$\s*/, '').trim() : '',
         vencimento: String(it.venc || '').trim(),
-        obs: sugerirRecursoImportacaoErp({ nf: it.numeroNf, serie: it.serie, cnpj: it.cnpj || (it.erp && it.erp.cnpjFornecedor) || '' }) || '',
+        obs: sugerirRecursoImportacaoErp({ nf: it.numeroNf, serie: it.serie, cnpj: it.cnpj || (it.erp && it.erp.cnpjFornecedor) || '' }) || (it.erp && it.erp.recursoManual) || '',
         data: `${String(hoje.getDate()).padStart(2, '0')}/${String(hoje.getMonth() + 1).padStart(2, '0')}/${hoje.getFullYear()}`
     };
 }
@@ -919,7 +919,7 @@ function renderCardHistoricoNf(item) {
 
     return `<div class="nota-item" style="flex-direction:column;align-items:stretch;gap:4px;cursor:pointer;" onclick="toggleDetalheHistoricoNf('${item.chave}')">
         <div class="nota-info">${escRel(tituloFornNf(item.nomeFornecedor, item.cnpj, item.numeroNf))}${item.serie ? '<span class="txt-aux"> /' + escRel(item.serie) + '</span>' : ''}</div>
-        <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}${(() => { const an = item.nf ? analisarPedidoDaNf(item.nf, item.erp) : null; return an ? ' · <strong>⚠ parece ser do pedido ' + an.candidatos.map(c => escRel(c.pedido)).join(' ou ') + '</strong>' : ''; })()}${item.nf && nfSemPedidoPendente(item.nf) ? ' · <strong>⚠ sem pedido</strong>' : ''}</div>
+        <div class="nota-detalhes">${dataExibicao} · ${origemLabel}${item.pedido ? ' · Pedido ' + escRel(item.pedido) : (item.erp && item.erp.semPedido ? ' · Sem pedido' : '')}${item.erp && item.erp.recursoManual ? ' · ' + escRel(item.erp.recursoManual) : ''}${item.divergenciasDaNf.length ? ' · ' + item.divergenciasDaNf.length + ' divergência(s)' : ''}${(() => { const an = item.nf ? analisarPedidoDaNf(item.nf, item.erp) : null; return an ? ' · <strong>⚠ parece ser do pedido ' + an.candidatos.map(c => escRel(c.pedido)).join(' ou ') + '</strong>' : ''; })()}${item.nf && nfSemPedidoPendente(item.nf) ? ' · <strong>⚠ sem pedido</strong>' : ''}</div>
         ${detalheHTML}
     </div>`;
 }

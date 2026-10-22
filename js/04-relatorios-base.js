@@ -236,10 +236,34 @@ function renderRelatorioDivergencias(container) {
             <div class="nota-info">${escRel(x.pedido) || 'Sem pedido'} ${x.fornecedor ? `<span class="txt-suave">— ${escRel(upAud(x.fornecedor))}</span>` : ''} <span class="central-status-badge status-${x.status}">${badgeTexto}</span></div>
             <div class="nota-detalhes">${def ? escRel(def.label) : escRel(x.tipo)}${x.notaFiscal ? ` | NF ${escRel(x.notaFiscal)}` : ''}${rep}</div>
             ${linhasHTML}
+            <div class="actions-row" style="margin-top:8px"><button type="button" class="action-chip delete-chip" onclick="event.stopPropagation(); excluirDivergenciaRelatorio(${i})">Excluir</button></div>
         </div>`;
     }).join('');
 }
 let relDivCache = [];
+// 2.10.7: exclui a divergência (e os registros repetidos dela) da anotação de auditoria. Não mexe no texto já gerado da anotação.
+function excluirDivergenciaRelatorio(i) {
+    const x = relDivCache[i]; if (!x || !x.origens || !x.origens.length) return;
+    showConfirmModal({
+        title: 'Excluir divergência',
+        message: `Excluir esta divergência${x.registros > 1 ? ` (${x.registros} registros)` : ''}${x.pedido ? ' do pedido ' + x.pedido : ''}? O texto já gerado na anotação não é alterado. Não dá para desfazer.`,
+        confirmText: 'Excluir', confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                const porAnot = new Map();
+                x.origens.forEach(o => { if (!o.anotId || o.dIdx < 0) return; if (!porAnot.has(o.anotId)) porAnot.set(o.anotId, []); porAnot.get(o.anotId).push(o); });
+                for (const [id, lista] of porAnot) {
+                    const a = listaAnotacoes.find(n => n.id === id); if (!a) continue;
+                    const ocs = JSON.parse(JSON.stringify(a.ocorrencias || []));
+                    lista.sort((p, q) => (q.ocIdx - p.ocIdx) || (q.dIdx - p.dIdx)).forEach(o => { const oc = ocs[o.ocIdx]; if (oc && oc.divergencias) oc.divergencias.splice(o.dIdx, 1); });
+                    const final = ocs.filter(oc => (oc.divergencias && oc.divergencias.length) || (oc.observacaoGeral && String(oc.observacaoGeral).trim()));
+                    await anotacoesTextoCollection.doc(id).update({ ocorrencias: final, atualizadoEm: new Date().toISOString() });
+                }
+                toast('✓ Divergência excluída.');
+            } catch (e) { console.error('Erro ao excluir divergência:', e); toast('✕ Erro ao excluir.'); }
+        }
+    });
+}
 
 // ===================================================================
 // --- FASE 15: INDICADORES E FILTROS DO RELATÓRIOS ---
@@ -362,8 +386,8 @@ function produtosDivergenciaRel(d) {
 function auditoriasBaseRel() {
     const f = relatoriosFiltros;
     const lista = [];
-    listaAnotacoes.forEach(a => (a.ocorrencias || []).forEach(oc => {
-        const x = { pedido: a.pedido || '', anotStatus: a.status || '', fornecedorCnpj: oc.fornecedorCnpj || '', fornecedor: oc.fornecedor || '', notaFiscal: oc.notaFiscal || '', data: dataRel(oc.data) ? oc.data : (oc.criadoEm || ''), observacaoGeral: oc.observacaoGeral || '', divergencias: oc.divergencias || [] };
+    listaAnotacoes.forEach(a => (a.ocorrencias || []).forEach((oc, ocIdx) => {
+        const x = { pedido: a.pedido || '', anotStatus: a.status || '', fornecedorCnpj: oc.fornecedorCnpj || '', fornecedor: oc.fornecedor || '', notaFiscal: oc.notaFiscal || '', data: dataRel(oc.data) ? oc.data : (oc.criadoEm || ''), observacaoGeral: oc.observacaoGeral || '', divergencias: oc.divergencias || [], anotId: a.id, ocIdx };
         if (!dentroPeriodoRel(x.data) || !fornecedorCasaRel(x.fornecedor)) return;
         if (f.destino) { const cot = listaCotacoes.find(c => c.pedido === x.pedido); if (!cot || cot.origem !== f.destino) return; }
         lista.push(x);
@@ -392,7 +416,18 @@ function itemCotacaoDaDivergenciaRel(pedido, d, cnpj) {
 }
 // Situação "de verdade": a gravada na divergência; se é registro antigo (sem situação), vale o que o app já sabe — anotação concluída ou
 // item marcado como resolvido na cotação — em vez de ficar "Pendente" para sempre.
+function itemChegouParaRel(pedido, item) {
+    const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido));
+    if (!cot || !item) return false;
+    if ((cot.chegadasPorFornecedor || {})[normalizarCnpj(item.cnpjFornecedor)]) return true;
+    try {
+        const linha = compararFontesPedido(cot.pedido).find(l => String(l.codProduto) === String(item.codProduto) && normalizarCnpj(l.cnpjFornecedor) === normalizarCnpj(item.cnpjFornecedor));
+        return !!(linha && (linha.temNf || linha.temErp) && !linha.divergencias.some(v => v.tipo === 'nao_faturado'));
+    } catch (e) { return false; }
+}
 function statusEfetivoDivergenciaRel(d, x, item) {
+    // 2.10.7: "não faturado" pendente some quando o item já chegou (marcado "já chegou", NF do app ou ERP associado).
+    if ((d.status || 'pendente') === 'pendente' && d.tipo === 'nao_faturado' && item && itemChegouParaRel(x.pedido, item)) return 'resolvida';
     if (d.status) return d.status;
     if (x.anotStatus === 'concluido') return 'resolvida';
     const cot = listaCotacoes.find(c => String(c.pedido) === String(x.pedido));
@@ -403,7 +438,7 @@ function divergenciasRel() {
     const todas = [];
     auditoriasBaseRel().forEach(x => x.divergencias.filter(divPassaFiltrosRel).forEach(d => {
         const item = itemCotacaoDaDivergenciaRel(x.pedido, d, x.fornecedorCnpj);
-        todas.push({ pedido: x.pedido, fornecedor: x.fornecedor, fornecedorCnpj: x.fornecedorCnpj || (item && item.cnpjFornecedor) || '', notaFiscal: x.notaFiscal, tipo: d.tipo, data: x.data, status: statusEfetivoDivergenciaRel(d, x, item), linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d), codProduto: item ? item.codProduto : '', registros: 1 });
+        todas.push({ pedido: x.pedido, fornecedor: x.fornecedor, fornecedorCnpj: x.fornecedorCnpj || (item && item.cnpjFornecedor) || '', notaFiscal: x.notaFiscal, tipo: d.tipo, data: x.data, status: statusEfetivoDivergenciaRel(d, x, item), linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d), codProduto: item ? item.codProduto : '', registros: 1, origens: [{ anotId: x.anotId, ocIdx: x.ocIdx, dIdx: x.divergencias.indexOf(d) }] });
     }));
     // Registro refeito a cada etapa (identificação, depois resolução...) do MESMO pedido + tipo + produto vira UMA divergência: vale o mais recente.
     const mapa = new Map(), resultado = [];
@@ -413,7 +448,9 @@ function divergenciasRel() {
         const ant = mapa.get(k);
         if (!ant) { mapa.set(k, x); resultado.push(x); return; }
         ant.registros++;
+        const orig = ant.origens.concat(x.origens);
         if (String(x.data) >= String(ant.data)) { const r = ant.registros; Object.assign(ant, x, { registros: r }); }
+        ant.origens = orig;
     });
     return resultado;
 }

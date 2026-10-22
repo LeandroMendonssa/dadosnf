@@ -534,9 +534,10 @@ function divergenciasAuditoriaDoItem(pedido, item) {
     return achadas;
 }
 // Resolução do item: a auditoria ligada manda; sem auditoria, vale o "Marcar como resolvido" manual.
-function resolucaoItemComparacao(cotacao, codProduto, auditorias) {
+function resolucaoItemComparacao(cotacao, codProduto, auditorias, chegou) {
     if (auditorias.length) {
-        const todasTratadas = auditorias.every(x => (x.d.status || 'pendente') !== 'pendente');
+        // 2.10.7: "não faturado" pendente deixa de contar quando o item já chegou (marcado, NF do app ou ERP).
+        const todasTratadas = auditorias.every(x => (x.d.status || 'pendente') !== 'pendente' || (chegou && x.d.tipo === 'nao_faturado'));
         const datas = auditorias.flatMap(x => (x.d.historico || []).map(h => h.data)).filter(Boolean).sort();
         return { resolvido: todasTratadas ? { data: datas[datas.length - 1] || null, origem: 'auditoria' } : null, auditorias };
     }
@@ -713,7 +714,7 @@ function compararFontesPedido(pedido, opcoes) {
             nfs: nfsQueFaturaram, codigoSpData,
             cobertura,
             divergencias,
-            ...resolucaoItemComparacao(cotacao, itemCotacao.codProduto, auditoriasItem)
+            ...resolucaoItemComparacao(cotacao, itemCotacao.codProduto, auditoriasItem, itensNf.length > 0 || itensErp.length > 0 || !!(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)])
         };
     });
 }
@@ -1036,15 +1037,19 @@ function entradasErpDoFornecedorCentral(cnpj) {
 }
 function renderListaCandidatasAssociarNf(pedido, cnpj) {
     const filtro = normalizarCnpj(centralAssociarNfFiltro[normalizarCnpj(cnpj)] || '');
-    const lista = entradasErpDoFornecedorCentral(cnpj)
+    const daEntidade = new Set(entradasErpDoFornecedorCentral(cnpj).map(e => e.id));
+    // 2.10.7: o fornecedor pode entregar por outro CNPJ. Sem número digitado, a lista mostra as NFs da mesma
+    // entidade; ao digitar o número, a busca vale para TODAS as NFs do histórico ainda sem pedido.
+    const base = filtro ? listaEntradasErp : listaEntradasErp.filter(e => daEntidade.has(e.id));
+    const lista = base
         .filter(e => !pedidoDoErpConfirmado(e))
         .filter(e => !filtro || normalizarCnpj(e.nf).includes(filtro))
-        .sort((a, b) => String(b.atualizadoEm || '').localeCompare(String(a.atualizadoEm || '')));
-    if (!lista.length) return '<div class="central-item-vazio">Nenhuma NF do histórico encontrada para este fornecedor' + (filtro ? ' com esse número' : '') + ' (CNPJs da mesma entidade incluídos).</div>';
+        .sort((a, b) => (daEntidade.has(b.id) - daEntidade.has(a.id)) || String(b.atualizadoEm || '').localeCompare(String(a.atualizadoEm || '')));
+    if (!lista.length) return '<div class="central-item-vazio">Nenhuma NF do histórico encontrada' + (filtro ? ' com esse número' : ' para este fornecedor (digite o número da NF para buscar em todos os fornecedores)') + '.</div>';
     return lista.slice(0, 8).map(e => `<div class="central-item-linha" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span>NF ${escRel(e.nf)}${e.serie ? '/' + escRel(e.serie) : ''} · ${escRel(e.data || '—')} · ${(e.itens || []).length} item(ns)</span>
+        <span>NF ${escRel(e.nf)}${e.serie ? '/' + escRel(e.serie) : ''} · ${escRel(e.data || '—')} · ${(e.itens || []).length} item(ns)${daEntidade.has(e.id) ? '' : '<br><small>' + escRel(e.fornecedorNomeEditado || e.fornecedorNomeRelatorio || 'outro fornecedor') + ' (outro CNPJ)</small>'}</span>
         <button type="button" class="central-status-toggle" onclick="associarEntradaErpDaCentral('${e.id}', '${pedido}', '${cnpj}')">Associar</button>
-    </div>`).join('') + (lista.length > 8 ? '<div class="central-item-vazio">Mostrando as 8 mais recentes — use o filtro pelo número da NF.</div>' : '');
+    </div>`).join('') + (lista.length > 8 ? '<div class="central-item-vazio">Mostrando as 8 primeiras — digite mais do número da NF para refinar.</div>' : '');
 }
 // 2.1.3: o "Associar NF do histórico" foi dividido em três peças: o botão (sempre visível no card), o painel de busca (abre logo
 // abaixo do botão) e a lista das NFs já associadas (nos detalhes que expandem).
