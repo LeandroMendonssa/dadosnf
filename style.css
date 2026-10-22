@@ -1583,3 +1583,8 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 .aj-tut-topo { gap: 10px; }
 .aj-tut-topo > span { min-width: 0; }
 .controle-topo { margin: 0 0 12px; justify-content: flex-start; }
+
+/* 2.10.8: caixa de seleção do Editor da NF — o input global ocupava a linha toda e empurrava o texto */
+.nfe-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.nfe-check input[type="checkbox"]{width:20px;height:20px;min-width:20px;flex:0 0 20px;margin:2px 0 0;padding:0}
+.nfe-check span{flex:1;min-width:0;line-height:1.35}
