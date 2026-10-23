@@ -235,7 +235,12 @@ async function confirmarVinculoErpComPedido(chave, pedidoEscolhido) {
             for (const p of resultado.pares) await confirmarAssociacaoSpData(p.codigoSmartCompras, p.spDataCodigo, { silencioso: true, origemAutomatica: true });
             toast(`✓ Vínculo confirmado · ${resultado.pares.length} associação(ões) de SP Data preenchida(s) automaticamente a partir do ERP.`);
         }
+        entrada.vinculo = novoVinculo; // 2.11.5: atualiza já na memória (a tela não espera o retorno do banco)
+        if (typeof retroRecemConfirmadas !== 'undefined') retroRecemConfirmadas.add(chave);
+        // 2.11.5: aprende também as associações do fornecedor (código do fornecedor → produto) e do SP Data quando a NF bate com o pedido
+        if (typeof aprenderAssociacoesDoPedido === 'function') { const n = await aprenderAssociacoesDoPedido(entrada, pedidoEscolhido); if (n) toast(`✓ Vínculo confirmado · ${n} associação(ões) aprendida(s) porque a NF bate com o pedido.`); }
         renderHistoricoNfs();
+        if (typeof renderAuditoriaRetroSeAtiva === 'function') renderAuditoriaRetroSeAtiva();
     } catch (e) {
         console.error('Erro ao confirmar vínculo ERP → pedido:', e);
         toast('✕ Erro ao confirmar vínculo.');

@@ -8,6 +8,14 @@ function dataISOSimples(v) { const m = String(v || '').match(/^(\d{4})-(\d{2})-(
 function numeroBrOuPonto(v) { const n = typeof v === 'number' ? v : valorNfNumerico(v); return Number.isFinite(n) ? n : null; }
 
 // ---------------- XML (Entrada de NF) ----------------
+// Total REAL da NF no ERP: soma das parcelas (já com o frete). O "Total da nota" do relatório é só dos produtos e sem o frete;
+// comparar o XML (que traz o frete) com ele dá divergência falsa. Só cai para totalNota + frete se não houver parcelas.
+function totalErpComFrete(e) {
+    const v = numeroBrOuPonto(e.valor);
+    if (v !== null && v > 0) return v;
+    const f = e.financeiro || {};
+    return f.totalNota != null ? Number(f.totalNota) + (Number(f.frete) || 0) : null;
+}
 function verificacoesNfXml() {
     const r = [];
     if (!nfeInfoAtual) return r;
@@ -31,11 +39,27 @@ function verificacoesNfXml() {
     const total = numeroBrOuPonto(info.valorTotal);
     const erp = listaEntradasErp.find(e => normNfNumero(e.nf) === normNfNumero(info.nNF) && (normSerieNf(e.serie) === normSerieNf(info.serie)) && (!e.cnpjFornecedor || mesmoCnpj(e.cnpjFornecedor, info.cnpjEmit) || mesmaRaizCnpj(e.cnpjFornecedor, info.cnpjEmit)));
     if (erp && total !== null) {
-        const t = erp.financeiro && erp.financeiro.totalNota != null ? erp.financeiro.totalNota : numeroBrOuPonto(erp.valor);
+        const t = totalErpComFrete(erp);
         if (t != null && Math.abs(t - total) > 0.05) {
             const dif = total - t;
             const quando = [erp.data ? 'lançada em ' + erp.data : '', erp.vencimento ? 'vencimento ' + erp.vencimento : '', ROTULO_STATUS_ERP[erp.statusFluxo] || ''].filter(Boolean).join(' · ');
-            r.push({ nivel: 'atencao', texto: `O valor desta NF no XML (R$ ${formatValorBR(total)}) é diferente do lançado no ERP (R$ ${formatValorBR(t)}) — o XML está R$ ${formatValorBR(Math.abs(dif))} ${dif > 0 ? 'acima' : 'abaixo'}. Lançamento do ERP: NF ${erp.nf}${erp.serie ? '/' + erp.serie : ''}${quando ? ' (' + quando + ')' : ''}. Pode ser frete, desconto ou imposto lançado de outro jeito; abra o lançamento para conferir.`, acao: { rotulo: 'Abrir lançamento do ERP', js: `abrirEditorNf('${String(erp.id).replace(/'/g, "\\'")}')` } });
+            // 2.11.5: o XML traz o detalhe (frete, seguro, outras despesas, desconto, IPI, ST): tenta explicar a diferença com ele
+            const tt = info.totais || {};
+            const rotulos = { vFrete: 'frete', vSeg: 'seguro', vOutro: 'outras despesas', vIPI: 'IPI', vST: 'ICMS ST' };
+            const chaves = Object.keys(rotulos).filter(k => tt[k] > 0.004);
+            let explic = null;
+            for (let m = (1 << chaves.length) - 1; m > 0 && !explic; m--) { // da combinação com mais itens para a com menos
+                const grupo = chaves.filter((k, i) => m & (1 << i));
+                const soma = grupo.reduce((a, k) => a + tt[k], 0);
+                if (Math.abs((total - soma) - t) <= 0.05 || Math.abs((total - soma - 0) - t) <= 0.05) explic = { grupo, soma };
+            }
+            if (!explic && tt.vDesc > 0.004 && Math.abs((total + tt.vDesc) - t) <= 0.05) explic = { desc: true };
+            if (explic && explic.grupo) {
+                r.push({ nivel: 'info', texto: `O valor da NF no XML (R$ ${formatValorBR(total)}) é maior que o lançado no ERP (R$ ${formatValorBR(t)}) por causa de ${explic.grupo.map(k => rotulos[k] + ' R$ ' + formatValorBR(tt[k])).join(' + ')}, destacado no XML. Sem isso o valor bate com o ERP (NF ${erp.nf}${quando ? ', ' + quando : ''}); o ERP lançou sem esse valor.${explic.grupo.includes('vIPI') ? ' (O SP Data não aceita IPI: ele costuma ser somado a algum item.)' : ''}`, acao: { rotulo: 'Abrir lançamento do ERP', js: `abrirEditorNf('${String(erp.id).replace(/'/g, "\\'")}')` } });
+            } else if (explic && explic.desc) {
+                r.push({ nivel: 'info', texto: `O valor da NF no XML (R$ ${formatValorBR(total)}) é menor que o lançado no ERP (R$ ${formatValorBR(t)}) porque o XML traz desconto de R$ ${formatValorBR(tt.vDesc)}; o ERP lançou sem descontar (NF ${erp.nf}${quando ? ', ' + quando : ''}).`, acao: { rotulo: 'Abrir lançamento do ERP', js: `abrirEditorNf('${String(erp.id).replace(/'/g, "\\'")}')` } });
+            } else
+            r.push({ nivel: 'atencao', texto: `O valor desta NF no XML (R$ ${formatValorBR(total)}) é diferente do lançado no ERP (R$ ${formatValorBR(t)}) — o XML está R$ ${formatValorBR(Math.abs(dif))} ${dif > 0 ? 'acima' : 'abaixo'}. ${(erp.financeiro && erp.financeiro.frete > 0) ? 'O ERP já inclui o frete de R$ ' + formatValorBR(erp.financeiro.frete) + '. ' : ''}Lançamento do ERP: NF ${erp.nf}${erp.serie ? '/' + erp.serie : ''}${quando ? ' (' + quando + ')' : ''}. O XML não traz frete, seguro, desconto ou imposto que expliquem a diferença; abra o lançamento para conferir.`, acao: { rotulo: 'Abrir lançamento do ERP', js: `abrirEditorNf('${String(erp.id).replace(/'/g, "\\'")}')` } });
         }
     }
 

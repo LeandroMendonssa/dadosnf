@@ -203,7 +203,8 @@ function processarXmlTexto(texto) {
     // fornecedor/NF e tenta achar o pedido sozinho antes de pedir seleção
     // manual — sem inventar nada, só reaproveitando associações já
     // confirmadas em NFs anteriores.
-    nfeInfoAtual = { cnpjEmit, nNF, fornecedor: nfeIdentificacao.fornecedor, serie: nfeIdentificacao.serie, emissao: nfeIdentificacao.emissao, valorTotal: nfeIdentificacao.valorTotal, vencimentos: nfeIdentificacao.vencimentos || [] };
+    nfeInfoAtual = { cnpjEmit, nNF, fornecedor: nfeIdentificacao.fornecedor, serie: nfeIdentificacao.serie, emissao: nfeIdentificacao.emissao, valorTotal: nfeIdentificacao.valorTotal, vencimentos: nfeIdentificacao.vencimentos || [],
+        totais: ['vProd', 'vFrete', 'vSeg', 'vOutro', 'vDesc', 'vIPI', 'vST'].reduce((o, k) => { const el = xmlDocAtual.querySelector('total ICMSTot ' + k); const n = el ? parseFloat(el.textContent) : 0; o[k] = Number.isFinite(n) ? n : 0; return o; }, {}) };
     associacaoFornecedorBuscaAberta = new Set();
     historicoAssociacaoAbertoXml = new Set();
 

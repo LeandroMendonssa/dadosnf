@@ -135,13 +135,15 @@ function resumoRetroativo(an) {
 }
 const RETRO_FILTROS = [['todas', 'Todas'], ['sugerido', 'Pedido sugerido'], ['sem', 'Sem pedido'], ['semproduto', 'Itens sem produto'], ['defasados', 'Itens defasados']];
 function passaFiltroRetro(a) {
+    if (retroRecemConfirmadas.has(a.e.id)) return true;
     if (retroFiltro === 'sugerido') return a.pedidoSt === 'sugerido';
     if (retroFiltro === 'sem') return a.pedidoSt === 'sem_associacao';
     if (retroFiltro === 'semproduto') return a.semProduto > 0;
     if (retroFiltro === 'defasados') return a.defasados > 0;
     return true;
 }
-function prepararAuditoriaRetroativa() { retroFiltro = 'todas'; retroLimite = 60; renderAuditoriaRetroativa(); }
+const retroRecemConfirmadas = new Set(); // NFs confirmadas nesta visita: ficam no lugar, marcadas, para você não ficar na dúvida
+function prepararAuditoriaRetroativa() { retroFiltro = 'todas'; retroLimite = 60; retroRecemConfirmadas.clear(); renderAuditoriaRetroativa(); }
 function renderAuditoriaRetroSeAtiva() {
     const t = document.getElementById('screen-auditoria-retro');
     if (t && t.classList.contains('active')) renderAuditoriaRetroativa();
@@ -154,6 +156,7 @@ function renderAuditoriaRetroativa() {
     const an = analiseRetroativaErp();
     const c = resumoRetroativo(an);
     const sug = an.filter(a => a.pedidoSt === 'sugerido' && a.pedido && a.veredito === 'bate');
+    const apr = propostasAprendizadoRetro();
     const pct = c.itens ? Math.round(c.ligados * 100 / c.itens) : 0;
     const resumo = `<div class="card"><div class="xml-item-meta"><strong>O que o app entendeu das NFs do ERP</strong></div>
         <div class="retro-grade">
@@ -166,14 +169,15 @@ function renderAuditoriaRetroativa() {
         </div>
         <div class="xml-item-meta">Você não precisa associar NF por NF: os itens se ligam ao produto da cotação pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor. O que depende de você aparece abaixo como sugestão ou pendência.</div>
         <div class="nfe-acoes">${c.defasados ? `<button type="button" class="central-status-toggle" onclick="reavaliarItensErp(true)">Atualizar ${c.defasados} item(ns) defasado(s)</button>` : ''}
-            ${sug.length ? `<button type="button" class="central-status-toggle" onclick="confirmarSugestoesRetro()">Confirmar as ${sug.length} que batem em tudo</button>` : ''}</div></div>`;
+            ${sug.length ? `<button type="button" class="central-status-toggle" onclick="confirmarSugestoesRetro()">Confirmar as ${sug.length} que batem em tudo</button>` : ''}
+            ${(apr.sp.length || apr.fornecedor.length) ? `<button type="button" class="central-status-toggle" onclick="aprenderRetroativoConfirmar()">Aprender ${apr.fornecedor.length + apr.sp.length} associação(ões) dos pedidos confirmados</button>` : ''}</div></div>`;
     const chips = `<div class="retro-chips">${RETRO_FILTROS.map(([k, t]) => `<button type="button" class="retro-chip${retroFiltro === k ? ' on' : ''}" onclick="filtrarRetro('${k}')">${t}</button>`).join('')}</div>`;
     const ordem = { sugerido: 0, sem_associacao: 1, confirmado: 2, direta: 3 };
     const lista = an.filter(passaFiltroRetro).sort((x, y) => (y.defasados > 0) - (x.defasados > 0) || (ordem[x.pedidoSt] - ordem[y.pedidoSt]) || (y.semProduto - x.semProduto));
     const cards = lista.slice(0, retroLimite).map(a => {
         const e = a.e;
         const nome = tituloFornNf(e.fornecedorNomeEditado || nomeExibicaoFornecedor(e.fornecedorNomeRelatorio || '', e.cnpjFornecedor) || e.fornecedorNomeRelatorio || '(sem fornecedor)', e.cnpjFornecedor, e.nf);
-        const rot = { confirmado: ['ok', 'Pedido ' + a.pedido], sugerido: ['', 'Sugerido ' + a.pedido], sem_associacao: ['m', 'Sem pedido'], direta: ['m', 'Direta'] }[a.pedidoSt] || ['m', a.pedidoSt];
+        const rot = retroRecemConfirmadas.has(e.id) ? ['ok', '✓ Confirmado: pedido ' + a.pedido] : { confirmado: ['ok', 'Pedido ' + a.pedido], sugerido: ['', 'Sugerido ' + a.pedido], sem_associacao: ['m', 'Sem pedido'], direta: ['m', 'Direta'] }[a.pedidoSt] || ['m', a.pedidoSt];
         const motivo = a.pedidoSt === 'sugerido' ? `Evidências: ${((e.vinculo && e.vinculo.evidencias) || []).map(escRel).join(' ')}` : (a.pedidoSt === 'sem_associacao' ? escRel(a.motivo) : (a.pedidoSt === 'direta' ? 'Marcada como "Não vai ao financeiro": não precisa de pedido.' : ''));
         const itensHtml = a.itens.map(it => {
             const cod = it.codigoSmartComprasRelacionado, novo = codigoProdutoAtualDoItemErp(it);

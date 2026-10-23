@@ -42,7 +42,7 @@ const AJUDA_ARTIGOS = [
         'Abra Entrada de NF e carregue o arquivo XML da nota.',
         'Em "Pedido/Cotação correspondente", confirme o pedido. Se a NF não tem cotação do SmartCompras (compra direta), informe o Destino dos itens (Santa Casa ou CTI).',
         'Item por item, confira o fator de conversão (vem da descrição, como "C/10" = 10; a sua correção fica lembrada para a próxima NF), a associação com a cotação e o SP Data.',
-        'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, os dados do lançamento e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
+        'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, a explicação pelo frete, seguro ou desconto do próprio XML quando houver, e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
         'Itens com pendência já abrem sozinhos; o selo mostra o que falta.',
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
@@ -84,7 +84,7 @@ const AJUDA_ARTIGOS = [
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
-    { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.3',
+    { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.5',
       resumo: 'Ver o que foi ligado sozinho nas NFs do ERP e resolver só o que depende de você.',
       palavras: 'auditoria retroativa erp nf itens produto pedido sugerido sugestao defasado associacao reprocessar conferencia',
       tela: [{ id: 'screen-auditoria-retro', titulo: 'Auditoria Retroativa', rotulo: 'Abrir Auditoria Retroativa' }],
@@ -94,6 +94,8 @@ const AJUDA_ARTIGOS = [
         'Itens defasados são itens antigos que hoje já teriam produto (porque você associou o SP Data depois). O app os atualiza sozinho; o botão \"Atualizar itens defasados\" faz isso na hora.',
         'Pedido sugerido: o app achou um pedido provável, mas pede sua confirmação. Toque em "Conferir a sugestão" no cartão: ele mostra o valor total da NF × cotado, as datas do pedido, do limite e da NF e quais itens da NF estão na cotação, com um resumo (bate em tudo, conferir ou não parece). "Abrir o pedido" leva à cotação e "Confirmar" aceita aquele pedido.',
         'O botão "Confirmar as N que batem em tudo" confirma de uma vez só as sugestões com valor até 5% de diferença, data coerente e pelo menos 60% dos itens na cotação; as demais você confere uma a uma.',
+        'Depois de confirmar, o cartão fica no mesmo lugar marcado com \"✓ Confirmado: pedido N\" e o botão some, para você não ficar na dúvida se já confirmou.',
+        'Quando o pedido é confirmado e os itens da NF batem com a cotação (mesma quantidade e valor unitário, casamento único e pelo menos 90% do valor), o app aprende sozinho o código do fornecedor → produto da cotação e o produto → SP Data. Só preenche o que falta e nunca troca uma associação sua. O botão "Aprender N associações dos pedidos confirmados" faz isso para os pedidos já confirmados.',
         'Sem pedido: o cartão mostra o motivo (por exemplo, o fornecedor ainda não tem cotação). Isso nem sempre é um problema.',
         'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
       ],

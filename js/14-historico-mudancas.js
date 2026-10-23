@@ -10,14 +10,26 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.11.4', nome: 'Aviso de valor do XML × ERP com detalhe e atalho', status: 'atual',
+        numero: '2.11.5', nome: 'Frete certo na comparação, botão que confirma de verdade e aprendizado pelo pedido', status: 'atual',
         novidades: [
-            'Entrada de NF: o aviso "valor da NF no XML é diferente do lançado no ERP" agora diz de quanto é a diferença (e se o XML está acima ou abaixo), identifica o lançamento do ERP (NF, série, data de lançamento, vencimento e situação) e lembra que pode ser frete, desconto ou imposto.',
+            'Correção: o aviso "valor do XML diferente do ERP" comparava com o "Total da nota" do ERP, que não inclui o frete (como o XML inclui), e dava divergência falsa. Agora compara com o total real do ERP (soma das parcelas, já com o frete). Se sobrar diferença, o aviso ainda tenta explicá-la pelo frete, seguro, outras despesas, IPI ou desconto do XML (e lembra que o SP Data não aceita IPI).',
+            'Auditoria Retroativa: ao confirmar um pedido, o cartão fica no lugar com "✓ Confirmado: pedido N" e o botão some (antes o botão continuava lá e dava dúvida).',
+            'Novo aprendizado: quando o pedido está confirmado e os itens da NF batem com a cotação (mesma quantidade e valor unitário, casamento único nos dois sentidos e pelo menos 90% do valor), o app associa sozinho o código do fornecedor → produto da cotação e o produto → SP Data. Roda ao confirmar um pedido e, em lote, pelo botão "Aprender N associações dos pedidos confirmados".'
+        ],
+        implementado: ['Só preenche o que está faltando: nunca troca associação que você já confirmou (divergências são contadas e deixadas como estão).', 'No último diagnóstico o aprendizado acharia 6 associações SP Data novas em 4 NFs e deixaria 8 casos divergentes como estão.'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/19, js/31, js/32, js/33 e o novo js/35-aprendizado-pedido.js.'],
+        testar: ['Entrada de NF com o XML da DCB (109756): o aviso de valor não deve mais aparecer.', 'Auditoria Retroativa → Pedido sugerido: confirmar uma NF e ver o cartão marcado e o botão sumir.', 'Auditoria Retroativa: tocar em "Aprender N associações" (se aparecer), ler o resumo e confirmar; depois conferir uma associação SP Data nova.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.4', nome: 'Aviso de valor do XML × ERP com detalhe, atalho e explicação pelo frete', status: 'concluida',
+        novidades: [
+            'Entrada de NF: o aviso "valor da NF no XML é diferente do lançado no ERP" agora diz de quanto é a diferença (e se o XML está acima ou abaixo), identifica o lançamento do ERP (NF, série, data de lançamento, vencimento e situação) e usa o detalhe do próprio XML (frete, seguro, outras despesas, IPI, ICMS ST e desconto) para explicar a diferença: quando o frete é a causa, o aviso diz isso e passa a ser só informativo, sem alarme.',
             'O aviso ganhou o botão "Abrir lançamento do ERP", que leva direto ao lançamento daquela NF.'
         ],
         implementado: ['Os avisos da entrada agora aceitam um botão de atalho; por enquanto só este aviso usa.'],
-        mudou: ['Arquivos alterados: js/14, js/31 e js/33.'],
-        testar: ['Carregar em Entrada de NF um XML cuja NF já esteja lançada no ERP com valor diferente (por exemplo, o da DCB 109756), ler o aviso e tocar em "Abrir lançamento do ERP".', 'Voltar e conferir se o XML carregado continua na tela.'],
+        mudou: ['Arquivos alterados: js/10, js/14, js/31 e js/33.'],
+        testar: ['Carregar em Entrada de NF um XML cuja NF já esteja lançada no ERP com valor diferente (por exemplo, o da DCB 109756: o frete de R$ 276,39 explica a diferença), ler o aviso e tocar em "Abrir lançamento do ERP".', 'Voltar e conferir se o XML carregado continua na tela.'],
         testarLinks: []
     },
     {
