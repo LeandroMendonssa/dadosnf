@@ -34,7 +34,7 @@ const AJUDA_ARTIGOS = [
         'Toque em Salvar. A nota entra na relação de Gerenciar.'
       ],
       dicas: ['Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
-    { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.10.0',
+    { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.11.4',
       resumo: 'Ler o XML, conferir os itens, definir o recurso e salvar.',
       palavras: 'xml entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
       tela: [{ id: 'screen-xml-editor', titulo: 'Entrada de NF', rotulo: 'Abrir Entrada de NF' }],
@@ -42,6 +42,7 @@ const AJUDA_ARTIGOS = [
         'Abra Entrada de NF e carregue o arquivo XML da nota.',
         'Em "Pedido/Cotação correspondente", confirme o pedido. Se a NF não tem cotação do SmartCompras (compra direta), informe o Destino dos itens (Santa Casa ou CTI).',
         'Item por item, confira o fator de conversão (vem da descrição, como "C/10" = 10; a sua correção fica lembrada para a próxima NF), a associação com a cotação e o SP Data.',
+        'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, os dados do lançamento e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
         'Itens com pendência já abrem sozinhos; o selo mostra o que falta.',
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
@@ -83,6 +84,32 @@ const AJUDA_ARTIGOS = [
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
+    { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.3',
+      resumo: 'Ver o que foi ligado sozinho nas NFs do ERP e resolver só o que depende de você.',
+      palavras: 'auditoria retroativa erp nf itens produto pedido sugerido sugestao defasado associacao reprocessar conferencia',
+      tela: [{ id: 'screen-auditoria-retro', titulo: 'Auditoria Retroativa', rotulo: 'Abrir Auditoria Retroativa' }],
+      passos: [
+        'Abra Ajustes → Auditoria Retroativa. O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
+        'Você não precisa associar NF por NF: os itens se ligam ao produto pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor.',
+        'Itens defasados são itens antigos que hoje já teriam produto (porque você associou o SP Data depois). O app os atualiza sozinho; o botão \"Atualizar itens defasados\" faz isso na hora.',
+        'Pedido sugerido: o app achou um pedido provável, mas pede sua confirmação. Toque em "Conferir a sugestão" no cartão: ele mostra o valor total da NF × cotado, as datas do pedido, do limite e da NF e quais itens da NF estão na cotação, com um resumo (bate em tudo, conferir ou não parece). "Abrir o pedido" leva à cotação e "Confirmar" aceita aquele pedido.',
+        'O botão "Confirmar as N que batem em tudo" confirma de uma vez só as sugestões com valor até 5% de diferença, data coerente e pelo menos 60% dos itens na cotação; as demais você confere uma a uma.',
+        'Sem pedido: o cartão mostra o motivo (por exemplo, o fornecedor ainda não tem cotação). Isso nem sempre é um problema.',
+        'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
+      ],
+      dicas: ['O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.', 'Na entrada (XML e relatório do ERP) o app já mostra "Verificações da entrada" com os avisos que valem conferir na hora.'], tutorial: null },
+    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'O que precisa de atenção: o que está parado', versao: '2.11.3',
+      resumo: 'Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.',
+      palavras: 'atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
+      tela: [{ id: 'screen-atencao', titulo: 'O que precisa de atenção', rotulo: 'Abrir o painel' }],
+      passos: [
+        'Abra Ajustes → O que precisa de atenção. No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
+        'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido e pedidos com prazo vencido sem nenhum sinal de entrega.',
+        'Importante: divergências pendentes, NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
+        'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
+        'Toque num grupo para abrir a lista e num item para ir direto à tela que resolve (pedido, Editor da NF, Relatórios, Auditoria Retroativa...).'
+      ],
+      dicas: ['O painel só lê o que já está salvo: nada é alterado ao abri-lo.'], tutorial: null },
     { id: 'recurso', cat: 'Cotações e recurso', titulo: 'Definir o recurso da NF (item a item ou a NF inteira)', versao: '2.10.0',
       resumo: 'C/C ou Recurso Próprio: onde definir e como chega à Saída de Texto.',
       palavras: 'recurso cc c/c proprio santa casa cti nf inteira item cotacao fornecedores ganhadores saida texto',
@@ -140,7 +167,7 @@ const AJUDA_ARTIGOS = [
         'Para ver o modo web no celular, abra o app com ?plataforma=web no endereço (?plataforma=aparelho volta ao normal).'
       ],
       dicas: [], tutorial: null },
-    { id: 'importar-erp', cat: 'Notas fiscais', titulo: 'Importar o relatório do ERP (Relação de Notas Fiscais)', versao: '2.10.1',
+    { id: 'importar-erp', cat: 'Notas fiscais', titulo: 'Importar o relatório do ERP (Relação de Notas Fiscais)', versao: '2.11.1',
       resumo: 'Trazer várias notas de uma vez, já com recurso e apelido do fornecedor.',
       palavras: 'importar relatorio erp relacao notas fiscais txt colar processar recurso duplicata marcadas',
       tela: [{ id: 'screen-import', titulo: 'Importar Relatório (ERP)', rotulo: 'Abrir a importação' }],
@@ -148,6 +175,7 @@ const AJUDA_ARTIGOS = [
         'Abra Mais → Importar Relatório (ERP).',
         'Cole o texto do relatório ("Colar") ou envie o arquivo ("Subir Arquivo TXT") e toque em "Processar Relatório".',
         'Revise cada nota: fornecedor, NF, data, vencimento, valor e recurso. Notas com aviso merecem atenção; o app marca as que já existem pendentes (bloqueadas) ou já foram arquivadas.',
+        'Além dos avisos do relatório, o app acrescenta verificações na hora: valor ou itens zerados, NF já processada pelo XML com valor diferente, fornecedor sem CNPJ no SP Data e item com código SP Data fora da lista. Eles só avisam; não bloqueiam.',
         'Se você corrigir o nome de um fornecedor, o app aprende o apelido e aplica nas outras linhas.',
         'O campo Recurso já vem preenchido quando a NF passou pela Entrada de NF e tem um único recurso ("Sugerido pela Entrada de NF desta nota"). Para várias notas de uma vez, marque-as, escolha o recurso e use "Aplicar Recurso às Marcadas".',
         'Use Marcar Todas / Desmarcar Todas, a busca e "Mostrar Apenas Novas" para filtrar, e confirme a importação.'

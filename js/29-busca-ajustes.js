@@ -9,6 +9,8 @@
         'screen-observacoes': 'observacao texto padrao nota',
         'screen-spdata': 'produtos sp data sku catalogo',
         'screen-config-analise-cotacoes': 'analise cotacao ganhador preco regra',
+        'screen-atencao': 'atencao pendencia urgente vencida vencido parado alerta o que precisa',
+        'screen-auditoria-retro': 'auditoria retroativa erp nf itens pedido sugestao defasado associacao conferencia',
         'screen-ajuda': 'ajuda tutorial como fazer passo a passo duvida ensinar',
         'screen-historico-mudancas': 'historico mudanca versao novidade atualizacao',
         'screen-personalizacao': 'aparencia tema personalizar visual',

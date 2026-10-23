@@ -59,6 +59,9 @@ function renderControleSeAtivo() {
         if (tela && tela.classList.contains('active')) renderControleNfs();
     });
 
+    renderAuditoriaRetroSeAtiva(); // 2.11.0
+    if (typeof renderAtencaoSeAtiva === 'function') renderAtencaoSeAtiva(); // 2.11.3
+    agendarRender('reavaliarItensErp', () => reavaliarItensErp(false), 4000); // 2.11.0: itens do ERP acompanham as associações novas
     renderEditorNfSeAtivo(); // 2.0.7: o Editor da NF acompanha qualquer mudança de dado
     agendarRender('alinharVinculosErp', alinharVinculosErpComNfs, 3000); // 2.0.8: corrige vínculos do ERP desatualizados
 }
@@ -270,6 +273,7 @@ function alternarMesControle(chaveMes, atual) {
 function renderControleNfs() {
     const lista = document.getElementById('controle-lista');
     if (!lista) return;
+    if (typeof renderBannerAtencao === 'function') renderBannerAtencao(); // 2.11.3
     const todos = montarControleNfs();
     const contagem = { aberto: 0, arquivadas: 0 };
     todos.forEach(it => { contagem[abaDoItemControle(it)]++; });

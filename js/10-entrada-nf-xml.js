@@ -1332,7 +1332,7 @@ function renderAssociacaoCotacaoXml() {
         </div>`;
     }).join('');
 
-    container.innerHTML = avisoSemCotacoesHTML + conflitoHTML + sugestaoPedidoHTML + htmlRecursoTodosNfXml() + filtroHTML + linhasItens;
+    container.innerHTML = avisoSemCotacoesHTML + htmlAlertasEntrada(verificacoesNfXml()) + conflitoHTML + sugestaoPedidoHTML + htmlRecursoTodosNfXml() + filtroHTML + linhasItens;
     renderResumoPendenciasXml();
     renderResumoCodigosXml();
     renderResultadoSalvarNF(); // conferência ao vivo, antes de salvar

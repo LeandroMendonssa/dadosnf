@@ -10,7 +10,88 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.10.8', nome: 'Dados da NF também com XML, toda a cotação como entregue e aviso de produto repetido', status: 'atual',
+        numero: '2.11.4', nome: 'Aviso de valor do XML × ERP com detalhe e atalho', status: 'atual',
+        novidades: [
+            'Entrada de NF: o aviso "valor da NF no XML é diferente do lançado no ERP" agora diz de quanto é a diferença (e se o XML está acima ou abaixo), identifica o lançamento do ERP (NF, série, data de lançamento, vencimento e situação) e lembra que pode ser frete, desconto ou imposto.',
+            'O aviso ganhou o botão "Abrir lançamento do ERP", que leva direto ao lançamento daquela NF.'
+        ],
+        implementado: ['Os avisos da entrada agora aceitam um botão de atalho; por enquanto só este aviso usa.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/33.'],
+        testar: ['Carregar em Entrada de NF um XML cuja NF já esteja lançada no ERP com valor diferente (por exemplo, o da DCB 109756), ler o aviso e tocar em "Abrir lançamento do ERP".', 'Voltar e conferir se o XML carregado continua na tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.3', nome: 'Conferência das sugestões de pedido e painel "O que precisa de atenção"', status: 'concluida',
+        novidades: [
+            'Auditoria Retroativa: cada NF com pedido sugerido ganhou "Conferir a sugestão", que mostra na hora o valor total da NF × cotado (com a %), as datas (pedido, limite e NF, em dias) e quantos itens da NF estão na cotação do fornecedor, item por item. O resultado vem resumido: bate em tudo, conferir ou não parece.',
+            'Há botões para abrir o pedido sugerido e para confirmar cada candidato; quando há mais de um pedido possível, cada um aparece com a própria conferência.',
+            'O botão em lote agora confirma só as sugestões que batem em tudo (valor até 5%, data coerente e pelo menos 60% dos itens). As outras ficam para você conferir.',
+            'Novo painel em Ajustes → O que precisa de atenção, com o que está parado, do mais urgente ao menos: notas vencidas na relação, pedidos com prazo vencido sem entrega, divergências pendentes, sugestões de pedido, NFs do ERP esperando decisão, NFs sem pedido, itens sem recurso ou sem produto e fornecedores sem CNPJ. Cada item leva direto à tela que resolve.',
+            'No Controle de NFs aparece uma faixa no topo com o total de itens que precisam de atenção.'
+        ],
+        implementado: ['A conferência só lê dados já salvos: nada é confirmado ou alterado sem o seu toque.', 'No último diagnóstico, das 17 sugestões, 9 batem em tudo, 2 pedem conferência, 3 não parecem certas e 3 têm mais de um candidato.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/14, js/17, js/29, js/31, js/32 e o novo js/34-atencao.js.'],
+        testar: [
+            'Ajustes → Auditoria Retroativa → filtro "Pedido sugerido": abrir "Conferir a sugestão" em alguns cartões e comparar com o que você veria na cotação.',
+            'Tocar em "Abrir o pedido" e voltar; confirmar uma sugestão que bate.',
+            'Tocar em "Confirmar as N que batem em tudo".',
+            'Ajustes → O que precisa de atenção: abrir os grupos e tocar em itens.',
+            'Controle de NFs: ver a faixa no topo e tocar nela.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.2', nome: 'Verificações da entrada item a item: valor, quantidade e ERP', status: 'concluida',
+        novidades: [
+            'Entrada de NF (XML): o quadro "Verificações da entrada" agora confere cada item contra a cotação — valor unitário diferente do cotado (com a diferença em %), quantidade acima da cotada e entrega parcial (somando as NFs do mesmo pedido já processadas).',
+            'Quando a NF já está lançada no ERP, o quadro compara a quantidade de cada produto no XML com a lançada no ERP (o caso da lanceta: 1100 no XML × 1000 no ERP aparece na hora).',
+            'Produto da NF ligado a um item que não está no pedido escolhido também é avisado.'
+        ],
+        implementado: ['As contas são as mesmas da conferência do pedido (valor direto ou convertido pelo fator; quantidade direta ou convertida), só que antes de salvar: o aviso de agora é a divergência que apareceria depois.', 'Produtos marcados para ignorar divergência de unidade ficam de fora. Entrega parcial aparece só como informação.', 'Nos dados do último diagnóstico, os avisos de valor coincidem com as divergências de valor que o app já gera (5 e 5).'],
+        mudou: ['Arquivos alterados: js/14, js/31, js/33.'],
+        testar: [
+            'Entrada de NF: carregar o XML da NF 1067970 e ver o aviso da lanceta (XML × ERP).',
+            'Carregar uma NF com valor diferente da cotação (por exemplo a 1779878) e ver o aviso de valor com a %.',
+            'Carregar uma NF com quantidade acima da cotada (por exemplo a 1787824) e conferir o aviso.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.1', nome: 'Verificações na entrada: o app avisa na hora o que não fecha', status: 'concluida',
+        novidades: [
+            'Entrada de NF (XML): um quadro "Verificações da entrada" avisa quando itens diferentes estão ligados ao mesmo produto da cotação, quando o valor do XML difere do lançado no ERP para a mesma NF, quando o fornecedor não participa do pedido escolhido, quando o vencimento é anterior à emissão e quando falta o número ou o valor da NF.',
+            'Importação do relatório do ERP: cada nota da prévia ganha avisos quando o valor ou os itens estão zerados, quando a mesma NF já foi processada pelo XML com valor diferente, quando o fornecedor não tem CNPJ no SP Data (o pedido não será achado sozinho) e quando há item com código SP Data fora da lista de produtos.',
+            'Os avisos nunca bloqueiam nem alteram nada: só mostram o que pede conferência.'
+        ],
+        implementado: ['Vencimento anterior ao lançamento no ERP não gera aviso: nota lançada com atraso é normal.', 'No último diagnóstico, os avisos de XML apontam 6 casos reais (2 de produto repetido, incluindo a NF 813145, e 4 de valor diferente do ERP).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/10, js/14, js/19, js/31 e o novo js/33-verificacoes-entrada.js.'],
+        testar: [
+            'Entrada de NF: carregar o XML de uma NF e ver o quadro "Verificações da entrada" (quando houver algo a avisar).',
+            'Importar Relatório (ERP): colar um relatório e ver os avisos nas notas da prévia.',
+            'Conferir que nada fica bloqueado: os avisos só informam.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.0', nome: 'Auditoria Retroativa das NFs do ERP e itens do ERP sempre atualizados', status: 'concluida',
+        novidades: [
+            'Nova tela em Ajustes → Auditoria Retroativa: mostra, por NF do ERP, o pedido (confirmado, sugerido ou sem pedido, com o motivo) e quais itens estão ligados a um produto da cotação.',
+            'Itens do ERP defasados (que ganharam produto depois de uma associação SP Data nova) passam a ser atualizados sozinhos, sem precisar reimportar.',
+            'Botões para atualizar os itens defasados e para confirmar de uma vez as sugestões de pedido.',
+            'Filtros: pedido sugerido, sem pedido, itens sem produto e itens defasados.'
+        ],
+        implementado: ['A atualização automática só preenche ou corrige para um produto existente; nunca apaga um código, e não roda enquanto os dados ainda estão carregando.', 'Nenhuma regra de associação, vínculo ou divergência mudou. A tela só lê os dados já salvos.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/05, js/14, js/17, js/29, js/31 e o novo js/32-auditoria-retroativa.js.'],
+        testar: [
+            'Ajustes → Auditoria Retroativa: ver o resumo e os cartões; testar os filtros e "Ver itens".',
+            'Tocar em "Atualizar itens defasados" (deve haver 13 no último diagnóstico).',
+            'Confirmar uma sugestão de pedido pelo cartão e, se quiser, as demais em lote.',
+            'Pelo Ajustes, buscar "retroativa" e conferir que a tela aparece.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.8', nome: 'Dados da NF também com XML, toda a cotação como entregue e aviso de produto repetido', status: 'concluida',
         novidades: [
             'Editor da NF (com XML): novo cartão "Dados desta NF" com nome do fornecedor, recurso da NF inteira e a opção "Esta NF não tem cotação (compra direta)".',
             'Pedido: botão "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez; depois vira "Desfazer marcas de entrega de todos".',

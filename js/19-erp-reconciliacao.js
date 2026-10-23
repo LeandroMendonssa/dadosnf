@@ -621,8 +621,9 @@ function renderPreviewImportacao() {
     const totalProcessadas = linhas.length - totalNovas;
 
     const itensHTML = linhas.map(({ nota, idx, apelidoEncontrado, fornecedorExibido, duplicata, duplicataAtiva, ignorado, status, recursoSugerido }) => {
-        const avisosHTML = nota.avisos.length
-            ? `<div class="import-avisos">${nota.avisos.map(a => `<div class="import-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${a}</div>`).join('')}</div>`
+        const todosAvisos = [...nota.avisos, ...verificacoesNotaErp(nota).map(v => v.texto)]; // 2.11.1: verificações da entrada
+        const avisosHTML = todosAvisos.length
+            ? `<div class="import-avisos">${todosAvisos.map(a => `<div class="import-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${escRel(a)}</div>`).join('')}</div>`
             : '';
         const badgeIgnorado = ignorado ? `<div class="import-badge import-badge-ignorado"><i class="fa-solid fa-ban"></i> Fornecedor ignorado — não entra na importação</div>` : '';
         const badgeDup = !duplicata ? '' : (
