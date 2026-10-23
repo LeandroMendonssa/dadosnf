@@ -156,7 +156,7 @@ function renderAuditoriaRetroativa() {
     const an = analiseRetroativaErp();
     const c = resumoRetroativo(an);
     const sug = an.filter(a => a.pedidoSt === 'sugerido' && a.pedido && a.veredito === 'bate');
-    const apr = propostasAprendizadoRetro();
+    const apr = typeof propostasAprendizadoRetro === 'function' ? propostasAprendizadoRetro() : { sp: [], fornecedor: [], conflitos: 0 }; // js/35 ausente: a tela abre mesmo assim
     const pct = c.itens ? Math.round(c.ligados * 100 / c.itens) : 0;
     const resumo = `<div class="card"><div class="xml-item-meta"><strong>O que o app entendeu das NFs do ERP</strong></div>
         <div class="retro-grade">
