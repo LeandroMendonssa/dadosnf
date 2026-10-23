@@ -1588,3 +1588,39 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 .nfe-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
 .nfe-check input[type="checkbox"]{width:20px;height:20px;min-width:20px;flex:0 0 20px;margin:2px 0 0;padding:0}
 .nfe-check span{flex:1;min-width:0;line-height:1.35}
+
+/* 2.11.0: Auditoria Retroativa */
+.retro-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.retro-grade div{background:var(--bg-tertiary);border-radius:12px;padding:10px;text-align:center}
+.retro-grade b{display:block;font-size:20px;color:var(--text-dark)}
+.retro-grade span{font-size:11px;color:var(--text-light)}
+.retro-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px}
+.retro-chip{flex:none;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-dark);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:600}
+.retro-chip.on{background:var(--accent-color);border-color:var(--accent-color);color:#fff}
+.retro-motivo{font-size:12px;color:var(--text-light)}
+.retro-det{margin-top:8px}
+.retro-det summary{font-size:13px;font-weight:600;color:var(--accent-text);cursor:pointer}
+.retro-linha{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--border-color);font-size:13px}
+.retro-it{flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px}
+.retro-it.ok{background:color-mix(in srgb,var(--button-success) 18%,transparent);color:var(--button-success)}
+.retro-it.m{background:var(--bg-tertiary);color:var(--text-light)}
+.retro-it.err{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger)}
+@media (min-width:768px){body[data-plataforma="web"] .retro-grade{grid-template-columns:repeat(6,1fr)}}
+
+.entrada-alertas .nfe-alerta-txt{margin-top:6px}
+.entrada-alertas .entrada-info{opacity:.8}
+
+/* 2.11.3: conferência da sugestão */
+.retro-conf{background:var(--bg-tertiary);border-radius:14px;padding:12px;margin-top:8px}
+.retro-conf-tit{font-weight:700;margin-bottom:6px}
+.retro-ck{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:4px 0}
+.retro-ck-i{flex:none;width:18px;font-weight:800}
+.retro-ck.ok .retro-ck-i{color:var(--button-success)}
+.retro-ck.aviso .retro-ck-i{color:#ff9500}
+.retro-ck.erro .retro-ck-i{color:var(--danger)}
+.retro-linha small{color:var(--text-light)}
+
+/* 2.11.3: O que precisa de atenção */
+.atn-banner{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px;padding:13px 16px;border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 9%,transparent);color:var(--text-dark);border-radius:14px;font-size:14px;text-align:left}
+.atn-seta{flex:none;color:var(--text-light);font-size:20px;line-height:1}
+.atn-linha:active{opacity:.6}

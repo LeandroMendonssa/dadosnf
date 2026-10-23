@@ -256,6 +256,8 @@
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-ajuda" data-title="Ajuda" onclick="prepararAjuda()"><i class="icon fa-solid fa-circle-question" style="background-color: #007aff;"></i> Ajuda <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-atencao" data-title="O que precisa de atenção" onclick="prepararAtencao()"><i class="icon fa-solid fa-bell" style="background-color: #ff3b30;"></i> O que precisa de atenção <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-auditoria-retro" data-title="Auditoria Retroativa" onclick="prepararAuditoriaRetroativa()"><i class="icon fa-solid fa-clipboard-check" style="background-color: #ff9500;"></i> Auditoria Retroativa <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -326,6 +328,12 @@
                 <div id="ajuda-conteudo"></div>
             </div>
 
+            <div class="app-screen" id="screen-atencao">
+                <div id="atencao-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-auditoria-retro">
+                <div id="retro-conteudo"></div>
+            </div>
             <div class="app-screen" id="screen-historico-mudancas">
                 <div id="historico-mudancas-lista"></div>
             </div>
@@ -718,6 +726,7 @@
             </div>
             <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div>
       <div class="app-screen" id="screen-controle-nfs">
+        <div id="controle-atencao-banner"></div>
         <div class="campo mb-4"><input type="text" id="controle-busca" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarControle(this.value)"></div>
         <div class="xml-filtro-toggle" id="controle-abas">
           <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
@@ -988,6 +997,9 @@
   <script src="js/29-busca-ajustes.js"></script>
   <script src="js/30-navegacao.js"></script>
   <script src="js/31-ajuda.js"></script>
+  <script src="js/32-auditoria-retroativa.js"></script>
+  <script src="js/33-verificacoes-entrada.js"></script>
+  <script src="js/34-atencao.js"></script>
 
 </body>
 </html>
