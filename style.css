@@ -1624,3 +1624,13 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 .atn-banner{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px;padding:13px 16px;border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 9%,transparent);color:var(--text-dark);border-radius:14px;font-size:14px;text-align:left}
 .atn-seta{flex:none;color:var(--text-light);font-size:20px;line-height:1}
 .atn-linha:active{opacity:.6}
+
+/* 2.13.0 — Assistente */
+.ia-log{display:flex;flex-direction:column;gap:10px;margin:10px 0;max-height:58vh;overflow-y:auto}
+.ia-bolha{padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.45;max-width:92%;word-break:break-word}
+.ia-eu{align-self:flex-end;background:var(--accent-color);color:#fff;border-bottom-right-radius:5px}
+.ia-ia{align-self:flex-start;background:var(--bg-secondary);color:var(--text-dark);border:1px solid var(--border-color);border-bottom-left-radius:5px}
+.ia-pensando{opacity:.7;font-style:italic}
+.ia-fonte{margin-top:8px;font-size:12px;opacity:.65}
+.ia-entrada{display:flex;gap:8px;align-items:center}
+.ia-entrada .input-box{flex:1}
