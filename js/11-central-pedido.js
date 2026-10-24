@@ -1035,6 +1035,13 @@ function entradasErpDoFornecedorCentral(cnpj) {
         return [e.cnpjFornecedor, v.cnpjFornecedor, ...(v.cnpjsFornecedor || [])].filter(Boolean).some(c => cnpjEmLista(entidade, c));
     });
 }
+// 2.12.4: NFs do ERP ligadas a este pedido, em QUALQUER situação (inclusive "esperando decisão"): a lista de candidatas continua
+// escondendo as que esperam decisão, mas uma NF que você já associou ao pedido tem que aparecer aqui, senão parece que nada foi associado.
+function entradasErpVinculadasAoPedido(pedido, cnpj) {
+    const entidade = cnpjsDaMesmaEntidadeFornecedor(cnpj);
+    return listaEntradasErp.filter(e => pedidoDoErpConfirmado(e) === String(pedido)
+        && [e.cnpjFornecedor, (e.vinculo || {}).cnpjFornecedor, ...(((e.vinculo || {}).cnpjsFornecedor) || [])].filter(Boolean).some(c => cnpjEmLista(entidade, c)));
+}
 function renderListaCandidatasAssociarNf(pedido, cnpj) {
     const filtro = normalizarCnpj(centralAssociarNfFiltro[normalizarCnpj(cnpj)] || '');
     const daEntidade = new Set(entradasErpDoFornecedorCentral(cnpj).map(e => e.id));
@@ -1055,12 +1062,12 @@ function renderListaCandidatasAssociarNf(pedido, cnpj) {
 // abaixo do botão) e a lista das NFs já associadas (nos detalhes que expandem).
 function htmlBotaoAssociarNf(pedido, cnpj) {
     const aberto = centralAssociarNfAberto.has(cnpj);
-    const vinculadas = entradasErpDoFornecedorCentral(cnpj).filter(e => pedidoDoErpConfirmado(e) === String(pedido));
+    const vinculadas = entradasErpVinculadasAoPedido(pedido, cnpj);
     return `<button type="button" class="action-chip edit-chip" onclick="toggleAssociarNfCentral('${cnpj}')">${aberto ? 'Fechar' : (vinculadas.length ? 'Associar outra NF do histórico' : 'Associar NF do histórico')}</button>`;
 }
 function acaoAssociarNf(pedido, cnpj) {
     const aberto = centralAssociarNfAberto.has(cnpj);
-    const vinculadas = entradasErpDoFornecedorCentral(cnpj).filter(e => pedidoDoErpConfirmado(e) === String(pedido));
+    const vinculadas = entradasErpVinculadasAoPedido(pedido, cnpj);
     return { i: 'rel', t: aberto ? 'Fechar' : (vinculadas.length ? 'Associar outra NF' : 'Associar NF'), fn: `toggleAssociarNfCentral('${cnpj}')` };
 }
 function htmlPainelAssociarNf(pedido, cnpj) {
@@ -1071,9 +1078,17 @@ function htmlPainelAssociarNf(pedido, cnpj) {
     </div>`;
 }
 function htmlVinculadasNf(pedido, cnpj) {
-    const vinculadas = entradasErpDoFornecedorCentral(cnpj).filter(e => pedidoDoErpConfirmado(e) === String(pedido));
+    const vinculadas = entradasErpVinculadasAoPedido(pedido, cnpj);
     const entidadeVinc = cnpjsDaMesmaEntidadeFornecedor(cnpj);
-    return vinculadas.map(e => `<div class="central-item-meta"><span>NF ${escRel(e.nf)}${e.serie ? '/' + escRel(e.serie) : ''} registrada no ERP e associada a este pedido · ${nfErpTemXmlNoApp(e, entidadeVinc) ? 'XML processado no app' : 'sem XML processado no app'}</span>${e.vinculo.viaCentral ? `<button type="button" class="central-status-toggle" onclick="desfazerAssociacaoEntradaErpDaCentral('${e.id}', '${pedido}')">Desfazer</button>` : ''}</div>`).join('');
+    const cotP = listaCotacoes.find(c => String(c.pedido) === String(pedido));
+    // 2.12.0: mostra o que foi lançado na NF (nome, quantidade, valor) e a que produto da cotação cada item está ligado, mesmo sem o texto do SmartCompras colado
+    const itensLancados = e => `<details class="retro-det"><summary>Itens lançados (${(e.itens || []).length})</summary>${(e.itens || []).map(i => {
+        const cod = i.codigoSmartComprasRelacionado || codigoProdutoAtualDoItemErp(i);
+        const it = cod && cotP ? (cotP.itens || []).find(x => String(x.codProduto) === String(cod)) : null;
+        const lig = it ? '→ ' + escRel(String(it.nomeOficial || it.descricao || cod).slice(0, 50)) : 'sem produto da cotação ligado';
+        return `<div class="retro-linha"><span>${escRel(i.nome)} · ${escRel(qdtFmt(i.quantidade))} × R$ ${formatValorBR(i.valorUnitario)}<br><small>${lig}</small></span><span class="retro-it ${it ? 'ok' : 'm'}">${it ? '✓' : '·'}</span></div>`;
+    }).join('')}</details>`;
+    return vinculadas.map(e => `<div class="central-item-meta"><span>NF ${escRel(e.nf)}${e.serie ? '/' + escRel(e.serie) : ''} registrada no ERP e associada a este pedido · ${nfErpTemXmlNoApp(e, entidadeVinc) ? 'XML processado no app' : 'sem XML processado no app'}</span>${e.vinculo.viaCentral ? `<button type="button" class="central-status-toggle" onclick="desfazerAssociacaoEntradaErpDaCentral('${e.id}', '${pedido}')">Desfazer</button>` : ''}</div>${itensLancados(e)}`).join('');
 }
 function toggleAssociarNfCentral(cnpj) {
     if (centralAssociarNfAberto.has(cnpj)) centralAssociarNfAberto.delete(cnpj); else centralAssociarNfAberto.add(cnpj);
@@ -1104,7 +1119,10 @@ function associarEntradaErpDaCentral(chave, pedido, cnpj) {
                 entrada.vinculo = novoVinculo; entrada.cnpjFornecedor = cnpj;
                 const resultado = reconciliarAssociacoesSpDataViaErp(entrada);
                 for (const p of resultado.pares) await confirmarAssociacaoSpData(p.codigoSmartCompras, p.spDataCodigo, { silencioso: true, origemAutomatica: true });
-                toast(`✓ NF ${entrada.nf} associada ao pedido ${pedido}` + (resultado.pares.length ? ` · ${resultado.pares.length} associação(ões) de SP Data preenchida(s).` : '.'));
+                // 2.12.0: aprende também por nome + quantidade + preço próximo (não depende do texto do SmartCompras colado nem de preço idêntico)
+                const aprendidas = typeof aprenderAssociacoesDoPedido === 'function' ? await aprenderAssociacoesDoPedido(entrada, pedido) : 0;
+                const totalAssoc = resultado.pares.length + aprendidas;
+                toast(`✓ NF ${entrada.nf} associada ao pedido ${pedido}` + (totalAssoc ? ` · ${totalAssoc} associação(ões) preenchida(s) automaticamente.` : '.'));
                 if (centralPedidoAtual === pedido) renderCentralPedidoCompleto(pedido);
             } catch (e) {
                 console.error('Erro ao associar NF do histórico:', e);

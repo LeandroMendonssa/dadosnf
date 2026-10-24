@@ -637,12 +637,14 @@ function htmlDadosNfErp(erp, fornNome, pedido) {
     const id = escRel(erp.id);
     const opcoesRec = (typeof observacoesSugeridas !== 'undefined' ? observacoesSugeridas : []).filter(Boolean);
     const atual = erp.recursoManual || '';
+    const vz = typeof visaoNfPorId === 'function' ? visaoNfPorId(erp.id) : null; // 2.12.0: o recurso já conhecido pela cotação do pedido não é perguntado de novo
+    const recursoDaCotacao = vz && vz.recursoOrigem === 'cotacao' && !erp.recursoManual && vz.recursos.length ? vz.recursos : null;
     const sel = `<select class="input-box" onchange="definirRecursoErpSo('${id}', this.value)"><option value="">(não definido)</option>${opcoesRec.map(o => `<option value="${escRel(o)}"${o === atual ? ' selected' : ''}>${escRel(o)}</option>`).join('')}</select>`;
     return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
         <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
             <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorErpSo('${id}')">Salvar</button></div>
             <div class="xml-item-meta">O nome fica lembrado: nas próximas importações do ERP com este nome, o fornecedor já vem certo.</div></div>
-        <div class="nfe-trocar"><span class="nfe-rot">Recurso</span>${sel}</div>
+        ${recursoDaCotacao ? `<div class="nfe-trocar"><span class="nfe-rot">Recurso</span><div class="xml-item-meta">Vem da cotação do pedido: <strong>${escRel(recursoDaCotacao.join(', '))}</strong>.</div><details class="retro-det"><summary>Mudar só nesta NF</summary>${sel}</details></div>` : `<div class="nfe-trocar"><span class="nfe-rot">Recurso</span>${sel}</div>`}
         <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${erp.semPedido && !pedido ? 'checked' : ''} ${pedido ? 'disabled' : ''} onchange="definirSemPedidoErpSo('${id}', this.checked)"> <span>Esta NF não tem pedido (compra direta)</span></label>${pedido ? '<div class="xml-item-meta">Há pedido vinculado; para marcar “sem pedido”, mova a NF para nenhum pedido primeiro.</div>' : ''}</div></div>`;
 }
 async function definirRecursoErpSo(id, valor) {
@@ -680,7 +682,7 @@ function destinoDaNfSalva(nf) {
 }
 function recursosAtuaisDaNf(nf) {
     const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
-    return [...new Set((nf.itens || []).map(it => it.semCotacao ? it.recurso : (cot && it.codigoSmartCompras ? (cot.recursosPorItem || {})[it.codigoSmartCompras] : null)).filter(Boolean))];
+    return [...new Set((nf.itens || []).map(it => (it.semCotacao || nf.semCotacaoSmartCompras) ? it.recurso : (cot && it.codigoSmartCompras ? (cot.recursosPorItem || {})[it.codigoSmartCompras] : null)).filter(Boolean))];
 }
 function htmlDadosNf(nf, fornecedorNome) {
     const id = escRel(nf.id);
@@ -693,10 +695,12 @@ function htmlDadosNf(nf, fornecedorNome) {
         <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
             <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornecedorNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorNfSalva('${id}')">Salvar</button></div>
             <div class="xml-item-meta">O nome fica lembrado nas próximas importações.</div></div>
-        <div class="nfe-trocar"><span class="nfe-rot">Recurso da NF inteira</span><div class="xml-item-meta">${resumo}${destino ? '' : ' Defina antes a origem (destino) da cotação do pedido.'}</div>
+        <div class="nfe-trocar"><span class="nfe-rot">Recurso da NF inteira</span><div class="xml-item-meta">${resumo}${destino ? '' : (direta ? ' Escolha abaixo o destino (Santa Casa ou CTI).' : ' Defina antes a origem (destino) da cotação do pedido.')}</div>
             <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'cc')">${escRel(rotCC)}</button> <button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'proprio')">${escRel(rotPR)}</button></div></div>
         <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${direta ? 'checked' : ''} onchange="definirCompraDiretaNf('${id}', this.checked)"> <span>Esta NF não tem cotação (compra direta)</span></label>
-            <div class="xml-item-meta">Marcar tira o pedido da NF e ela deixa de aparecer como "sem pedido".</div></div></div>`;
+            <div class="xml-item-meta">Marcar tira o pedido da NF e ela deixa de aparecer como "sem pedido".</div></div>
+        ${direta ? `<div class="nfe-trocar"><span class="nfe-rot">Destino da compra direta</span><select class="input-box" onchange="definirDestinoNfDireta('${id}', this.value)"><option value="">(escolha)</option>${Object.keys(RECURSOS_OFICIAIS).map(o => `<option value="${escRel(o)}"${nf.destino === o ? ' selected' : ''}>${escRel(o)}</option>`).join('')}</select>
+            <div class="xml-item-meta">Sem cotação do SmartCompras não há origem para dar o destino: é aqui que você diz para onde foi. Com o destino, os botões de recurso (C/C ou próprio) acima passam a funcionar.</div></div>` : ''}</div>`;
 }
 async function salvarNomeFornecedorNfSalva(id) {
     const nf = listaNfsProcessadas.find(n => n.id === id); const inp = document.getElementById('nfed-nome-forn'); if (!nf || !inp) return;
@@ -715,13 +719,13 @@ async function salvarNomeFornecedorNfSalva(id) {
 async function definirRecursoNfSalva(id, tipo) {
     const nf = listaNfsProcessadas.find(n => n.id === id); if (!nf) return;
     const destino = destinoDaNfSalva(nf);
-    if (!destino) return toast('Sem origem (destino) definida para esta NF: defina na cotação do pedido.');
+    if (!destino) return toast('Sem origem (destino) definida para esta NF: escolha Santa Casa ou CTI em "Dados desta NF" (ou defina na cotação do pedido).');
     const oficial = calcularRecursoOficial(destino, tipo); if (!oficial) return toast('Origem sem recurso configurado.');
     try {
         const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
         const novosCot = {}; let diretos = false;
         const itens = (nf.itens || []).map(it => {
-            if (it.semCotacao) { diretos = true; return { ...it, recurso: oficial }; }
+            if (it.semCotacao || nf.semCotacaoSmartCompras) { diretos = true; return { ...it, recurso: oficial }; } // 2.12.1: compra direta marcada no Editor também vale
             if (cot && it.codigoSmartCompras) novosCot[it.codigoSmartCompras] = oficial;
             return it;
         });
@@ -730,6 +734,10 @@ async function definirRecursoNfSalva(id, tipo) {
         toast(Object.keys(novosCot).length || diretos ? `✓ Recurso da NF definido: ${oficial}.` : 'Nenhum item com base para definir o recurso.');
         renderEditorNf();
     } catch (e) { console.error(e); toast('✕ Erro ao salvar o recurso.'); }
+}
+async function definirDestinoNfDireta(id, valor) {
+    try { await nfsProcessadasCollection.doc(id).update({ destino: valor || null }); toast(valor ? `✓ Destino: ${valor}.` : '✓ Destino removido.'); renderEditorNf(); }
+    catch (e) { console.error(e); toast('✕ Erro ao salvar o destino.'); }
 }
 function definirCompraDiretaNf(id, marcado) {
     const nf = listaNfsProcessadas.find(n => n.id === id); if (!nf) return;

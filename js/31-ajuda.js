@@ -89,7 +89,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'auditoria retroativa erp nf itens produto pedido sugerido sugestao defasado associacao reprocessar conferencia',
       tela: [{ id: 'screen-auditoria-retro', titulo: 'Auditoria Retroativa', rotulo: 'Abrir Auditoria Retroativa' }],
       passos: [
-        'Abra Ajustes → Auditoria Retroativa. O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
+        'Abra Mais → Auditoria Retroativa. O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
         'Você não precisa associar NF por NF: os itens se ligam ao produto pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor.',
         'Itens defasados são itens antigos que hoje já teriam produto (porque você associou o SP Data depois). O app os atualiza sozinho; o botão \"Atualizar itens defasados\" faz isso na hora.',
         'Pedido sugerido: o app achou um pedido provável, mas pede sua confirmação. Toque em "Conferir a sugestão" no cartão: ele mostra o valor total da NF × cotado, as datas do pedido, do limite e da NF e quais itens da NF estão na cotação, com um resumo (bate em tudo, conferir ou não parece). "Abrir o pedido" leva à cotação e "Confirmar" aceita aquele pedido.',
@@ -100,15 +100,29 @@ const AJUDA_ARTIGOS = [
         'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
       ],
       dicas: ['O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.', 'Na entrada (XML e relatório do ERP) o app já mostra "Verificações da entrada" com os avisos que valem conferir na hora.'], tutorial: null },
-    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'O que precisa de atenção: o que está parado', versao: '2.11.3',
-      resumo: 'Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.',
-      palavras: 'atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
-      tela: [{ id: 'screen-atencao', titulo: 'O que precisa de atenção', rotulo: 'Abrir o painel' }],
+    { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.13.1',
+      resumo: 'Uma IA que responde perguntas sobre os dados do app, só lendo, sem alterar nada.',
+      palavras: 'assistente ia inteligencia artificial pergunta consulta chat divergencia material quantidade fornecedor pedido nf',
+      tela: [{ id: 'screen-assistente', titulo: 'Assistente', rotulo: 'Abrir o Assistente' }],
       passos: [
-        'Abra Ajustes → O que precisa de atenção. No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
+        'Funciona de graça e sem instalar nada, no "modo básico": ele entende pedido, NF, fornecedor, material, divergências e pendências por palavras-chave (ex.: "situação do pedido 1726", "NF 1067970", "NFs da MINAS SUL", "lanceta").',
+        'Opcional, para perguntas em linguagem livre: siga o arquivo COMO-INSTALAR-O-ASSISTENTE.md (chave da IA + intermediário gratuito) e cole o endereço em Mais → Assistente → Ligar a IA → Salvar. Isso é feito uma vez só.',
+        'Abra Mais → Assistente e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
+        'Sob cada resposta aparece "Consultas feitas": são as consultas que o Assistente fez nos dados do app. Ele não inventa números: quando não acha, diz que não achou.',
+        'O Assistente só lê. Para resolver algo (confirmar pedido, marcar chegada), use as telas do app.'
+      ],
+      dicas: ['Seja específico: um fornecedor, um pedido ou um material por vez dá respostas melhores e mais baratas.', 'Cada pergunta tem um pequeno custo na API da IA; o limite mensal você define no console da Anthropic.'], tutorial: null },
+    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'Central de notificações: o que está parado', versao: '2.12.3',
+      resumo: 'Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.',
+      palavras: 'central notificacoes notificação atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
+      tela: [{ id: 'screen-atencao', titulo: 'Central de notificações', rotulo: 'Abrir a central' }],
+      passos: [
+        'Abra Mais → Central de notificações (o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
         'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido e pedidos com prazo vencido sem nenhum sinal de entrega.',
         'Importante: divergências pendentes, NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
         'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
+        'As pendências de cada NF vêm da mesma "visão única da NF" usada pelo Controle, pelo Editor e pela Auditoria Retroativa; as divergências vêm da mesma lista de Relatórios → Divergências. Por isso os números são sempre os mesmos nas telas.',
+        'Os botões no topo trocam a forma de ver: Por urgência (padrão), Por pedido ou Por fornecedor, que reúne num só cartão tudo o que está pendente do mesmo pedido ou do mesmo fornecedor.',
         'Toque num grupo para abrir a lista e num item para ir direto à tela que resolve (pedido, Editor da NF, Relatórios, Auditoria Retroativa...).'
       ],
       dicas: ['O painel só lê o que já está salvo: nada é alterado ao abri-lo.'], tutorial: null },
@@ -183,7 +197,7 @@ const AJUDA_ARTIGOS = [
         'Use Marcar Todas / Desmarcar Todas, a busca e "Mostrar Apenas Novas" para filtrar, e confirme a importação.'
       ],
       dicas: ['Duas notas com o mesmo fornecedor e NF ativas ao mesmo tempo são sempre tratadas como erro: o app trava a importação da repetida.'], tutorial: 'importar-erp' },
-    { id: 'editor-nf', cat: 'Notas fiscais', titulo: 'Editor da NF: abas e situação', versao: '2.10.8',
+    { id: 'editor-nf', cat: 'Notas fiscais', titulo: 'Editor da NF: abas e situação', versao: '2.12.0',
       resumo: 'Ver e corrigir tudo sobre uma NF em um só lugar.',
       palavras: 'editor nf abas itens financeiro fiscal emitente destinatario transporte xml erp chips',
       passos: [
@@ -191,12 +205,14 @@ const AJUDA_ARTIGOS = [
         'No topo, os selos mostram a situação: XML processado, vínculo com o ERP e se o XML completo está guardado.',
         'As abas organizam os dados: Itens, Financeiro (pagamento e ERP), Fiscal, Emitente/Dest., Transporte e XML.',
         'NFs que só existem no relatório do ERP mostram um aviso de "sem XML" e o cartão "Dados desta NF": ali você edita o nome do fornecedor (o app lembra para as próximas importações), escolhe o recurso e marca "não tem pedido" (compra direta).',
+        'Quando a NF do ERP já está ligada a um pedido cujo recurso o app conhece pela cotação, o cartão mostra "Vem da cotação do pedido" em vez de perguntar; "Mudar só nesta NF" continua disponível.',
         'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (C/C ou próprio, conforme a origem do pedido) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
+        'Ao marcar "Esta NF não tem cotação (compra direta)", aparece "Destino da compra direta": escolha Santa Casa ou CTI. Com o destino, os botões de recurso (C/C ou próprio) funcionam mesmo sem cotação do SmartCompras, e a NF deixa de aparecer como "sem produto da cotação".',
         'Se aparecer o aviso "Itens diferentes com o mesmo produto da cotação", dois itens da NF estão associados ao mesmo produto: corrija a associação na aba Itens.',
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.10.8',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.12.4',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
       palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
@@ -205,6 +221,7 @@ const AJUDA_ARTIGOS = [
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
         'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou ou Desfazer a marca manual.',
         'Em Associar NF, a lista mostra as NFs da mesma entidade do fornecedor. Se ele entregou por outro CNPJ, digite o número da NF: a busca passa a valer para todos os fornecedores e indica o nome e "outro CNPJ".',
+        'Ao associar uma NF do histórico, o app liga sozinho os itens à cotação (por SP Data, e também por nome, quantidade e preço próximo, mesmo sem o texto do SmartCompras colado). Só liga quando é inequívoco e nunca troca uma associação sua. Abaixo da NF associada, "Itens lançados" mostra o que foi lançado e a qual produto da cotação cada item ficou ligado. A NF aparece aí mesmo que ainda esteja esperando decisão no Controle. Itens sem nome oficial (relatório do SmartCompras não colado) mostram o nome lançado no ERP, marcado como tal.',
         'No topo do pedido, "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez como "já chegou" (manual); o mesmo botão passa a "Desfazer marcas de entrega de todos".',
         'O quadro Divergências, quando maior que zero, é tocável e leva ao item divergente.',
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'

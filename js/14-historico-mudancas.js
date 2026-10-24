@@ -10,7 +10,88 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.11.5', nome: 'Frete certo na comparação, botão que confirma de verdade e aprendizado pelo pedido', status: 'atual',
+        numero: '2.13.1', nome: 'Assistente em modo básico: grátis, sem IA e sem instalação', status: 'atual',
+        novidades: [
+            'O Assistente agora funciona logo de cara, de graça, sem chave nem instalação: o "modo básico" entende a pergunta por palavras-chave (número do pedido, número da NF, fornecedor, material, "divergências", "pendente", "sem pedido", "esperando decisão") e responde na hora com as mesmas consultas da versão com IA.',
+            'Exemplos: "situação do pedido 1726", "NF 1067970", "divergências do pedido 1726", "NFs da MINAS SUL", "fornecedor SUPERMED", "quanto de lanceta temos?", "o que está pendente hoje?".',
+            'A IA ficou opcional: em Mais → Assistente → "Ligar a IA (opcional)" você cola o endereço do intermediário quando e se quiser perguntas em linguagem livre.',
+            'Correção: "NFs sem pedido" passa a incluir as NFs só do ERP (antes só as com XML).'
+        ],
+        implementado: ['O modo básico não usa internet nem conta: tudo é calculado no próprio app com os dados que ele já carregou.', 'Quando não entende a pergunta, mostra exemplos do que sabe responder.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/37.'],
+        testar: ['Mais → Assistente: tocar nas sugestões e fazer perguntas como as dos exemplos.', 'Conferir 2 ou 3 respostas com as telas (Central do pedido, Relatórios → Divergências, Controle de NFs).', 'Perguntar algo fora do que ele entende e ver as dicas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.0', nome: 'Assistente: IA para consultar os dados do app', status: 'concluida',
+        novidades: [
+            'Nova tela Mais → Assistente: você pergunta em linguagem natural (divergências pendentes, situação de um pedido, quantidade cotada e recebida de um material, NFs de um fornecedor...) e a IA responde em cima dos dados do app.',
+            'A IA só lê: ela usa consultas prontas (as mesmas regras da visão única da NF, das divergências e da comparação do pedido), mostra "Consultas feitas" sob cada resposta, nunca calcula nem decide sozinha e não grava nada.',
+            'A chave da IA fica num intermediário gratuito (Cloudflare Worker), nunca dentro do app; o intermediário só atende quem está logado e pode ser limitado aos seus e-mails. Passo a passo no arquivo COMO-INSTALAR-O-ASSISTENTE.md.'
+        ],
+        implementado: ['Só vão para a IA os resultados das consultas que a pergunta pede (no máximo 25 linhas por consulta), nunca o banco inteiro.', 'O app funciona normalmente sem o Assistente: a tela só pede o endereço do intermediário na primeira vez.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/14, js/31; novo js/37-assistente.js. Arquivos fora do app: assistente/worker-assistente.js e assistente/COMO-INSTALAR-O-ASSISTENTE.md.'],
+        testar: ['Seguir o passo a passo, abrir Mais → Assistente e salvar o endereço.', 'Perguntar: "Quais divergências estão pendentes?" e conferir com Relatórios → Divergências.', 'Perguntar sobre um material (ex.: lanceta) e conferir quantidades e fornecedores.', 'Perguntar a situação de um pedido e conferir com a Central do pedido.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.4', nome: 'Nomes dos itens pelo ERP e NF associada sempre visível na Central do pedido', status: 'concluida',
+        novidades: [
+            'Central do pedido: item da cotação sem "nome oficial" (relatório do SmartCompras não colado) agora mostra o nome que o ERP lançou para ele, marcado como "nome lançado no ERP; o oficial vem do relatório do SmartCompras". O nome vem do produto SP Data associado ou do item do ERP que casa com ele por nome, quantidade e preço, nas NFs que você já ligou ao pedido. Só leitura: nada é gravado e nunca passa por oficial.',
+            'Correção: NF do ERP associada ao pedido mas ainda "esperando decisão" não aparecia na Central do pedido (o botão seguia como "Associar NF" e não mostrava os itens lançados). Agora toda NF ligada ao pedido aparece, em qualquer situação.'
+        ],
+        implementado: ['Itens ambíguos (por exemplo, dois sensores iguais com o mesmo preço) continuam sem nome: o app não chuta.', 'Na NF 4694 / pedido 1697, 2 dos 6 itens ganham nome; os outros dependem do relatório do SmartCompras ou de a NF trazer o item.'],
+        mudou: ['Arquivos alterados: js/09, js/11, js/14 e js/35.'],
+        testar: ['Pedido 1697 → BIO INFINITY: ver os nomes do ERP nos itens ligados e a NF 4694 listada com "Itens lançados".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.3', nome: 'Central de notificações por pedido ou por fornecedor', status: 'concluida',
+        novidades: ['A Central de notificações ganhou três formas de ver: Por urgência (como era), Por pedido e Por fornecedor. Nas duas novas, tudo o que está pendente do mesmo pedido ou do mesmo fornecedor (divergência, NF sem pedido, sugestão, sem recurso...) fica junto num cartão só, do que tem mais pendências para o que tem menos.'],
+        implementado: ['Só muda a apresentação: as pendências são as mesmas da visão única da NF.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/34.'],
+        testar: ['Mais → Central de notificações: tocar em "Por pedido" e "Por fornecedor", abrir alguns cartões e tocar num item.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.2', nome: 'Compra direta com destino e Central de notificações em "Mais"', status: 'concluida',
+        novidades: [
+            'Fornecedor sem cotação do SmartCompras (como a MINAS SUL): ao marcar "Esta NF não tem cotação (compra direta)" no Editor da NF, aparece "Destino da compra direta" (Santa Casa ou CTI). Com o destino, os botões de recurso C/C e próprio funcionam, e a NF deixa de aparecer como "sem produto da cotação".',
+            '"O que precisa de atenção" virou "Central de notificações" e saiu de Ajustes: agora fica na tela Mais (em Ferramentas, com o número de itens ao lado) e, no computador, no menu lateral antes de Ajustes.',
+            'A Auditoria Retroativa também saiu de Ajustes e foi para Mais → Ferramentas (e menu lateral no computador).'
+        ],
+        implementado: ['Compra direta marcada no Editor passa a valer para o recurso dos itens (antes só valia a marca feita na Entrada de NF).'],
+        mudou: ['Arquivos alterados: index.html, js/01, js/02, js/14, js/20, js/31, js/34 e js/36.'],
+        testar: ['Editor da NF da MINAS SUL 33669: marcar compra direta, escolher o destino e tocar em C/C; conferir que a NF sai de "sem produto da cotação".', 'Tela Mais: ver Central de notificações (com o número) e Auditoria Retroativa em Ferramentas; abrir cada uma e voltar.', 'Ajustes: confirmar que as duas entradas não estão mais lá.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.0', nome: 'Visão única da NF e aprendizado das associações sem o texto do SmartCompras', status: 'concluida',
+        novidades: [
+            'Nova "visão única da NF": uma só rotina junta o XML, o lançamento do ERP e a cotação e responde, para qualquer tela, qual é o pedido, o recurso, o destino, os totais (com frete), os itens, se chegou e quais pendências a NF tem. Os dados continuam onde estavam; as telas é que deixam de refazer a conta cada uma do seu jeito.',
+            'O painel "O que precisa de atenção" passou a ler as pendências das NFs dessa visão. Consequência: uma NF cujo XML já tem pedido não aparece mais como "pedido sugerido" só porque o lançamento do ERP ficou com a sugestão antiga (de 8 para 5 no último diagnóstico).',
+            'Aprendizado mais esperto: ao confirmar ou associar um pedido a uma NF do ERP, o app liga os itens à cotação também por nome + quantidade + preço próximo (até 15%), sem depender do texto do SmartCompras colado nem de preço idêntico. Só liga quando o par é inequívoco dos dois lados; na dúvida deixa para você.',
+            'Central do pedido: abaixo de cada NF associada, "Itens lançados" mostra o nome, a quantidade e o valor lançados e a que produto da cotação cada item ficou ligado.',
+            'Editor da NF do ERP: quando o recurso já é conhecido pela cotação do pedido, ele aparece como "Vem da cotação do pedido" em vez de ser perguntado; "Mudar só nesta NF" continua disponível.'
+        ],
+        implementado: ['Conferido contra as suas associações já existentes: dos pares que o app formaria por nome + quantidade + preço, 329 de 330 conferidos coincidem com o que você já tinha associado (o outro é um soro 100 mL, e o app nunca troca associação sua); 17 seriam novos.', 'Exemplo real: na NF 4694 (BIO INFINITY) o app liga o cabo de ECG e a extensão de PNI ao pedido 1697 e deixa os dois sensores de oximetria, que são ambíguos, para você.'],
+        mudou: ['Arquivos alterados: index.html, js/11, js/14, js/20, js/31, js/34 e js/35; novo js/36-visao-nf.js.'],
+        testar: ['Central do pedido 1697 (BIO INFINITY) → Associar NF 4694: ver a mensagem de associações preenchidas e abrir "Itens lançados".', 'Editor de uma NF do ERP com pedido ligado: o recurso deve aparecer como "Vem da cotação do pedido".', 'Ajustes → O que precisa de atenção: conferir se os números e os itens fazem sentido com o Controle de NFs.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.6', nome: 'Divergências do painel de atenção iguais às do relatório', status: 'concluida',
+        novidades: [
+            'Correção: "O que precisa de atenção" contava divergências com uma regra própria e mostrava como pendente o "não faturado" que já chegou (e que você já tinha resolvido). Agora usa a mesma lista e a mesma regra de Relatórios → Divergências, então os números e os itens são sempre os mesmos.',
+            'Tocar numa divergência do painel abre o pedido na Central do pedido (antes abria o relatório sem mostrar o item).'
+        ],
+        implementado: ['No último diagnóstico, painel e relatório passaram a mostrar a mesma quantidade (2).'],
+        mudou: ['Arquivos alterados: js/14 e js/34.'],
+        testar: ['Ajustes → O que precisa de atenção: conferir se "Divergências pendentes" bate com Relatórios → Divergências (pedido 1726 não deve mais aparecer se já chegou).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.5', nome: 'Frete certo na comparação, botão que confirma de verdade e aprendizado pelo pedido', status: 'concluida',
         novidades: [
             'Correção: o aviso "valor do XML diferente do ERP" comparava com o "Total da nota" do ERP, que não inclui o frete (como o XML inclui), e dava divergência falsa. Agora compara com o total real do ERP (soma das parcelas, já com o frete). Se sobrar diferença, o aviso ainda tenta explicá-la pelo frete, seguro, outras despesas, IPI ou desconto do XML (e lembra que o SP Data não aceita IPI).',
             'Auditoria Retroativa: ao confirmar um pedido, o cartão fica no lugar com "✓ Confirmado: pedido N" e o botão some (antes o botão continuava lá e dava dúvida).',

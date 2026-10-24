@@ -584,7 +584,9 @@ function renderLinhaProduto(it, chaveUnica, ctx) {
 
     const tituloHTML = nomeOficialSmartCompras
         ? `<div class="central-item-desc-linha">${nomeOficialSmartCompras}</div>`
-        : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`;
+        : ((nomeProv) => nomeProv
+            ? `<div class="central-item-desc-linha">${escRel(nomeProv)} <small class="central-item-sem-desc">(nome lançado no ERP; o oficial vem do relatório do SmartCompras)</small></div>`
+            : `<div class="central-item-desc-linha central-item-sem-desc">Nome oficial: pendente de complementação (importe o relatório do SmartCompras)</div>`)(typeof nomeProvisorioItemCotacao === 'function' ? nomeProvisorioItemCotacao(centralPedidoAtual, it) : null);
     // SP Data sempre visível, mas como linha SECUNDÁRIA — nunca substitui o
     // nome real da cotação (já foi assim antes e causou associação errada:
     // nomes do SP Data podem vir cortados/parecidos e escondiam o nome real).
