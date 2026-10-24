@@ -1626,17 +1626,29 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 .atn-linha:active{opacity:.6}
 
 /* 2.13.0 — Assistente */
-.ia-log{display:flex;flex-direction:column;gap:10px;margin:10px 0;max-height:58vh;overflow-y:auto}
-.ia-bolha{padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.45;max-width:92%;word-break:break-word}
+/* Assistente: tela em coluna (barra no topo, conversa rolando no meio, campo de digitar no rodapé). A tela não rola: assim o teclado
+   do celular só encolhe a conversa e o campo fica sempre visível logo acima dele. */
+#screen-assistente{overflow:hidden}
+#assistente-conteudo{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.ia-barra{flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;font-size:13px}
+.ia-barra details{flex-basis:100%}
+.ia-estado{font-weight:600;color:var(--accent-text,var(--accent-color))}
+.ia-estado-off{color:var(--text-dark);opacity:.75}
+.ia-log{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 0}
+.ia-bolha{padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.45;max-width:92%;word-break:break-word;flex-shrink:0}
 .ia-eu{align-self:flex-end;background:var(--accent-color);color:#fff;border-bottom-right-radius:5px}
 .ia-ia{align-self:flex-start;background:var(--bg-secondary);color:var(--text-dark);border:1px solid var(--border-color);border-bottom-left-radius:5px}
 .ia-pensando{opacity:.7;font-style:italic}
 .ia-fonte{margin-top:8px;font-size:12px;opacity:.65}
 .ia-link{color:var(--accent-color);text-decoration:underline;cursor:pointer;font-weight:600}
 .ia-num{font-weight:700;color:var(--accent-color)}
-.ia-rod{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:12px;opacity:.7}
-.ia-mini{background:transparent;border:1px solid var(--border-color);color:inherit;border-radius:10px;padding:3px 10px;font-size:12px;cursor:pointer}
-.ia-topo{display:flex;justify-content:flex-end;margin-top:8px}
-.ia-parar{background:#c0392b!important;color:#fff!important}
-.ia-entrada{display:flex;gap:8px;align-items:center}
-.ia-entrada .input-box{flex:1}
+.ia-rod{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 10px;margin-top:8px;font-size:12px}
+.ia-rod span{opacity:.7;min-width:0}
+.ia-mini{flex-shrink:0;white-space:nowrap;background:transparent;border:1.5px solid var(--accent-color);color:var(--accent-text,var(--accent-color));border-radius:980px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background-color .15s ease}
+.ia-mini:active{background-color:color-mix(in srgb,var(--accent-color) 14%,transparent)}
+.ia-parar{background:#c0392b!important;color:#fff!important;border-color:#c0392b!important}
+.ia-entrada{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.ia-entrada .input-box{flex:1;min-width:0;font-size:16px}
+.ia-entrada .central-status-toggle{flex-shrink:0;white-space:nowrap;min-width:84px}
+.ia-aviso{flex-shrink:0;font-size:11px;opacity:.6;text-align:center}
+#ia-sugestoes{flex-shrink:0}
