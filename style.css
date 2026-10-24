@@ -264,7 +264,9 @@ body[data-tab-icons="off"] .tab-item{font-size:11px;padding:10px 4px}
 
 #screen-anotacoes { display: flex; flex-direction: column; gap: 16px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); transition: padding-bottom 0.2s ease-out; }
 .anotacao-item{cursor:pointer}
-.rte-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;background:var(--bg-primary);border:none;border-bottom:1px solid var(--border-color);border-radius:0;padding:8px 2px;position:sticky;top:0;z-index:5}
+.rte-toolbar{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;height:100%;padding:0 10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-radius:inherit;position:relative;z-index:1}
+.rte-toolbar::-webkit-scrollbar{display:none}
+.rte-toolbar>*{flex-shrink:0}
 #anotacao-titulo{background:transparent;border:none;padding:4px 2px;font-size:24px !important;font-weight:700 !important;letter-spacing:-.4px}
 #anotacao-titulo:focus{box-shadow:none;outline:none}
 #screen-anotacoes-editor{padding-left:16px;padding-right:16px}
@@ -1151,7 +1153,6 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
 }
 .main-content > .header.scrolled{ border-bottom-color:color-mix(in srgb, var(--border-color) 85%, transparent); }
 .app-screen{ padding-top:calc(var(--header-h) + 16px); }
-.rte-toolbar{ top:var(--header-h); }
 
 /* ---- dock: cápsula flutuante de vidro (somente telas estreitas; no desktop vale o menu lateral) ---- */
 @media (max-width:899px){
@@ -1650,5 +1651,39 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 .ia-entrada{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .ia-entrada .input-box{flex:1;min-width:0;font-size:16px}
 .ia-entrada .central-status-toggle{flex-shrink:0;white-space:nowrap;min-width:84px}
-.ia-aviso{flex-shrink:0;font-size:11px;opacity:.6;text-align:center}
+.ia-aviso{font-size:11px;opacity:.6;text-align:right;min-width:0}
+.ia-rodape-chat{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ia-modo-wrap{position:relative;flex-shrink:0}
+.ia-modo{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:var(--bg-secondary);border:1px solid var(--border-color);color:var(--text-dark);border-radius:980px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.ia-modo .ia-seta{font-size:9px;opacity:.55}
+.ia-modo-menu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:40;min-width:260px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:18px;box-shadow:var(--shadow-lg);padding:6px}
+.ia-modo-menu button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;background:transparent;border:none;color:var(--text-dark);padding:10px 12px;border-radius:12px;cursor:pointer}
+.ia-modo-menu button:active{background:var(--bg-primary)}
+.ia-modo-menu small{display:block;font-size:11.5px;opacity:.65;font-weight:400;margin-top:2px}
+.ia-modo-menu .fa-check{color:var(--accent-text,var(--accent-color))}
 #ia-sugestoes{flex-shrink:0}
+
+
+/* ---- Anotações no estilo Apple Notas ---- */
+/* cabeçalho: "⋯" (ações) e "✓" (concluir) só aparecem no editor de anotação */
+#nota-menu-btn, #nota-done-btn{display:none}
+body:has(#screen-anotacoes-editor.active) #nota-menu-btn, body:has(#screen-anotacoes-editor.active) #nota-done-btn{display:flex}
+#nota-done-btn{background:var(--accent-color)!important;color:#fff!important;border-color:var(--accent-color)!important}
+/* menu de ações (cartão de vidro, abre sob o cabeçalho) */
+.nota-menu{position:fixed;top:calc(var(--header-h) + 4px);right:12px;z-index:70;min-width:230px;background:var(--glass-tint,var(--bg-secondary));-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid var(--glass-edge,var(--border-color));border-radius:22px;box-shadow:var(--glass-shadow,var(--shadow-lg));padding:8px}
+.nota-menu button{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left;background:transparent;border:none;color:var(--text-dark);font-size:16px;padding:12px 14px;border-radius:14px;cursor:pointer}
+.nota-menu button:active{background:color-mix(in srgb,var(--accent-color) 12%,transparent)}
+.nota-menu button i{opacity:.7;width:20px;text-align:center}
+.nota-menu-sep{height:1px;background:var(--border-color);margin:6px 8px}
+.nota-menu .nota-menu-del, .nota-menu .nota-menu-del i{color:#e0382d;opacity:1}
+/* barra de formatação: segunda "dock", cápsula de vidro fixa embaixo; no celular só com o teclado aberto, sempre logo acima dele */
+.rte-dock{display:none;position:fixed;left:12px;right:12px;bottom:calc(var(--kb,0px) + 10px);height:52px;z-index:60;border-radius:26px}
+.rte-dock::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--glass-tint,var(--bg-secondary));-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid var(--glass-edge,var(--border-color));box-shadow:var(--glass-shadow,var(--shadow-lg))}
+body:has(#screen-anotacoes-editor.active).keyboard-open .rte-dock{display:block}
+.rte-dock .rte-popover{position:fixed;top:auto;right:auto;max-height:55vh;overflow-y:auto}
+body:has(#screen-anotacoes-editor.active).keyboard-open #screen-anotacoes-editor{padding-bottom:calc(var(--kb,0px) + 96px)!important}
+@media (min-width:900px){
+  .rte-dock{left:0;right:0;margin:0 auto;width:fit-content;max-width:calc(100% - 48px);bottom:16px}
+  body:has(#screen-anotacoes-editor.active) .rte-dock{display:block}
+  body:has(#screen-anotacoes-editor.active) #screen-anotacoes-editor{padding-bottom:96px}
+}

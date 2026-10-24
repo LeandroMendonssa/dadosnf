@@ -142,6 +142,12 @@
                         <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
                     </span>
                 </button>
+                <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
+                    <span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span>
+                </button>
+                <button class="header-action nota-ok" id="nota-done-btn" onclick="concluirAnotacao()" title="Concluir" aria-label="Concluir">
+                    <span class="icon-wrapper"><i class="fa-solid fa-check"></i></span>
+                </button>
                 <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;" title="Selecionar em lote (editar)">
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-list-check"></i>
@@ -815,6 +821,11 @@
                     <input type="text" id="anotacao-titulo" class="form-field" placeholder="Título da anotação" style="font-size: 18px; font-weight: 700;" oninput="agendarAutoSaveAnotacao()">
                 </div>
                 <div id="central-pedido-container" style="display:none;"></div>
+                <div id="anotacao-corpo" class="rte-editor" contenteditable="true" oninput="agendarAutoSaveAnotacao()" onpaste="setTimeout(agendarAutoSaveAnotacao, 50)"></div>
+            </div>
+        </div>
+
+        <div id="rte-dock" class="rte-dock">
                 <div class="rte-toolbar">
                     <button type="button" data-cmd="undo" title="Desfazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('undo')"><i class="fa-solid fa-rotate-left"></i></button>
                     <button type="button" data-cmd="redo" title="Refazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('redo')"><i class="fa-solid fa-rotate-right"></i></button>
@@ -876,15 +887,13 @@
                         </div>
                     </div>
                 </div>
-                <div id="anotacao-corpo" class="rte-editor" contenteditable="true" oninput="agendarAutoSaveAnotacao()" onpaste="setTimeout(agendarAutoSaveAnotacao, 50)"></div>
-                <div class="actions mt-4" >
-                    <button class="actions-button" onclick="copiarTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar Tudo</button>
-                    <button class="actions-button" onclick="colarTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
-                    <button class="actions-button is-neutral" onclick="limparTextoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-eraser"></i></span> Limpar Texto</button>
-                    <button class="actions-button is-danger" onclick="excluirAnotacaoAtual()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir</button>
-                    <button class="actions-button is-primary" onclick="salvarAnotacaoAtual(true)"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
-                </div>
-            </div>
+        </div>
+        <div id="nota-menu" class="nota-menu" style="display:none;">
+            <button type="button" onclick="menuNotaAcao('copiar')"><span>Copiar tudo</span><i class="fa-solid fa-copy"></i></button>
+            <button type="button" onclick="menuNotaAcao('colar')"><span>Colar</span><i class="fa-solid fa-paste"></i></button>
+            <button type="button" onclick="menuNotaAcao('limpar')"><span>Limpar texto</span><i class="fa-solid fa-eraser"></i></button>
+            <div class="nota-menu-sep"></div>
+            <button type="button" class="nota-menu-del" onclick="menuNotaAcao('excluir')"><span>Excluir</span><i class="fa-solid fa-trash"></i></button>
         </div>
 
         <nav id="tab-bar" class="tab-bar"></nav>
