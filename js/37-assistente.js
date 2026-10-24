@@ -7,13 +7,43 @@
 // Instalação do intermediário: assistente/COMO-INSTALAR-O-ASSISTENTE.md
 // ===================================================================
 let assistenteUrl = '';
+let iaCtlUsuario = null, iaInterrompido = false, iaTimer = null;
 let assistenteMsgs = [];      // histórico no formato da API (só nesta tela; some ao recarregar)
 let assistenteOcupado = false;
 const IA_MAX_RODADAS = 6, IA_LINHAS = 25;
 
 // ---------------- consultas (só leitura) ----------------
 function iaPalavras(s) { return tokensNomeProduto(s); }
-function iaCasa(texto, busca) { if (!busca) return true; const t = iaPalavras(texto).join(' '); return iaPalavras(busca).every(w => t.includes(w)); }
+function iaDist1(a, b) {   // true se as palavras diferem em no máximo 1 letra (trocada, faltando ou sobrando): "CREPON" ~ "CREPOM"
+    if (a === b) return true; if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    return a.length === b.length ? a.slice(i + 1) === b.slice(i + 1) : (a.length > b.length ? a.slice(i + 1) === b.slice(i) : b.slice(i + 1) === a.slice(i));
+}
+function iaLev(a, b) {
+    const d = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) { let ant = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, ant + (a[i - 1] === b[j - 1] ? 0 : 1)); ant = t; } }
+    return d[b.length];
+}
+function iaQuisDizer(texto) {   // palavras da pergunta que não existem no cadastro → as mais parecidas que existem (sem IA: não inventa nome)
+    const vocab = new Map();
+    const add = n => iaPalavras(n).forEach(w => { if (w.length >= 5 && !/\d/.test(w)) vocab.set(w, (vocab.get(w) || 0) + 1); });
+    listaCotacoes.forEach(c => (c.itens || []).forEach(i => add(i.nomeOficial || i.descricao || '')));
+    listaEntradasErp.forEach(e => (e.itens || []).forEach(i => add(i.nome)));
+    listaNfsProcessadas.forEach(n => (n.itens || []).forEach(i => add(i.xProd)));
+    const out = [];
+    iaPalavras(texto).filter(w => w.length >= 5 && !/\d/.test(w) && !vocab.has(w) && ![...vocab.keys()].some(v => iaDist1(v, w))).forEach(w => {
+        const lim = w.length >= 9 ? 2 : 1;
+        const c = [...vocab.keys()].map(v => [v, iaLev(w, v)]).filter(([, dd]) => dd <= lim).sort((x, y) => x[1] - y[1] || vocab.get(y[0]) - vocab.get(x[0])).slice(0, 3).map(x => x[0]);
+        if (c.length) out.push({ digitado: w, parecidas: c });
+    });
+    return out;
+}
+function iaCasa(texto, busca) {
+    if (!busca) return true; const toks = iaPalavras(texto), t = toks.join(' ');
+    return iaPalavras(busca).every(w => /^\d{1,3}$/.test(w) ? toks.some(k => k === w || new RegExp('^' + w + '[A-Z]').test(k)) : (t.includes(w) || (w.length >= 5 && toks.some(k => iaDist1(k, w)))));   // "21" não casa com 20G nem 210; erro de 1 letra é tolerado
+}
+function iaISO(v) { const t = String(v || ''); const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : t.slice(0, 10); }
+function iaBR(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
 function iaNum(v) { const n = numeroFlexivel(v); return n === null || n === undefined ? null : n; }
 function iaFornDoCnpj(cnpj) { const c = (listaCotacoes.flatMap(x => x.fornecedores || [])).find(f => mesmoCnpj(f.cnpj, cnpj)); return c ? (c.razaoSocial || c.cnpj) : cnpj; }
 function iaFiltrosLimpos() { const f = relatoriosFiltros; relatoriosFiltros = { de: '', ate: '', fornecedor: '', fornecedorExato: false, destino: '', recurso: '', tipo: '', produto: '' }; return f; }
@@ -25,8 +55,8 @@ const IA_FERRAMENTAS = [
       input_schema: { type: 'object', properties: { numero: { type: 'string' }, fornecedor: { type: 'string' } }, required: ['numero'] } },
     { name: 'consultar_pedido', description: 'Situação de um pedido (cotação): origem, datas, fornecedores e, por item, quantidade cotada × faturada (NF do app) × lançada (ERP) × entregue, valor, e divergências detectadas.',
       input_schema: { type: 'object', properties: { pedido: { type: 'string' }, fornecedor: { type: 'string', description: 'opcional: filtrar por fornecedor' } }, required: ['pedido'] } },
-    { name: 'buscar_produto', description: 'Procura um material pelo nome ou código em cotações, NFs (XML) e lançamentos do ERP: quantidades, preços, fornecedores e pedidos.',
-      input_schema: { type: 'object', properties: { texto: { type: 'string' }, fornecedor: { type: 'string' } }, required: ['texto'] } },
+    { name: 'buscar_produto', description: 'Procura um material pelo nome ou código em cotações, NFs (XML) e lançamentos do ERP: quantidades, preços, fornecedores e pedidos. Devolve também resumo_precos (compras, última data, último preço, média, mínimo e máximo por produto, já calculados) e, nas cotações, a descricao do SmartCompras, onde costuma aparecer a marca. Use o campo marca para filtrar cotações pela marca.',
+      input_schema: { type: 'object', properties: { texto: { type: 'string' }, fornecedor: { type: 'string' }, marca: { type: 'string' } }, required: ['texto'] } },
     { name: 'divergencias', description: 'Divergências de auditoria (pendentes por padrão) com pedido, fornecedor, tipo e produtos. É a mesma lista de Relatórios → Divergências.',
       input_schema: { type: 'object', properties: { pedido: { type: 'string' }, fornecedor: { type: 'string' }, incluir_resolvidas: { type: 'boolean' } } } },
     { name: 'pendencias', description: 'Resumo da Central de notificações: o que está parado ou envelhecendo, por grupo e urgência.', input_schema: { type: 'object', properties: {} } },
@@ -75,17 +105,38 @@ const IA_EXEC = {
         listaCotacoes.forEach(c => (c.itens || []).forEach(i => {
             if (!(iaCasa(i.nomeOficial || '', a.texto) || iaCasa(i.descricao || '', a.texto) || String(i.codProduto) === String(a.texto))) return;
             const forn = iaFornDoCnpj(i.cnpjFornecedor); if (a.fornecedor && !iaCasa(forn, a.fornecedor)) return;
-            out.cotacoes.push({ pedido: c.pedido, produto: i.nomeOficial || String(i.descricao || '').slice(0, 90), fornecedor: forn, quantidade: iaNum(i.quantidade), preco_unitario: iaNum(i.precoUnitario), cod: i.codProduto });
+            if (a.marca && !iaCasa(`${i.descricao || ''} ${i.nomeOficial || ''}`, a.marca)) return;
+            out.cotacoes.push({ pedido: c.pedido, produto: i.nomeOficial || String(i.descricao || '').slice(0, 90), descricao: String(i.descricao || '').slice(0, 100), fornecedor: forn, quantidade: iaNum(i.quantidade), preco_unitario: iaNum(i.precoUnitario), cod: i.codProduto });
         }));
         listaNfsProcessadas.forEach(n => (n.itens || []).forEach(i => {
             if (!iaCasa(i.xProd, a.texto)) return; if (a.fornecedor && !iaCasa(n.fornecedor, a.fornecedor)) return;
-            out.nfs_xml.push({ nf: n.nf, fornecedor: n.fornecedor, produto: i.xProd, quantidade: i.quantidade, valor_unitario: i.valorUnitario, pedido: n.pedido || undefined });
+            out.nfs_xml.push({ data: iaISO(n.emissao || (n.xmlDados && n.xmlDados.dhEmi) || ''), nf: n.nf, fornecedor: n.fornecedor, produto: i.xProd, quantidade: i.quantidade, valor_unitario: i.valorUnitario, pedido: n.pedido || undefined });
         }));
         listaEntradasErp.forEach(e => (e.itens || []).forEach(i => {
             if (!iaCasa(i.nome, a.texto)) return; const nome = e.fornecedorNomeEditado || e.fornecedorNomeRelatorio; if (a.fornecedor && !iaCasa(nome, a.fornecedor)) return;
-            out.erp.push({ nf: e.nf, fornecedor: nome, produto: i.nome, quantidade: i.quantidade, valor_unitario: i.valorUnitario, data: e.data });
+            out.erp.push({ nf: e.nf, fornecedor: nome, produto: i.nome, quantidade: i.quantidade, valor_unitario: i.valorUnitario, data: iaISO(e.data) });
         }));
-        return { cotacoes: iaCorta(out.cotacoes), nfs_xml: iaCorta(out.nfs_xml), erp: iaCorta(out.erp) };
+        const maisNovo = (x, y) => String(y.data || '').localeCompare(String(x.data || ''));   // mais recente primeiro: serve para "última vez que chegou"
+        out.nfs_xml.sort(maisNovo); out.erp.sort(maisNovo);
+        const res = { cotacoes: iaCorta(out.cotacoes), nfs_xml: iaCorta(out.nfs_xml), erp: iaCorta(out.erp) };
+        const grupos = new Map();   // contas prontas (a IA não precisa calcular média): NFs do XML e ERP, por produto
+        [...out.nfs_xml.map(x => ({ ...x, fonte: 'NF' })), ...out.erp.map(x => ({ ...x, fonte: 'ERP' }))].forEach(x => {
+            const v = iaNum(x.valor_unitario); if (v === null || !(v > 0)) return;
+            const k = iaPalavras(x.produto).join(' '); const g = grupos.get(k) || { produto: x.produto, precos: [] }; g.precos.push({ v, data: x.data || '', nf: x.nf }); grupos.set(k, g);
+        });
+        if (grupos.size) res.resumo_precos = [...grupos.values()].slice(0, 8).map(g => { g.precos.sort((x, y) => String(y.data).localeCompare(String(x.data))); const vs = g.precos.map(p => p.v); return { produto: g.produto, compras: vs.length, ultima_data: iaBR(g.precos[0].data) || undefined, ultima_nf: g.precos[0].nf, ultimo_preco: g.precos[0].v, media: Math.round(vs.reduce((a, b) => a + b, 0) / vs.length * 100) / 100, minimo: Math.min(...vs), maximo: Math.max(...vs) }; });
+        const qd = (!res.cotacoes.total && !res.nfs_xml.total && !res.erp.total) ? iaQuisDizer(a.texto) : [];
+        if (qd.length) res.quis_dizer = qd;
+        else if (!res.cotacoes.total && !res.nfs_xml.total && !res.erp.total) {   // não existe exatamente isso: mostra o que existe de parecido (sem o número/medida)
+            const semNum = iaPalavras(a.texto).filter(w => !/^\d/.test(w)).join(' ');
+            if (semNum && semNum !== iaPalavras(a.texto).join(' ')) {
+                const nomes = new Set();
+                listaCotacoes.forEach(c => (c.itens || []).forEach(i => { if (iaCasa(i.nomeOficial || '', semNum)) nomes.add(i.nomeOficial); }));
+                listaEntradasErp.forEach(e => (e.itens || []).forEach(i => { if (iaCasa(i.nome, semNum)) nomes.add(i.nome); }));
+                res.nao_existe_exato = a.texto; res.parecidos = [...nomes].slice(0, 10);
+            }
+        }
+        return res;
     },
     divergencias(a) {
         const f = iaFiltrosLimpos(); let l;
@@ -112,45 +163,90 @@ function iaExecutar(nome, entrada) {
     catch (e) { console.error('Assistente: erro na consulta', nome, e); return { erro: 'Falhou ao consultar: ' + (e && e.message) }; }
 }
 
-// ---------------- conversa ----------------
-const IA_SISTEMA = `Você é o Assistente de consultas de um app de auditoria de notas fiscais e cotações de um hospital. Responda sempre em português do Brasil, de forma curta e direta.
-Regras:
-- Use SEMPRE as consultas (ferramentas) para obter dados; nunca invente números, notas, pedidos ou fornecedores. Se a consulta não trouxer o dado, diga que não encontrou.
-- Não faça contas fiscais nem decida nada sozinho: apresente o que as consultas devolveram e, se algo parecer divergente, diga o que está diferente e onde conferir.
-- Cite sempre o número da NF e do pedido. Valores em R$ com vírgula decimal. Quando o resultado vier cortado (campo "total" maior que "mostrando"), avise.
-- Se a pergunta for ambígua (por exemplo, um nome de fornecedor que pode ser vários), peça para especificar.
-- Você só lê dados: não altera nada no app.`;
+// ---------------- conversa com a IA (Cloudflare Workers AI, texto puro) ----------------
+// Funciona com qualquer modelo de texto: a IA pede consultas respondendo um JSON {"consultas":[{"nome","args"}]}, o app executa (só leitura)
+// e devolve os resultados; quando tem o que precisa, ela responde em texto. Antes de chamar a IA, o app já faz as consultas que o modo
+// básico reconhece e entrega os resultados junto com a pergunta: na maioria das vezes basta UMA chamada, e a IA só redige a resposta.
+function iaDescricaoConsultas() {
+    return IA_FERRAMENTAS.map(f => `- ${f.name}(${Object.entries(f.input_schema.properties || {}).map(([k, v]) => k + ': ' + v.type).join(', ')}): ${f.description}`).join('\n');
+}
+function iaSistema() {
+    return `Você é um assistente de IA útil, de uso geral, que responde em português do Brasil, de forma direta. Dentro de um app de auditoria de notas fiscais e cotações de um hospital você também tem acesso a consultas de leitura aos dados do app. Pode responder qualquer assunto; use as consultas quando a pergunta envolver NFs, pedidos, materiais, fornecedores ou divergências.
+HOJE É ${dataLocalISO().split('-').reverse().join('/')}.
+CONSULTAS DISPONÍVEIS (só leitura):
+${iaDescricaoConsultas()}
 
-function iaPodar(msgs) {   // mantém só as últimas perguntas (sempre começando numa pergunta, para não separar uma consulta do seu resultado)
-    const idx = []; msgs.forEach((m, i) => { if (m.role === 'user' && typeof m.content === 'string') idx.push(i); });
-    return idx.length > 4 ? msgs.slice(idx[idx.length - 4]) : msgs;
+COMO USAR AS CONSULTAS:
+- Se a mensagem já traz "RESULTADOS DAS CONSULTAS", use-os.
+- Para pedir dados, responda SOMENTE com um JSON, sem outro texto: {"consultas":[{"nome":"buscar_produto","args":{"texto":"atadura crepom 15cm"}}]}. Depois que os resultados chegarem, responda em texto.
+- Se uma busca não achar nada, NÃO desista nem diga que vai tentar: faça você mesma outra consulta com menos palavras (só o nome principal, sem medida ou sem fornecedor, ou corrigindo erro de digitação) e só então responda. Busque pelo nome como aparece nos dados (ex.: "crepom", não "crepon").
+- As listas vêm da mais recente para a mais antiga (campo data): "última vez que chegou" é a primeira de NFs ou ERP; informe a data e a NF.
+- Confira a premissa: se o item exato pedido não existe (ex.: "jelco 21" quando só há 20G, 22G, 24G), diga isso e mostre os parecidos que existem.
+- "fornecedor" é a empresa que vende (distribuidora), nunca confunda com marca. A marca, quando existe, aparece no texto da descricao das cotações do SmartCompras (ex.: "NOREPINEFRINA 2MG/ML AMPOLA 4ML EPIKABI FRESENIUS KABI" → marca Fresenius Kabi); extraia dali, e use o argumento marca de buscar_produto para filtrar. NF (XML) e ERP não têm campo de marca.
+- Médias, mínimos e máximos de preço: use o resumo_precos já calculado; não refaça contas.
+- Formato: datas em dd/mm/aaaa; use **negrito** para o que importa (produto, valor, data), listas com "- " ou numeradas "1." quando houver mais de um item, e escreva sempre "pedido 1731" e "NF 36435" por extenso, porque o app transforma isso em link clicável.
+- Se o resultado traz "quis_dizer", pergunte ao usuário se era uma dessas palavras; nunca invente nome de medicamento ou material.
+- Números, notas e pedidos do app só podem vir das consultas: não os invente; se não achou, diga. Cite a NF e o pedido. Valores em R$ com vírgula. Se o resultado veio cortado (total maior que mostrando), avise.
+- Não altere nada no app e não tome decisões fiscais: apresente os dados e aponte o que parece diferente.
+- Para conhecimento geral, responda com o que você sabe; se não tiver certeza ou for um fato recente que você não tem como verificar, diga isso em uma frase.`;
+}
+const IA_PREFIXO_RES = 'RESULTADOS DAS CONSULTAS';
+function iaPodar(msgs) {   // mantém só as últimas perguntas (sempre começando numa pergunta)
+    const idx = []; msgs.forEach((m, i) => { if (m.role === 'user' && !m.content.startsWith(IA_PREFIXO_RES)) idx.push(i); });
+    return idx.length > 3 ? msgs.slice(idx[idx.length - 3]) : msgs;
 }
 async function iaChamar(msgs) {
     const user = firebase.auth().currentUser; if (!user) throw new Error('Você precisa estar logado.');
     const token = await user.getIdToken();
-    const r = await fetch(assistenteUrl, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ system: IA_SISTEMA, tools: IA_FERRAMENTAS, messages: iaPodar(msgs) }) });
+    const t0 = Date.now(), ctl = new AbortController(), tempo = setTimeout(() => ctl.abort(), 60000);
+    if (iaCtlUsuario) iaCtlUsuario.signal.addEventListener('abort', () => ctl.abort());
+    const corpo = JSON.stringify({ system: iaSistema(), messages: iaPodar(msgs) });
+    const enviar = () => fetch(assistenteUrl, { method: 'POST', signal: ctl.signal, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: corpo });
+    let r;
+    try { try { r = await enviar(); } catch (e) { if (e && e.name === 'AbortError') throw e; r = await enviar(); } }   // falha de rede: tenta mais uma vez
+    catch (e) { if (iaInterrompido) throw new Error('INTERROMPIDO'); throw new Error(e && e.name === 'AbortError' ? 'a IA demorou mais de 60 segundos' : 'não consegui falar com o Worker (' + (e && e.message || 'sem detalhe') + ', após ' + Math.round((Date.now() - t0) / 1000) + 's)'); }
+    finally { clearTimeout(tempo); }
     const dados = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error((dados.error && (dados.error.message || dados.error)) || ('Erro ' + r.status));
-    return dados;
+    return String(dados.text || '').trim();
 }
+function iaExtrairConsultas(txt) {
+    const limpo = String(txt).replace(/```json|```/gi, '');
+    const a = limpo.indexOf('{'), b = limpo.lastIndexOf('}');
+    if (a < 0 || b <= a) return null;
+    try { const o = JSON.parse(limpo.slice(a, b + 1)); return Array.isArray(o.consultas) ? o.consultas.filter(c => c && IA_EXEC[c.nome]).slice(0, 3) : null; } catch (e) { return null; }
+}
+function iaRodar(consultas, aoUsar) {
+    return consultas.map(c => { if (aoUsar) aoUsar(c.nome, c.args); return { consulta: c.nome, args: c.args || {}, resultado: iaExecutar(c.nome, c.args) }; });
+}
+function iaTextoResultados(lista) { return JSON.stringify(lista).slice(0, 9000); }
 async function iaPerguntar(texto, aoUsarConsulta) {
-    assistenteMsgs.push({ role: 'user', content: texto });
-    for (let i = 0; i < IA_MAX_RODADAS; i++) {
-        const resp = await iaChamar(assistenteMsgs);
-        assistenteMsgs.push({ role: 'assistant', content: resp.content });
-        const usos = (resp.content || []).filter(b => b.type === 'tool_use');
-        if (!usos.length) return (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim() || '(sem resposta)';
-        const resultados = usos.map(u => { if (aoUsarConsulta) aoUsarConsulta(u.name, u.input); return { type: 'tool_result', tool_use_id: u.id, content: JSON.stringify(iaExecutar(u.name, u.input)).slice(0, 14000) }; });
-        assistenteMsgs.push({ role: 'user', content: resultados });
-    }
-    return 'A pergunta pediu consultas demais. Tente perguntar de forma mais específica (um fornecedor, um pedido ou um material por vez).';
+    const n0 = assistenteMsgs.length;
+    try {
+        const plano = iaEntender(texto).map(([nome, args]) => ({ nome, args }));
+        // consultas por palavra-chave que não acharam nada (ex.: "material" que não existe) não entram: a IA decide o que consultar
+        const previos = iaRodar(plano, aoUsarConsulta).filter(x => !(x.consulta === 'buscar_produto' && !(x.resultado.cotacoes.total + x.resultado.nfs_xml.total + x.resultado.erp.total)));
+        assistenteMsgs.push({ role: 'user', content: texto + (previos.length ? `\n\n${IA_PREFIXO_RES} (já feitas):\n${iaTextoResultados(previos)}` : '') });
+        for (let i = 0; i < 6; i++) {
+            if (iaInterrompido) throw new Error('INTERROMPIDO');
+            const txt = await iaChamar(assistenteMsgs);
+            assistenteMsgs.push({ role: 'assistant', content: txt || '(vazio)' });
+            const consultas = iaExtrairConsultas(txt);
+            if (!consultas || !consultas.length) { if (!txt) throw new Error('A IA não respondeu.'); return txt; }
+            const res = iaRodar(consultas, aoUsarConsulta);
+            assistenteMsgs.push({ role: 'user', content: `${IA_PREFIXO_RES}:\n${iaTextoResultados(res)}\n\nAgora responda ao usuário em texto (ou faça outra consulta se faltar algo).` });
+        }
+        // muitas rodadas de consulta: pede à IA que responda com o que já tem, em vez de desistir
+        assistenteMsgs.push({ role: 'user', content: 'Chega de consultas. Responda agora ao usuário, em texto, com o que já foi encontrado (e diga o que faltou).' });
+        const fim = await iaChamar(assistenteMsgs); assistenteMsgs.push({ role: 'assistant', content: fim || '(vazio)' });
+        return fim || 'A pergunta pediu consultas demais. Tente perguntar de forma mais específica (um fornecedor, um pedido ou um material por vez).';
+    } catch (e) { assistenteMsgs.length = n0; throw e; }
 }
-
 
 // ---------------- modo básico: grátis, sem IA e sem instalação (2.13.1) ----------------
 // Entende a pergunta por palavras-chave (número de pedido, número de NF, fornecedor, material, "divergência", "pendente", "sem pedido"...)
 // e responde com as MESMAS consultas que a IA usaria. Não conversa livremente, mas responde as perguntas do dia a dia na hora e de graça.
-const IA_PARADAS = new Set(['QUAL', 'QUAIS', 'QUANTO', 'QUANTOS', 'QUANTA', 'QUANTAS', 'TEM', 'TEMOS', 'HA', 'EXISTE', 'SITUACAO', 'STATUS', 'DO', 'DA', 'DE', 'DOS', 'DAS', 'NO', 'NA', 'NOS', 'NAS', 'UM', 'UMA', 'O', 'A', 'OS', 'AS', 'E', 'EM', 'COM', 'PARA', 'POR', 'SOBRE', 'ME', 'MOSTRE', 'MOSTRA', 'MOSTRAR', 'LISTE', 'LISTA', 'VER', 'QUERO', 'PROCURE', 'BUSQUE', 'BUSCAR', 'MATERIAL', 'MATERIAIS', 'PRODUTO', 'PRODUTOS', 'COTADO', 'COTADA', 'RECEBIDO', 'RECEBIDA', 'ESTA', 'ESTAO', 'FORAM', 'FOI', 'SAO', 'QUE', 'DE', 'ULTIMAS', 'ULTIMA', 'TODAS', 'TODOS', 'ESTOQUE', 'CHEGOU', 'CHEGARAM', 'FORNECEDOR', 'FORNECEDORES', 'BOM', 'DIA', 'TARDE', 'NOITE', 'OI', 'OLA', 'OBRIGADO', 'POR', 'FAVOR']);
+const IA_PARADAS = new Set(['QUAL', 'QUAIS', 'QUANTO', 'QUANTOS', 'QUANTA', 'QUANTAS', 'TEM', 'TEMOS', 'HA', 'EXISTE', 'SITUACAO', 'STATUS', 'DO', 'DA', 'DE', 'DOS', 'DAS', 'NO', 'NA', 'NOS', 'NAS', 'UM', 'UMA', 'O', 'A', 'OS', 'AS', 'E', 'EM', 'COM', 'PARA', 'POR', 'SOBRE', 'ME', 'MOSTRE', 'MOSTRA', 'MOSTRAR', 'LISTE', 'LISTA', 'VER', 'QUERO', 'PROCURE', 'BUSQUE', 'BUSCAR', 'MATERIAL', 'MATERIAIS', 'PRODUTO', 'PRODUTOS', 'COTADO', 'COTADA', 'RECEBIDO', 'RECEBIDA', 'ESTA', 'ESTAO', 'FORAM', 'FOI', 'SAO', 'QUE', 'DE', 'ULTIMAS', 'ULTIMA', 'TODAS', 'TODOS', 'ESTOQUE', 'CHEGOU', 'CHEGARAM', 'FORNECEDOR', 'FORNECEDORES', 'BOM', 'DIA', 'TARDE', 'NOITE', 'OI', 'OLA', 'OBRIGADO', 'POR', 'FAVOR', 'COMO', 'ESTAMOS', 'VEZ', 'VEZES', 'COMPRA', 'COMPRAS', 'COMPRADO', 'COMPRADA', 'MARCA', 'POSSIVEL', 'SE', 'SEI', 'QUIS', 'DIZER', 'EU', 'ENTRADA', 'ENTRADAS', 'ULTIMAMENTE', 'ULTIMO', 'ULTIMOS', 'QUANDO', 'CHEGADA', 'ESTA', 'DIGA', 'FALE', 'EXPLIQUE', 'PORQUE', 'POR', 'QUE', 'ESTAO']);
 const IA_GENERICAS_FORN = new Set(['COMERCIO', 'COMERCIAL', 'DISTRIBUIDORA', 'PRODUTOS', 'HOSPITALARES', 'HOSPITALAR', 'MEDICAMENTOS', 'MEDICOS', 'MEDICO', 'LTDA', 'EIRELI', 'IMPORTACAO', 'EXPORTACAO', 'INDUSTRIA', 'SERVICOS', 'MATERIAIS', 'EQUIPAMENTOS', 'FARMACEUTICA', 'FARMACEUTICOS', 'SAUDE', 'ARTEFATOS', 'DROGARIA']);
 function iaFornecedoresConhecidos() {
     const nomes = new Set();
@@ -185,7 +281,7 @@ function iaEntender(texto) {
     if (tem(/PENDENCIA|PENDENTE|ATENCAO|URGENTE|PARADO|O QUE FALTA|HOJE|NOTIFICACO/) && !forn) { plano.push(['pendencias', {}]); return plano; }
     if (forn && tem(/\bNFS?\b|NOTAS?\b/)) { plano.push(['buscar_nfs', { fornecedor: forn, so_com_pendencia: tem(/PENDENCIA|PENDENTE|PROBLEMA/) }]); return plano; }
     if (forn && !tem(/QUANT|MATERIAL|PRODUTO/)) { plano.push(['fornecedor', { nome: forn }]); return plano; }
-    const resto = t.filter(w => !IA_PARADAS.has(w) && w !== (forn || '').toUpperCase() && !/^\d+$/.test(w) || /^\d{3,}$/.test(w));
+    const resto = t.filter(w => !IA_PARADAS.has(w) && w !== (forn || '').toUpperCase());
     if (resto.length) { plano.push(['buscar_produto', { texto: resto.join(' '), ...(forn ? { fornecedor: forn } : {}) }]); return plano; }
     return plano;
 }
@@ -208,9 +304,11 @@ const IA_RENDER = {
     },
     buscar_produto(r) {
         const sec = (tit, d, f) => d.total ? `<b>${tit} (${d.total})</b><br>` + d.itens.map(f).join('<br>') : '';
-        const partes = [sec('Cotações', r.cotacoes, c => `• pedido ${c.pedido} · ${c.produto} · ${c.fornecedor} · ${c.quantidade ?? '—'} × ${IA_BRL(c.preco_unitario)}`),
-            sec('NFs (XML)', r.nfs_xml, n => `• NF ${n.nf} · ${n.fornecedor} · ${n.produto} · ${n.quantidade} × ${IA_BRL(n.valor_unitario)}${n.pedido ? ' · pedido ' + n.pedido : ''}`),
-            sec('Lançado no ERP', r.erp, e => `• NF ${e.nf} · ${e.fornecedor} · ${e.produto} · ${e.quantidade} × ${IA_BRL(e.valor_unitario)}${e.data ? ' · ' + e.data : ''}`)].filter(Boolean);
+        const partes = [sec('Cotações', r.cotacoes, c => `• pedido ${c.pedido} · ${c.produto}${c.descricao && iaPalavras(c.descricao).join(' ') !== iaPalavras(c.produto).join(' ') ? ' (' + escRel(c.descricao) + ')' : ''} · ${c.fornecedor} · ${c.quantidade ?? '—'} × ${IA_BRL(c.preco_unitario)}`),
+            sec('NFs (XML)', r.nfs_xml, n => `• NF ${n.nf}${n.data ? ' (' + iaBR(n.data) + ')' : ''} · ${n.fornecedor} · ${n.produto} · ${n.quantidade} × ${IA_BRL(n.valor_unitario)}${n.pedido ? ' · pedido ' + n.pedido : ''}`),
+            sec('Lançado no ERP', r.erp, e => `• NF ${e.nf} · ${e.fornecedor} · ${e.produto} · ${e.quantidade} × ${IA_BRL(e.valor_unitario)}${e.data ? ' · ' + iaBR(e.data) : ''}`)].filter(Boolean);
+        if (r.quis_dizer) return `Não achei "${escRel(r.quis_dizer.map(x => x.digitado).join(' ')).toLowerCase()}" no cadastro. Você quis dizer:<br>` + r.quis_dizer.map(x => '• ' + x.parecidas.map(escRel).join(' / ')).join('<br>');
+        if (r.nao_existe_exato) return `Não existe "${escRel(r.nao_existe_exato)}" em cotações, NFs ou ERP.` + (r.parecidos.length ? '<br>Existem produtos parecidos:<br>' + r.parecidos.map(n => '• ' + escRel(n)).join('<br>') : '');
         return partes.length ? partes.join('<br><br>') : 'Não achei esse material em cotações, NFs ou lançamentos do ERP.';
     },
     divergencias(r) {
@@ -235,8 +333,41 @@ function iaResponderBasico(texto) {
 
 // ---------------- tela ----------------
 const IA_SUGESTOES = ['O que está pendente hoje?', 'Quais divergências estão pendentes?', 'NFs sem pedido', 'Situação do pedido 1726'];
+// pedido 1731 / NF 36435 viram links (só no texto, nunca dentro de tags): abre a Central do pedido ou o editor da NF
+function iaLinkar(html) {
+    return String(html).replace(/(<[^>]*>)|\b(pedido)\s+(\d{3,6})\b|\b(NF)\s*(?:n[ºo.]*\s*)?(\d{2,9})\b/gi, (m, tag, p1, ped, n1, nf) =>
+        tag ? tag : ped ? `<a class="ia-link" onclick="abrirCentralPedido('${ped}')">${m}</a>` : `<a class="ia-link" onclick="iaAbrirNf('${nf}')">${m}</a>`);
+}
+function iaAbrirNf(numero) {
+    const l = visoesNf().filter(v => normNfNumero(v.numeroNf) === normNfNumero(numero));
+    if (!l.length) return toast('NF ' + numero + ' não encontrada no app.');
+    l.sort((a, b) => String(b.dataISO || '').localeCompare(String(a.dataISO || '')));
+    if (l.length > 1) toast(l.length + ' NFs com esse número: abrindo a mais recente (' + l[0].fornecedor + ').');
+    abrirEditorNf(l[0].id);
+}
 function iaHtmlResposta(t) {
-    return escRel(String(t).replace(/&/g, '&amp;')).replace(/&amp;amp;/g, '&amp;').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/^[-•]\s+/gm, '• ').replace(/\n/g, '<br>');
+    const h = escRel(String(t).replace(/&/g, '&amp;')).replace(/&amp;amp;/g, '&amp;')
+        .replace(/^#{1,4}\s*(.+)$/gm, '<b>$1</b>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/^\s*[-•*]\s+/gm, '• ').replace(/^\s*(\d{1,2})[.)]\s+/gm, '<span class="ia-num">$1.</span> ')
+        .replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+    return iaLinkar(h);
+}
+function iaFmtSeg(ms) { return (ms / 1000).toFixed(1).replace('.', ',') + 's'; }
+function iaRodape(ms, rotulo, usadas) {
+    return `<div class="ia-rod"><span>⏱ ${iaFmtSeg(ms)} · ${rotulo}${usadas && usadas.length ? ' · consultas: ' + escRel([...new Set(usadas)].join(', ')) : ''}</span><button type="button" class="ia-mini" onclick="iaCopiar(this)">Copiar</button></div>`;
+}
+function iaCopiar(btn) {
+    const b = btn.closest('.ia-bolha'); const c = b && b.querySelector('.ia-corpo'); if (!c) return;
+    const txt = c.innerText;
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('✓ Resposta copiada.')).catch(() => {
+        try { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('✓ Resposta copiada.'); } catch (e) { toast('Não consegui copiar.'); }
+    });
+}
+function iaParar() { if (!assistenteOcupado) return; iaInterrompido = true; if (iaCtlUsuario) iaCtlUsuario.abort(); }
+function iaNovaConversa() {
+    if (assistenteOcupado) iaParar();
+    assistenteMsgs = []; const log = document.getElementById('ia-log'); if (log) log.innerHTML = '';
+    const sug = document.getElementById('ia-sugestoes'); if (sug) sug.style.display = '';
 }
 function iaAdicionarBolha(tipo, html) {
     const log = document.getElementById('ia-log'); if (!log) return null;
@@ -245,9 +376,10 @@ function iaAdicionarBolha(tipo, html) {
 function prepararAssistente() {
     const el = document.getElementById('assistente-conteudo'); if (!el) return;
     el.innerHTML = `<div class="card" id="ia-config"></div>
+        <div class="ia-topo"><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
         <div class="ia-log" id="ia-log"></div>
         <div class="retro-chips" id="ia-sugestoes">${IA_SUGESTOES.map(s => `<button type="button" class="retro-chip" onclick="iaUsarSugestao(this)">${escRel(s)}</button>`).join('')}</div>
-        <div class="ia-entrada"><input type="text" id="ia-texto" class="input-box" placeholder="Pergunte sobre NFs, pedidos, materiais, fornecedores..." onkeydown="if(event.key==='Enter')enviarAssistente()"><button type="button" class="central-status-toggle" id="ia-enviar" onclick="enviarAssistente()">Enviar</button></div>
+        <div class="ia-entrada"><input type="text" id="ia-texto" class="input-box" placeholder="Pergunte sobre NFs, pedidos, materiais, fornecedores..." onkeydown="if(event.key==='Enter'&&!assistenteOcupado)enviarAssistente()"><button type="button" class="central-status-toggle" id="ia-enviar" onclick="enviarAssistente()">Enviar</button></div>
         <div class="xml-item-meta" style="margin-top:8px">O Assistente só lê os dados do app e pode errar: confira os números importantes (a resposta indica de onde veio cada dado).</div>`;
     iaRenderConfig();
     settingsDocRef.get().then(d => { assistenteUrl = ((d.data() || {}).assistenteUrl) || ''; iaRenderConfig(); }).catch(() => { });
@@ -257,7 +389,7 @@ function iaRenderConfig() {
     c.innerHTML = assistenteUrl
         ? `<div class="xml-item-meta">✓ Modo IA ligado (intermediário configurado). <a class="ctl-pend-link" onclick="assistenteUrl='';iaRenderConfig()">Voltar ao modo básico</a></div>`
         : `<div class="xml-item-meta"><strong>Modo básico (grátis, sem IA).</strong> Entende pedido, NF, fornecedor, material, divergências e pendências e responde na hora, sem instalar nada.</div>
-           <details class="retro-det"><summary>Ligar a IA (opcional)</summary><div class="xml-item-meta">Para perguntas em linguagem livre. Siga o COMO-INSTALAR-O-ASSISTENTE.md e cole o endereço do intermediário:</div>
+           <details class="retro-det"><summary>Ligar a IA (opcional, grátis na Cloudflare)</summary><div class="xml-item-meta">Para perguntas em linguagem livre. Siga o COMO-INSTALAR-O-ASSISTENTE.md e cole o endereço do seu Worker:</div>
            <div class="ia-entrada"><input type="text" id="ia-url" class="input-box" placeholder="https://assistente-auditoria.seunome.workers.dev"><button type="button" class="central-status-toggle" onclick="salvarUrlAssistente()">Salvar</button></div></details>`;
 }
 async function salvarUrlAssistente() {
@@ -267,25 +399,34 @@ async function salvarUrlAssistente() {
     catch (e) { console.error(e); toast('✕ Erro ao salvar o endereço.'); }
 }
 function iaUsarSugestao(btn) { const i = document.getElementById('ia-texto'); if (i) { i.value = btn.textContent; enviarAssistente(); } }
+function iaBotaoEstado(ocupado) { const bt = document.getElementById('ia-enviar'); if (bt) { bt.textContent = ocupado ? '■ Parar' : 'Enviar'; bt.classList.toggle('ia-parar', !!ocupado); } }
 async function enviarAssistente() {
-    const inp = document.getElementById('ia-texto'); if (!inp || assistenteOcupado) return;
+    if (assistenteOcupado) return iaParar();   // enquanto responde, o botão vira "Parar"
+    const inp = document.getElementById('ia-texto'); if (!inp) return;
     const texto = inp.value.trim(); if (!texto) return;
-    inp.value = ''; assistenteOcupado = true; const bt = document.getElementById('ia-enviar'); if (bt) bt.disabled = true;
+    inp.value = ''; assistenteOcupado = true; iaInterrompido = false; iaCtlUsuario = new AbortController(); iaBotaoEstado(true);
     const sug = document.getElementById('ia-sugestoes'); if (sug) sug.style.display = 'none';
     iaAdicionarBolha('eu', escRel(texto));
+    const t0 = Date.now(), usadas = [];
+    const fim = () => { clearInterval(iaTimer); assistenteOcupado = false; iaCtlUsuario = null; iaBotaoEstado(false); const log = document.getElementById('ia-log'); if (log) log.scrollTop = log.scrollHeight; };
     if (!assistenteUrl) { // modo básico: grátis, sem IA e sem rede
         const r = iaResponderBasico(texto);
-        iaAdicionarBolha('ia', r.html + (r.usadas.length ? `<div class="ia-fonte">Modo básico · consultas: ${escRel([...new Set(r.usadas)].join(', '))}</div>` : ''));
-        assistenteOcupado = false; if (bt) bt.disabled = false; return;
+        iaAdicionarBolha('ia', `<div class="ia-corpo">${iaLinkar(r.html)}</div>` + iaRodape(Date.now() - t0, 'modo básico', r.usadas));
+        return fim();
     }
-    const pens = iaAdicionarBolha('ia', '<span class="ia-pensando">Consultando…</span>');
-    const usadas = [], n0 = assistenteMsgs.length - 1; // (a pergunta já entrou no histórico)
+    const pens = iaAdicionarBolha('ia', '<span class="ia-pensando">Pensando… 0s</span>');
+    const atual = () => { const q = [...new Set(usadas)]; if (pens) pens.innerHTML = `<span class="ia-pensando">${q.length ? 'Consultando: ' + escRel(q.join(', ')) : 'Pensando'}… ${Math.round((Date.now() - t0) / 1000)}s</span>`; };
+    clearInterval(iaTimer); iaTimer = setInterval(atual, 1000);
     try {
-        const r = await iaPerguntar(texto, (nome, ent) => { usadas.push(nome); if (pens) pens.innerHTML = `<span class="ia-pensando">Consultando: ${escRel(usadas.join(', '))}…</span>`; });
-        if (pens) pens.innerHTML = iaHtmlResposta(r) + (usadas.length ? `<div class="ia-fonte">Consultas feitas: ${escRel([...new Set(usadas)].join(', '))}</div>` : '');
+        const r = await iaPerguntar(texto, (nome) => { usadas.push(nome); atual(); });
+        if (pens) pens.innerHTML = `<div class="ia-corpo">${iaHtmlResposta(r)}</div>` + iaRodape(Date.now() - t0, 'IA', usadas);
     } catch (e) {
-        console.error(e); assistenteMsgs.length = n0; // desfaz a pergunta e qualquer consulta pela metade, para a próxima não quebrar
-        if (pens) pens.innerHTML = `<span style="color:var(--danger-solid)">✕ ${escRel(e.message || 'Erro ao consultar.')}</span>`;
+        if (iaInterrompido || (e && e.message === 'INTERROMPIDO')) { if (pens) pens.innerHTML = `<div class="ia-corpo"><i>⏹ Interrompido por você.</i></div><div class="ia-rod"><span>⏱ ${iaFmtSeg(Date.now() - t0)}</span></div>`; }
+        else {
+            // a IA falhou (limite do dia, rede...): responde pelo modo básico, que não depende dela
+            console.error(e); const b = iaResponderBasico(texto);
+            if (pens) pens.innerHTML = `<div class="ia-fonte" style="margin:0 0 8px">⚠ IA indisponível (${escRel(e.message || 'erro')}). Resposta do modo básico:</div><div class="ia-corpo">${iaLinkar(b.html)}</div>` + iaRodape(Date.now() - t0, 'modo básico', b.usadas);
+        }
     }
-    assistenteOcupado = false; if (bt) bt.disabled = false; const log = document.getElementById('ia-log'); if (log) log.scrollTop = log.scrollHeight;
+    fim();
 }

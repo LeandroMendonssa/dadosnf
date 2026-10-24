@@ -100,18 +100,18 @@ const AJUDA_ARTIGOS = [
         'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
       ],
       dicas: ['O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.', 'Na entrada (XML e relatório do ERP) o app já mostra "Verificações da entrada" com os avisos que valem conferir na hora.'], tutorial: null },
-    { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.13.1',
+    { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.13.3',
       resumo: 'Uma IA que responde perguntas sobre os dados do app, só lendo, sem alterar nada.',
       palavras: 'assistente ia inteligencia artificial pergunta consulta chat divergencia material quantidade fornecedor pedido nf',
       tela: [{ id: 'screen-assistente', titulo: 'Assistente', rotulo: 'Abrir o Assistente' }],
       passos: [
         'Funciona de graça e sem instalar nada, no "modo básico": ele entende pedido, NF, fornecedor, material, divergências e pendências por palavras-chave (ex.: "situação do pedido 1726", "NF 1067970", "NFs da MINAS SUL", "lanceta").',
-        'Opcional, para perguntas em linguagem livre: siga o arquivo COMO-INSTALAR-O-ASSISTENTE.md (chave da IA + intermediário gratuito) e cole o endereço em Mais → Assistente → Ligar a IA → Salvar. Isso é feito uma vez só.',
+        'Opcional, para perguntas em linguagem livre: siga o arquivo COMO-INSTALAR-O-ASSISTENTE.md (tudo na Cloudflare, grátis, sem cartão) e cole o endereço do seu Worker em Mais → Assistente → Ligar a IA → Salvar. Isso é feito uma vez só. Se o limite grátis do dia acabar, o modo básico responde no lugar.',
         'Abra Mais → Assistente e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
         'Sob cada resposta aparece "Consultas feitas": são as consultas que o Assistente fez nos dados do app. Ele não inventa números: quando não acha, diz que não achou.',
         'O Assistente só lê. Para resolver algo (confirmar pedido, marcar chegada), use as telas do app.'
       ],
-      dicas: ['Seja específico: um fornecedor, um pedido ou um material por vez dá respostas melhores e mais baratas.', 'Cada pergunta tem um pequeno custo na API da IA; o limite mensal você define no console da Anthropic.'], tutorial: null },
+      dicas: ['Seja específico: um fornecedor, um pedido ou um material por vez dá respostas melhores e mais baratas.', 'A IA usa o limite grátis diário da Cloudflare (10.000 neurons); passando dele, ela recusa até o dia seguinte e o modo básico continua respondendo.'], tutorial: null },
     { id: 'atencao', cat: 'Ajustes e dados', titulo: 'Central de notificações: o que está parado', versao: '2.12.3',
       resumo: 'Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.',
       palavras: 'central notificacoes notificação atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',

@@ -10,7 +10,30 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.13.1', nome: 'Assistente em modo básico: grátis, sem IA e sem instalação', status: 'atual',
+        numero: '2.13.3', nome: 'Assistente: IA mais rápida e erros claros', status: 'atual',
+        novidades: [
+            'Se a IA demorar demais (mais de 40 segundos) ou a conexão com o Worker falhar, o Assistente avisa o motivo e responde pelo modo básico, em vez de ficar travado ou mostrar só "Load failed".',
+            'A IA passou a usar por padrão um modelo menor e mais rápido, que gasta menos do limite grátis do dia, e a quantidade de dados enviada a ela foi reduzida.'
+        ],
+        implementado: ['O Worker não exige mais lista de e-mails: qualquer usuário que entra no app pode usar, e quem é barrado no app não consegue.', 'O Worker também trata respostas da IA em formatos diferentes e mostra o que recebeu quando vem vazia.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/37. Fora do app: assistente/worker-assistente.js.'],
+        testar: ['Perguntar algo no Assistente com a IA ligada e ver se responde em poucos segundos.', 'Se aparecer aviso de IA indisponível, mandar o texto do aviso.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.2', nome: 'Assistente com IA 100% Cloudflare (grátis)', status: 'concluida',
+        novidades: [
+            'A IA opcional do Assistente passou a rodar inteiramente na Cloudflare (Workers AI, plano gratuito): não precisa mais de chave da Anthropic nem de cartão. O guia COMO-INSTALAR-O-ASSISTENTE.md foi reescrito para isso.',
+            'Funciona com qualquer modelo de texto: o app já faz as consultas que reconhece pela pergunta e entrega os resultados à IA, que só redige a resposta (na maioria das vezes uma chamada só); quando precisa de mais dados, ela pede consultas em formato JSON e o app executa.',
+            'Se a IA falhar (limite grátis do dia acabou, rede, etc.), o Assistente responde sozinho pelo modo básico, avisando o motivo.'
+        ],
+        implementado: ['O Worker confere o login do app (só quem está logado e, se configurado, só os e-mails permitidos) e decide modelo e tamanho da resposta.', 'O limite grátis da Cloudflare (10.000 neurons por dia) nunca gera cobrança: passando dele, a IA apenas recusa até o dia seguinte.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/37. Fora do app: assistente/worker-assistente.js e assistente/COMO-INSTALAR-O-ASSISTENTE.md (reescritos).'],
+        testar: ['Seguir o guia, salvar o endereço em Mais → Assistente → Ligar a IA e perguntar algo em linguagem livre (ex.: "o que está pendente hoje e por quê?").', 'Conferir a resposta com as telas.', 'Se a IA recusar por limite, ver que o modo básico responde.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.1', nome: 'Assistente em modo básico: grátis, sem IA e sem instalação', status: 'concluida',
         novidades: [
             'O Assistente agora funciona logo de cara, de graça, sem chave nem instalação: o "modo básico" entende a pergunta por palavras-chave (número do pedido, número da NF, fornecedor, material, "divergências", "pendente", "sem pedido", "esperando decisão") e responde na hora com as mesmas consultas da versão com IA.',
             'Exemplos: "situação do pedido 1726", "NF 1067970", "divergências do pedido 1726", "NFs da MINAS SUL", "fornecedor SUPERMED", "quanto de lanceta temos?", "o que está pendente hoje?".',
