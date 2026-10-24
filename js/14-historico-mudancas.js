@@ -10,7 +10,20 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.13.4', nome: 'Assistente: chat mais completo, marca e médias', status: 'atual',
+        numero: '2.14.0', nome: 'Anotações no estilo Apple Notas e Assistente com endereço fixo', status: 'atual',
+        novidades: [
+            'Anotações redesenhadas como as Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir); os botões grandes do rodapé saíram.',
+            'A barra de formatação virou uma cápsula de vidro embaixo, logo acima do teclado (no celular só aparece com o teclado aberto; no computador fica sempre visível). Ela rola para o lado e os menus de cor, tamanho, espaçamento e tabela abrem logo acima dela. Antes ela ficava fixa no meio da tela ao rolar.',
+            'O título do topo (parte branca) agora acompanha o título da anotação enquanto você digita e ao salvar.',
+            'Assistente: o endereço da IA agora é fixo no app (não dá mais para trocar manualmente) e a escolha IA / Modo básico fica num seletor embaixo do campo de digitar, lembrada neste aparelho.'
+        ],
+        implementado: ['A altura do teclado passou a ser guardada para posicionar a barra de formatação (estimativa maior quando o navegador não informa).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/02, js/09, js/14, js/31 e js/37. Fora do app: assistente/COMO-INSTALAR-O-ASSISTENTE.md.'],
+        testar: ['No celular: abrir uma anotação, tocar no texto e ver a cápsula de formatação logo acima do teclado; testar negrito, lista, cor, tamanho e tabela (os menus abrem acima da cápsula).', 'Tocar em ⋯ e testar Copiar tudo, Colar e Limpar texto; tocar em ✓ para concluir e voltar à lista.', 'Digitar um título e ver o título branco do topo mudar; salvar e conferir.', 'Rolar a anotação e ver que nada fica fixo no meio da tela.', 'No Assistente, trocar entre IA e Modo básico no seletor embaixo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.4', nome: 'Assistente: chat mais completo, marca e médias', status: 'concluida',
         novidades: [
             'Respostas com negrito, listas numeradas e links: "pedido 1731" abre a Central do pedido e "NF 36435" abre a NF (se houver mais de uma NF com o número, abre a mais recente e avisa).',
             'Controles do chat: botão "■ Parar" enquanto a IA responde, contador de segundos, tempo total da resposta, botão Copiar em cada resposta e "+ Nova conversa".',

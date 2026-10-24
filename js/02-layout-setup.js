@@ -40,13 +40,14 @@ setTimeout(setAppHeight, 1000);
 // teclado). Em vez disso, só escondemos a tab-bar via classe no body, o que
 // libera o espaço que ela ocupava sem mover mais nada.
 const KEYBOARD_HEIGHT_THRESHOLD = 120;
-const TECLADO_ESTIMADO = 300; // usado até o navegador informar a altura real do teclado
+const TECLADO_ESTIMADO = 336; // usado até o navegador informar a altura real do teclado
 
 const setupKeyboardListener = () => {
     if (!('visualViewport' in window)) return;
 
     const aplicarEstadoTeclado = (isKeyboardOpen, keyboardHeight) => {
         document.body.classList.toggle('keyboard-open', isKeyboardOpen);
+        document.documentElement.style.setProperty('--kb', (isKeyboardOpen ? keyboardHeight : 0) + 'px');   // altura do teclado: usada pela barra de formatação das Anotações
         if (isKeyboardOpen) {
             // Aplica o padding extra na tela ativa no momento (qualquer uma —
             // Anotações, Auditoria, Adicionar etc.), não só numa tela fixa.

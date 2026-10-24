@@ -752,8 +752,12 @@ function voltarParaListaAnotacoes() {
 }
 
 let autoSaveAnotacaoTimeout = null;
+function atualizarTituloCabecalhoAnotacao() {   // o título branco do topo acompanha o que está escrito (e o que foi salvo)
+    const h = document.getElementById('main-header-title'), t = document.getElementById('anotacao-titulo'), tela = document.getElementById('screen-anotacoes-editor');
+    if (h && t && tela && tela.classList.contains('active')) h.textContent = t.value.trim() || (anotacaoAtualId ? 'Sem título' : 'Nova Anotação');
+}
 function agendarAutoSaveAnotacao() {
-    atualizarEstadoToolbarAnotacao();
+    atualizarEstadoToolbarAnotacao(); atualizarTituloCabecalhoAnotacao();
     clearTimeout(autoSaveAnotacaoTimeout);
     autoSaveAnotacaoTimeout = setTimeout(() => salvarAnotacaoAtual(false), 1200);
 }
@@ -788,12 +792,28 @@ async function salvarAnotacaoAtual(mostrarToast) {
             const ref = await anotacoesTextoCollection.add(dados);
             anotacaoAtualId = ref.id;
         }
+        atualizarTituloCabecalhoAnotacao();
         if (mostrarToast) toast('✓ Anotação salva!');
     } catch (e) {
         console.error('Erro ao salvar anotação:', e);
         if (mostrarToast) toast('✕ Erro ao salvar anotação.');
     }
 }
+
+// Estilo Apple Notas: "✓" no topo conclui (salva e volta) e "⋯" abre as ações da anotação (copiar, colar, limpar, excluir)
+async function concluirAnotacao() {
+    fecharMenuNota(); fecharPopoversRte(); clearTimeout(autoSaveAnotacaoTimeout);
+    if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+    await salvarAnotacaoAtual(true);
+    voltarParaListaAnotacoes();
+}
+function fecharMenuNota() { const m = document.getElementById('nota-menu'); if (m) m.style.display = 'none'; }
+function toggleMenuNota(ev) { if (ev) ev.stopPropagation(); const m = document.getElementById('nota-menu'); if (!m) return; fecharPopoversRte(); m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
+function menuNotaAcao(acao) {
+    fecharMenuNota();
+    if (acao === 'copiar') copiarTextoAnotacao(); else if (acao === 'colar') colarTextoAnotacao(); else if (acao === 'limpar') limparTextoAnotacao(); else if (acao === 'excluir') excluirAnotacaoAtual();
+}
+document.addEventListener('click', (e) => { if (!e.target.closest('#nota-menu')) fecharMenuNota(); });
 
 async function copiarTextoAnotacao() {
     const corpoEl = document.getElementById('anotacao-corpo');
@@ -953,29 +973,14 @@ function toggleRtePopover(id) {
 // sobre o conteúdo, cortado. Agora mede a posição real antes de mostrar e
 // alinha pela direita quando não há espaço suficiente à esquerda.
 function posicionarPopoverDentroDaTela(pop) {
-    // BUG: limpar left/right pra '' não remove o "left:0" que já vem do CSS
-    // base (.rte-popover{left:0}) — ao setar só "right:0" depois, os dois
-    // ficavam ativos ao mesmo tempo, e um elemento position:absolute com
-    // left E right definidos estica pra preencher o espaço inteiro entre os
-    // dois, virando a largura absurda do print. Agora sempre define os DOIS
-    // lados explicitamente (um em 'auto', nunca deixando o CSS base valer).
-    pop.style.left = '0';
-    pop.style.right = 'auto';
-    const rect = pop.getBoundingClientRect();
-    const margem = 8;
-    if (rect.right > window.innerWidth - margem) {
-        pop.style.left = 'auto';
-        pop.style.right = '0';
-    }
-    // Reavalia depois de trocar de lado — se ainda estourar pela esquerda
-    // (popover mais largo que o espaço disponível), prende na borda da tela.
-    const rect2 = pop.getBoundingClientRect();
-    if (rect2.left < margem) {
-        const wrap = pop.closest('.rte-popover-wrap');
-        const wrapRect = wrap.getBoundingClientRect();
-        pop.style.right = 'auto';
-        pop.style.left = (margem - wrapRect.left) + 'px';
-    }
+    // A barra de formatação agora é uma cápsula fixa embaixo (como na Apple), que rola para o lado: o popover abre "fixo" logo acima
+    // dela, centralizado no botão e sem estourar a tela (um popover dentro da barra rolável seria cortado).
+    const wrap = pop.closest('.rte-popover-wrap'), dock = document.getElementById('rte-dock'); if (!wrap || !dock) return;
+    const br = wrap.getBoundingClientRect(), dr = dock.getBoundingClientRect();
+    pop.style.position = 'fixed'; pop.style.top = 'auto'; pop.style.right = 'auto';
+    pop.style.bottom = Math.round(window.innerHeight - dr.top + 10) + 'px';
+    const w = pop.getBoundingClientRect().width;
+    pop.style.left = Math.round(Math.max(8, Math.min(br.left + br.width / 2 - w / 2, window.innerWidth - w - 8))) + 'px';
 }
 document.addEventListener('click', (event) => {
     if (!event.target.closest('.rte-popover-wrap')) fecharPopoversRte();

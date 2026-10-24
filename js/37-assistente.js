@@ -6,7 +6,10 @@
 // cima do que elas devolveram. A chave da IA fica num intermediário (Worker) — o app só manda a pergunta e os resultados das consultas.
 // Instalação do intermediário: assistente/COMO-INSTALAR-O-ASSISTENTE.md
 // ===================================================================
-let assistenteUrl = '';
+const IA_URL_PADRAO = 'https://assistente-auditoria.aseleandro.workers.dev';   // endereço fixo do Worker (não é mais digitado pelo usuário)
+let assistenteUrl = IA_URL_PADRAO;
+let assistenteModoBasico = false;   // escolhido no chat (IA ou Básico); lembrado neste aparelho
+try { assistenteModoBasico = localStorage.getItem('iaModoBasico') === '1'; } catch (e) { }
 let iaCtlUsuario = null, iaInterrompido = false, iaTimer = null;
 let assistenteMsgs = [];      // histórico no formato da API (só nesta tela; some ao recarregar)
 let assistenteOcupado = false;
@@ -375,27 +378,27 @@ function iaAdicionarBolha(tipo, html) {
 }
 function prepararAssistente() {
     const el = document.getElementById('assistente-conteudo'); if (!el) return;
-    el.innerHTML = `<div class="ia-barra"><div id="ia-config"></div><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
+    el.innerHTML = `<div class="ia-barra"><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
         <div class="ia-log" id="ia-log"></div>
         <div class="retro-chips" id="ia-sugestoes">${IA_SUGESTOES.map(s => `<button type="button" class="retro-chip" onclick="iaUsarSugestao(this)">${escRel(s)}</button>`).join('')}</div>
         <div class="ia-entrada"><input type="text" id="ia-texto" class="input-box" placeholder="Pergunte sobre NFs, pedidos, materiais, fornecedores..." onkeydown="if(event.key==='Enter'&&!assistenteOcupado)enviarAssistente()"><button type="button" class="central-status-toggle" id="ia-enviar" onclick="enviarAssistente()">Enviar</button></div>
-        <div class="ia-aviso">Só lê os dados do app e pode errar: confira os números importantes.</div>`;
+        <div class="ia-rodape-chat"><div class="ia-modo-wrap"><button type="button" class="ia-modo" id="ia-modo" onclick="iaToggleMenuModo(event)"></button>
+            <div class="ia-modo-menu" id="ia-modo-menu" style="display:none"></div></div><span class="ia-aviso">Só lê os dados do app e pode errar: confira os números.</span></div>`;
     iaRenderConfig();
-    settingsDocRef.get().then(d => { assistenteUrl = ((d.data() || {}).assistenteUrl) || ''; iaRenderConfig(); }).catch(() => { });
 }
+function iaUsaIA() { return !!assistenteUrl && !assistenteModoBasico; }
+function iaToggleMenuModo(ev) { if (ev) ev.stopPropagation(); const m = document.getElementById('ia-modo-menu'); if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
+function iaEscolherModo(basico) {
+    assistenteModoBasico = !!basico; try { localStorage.setItem('iaModoBasico', basico ? '1' : '0'); } catch (e) { }
+    iaRenderConfig(); const m = document.getElementById('ia-modo-menu'); if (m) m.style.display = 'none';
+}
+document.addEventListener('click', () => { const m = document.getElementById('ia-modo-menu'); if (m) m.style.display = 'none'; });
 function iaRenderConfig() {
-    const c = document.getElementById('ia-config'); if (!c) return;
-    c.innerHTML = assistenteUrl
-        ? `<span class="ia-estado">● IA ligada</span> <a class="ctl-pend-link" onclick="assistenteUrl='';iaRenderConfig()">usar modo básico</a>`
-        : `<span class="ia-estado ia-estado-off">Modo básico (grátis, sem IA)</span>
-           <details class="retro-det"><summary>Ligar a IA (opcional, grátis na Cloudflare)</summary><div class="xml-item-meta">Siga o COMO-INSTALAR-O-ASSISTENTE.md e cole o endereço do seu Worker:</div>
-           <div class="ia-entrada"><input type="text" id="ia-url" class="input-box" placeholder="https://assistente-auditoria.seunome.workers.dev"><button type="button" class="central-status-toggle" onclick="salvarUrlAssistente()">Salvar</button></div></details>`;
-}
-async function salvarUrlAssistente() {
-    const v = (document.getElementById('ia-url') || {}).value || ''; const url = v.trim();
-    if (!/^https:\/\/[^\s]+$/.test(url)) return toast('Cole o endereço completo, começando com https://');
-    try { await settingsDocRef.set({ assistenteUrl: url }, { merge: true }); assistenteUrl = url; iaRenderConfig(); toast('✓ Endereço salvo.'); }
-    catch (e) { console.error(e); toast('✕ Erro ao salvar o endereço.'); }
+    const b = document.getElementById('ia-modo'), m = document.getElementById('ia-modo-menu'); if (!b || !m) return;
+    const ia = iaUsaIA();
+    b.innerHTML = `<i class="fa-solid ${ia ? 'fa-wand-magic-sparkles' : 'fa-bolt'}"></i> ${ia ? 'IA' : 'Modo básico'} <i class="fa-solid fa-chevron-up ia-seta"></i>`;
+    m.innerHTML = `<button type="button" onclick="iaEscolherModo(false)"><span><b>IA</b><small>Entende perguntas livres (usa o limite grátis do dia)</small></span>${ia ? '<i class="fa-solid fa-check"></i>' : ''}</button>
+        <button type="button" onclick="iaEscolherModo(true)"><span><b>Modo básico</b><small>Sem IA, resposta na hora, só palavras-chave</small></span>${!ia ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
 }
 function iaUsarSugestao(btn) { const i = document.getElementById('ia-texto'); if (i) { i.value = btn.textContent; enviarAssistente(); } }
 function iaBotaoEstado(ocupado) { const bt = document.getElementById('ia-enviar'); if (bt) { bt.textContent = ocupado ? '■ Parar' : 'Enviar'; bt.classList.toggle('ia-parar', !!ocupado); } }
@@ -408,7 +411,7 @@ async function enviarAssistente() {
     iaAdicionarBolha('eu', escRel(texto));
     const t0 = Date.now(), usadas = [];
     const fim = () => { clearInterval(iaTimer); assistenteOcupado = false; iaCtlUsuario = null; iaBotaoEstado(false); const log = document.getElementById('ia-log'); if (log) log.scrollTop = log.scrollHeight; };
-    if (!assistenteUrl) { // modo básico: grátis, sem IA e sem rede
+    if (!iaUsaIA()) { // modo básico: grátis, sem IA e sem rede
         const r = iaResponderBasico(texto);
         iaAdicionarBolha('ia', `<div class="ia-corpo">${iaLinkar(r.html)}</div>` + iaRodape(Date.now() - t0, 'modo básico', r.usadas));
         return fim();
