@@ -375,21 +375,20 @@ function iaAdicionarBolha(tipo, html) {
 }
 function prepararAssistente() {
     const el = document.getElementById('assistente-conteudo'); if (!el) return;
-    el.innerHTML = `<div class="card" id="ia-config"></div>
-        <div class="ia-topo"><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
+    el.innerHTML = `<div class="ia-barra"><div id="ia-config"></div><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
         <div class="ia-log" id="ia-log"></div>
         <div class="retro-chips" id="ia-sugestoes">${IA_SUGESTOES.map(s => `<button type="button" class="retro-chip" onclick="iaUsarSugestao(this)">${escRel(s)}</button>`).join('')}</div>
         <div class="ia-entrada"><input type="text" id="ia-texto" class="input-box" placeholder="Pergunte sobre NFs, pedidos, materiais, fornecedores..." onkeydown="if(event.key==='Enter'&&!assistenteOcupado)enviarAssistente()"><button type="button" class="central-status-toggle" id="ia-enviar" onclick="enviarAssistente()">Enviar</button></div>
-        <div class="xml-item-meta" style="margin-top:8px">O Assistente só lê os dados do app e pode errar: confira os números importantes (a resposta indica de onde veio cada dado).</div>`;
+        <div class="ia-aviso">Só lê os dados do app e pode errar: confira os números importantes.</div>`;
     iaRenderConfig();
     settingsDocRef.get().then(d => { assistenteUrl = ((d.data() || {}).assistenteUrl) || ''; iaRenderConfig(); }).catch(() => { });
 }
 function iaRenderConfig() {
     const c = document.getElementById('ia-config'); if (!c) return;
     c.innerHTML = assistenteUrl
-        ? `<div class="xml-item-meta">✓ Modo IA ligado (intermediário configurado). <a class="ctl-pend-link" onclick="assistenteUrl='';iaRenderConfig()">Voltar ao modo básico</a></div>`
-        : `<div class="xml-item-meta"><strong>Modo básico (grátis, sem IA).</strong> Entende pedido, NF, fornecedor, material, divergências e pendências e responde na hora, sem instalar nada.</div>
-           <details class="retro-det"><summary>Ligar a IA (opcional, grátis na Cloudflare)</summary><div class="xml-item-meta">Para perguntas em linguagem livre. Siga o COMO-INSTALAR-O-ASSISTENTE.md e cole o endereço do seu Worker:</div>
+        ? `<span class="ia-estado">● IA ligada</span> <a class="ctl-pend-link" onclick="assistenteUrl='';iaRenderConfig()">usar modo básico</a>`
+        : `<span class="ia-estado ia-estado-off">Modo básico (grátis, sem IA)</span>
+           <details class="retro-det"><summary>Ligar a IA (opcional, grátis na Cloudflare)</summary><div class="xml-item-meta">Siga o COMO-INSTALAR-O-ASSISTENTE.md e cole o endereço do seu Worker:</div>
            <div class="ia-entrada"><input type="text" id="ia-url" class="input-box" placeholder="https://assistente-auditoria.seunome.workers.dev"><button type="button" class="central-status-toggle" onclick="salvarUrlAssistente()">Salvar</button></div></details>`;
 }
 async function salvarUrlAssistente() {

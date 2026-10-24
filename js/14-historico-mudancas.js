@@ -10,10 +10,29 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.13.3', nome: 'Assistente: IA mais rápida e erros claros', status: 'atual',
+        numero: '2.13.4', nome: 'Assistente: chat mais completo, marca e médias', status: 'atual',
+        novidades: [
+            'Respostas com negrito, listas numeradas e links: "pedido 1731" abre a Central do pedido e "NF 36435" abre a NF (se houver mais de uma NF com o número, abre a mais recente e avisa).',
+            'Controles do chat: botão "■ Parar" enquanto a IA responde, contador de segundos, tempo total da resposta, botão Copiar em cada resposta e "+ Nova conversa".',
+            'Marca dos produtos: as cotações passam a levar a descrição do SmartCompras (onde fica a marca) e dá para filtrar por marca; a IA extrai a marca dali.',
+            'Médias, mínimo, máximo e último preço das compras já vêm calculados pelo app (a IA não faz mais as contas, o que evita erro).',
+            'Perguntas que precisam de várias consultas não terminam mais em "consultas demais": a IA é chamada a responder com o que já achou. Sugestões de "você quis dizer" ficaram mais rigorosas (ex.: "ritalina" não sugere mais "vitamina").'
+        ],
+        implementado: ['Datas na resposta da IA em dd/mm/aaaa.', 'Até 6 rodadas de consulta por pergunta.', 'Tela do Assistente refeita no padrão de chat: barra no topo, conversa rolando no meio e campo de digitar fixo no rodapé, logo acima do teclado (antes o teclado empurrava tudo e o campo sumia). Botões Copiar e Nova conversa no estilo dos botões do app, sem quebra de texto.'],
+        mudou: ['Arquivos alterados: js/14, js/31, js/37 e style.css.'],
+        testar: ['Perguntar "média de preço das últimas compras de atadura crepom 15cm" e conferir com as NFs.', 'Perguntar uma marca (ex.: cotações de norepinefrina da marca Fresenius).', 'Tocar nos links de pedido e NF da resposta; usar Parar, Copiar e Nova conversa.', 'No celular: tocar no campo de digitar e ver se ele fica logo acima do teclado, com a conversa visível; fechar o teclado e ver se tudo volta ao lugar, sem sobrepor a barra de abas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.3', nome: 'Assistente: IA mais rápida, datas e erros claros', status: 'concluida',
         novidades: [
             'Se a IA demorar demais (mais de 40 segundos) ou a conexão com o Worker falhar, o Assistente avisa o motivo e responde pelo modo básico, em vez de ficar travado ou mostrar só "Load failed".',
-            'A IA passou a usar por padrão um modelo menor e mais rápido, que gasta menos do limite grátis do dia, e a quantidade de dados enviada a ela foi reduzida.'
+            'Perguntas como "qual a última vez que chegou (material)?" agora funcionam: o app entende a pergunta, busca o material nas NFs e no ERP, ordena da mais recente para a mais antiga e mostra a data de cada NF. A IA também passa a saber a data de hoje.',
+            'Medidas e números agora contam na busca: "jelco 21" só acha 21 (não confunde com 20G ou 210). Se o item exato não existe, o Assistente diz que não existe e lista os parecidos (ex.: 14G, 18G, 20G, 22G, 24G).',
+            'A IA deixou de ser limitada aos dados do app: responde qualquer assunto e usa as consultas do app quando a pergunta envolve NFs, pedidos, materiais ou fornecedores. Só os números do app vêm obrigatoriamente das consultas (para não inventar). Se uma busca não acha, ela mesma tenta de novo com outras palavras.',
+            'A busca tolera erro de 1 letra ("crepon" acha "crepom") e, se o item exato não existe (ex.: atadura 17cm), diz isso e lista os parecidos. Falha de rede ao falar com a IA agora é repetida uma vez automaticamente.',
+            'Quando a pergunta tem uma palavra que não existe no cadastro (ex.: "gentilina"), o app sugere as parecidas que existem ("Você quis dizer: fentanila?") em vez de a IA inventar um nome. A IA foi orientada a não confundir fornecedor com marca (o app não tem campo de marca).',
+            'O Worker voltou a usar por padrão o modelo maior (70B), que entende e segue instruções bem melhor; o app espera até 60 segundos. Se ficar lento ou gastar muito do limite grátis, basta criar a variável MODEL com o modelo menor.'
         ],
         implementado: ['O Worker não exige mais lista de e-mails: qualquer usuário que entra no app pode usar, e quem é barrado no app não consegue.', 'O Worker também trata respostas da IA em formatos diferentes e mostra o que recebeu quando vem vazia.'],
         mudou: ['Arquivos alterados: js/14, js/31 e js/37. Fora do app: assistente/worker-assistente.js.'],
