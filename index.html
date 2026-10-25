@@ -142,7 +142,7 @@
                         <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
                     </span>
                 </button>
-                <div class="nota-capsula" id="nota-capsula">
+                <div class="nota-capsula" id="nota-capsula" onmousedown="event.preventDefault()">
                     <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
                         <span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span>
                     </button>
@@ -179,7 +179,7 @@
             
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <button type="button" class="mais-item gerenciar-ver-todas" onclick="abrirControleNfs()"><span class="mais-item-nome">Ver todas as NFs (Controle de NFs)</span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button> 
+                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="action-chip" onclick="abrirControleNfs()"><i class="fa-solid fa-list-check"></i> Ver todas as NFs (Controle)</button></div> 
             </div>
             
             
@@ -306,8 +306,9 @@
                     <input type="text" class="form-field" placeholder="Buscar por código, razão social, apelido ou CNPJ..." oninput="filtrarCadastroFornecedoresSpData(this.value)">
                     <div id="lista-cadastro-fornecedores-spdata" class="mt-3"></div>
                 </div>
-                <div class="card mt-4" >
-                    <h3 class="card-titulo card-titulo-sm">Importar/Atualizar Cadastro</h3>
+                <details class="card mt-4 importar-colapso" id="forn-importar">
+                    <summary><span class="imp-ic"><i class="fa-solid fa-file-import"></i></span><span class="imp-tx"><b>Importar/Atualizar Cadastro</b><small>Colar ou subir o relatório de fornecedores do SP Data</small></span><i class="fa-solid fa-chevron-right imp-seta"></i></summary>
+                    <div class="importar-corpo">
                     <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Usado pra confirmar automaticamente a qual NF/cotação um lançamento do relatório de entrada do ERP corresponde — nunca por semelhança de nome. Atualização incremental: nunca apaga fornecedores, CNPJs ou apelidos já cadastrados.</p>
                     <textarea id="import-fornspdata-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do relatório de cadastro de fornecedores..."></textarea>
                     <input type="file" id="import-fornspdata-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleFornecedoresSpDataFileUpload(event)">
@@ -319,7 +320,8 @@
                         <button class="actions-button" onclick="processarCadastroFornecedoresSpData()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Cadastro</button>
                     </div>
                     <div id="import-fornspdata-preview"></div>
-                </div>
+                    </div>
+                </details>
 
                 <div style="display:none;">
                     <input type="text" id="forn-manage" placeholder="Digite para adicionar...">
@@ -417,9 +419,11 @@
             </div>
 
             <div class="app-screen" id="screen-spdata">
-                <div class="card">
+                <details class="card importar-colapso" id="spdata-importar">
+                    <summary><span class="imp-ic"><i class="fa-solid fa-file-import"></i></span><span class="imp-tx"><b>Importar relatório do SGH</b><small>Colar o texto para cadastrar ou atualizar produtos</small></span><i class="fa-solid fa-chevron-right imp-seta"></i></summary>
+                    <div class="importar-corpo">
                     <p class="desc-tela">Cole o texto do relatório do SGH com Código, Nome e Unidade — qualquer um deles funciona (Listagem de itens, por grupo, por subgrupo...), mas prefira um com coluna de nome mais larga, como "Itens por subgrupo II", pra vir menos cortado.</p>
-                    <div class="campo"><textarea id="spdata-inventario-texto" class="form-field" style="min-height:120px;" placeholder="Cole aqui o relatório de inventário..."></textarea></div>
+                    <div class="campo"><textarea id="spdata-inventario-texto" class="form-field" style="min-height:96px;" placeholder="Cole aqui o relatório de inventário..."></textarea></div>
                     <div class="actions-row">
                         <button class="actions-button" onclick="processarInventarioSpDataColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
                     </div>
@@ -430,7 +434,8 @@
                             <button class="actions-button is-neutral" onclick="cancelarImportacaoSpData()">Cancelar</button>
                         </div>
                     </div>
-                </div>
+                    </div>
+                </details>
                 <div class="card card-plain mt-4" >
                     <div class="actions-row" style="margin:0 0 12px;">
                         <button class="actions-button is-primary" onclick="toggleFormNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar produto</button>
@@ -890,15 +895,18 @@
                     </div>
                 </div>
         </div>
-        <div id="nota-menu" class="nota-menu" style="display:none;">
+        <div id="nota-menu" class="nota-menu" style="display:none;" onmousedown="event.preventDefault()">
             <button type="button" onclick="menuNotaAcao('copiar')"><span>Copiar tudo</span><i class="fa-solid fa-copy"></i></button>
             <button type="button" onclick="menuNotaAcao('colar')"><span>Colar</span><i class="fa-solid fa-paste"></i></button>
             <button type="button" onclick="menuNotaAcao('limpar')"><span>Limpar texto</span><i class="fa-solid fa-eraser"></i></button>
+            <div class="nota-menu-sep"></div>
+            <div class="nota-menu-altura"><span>Altura da barra</span><div class="nota-menu-passo"><button type="button" onclick="ajustarAlturaBarraNotas(-4)" aria-label="Descer a barra"><i class="fa-solid fa-minus"></i></button><span id="nota-altura-valor">0 px</span><button type="button" onclick="ajustarAlturaBarraNotas(4)" aria-label="Subir a barra"><i class="fa-solid fa-plus"></i></button></div></div>
             <div class="nota-menu-sep"></div>
             <button type="button" class="nota-menu-del" onclick="menuNotaAcao('excluir')"><span>Excluir</span><i class="fa-solid fa-trash"></i></button>
         </div>
 
         <nav id="tab-bar" class="tab-bar"></nav>
+        <div id="dock-selecao" class="dock-selecao" role="toolbar" aria-label="Ações da seleção"></div>
 
         <div id="bulk-action-bar-notas" class="bulk-action-bar">
             <div class="bulk-action-bar-inner">
@@ -1015,6 +1023,7 @@
   <script src="js/35-aprendizado-pedido.js"></script>
   <script src="js/36-visao-nf.js"></script>
   <script src="js/37-assistente.js"></script>
+  <script src="js/38-dock-selecao.js"></script>
 
 </body>
 </html>

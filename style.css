@@ -979,7 +979,7 @@ details[open] > .filtros-resumo::before { transform: rotate(90deg); }
 
 /* ===== Fase 38: Gerenciar NF (abas) + Controle de NFs ===== */
 #gerenciar-abas { margin: 0 0 12px; }
-.gerenciar-ver-todas { margin-top: 12px; border: 1px solid var(--border-color); border-radius: var(--r-md); background: var(--bg-secondary); color: var(--accent-text); flex-shrink: 0; }
+.gerenciar-ver-todas { display: flex; justify-content: center; margin-top: 18px; flex-shrink: 0; }
 .controle-subtitulo { font-size: 13px; color: var(--text-light); margin: 0 4px 8px; }
 .controle-topo { display: flex; justify-content: flex-end; margin: -4px 0 4px; }
 .controle-barra-selecao { align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; margin-bottom: 8px; border: 1px solid var(--border-color); border-radius: var(--r-md); background: var(--bg-secondary); font-size: 14px; }
@@ -1679,6 +1679,11 @@ body:has(#screen-anotacoes-editor.active) .nota-capsula{display:flex}
 .nota-menu button:active{background:color-mix(in srgb,var(--accent-color) 12%,transparent)}
 .nota-menu button i{opacity:.7;width:20px;text-align:center}
 .nota-menu-sep{height:1px;background:var(--border-color);margin:6px 8px}
+.nota-menu-altura{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:6px 14px;font-size:16px;color:var(--text-dark)}
+.nota-menu-passo{display:flex;align-items:center;gap:6px}
+.nota-menu-passo span{min-width:52px;text-align:center;font-size:14px;font-weight:600;color:var(--text-light)}
+.nota-menu .nota-menu-passo button{width:38px;height:34px;padding:0;justify-content:center;border-radius:999px;background:color-mix(in srgb,var(--accent-color) 10%,transparent);color:var(--accent-text,var(--accent-color))}
+.nota-menu .nota-menu-passo button i{opacity:1;width:auto}
 .nota-menu .nota-menu-del, .nota-menu .nota-menu-del i{color:#e0382d;opacity:1}
 /* barra de formatação: a dock do editor. Fina, de vidro, ocupa o lugar da dock principal enquanto a anotação está aberta.
    Sobe com mola junto com o teclado: o JS (js/02) grava --rte-bottom (altura do teclado + barrinha do iOS + folga). */
@@ -1705,3 +1710,45 @@ body:has(#screen-anotacoes-editor.active).keyboard-open #screen-anotacoes-editor
 
 /* Central de notificações: espaço entre os blocos (eles ficam dentro de um contêiner, então a regra .app-screen > .card + .card não vale) */
 #atencao-conteudo{display:flex;flex-direction:column;gap:12px}
+
+
+/* ---- 2.15.0: Dock de seleção em lote (js/38): a dock principal dá lugar às ações da seleção ---- */
+.bulk-action-bar, #anotacoes-bulk-bar, #controle-barra-selecao, #bulk-select-all-notas { display: none !important; }   /* as barras antigas saíram: a dock de seleção faz o papel delas */
+.dock-selecao{position:fixed;left:10px;right:10px;margin:0 auto;max-width:520px;bottom:-70px;height:48px;z-index:60;border-radius:24px;display:flex;align-items:center;gap:2px;padding:0 6px;
+  background:color-mix(in srgb,var(--bg-secondary) 86%,transparent);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);
+  border:1px solid color-mix(in srgb,var(--border-color) 70%,transparent);box-shadow:0 6px 18px rgba(15,23,42,.12),0 1px 3px rgba(15,23,42,.08);
+  visibility:hidden;opacity:0;pointer-events:none;transition:bottom .55s var(--spring,cubic-bezier(.32,1.2,.5,1)),opacity .22s ease,visibility 0s linear .55s}
+.dock-selecao.ds-on{bottom:var(--dock-b,10px);visibility:visible;opacity:1;pointer-events:auto;transition-delay:0s}
+body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
+@media (max-width:899px){ body.sel-lote .tab-bar{display:none} }
+.ds-bt{height:38px;min-width:38px;padding:0 10px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:6px;border:none;background:transparent;color:var(--text-dark);font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background-color .15s ease,transform .2s var(--spring-soft,ease)}
+.ds-bt:not(:disabled):active{transform:scale(.92);background:color-mix(in srgb,var(--accent-color) 12%,transparent)}
+.ds-bt:disabled{opacity:.3;cursor:default}
+.ds-bt.ds-x{color:var(--text-light);background:color-mix(in srgb,var(--text-dark) 7%,transparent);width:38px;padding:0}
+.ds-bt.ds-txt{font-size:13.5px;color:var(--accent-text)}
+.ds-bt.perigo{color:var(--button-danger,#e0382d)}
+.ds-bt.pri{background:var(--accent-color);color:#fff;padding:0 14px;font-size:13.5px}
+.ds-bt.pri:disabled{opacity:.4}
+.ds-bt span{font-size:13.5px}
+.ds-cont{padding:0 8px;font-size:13.5px;font-weight:700;white-space:nowrap}
+.ds-esp{flex:1}
+@media (min-width:900px){
+  .dock-selecao{left:240px;right:0;width:fit-content;max-width:calc(100% - 288px);min-width:340px;bottom:-70px}
+  .dock-selecao.ds-on{bottom:16px}
+}
+
+/* ---- 2.15.0: refinos de tela ---- */
+/* Central do pedido: linha "Outras ocorrências" (sem avatar) com texto e seta centralizados e respiro embaixo */
+.central-fornecedor-header.cf-simples{align-items:center;padding:14px 16px}
+.central-fornecedor-header.cf-simples .cf-cnpj{margin-top:3px}
+/* Cartão de importação recolhido (Produtos SP Data, Fornecedores): só uma linha até tocar */
+.importar-colapso.card{padding:0;overflow:hidden}
+.importar-colapso>summary{display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 16px;cursor:pointer;list-style:none}
+.importar-colapso>summary::-webkit-details-marker{display:none}
+.importar-colapso .imp-ic{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent-color) 12%,transparent);color:var(--accent-text,var(--accent-color));font-size:15px}
+.importar-colapso .imp-tx{flex:1;min-width:0}
+.importar-colapso .imp-tx b{display:block;font-size:15px;font-weight:700;color:var(--text-dark);line-height:1.25}
+.importar-colapso .imp-tx small{display:block;margin-top:2px;font-size:12px;color:var(--text-light);line-height:1.3}
+.importar-colapso .imp-seta{font-size:12px;color:var(--text-light);transition:transform .25s var(--ease-out,ease)}
+.importar-colapso[open]>summary .imp-seta{transform:rotate(90deg)}
+.importar-colapso .importar-corpo{padding:14px 16px 16px;border-top:1px solid var(--border-color)}
