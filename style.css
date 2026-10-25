@@ -1650,7 +1650,9 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 .ia-parar{background:#c0392b!important;color:#fff!important;border-color:#c0392b!important}
 .ia-entrada{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .ia-entrada .input-box{flex:1;min-width:0;font-size:16px}
-.ia-entrada .central-status-toggle{flex-shrink:0;white-space:nowrap;min-width:84px}
+.ia-enviar{flex-shrink:0;width:44px;height:44px;padding:0;border:none;border-radius:50%;background:var(--accent-color);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .25s var(--spring-soft),background-color .2s ease}
+.ia-enviar:active{transform:scale(.92)}
+.ia-enviar svg{display:block}
 .ia-aviso{font-size:11px;opacity:.6;text-align:right;min-width:0}
 .ia-rodape-chat{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .ia-modo-wrap{position:relative;flex-shrink:0}
@@ -1665,25 +1667,41 @@ body[data-transition="none"] .aj-anim-frente, body[data-transition="none"] .aj-a
 
 
 /* ---- Anotações no estilo Apple Notas ---- */
-/* cabeçalho: "⋯" (ações) e "✓" (concluir) só aparecem no editor de anotação */
-#nota-menu-btn, #nota-done-btn{display:none}
-body:has(#screen-anotacoes-editor.active) #nota-menu-btn, body:has(#screen-anotacoes-editor.active) #nota-done-btn{display:flex}
-#nota-done-btn{background:var(--accent-color)!important;color:#fff!important;border-color:var(--accent-color)!important}
+/* cabeçalho: cápsula de vidro com "⋯" (ações) e "✓" (concluir), só no editor de anotação */
+.nota-capsula{display:none;align-items:center;gap:0;padding:3px;border-radius:999px;background:var(--glass-tint,var(--bg-secondary));border:1px solid var(--glass-edge,var(--border-color));box-shadow:var(--glass-shadow,var(--shadow-md));-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%)}
+body:has(#screen-anotacoes-editor.active) .nota-capsula{display:flex}
+.nota-capsula .header-action{width:42px;height:38px;min-width:0;padding:0;border:none;border-radius:999px;background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center;color:var(--text-dark)}
+.nota-capsula .header-action:active{background:color-mix(in srgb,var(--accent-color) 12%,transparent)}
+.nota-capsula #nota-done-btn{background:var(--accent-color)!important;color:#fff!important}
 /* menu de ações (cartão de vidro, abre sob o cabeçalho) */
-.nota-menu{position:fixed;top:calc(var(--header-h) + 4px);right:12px;z-index:70;min-width:230px;background:var(--glass-tint,var(--bg-secondary));-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid var(--glass-edge,var(--border-color));border-radius:22px;box-shadow:var(--glass-shadow,var(--shadow-lg));padding:8px}
+.nota-menu{position:fixed;top:calc(var(--header-h) + 4px);right:12px;z-index:70;min-width:230px;background:var(--glass-tint-strong,var(--bg-secondary));-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid var(--glass-edge,var(--border-color));border-radius:22px;box-shadow:var(--glass-shadow,var(--shadow-lg));padding:8px}
 .nota-menu button{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left;background:transparent;border:none;color:var(--text-dark);font-size:16px;padding:12px 14px;border-radius:14px;cursor:pointer}
 .nota-menu button:active{background:color-mix(in srgb,var(--accent-color) 12%,transparent)}
 .nota-menu button i{opacity:.7;width:20px;text-align:center}
 .nota-menu-sep{height:1px;background:var(--border-color);margin:6px 8px}
 .nota-menu .nota-menu-del, .nota-menu .nota-menu-del i{color:#e0382d;opacity:1}
-/* barra de formatação: segunda "dock", cápsula de vidro fixa embaixo; no celular só com o teclado aberto, sempre logo acima dele */
-.rte-dock{display:none;position:fixed;left:12px;right:12px;bottom:calc(var(--kb,0px) + 10px);height:52px;z-index:60;border-radius:26px}
-.rte-dock::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--glass-tint,var(--bg-secondary));-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid var(--glass-edge,var(--border-color));box-shadow:var(--glass-shadow,var(--shadow-lg))}
-body:has(#screen-anotacoes-editor.active).keyboard-open .rte-dock{display:block}
-.rte-dock .rte-popover{position:fixed;top:auto;right:auto;max-height:55vh;overflow-y:auto}
-body:has(#screen-anotacoes-editor.active).keyboard-open #screen-anotacoes-editor{padding-bottom:calc(var(--kb,0px) + 96px)!important}
+/* barra de formatação: a dock do editor. Fina, de vidro, ocupa o lugar da dock principal enquanto a anotação está aberta.
+   Sobe com mola junto com o teclado: o JS (js/02) grava --rte-bottom (altura do teclado + barrinha do iOS + folga). */
+.rte-dock{position:fixed;left:10px;right:10px;margin:0 auto;max-width:520px;bottom:var(--rte-bottom,var(--dock-b,10px));height:46px;z-index:60;border-radius:23px;
+  visibility:hidden;opacity:0;pointer-events:none;
+  transition:bottom .55s var(--spring,cubic-bezier(.32,1.2,.5,1)),opacity .22s ease,visibility 0s linear .55s}
+.rte-dock::before{content:"";position:absolute;inset:0;border-radius:inherit;background:color-mix(in srgb,var(--bg-secondary) 84%,transparent);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid color-mix(in srgb,var(--border-color) 70%,transparent);box-shadow:0 6px 18px rgba(15,23,42,.12),0 1px 3px rgba(15,23,42,.08)}
+body:has(#screen-anotacoes-editor.active) .rte-dock{visibility:visible;opacity:1;pointer-events:auto;transition-delay:0s}
+/* primeira aparição: nasce de baixo da tela e sobe com mola */
+body:has(#screen-anotacoes-editor.active) .rte-dock.rte-entrando{bottom:-70px;opacity:0}
+.rte-dock .rte-toolbar{padding:0 8px}
+.rte-dock .rte-toolbar button{width:40px;height:38px;border-radius:999px;font-size:15px}
+.rte-popover.rte-solto{position:fixed;top:auto;right:auto;max-height:55vh;overflow-y:auto;z-index:80}
+/* enquanto o editor está aberto (celular) a dock principal dá lugar à dock de ferramentas */
+@media (max-width:899px){ body:has(#screen-anotacoes-editor.active) .tab-bar{display:none} }
+body:has(#screen-anotacoes-editor.active) #screen-anotacoes-editor{padding-bottom:120px!important}
+body:has(#screen-anotacoes-editor.active).keyboard-open #screen-anotacoes-editor{padding-bottom:calc(var(--kb,0px) + 100px)!important}
 @media (min-width:900px){
-  .rte-dock{left:0;right:0;margin:0 auto;width:fit-content;max-width:calc(100% - 48px);bottom:16px}
-  body:has(#screen-anotacoes-editor.active) .rte-dock{display:block}
-  body:has(#screen-anotacoes-editor.active) #screen-anotacoes-editor{padding-bottom:96px}
+  /* computador: o menu lateral continua; a barra de ferramentas fica no topo da anotação, sob o cabeçalho */
+  .rte-dock{left:240px;right:0;bottom:auto!important;top:calc(var(--header-h) + 10px);width:fit-content;max-width:calc(100% - 288px);transition:opacity .22s ease,visibility 0s linear .22s}
+  body:has(#screen-anotacoes-editor.active) #screen-anotacoes-editor{padding-top:calc(var(--header-h) + 72px);padding-bottom:60px!important}
+  body:has(#screen-anotacoes-editor.active).keyboard-open #screen-anotacoes-editor{padding-bottom:60px!important}
 }
+
+/* Central de notificações: espaço entre os blocos (eles ficam dentro de um contêiner, então a regra .app-screen > .card + .card não vale) */
+#atencao-conteudo{display:flex;flex-direction:column;gap:12px}

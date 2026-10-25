@@ -142,12 +142,14 @@
                         <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
                     </span>
                 </button>
-                <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
-                    <span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span>
-                </button>
-                <button class="header-action nota-ok" id="nota-done-btn" onclick="concluirAnotacao()" title="Concluir" aria-label="Concluir">
-                    <span class="icon-wrapper"><i class="fa-solid fa-check"></i></span>
-                </button>
+                <div class="nota-capsula" id="nota-capsula">
+                    <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
+                        <span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span>
+                    </button>
+                    <button class="header-action nota-ok" id="nota-done-btn" onclick="concluirAnotacao()" title="Concluir" aria-label="Concluir">
+                        <span class="icon-wrapper"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
                 <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;" title="Selecionar em lote (editar)">
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-list-check"></i>
