@@ -381,7 +381,7 @@ function prepararAssistente() {
     el.innerHTML = `<div class="ia-barra"><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
         <div class="ia-log" id="ia-log"></div>
         <div class="retro-chips" id="ia-sugestoes">${IA_SUGESTOES.map(s => `<button type="button" class="retro-chip" onclick="iaUsarSugestao(this)">${escRel(s)}</button>`).join('')}</div>
-        <div class="ia-entrada"><input type="text" id="ia-texto" class="input-box" placeholder="Pergunte sobre NFs, pedidos, materiais, fornecedores..." onkeydown="if(event.key==='Enter'&&!assistenteOcupado)enviarAssistente()"><button type="button" class="central-status-toggle" id="ia-enviar" onclick="enviarAssistente()">Enviar</button></div>
+        <div class="ia-entrada"><input type="text" id="ia-texto" class="input-box" placeholder="Pergunte sobre NFs, pedidos, materiais, fornecedores..." onkeydown="if(event.key==='Enter'&&!assistenteOcupado)enviarAssistente()"><button type="button" class="ia-enviar" id="ia-enviar" onclick="enviarAssistente()" aria-label="Enviar">${IA_ICO_ENVIAR}</button></div>
         <div class="ia-rodape-chat"><div class="ia-modo-wrap"><button type="button" class="ia-modo" id="ia-modo" onclick="iaToggleMenuModo(event)"></button>
             <div class="ia-modo-menu" id="ia-modo-menu" style="display:none"></div></div><span class="ia-aviso">Só lê os dados do app e pode errar: confira os números.</span></div>`;
     iaRenderConfig();
@@ -401,7 +401,9 @@ function iaRenderConfig() {
         <button type="button" onclick="iaEscolherModo(true)"><span><b>Modo básico</b><small>Sem IA, resposta na hora, só palavras-chave</small></span>${!ia ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
 }
 function iaUsarSugestao(btn) { const i = document.getElementById('ia-texto'); if (i) { i.value = btn.textContent; enviarAssistente(); } }
-function iaBotaoEstado(ocupado) { const bt = document.getElementById('ia-enviar'); if (bt) { bt.textContent = ocupado ? '■ Parar' : 'Enviar'; bt.classList.toggle('ia-parar', !!ocupado); } }
+const IA_ICO_ENVIAR = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
+const IA_ICO_PARAR = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>';
+function iaBotaoEstado(ocupado) { const bt = document.getElementById('ia-enviar'); if (bt) { bt.innerHTML = ocupado ? IA_ICO_PARAR : IA_ICO_ENVIAR; bt.setAttribute('aria-label', ocupado ? 'Parar' : 'Enviar'); bt.classList.toggle('ia-parar', !!ocupado); } }
 async function enviarAssistente() {
     if (assistenteOcupado) return iaParar();   // enquanto responde, o botão vira "Parar"
     const inp = document.getElementById('ia-texto'); if (!inp) return;

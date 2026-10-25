@@ -960,6 +960,9 @@ function toggleRtePopover(id) {
     const pop = document.getElementById(id);
     const estavaAberto = pop.style.display === 'block';
     fecharPopoversRte();
+    // A barra rola para o lado (overflow) e o Safari corta qualquer menu que esteja dentro dela, mesmo fixo: o menu é levado para fora, direto no body.
+    if (!pop._wrap) pop._wrap = pop.closest('.rte-popover-wrap');
+    if (pop.parentElement !== document.body) { document.body.appendChild(pop); pop.classList.add('rte-solto'); }
     pop.style.display = estavaAberto ? 'none' : 'block';
     if (id === 'rte-table-popover') montarGradeTabela();
     if (id === 'rte-size-popover') atualizarSizePopoverAtivo();
@@ -975,15 +978,16 @@ function toggleRtePopover(id) {
 function posicionarPopoverDentroDaTela(pop) {
     // A barra de formatação agora é uma cápsula fixa embaixo (como na Apple), que rola para o lado: o popover abre "fixo" logo acima
     // dela, centralizado no botão e sem estourar a tela (um popover dentro da barra rolável seria cortado).
-    const wrap = pop.closest('.rte-popover-wrap'), dock = document.getElementById('rte-dock'); if (!wrap || !dock) return;
+    const wrap = pop._wrap || pop.closest('.rte-popover-wrap'), dock = document.getElementById('rte-dock'); if (!wrap || !dock) return;
     const br = wrap.getBoundingClientRect(), dr = dock.getBoundingClientRect();
     pop.style.position = 'fixed'; pop.style.top = 'auto'; pop.style.right = 'auto';
-    pop.style.bottom = Math.round(window.innerHeight - dr.top + 10) + 'px';
+    if (window.matchMedia('(min-width:900px)').matches) { pop.style.bottom = 'auto'; pop.style.top = Math.round(dr.bottom + 10) + 'px'; }   // computador: a barra fica no topo, o menu abre embaixo dela
+    else { pop.style.top = 'auto'; pop.style.bottom = Math.round(window.innerHeight - dr.top + 10) + 'px'; }
     const w = pop.getBoundingClientRect().width;
     pop.style.left = Math.round(Math.max(8, Math.min(br.left + br.width / 2 - w / 2, window.innerWidth - w - 8))) + 'px';
 }
 document.addEventListener('click', (event) => {
-    if (!event.target.closest('.rte-popover-wrap')) fecharPopoversRte();
+    if (!event.target.closest('.rte-popover-wrap') && !event.target.closest('.rte-popover')) fecharPopoversRte();
 });
 
 // --- Cor do texto ---

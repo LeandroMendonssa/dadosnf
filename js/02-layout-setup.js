@@ -309,3 +309,51 @@ function reordenarMenusDOM(order) {
     if (ativa) document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(ativa.id) : (screenParentMap[ativa.id] || ativa.id))));
 }
 
+
+// --- Barra de formatação das Anotações: sobe com mola, sempre logo acima do teclado ---
+// O navegador pode reagir ao teclado de 3 jeitos; a barra se ajusta em todos:
+//  1) a janela inteira encolhe (innerHeight cai)  → o rodapé já está acima do teclado: só entra a folga
+//  2) só a área visível encolhe (visualViewport)  → a folga é o que sobra entre o fim da área visível e o fim da página
+//  3) nada informa o teclado                      → com um campo em edição no celular, usa a altura aprendida/estimada
+// No iPhone o sistema desenha por cima da página a barrinha de setas e ✓ (não dá para removê-la numa página web): a barra sobe acima dela.
+(function barraDeFormatacaoAcimaDoTeclado() {
+    const ehIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const FOLGA = 8, BARRINHA_IOS = 16;
+    const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+    let lido = 0; try { lido = +(localStorage.getItem('kbAprendido') || 0); } catch (e) {}
+    let repouso = window.innerHeight, aprendido = lido > 100 ? lido : TECLADO_ESTIMADO;
+    const editorAberto = () => !!document.querySelector('#screen-anotacoes-editor.active');
+
+    function posicionar() {
+        const raiz = document.documentElement.style;
+        if (!editorAberto()) { raiz.removeProperty('--rte-bottom'); return; }
+        const vv = window.visualViewport, ih = window.innerHeight, vh = vv ? vv.height : ih, topo = vv ? vv.offsetTop : 0;
+        let inset = 0, teclado = false;
+        if (vv && ih - vh - topo > 100) { teclado = true; inset = Math.round(ih - vh - topo); aprendido = inset; guardar('kbAprendido', inset); }
+        else if (repouso - ih > 100) { teclado = true; inset = 0; aprendido = repouso - ih; guardar('kbAprendido', aprendido); }
+        else if (telaDeToque && campoDeTexto(document.activeElement)) { teclado = true; inset = aprendido; }
+        else if (!campoDeTexto(document.activeElement)) repouso = ih;
+        if (teclado && window.matchMedia('(max-width:899px)').matches) raiz.setProperty('--rte-bottom', (inset + (ehIOS ? BARRINHA_IOS : 0) + FOLGA) + 'px');
+        else raiz.removeProperty('--rte-bottom');   // sem teclado: volta ao lugar da dock principal
+    }
+    window.posicionarBarraDeFormatacao = posicionar;
+    if (window.visualViewport) { visualViewport.addEventListener('resize', posicionar); visualViewport.addEventListener('scroll', posicionar); }
+    window.addEventListener('resize', posicionar);
+    document.addEventListener('focusin', () => { posicionar(); setTimeout(posicionar, 60); setTimeout(posicionar, 400); setTimeout(posicionar, 900); });
+    document.addEventListener('focusout', () => setTimeout(posicionar, 300));
+
+    // Quando o editor abre, a barra nasce de baixo da tela e sobe com mola (classe temporária que o CSS usa como ponto de partida).
+    const tela = document.getElementById('screen-anotacoes-editor'), dock = document.getElementById('rte-dock');
+    if (tela && dock && 'MutationObserver' in window) {
+        let estavaAberto = false;
+        new MutationObserver(() => {
+            const aberto = editorAberto();
+            if (aberto && !estavaAberto) {
+                dock.classList.add('rte-entrando'); void dock.offsetHeight;
+                requestAnimationFrame(() => requestAnimationFrame(() => { dock.classList.remove('rte-entrando'); posicionar(); }));
+            }
+            if (!aberto) posicionar();
+            estavaAberto = aberto;
+        }).observe(tela, { attributes: true, attributeFilter: ['class'] });
+    }
+})();

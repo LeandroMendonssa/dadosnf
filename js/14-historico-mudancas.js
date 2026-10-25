@@ -10,7 +10,31 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.14.0', nome: 'Anotações no estilo Apple Notas e Assistente com endereço fixo', status: 'atual',
+        numero: '2.14.2', nome: 'Anotações: nova barra de ferramentas, fina e animada', status: 'atual',
+        novidades: [
+            'Anotações: enquanto a anotação está aberta, a barra de ferramentas ocupa o lugar da dock principal (que volta ao fechar a anotação). É uma cápsula fina de vidro, com os mesmos ícones do app.',
+            'Com o teclado, a barra sobe com uma animação de mola e para logo acima dele (acima também da barrinha de setas e ✓ do iPhone, que o sistema desenha por cima da página e não pode ser removida).',
+            'No cabeçalho, "⋯" e "✓" agora ficam numa cápsula de vidro, como nas Notas da Apple.',
+            'No computador: o menu lateral continua, e a barra de ferramentas fica no topo da anotação, abaixo do cabeçalho (os menus de cor, tamanho etc. abrem para baixo).'
+        ],
+        implementado: ['Posição da barra calculada pelo tamanho real da área visível (corrige a barra que ficava no meio da tela), com folga de 16px sobre a barrinha do iPhone.', 'Entrada animada ao abrir a anotação (nasce de baixo e sobe).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/02, js/09, js/14 e js/31.'],
+        testar: ['No iPhone: abrir uma anotação, tocar no texto e ver a barra subir e parar logo acima do teclado, sem ficar atrás da barrinha de setas.', 'Fechar o teclado e ver a barra descer para o lugar da dock; voltar à lista e ver a dock principal de volta.', 'Abrir os menus de cor, tamanho e tabela e conferir que abrem logo acima da barra.', 'No computador: ver a barra no topo da anotação com o menu lateral.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.1', nome: 'Correções visuais: botão do chat e Central de notificações', status: 'concluida',
+        novidades: [
+            'Assistente: o botão de enviar virou um botão redondo com seta (e quadrado para parar), centralizado, sem texto deslocado.',
+            'Central de notificações: o primeiro bloco (explicação) não fica mais colado no bloco de baixo; todos os blocos têm espaço entre si.'
+        ],
+        implementado: ['Protótipo de Anotações (proto-notas.html) para escolher o novo desenho antes de mexer na tela real: dock trocada, ferramentas compactas ou completas, botões do topo em cápsula ou ícones simples.'],
+        mudou: ['Arquivos alterados: js/14, js/37 e style.css. Novo arquivo de teste (fora do app): proto-notas.html.'],
+        testar: ['No Assistente: ver o botão de enviar redondo, e o botão virar quadrado enquanto a IA responde.', 'Na Central de notificações: ver o espaço entre o primeiro bloco e os demais.', 'Abrir /proto-notas.html no mesmo endereço do app e testar as variantes com o teclado do iPhone.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.0', nome: 'Anotações no estilo Apple Notas e Assistente com endereço fixo', status: 'concluida',
         novidades: [
             'Anotações redesenhadas como as Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir); os botões grandes do rodapé saíram.',
             'A barra de formatação virou uma cápsula de vidro embaixo, logo acima do teclado (no celular só aparece com o teclado aberto; no computador fica sempre visível). Ela rola para o lado e os menus de cor, tamanho, espaçamento e tabela abrem logo acima dela. Antes ela ficava fixa no meio da tela ao rolar.',

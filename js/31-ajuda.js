@@ -245,7 +245,7 @@ const AJUDA_ARTIGOS = [
         'Os cartões de pedido seguem o padrão do app; tocar abre o pedido.'
       ],
       dicas: [], tutorial: null },
-    { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.14.0',
+    { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.14.2',
       resumo: 'Lista de anotações em aberto e arquivadas.',
       palavras: 'anotacoes em aberto arquivadas selecionar enviada financeiro exportar relatorio nova anotacao',
       tela: [{ id: 'screen-anotacoes', titulo: 'Anotações', rotulo: 'Abrir Anotações' }],
@@ -254,7 +254,7 @@ const AJUDA_ARTIGOS = [
         '"Nova Anotação" cria uma anotação livre; "Nova Auditoria" abre o formulário de auditoria (veja o artigo seguinte).',
         'Com "Selecionar", marque anotações e use as ações: Enviada ao financeiro ou Não vai ao financeiro.',
         '"Exportar Relatório" gera o relatório das anotações.',
-        'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). A barra de formatação (negrito, listas, cor, tamanho, tabela...) é uma cápsula embaixo, logo acima do teclado, e rola para o lado. O título do topo acompanha o título da anotação.'
+        'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação.'
       ],
       dicas: [], tutorial: null },
     { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.10.3',
