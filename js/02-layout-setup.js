@@ -318,7 +318,10 @@ function reordenarMenusDOM(order) {
 // No iPhone o sistema desenha por cima da página a barrinha de setas e ✓ (não dá para removê-la numa página web): a barra sobe acima dela.
 (function barraDeFormatacaoAcimaDoTeclado() {
     const ehIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const FOLGA = 8, BARRINHA_IOS = 16;
+    const FOLGA = 8, BARRINHA_PADRAO = ehIOS ? 16 : 0;
+    // Altura extra sobre o teclado (a barrinha de setas/✓ do iPhone): regulável pelo menu ⋯ da anotação e lembrada neste aparelho.
+    const barrinha = () => { let v = null; try { v = localStorage.getItem('rteBarrinha'); } catch (e) {} return v !== null && v !== '' && !isNaN(+v) ? +v : BARRINHA_PADRAO; };
+    window.rteBarrinhaAtual = barrinha;
     const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
     let lido = 0; try { lido = +(localStorage.getItem('kbAprendido') || 0); } catch (e) {}
     let repouso = window.innerHeight, aprendido = lido > 100 ? lido : TECLADO_ESTIMADO;
@@ -333,7 +336,7 @@ function reordenarMenusDOM(order) {
         else if (repouso - ih > 100) { teclado = true; inset = 0; aprendido = repouso - ih; guardar('kbAprendido', aprendido); }
         else if (telaDeToque && campoDeTexto(document.activeElement)) { teclado = true; inset = aprendido; }
         else if (!campoDeTexto(document.activeElement)) repouso = ih;
-        if (teclado && window.matchMedia('(max-width:899px)').matches) raiz.setProperty('--rte-bottom', (inset + (ehIOS ? BARRINHA_IOS : 0) + FOLGA) + 'px');
+        if (teclado && window.matchMedia('(max-width:899px)').matches) raiz.setProperty('--rte-bottom', (inset + barrinha() + FOLGA) + 'px');
         else raiz.removeProperty('--rte-bottom');   // sem teclado: volta ao lugar da dock principal
     }
     window.posicionarBarraDeFormatacao = posicionar;

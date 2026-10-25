@@ -49,13 +49,13 @@ const AJUDA_ARTIGOS = [
         'Salve a NF. Ao salvar, o recurso dos itens é gravado na cotação.'
       ],
       dicas: ['Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.'], tutorial: 'xml-ao-texto' },
-    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.10.0',
+    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.15.0',
       resumo: 'Trabalhar com a relação de notas pendentes.',
       palavras: 'gerenciar notas pendentes espera lote editar arquivar excluir selecionar conferida divergencia',
       tela: [{ id: 'screen-manage', titulo: 'Gerenciar', rotulo: 'Abrir Gerenciar' }],
       passos: [
         'Cada nota mostra um selo de situação: Conferida, Compra direta, Sem pedido vinculado, Auditoria pendente, Divergência resolvida ou Divergência. Toque no selo para ir direto ao pedido onde isso se resolve.',
-        'Para agir em várias notas, ative a seleção e marque as notas. A barra inferior permite marcar como pendente (em espera), remover a pendência, editar em lote, arquivar e excluir.',
+        'Para agir em várias notas, ative a seleção e marque as notas. Enquanto você seleciona, a dock principal dá lugar à dock de seleção: Todas, marcar como pendente (em espera), remover a pendência, editar em lote, arquivar e excluir. O ✕ à esquerda cancela a seleção.',
         'Notas em espera não entram na Saída de Texto.',
         'Se aparecer o aviso de notas sem recurso mas com recurso já conhecido pela Entrada de NF, toque em "Aplicar em todas" (ou aplique nota a nota).'
       ],
@@ -72,7 +72,7 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['O recurso de cada nota no texto é o campo Recurso dela. Se uma nota sai sem recurso, aplique o recurso em Gerenciar ou edite a nota.',
               'Próximos Vencimentos lista as notas que vencem nos próximos 7 dias.'], tutorial: 'xml-ao-texto' },
-    { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.10.6',
+    { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.15.0',
       resumo: 'Ver todas as NFs e resolver o que falta tocando na pendência.',
       palavras: 'controle nfs pendencia erp xml vinculo cartao divergencia editor',
       tela: [{ id: 'screen-controle-nfs', titulo: 'Controle de NFs', rotulo: 'Abrir Controle de NFs' }],
@@ -80,7 +80,7 @@ const AJUDA_ARTIGOS = [
         'Cada NF é um cartão com iniciais do fornecedor, situação, valor, vencimento e uma faixa de pendências.',
         'Toque numa pendência (texto vermelho ou o selo "N pendências"): o app abre o lugar certo e destaca o ponto em amarelo.',
         'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Gerenciar.',
-        'O botão Selecionar (igual ao de Anotações) permite marcar várias NFs em aberto e marcá-las como enviadas ao financeiro.',
+        'O botão Selecionar (igual ao de Anotações) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
@@ -245,16 +245,16 @@ const AJUDA_ARTIGOS = [
         'Os cartões de pedido seguem o padrão do app; tocar abre o pedido.'
       ],
       dicas: [], tutorial: null },
-    { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.14.2',
+    { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.15.0',
       resumo: 'Lista de anotações em aberto e arquivadas.',
       palavras: 'anotacoes em aberto arquivadas selecionar enviada financeiro exportar relatorio nova anotacao',
       tela: [{ id: 'screen-anotacoes', titulo: 'Anotações', rotulo: 'Abrir Anotações' }],
       passos: [
         'A tela tem duas listas: Em aberto e Arquivadas.',
         '"Nova Anotação" cria uma anotação livre; "Nova Auditoria" abre o formulário de auditoria (veja o artigo seguinte).',
-        'Com "Selecionar", marque anotações e use as ações: Enviada ao financeiro ou Não vai ao financeiro.',
+        'Com "Selecionar", marque as anotações: a dock de seleção aparece embaixo com o ✕ (cancelar) e o botão Exportar.',
         '"Exportar Relatório" gera o relatório das anotações.',
-        'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação.'
+        'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação. Se a barra ficar alta ou baixa demais no seu aparelho, use "Altura da barra" (− e +) no menu "⋯".'
       ],
       dicas: [], tutorial: null },
     { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.10.3',
@@ -286,24 +286,24 @@ const AJUDA_ARTIGOS = [
         '"Estoque por modelo" resume o que está disponível; "Exportar lista" gera a planilha (.xlsx), com opção de só o que é novo desde a última exportação.'
       ],
       dicas: ['O estoque se chama Almoxarifado. Se o aparelho consta em outro setor, o app avisa e registra o local real.'], tutorial: null },
-    { id: 'sp-data', cat: 'Fornecedores e produtos', titulo: 'Produtos SP Data e associação com a cotação', versao: '2.10.1',
+    { id: 'sp-data', cat: 'Fornecedores e produtos', titulo: 'Produtos SP Data e associação com a cotação', versao: '2.15.0',
       resumo: 'Importar o cadastro de produtos e ligar cada item ao SP Data.',
       palavras: 'sp data sgh produtos importar relatorio codigo nome unidade cadastrar associacao ativo ignorar divergencia',
       tela: [{ id: 'screen-spdata', titulo: 'Produtos SP Data', rotulo: 'Abrir Produtos SP Data' }],
       passos: [
-        'Em Ajustes → Produtos SP Data, cole o relatório do SGH com Código, Nome e Unidade (prefira um com a coluna de nome larga, como "Itens por subgrupo II") e toque em Processar.',
+        'Em Ajustes → Produtos SP Data, toque em "Importar relatório do SGH" (a área fica recolhida até você tocar), cole o relatório do SGH com Código, Nome e Unidade (prefira um com a coluna de nome larga, como "Itens por subgrupo II") e toque em Processar.',
         'Confira a prévia e use Confirmar Importação.',
         'Para um produto que não está no relatório, use "Cadastrar produto" (Código SP Data, Nome, Unidade).',
         'A associação do item da cotação com o produto SP Data pode ser feita na própria Entrada de NF, sem sair dela.',
         'Por produto, você pode ativar/desativar ou ignorar a divergência de quantidade/valor unitário.'
       ],
       dicas: ['"Limpar Banco de Exceções" apaga os fatores de conversão lembrados; use só se quiser recomeçar.'], tutorial: null },
-    { id: 'fornecedores-cadastro', cat: 'Fornecedores e produtos', titulo: 'Importar o cadastro de fornecedores (SP Data)', versao: '2.10.1',
+    { id: 'fornecedores-cadastro', cat: 'Fornecedores e produtos', titulo: 'Importar o cadastro de fornecedores (SP Data)', versao: '2.15.0',
       resumo: 'Trazer código, CNPJ, nome real e nome exibido.',
       palavras: 'fornecedores cadastro importar atualizar sp data cnpj nome real exibido selecionar multiplos xml',
       tela: [{ id: 'screen-fornecedores', titulo: 'Fornecedores', rotulo: 'Abrir Fornecedores' }],
       passos: [
-        'Em Ajustes → Fornecedores, abra "Importar/Atualizar Cadastro".',
+        'Em Ajustes → Fornecedores, toque em "Importar/Atualizar Cadastro" (fica recolhido até você tocar).',
         'Cole o relatório de cadastro ou envie o arquivo e toque em "Processar Cadastro".',
         'O cadastro serve para confirmar automaticamente a qual NF/cotação um lançamento do ERP corresponde.',
         '"Selecionar Múltiplos" e "Todos Visíveis" ajudam nas ações em vários fornecedores.',

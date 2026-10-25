@@ -10,7 +10,31 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.14.2', nome: 'Anotações: nova barra de ferramentas, fina e animada', status: 'atual',
+        numero: '2.15.0', nome: 'Dock de seleção em lote e refinos de tela', status: 'atual',
+        novidades: [
+            'Seleção em lote com Dock própria: ao tocar em Selecionar em Gerenciar, Anotações ou Controle de NFs, a dock principal dá lugar a uma cápsula com o ✕ (cancelar), o contador, "Todas" e as ações da seleção. Ela sobe com mola e some quando a seleção termina. As barras antigas saíram.',
+            'Produtos SP Data e Fornecedores: a área de colar o relatório ficou recolhida em uma linha ("Importar relatório do SGH" / "Importar/Atualizar Cadastro") e só abre ao tocar, sem o campo de texto aberto na tela.',
+            'Gerenciar: "Ver todas as NFs" virou um botão em pílula centralizado (mesmo estilo do "Adicionar nota"), no lugar do cartão azul solto.',
+            'Central do pedido: a linha "Outras ocorrências" ganhou respiro embaixo e o texto e a seta ficam centralizados na altura.'
+        ],
+        implementado: ['Novo arquivo js/38-dock-selecao.js: cada tela só avisa seu estado de seleção; as ações chamam as mesmas funções de antes (nada mudou nas regras de pendente, arquivar, excluir, exportar e financeiro).', 'A dock de seleção só aparece na tela que está em seleção; trocar de tela a esconde.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/06, js/09, js/17, js/14 e js/31. Novo arquivo: js/38-dock-selecao.js (vai na pasta js).'],
+        testar: ['Gerenciar: tocar no ícone de seleção, marcar notas e ver a dock com Todas e as ações (pendente, remover pendência, editar, arquivar, excluir); tocar no ✕ e ver a dock principal voltar.', 'Anotações e Controle de NFs: tocar em Selecionar e conferir a dock (Exportar; Financeiro e Direta).', 'Com a seleção ativa, trocar de tela pela barra: a dock de seleção só deve aparecer na tela que está selecionando.', 'Produtos SP Data e Fornecedores: ver a linha de importação recolhida, abrir, colar e processar.', 'Gerenciar (vazio ou com notas): ver o botão "Ver todas as NFs (Controle)" centralizado. Central do pedido: ver a linha "Outras ocorrências".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.3', nome: 'Anotações: altura da barra regulável e menus completos', status: 'concluida',
+        novidades: [
+            'Anotações: no menu "⋯" há agora "Altura da barra" com os botões − e +. Eles sobem ou descem a barra de ferramentas de 4 em 4 px, funcionam com o teclado aberto e o valor fica lembrado neste aparelho.',
+            'Os menus da barra (cor, tamanho, espaçamento e tabela) agora aparecem inteiros acima dela; antes o Safari os cortava fora da área da barra.'
+        ],
+        implementado: ['Valor padrão no iPhone: 16 px acima da barrinha de setas e ✓ do sistema.', 'Os botões do cabeçalho e o menu "⋯" não tiram mais o foco do texto, então o teclado continua aberto ao regular.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/02, js/09, js/14 e js/31.'],
+        testar: ['No iPhone: abrir uma anotação, tocar no texto, abrir "⋯" e usar − ou + em "Altura da barra" vendo a barra se mexer; anotar o valor que ficou bom.', 'Abrir os menus de cor, tamanho e tabela e conferir que aparecem inteiros acima da barra.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.2', nome: 'Anotações: nova barra de ferramentas, fina e animada', status: 'concluida',
         novidades: [
             'Anotações: enquanto a anotação está aberta, a barra de ferramentas ocupa o lugar da dock principal (que volta ao fechar a anotação). É uma cápsula fina de vidro, com os mesmos ícones do app.',
             'Com o teclado, a barra sobe com uma animação de mola e para logo acima dele (acima também da barrinha de setas e ✓ do iPhone, que o sistema desenha por cima da página e não pode ser removida).',

@@ -146,6 +146,7 @@ function atualizarBulkBarNotas() {
     const daAbaBulk = notasDaAbaGerenciar();
     if (selectAllBtn) selectAllBtn.textContent = (daAbaBulk.length > 0 && daAbaBulk.every(n => notasSelecionadas.has(n.id))) ? 'Nenhuma' : 'Todas';
     document.querySelectorAll('#bulk-action-bar-notas .bulk-buttons button').forEach(b => b.disabled = count === 0);
+    if (typeof dockSelecaoAtualizar === 'function') dockSelecaoAtualizar('notas', selectionModeNotas, count, daAbaBulk.length > 0 && daAbaBulk.every(n => notasSelecionadas.has(n.id)));   // dock de seleção (js/38)
 }
 
 // Fase 40: arquivar em massa as notas selecionadas (mesma lógica de arquivarNotaIndividual/limpar, em lotes).

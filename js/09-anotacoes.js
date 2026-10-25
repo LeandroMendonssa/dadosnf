@@ -112,6 +112,7 @@ function toggleSelecaoAnotacao(id) {
 function atualizarContadorSelecaoAnotacoes() {
     const el = document.getElementById('anotacoes-selecao-contador');
     if (el) el.textContent = anotacoesSelecionadas.size > 0 ? `${anotacoesSelecionadas.size} selecionada(s)` : 'Toque nas anotações para selecionar';
+    if (typeof dockSelecaoAtualizar === 'function') dockSelecaoAtualizar('anotacoes', selecaoAnotacoesAtiva, anotacoesSelecionadas.size, false);   // dock de seleção (js/38)
 }
 async function exportarAnotacoesWhatsapp() {
     if (anotacoesSelecionadas.size === 0) return toast('Selecione ao menos uma anotação.');
@@ -406,7 +407,7 @@ function renderCentralPedidoCompleto(pedido) {
         const semFornecedor = todasDivergencias.filter(x => !x.oc.fornecedorCnpj);
         const abertoSem = centralFornecedoresAbertos.has('_sem_cnpj');
         const semFornecedorHTML = semFornecedor.length ? `<div class="central-fornecedor${abertoSem ? ' aberto' : ''}">
-            <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('_sem_cnpj', this)">
+            <div class="central-fornecedor-header cf-simples" onclick="toggleCentralFornecedor('_sem_cnpj', this)">
                 <div class="cf-topo-info"><div class="cf-nome">Outras ocorrências</div><div class="cf-cnpj">sem fornecedor identificado na cotação</div></div>
                 <i class="fa-solid fa-chevron-right"></i>
             </div>
@@ -807,8 +808,17 @@ async function concluirAnotacao() {
     await salvarAnotacaoAtual(true);
     voltarParaListaAnotacoes();
 }
+// Regulagem da altura da barra de formatação (fica no menu ⋯): − desce, + sobe, de 4 em 4 px; vale já com o teclado aberto.
+function atualizarValorAlturaBarra() { const el = document.getElementById('nota-altura-valor'); if (el && typeof window.rteBarrinhaAtual === 'function') el.textContent = window.rteBarrinhaAtual() + ' px'; }
+function ajustarAlturaBarraNotas(delta) {
+    const atual = typeof window.rteBarrinhaAtual === 'function' ? window.rteBarrinhaAtual() : 0;
+    const novo = Math.max(-24, Math.min(90, atual + delta));
+    try { localStorage.setItem('rteBarrinha', String(novo)); } catch (e) {}
+    atualizarValorAlturaBarra();
+    if (typeof window.posicionarBarraDeFormatacao === 'function') window.posicionarBarraDeFormatacao();
+}
 function fecharMenuNota() { const m = document.getElementById('nota-menu'); if (m) m.style.display = 'none'; }
-function toggleMenuNota(ev) { if (ev) ev.stopPropagation(); const m = document.getElementById('nota-menu'); if (!m) return; fecharPopoversRte(); m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
+function toggleMenuNota(ev) { if (ev) ev.stopPropagation(); const m = document.getElementById('nota-menu'); if (!m) return; fecharPopoversRte(); m.style.display = m.style.display === 'none' ? 'block' : 'none'; atualizarValorAlturaBarra(); }
 function menuNotaAcao(acao) {
     fecharMenuNota();
     if (acao === 'copiar') copiarTextoAnotacao(); else if (acao === 'colar') colarTextoAnotacao(); else if (acao === 'limpar') limparTextoAnotacao(); else if (acao === 'excluir') excluirAnotacaoAtual();

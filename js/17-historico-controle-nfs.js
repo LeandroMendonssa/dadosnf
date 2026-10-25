@@ -293,6 +293,7 @@ function renderControleNfs() {
         document.getElementById('controle-sel-info').textContent = `${selecionadasControle.size} selecionada(s)`;
         document.getElementById('controle-sel-direta').disabled = selecionadasControle.size === 0;
         const fin = document.getElementById('controle-sel-fin'); if (fin) fin.disabled = selecionadasControle.size === 0;
+        if (typeof dockSelecaoAtualizar === 'function') dockSelecaoAtualizar('controle', selecaoControleAtiva, selecionadasControle.size, false);   // dock de seleção (js/38)
     }
     const subtitulos = { aberto: 'Tudo que ainda não foi para o financeiro', arquivadas: 'NFs que já foram para o financeiro ou que não vão a ele (diretas)' };
     const vazios = {
