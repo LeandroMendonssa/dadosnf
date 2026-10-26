@@ -1,10 +1,12 @@
+/* ✓ reto: fonte própria só com o sinal de verificado (✓ e ✔), traço reto de espessura uniforme; vale em todo o app e acompanha tamanho e cor do texto */
+@font-face{font-family:"Check Reto";src:url(data:font/ttf;base64,AAEAAAAKAIAAAwAgT1MvMuvya/EAAAEoAAAAYGNtYXAADCdnAAABlAAAADRnbHlmOdYE8gAAAdAAAABQaGVhZDDxMEsAAACsAAAANmhoZWEGXwPOAAAA5AAAACRobXR4BdwAAAAAAYgAAAAKbG9jYQAUACgAAAHIAAAACG1heHAABQAIAAABCAAAACBuYW1l5xD+vQAAAiAAAABpcG9zdHRgQDwAAAKMAAAAOAABAAAAAQAAKIKE4l8PPPUAAQPoAAAAAOcD9iQAAAAA5wP2JABMAD0DiQLmAAAAAwACAAAAAAAAAAEAAAMg/zgAAAPoAAAAqwM9AAEAAAAAAAAAAAAAAAAAAAACAAEAAAADAAYAAQAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAwNBAZAABQAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAPz8/PwAAJxMnFAMg/zgAAAMgAMgAAAAAAAAAAAAAAAAAAAAgAAAB9AAAA+gAAAAAAAAAAAACAAAAAwAAABQAAwABAAAAFAAEACAAAAAEAAQAAQAAJxT//wAAJxP//9juAAEAAAAAAAAAAAAUACgAAQBMAD0DiQLmAAUAABMXARcBAaS4AdNa/df+7AGouQH3VP2rARMAAAEATAA9A4kC5gAFAAATFwEXAQGkuAHTWv3X/uwBqLkB91T9qwETAAAAAAQANgABAAAAAAABAAoAAAABAAAAAAACAAcACgADAAEECQABABQAEQADAAEECQACAA4AJUNoZWNrIFJldG9SZWd1bGFyAEMAaABlAGMAawAgAFIAZQB0AG8AUgBlAGcAdQBsAGEAcgAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAECAQMHdW5pMjcxMwd1bmkyNzE0) format("truetype");unicode-range:U+2713,U+2714;font-display:block}
 :root {
     /* Font Variables */
-    --font-arial: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-    --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
-    --font-serif: 'Roboto Slab', serif;
-    --font-mono: 'Source Code Pro', monospace;
-    --font-montserrat: 'Montserrat', sans-serif;
+    --font-arial: 'Check Reto', Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    --font-sans: 'Check Reto', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Check Reto', 'Roboto Slab', serif;
+    --font-mono: 'Check Reto', 'Source Code Pro', monospace;
+    --font-montserrat: 'Check Reto', 'Montserrat', sans-serif;
 
     /* Tema Padrão (Claro) */
     --bg-primary: #f0f2f5; --bg-secondary: #ffffff;
@@ -1742,13 +1744,21 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .central-fornecedor-header.cf-simples{align-items:center;padding:14px 16px}
 .central-fornecedor-header.cf-simples .cf-cnpj{margin-top:3px}
 /* Cartão de importação recolhido (Produtos SP Data, Fornecedores): só uma linha até tocar */
-.importar-colapso.card{padding:0;overflow:hidden}
-.importar-colapso>summary{display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 16px;cursor:pointer;list-style:none}
-.importar-colapso>summary::-webkit-details-marker{display:none}
+.importar-colapso.card{padding:0;overflow:hidden;flex-shrink:0}   /* a tela é uma coluna: sem isto o cartão encolhia quando a lista de produtos era grande */
+.importar-colapso .imp-cab{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:12px 16px;text-align:left;background:transparent;border:none;border-radius:0;cursor:pointer;color:var(--text-dark)}
 .importar-colapso .imp-ic{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent-color) 12%,transparent);color:var(--accent-text,var(--accent-color));font-size:15px}
 .importar-colapso .imp-tx{flex:1;min-width:0}
 .importar-colapso .imp-tx b{display:block;font-size:15px;font-weight:700;color:var(--text-dark);line-height:1.25}
-.importar-colapso .imp-tx small{display:block;margin-top:2px;font-size:12px;color:var(--text-light);line-height:1.3}
+.importar-colapso .imp-tx small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--text-light);line-height:1.3}
 .importar-colapso .imp-seta{font-size:12px;color:var(--text-light);transition:transform .25s var(--ease-out,ease)}
-.importar-colapso[open]>summary .imp-seta{transform:rotate(90deg)}
+.importar-colapso.aberto .imp-seta{transform:rotate(90deg)}
+.importar-colapso .imp-corpo-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease-out,ease)}
+.importar-colapso.aberto .imp-corpo-wrap{grid-template-rows:1fr}
+.importar-colapso .imp-corpo-int{overflow:hidden;min-height:0}
 .importar-colapso .importar-corpo{padding:14px 16px 16px;border-top:1px solid var(--border-color)}
+
+/* ---- Botões: um tamanho e um estilo só em todas as telas ----
+   Botão de ação (.actions-button): mesma altura e mesma largura mínima, centralizado; a pílula pequena (.action-chip) sempre na cor de destaque. */
+.actions-button{min-height:44px;justify-content:center}
+.app-screen .actions > .actions-button:not(.xml-item-acao *), .app-screen .actions-row > .actions-button:not(.xml-item-acao *){min-width:min(100%,240px)}
+.action-chip{color:var(--accent-text)}
