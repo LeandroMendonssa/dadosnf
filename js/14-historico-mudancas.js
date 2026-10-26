@@ -14,11 +14,12 @@ const HISTORICO_FASES = [
         novidades: [
             'Seleção em lote com Dock própria: ao tocar em Selecionar em Gerenciar, Anotações ou Controle de NFs, a dock principal dá lugar a uma cápsula com o ✕ (cancelar), o contador, "Todas" e as ações da seleção. Ela sobe com mola e some quando a seleção termina. As barras antigas saíram.',
             'Produtos SP Data e Fornecedores: a área de colar o relatório ficou recolhida em uma linha ("Importar relatório do SGH" / "Importar/Atualizar Cadastro") e só abre ao tocar, sem o campo de texto aberto na tela.',
-            'Gerenciar: "Ver todas as NFs" virou um botão em pílula centralizado (mesmo estilo do "Adicionar nota"), no lugar do cartão azul solto.',
+            'Gerenciar: "Ver todas as NFs" virou um botão de ação centralizado (o mesmo tamanho e estilo dos demais), no lugar do cartão azul solto; "Adicionar nota" (lista vazia) também usa o botão padrão.',
+            'Botões padronizados: os botões de ação de todas as telas têm a mesma altura (44 px) e a mesma largura mínima, centralizados, e as pílulas pequenas usam sempre a cor de destaque.',
             'Central do pedido: a linha "Outras ocorrências" ganhou respiro embaixo e o texto e a seta ficam centralizados na altura.'
         ],
         implementado: ['Novo arquivo js/38-dock-selecao.js: cada tela só avisa seu estado de seleção; as ações chamam as mesmas funções de antes (nada mudou nas regras de pendente, arquivar, excluir, exportar e financeiro).', 'A dock de seleção só aparece na tela que está em seleção; trocar de tela a esconde.'],
-        mudou: ['Arquivos alterados: index.html, style.css, js/06, js/09, js/17, js/14 e js/31. Novo arquivo: js/38-dock-selecao.js (vai na pasta js).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/05, js/06, js/09, js/17, js/14 e js/31. Novo arquivo: js/38-dock-selecao.js (vai na pasta js).'],
         testar: ['Gerenciar: tocar no ícone de seleção, marcar notas e ver a dock com Todas e as ações (pendente, remover pendência, editar, arquivar, excluir); tocar no ✕ e ver a dock principal voltar.', 'Anotações e Controle de NFs: tocar em Selecionar e conferir a dock (Exportar; Financeiro e Direta).', 'Com a seleção ativa, trocar de tela pela barra: a dock de seleção só deve aparecer na tela que está selecionando.', 'Produtos SP Data e Fornecedores: ver a linha de importação recolhida, abrir, colar e processar.', 'Gerenciar (vazio ou com notas): ver o botão "Ver todas as NFs (Controle)" centralizado. Central do pedido: ver a linha "Outras ocorrências".'],
         testarLinks: []
     },

@@ -233,6 +233,7 @@ const ASSINATURAS_DADOS = {
             listaAssociacoesSpData = snapshot.docs.map(doc => ({ codigoSmartCompras: doc.id, ...doc.data() }));
             if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
             if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
+            agendarRender('reavaliarItensErp', () => reavaliarItensErp(false), 4000); // 2.11.0
         }, error => console.error("Erro ao carregar associações SP Data:", error));
     },
     associacoesFornecedor: () => {
@@ -428,7 +429,7 @@ function rebuildNotasPendentesList(){
     if(notasParaExibir.length===0){
         DOM.listaNotas.innerHTML = abaGerenciar === 'espera'
             ? `<div class="empty-state">Nenhuma nota em espera. As notas que você colocar em espera aparecem aqui.</div>`
-            : `<div class="empty-state">Nenhuma nota na relação para saída.<div class="actions-row"><button type="button" class="action-chip edit-chip" onclick="switchToScreen('screen-add', 'Adicionar')">Adicionar nota</button></div></div>`;
+            : `<div class="empty-state">Nenhuma nota na relação para saída.<div class="actions-row"><button type="button" class="actions-button is-primary" onclick="switchToScreen('screen-add', 'Adicionar')">Adicionar nota</button></div></div>`;
         return;
     }
     
