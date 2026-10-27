@@ -351,7 +351,7 @@ function renderCentralPedidoCompleto(pedido) {
                     const comp = compForn.find(c => c.codProduto === it.codProduto && (c.temNf || c.temErp || c.divergencias.length));
                     const divs = divPorProduto[it.codProduto] || [];
                     return renderLinhaProduto(it, `${f.cnpj}-${it.codProduto}`, {
-                        comp, chegou: !!chegada,
+                        comp, chegou: !!chegada, estado: (compForn.find(c => c.codProduto === it.codProduto) || {}).estado || 'nenhuma',
                         compHTML: comp ? renderComparacaoItemHTML(pedido, comp, true) : `<div class="central-item-vazio">${chegada ? 'Fornecedor marcado como já chegou (sem NF no app).' : 'Ainda sem NF/ERP para este item.'}</div>`,
                         divsHTML: divs.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join(''),
                         divsPendentes: divs.filter(x => (x.d.status || 'pendente') === 'pendente').length
@@ -363,25 +363,21 @@ function renderCentralPedidoCompleto(pedido) {
                 ? `<div class="central-secao-titulo">Outras divergências deste fornecedor</div>${divSoltas.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join('')}`
                 : '';
 
-            // 2.0.9: "com divergência" conta só o que está EM ABERTO (item sem auditoria resolvida/encerrada).
-            const nComDiv = compForn.filter(c => c.divergencias.length && !c.resolvido).length;
-            const nPend = divergenciasForn.filter(x => (x.d.status || 'pendente') === 'pendente').length;
-            const emErro = nComDiv > 0 || nPend > 0;
-            const entregaOk = !!(entrega && entrega.estado === 'completa');
+            // 2.16.0: UMA contagem, pelo estado da ocorrência de cada item (nunca soma comparação + auditoria do mesmo problema).
+            // Em aberto = detectada (sem relato: depende de você). Relatada tem o peso de resolvida: aparece, mas não acende o cartão.
+            const estadosForn = compForn.map(c => c.estado);
+            const nAbertas = estadosForn.filter(e => e === 'detectada').length;
+            const nRelatadas = estadosForn.filter(e => e === 'relatada').length + divSoltas.filter(x => (x.d.status || 'pendente') === 'pendente').length;
+            const emErro = nAbertas > 0;
+            const entregaOk = !!(entrega && (entrega.estado === 'completa' || entrega.estado === 'parcial_relatada')); // 2.16.1: parcial já chegou (falta relatada) pesa como entregue
             const classeFornecedor = emErro ? 'st-erro' : (entregaOk ? 'st-ok' : 'st-pend');
             const rot = entrega ? rotuloEntregaFornecedor(entrega) : null;
             const classeEntrega = rot ? (rot.classe === 'pronto' ? 'rs-ok' : rot.classe === 'pendente' ? 'rs-pend' : '') : '';
-            const partesResumo = [
-                `<span>${produtos.length} item(ns)</span>`,
-                nComDiv ? `<strong class="rs-erro">${nComDiv} com divergência em aberto</strong>` : '',
-                nPend ? `<strong class="rs-erro">${nPend} auditoria(s) pendente(s)</strong>` : ''
-            ].filter(Boolean);
-            const resumo = partesResumo.join(' · ');
 
             // 2.9.0: cartão no padrão do app — iniciais, nome, status, itens/valor/pendências e (abaixo) as ações; o corpo continua recolhível.
             const valorCot = (typeof valorTotalCotacaoPorFornecedor === 'function') ? valorTotalCotacaoPorFornecedor(cotacao, f.cnpj) : 0;
-            const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', 'Entregue'] : ['m', 'Aguardando']);
-            const pendTxt = [nComDiv ? `${nComDiv} item(ns) com divergência em aberto` : '', nPend ? `${nPend} auditoria(s) pendente(s)` : ''].filter(Boolean).join(' · ');
+            const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', entrega.estado === 'parcial_relatada' ? 'Chegou (parcial)' : 'Entregue'] : ['m', 'Aguardando']);
+            const pendTxt = [nAbertas ? `${nAbertas} divergência(s) em aberto` : '', nRelatadas ? `${nRelatadas} pendência(s) relatada(s)` : ''].filter(Boolean).join(' · ');
             const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('');
             return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}" data-cnpj="${f.cnpj}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
@@ -396,7 +392,7 @@ function renderCentralPedidoCompleto(pedido) {
                 ${acoesHTML}
                 <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
                     ${faixaHTML}
-                    <div class="cf-tiles"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div${(nComDiv + nPend) ? ` class="ctl-link" onclick="irParaDivergenciaCartao('${f.cnpj}')"` : ''}><span>Divergências</span><strong class="${(nComDiv + nPend) ? 'e' : ''}">${nComDiv + nPend}</strong></div></div>
+                    <div class="cf-tiles"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div${(nAbertas + nRelatadas) ? ` class="ctl-link" onclick="irParaDivergenciaCartao('${f.cnpj}')"` : ''}><span>Em aberto</span><strong class="${nAbertas ? 'e' : ''}">${nAbertas}</strong></div></div>
                     ${detalhesEntregaHTML ? `<div class="cf-detalhes">${detalhesEntregaHTML}</div>` : ''}
                     ${produtosHTML}
                     ${soltasHTML}
@@ -623,13 +619,12 @@ function renderLinhaProduto(it, chaveUnica, ctx) {
     // ao abrir, cotação + comparação Cotação × NF × ERP + divergências da
     // auditoria do MESMO item. Abre/fecha por classe (sem redesenhar a tela).
     const c = ctx || {};
-    const badges = (c.comp ? (c.comp.divergencias.length && c.comp.resolvido
-            ? `<span class="xml-item-badge pronto">✓ Resolvido</span>`
-            : c.comp.divergencias.length
-            ? `<span class="xml-item-badge pendente">⚠ ${c.comp.divergencias.length} diverg.</span>`
-            : (!c.comp.temNf && c.comp.temErp) ? `<span class="xml-item-badge pronto">Lançado no ERP</span>`
-            : `<span class="xml-item-badge pronto">✓ Confere</span>`) : (c.chegou ? `<span class="xml-item-badge pronto">Chegou</span>` : ''))
-        + (c.divsPendentes ? ` <span class="xml-item-badge pendente">Auditoria pendente</span>` : '');
+    // 2.16.0: UMA etiqueta por item, pelo estado da ocorrência (a divergência detectada e a auditoria do mesmo item deixam de ser dois selos).
+    const estadoItem = c.estado || (c.comp ? c.comp.estado : 'nenhuma');
+    const seloEstado = seloEstadoOcorrencia(estadoItem, c.comp ? c.comp.divergencias.length : 0);
+    const badges = seloEstado
+        || (c.comp ? ((!c.comp.temNf && c.comp.temErp) ? `<span class="xml-item-badge pronto">Lançado no ERP</span>`
+            : `<span class="xml-item-badge pronto">✓ Confere</span>`) : (c.chegou ? `<span class="xml-item-badge pronto">Chegou</span>` : ''));
     return `<div class="central-item-linha central-prod${expandido ? ' aberto' : ''}">
         <div class="central-prod-cab" onclick="toggleCentralProduto('${chaveUnica}', this)">
             ${tituloHTML}

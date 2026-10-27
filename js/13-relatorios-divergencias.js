@@ -235,18 +235,19 @@ function itensCorrespondentesCotacao(cotacao, termo) {
 // Fase 34: resumo de entrega do pedido (quantos fornecedores completos/parciais/aguardando).
 // Só leitura: usa as mesmas funções do card do fornecedor na Central (Fase 31). Nunca quebra a lista.
 function resumoEntregaCotacao(c) {
-    const r = { completa: 0, parcial: 0, erp: 0, aguardando: 0, divergencias: 0, total: 0 };
+    const r = { completa: 0, parcial: 0, parcialRel: 0, erp: 0, aguardando: 0, divergencias: 0, total: 0 };
     try {
         const fornecedores = c.fornecedores || [];
         if (!fornecedores.length || !(c.itens || []).length) return r;
         const comp = compararFontesPedido(c.pedido);
-        r.divergencias = comp.filter(x => x.divergencias.some(d => d.tipo !== 'nao_faturado') && !x.resolvido).length; // Fase 36: "não faturado" já aparece como entrega parcial
+        r.divergencias = comp.filter(x => x.estado === 'detectada' && x.divergencias.some(d => d.tipo !== 'nao_faturado')).length; // Fase 36: "não faturado" já aparece como entrega parcial. 2.16.0: só conta a em aberto (sem relato); relatada tem o peso de resolvida.
         fornecedores.forEach(f => {
             const compForn = comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === normalizarCnpj(f.cnpj));
             const e = calcularEntregaFornecedorPedido(c.pedido, f, compForn);
             if (!e || !e.total) return;
             r.total++;
             if (e.estado === 'completa') r.completa++;
+            else if (e.estado === 'parcial_relatada') r.parcialRel++; // 2.16.1: chegou parcial, falta relatada
             else if (e.estado === 'parcial') r.parcial++;
             else if (e.estado === 'erp_sem_itens') r.erp++;
             else r.aguardando++;
@@ -259,6 +260,7 @@ function chipsResumoEntrega(r) {
     return [
         r.completa ? chip('pronto', `✓ ${r.completa} completa${r.completa === 1 ? '' : 's'}`) : '',
         r.parcial ? chip('pendente', `◐ ${r.parcial} parcial${r.parcial === 1 ? '' : 'is'}`) : '',
+        r.parcialRel ? chip('neutro', `◐ ${r.parcialRel} parcial (já chegou)`) : '',
         r.erp ? chip('neutro', `◐ ${r.erp} NF no ERP`) : '',
         r.aguardando ? chip('neutro', `○ ${r.aguardando} aguardando`) : '',
         r.divergencias ? chip('pendente', `${r.divergencias} divergência${r.divergencias === 1 ? '' : 's'}`) : ''
@@ -274,10 +276,12 @@ function renderCardCotacao(c) {
     let st = ['m', 'Aguardando'];
     if (r.divergencias) st = ['err', `${r.divergencias} divergência${r.divergencias === 1 ? '' : 's'}`];
     else if (r.total && r.completa === r.total) st = ['ok', 'Completo'];
-    else if (r.completa || r.parcial || r.erp) st = ['', 'Em andamento'];
+    else if (r.total && r.completa + r.parcialRel === r.total) st = ['ok', 'Concluído']; // 2.16.1: tudo chegou; a falta já foi relatada
+    else if (r.completa || r.parcial || r.parcialRel || r.erp) st = ['', 'Em andamento'];
     const partes = [
         r.completa ? `✓ ${r.completa} completa${r.completa === 1 ? '' : 's'}` : '',
         r.parcial ? `◐ ${r.parcial} parcial${r.parcial === 1 ? '' : 'is'}` : '',
+        r.parcialRel ? `◐ ${r.parcialRel} parcial (já chegou)` : '',
         r.erp ? `◐ ${r.erp} NF no ERP` : '',
         r.aguardando ? `○ ${r.aguardando} aguardando` : ''
     ].filter(Boolean);

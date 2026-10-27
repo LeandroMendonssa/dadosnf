@@ -10,7 +10,47 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.15.0', nome: 'Dock de seleção em lote e refinos de tela', status: 'atual',
+        numero: '2.16.1', nome: 'Entrega parcial que já chegou', status: 'atual',
+        novidades: [
+            'Quando o fornecedor faturou menos do que foi cotado e essa falta já foi relatada em auditoria, o item deixa de ficar "aguardando": não se espera nova entrega, porque o que não foi faturado não vem depois.',
+            'O fornecedor passa a mostrar "◐ Entrega parcial — já chegou (falta relatada)", em cinza (mesmo peso de resolvido), e o cartão do pedido mostra "◐ N parcial (já chegou)". O cartão do fornecedor fica verde com "Chegou (parcial)".',
+            'Quando todos os fornecedores do pedido chegaram, completos ou parciais com a falta relatada, o pedido aparece como "Concluído".',
+            'Na linha do fornecedor, em vez de "Faltam: ...", aparece "Chegou parcial e a falta já foi relatada em auditoria (não se espera nova entrega): ...". O botão "Marcar parcial como resolvida" some, porque não há mais o que marcar.',
+            'Antes de relatar, nada muda: a falta ainda sem auditoria continua como entrega parcial em amarelo.'
+        ],
+        implementado: ['Novo estado de entrega "parcial_relatada" em calcularEntregaFornecedorPedido (js/11), lido pelo cartão do fornecedor (js/09) e pelo resumo do pedido (js/13).'],
+        mudou: ['Arquivos alterados: js/09, js/11, js/13, js/14 e js/31.'],
+        testar: ['Pedido 1744: o fornecedor da hidrocortisona deve mostrar "Entrega parcial — já chegou (falta relatada)" em vez de aguardando/parcial em amarelo, sem o botão "Marcar parcial como resolvida".', 'Em Cotações, o cartão do 1744 deve mostrar "◐ 1 parcial (já chegou)".', 'Num pedido com falta ainda NÃO relatada, o fornecedor continua "Entrega parcial" em amarelo, com o botão de marcar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.16.0', nome: 'Divergência única: detectada, pendência relatada e resolvida', status: 'concluida',
+        novidades: [
+            'Uma divergência é uma ocorrência só, por item, com três estados: Divergência (o app viu a diferença e ninguém relatou ainda), Pendência relatada (existe auditoria aberta) e Resolvido. Antes, a comparação e a auditoria do mesmo problema eram contadas como duas coisas, e por isso o cartão do fornecedor mostrava 2 quando por fora aparecia 1.',
+            'Pendência relatada tem o peso de resolvido: não acende o cartão do fornecedor em vermelho, não conta como "em aberto", não aparece no total de "itens que precisam de atenção" e o selo da NF fica neutro. Só a divergência ainda sem relato pede ação sua.',
+            'Cartão do fornecedor: o quadro agora é "Em aberto" (só as divergências sem relato) e a faixa mostra "N divergência(s) em aberto · N pendência(s) relatada(s)". Cada item tem uma etiqueta só.',
+            'Selo de aptidão da NF: passa a olhar só os itens da própria NF (antes, qualquer auditoria pendente do pedido marcava todas as NFs). Novo selo "Pendência relatada".',
+            'A auditoria gerada a partir da comparação agora grava o código do item da cotação, para a ligação não depender do nome do produto. As auditorias antigas continuam como estavam e seguem ligadas pelo nome.',
+            'Central de notificações: as auditorias abertas passaram para "Pendências relatadas" (prioridade baixa, fora da contagem de atenção). Na NF em edição, "Gerar auditoria" só aparece para divergência ainda sem relato.'
+        ],
+        implementado: ['Função estadoOcorrenciaItem em js/11 (estado derivado da evidência calculada + auditoria ligada) lida por cartão, linha do item, selo da NF, resumo do pedido, Central de notificações, visão da NF e Assistente.'],
+        mudou: ['Arquivos alterados: js/05, js/09, js/11, js/13, js/14, js/30, js/31, js/34, js/36 e js/37. Nenhum dado salvo foi reescrito.'],
+        testar: ['Abrir o pedido 1744: o cartão do fornecedor deve mostrar "Em aberto 0" e a faixa "1 pendência relatada", e o item uma etiqueta só ("Pendência relatada").', 'Abrir um pedido com divergência ainda sem auditoria: o cartão fica vermelho, "Em aberto 1", etiqueta "Divergência" e botão Gerar auditoria. Gerar e salvar a auditoria: o item passa a "Pendência relatada" e o cartão deixa de ficar vermelho.', 'Alterar o status da auditoria para Resolvida: o item mostra "Resolvido" em verde.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.15.1', nome: 'Correção do cartão de importação e verificado reto', status: 'concluida',
+        novidades: [
+            'Produtos SP Data (e Fornecedores): o cartão recolhido de importação não é mais espremido quando a lista de produtos é grande; a linha aparece inteira e abre normalmente.',
+            'O sinal de verificado (✓) agora é reto, de traço uniforme e pontas retas, em todo o app (selos, avisos, seleção de NFs, Ajuda): ele vem de uma fonte própria que só troca esse símbolo e acompanha o tamanho e a cor do texto.'
+        ],
+        implementado: ['Fonte "Check Reto" embutida no style.css (menos de 1 KB), usada antes das fontes escolhidas em Aparência.'],
+        mudou: ['Arquivos alterados: style.css e js/14.'],
+        testar: ['Abrir Produtos SP Data e conferir a linha "Importar relatório do SGH" inteira; tocar e ver abrir.', 'Ver o ✓ nos selos (ex.: "✓ 1 completa" em Cotações), na seleção de NFs do Controle e nos avisos: todos com o traço reto.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.15.0', nome: 'Dock de seleção em lote e refinos de tela', status: 'concluida',
         novidades: [
             'Seleção em lote com Dock própria: ao tocar em Selecionar em Gerenciar, Anotações ou Controle de NFs, a dock principal dá lugar a uma cápsula com o ✕ (cancelar), o contador, "Todas" e as ações da seleção. Ela sobe com mola e some quando a seleção termina. As barras antigas saíram.',
             'Produtos SP Data e Fornecedores: a área de colar o relatório ficou recolhida em uma linha ("Importar relatório do SGH" / "Importar/Atualizar Cadastro") e só abre ao tocar, sem o campo de texto aberto na tela.',

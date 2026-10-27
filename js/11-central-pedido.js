@@ -544,6 +544,26 @@ function resolucaoItemComparacao(cotacao, codProduto, auditorias, chegou) {
     const manual = (cotacao.resolvidosPorItem || {})[codProduto] || null;
     return { resolvido: manual ? { ...manual, origem: 'manual' } : null, auditorias: [] };
 }
+// 2.16.0: UMA ocorrência por item, com o estado derivado das duas camadas (evidência calculada + relato da auditoria).
+//   detectada = o app viu a diferença e ninguém relatou ainda (depende de você);
+//   relatada  = existe auditoria aberta (já está com o responsável: peso de "resolvido", não pede ação sua);
+//   resolvida = a auditoria foi tratada, ou foi marcada como resolvida;
+//   nenhuma   = sem divergência. Todas as telas leem este estado; nenhuma soma por conta própria.
+function estadoOcorrenciaItem(divergencias, resolvido, auditorias) {
+    const temAud = (auditorias || []).length > 0;
+    if (resolvido && ((divergencias || []).length || temAud)) return 'resolvida';
+    if (temAud) return 'relatada';
+    if ((divergencias || []).length) return 'detectada';
+    return 'nenhuma';
+}
+const ROTULO_ESTADO_OCORRENCIA = { detectada: 'Divergência', relatada: 'Pendência relatada', resolvida: 'Resolvido', nenhuma: '' };
+// Selo (HTML) do estado: amarelo = em aberto (sua), cinza = relatada, verde = resolvida.
+function seloEstadoOcorrencia(estado, qtdProblemas) {
+    if (estado === 'resolvida') return `<span class="xml-item-badge pronto">✓ Resolvido</span>`;
+    if (estado === 'relatada') return `<span class="xml-item-badge neutro">Pendência relatada</span>`;
+    if (estado === 'detectada') return `<span class="xml-item-badge pendente">⚠ ${qtdProblemas > 1 ? qtdProblemas + ' divergências' : 'Divergência'}</span>`;
+    return '';
+}
 
 function compararFontesPedido(pedido, opcoes) {
     const cotacao = listaCotacoes.find(c => c.pedido === pedido);
@@ -703,7 +723,9 @@ function compararFontesPedido(pedido, opcoes) {
         }
 
         const nomeItemAud = nome;
-        const auditoriasItem = divergenciasAuditoriaDoItem(pedido, { nome: nomeItemAud, cnpjFornecedor: itemCotacao.cnpjFornecedor });
+        // 2.16.0: o código do produto entra na ligação (auditorias novas o gravam); o nome segue valendo para as antigas.
+        const auditoriasItem = divergenciasAuditoriaDoItem(pedido, { nome: nomeItemAud, cnpjFornecedor: itemCotacao.cnpjFornecedor, codProduto: itemCotacao.codProduto });
+        const resolucao = resolucaoItemComparacao(cotacao, itemCotacao.codProduto, auditoriasItem, itensNf.length > 0 || itensErp.length > 0 || !!(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]);
         return {
             codProduto: itemCotacao.codProduto,
             cnpjFornecedor: itemCotacao.cnpjFornecedor,
@@ -714,7 +736,8 @@ function compararFontesPedido(pedido, opcoes) {
             nfs: nfsQueFaturaram, codigoSpData,
             cobertura,
             divergencias,
-            ...resolucaoItemComparacao(cotacao, itemCotacao.codProduto, auditoriasItem, itensNf.length > 0 || itensErp.length > 0 || !!(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)])
+            ...resolucao,
+            estado: estadoOcorrenciaItem(divergencias, resolucao.resolvido, resolucao.auditorias)
         };
     });
 }
@@ -764,7 +787,8 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
             if (c.divergencias.length && c.resolvido) situacao = 'resolvido';
             else if (c.cobertura === 'nf_completa') situacao = 'nf';
             else if (c.cobertura === 'erp_completa') situacao = 'erp';
-            else if (c.cobertura === 'nf_parcial' || c.cobertura === 'erp_parcial') situacao = 'parcial';
+            // 2.16.1: chegou parte e a falta JÁ foi relatada (auditoria aberta): não se espera nova entrega, então não fica "aguardando".
+            else if (c.cobertura === 'nf_parcial' || c.cobertura === 'erp_parcial') situacao = (c.estado === 'relatada') ? 'parcial_relatada' : 'parcial';
             else if (c.cobertura === 'erp_sem_quantidade') situacao = 'erp_sem_quantidade';
         }
         const nome = p.nomeOficial || p.descricao || p.codProduto;
@@ -774,6 +798,7 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
     const total = itens.length;
     const cobertos = itens.filter(i => i.situacao === 'nf' || i.situacao === 'erp' || i.situacao === 'resolvido').length;
     const parciais = itens.filter(i => i.situacao === 'parcial').length;
+    const parciaisRelatadas = itens.filter(i => i.situacao === 'parcial_relatada').map(i => i.nomeComQuantidade);
     const pendentes = itens.filter(i => i.situacao === 'pendente').length;
     const semQuantidade = itens.filter(i => i.situacao === 'erp_sem_quantidade');
     const faltando = itens.filter(i => i.situacao === 'pendente' || i.situacao === 'parcial').map(i => i.nomeComQuantidade);
@@ -781,7 +806,9 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
     // 'erp_sem_itens' = há NF/linha no ERP, mas o app não consegue afirmar quanto chegou (nunca "completa").
     let estadoAuto;
     if (total && cobertos === total) estadoAuto = 'completa';
-    else if (parciais > 0 || (cobertos > 0 && pendentes > 0)) estadoAuto = 'parcial';
+    // 2.16.1: tudo chegou, e o que veio a menos já foi relatado = parcial JÁ CHEGOU (sem nova entrega esperada).
+    else if (parciaisRelatadas.length && cobertos + parciaisRelatadas.length === total) estadoAuto = 'parcial_relatada';
+    else if (parciais > 0 || ((cobertos + parciaisRelatadas.length) > 0 && pendentes > 0)) estadoAuto = 'parcial';
     else if (cobertos > 0 || semQuantidade.length || nfsErp.length) estadoAuto = 'erp_sem_itens';
     else estadoAuto = 'aguardando';
 
@@ -795,7 +822,7 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
     }
 
     const datas = nfsApp.map(n => n.data).concat(nfsErp.map(n => n.data)).filter(Boolean).sort();
-    const dataChegada = estadoAuto === 'completa' ? (datas[datas.length - 1] || null) : (manual ? manual.data || null : null);
+    const dataChegada = (estadoAuto === 'completa' || estadoAuto === 'parcial_relatada') ? (datas[datas.length - 1] || null) : (manual ? manual.data || null : null);
     const primeiraEvidencia = datas[0] || null;
 
     // Histórico "NF a NF" (só quando há 2+ NFs do app): quantos itens estavam cobertos depois de cada uma.
@@ -807,7 +834,7 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
             return { nf: n.nf, serie: n.serie, data: n.data, cobertos: comp.filter(x => x.cobertura === 'nf_completa').length, total };
         });
     }
-    return { estado, estadoAuto, origem, total, cobertos, parciais, faltando, semQuantidade: semQuantidade.map(i => i.nome), itens, nfsApp, nfsErp, manual, dataChegada, primeiraEvidencia, passos };
+    return { estado, estadoAuto, origem, total, cobertos, parciais, parciaisRelatadas, faltando, semQuantidade: semQuantidade.map(i => i.nome), itens, nfsApp, nfsErp, manual, dataChegada, primeiraEvidencia, passos };
 }
 
 // Texto/classe do selo e frases de apoio do card do fornecedor.
@@ -818,6 +845,7 @@ function rotuloEntregaFornecedor(e) {
         if (e.origem === 'parcial_resolvida') return { texto: '✓ Entrega parcial resolvida (manual)', classe: 'pronto', curto: '✓ parcial resolvida (manual)' };
         return { texto: '✓ Entrega completa', classe: 'pronto', curto: '✓ entrega completa' };
     }
+    if (e.estado === 'parcial_relatada') return { texto: '◐ Entrega parcial — já chegou (falta relatada)', classe: 'neutro', curto: '◐ parcial · já chegou' };
     if (e.estado === 'parcial') return { texto: `◐ Entrega parcial (${e.cobertos}/${e.total} itens)`, classe: 'pendente', curto: `◐ parcial ${e.cobertos}/${e.total}` };
     if (e.estado === 'erp_sem_itens') return { texto: '◐ NF no ERP — itens/quantidades não conferidos', classe: 'neutro', curto: '◐ NF no ERP' };
     return { texto: '○ Aguardando entrega', classe: 'neutro', curto: '○ aguardando entrega' };
@@ -835,7 +863,8 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     else if (e.manual) linhas.push(`${e.origem === 'parcial_resolvida' ? 'Parcial marcada como resolvida' : 'Marcado como já chegou'} manualmente${e.manual.data ? ' em ' + formatarDataBRSimples(e.manual.data) : ''} — o app não tem NF/ERP que comprove todos os itens.`);
     if (e.manual && e.estadoAuto === 'completa') linhas.push(`Também havia marca manual em ${formatarDataBRSimples(e.manual.data)} (já não é necessária).`);
     if (e.estado !== 'completa' || e.estadoAuto !== 'completa') {
-        if (e.total) linhas.push(`Itens com entrega comprovada: ${e.cobertos}/${e.total}.`);
+        if (e.total) linhas.push(`${(e.parciaisRelatadas || []).length ? 'Itens completos' : 'Itens com entrega comprovada'}: ${e.cobertos}/${e.total}.`);
+        if ((e.parciaisRelatadas || []).length) linhas.push(`Chegou parcial e a falta já foi relatada em auditoria (não se espera nova entrega): ${e.parciaisRelatadas.slice(0, 3).map(escRel).join(', ')}${e.parciaisRelatadas.length > 3 ? ' e mais ' + (e.parciaisRelatadas.length - 3) : ''}.`);
         if (e.faltando.length) linhas.push(`Faltam: ${e.faltando.slice(0, 3).map(escRel).join(', ')}${e.faltando.length > 3 ? ' e mais ' + (e.faltando.length - 3) : ''}.`);
         if (e.semQuantidade.length) linhas.push(`No ERP, mas sem como conferir a quantidade (o valor unitário não bate com a cotação): ${e.semQuantidade.slice(0, 3).map(escRel).join(', ')}${e.semQuantidade.length > 3 ? ' e mais ' + (e.semQuantidade.length - 3) : ''}.`);
     }
@@ -843,7 +872,7 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     if (e.passos.length) linhas.push(`Histórico: ${e.passos.map(p => `${fmtNf(p)} → ${p.cobertos}/${p.total} itens`).join(' · ')}.`);
     const botoes = e.manual
         ? `<button type="button" class="action-chip edit-chip" onclick="alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)">Desfazer marca manual</button>`
-        : e.estadoAuto === 'completa' ? ''
+        : (e.estadoAuto === 'completa' || e.estadoAuto === 'parcial_relatada') ? ''
         : e.estadoAuto === 'parcial'
             ? `<button type="button" class="action-chip edit-chip" onclick="alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true, 'parcial_resolvida')">Marcar parcial como resolvida</button>`
             : `<button type="button" class="action-chip edit-chip" onclick="alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)">Marcar como já chegou</button>`;
@@ -859,6 +888,7 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     const acoes = e.nfsApp.map(n => ({ i: 'dir', t: `Abrir NF ${n.nf}`, fn: `abrirNfDaDivergencia('${pedido}', '${escRel(n.nf)}')` }));
     acoes.push(acaoAssociarNf(pedido, fornecedor.cnpj));
     if (e.manual) acoes.push({ i: 'reab', t: 'Desfazer marca manual', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
+    else if (e.estadoAuto === 'parcial_relatada') { /* já chegou, falta relatada: nada a marcar */ }
     else if (e.estadoAuto === 'parcial') acoes.push({ i: 'fin', t: 'Marcar parcial resolvida', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true, 'parcial_resolvida')` });
     else if (e.estadoAuto !== 'completa') acoes.push({ i: 'fin', t: 'Marcar como já chegou', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` });
     return {
@@ -950,27 +980,19 @@ function calcularAptidaoSaidaNota(nota) {
     const recursos = [...new Set([...(cotacao ? codigosDestaNf.map(cod => (cotacao.recursosPorItem || {})[cod]) : []), ...recursosDiretos].filter(Boolean))];
     const base = { pedido: nfProcessada.pedido, cnpjFornecedor: nfProcessada.cnpjFornecedor || null, destino, recursos };
 
-    const divergenciasDestaNf = compararFontesPedido(nfProcessada.pedido)
-        .filter(item => codigosDestaNf.includes(item.codProduto) && !item.resolvido)
-        .flatMap(item => item.divergencias);
-
-    if (divergenciasDestaNf.length === 0) {
-        return { status: 'apta', label: '✓ Conferida — sem divergência com a cotação/ERP', badge: 'pronto', ...base };
+    // 2.16.0: o selo da NF lê o estado da ocorrência DOS ITENS DESTA NF (antes, qualquer auditoria pendente do pedido
+    // marcava todas as NFs). Em aberto (detectada) pede ação; relatada e resolvida têm o mesmo peso: não travam nada.
+    const itensDestaNf = compararFontesPedido(nfProcessada.pedido).filter(item => codigosDestaNf.includes(item.codProduto));
+    if (itensDestaNf.some(i => i.estado === 'detectada')) {
+        return { status: 'divergencia_sem_auditoria', label: '⚠ Divergência com a cotação/ERP — ainda sem relato em auditoria', badge: 'pendente', ...base };
     }
-
-    // Há divergência — mas isso não é "não apta" por si só (o documento é
-    // explícito: divergência pode só exigir registro). Só distingue se já
-    // foi registrada em auditoria e se essa auditoria ainda está pendente.
-    const anotacao = listaAnotacoes.find(a => a.pedido === nfProcessada.pedido);
-    const temDivergenciaPendente = anotacao && (anotacao.ocorrencias || []).some(oc => (oc.divergencias || []).some(d => d.status === 'pendente'));
-
-    if (temDivergenciaPendente) {
-        return { status: 'auditoria_pendente', label: '⚠ Divergência registrada em auditoria, ainda pendente', badge: 'pendente', ...base };
+    if (itensDestaNf.some(i => i.estado === 'relatada')) {
+        return { status: 'pendencia_relatada', label: 'Pendência relatada em auditoria — já está com o responsável', badge: 'neutro', ...base };
     }
-    if (anotacao) {
+    if (itensDestaNf.some(i => i.estado === 'resolvida' && i.divergencias.length)) {
         return { status: 'divergencia_com_auditoria_resolvida', label: 'Divergência já registrada e resolvida em auditoria', badge: 'pronto', ...base };
     }
-    return { status: 'divergencia_sem_auditoria', label: '⚠ Divergência com a cotação/ERP — ainda sem auditoria registrada', badge: 'pendente', ...base };
+    return { status: 'apta', label: '✓ Conferida — sem divergência com a cotação/ERP', badge: 'pronto', ...base };
 }
 
 // Comparação Cotação × NF × ERP, só os itens deste fornecedor — embutida
@@ -989,26 +1011,23 @@ function renderComparacaoItemHTML(pedido, item, compacto) {
     {
         const resolvido = !!(item.divergencias.length && item.resolvido);
         const comAuditoria = (item.auditorias || []).length > 0;
-        const statusHTML = resolvido
-            ? `<span class="xml-item-badge pronto">✓ Resolvido</span>`
-            : item.divergencias.length
-            ? `<span class="xml-item-badge pendente">⚠ ${item.divergencias.length} diverg.</span>`
-            : (!item.temNf && item.temErp) ? `<span class="xml-item-badge pronto">Lançado no ERP (sem NF)</span>`
-            : `<span class="xml-item-badge pronto">✓ Confere</span>`;
+        const statusHTML = seloEstadoOcorrencia(item.estado, item.divergencias.length)
+            || ((!item.temNf && item.temErp) ? `<span class="xml-item-badge pronto">Lançado no ERP (sem NF)</span>`
+            : `<span class="xml-item-badge pronto">✓ Confere</span>`);
         const fontesHTML = `Cotado: ${item.quantidadeCotada ?? '—'} · Faturado (NF): ${item.quantidadeFaturada ?? '—'} · Lançado (ERP): ${item.quantidadeLancada ?? '—'}`;
         let acoes = '';
         if (item.divergencias.length) {
             if (comAuditoria) {
                 // 2.0.9: status vem da auditoria — nada de botão manual que duplique o registro.
                 const tratadas = resolvido;
-                acoes = `<div class="xml-item-acao"><span class="xml-item-meta">${tratadas ? '✓ Tratado na auditoria' : 'Em aberto na auditoria'} (${item.auditorias.map(x => (x.d.status || 'pendente')).join(', ')})</span></div>`;
+                acoes = `<div class="xml-item-acao"><span class="xml-item-meta">${tratadas ? '✓ Tratado na auditoria' : 'Pendência relatada na auditoria'} (${item.auditorias.map(x => (x.d.status || 'pendente')).join(', ')})</span></div>`;
             } else {
                 acoes = `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${pedido}', '${item.codProduto}')">Gerar auditoria</button>${resolvido
                     ? ` <button type="button" class="central-status-toggle" onclick="alterarResolvidoItemComparacao('${pedido}', '${item.codProduto}', false)">Reabrir</button> <span class="xml-item-meta">Resolvido em ${formatarDataBRSimples(item.resolvido.data)}</span>`
                     : ` <button type="button" class="central-status-toggle" onclick="alterarResolvidoItemComparacao('${pedido}', '${item.codProduto}', true)">Marcar como resolvido</button>`}</div>`;
             }
         }
-        return `<div class="xml-item-linha ${item.divergencias.length && !resolvido ? 'pendente' : ''}">
+        return `<div class="xml-item-linha ${item.estado === 'detectada' ? 'pendente' : ''}">
             ${compacto ? '' : `<div class="xml-item-topo">
                 <div class="xml-produto-nome">${item.nome}</div>
                 ${statusHTML}
@@ -1322,7 +1341,7 @@ function registrarDivergenciaDaComparacao(pedido, codProduto) {
             const jaExisteOutro = divergenciasAuditoria.some(d => d.tipo === 'outro' && d.campos && d.campos.produto === item.nome && d.observacao === textoDivergencia);
             if (!jaExisteOutro) {
                 divergenciasAuditoria.forEach(d => d.aberto = false);
-                divergenciasAuditoria.push({ id: ++contadorDivergenciaId, tipo: 'outro', aberto: true, materiais: [], observacao: textoDivergencia, campos: { produto: item.nome } });
+                divergenciasAuditoria.push({ id: ++contadorDivergenciaId, tipo: 'outro', aberto: true, materiais: [], observacao: textoDivergencia, campos: { produto: item.nome, codProduto: item.codProduto || '' } });
                 algumaMudanca = true;
             }
             return;
@@ -1343,9 +1362,10 @@ function registrarDivergenciaDaComparacao(pedido, codProduto) {
         if (materialExistente) {
             Object.assign(materialExistente.campos, novosCampos);
         } else {
-            card.materiais.push({ id: ++contadorMaterialId, campos: novosCampos });
+            card.materiais.push({ id: ++contadorMaterialId, campos: novosCampos, ref: item.codProduto || null }); // 2.16.0: grava o código do item (ligação firme, sem depender do nome)
             algumaMudanca = true;
         }
+        if (materialExistente && !materialExistente.ref && item.codProduto) materialExistente.ref = item.codProduto;
         const linhaRecurso = recurso ? `Recurso ${item.nome}: ${recurso}` : null;
         if (linhaRecurso && !card.observacao.includes(linhaRecurso)) {
             card.observacao = (card.observacao ? card.observacao + '\n' : '') + linhaRecurso;
@@ -1517,20 +1537,24 @@ function renderResultadoSalvarNF() {
     if (comparacao.length === 0 && aguardando === 0) { el.style.display = 'none'; return; }
     el.style.display = 'block';
 
-    const temDivergencia = comparacao.some(item => item.divergencias.length > 0);
+    const temDivergencia = comparacao.some(item => item.estado === 'detectada');
+    const temRelatada = comparacao.some(item => item.estado === 'relatada');
     const previa = nfSalvaXml ? '' : ' (prévia — ainda não salva)';
     const cabecalho = comparacao.length === 0 ? '' : `<div class="xml-estado-card ${temDivergencia ? 'pendente' : 'pronto'}"><div class="xml-estado-linha">${
         temDivergencia
             ? `<span class="xml-item-badge pendente">⚠ Divergência com a cotação/ERP${previa}</span>`
+            : temRelatada
+            ? `<span class="xml-item-badge neutro">Pendência relatada em auditoria${previa}</span>`
             : `<span class="xml-item-badge pronto">✓ Confere com a cotação/ERP${previa}</span>`
     }</div></div>`;
     const aguardandoHTML = aguardando > 0
         ? `<div class="xml-item-meta">${aguardando} item(ns) aguardando a confirmação do fator de conversão — só entram na conferência depois de confirmados.</div>` : '';
 
-    const itensComDivergencia = comparacao.filter(item => item.divergencias.length > 0).map(item => `<div class="xml-item-linha pendente">
-        <div class="xml-item-topo"><div class="xml-produto-nome">${item.nome}${multiPedidoAtivo() ? ` <span class="xml-item-meta">(Pedido ${escRel(item._pedido)})</span>` : ''}</div></div>
+    // 2.16.0: "Gerar auditoria" só para a divergência ainda sem relato; relatada/resolvida mostram o estado (sem duplicar o registro).
+    const itensComDivergencia = comparacao.filter(item => item.divergencias.length > 0).map(item => `<div class="xml-item-linha ${item.estado === 'detectada' ? 'pendente' : ''}">
+        <div class="xml-item-topo"><div class="xml-produto-nome">${item.nome}${multiPedidoAtivo() ? ` <span class="xml-item-meta">(Pedido ${escRel(item._pedido)})</span>` : ''}</div>${item.estado === 'detectada' ? '' : seloEstadoOcorrencia(item.estado, item.divergencias.length)}</div>
         <div class="xml-item-cotacao">${item.divergencias.map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div>
-        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${escRel(item._pedido)}', '${item.codProduto}')">Gerar auditoria</button>${item.divergencias.some(d => d.tipo === 'quantidade_cotada_nf' || d.tipo === 'valor_cotado_nf') ? ` <button type="button" class="central-status-toggle" onclick="marcarFalsoPositivoUnidade('${escRel(item.codigoSpData || '')}')">Falso positivo (unidade)</button>` : ''}</div>
+        ${item.estado === 'detectada' ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${escRel(item._pedido)}', '${item.codProduto}')">Gerar auditoria</button>${item.divergencias.some(d => d.tipo === 'quantidade_cotada_nf' || d.tipo === 'valor_cotado_nf') ? ` <button type="button" class="central-status-toggle" onclick="marcarFalsoPositivoUnidade('${escRel(item.codigoSpData || '')}')">Falso positivo (unidade)</button>` : ''}</div>` : ''}
     </div>`).join('');
 
     el.innerHTML = cabecalho + aguardandoHTML + itensComDivergencia;

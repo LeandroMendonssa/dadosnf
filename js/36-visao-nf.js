@@ -60,7 +60,7 @@ function visoesNf() {
             const semRec = itens.filter(i => !i.recurso).length;
             if (semRec) pendencias.push({ id: 'sem-recurso', nivel: 'baixa', texto: `${semRec} de ${itens.length} item(ns) sem recurso` });
         }
-        if (divergencias.length) pendencias.push({ id: 'divergencias', nivel: 'media', texto: `${divergencias.length} divergência(s) pendente(s) no pedido ${pedido}` });
+        if (divergencias.length) pendencias.push({ id: 'divergencias', nivel: 'baixa', texto: `${divergencias.length} pendência(s) relatada(s) em auditoria no pedido ${pedido}` }); // 2.16.0: relatada = já com o responsável
 
         return { chave: it.chave, numeroNf: it.numeroNf, serie: it.serie, fornecedor: it.nomeFornecedor, cnpj: it.cnpj, dataISO: it.dataISO, situacao: it.situacao,
             nf, erp, fontes: { xml: !!nf, erp: !!erp }, id: (nf && nf.id) || (erp && erp.id) || null,

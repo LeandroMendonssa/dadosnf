@@ -49,12 +49,12 @@ const AJUDA_ARTIGOS = [
         'Salve a NF. Ao salvar, o recurso dos itens é gravado na cotação.'
       ],
       dicas: ['Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.'], tutorial: 'xml-ao-texto' },
-    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.15.0',
+    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.16.0',
       resumo: 'Trabalhar com a relação de notas pendentes.',
       palavras: 'gerenciar notas pendentes espera lote editar arquivar excluir selecionar conferida divergencia',
       tela: [{ id: 'screen-manage', titulo: 'Gerenciar', rotulo: 'Abrir Gerenciar' }],
       passos: [
-        'Cada nota mostra um selo de situação: Conferida, Compra direta, Sem pedido vinculado, Auditoria pendente, Divergência resolvida ou Divergência. Toque no selo para ir direto ao pedido onde isso se resolve.',
+        'Cada nota mostra um selo de situação: Conferida, Compra direta, Sem pedido vinculado, Pendência relatada, Divergência resolvida ou Divergência (ainda sem relato). O selo olha só os itens daquela NF. Pendência relatada e resolvida têm o mesmo peso: não pedem ação sua. Toque no selo para ir direto ao pedido.',
         'Para agir em várias notas, ative a seleção e marque as notas. Enquanto você seleciona, a dock principal dá lugar à dock de seleção: Todas, marcar como pendente (em espera), remover a pendência, editar em lote, arquivar e excluir. O ✕ à esquerda cancela a seleção.',
         'Notas em espera não entram na Saída de Texto.',
         'Se aparecer o aviso de notas sem recurso mas com recurso já conhecido pela Entrada de NF, toque em "Aplicar em todas" (ou aplique nota a nota).'
@@ -114,16 +114,16 @@ const AJUDA_ARTIGOS = [
         'O Assistente só lê. Para resolver algo (confirmar pedido, marcar chegada), use as telas do app.'
       ],
       dicas: ['Seja específico: um fornecedor, um pedido ou um material por vez dá respostas melhores e mais baratas.', 'A IA usa o limite grátis diário da Cloudflare (10.000 neurons); passando dele, ela recusa até o dia seguinte e o modo básico continua respondendo.'], tutorial: null },
-    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'Central de notificações: o que está parado', versao: '2.12.3',
+    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'Central de notificações: o que está parado', versao: '2.16.0',
       resumo: 'Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.',
       palavras: 'central notificacoes notificação atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
       tela: [{ id: 'screen-atencao', titulo: 'Central de notificações', rotulo: 'Abrir a central' }],
       passos: [
         'Abra Mais → Central de notificações (o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
         'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido e pedidos com prazo vencido sem nenhum sinal de entrega.',
-        'Importante: divergências pendentes, NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
+        'Importante: NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
         'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
-        'As pendências de cada NF vêm da mesma "visão única da NF" usada pelo Controle, pelo Editor e pela Auditoria Retroativa; as divergências vêm da mesma lista de Relatórios → Divergências. Por isso os números são sempre os mesmos nas telas.',
+        'As pendências de cada NF vêm da mesma "visão única da NF" usada pelo Controle, pelo Editor e pela Auditoria Retroativa; as auditorias abertas aparecem em "Pendências relatadas" (prioridade baixa: já estão com o responsável e não entram na contagem de atenção), vindas da mesma lista de Relatórios → Divergências. Por isso os números são sempre os mesmos nas telas.',
         'Os botões no topo trocam a forma de ver: Por urgência (padrão), Por pedido ou Por fornecedor, que reúne num só cartão tudo o que está pendente do mesmo pedido ou do mesmo fornecedor.',
         'Toque num grupo para abrir a lista e num item para ir direto à tela que resolve (pedido, Editor da NF, Relatórios, Auditoria Retroativa...).'
       ],
@@ -140,7 +140,7 @@ const AJUDA_ARTIGOS = [
         'Ao importar o relatório do ERP, o campo Recurso da nota vem preenchido com o recurso da NF (quando ele é único).'
       ],
       dicas: ['Itens sem Origem na cotação ou sem destino não são alterados pelo botão da NF inteira.'], tutorial: 'xml-ao-texto' },
-    { id: 'cotacoes', cat: 'Cotações e recurso', titulo: 'Cotações: importar e acompanhar pedidos', versao: '2.10.6',
+    { id: 'cotacoes', cat: 'Cotações e recurso', titulo: 'Cotações: importar e acompanhar pedidos', versao: '2.16.0',
       resumo: 'Importar o XML do SmartCompras e o relatório de ganhadores.',
       palavras: 'cotacoes smartcompras importar xml ganhadores pedido fornecedores divergencia previa',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
@@ -150,7 +150,7 @@ const AJUDA_ARTIGOS = [
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
-      dicas: ['Tocar no selo de divergências do cartão leva direto ao item divergente.'], tutorial: null },
+      dicas: ['Tocar no selo ou no quadro "Em aberto" do cartão leva direto ao item.'], tutorial: null },
     { id: 'fornecedores', cat: 'Fornecedores e produtos', titulo: 'Fornecedores: apelido e CNPJs vinculados', versao: '2.10.0',
       resumo: 'Apelido único para filiais e vínculo automático por CNPJ.',
       palavras: 'fornecedor apelido nome exibicao cnpj vincular desvincular filial grupo',
@@ -214,7 +214,7 @@ const AJUDA_ARTIGOS = [
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.12.4',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.16.0',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
       palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
@@ -225,7 +225,8 @@ const AJUDA_ARTIGOS = [
         'Em Associar NF, a lista mostra as NFs da mesma entidade do fornecedor. Se ele entregou por outro CNPJ, digite o número da NF: a busca passa a valer para todos os fornecedores e indica o nome e "outro CNPJ".',
         'Ao associar uma NF do histórico, o app liga sozinho os itens à cotação (por SP Data, e também por nome, quantidade e preço próximo, mesmo sem o texto do SmartCompras colado). Só liga quando é inequívoco e nunca troca uma associação sua. Abaixo da NF associada, "Itens lançados" mostra o que foi lançado e a qual produto da cotação cada item ficou ligado. A NF aparece aí mesmo que ainda esteja esperando decisão no Controle. Itens sem nome oficial (relatório do SmartCompras não colado) mostram o nome lançado no ERP, marcado como tal.',
         'No topo do pedido, "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez como "já chegou" (manual); o mesmo botão passa a "Desfazer marcas de entrega de todos".',
-        'O quadro Divergências, quando maior que zero, é tocável e leva ao item divergente.',
+        'Cada problema de um item é uma ocorrência só, com três estados: Divergência (o app viu e você ainda não relatou), Pendência relatada (há auditoria aberta, já com o responsável) e Resolvido. O quadro "Em aberto" conta só as divergências ainda sem relato e, quando maior que zero, é tocável e leva ao item. A pendência relatada tem o peso de resolvido: não deixa o cartão vermelho.',
+        'Entrega parcial: se o fornecedor faturou menos do que foi cotado e você já relatou a falta em auditoria, o fornecedor mostra "Entrega parcial — já chegou (falta relatada)" em cinza: não se espera nova entrega, então não fica aguardando e não precisa marcar nada. Sem o relato, continua como entrega parcial em amarelo.',
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'
       ],
       dicas: ['O cálculo da entrega usa as NFs processadas no app; a marca manual existe para quando o recebimento não passou por ele.'], tutorial: null },

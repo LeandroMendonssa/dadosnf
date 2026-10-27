@@ -391,7 +391,7 @@ function rebuildNotasPendentesList(){
         const recSugerido = (!nota.obs && aptidao.recursos && aptidao.recursos.length === 1) ? aptidao.recursos[0] : '';
         const aplicarRecursoHTML = recSugerido ? `<button class="action-chip" onclick="event.stopPropagation(); aplicarRecursoSugeridoNota('${nota.id}')">Aplicar recurso: ${recSugerido}</button>` : '';
         // 2.9.6: no cartão o selo é curto (o texto completo fica no title); antes ocupava até 3 linhas em letras minúsculas.
-        const aptidaoCurta = { apta: '✓ Conferida', sem_cotacao: '✓ Compra direta', sem_pedido: 'Sem pedido vinculado', auditoria_pendente: '⚠ Auditoria pendente', divergencia_com_auditoria_resolvida: 'Divergência resolvida', divergencia_sem_auditoria: '⚠ Divergência' }[aptidao.status] || aptidao.label;
+        const aptidaoCurta = { apta: '✓ Conferida', sem_cotacao: '✓ Compra direta', sem_pedido: 'Sem pedido vinculado', auditoria_pendente: 'Pendência relatada', pendencia_relatada: 'Pendência relatada', divergencia_com_auditoria_resolvida: 'Divergência resolvida', divergencia_sem_auditoria: '⚠ Divergência' }[aptidao.status] || aptidao.label;
         const aptidaoHTML = `<span class="xml-item-badge ${aptidao.badge} ctl-link" title="${aptidao.label.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); irParaAptidaoNota('${nota.id}')">${aptidaoCurta}</span>`;
         const complementoPartes = [
             aptidao.pedido ? `Pedido ${aptidao.pedido}` : null,

@@ -101,7 +101,7 @@ const IA_EXEC = {
         if (a.fornecedor) itens = itens.filter(i => iaCasa(iaFornDoCnpj(i.cnpjFornecedor), a.fornecedor));
         return { pedido: cot.pedido, origem: cot.origem, data_pedido: cot.dataPedido, data_limite: cot.dataLimite, fornecedores: (cot.fornecedores || []).map(f => f.razaoSocial || f.cnpj),
             itens: iaCorta(itens.map(i => ({ produto: i.nome, fornecedor: iaFornDoCnpj(i.cnpjFornecedor), qtd_cotada: iaNum(i.quantidadeCotada), qtd_nf_xml: i.quantidadeFaturada, qtd_lancada_erp: i.quantidadeLancada, qtd_entregue: i.quantidadeEntregue,
-                nfs: i.nfs, situacao: i.cobertura || (i.temNf || i.temErp ? 'com NF' : 'sem NF'), divergencias: (i.divergencias || []).map(d => d.tipo) }))) };
+                nfs: i.nfs, situacao: i.cobertura || (i.temNf || i.temErp ? 'com NF' : 'sem NF'), divergencias: (i.divergencias || []).map(d => d.tipo), estado_ocorrencia: ROTULO_ESTADO_OCORRENCIA[i.estado] || undefined }))) };
     },
     buscar_produto(a) {
         const out = { cotacoes: [], nfs_xml: [], erp: [] };

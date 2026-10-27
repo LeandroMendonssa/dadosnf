@@ -113,7 +113,7 @@ function chaveFornecedorNoPedido(pedido, cnpj) {
     return f ? f.cnpj : null;
 }
 function abrirItemComDivergenciaNoCartao(card) {
-    const cab = card.querySelector('.central-prod .xml-item-badge.pendente');
+    const cab = card.querySelector('.central-prod .xml-item-badge.pendente') || card.querySelector('.central-prod .xml-item-badge.neutro'); // 2.16.0: em aberto primeiro; sem nenhuma, a pendência relatada
     const prod = cab ? cab.closest('.central-prod') : null;
     if (!prod) return card;
     if (!prod.classList.contains('aberto')) {
