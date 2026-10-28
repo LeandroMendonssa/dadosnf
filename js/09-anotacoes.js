@@ -595,21 +595,42 @@ function renderLinhaProduto(it, chaveUnica, ctx) {
         const c = listaCotacoes.find(x => x.pedido === centralPedidoAtual);
         return c && c.recursosPorItem ? c.recursosPorItem[it.codProduto] : null;
     })() : null;
-    const recursoHTML = recursoItem
-        ? `<div>Recurso: <strong>${recursoItem}</strong></div>`
-        : (it.codProduto ? '<div style="color:var(--text-light);"><em>Recurso: ainda não confirmado (definido na entrada da NF)</em></div>' : '');
+    // 2.17.1: card do item reorganizado em blocos (Produto · Quantidade e valores · Cotação e recurso · SP Data). O recurso é lido
+    // da própria cotação (nº de fornecedores que cotaram); a NF só o confirma/grava — por isso não aparece mais "ainda não confirmado"
+    // ao lado de "7 fornecedores cotaram".
+    const cotItem = centralPedidoAtual ? listaCotacoes.find(x => x.pedido === centralPedidoAtual) : null;
+    const recursoPelaCotacao = (cotItem && it.codProduto) ? recursoEsperadoPelaCotacao(cotItem, it.codProduto) : '';
+    const minCC = minimoFornecedoresCC();
+    const nPart = itemGanhadores ? itemGanhadores.participantes : null;
+    const rec = (rotulo, valor, selo, dica) => `<div class="cdet-rec"><div class="cdet-rec-linha"><span class="cdet-k">${rotulo}</span><strong>${valor}</strong>${selo ? `<span class="xml-item-badge ${selo[0]}">${selo[1]}</span>` : ''}</div>${dica ? `<div class="cdet-dica">${dica}</div>` : ''}</div>`;
+    let recursoHTML = '';
+    if (it.codProduto) {
+        if (recursoItem) {
+            recursoHTML = rec('Recurso', escRel(recursoItem), ['pronto', '✓ Confirmado na NF'], (recursoPelaCotacao && recursoPelaCotacao !== recursoItem) ? `A cotação indicava ${escRel(recursoPelaCotacao)}; vale o que foi confirmado na NF.` : '');
+        } else if (recursoPelaCotacao) {
+            recursoHTML = rec('Recurso', escRel(recursoPelaCotacao), ['neutro', 'Pela cotação'], `${nPart != null ? nPart + ' fornecedor(es) cotaram' : 'Regra da cotação'}. Fica gravado no pedido quando a NF for salva.`);
+        } else if (nPart != null && nPart < minCC) {
+            recursoHTML = rec('Recurso', 'a definir', ['pendente', 'Escolher na NF'], `Só ${nPart} fornecedor(es) cotaram (mínimo ${minCC} para C/C): escolha o recurso na entrada da NF.`);
+        } else {
+            recursoHTML = rec('Recurso', 'a definir', ['neutro', 'Na entrada da NF'], 'O recurso será definido na entrada da NF.');
+        }
+    }
+    const cotacaoBlocoHTML = itemGanhadores
+        ? `<div class="cdet-cot"><div class="cdet-rec-linha"><span class="cdet-k">Cotaram este item</span><strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= minCC ? '<span class="xml-item-badge pronto">✓ Atingiu o mínimo</span>' : `<span class="xml-item-badge pendente">Abaixo de ${minCC}</span>`}</div>
+            <div class="cdet-linha"><span class="cdet-k">Vencedor</span><span>${itemGanhadores.fornecedorVencedor ? escRel(itemGanhadores.fornecedorVencedor.nome) : '<em>não identificado</em>'}</span></div>
+            ${itemGanhadores.empresas.length ? `<details class="cdet-part"><summary>Ver os ${itemGanhadores.empresas.length} participantes</summary><div class="txt-aux">${itemGanhadores.empresas.map(e => escRel(e.nome)).join(', ')}</div></details>` : ''}</div>`
+        : '';
+    const moeda = v => { const n = Number(String(v).replace(/\./g, '').replace(',', '.')); const bruto = Number(String(v).replace(',', '.')); const x = Number.isFinite(bruto) ? bruto : n; return Number.isFinite(x) ? 'R$ ' + formatValorBR(x) : 'R$ ' + v; };
+    const numeros = [it.quantidade ? ['Quantidade', it.quantidade] : null, it.precoUnitario ? ['Valor unitário', moeda(it.precoUnitario)] : null, it.precoTotal ? ['Valor total', moeda(it.precoTotal)] : null].filter(Boolean);
 
-    const detalhesHTML = `<div class="central-item-detalhes">
-        ${it.codProduto ? `<div>Código SmartCompras: ${it.codProduto}</div>` : ''}
-        ${nomeOficialSmartCompras ? `<div>Nome oficial SmartCompras: ${nomeOficialSmartCompras}</div>` : ''}
-        ${observacao ? `<div>Descrição/observação original SmartCompras: ${observacao}</div>` : ''}
-        ${marca ? `<div>Marca: ${marca}</div>` : ''}
-        ${it.embalagem ? `<div>Embalagem: ${it.embalagem}</div>` : ''}
-        ${it.quantidade ? `<div>Quantidade: ${it.quantidade}</div>` : ''}
-        ${it.precoUnitario ? `<div>Valor Unitário: R$ ${it.precoUnitario}</div>` : ''}
-        ${it.precoTotal ? `<div>Valor Total: R$ ${it.precoTotal}</div>` : ''}
-        ${recursoHTML}
-        ${participantesDetalheHTML}
+    const detalhesHTML = `<div class="central-item-detalhes cdet">
+        <div class="cdet-bloco"><div class="cdet-tit">Produto</div>
+            ${nomeOficialSmartCompras ? `<div class="cdet-nome">${nomeOficialSmartCompras}</div>` : ''}
+            <div class="cdet-linha-meta">${[it.codProduto ? `Cód. SmartCompras ${it.codProduto}` : '', marca ? `Marca ${marca}` : '', it.embalagem ? `Emb. ${it.embalagem}` : ''].filter(Boolean).map(x => `<span>${escRel(x)}</span>`).join('')}</div>
+            ${observacao ? `<div class="cdet-dica">Descrição original: ${observacao}</div>` : ''}
+        </div>
+        ${numeros.length ? `<div class="cdet-numeros">${numeros.map(([k, v]) => `<div><span class="cdet-k">${k}</span><strong>${escRel(String(v))}</strong></div>`).join('')}</div>` : ''}
+        ${(cotacaoBlocoHTML || recursoHTML) ? `<div class="cdet-bloco"><div class="cdet-tit">Cotação e recurso</div>${cotacaoBlocoHTML}${recursoHTML}</div>` : ''}
         ${renderAssociacaoSpDataWidget(it, chaveUnica)}
     </div>`;
 

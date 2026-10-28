@@ -36,6 +36,7 @@ let pedidosAdicionaisXml = [];          // pedidos além do principal (pedidoSel
 function cotacoesSelecionadasXml() { return [pedidoSelecionadoXml, ...pedidosAdicionaisXml].filter(Boolean); }
 let nfSalvaXml = false;                 // depois de salvar, trocar o recurso grava na hora
 const SEM_COTACAO_VALOR = '__SEM_COTACAO__';
+let mostrarJaAssociadosXml = false; // 2.17.0: por padrão a lista esconde os itens da cotação que OUTRO item desta NF já associou; "ver outros itens desse fornecedor" mostra todos
 let mostrarOutrosFornecedoresXml = false; // por padrão a seleção de item prioriza o fornecedor identificado pelo CNPJ; só amplia quando pedido explicitamente
 
 function detectarFatorXml(xProd) {
@@ -278,6 +279,7 @@ function processarXmlTexto(texto) {
     // numa NF sem nenhuma pendência.
     filtroItensXml = itensXmlDetectados.some(item => !statusItemXml(item).pronto) ? 'pendencias' : 'todos';
     mostrarOutrosFornecedoresXml = false;
+    mostrarJaAssociadosXml = false;
 
     renderAssociacaoCotacaoXml();
 }
@@ -1055,6 +1057,7 @@ function alternarFiltroItensXml(modo) {
     renderAssociacaoCotacaoXml();
 }
 
+function alternarJaAssociadosXml() { mostrarJaAssociadosXml = !mostrarJaAssociadosXml; renderAssociacaoCotacaoXml(); }
 function alternarOutrosFornecedoresXml() {
     mostrarOutrosFornecedoresXml = !mostrarOutrosFornecedoresXml;
     renderAssociacaoCotacaoXml();
@@ -1203,7 +1206,15 @@ function renderAssociacaoCotacaoXml() {
     const restringeFornecedor = itensDoFornecedorIdentificado.length > 0 && itensDoFornecedorIdentificado.length < itensDaCotacao.length;
     const itensParaOpcoes = (restringeFornecedor && !mostrarOutrosFornecedoresXml) ? itensDoFornecedorIdentificado : itensDaCotacao;
 
+    // 2.17.0: item da cotação já associado a OUTRO item desta NF não aparece de novo (evita confundir). Os já usados ficam atrás do botão
+    // "Ver outros itens desse fornecedor": o fornecedor pode mandar o mesmo produto em dois códigos/marcas/validades.
+    const usoPorItem = new Map(); // chave "pedido::codigo" ou "codigo" -> Set de idx que a usam
+    itensComStatus.forEach(x => { const a = x.status && x.status.associacao; if (!a || !a.codigoSmartCompras) return; [String(a.codigoSmartCompras), `${a.pedido || ''}::${a.codigoSmartCompras}`].forEach(k => { if (!usoPorItem.has(k)) usoPorItem.set(k, new Set()); usoPorItem.get(k).add(x.idx); }); });
+    const jaUsadoPorOutro = (it, idxAtual) => { const k = multiPedido ? `${it._pedido}::${it.codProduto}` : String(it.codProduto); const u = usoPorItem.get(k) || usoPorItem.get(String(it.codProduto)); return !!(u && [...u].some(i => i !== idxAtual)); };
+    const totalJaUsados = itensParaOpcoes.filter(it => jaUsadoPorOutro(it, -1)).length;
+
     const linhasItens = itensParaExibir.map(({ item, idx, status }) => {
+        const itensLinha = mostrarJaAssociadosXml ? itensParaOpcoes : itensParaOpcoes.filter(it => !jaUsadoPorOutro(it, idx));
         const buscaAberta = associacaoFornecedorBuscaAberta.has(status.chave);
         let cotacaoSpDataHTML, acaoHTML = '';
 
@@ -1214,7 +1225,7 @@ function renderAssociacaoCotacaoXml() {
         } else if (!cotacaoAtual && !status.associacao) {
             cotacaoSpDataHTML = 'Selecione o pedido acima pra associar este item à cotação (ou marque "Esta NF não possui cotação do SmartCompras").';
         } else {
-            const opcoesSeletor = [{ valor: SEM_COTACAO_VALOR, titulo: 'Sem cotação do SmartCompras (compra direta)', especial: true }].concat(itensParaOpcoes.map(it => {
+            const opcoesSeletor = [{ valor: SEM_COTACAO_VALOR, titulo: 'Sem cotação do SmartCompras (compra direta)', especial: true }].concat(itensLinha.map(it => {
                 const cotItem = it._cotacao || cotacaoAtual;
                 const fornecedorIt = (cotItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor));
                 const nomeForn = fornecedorIt ? nomeExibicaoFornecedor(fornecedorIt.razaoSocial, fornecedorIt.cnpj) : (it.cnpjFornecedor || 'fornecedor não identificado');
@@ -1229,8 +1240,9 @@ function renderAssociacaoCotacaoXml() {
                 ${htmlSeletorBusca('assoc-' + status.chave, {
                     placeholder: 'Buscar item da cotação por código ou nome…', opcoes: opcoesSeletor,
                     // 2.1.3: sugestões pelo nome do item do XML no topo da lista (mesma regra dos botões "Usar:")
-                    sugestoes: () => { const r = item.xProd ? sugestoesItemCotacao(item.xProd, itensParaOpcoes) : { itens: [], aproximado: false }; const vs = new Set(r.itens.map(x => String(multiPedido ? `${x._pedido}::${x.codProduto}` : x.codProduto))); return opcoesSeletor.filter(o => vs.has(String(o.valor))).map(o => r.aproximado ? { ...o, grupo: 'Parecidos pelo nome — confira' } : o); },
+                    sugestoes: () => { const r = item.xProd ? sugestoesItemCotacao(item.xProd, itensLinha) : { itens: [], aproximado: false }; const vs = new Set(r.itens.map(x => String(multiPedido ? `${x._pedido}::${x.codProduto}` : x.codProduto))); return opcoesSeletor.filter(o => vs.has(String(o.valor))).map(o => r.aproximado ? { ...o, grupo: 'Parecidos pelo nome — confira' } : o); },
                     aoEscolher: valor => confirmarSelecaoAssociacaoFornecedor(status.chave, valor) })}
+                ${totalJaUsados ? `<button type="button" class="central-status-toggle" onclick="alternarJaAssociadosXml()">${mostrarJaAssociadosXml ? 'Esconder itens já associados' : 'Ver outros itens desse fornecedor (' + totalJaUsados + ' já associado' + (totalJaUsados === 1 ? '' : 's') + ')'}</button>` : ''}
                 ${restringeFornecedor ? `<button type="button" class="central-status-toggle" onclick="alternarOutrosFornecedoresXml()">${mostrarOutrosFornecedoresXml ? 'Mostrar só do fornecedor identificado' : 'Mostrar itens de outros fornecedores'}</button>` : ''}
             </div>`;
 

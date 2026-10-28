@@ -218,7 +218,7 @@ function aplicarPersonalizacoes() {
     if (sigLogo !== ultimaSigLogoDOM) { ultimaSigLogoDOM = sigLogo; atualizarPreviewLogo(); }
     const currentActiveScreen = document.querySelector('.app-screen.active');
     if (currentActiveScreen) { const screenId = currentActiveScreen.id;
-        const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); });
+        const parentScreenId = screenParentMap[screenId] || screenId; document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.destino ? item.dataset.destino === screenId : item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(screenId) : parentScreenId)); });
     }
 }
     
@@ -278,7 +278,7 @@ function reordenarMenusDOM(order) {
     {
         const li = document.createElement('li');
         const a = document.createElement('a');
-        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.title = 'Importar Relatório (ERP)';
+        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.destino = 'screen-import'; a.dataset.title = 'Importar Relatório (ERP)';
         a.innerHTML = '<span class="icon-wrapper"><i class="fa-solid fa-file-import"></i><span class="material-icons">upload_file</span></span><span>Importar Relatório (ERP)</span>';
         a.addEventListener('click', (e) => { e.preventDefault(); switchToScreen('screen-import', 'Importar Relatório (ERP)'); });
         li.appendChild(a); sidebarNav.appendChild(li);
@@ -286,7 +286,7 @@ function reordenarMenusDOM(order) {
     // 2.12.2: na tela larga, Central de notificações e Auditoria Retroativa também ficam no menu lateral (antes de Ajustes), como no "Mais"
     [['screen-atencao', 'Central de notificações', 'fa-bell', 'notifications', "prepararAtencao()"], ['screen-auditoria-retro', 'Auditoria Retroativa', 'fa-clipboard-check', 'fact_check', "prepararAuditoriaRetroativa()"], ['screen-assistente', 'Assistente', 'fa-comments', 'forum', "prepararAssistente()"]].forEach(([id, titulo, fa, mat, prep]) => {
         const li = document.createElement('li'), a = document.createElement('a');
-        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.title = titulo;
+        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.destino = id; a.dataset.title = titulo;
         a.innerHTML = `<span class="icon-wrapper"><i class="fa-solid ${fa}"></i><span class="material-icons">${mat}</span></span><span>${titulo}</span>`;
         a.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(id, titulo); new Function(prep)(); });
         li.appendChild(a); sidebarNav.appendChild(li);
@@ -306,7 +306,7 @@ function reordenarMenusDOM(order) {
     }
     renderTelaMais();
     const ativa = document.querySelector('.app-screen.active');
-    if (ativa) document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => item.classList.toggle('active', item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(ativa.id) : (screenParentMap[ativa.id] || ativa.id))));
+    if (ativa) document.querySelectorAll('.tab-item, .sidebar-item').forEach(item => item.classList.toggle('active', item.dataset.destino ? item.dataset.destino === ativa.id : item.dataset.screen === (item.classList.contains('tab-item') ? abaDaBarra(ativa.id) : (screenParentMap[ativa.id] || ativa.id))));
 }
 
 

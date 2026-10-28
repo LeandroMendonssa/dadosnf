@@ -120,9 +120,11 @@ function analiseRetroativaErp() {
         const ligados = itens.filter(i => i.codigoSmartComprasRelacionado || codigoProdutoAtualDoItemErp(i)).length;
         const v = e.vinculo || {};
         const direta = e.statusFluxo === 'historico_direto';
-        const pedidoSt = direta ? 'direta' : (v.status || 'sem_associacao');
+        // 2.16.2: a NF/XML já associada a um pedido no app vale mais que a sugestão gravada no ERP (antes seguia sugerindo o pedido errado)
+        const pedidoDaNf = direta ? null : (mapaPedidoErpPelaNf().get(e.id) || null);
+        const pedidoSt = direta ? 'direta' : (pedidoDaNf ? 'confirmado' : (v.status || 'sem_associacao'));
         const ver = (pedidoSt === 'sugerido' && v.pedido) ? ((conferenciaPedidoSugerido(e, v.pedido) || {}).veredito || null) : null;
-        return { e, itens, ligados, semProduto: itens.length - ligados, defasados: defas.get(e.id) || 0, pedidoSt, pedido: v.pedido ? String(v.pedido) : '', motivo: v.motivo || '', xml: temXml.has(e.id), veredito: ver };
+        return { e, itens, ligados, semProduto: itens.length - ligados, defasados: defas.get(e.id) || 0, pedidoSt, pedido: pedidoDaNf || (v.pedido ? String(v.pedido) : ''), motivo: v.motivo || '', xml: temXml.has(e.id), veredito: ver };
     });
 }
 function resumoRetroativo(an) {
@@ -144,6 +146,17 @@ function passaFiltroRetro(a) {
 }
 const retroRecemConfirmadas = new Set(); // NFs confirmadas nesta visita: ficam no lugar, marcadas, para você não ficar na dúvida
 function prepararAuditoriaRetroativa() { retroFiltro = 'todas'; retroLimite = 60; retroRecemConfirmadas.clear(); renderAuditoriaRetroativa(); }
+// 2.16.2: ao VOLTAR para esta tela (por exemplo, depois de associar a NF ao pedido certo no editor), ela se redesenha sozinha.
+// Antes só era redesenhada se já estivesse aberta no momento da mudança, e por isso mostrava a sugestão antiga.
+(function observarRetroativaAtiva() {
+    const t = document.getElementById('screen-auditoria-retro'); if (!t) return;
+    let estavaAtiva = t.classList.contains('active');
+    new MutationObserver(() => {
+        const ativa = t.classList.contains('active');
+        if (ativa && !estavaAtiva) { try { renderAuditoriaRetroativa(); } catch (e) { console.warn('retroativa', e); } }
+        estavaAtiva = ativa;
+    }).observe(t, { attributes: true, attributeFilter: ['class'] });
+})();
 function renderAuditoriaRetroSeAtiva() {
     const t = document.getElementById('screen-auditoria-retro');
     if (t && t.classList.contains('active')) renderAuditoriaRetroativa();

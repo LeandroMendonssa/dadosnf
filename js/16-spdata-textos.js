@@ -656,7 +656,19 @@ async function salvarAuditoriaComoAnotacao() {
 
     try {
         if (existente) {
-            const conteudoAtualizado = (existente.conteudo || '') + '<p>&nbsp;</p><hr>' + blocoHTML;
+            // 2.17.0: mesmo fornecedor e mesma NF já registrados nesta anotação → acrescenta só as ocorrências, sem repetir o cabeçalho
+            // (fornecedor — NF — pedido) nem a linha separadora. Outro fornecedor ou outra NF continua com cabeçalho próprio.
+            const chaveForn = x => normalizarCnpj(x.fornecedorCnpj || '') || upAud(x.fornecedor || '');
+            const nfsDe = x => String(x.notaFiscal || '').split(',').map(t => t.trim()).filter(Boolean);
+            const jaTemCabecalho = (existente.ocorrencias || []).some(o => chaveForn(o) && chaveForn(o) === chaveForn(novaOcorrencia) && nfsDe(novaOcorrencia).every(n => nfsDe(o).includes(n)));
+            const cab = gerarCabecalhoAuditoria();
+            let blocoNovo = blocoHTML;
+            let separador = '<p>&nbsp;</p><hr>';
+            if (jaTemCabecalho && cab && conteudoTexto.startsWith(cab)) {
+                const restoTxt = conteudoTexto.slice(cab.length).trim();
+                if (restoTxt) { blocoNovo = textoParaBlocoHtmlAnotacao(restoTxt).replace(/^<p><strong>(.*?)<\/strong><\/p>/, '<p>$1</p>'); separador = ''; }
+            }
+            const conteudoAtualizado = (existente.conteudo || '') + separador + blocoNovo;
             const ocorrencias = [...(existente.ocorrencias || []), novaOcorrencia];
             await anotacoesTextoCollection.doc(existente.id).update({
                 conteudo: conteudoAtualizado,

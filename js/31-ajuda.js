@@ -34,7 +34,7 @@ const AJUDA_ARTIGOS = [
         'Toque em Salvar. A nota entra na relação de Gerenciar.'
       ],
       dicas: ['Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
-    { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.11.4',
+    { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.17.0',
       resumo: 'Ler o XML, conferir os itens, definir o recurso e salvar.',
       palavras: 'xml entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
       tela: [{ id: 'screen-xml-editor', titulo: 'Entrada de NF', rotulo: 'Abrir Entrada de NF' }],
@@ -43,6 +43,7 @@ const AJUDA_ARTIGOS = [
         'Em "Pedido/Cotação correspondente", confirme o pedido. Se a NF não tem cotação do SmartCompras (compra direta), informe o Destino dos itens (Santa Casa ou CTI).',
         'Item por item, confira o fator de conversão (vem da descrição, como "C/10" = 10; a sua correção fica lembrada para a próxima NF), a associação com a cotação e o SP Data.',
         'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, a explicação pelo frete, seguro ou desconto do próprio XML quando houver, e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
+        'Na lista de itens da cotação, o app esconde os que outro item da NF já associou e mostra só os do fornecedor; "Ver outros itens desse fornecedor" traz todos de volta (útil quando o fornecedor manda o mesmo produto em dois códigos, marcas ou validades). As sugestões "Parecidos pelo nome" não dependem da ordem das palavras.',
         'Itens com pendência já abrem sozinhos; o selo mostra o que falta.',
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
@@ -114,14 +115,14 @@ const AJUDA_ARTIGOS = [
         'O Assistente só lê. Para resolver algo (confirmar pedido, marcar chegada), use as telas do app.'
       ],
       dicas: ['Seja específico: um fornecedor, um pedido ou um material por vez dá respostas melhores e mais baratas.', 'A IA usa o limite grátis diário da Cloudflare (10.000 neurons); passando dele, ela recusa até o dia seguinte e o modo básico continua respondendo.'], tutorial: null },
-    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'Central de notificações: o que está parado', versao: '2.16.0',
+    { id: 'atencao', cat: 'Ajustes e dados', titulo: 'Central de notificações: o que está parado', versao: '2.17.0',
       resumo: 'Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.',
       palavras: 'central notificacoes notificação atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
       tela: [{ id: 'screen-atencao', titulo: 'Central de notificações', rotulo: 'Abrir a central' }],
       passos: [
         'Abra Mais → Central de notificações (o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
         'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido e pedidos com prazo vencido sem nenhum sinal de entrega.',
-        'Importante: NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
+        'Importante: ocorrências detectadas pelo app e ainda sem relato em auditoria (abra o pedido e registre), NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
         'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
         'As pendências de cada NF vêm da mesma "visão única da NF" usada pelo Controle, pelo Editor e pela Auditoria Retroativa; as auditorias abertas aparecem em "Pendências relatadas" (prioridade baixa: já estão com o responsável e não entram na contagem de atenção), vindas da mesma lista de Relatórios → Divergências. Por isso os números são sempre os mesmos nas telas.',
         'Os botões no topo trocam a forma de ver: Por urgência (padrão), Por pedido ou Por fornecedor, que reúne num só cartão tudo o que está pendente do mesmo pedido ou do mesmo fornecedor.',
@@ -199,7 +200,7 @@ const AJUDA_ARTIGOS = [
         'Use Marcar Todas / Desmarcar Todas, a busca e "Mostrar Apenas Novas" para filtrar, e confirme a importação.'
       ],
       dicas: ['Duas notas com o mesmo fornecedor e NF ativas ao mesmo tempo são sempre tratadas como erro: o app trava a importação da repetida.'], tutorial: 'importar-erp' },
-    { id: 'editor-nf', cat: 'Notas fiscais', titulo: 'Editor da NF: abas e situação', versao: '2.12.0',
+    { id: 'editor-nf', cat: 'Notas fiscais', titulo: 'Editor da NF: abas e situação', versao: '2.17.0',
       resumo: 'Ver e corrigir tudo sobre uma NF em um só lugar.',
       palavras: 'editor nf abas itens financeiro fiscal emitente destinatario transporte xml erp chips',
       passos: [
@@ -211,14 +212,16 @@ const AJUDA_ARTIGOS = [
         'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (C/C ou próprio, conforme a origem do pedido) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
         'Ao marcar "Esta NF não tem cotação (compra direta)", aparece "Destino da compra direta": escolha Santa Casa ou CTI. Com o destino, os botões de recurso (C/C ou próprio) funcionam mesmo sem cotação do SmartCompras, e a NF deixa de aparecer como "sem produto da cotação".',
         'Se aparecer o aviso "Itens diferentes com o mesmo produto da cotação", dois itens da NF estão associados ao mesmo produto: corrija a associação na aba Itens.',
+        'No cartão do topo, "Cotações desta NF" lista o pedido principal e os complementares. Mesmo com a NF já enviada ao Controle, "Adicionar outra cotação a esta NF" inclui mais um pedido (como a cotação adicional da Entrada de NF) e "Remover" tira um complementar.',
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.16.0',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.17.1',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
       palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
       passos: [
+        'Ao abrir um produto, o card traz Produto, Quantidade e valores, Cotação e recurso e o SP Data. Em "Cotação e recurso" você vê quantos fornecedores cotaram, o vencedor e o recurso: "Pela cotação" (previsto pelo número de fornecedores, gravado ao salvar a NF) ou "Confirmado na NF".',
         'Em Cotações, toque no cartão do pedido.',
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
         'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou ou Desfazer a marca manual.',
@@ -258,7 +261,7 @@ const AJUDA_ARTIGOS = [
         'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação. Se a barra ficar alta ou baixa demais no seu aparelho, use "Altura da barra" (− e +) no menu "⋯".'
       ],
       dicas: [], tutorial: null },
-    { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.10.3',
+    { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.17.0',
       resumo: 'Um formulário gera a mensagem e o e-mail sem digitar duas vezes.',
       palavras: 'auditoria nova divergencia pedido nf fornecedor destinatario email mensagem gerar textos padrao copiar compartilhar salvar anotacao',
       tela: [{ id: 'screen-auditoria-nova', titulo: 'Nova Auditoria', rotulo: 'Abrir Nova Auditoria' }],
@@ -270,7 +273,8 @@ const AJUDA_ARTIGOS = [
         'O Destinatário do E-mail é opcional: em branco, a saudação sai sem nome.',
         'Use Observação Geral se precisar. Em "Configurar Textos Padrão" ajuste o destinatário padrão, a abertura, a frase de fotos, o fechamento e o modelo de frase de cada tipo de divergência: {campo} entra com o valor digitado e [[ trecho ]] só aparece se os campos dentro dele estiverem preenchidos. {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} são substituídos sozinhos na abertura.',
         'Toque em "Gerar Auditoria": o resultado traz as abas Mensagem e E-mail, com Copiar e Compartilhar.',
-        '"Salvar como Anotação" guarda a ocorrência para acompanhar depois.'
+        '"Salvar como Anotação" guarda a ocorrência para acompanhar depois. Se o mesmo fornecedor e a mesma NF já estão na anotação do pedido, só as novas ocorrências são acrescentadas, sem repetir o cabeçalho.',
+        'Na Central do pedido, quando um fornecedor tem várias ocorrências sem relato, "Gerar uma auditoria com as N ocorrências" reúne todas num rascunho só.'
       ],
       dicas: ['O resultado continua visível e editável depois de salvar.'], tutorial: 'auditoria' },
     { id: 'equipamentos', cat: 'Equipamentos', titulo: 'Equipamentos: cadastrar e movimentar', versao: '2.10.1',

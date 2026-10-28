@@ -685,7 +685,10 @@ function compararFontesPedido(pedido, opcoes) {
             const qtdCotadaNum = Number(itemCotacao.quantidade);
             cobertura = (bateDireto || bateConvertido || !Number.isFinite(qtdCotadaNum) || quantidadeFaturada > qtdCotadaNum || quantidadeFaturadaConvertida > qtdCotadaNum) ? 'nf_completa' : 'nf_parcial';
             // Soma de TODAS as NFs do pedido pra este produto, já na unidade da cotação.
-            quantidadeEntregue = ignoraUnidade ? null : Math.round(quantidadeFaturadaConvertida * 100) / 100;
+            // 2.16.2: a quantidade da NF salva JÁ está na unidade da cotação (convertida na Entrada de NF; o fator só registra a razão usada).
+            // Só quando a conta pelo fator é a que fecha com o cotado (unidade diferente) vale ela; senão é a quantidade da NF mesmo (antes
+            // dividia pelo fator e mostrava, por exemplo, 3/300 para 150 un. faturadas com fator 50).
+            quantidadeEntregue = ignoraUnidade ? null : Math.round(((bateConvertido && !bateDireto) ? quantidadeFaturadaConvertida : quantidadeFaturada) * 100) / 100;
             if (!bateDireto && !bateConvertido) {
                 divergencias.push({ tipo: 'quantidade_cotada_nf', nome, quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada, nfs: nfsQueFaturaram });
             }
@@ -1003,7 +1006,17 @@ function calcularAptidaoSaidaNota(nota) {
 function renderComparacaoFornecedorHTML(pedido, cnpjFornecedor) {
     const itens = compararFontesPedido(pedido).filter(item => normalizarCnpj(item.cnpjFornecedor) === normalizarCnpj(cnpjFornecedor) && (item.temNf || item.temErp || item.divergencias.length));
     if (itens.length === 0) return '<div class="central-item-vazio">Nenhuma NF processada ainda pra este fornecedor neste pedido.</div>';
-    return itens.map(item => renderComparacaoItemHTML(pedido, item, false)).join('');
+    // 2.17.0: várias ocorrências sem relato do mesmo fornecedor → um botão registra todas de uma vez, num rascunho só
+    const abertas = itens.filter(i => i.estado === 'detectada' && i.codProduto).length;
+    const lote = abertas > 1 ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}', '${escRel(String(cnpjFornecedor))}')">Gerar uma auditoria com as ${abertas} ocorrências</button></div>` : '';
+    return lote + itens.map(item => renderComparacaoItemHTML(pedido, item, false)).join('');
+}
+// 2.17.0: junta no MESMO rascunho todas as ocorrências ainda sem relato de um fornecedor do pedido (a Nova Auditoria já agrupa por tipo)
+function registrarTodasDivergenciasDoFornecedor(pedido, cnpj) {
+    const itens = compararFontesPedido(pedido, { nfExtra: nfExtraDaTela(pedido) }).filter(i => i.estado === 'detectada' && i.codProduto && normalizarCnpj(i.cnpjFornecedor) === normalizarCnpj(cnpj));
+    if (!itens.length) return toast('Nenhuma ocorrência em aberto para este fornecedor.');
+    itens.forEach(i => registrarDivergenciaDaComparacao(pedido, i.codProduto));
+    toast(`✓ ${itens.length} ocorrência(s) no mesmo rascunho. Confira e salve.`);
 }
 // compacto = true: usado dentro da linha unificada do produto (o nome e o
 // status já estão no cabeçalho da linha, então não se repetem).

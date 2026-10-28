@@ -122,6 +122,9 @@ function pontuarParecidoNome(nomeXml, nomeCot) {
     });
     return total ? pontos / total : 0;
 }
+// 2.17.0: parecença nos dois sentidos — a ordem das palavras não importa e vale também quando o nome da cotação é o mais curto
+// (todas as palavras dele aparecem no nome do XML, que traz marca/embalagem a mais).
+function parecencaNomes(nomeXml, nomeCot) { return Math.max(pontuarParecidoNome(nomeXml, nomeCot), pontuarParecidoNome(nomeCot, nomeXml) * 0.95); }
 function sugestoesItemCotacao(nomeXml, itens) {
     const estritos = buscarSugestoesCotacao(nomeXml, itens);
     if (estritos.length) return { itens: estritos, aproximado: false };
@@ -132,7 +135,7 @@ function sugestoesItemCotacao(nomeXml, itens) {
     const ranque = itens.map(it => {
         const nome = it.nomeOficial || it.descricao || '';
         const tk = tokensSugestaoNome(nome);
-        return { it, p: pontuarParecidoNome(nomeXml, nome), principal: principais.some(t => tk.includes(t)) };
+        return { it, p: parecencaNomes(nomeXml, nome), principal: principais.some(t => tk.includes(t)) };
     }).filter(x => x.p >= 0.5 || (x.principal && x.p >= 0.3)).sort((x, y) => y.p - x.p).slice(0, 3);
     // se o 1º não se destaca do resto, ainda lista (até 3), mas sem quick-button; a pessoa confere
     return { itens: ranque.map(x => x.it), aproximado: true };

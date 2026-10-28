@@ -10,7 +10,50 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.16.1', nome: 'Entrega parcial que já chegou', status: 'atual',
+        numero: '2.17.1', nome: 'Card do item mais claro (cotação e recurso)', status: 'atual',
+        novidades: [
+            'O card do item na Central do pedido foi reorganizado em blocos: Produto (nome, código, marca, embalagem), Quantidade e valores (em três campos) e Cotação e recurso.',
+            'O recurso agora vem da cotação: com fornecedores suficientes aparece "Recurso: C/C … · Pela cotação" (fica gravado quando a NF for salva) e, depois da NF, "✓ Confirmado na NF". Acabou a mensagem "ainda não confirmado" ao lado de "7 fornecedores cotaram".',
+            'Quando poucos fornecedores cotaram, o card diz quantos foram e que o recurso deve ser escolhido na entrada da NF.',
+            'Nenhuma informação saiu: vencedor, participantes (agora recolhidos em "Ver os N participantes"), descrição original e SP Data continuam no card.'
+        ],
+        implementado: ['renderLinhaProduto (js/09) com blocos "cdet" e estilos no fim do style.css; usa recursoEsperadoPelaCotacao (js/12), só leitura.'],
+        mudou: ['Arquivos alterados: js/09, js/14, js/31 e style.css.'],
+        testar: ['Abrir o pedido 1744, expandir "PROTETOR OCULAR M" e ver o recurso previsto pela cotação em vez de "ainda não confirmado".', 'Abrir um item de pedido já com NF salva e ver "✓ Confirmado na NF".', 'Item cotado por menos de 3 fornecedores: ver o aviso para escolher o recurso na NF.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.17.0', nome: 'Ocorrências sem relato, auditoria em bloco único e cotações da NF', status: 'concluida',
+        novidades: [
+            'Central de notificações: toda ocorrência detectada e ainda sem relato aparece no grupo "Importante" ("Ocorrências detectadas sem relato"), por pedido, levando direto ao pedido.',
+            'Central do pedido: quando um fornecedor tem mais de uma ocorrência sem relato, o botão "Gerar uma auditoria com as N ocorrências" junta todas num rascunho só (cada tipo vira um cartão, com os produtos dentro).',
+            'Anotação da auditoria: se o mesmo fornecedor e a mesma NF já estão na anotação do pedido, as novas ocorrências entram sem repetir o cabeçalho (fornecedor — NF — pedido) e sem a linha separadora. Outro fornecedor ou outra NF continua com cabeçalho próprio.',
+            'Editor da NF: mesmo depois de enviada ao Controle, a NF aceita mais de uma cotação. O cartão "Cotações desta NF" mostra o principal e os complementares, com "Adicionar outra cotação a esta NF" e "Remover".',
+            'Entrada de NF: na lista de itens da cotação, saem os itens que outro item da NF já associou e ficam só os do fornecedor; "Ver outros itens desse fornecedor" mostra todos de novo (mesmo produto em dois códigos, marcas ou validades).',
+            'Sugestão "Parecidos pelo nome" mais tolerante: não depende da ordem das palavras e vale também quando o nome da cotação é mais curto que o do XML.'
+        ],
+        implementado: ['Grupo "ocorrencias-sem-relato" em itensDeAtencao (js/34); registrarTodasDivergenciasDoFornecedor (js/11); pedidosDaNf/adicionarPedidoNaNf/removerPedidoDaNf (js/20); alternarJaAssociadosXml (js/10); parecencaNomes (js/21).'],
+        mudou: ['Arquivos alterados: js/10, js/11, js/14, js/16, js/20, js/21, js/31 e js/34.'],
+        testar: ['Central de notificações: conferir o grupo "Ocorrências detectadas sem relato" em Importante e se ele abre o pedido certo.', 'Pedido com duas ou mais faltas do mesmo fornecedor sem relato: usar "Gerar uma auditoria com as N ocorrências" e salvar; depois gerar outra para o mesmo fornecedor/NF e ver na anotação que o cabeçalho não se repete.', 'Editor da NF de uma NF já no Controle: adicionar uma segunda cotação, ver os itens dela na associação e remover.', 'Entrada de NF: associar um item e ver que ele some da lista dos demais; "Ver outros itens desse fornecedor" traz de volta.', 'Itens cujo nome vem em outra ordem no XML: ver se agora aparecem em "Parecidos pelo nome".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.16.2', nome: 'Acertos de abertura, associação, recurso e visual da web', status: 'concluida',
+        novidades: [
+            'A tela deixa de ficar travada depois do carregamento: a lista de fornecedores era montada item por item e agora é montada de uma vez.',
+            'Pedido com quantidade convertida (ex.: cotado em unidades, NF em caixas) mostra a quantidade já convertida, sem "(3/300)" enganoso.',
+            'No computador, só o item do menu lateral que você abriu fica destacado (antes os itens de "Mais" acendiam juntos).',
+            'Auditoria Retroativa: depois de associar a NF ao pedido correto, a sugestão antiga não volta mais; a lista se atualiza ao voltar para a tela.',
+            'Recurso da NF: quando nada foi gravado, o seletor mostra o recurso que as cotações indicam ("Vem da cotação"), em vez de "não definido".',
+            'Visual da web: área de conteúdo mais larga, cartões de Cotações e Anotações em duas colunas em telas grandes, menu lateral com marcador no item ativo e grupo separado para as ferramentas de "Mais".'
+        ],
+        implementado: ['popularDatalist (js/07) com uma única atribuição de innerHTML; recursoEsperadoPelaCotacao (js/12), só leitura; data-destino no menu lateral (js/02); bloco de estilo para computador no fim do style.css.'],
+        mudou: ['Arquivos alterados: style.css, js/02, js/07, js/11, js/12, js/14, js/20, js/32 e js/36.'],
+        testar: ['Abrir o app e ver se, ao sair da tela de carregamento, os botões respondem na hora.', 'Pedido 1744: deve aparecer "(150/300)" em vez de "(3/300)".', 'Na web, abrir Importar, Central de notificações, Auditoria Retroativa e Assistente: só o aberto fica azul.', 'Auditoria Retroativa: NF 1793358 associada ao pedido 1731 não volta a sugerir o 1726.', 'NF INTENSIVEMED 427148: confirmar o pedido e ver o recurso "Vem da cotação" no segundo bloco.', 'Na web, ver Cotações e Anotações em duas colunas e o novo menu lateral.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.16.1', nome: 'Entrega parcial que já chegou', status: 'concluida',
         novidades: [
             'Quando o fornecedor faturou menos do que foi cotado e essa falta já foi relatada em auditoria, o item deixa de ficar "aguardando": não se espera nova entrega, porque o que não foi faturado não vem depois.',
             'O fornecedor passa a mostrar "◐ Entrega parcial — já chegou (falta relatada)", em cinza (mesmo peso de resolvido), e o cartão do pedido mostra "◐ N parcial (já chegou)". O cartão do fornecedor fica verde com "Chegou (parcial)".',

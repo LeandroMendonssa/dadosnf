@@ -31,6 +31,17 @@ function itensDeAtencao() {
     add('alta', 'pedidos-sem-entrega', 'Pedidos com prazo vencido e sem sinal de entrega', 'Sem NF no app, sem NF do ERP ligada e sem marca de "já chegou".',
         semEntrega.map(c => ({ pedido: String(c.pedido), forn: '', t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `prazo ${dataBRdeISO(c.dataLimite)} (${diasDesdeISO(c.dataLimite)} dia(s) atrás) · ${(c.fornecedores || []).length} fornecedor(es)`, fn: `abrirCentralPedido('${escRel(c.pedido)}')` })));
 
+    // ---- MÉDIA (Importante): ocorrências detectadas e ainda SEM relato (2.17.0). Mesma contagem "em aberto" do cartão do pedido.
+    const semRelato = [];
+    listaCotacoes.forEach(c => {
+        const p = String(c.pedido); if (!nfPorPedido.has(p) && !erpPorPedido.has(p)) return; // sem NF não há o que comparar
+        let comp = []; try { comp = compararFontesPedido(c.pedido); } catch (e) { return; }
+        const abertas = comp.filter(x => x.estado === 'detectada');
+        if (abertas.length) semRelato.push({ c, abertas });
+    });
+    add('media', 'ocorrencias-sem-relato', 'Ocorrências detectadas sem relato', 'O app achou diferença entre cotação e NF e ninguém relatou ainda. Abra o pedido e registre a auditoria.',
+        semRelato.map(({ c, abertas }) => ({ pedido: String(c.pedido), forn: [...new Set(abertas.map(x => { const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === normalizarCnpj(x.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : ''; }).filter(Boolean))].join(', '), t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `${abertas.length} ocorrência(s) em aberto`, fn: `abrirCentralPedido('${escRel(String(c.pedido))}')` })));
+
     // ---- MÉDIA: divergências pendentes
     // 2.11.6: usa a MESMA lista da tela Relatórios → Divergências (divergenciasRel), com a mesma regra de status
     // ("não faturado" de item que já chegou conta como resolvido), só que sem os filtros da tela.

@@ -27,6 +27,13 @@ function determinarRecursoPorCotacao(pedido, codigo) {
     if (n >= minimoFornecedoresProprio()) return { tipo: 'proprio', participantes: n, minimo };
     return null;
 }
+// 2.16.2: recurso que as cotações indicam para um item do pedido (a mesma regra acima), SEM gravar. Serve para as telas que só leem
+// (ex.: NF que veio só do ERP) mostrarem o recurso em vez de "não definido" quando a cotação não gravou o recurso desse item.
+function recursoEsperadoPelaCotacao(cot, codigo) {
+    if (!cot || !codigo || !cot.origem) return '';
+    const det = determinarRecursoPorCotacao(cot.pedido, codigo);
+    return (det && calcularRecursoOficial(cot.origem, det.tipo)) || '';
+}
 function codigosSmartComprasDestaNf() {
     return [...new Set(itensXmlDetectados
         .filter(item => !item.semCotacao)

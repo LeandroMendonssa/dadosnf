@@ -104,6 +104,27 @@ function trocarPedidoDaNfEditor(nfId) {
     moverNfParaPedido(nfId, campo.value);
 }
 
+// 2.17.0: uma NF pode ter mais de uma cotação/pedido mesmo depois de enviada ao Controle (ex.: item que não alcançou 3 fornecedores e ganhou cotação complementar em outro pedido)
+function pedidosDaNf(nf) { return [...new Set([nf.pedido, ...(nf.pedidos || [])].filter(Boolean).map(String))]; }
+async function adicionarPedidoNaNf(nfId, pedidoNovo) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); if (!nf || !pedidoNovo) return;
+    const atuais = pedidosDaNf(nf);
+    if (atuais.includes(String(pedidoNovo))) return toast('Esta NF já usa essa cotação.');
+    try {
+        const upd = { pedidos: [...atuais, String(pedidoNovo)] };
+        if (!nf.pedido) upd.pedido = String(pedidoNovo);
+        await nfsProcessadasCollection.doc(nfId).update(upd);
+        toast(`✓ Cotação do pedido ${pedidoNovo} adicionada à NF ${nf.nf}.`);
+    } catch (err) { console.error('Erro ao adicionar pedido à NF:', err); toast('✕ Erro ao adicionar a cotação.'); }
+}
+function removerPedidoDaNf(nfId, pedido) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); if (!nf) return;
+    const atuais = pedidosDaNf(nf);
+    if (atuais.length < 2) return toast('A NF precisa ficar com ao menos um pedido (use "Mover esta NF").');
+    if (String(nf.pedido) === String(pedido)) return toast('Este é o pedido principal da NF. Mova a NF para outro pedido para trocá-lo.');
+    showConfirmModal({ title: 'Remover cotação da NF', message: `Tirar o pedido ${pedido} da NF ${nf.nf}? Os itens dela deixam de ser comparados com essa cotação. Auditorias já geradas não são alteradas.`, confirmText: 'Remover', confirmClass: 'warning',
+        onConfirm: async () => { try { await nfsProcessadasCollection.doc(nfId).update({ pedidos: atuais.filter(p => p !== String(pedido)) }); toast('✓ Cotação removida da NF.'); } catch (err) { console.error(err); toast('✕ Erro ao remover.'); } } });
+}
 function cotacoesDaNf(nf) {
     const pedidos = [...new Set([nf.pedido, ...(nf.pedidos || [])].filter(Boolean))];
     return pedidos.map(p => listaCotacoes.find(c => c.pedido === p)).filter(Boolean);
@@ -247,6 +268,14 @@ function renderEditorNf() {
     const trocaPedido = opcoesPedido.length ? `<div class="nfe-trocar"><span class="nfe-rot">Mover esta NF para outro pedido</span>
         ${htmlSeletorBusca('nfed-pedido', { placeholder: 'Buscar pedido…', opcoes: opcoesPedido, aoEscolher: valor => moverNfParaPedido(nf.id, valor) })}</div>` : '';
 
+    // 2.17.0: cotações desta NF (principal + complementares) e seletor para acrescentar outra
+    const pedidosNf = pedidosDaNf(nf);
+    const jaNaNf = new Set(pedidosNf);
+    const opcoesExtra = pedidosDisponiveis.filter(p => !jaNaNf.has(String(p))).map(p => { const c = listaCotacoes.find(x => String(x.pedido) === p); return { valor: p, titulo: `Pedido ${p}`, sub: c ? `${(c.itens || []).length} itens cotados${c.origem ? ' · ' + c.origem : ''}` : '' }; });
+    const cotacoesNfHTML = `<div class="nfe-trocar"><span class="nfe-rot">Cotações desta NF</span>
+        <div class="nfe-acoes">${pedidosNf.length ? pedidosNf.map(p => `<span class="xml-item-badge ${String(p) === String(nf.pedido) ? 'pronto' : 'neutro'}">Pedido ${escRel(p)}${String(p) === String(nf.pedido) ? ' (principal)' : ''}</span>${String(p) === String(nf.pedido) ? '' : `<button type="button" class="central-status-toggle" onclick="removerPedidoDaNf('${escRel(nf.id)}','${escRel(p)}')">Remover</button>`}`).join(' ') : '<span class="nfe-dica">Sem pedido.</span>'}</div>
+        ${opcoesExtra.length ? `<span class="nfe-rot" style="margin-top:8px;display:block">Adicionar outra cotação a esta NF</span>${htmlSeletorBusca('nfed-pedido-extra', { placeholder: 'Buscar pedido…', opcoes: opcoesExtra, aoEscolher: valor => adicionarPedidoNaNf(nf.id, valor) })}` : ''}</div>`;
+
     // ---- cabeçalho ----
     const valorTopo = fmtMoedaXml(xd ? xd.totais.vNF : (nf.valorTotal || ctrl.valorTxt));
     const cabecalho = `<div class="card nfe-topo">
@@ -266,6 +295,7 @@ function renderEditorNf() {
         <div class="nfe-chips">${badge('pronto', 'XML ✓')} ${badgeErp} ${badge('neutro', escRel(situacaoTxt))}${xd ? '' : ' ' + badge('pendente', 'XML completo não guardado')}</div>
         <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
         ${trocaPedido}
+        ${cotacoesNfHTML}
     </div>`;
 
     // ---- abas ----
@@ -682,7 +712,7 @@ function destinoDaNfSalva(nf) {
 }
 function recursosAtuaisDaNf(nf) {
     const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
-    return [...new Set((nf.itens || []).map(it => (it.semCotacao || nf.semCotacaoSmartCompras) ? it.recurso : (cot && it.codigoSmartCompras ? (cot.recursosPorItem || {})[it.codigoSmartCompras] : null)).filter(Boolean))];
+    return [...new Set((nf.itens || []).map(it => (it.semCotacao || nf.semCotacaoSmartCompras) ? it.recurso : (cot && it.codigoSmartCompras ? ((cot.recursosPorItem || {})[it.codigoSmartCompras] || recursoEsperadoPelaCotacao(cot, it.codigoSmartCompras) || null) : null)).filter(Boolean))];
 }
 function htmlDadosNf(nf, fornecedorNome) {
     const id = escRel(nf.id);

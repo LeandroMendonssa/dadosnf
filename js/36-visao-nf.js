@@ -34,7 +34,7 @@ function visoesNf() {
         let pedidoSt = pedido ? 'confirmado' : (it.situacao === 'direta' ? 'direta' : (pedidoSugerido ? 'sugerido' : (compraDireta ? 'compra_direta' : 'sem_pedido')));
 
         // itens: do XML quando existe, senão do ERP (cada um com o produto da cotação e o recurso que o app já conhece)
-        const recursoDe = (cod, semCot, rec) => semCot ? (rec || '') : ((cot && cod && (cot.recursosPorItem || {})[cod]) || '');
+        const recursoDe = (cod, semCot, rec) => semCot ? (rec || '') : ((cot && cod && ((cot.recursosPorItem || {})[cod] || recursoEsperadoPelaCotacao(cot, cod))) || ''); // 2.16.2: sem recurso gravado, vale o que as cotações indicam (mesma regra da Entrada de NF)
         const itens = nf && (nf.itens || []).length
             ? nf.itens.map(i => ({ fonte: 'xml', nome: i.xProd, qtd: i.quantidade, valorUnit: i.valorUnitario, total: null, codigoSmartCompras: i.codigoSmartCompras || null, codigoSpData: i.codigoSpData || null, cProd: i.cProd, semCotacao: !!(i.semCotacao || nf.semCotacaoSmartCompras), recurso: recursoDe(i.codigoSmartCompras, i.semCotacao || nf.semCotacaoSmartCompras, i.recurso) }))
             : ((erp && erp.itens) || []).map(i => { const cod = i.codigoSmartComprasRelacionado || codigoProdutoAtualDoItemErp(i) || null; return { fonte: 'erp', nome: i.nome, qtd: i.quantidade, valorUnit: i.valorUnitario, total: i.valorTotal != null ? i.valorTotal : null, codigoSmartCompras: cod, codigoSpData: i.codigoSpData || null, cProd: null, semCotacao: false, recurso: (erp && erp.recursoManual) || recursoDe(cod, false, '') }; });

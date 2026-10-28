@@ -519,7 +519,7 @@ function nomeTextoSeguro(v) {
 }
 async function adicionarFornecedor(forn, noToast = false) {const f = nomeTextoSeguro(forn).toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {fornecedoresSugeridos.push(f);await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
 async function deletarFornecedor(f){showConfirmModal({title:"Excluir Fornecedor",message:`Excluir "${f}"?`,onConfirm:async()=>{fornecedoresSugeridos = fornecedoresSugeridos.filter(item => item !== f);await settingsDocRef.update({fornecedores:firebase.firestore.FieldValue.arrayRemove(f)});toast(`Fornecedor ${f} excluído.`)}})}
-function popularDatalist(){DOM.fornDatalist.innerHTML='';const nomesUnificados=[...new Set([...fornecedoresSugeridos, ...listaFornecedoresSpData.map(f=>f.nomeExibido||f.nomeReal).filter(Boolean)])];nomesUnificados.sort().forEach(f=>DOM.fornDatalist.innerHTML+=`<option value="${f}"></option>`);popularListaFornecedores()}
+function popularDatalist(){DOM.fornDatalist.innerHTML='';const nomesUnificados=[...new Set([...fornecedoresSugeridos, ...listaFornecedoresSpData.map(f=>f.nomeExibido||f.nomeReal).filter(Boolean)])];DOM.fornDatalist.innerHTML=nomesUnificados.sort().map(f=>`<option value="${String(f).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}"></option>`).join('');popularListaFornecedores()} // 2.16.2: monta o HTML uma vez só (antes era innerHTML += por nome: travava a abertura)
 
 function popularListaFornecedores(){
     DOM.listaFornManage.classList.toggle('selection-mode', selectionModeFornecedores);
