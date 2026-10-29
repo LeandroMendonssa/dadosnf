@@ -442,7 +442,7 @@ async function baixarDadosDiagnostico() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `diagnostico-app-${new Date().toISOString().slice(0, 10)}.json`;
+        link.download = `diagnostico-app-${dataLocalISO()}.json`;
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
         const resumo = nomes.map(n => `${n}: ${dados.contagens[n]}`).join(' · ');
@@ -488,7 +488,7 @@ async function baixarBackupCompleto() {
             equipamentosSetores: (equipSetoresSnap && equipSetoresSnap.exists) ? (equipSetoresSnap.data().lista || []) : []
         };
 
-        const nomeArquivo = `backup-notas-fiscais-${new Date().toISOString().slice(0, 10)}.json`;
+        const nomeArquivo = `backup-notas-fiscais-${dataLocalISO()}.json`;
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

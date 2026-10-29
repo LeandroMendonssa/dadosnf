@@ -237,11 +237,18 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
     const status = d.status || 'pendente'; // ocorrências antigas sem status viram "pendente" só na exibição
     const linhas = linhasDeMateriais(d);
     if (linhas.length === 0) return '';
-    const linhasHTML = linhas.map(l => `<div class="central-item-linha">${l.replace(/</g, '&lt;')}</div>`).join('');
+    // 2.17.2: cartão único e fechado em si mesmo — o que é (tipo), de quem/qual NF/pedido, o texto, e a linha do tempo (o que foi registrado
+    // e quando), tudo dentro da mesma moldura. "Pendente" da auditoria = pendência RELATADA (já com o responsável): cinza, não vermelho.
+    const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
+    const rotuloStatus = status === 'pendente' ? 'Pendência relatada' : status === 'resolvida' ? 'Resolvida' : 'Encerrada';
+    const linhasHTML = linhas.map(l => `<div class="cdv-linha">${escRel(l)}</div>`).join('');
+    const chips = [oc.fornecedor ? upAud(oc.fornecedor) : '', oc.notaFiscal ? `NF ${oc.notaFiscal}` : '', centralPedidoAtual ? `Pedido ${centralPedidoAtual}` : ''].filter(Boolean)
+        .map(x => `<span class="cdv-chip">${escRel(x)}</span>`).join('');
 
+    const ROT = { identificacao: 'Relatada na auditoria', resolucao: 'Resolvida', encerramento: 'Encerrada', reabertura: 'Reaberta' };
     const historico = d.historico || [];
-    const historicoHTML = historico.length ? `<div class="central-historico">
-        ${historico.map(h => `<div class="central-historico-item">${formatarDataBRSimples(h.data)} — ${ROTULOS_HISTORICO[h.tipo] || h.tipo}${h.observacao ? ': ' + h.observacao.replace(/</g, '&lt;') : ''}</div>`).join('')}
+    const historicoHTML = historico.length ? `<div class="cdv-hist">
+        ${historico.map(h => `<div class="cdv-hist-item"><span class="cdv-ponto ${h.tipo === 'resolucao' ? 'ok' : h.tipo === 'encerramento' ? 'fim' : ''}"></span><span class="cdv-hist-data">${escRel(formatarDataBRSimples(h.data))}</span><span>${escRel(ROT[h.tipo] || ROTULOS_HISTORICO[h.tipo] || h.tipo)}${h.observacao ? ' — ' + escRel(h.observacao) : ''}</span></div>`).join('')}
     </div>` : '';
 
     const key = `${ocIdx}-${divIdx}`;
@@ -249,7 +256,7 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
     const statusFormHTML = formAberto ? `
         <div class="central-status-form">
             <select id="central-status-select-${key}" class="form-field">
-                <option value="pendente" ${status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                <option value="pendente" ${status === 'pendente' ? 'selected' : ''}>Pendência relatada</option>
                 <option value="resolvida" ${status === 'resolvida' ? 'selected' : ''}>Resolvida</option>
                 <option value="encerrada" ${status === 'encerrada' ? 'selected' : ''}>Encerrada</option>
             </select>
@@ -257,14 +264,12 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
             <button type="button" class="actions-button is-success" onclick="confirmarAlteracaoStatusCentral('${oc._anotacaoId}', ${ocIdx}, ${divIdx})">Atualizar Status</button>
         </div>` : '';
 
-    return `<div class="central-divergencia-bloco">
-        ${linhasHTML}
-        <div class="central-divergencia-meta">
-            <span class="central-status-badge status-${status}">${status === 'pendente' ? 'Pendente' : status === 'resolvida' ? 'Resolvida' : 'Encerrada'}</span>
-            ${oc.notaFiscal ? `<span class="central-nf-tag">NF ${oc.notaFiscal}</span>` : ''}
-            <button type="button" class="central-status-toggle" onclick="toggleCentralStatusForm('${key}')">${formAberto ? 'Cancelar' : 'Alterar status'}</button>
-        </div>
+    return `<div class="central-divergencia-bloco cdv">
+        <div class="cdv-topo"><span class="cdv-tipo">${escRel(def ? def.label : (d.tipo || 'Ocorrência'))}</span><span class="central-status-badge status-${status}">${rotuloStatus}</span></div>
+        ${chips ? `<div class="cdv-ctx">${chips}</div>` : ''}
+        <div class="cdv-texto">${linhasHTML}</div>
         ${historicoHTML}
+        <div class="cdv-rodape"><button type="button" class="central-status-toggle" onclick="toggleCentralStatusForm('${key}')">${formAberto ? 'Cancelar' : 'Alterar status'}</button></div>
         ${statusFormHTML}
     </div>`;
 }
@@ -408,7 +413,7 @@ function renderCentralPedidoCompleto(pedido) {
                 <i class="fa-solid fa-chevron-right"></i>
             </div>
             <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
-                ${semFornecedor.map(x => `<div style="margin-bottom:6px;font-size:12px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')}
+                ${semFornecedor.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join('')}
             </div></div></div>
         </div>` : '';
 
@@ -418,7 +423,7 @@ function renderCentralPedidoCompleto(pedido) {
         // auditorias antigas de antes da cotação existir) — mostra tudo junto,
         // sem agrupamento por fornecedor (não há CNPJ pra agrupar por).
         container.innerHTML = todasDivergencias.length
-            ? todasDivergencias.map(x => `<div style="margin-bottom:6px;font-size:12px;color:var(--text-light);">${x.oc.fornecedor ? upAud(x.oc.fornecedor) : 'Fornecedor não identificado'}</div>${renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)}`).join('')
+            ? todasDivergencias.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join('')
             : '<div class="central-item-vazio">Nenhuma ocorrência registrada ainda.</div>';
     } else {
         container.innerHTML = '';
@@ -700,7 +705,7 @@ async function confirmarAlteracaoStatusCentral(anotacaoId, ocIdx, divIdx) {
     // HISTÓRICO NUNCA É APAGADO — só acrescenta uma entrada nova. O texto
     // gerado/salvo na anotação continua exatamente como estava.
     const tipoEntrada = novoStatus === 'resolvida' ? 'resolucao' : novoStatus === 'encerrada' ? 'encerramento' : 'reabertura';
-    d.historico.push({ tipo: tipoEntrada, data: new Date().toISOString().slice(0, 10), observacao });
+    d.historico.push({ tipo: tipoEntrada, data: dataLocalISO(), observacao });
 
     try {
         await anotacoesTextoCollection.doc(anotacaoId).update({ ocorrencias, atualizadoEm: new Date().toISOString() });

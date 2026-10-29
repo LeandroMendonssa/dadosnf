@@ -419,8 +419,9 @@ function montarNfProcessadaAtual(opcoes) {
         .map(item => {
             const st = statusItemXml(item);
             const direto = !!item.semCotacao;
-            const associacao = direto ? null : bancoAssociacoesFornecedor[st.chave];
-            const chaveSpData = direto ? st.chaveDireta : (associacao ? associacao.codigoSmartCompras : null);
+            const associacao = direto ? null : st.associacao; // 2.17.3: já considera o tratamento do item (aceito/trocado)
+            const trat = (!direto && item.tratamentoXml) ? item.tratamentoXml : null;
+            const chaveSpData = direto ? st.chaveDireta : (st.trocado ? st.chaveDireta : (associacao ? associacao.codigoSmartCompras : null));
             const associacaoSpData = chaveSpData ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === chaveSpData) : null;
             const rec = direto ? recursoPrevistoItemXml(item, st) : null;
             // Com mais de uma cotação na NF, cada linha precisa saber de QUAL
@@ -433,12 +434,14 @@ function montarNfProcessadaAtual(opcoes) {
             // delas realmente TEM esse código — só cai no pedido principal se o
             // código existir em mais de uma (aí sim é ambíguo de verdade).
             let pedidoItem = null;
-            if (multi && associacao) {
-                if (associacao.pedido) pedidoItem = associacao.pedido;
+            if (multi && (associacao || trat)) {
+                const codigoDoItem = associacao ? associacao.codigoSmartCompras : trat.codigo;
+                if (trat && trat.pedido) pedidoItem = trat.pedido;
+                else if (associacao && associacao.pedido) pedidoItem = associacao.pedido;
                 else {
                     const donos = pedidosSelecionados.filter(p => {
                         const c = listaCotacoes.find(cc => cc.pedido === p);
-                        return c && (c.itens || []).some(i => i.codProduto === associacao.codigoSmartCompras);
+                        return c && (c.itens || []).some(i => i.codProduto === codigoDoItem);
                     });
                     pedidoItem = donos.length === 1 ? donos[0] : pedidoSelecionadoXml;
                 }
@@ -458,6 +461,7 @@ function montarNfProcessadaAtual(opcoes) {
                 // Fase 30: só quando o código de saída difere do original (NFs antigas não têm o campo).
                 ...((item.cProdNovo && item.cProdNovo !== item.cProd) ? { cProdSaida: item.cProdNovo } : {}),
                 ...(direto ? { semCotacao: true, recurso: (rec && rec.valor) || null } : {}),
+                ...(trat ? { tratamento: trat.tipo, ...(trat.tipo === 'trocado' ? { substituiCodigo: trat.codigo } : {}) } : {}), // 2.17.3
                 ...(pedidoItem ? { pedidoItem } : {})
             };
         });
@@ -598,9 +602,12 @@ function compararFontesPedido(pedido, opcoes) {
         // pedido (it.pedidoItem presente) é que o código precisa bater com
         // ESTE pedido, pra não contar um item do pedido errado (o mesmo
         // código do SmartCompras pode existir em pedidos diferentes).
-        const itensNf = nfsDoPedido.flatMap(nf => (nf.itens || [])
-            .filter(it => it.codigoSmartCompras === itemCotacao.codProduto && (!it.pedidoItem || it.pedidoItem === pedido))
+        // 2.17.3: item da NF marcado como "trocado" (veio outro produto no lugar deste) aponta para o código pedido em substituiCodigo.
+        const itensNfTodos = nfsDoPedido.flatMap(nf => (nf.itens || [])
+            .filter(it => (it.codigoSmartCompras === itemCotacao.codProduto || (it.tratamento === 'trocado' && it.substituiCodigo === itemCotacao.codProduto)) && (!it.pedidoItem || it.pedidoItem === pedido))
             .map(it => ({ ...it, nfNumero: nf.nf })));
+        const trocados = itensNfTodos.filter(it => it.tratamento === 'trocado');
+        const itensNf = itensNfTodos.filter(it => it.tratamento !== 'trocado');
         const quantidadeFaturada = itensNf.length ? itensNf.reduce((s, it) => s + it.quantidade, 0) : null;
         // SmartCompras e SP Data às vezes registram o mesmo produto em
         // unidades diferentes (ex.: cotação em frasco, dispensação em gotas
@@ -622,7 +629,7 @@ function compararFontesPedido(pedido, opcoes) {
         // ERP vinculada ao pedido mesmo sem NF/XML (auditoria retroativa).
         const assocSdItem = (!codigoSpDataNf && itemCotacao.codProduto) ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === itemCotacao.codProduto) : null;
         const codigoSpData = codigoSpDataNf || (assocSdItem ? assocSdItem.spDataCodigo : null);
-        const nfsQueFaturaram = [...new Set(itensNf.map(it => it.nfNumero))];
+        const nfsQueFaturaram = [...new Set(itensNfTodos.map(it => it.nfNumero))];
 
         const entradasErpDoItem = codigoSpDataNf ? entradasErpDoPedido : entradasErpDoPedido.filter(e => cnpjEmLista(entidadeDe(itemCotacao.cnpjFornecedor), e.vinculo.cnpjFornecedor || e.cnpjFornecedor));
         // 2.0.5: com NF do app no item, o ERP só conta se for da MESMA NF (mesmo número) — antes somava as entradas de TODAS as NFs
@@ -672,7 +679,12 @@ function compararFontesPedido(pedido, opcoes) {
             // Fase 36: só gera "não faturado" quando ESTE fornecedor já deu entrada de NF (XML do app) neste
             // pedido e este item ficou de fora. Fornecedor que ainda não entregou nada = "aguardando", sem alarme.
             const fornecedorJaDeuEntrada = pedidoTemNf && nfsDoPedido.some(nf => cnpjEmLista(entidadeDe(itemCotacao.cnpjFornecedor), nf.cnpjFornecedor));
-            if (fornecedorJaDeuEntrada && !itensErp.length && !(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]) {
+            if (trocados.length) {
+                // 2.17.3: no lugar deste item veio outro produto (marcado na Entrada de NF): é UMA ocorrência, "produto diferente" — não "não faturado".
+                const t0 = trocados[0];
+                divergencias.push({ tipo: 'produto_trocado', nome, produtoFaturado: t0.xProd || '', quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada: trocados.reduce((a, it) => a + (Number(it.quantidade) || 0), 0), nfs: nfsQueFaturaram });
+                cobertura = 'nf_completa'; // o fornecedor entregou (outro produto): a diferença segue na ocorrência
+            } else if (fornecedorJaDeuEntrada && !itensErp.length && !(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]) {
                 divergencias.push({ tipo: 'nao_faturado', nome, quantidadeCotada: itemCotacao.quantidade });
             }
         } else {
@@ -728,14 +740,14 @@ function compararFontesPedido(pedido, opcoes) {
         const nomeItemAud = nome;
         // 2.16.0: o código do produto entra na ligação (auditorias novas o gravam); o nome segue valendo para as antigas.
         const auditoriasItem = divergenciasAuditoriaDoItem(pedido, { nome: nomeItemAud, cnpjFornecedor: itemCotacao.cnpjFornecedor, codProduto: itemCotacao.codProduto });
-        const resolucao = resolucaoItemComparacao(cotacao, itemCotacao.codProduto, auditoriasItem, itensNf.length > 0 || itensErp.length > 0 || !!(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]);
+        const resolucao = resolucaoItemComparacao(cotacao, itemCotacao.codProduto, auditoriasItem, itensNf.length > 0 || trocados.length > 0 || itensErp.length > 0 || !!(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]);
         return {
             codProduto: itemCotacao.codProduto,
             cnpjFornecedor: itemCotacao.cnpjFornecedor,
             nome,
             quantidadeCotada: itemCotacao.quantidade,
             quantidadeFaturada, quantidadeLancada, quantidadeEntregue,
-            temNf: itensNf.length > 0, temErp: itensErp.length > 0,
+            temNf: itensNf.length > 0 || trocados.length > 0, temErp: itensErp.length > 0,
             nfs: nfsQueFaturaram, codigoSpData,
             cobertura,
             divergencias,
@@ -921,6 +933,8 @@ function textoDivergenciaNatural(div) {
             if (div.difTotal) partes.push(`valor total R$ ${fmt(div.valorTotalNf)} na NF × R$ ${fmt(div.valorTotalErp)} no ERP`);
             return `${div.nome}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}: ${partes.join('; ')}.`;
         }
+        case 'produto_trocado':
+            return `Solicitamos ${div.nome}${div.quantidadeCotada ? ', ' + div.quantidadeCotada + ' UNID' : ''}, porém foi faturado ${div.produtoFaturado || 'outro produto'}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
         case 'valor_cotado_nf':
             return `${div.nome} foi cotado a R$ ${div.valorCotado.toFixed(2)}, porém foi faturado a R$ ${div.valorFaturado.toFixed(2)}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
         default:
@@ -958,7 +972,7 @@ function calcularAptidaoSaidaNota(nota) {
     const entradaVinculada = listaEntradasErp.find(e => e.notaVinculadaId === nota.id);
     const cnpjConhecido = entradaVinculada ? entradaVinculada.cnpjFornecedor : null;
 
-    const candidatas = listaNfsProcessadas.filter(nf => normalize(nf.nf) === nfNormalizada && (!cnpjConhecido || nf.cnpjFornecedor === cnpjConhecido));
+    const candidatas = listaNfsProcessadas.filter(nf => normalize(nf.nf) === nfNormalizada && (!cnpjConhecido || mesmoCnpj(nf.cnpjFornecedor, cnpjConhecido)));
 
     if (candidatas.length === 0) {
         return { status: 'nao_conferida', label: 'Ainda não passou pela Entrada Segura (XML/NF)', badge: 'neutro', cnpjFornecedor: cnpjConhecido || null };
@@ -1273,7 +1287,8 @@ async function alterarChegadaFornecedorCotacao(pedido, cnpj, chegou, tipo) {
 const MAPA_TIPO_DIVERGENCIA_COMPARACAO = {
     'nao_faturado': 'nao_faturado',
     'quantidade_cotada_nf': 'quantidade_diferente',
-    'valor_cotado_nf': 'valor_diferente'
+    'valor_cotado_nf': 'valor_diferente',
+    'produto_trocado': 'produto_diferente'
 };
 
 // Monta os campos do material estruturado a partir da divergência já
@@ -1281,6 +1296,9 @@ const MAPA_TIPO_DIVERGENCIA_COMPARACAO = {
 // (quantidade cotada/faturada, valor cotado/faturado), nunca inventa dado.
 function camposMaterialDivergencia(tipoEstruturado, item, div) {
     const campos = { produto: item.nome };
+    if (tipoEstruturado === 'produto_diferente') { // 2.17.3: Solicitamos {produtoPedido}, porém foi faturado {produtoFaturado}
+        return { produtoPedido: item.nome, produtoFaturado: div.produtoFaturado || '', quantidade: div.quantidadeCotada, unidade: '' };
+    }
     if (tipoEstruturado === 'nao_faturado') {
         campos.quantidade = div.quantidadeCotada;
     } else if (tipoEstruturado === 'quantidade_diferente') {
@@ -1535,11 +1553,11 @@ function renderResultadoSalvarNF() {
     const nfExtra = montada ? { id: montada.chave, ...montada.doc } : null;
     const codigosConfirmados = itensXmlDetectados
         .filter(item => !item.semCotacao && !item.suspeito)
-        .map(item => bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)])
+        .map(item => associacaoEfetivaXml(item) || (item.tratamentoXml && item.tratamentoXml.tipo === 'trocado' ? { codigoSmartCompras: item.tratamentoXml.codigo } : null))
         .filter(Boolean)
         .map(a => a.codigoSmartCompras);
     const aguardando = itensXmlDetectados.filter(item => !item.semCotacao && item.suspeito
-        && bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)]).length;
+        && (associacaoEfetivaXml(item) || item.tratamentoXml)).length;
 
     // Uma cotação (o normal) ou várias (NF com itens de mais de um pedido):
     // junta a conferência de cada pedido selecionado; cada resultado carrega

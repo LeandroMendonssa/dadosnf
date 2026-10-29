@@ -10,7 +10,37 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.17.1', nome: 'Card do item mais claro (cotação e recurso)', status: 'atual',
+        numero: '2.18.1', nome: 'Varredura de erros de lógica', status: 'atual',
+        novidades: [
+            'Data errada à noite: várias telas pegavam a data do relógio em UTC, que no Brasil vira o dia seguinte depois das 21h. Afetava a data padrão da Nova Auditoria, o histórico de mudança de status da divergência, a data do pedido ao cadastrar cotação, a data do histórico da auditoria ao salvar, o limite "vencida" de Cotações e os nomes dos arquivos de backup e diagnóstico. Tudo passou a usar a data local.',
+            'CNPJ com e sem máscara: as cotações e parte do ERP guardam o CNPJ com pontos e traço, enquanto o SP Data e as NFs guardam só os 14 números. Em 5 lugares do Controle de NFs e do Editor a busca do fornecedor comparava os dois sem normalizar e não achava o cadastro (aparecia o nome cru do ERP no lugar do apelido, e "Enviar para a relação" pedia dados que o app já tinha). Agora a busca ignora a máscara.',
+            'Editor da NF: a lista "Divergências desta NF" mostrava tudo em amarelo e dizia "nenhuma divergência" mesmo com pendência relatada. Agora cada item mostra o seu estado (em aberto, relatada ou resolvida), igual às outras telas.',
+            'Ajustes (modelos de texto da auditoria): o campo registrava um novo "salvar ao sair" a cada vez que a tela abria; agora registra uma vez só.',
+            'Nada mais encontrado na varredura: nenhuma função chamada que não exista, nenhum botão apontando para função inexistente, nenhum elemento duplicado, nenhum "NaN" ou "undefined" nos textos das telas e nenhuma contagem de entrega que não feche, em todos os pedidos e NFs dos dados de teste.'
+        ],
+        implementado: ['docFornecedorSpDataPorCnpj (js/10), mapa por CNPJ normalizado e refeito só quando o SP Data muda; dataLocalISO no lugar de toISOString().slice(0,10).'],
+        mudou: ['Arquivos alterados: js/07, js/09, js/10, js/11, js/12, js/13, js/14, js/15, js/16, js/17 e js/20.'],
+        testar: ['Depois das 21h: abrir Nova Auditoria e ver se a data padrão é a de hoje (não a de amanhã).', 'Controle de NFs: NF que só existe no ERP deve mostrar o apelido do fornecedor, não o nome cru do relatório.', 'Editor de uma NF com pendência relatada: a lista de divergências deve mostrar o selo "Pendência relatada" e não o texto de "nenhuma divergência".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.18.0', nome: 'Produto trocado, divergência legível e busca da web', status: 'concluida',
+        novidades: [
+            'Web: o campo de pesquisa de Cotações (e o espaço de cima das demais telas) tinha ficado sob o cabeçalho depois da 2.16.2; corrigido.',
+            'Divergências (Outras divergências do fornecedor e Outras ocorrências): cada uma é um cartão só, com o tipo, fornecedor, NF e pedido, o texto, a linha do tempo (data e o que foi registrado) e "Alterar status" dentro da mesma moldura. "Pendente" passou a se chamar "Pendência relatada" e o histórico diz "Relatada na auditoria".',
+            'Nova Auditoria: "Produto Pedido" lista os itens da cotação do pedido (os do fornecedor primeiro; os de outros fornecedores com o nome dele), mesmo que o item já esteja associado a uma NF. O campo abre mostrando a lista inteira, sem ficar filtrado pelo texto já preenchido.',
+            'Nova Auditoria: "Produto Faturado" abre o cadastro inteiro do SP Data, sem filtro e sem sugestão, para o produto que veio no lugar (que pode nunca ter sido cotado).',
+            'Entrada de NF: cada item ganhou "Remover associação" (tira a associação errada do fornecedor), "Veio produto trocado" e "Aceito como outro produto".',
+            '"Veio produto trocado": o item da NF não é associado a código nenhum; a conferência registra a ocorrência "Solicitamos X, porém foi faturado Y" (já pronta para gerar auditoria) e o item pedido não vira "não faturado". O SP Data é o do produto que de fato veio.',
+            '"Aceito como outro produto" (ex.: dipirona 10 mL aceita no lugar da de 20 mL): vale como o item pedido só para esta NF e cotação, sem divergência de produto e sem gravar a associação, para não conflitar se a de 20 mL vier depois.'
+        ],
+        implementado: ['associacaoEfetivaXml, tratamentoXml (js/10); tratamento/substituiCodigo no item da NF salva e ocorrência "produto_trocado" em compararFontesPedido (js/11); renderBlocoDivergencia em cartão (js/09); listas livres da auditoria (js/12, js/13).'],
+        mudou: ['Arquivos alterados: style.css, js/09, js/10, js/11, js/12, js/13, js/14, js/31, js/33 e js/36.'],
+        testar: ['Web: abrir Cotações e ver o campo de pesquisa.', 'Pedido com divergências: ver os cartões (tipo, NF, pedido, linha do tempo) em "Outras divergências deste fornecedor" e em "Outras ocorrências".', 'Nova Auditoria, tipo "Produto diferente do pedido": Produto Pedido mostra os itens da cotação; Produto Faturado mostra o SP Data inteiro.', 'Pedido 1744, NF 123470 (protetor ocular): na Entrada de NF, "Remover associação" e depois "Veio produto trocado" apontando para o PROTETOR OCULAR P; salvar e conferir a ocorrência "Solicitamos … porém foi faturado …".', 'NF 78771 (dipirona 10 mL): "Aceito como outro produto" apontando para a de 20 mL; conferir que não aparece divergência e que a associação do fornecedor não mudou.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.17.1', nome: 'Card do item mais claro (cotação e recurso)', status: 'concluida',
         novidades: [
             'O card do item na Central do pedido foi reorganizado em blocos: Produto (nome, código, marca, embalagem), Quantidade e valores (em três campos) e Cotação e recurso.',
             'O recurso agora vem da cotação: com fornecedores suficientes aparece "Recurso: C/C … · Pela cotação" (fica gravado quando a NF for salva) e, depois da NF, "✓ Confirmado na NF". Acabou a mensagem "ainda não confirmado" ao lado de "7 fornecedores cotaram".',
@@ -2523,7 +2553,7 @@ function somarDiasISO(dataISO, dias) {
     if (!dataISO) return '';
     const d = new Date(dataISO + 'T00:00:00');
     d.setDate(d.getDate() + dias);
-    return d.toISOString().slice(0, 10);
+    return d.toLocaleDateString('en-CA'); // 2.18.1: data local (toISOString dá a data em UTC)
 }
 
 function calcularDiffCotacao(antiga, nova) {

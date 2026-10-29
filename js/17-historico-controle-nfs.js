@@ -79,7 +79,7 @@ function montarControleNfs() {
         const { nf, erp } = porChave[ch];
         const numeroNf = (nf && nf.nf) || (erp && erp.nf) || ch;
         const cnpj = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
-        const docForn = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
+        const docForn = cnpj ? docFornecedorSpDataPorCnpj(cnpj) : null;
         const nomeFornecedor = nomeTextoSeguro((erp && erp.fornecedorNomeEditado) || (nf && nf.fornecedorNomeEditado) || (docForn ? (apelidoFornecedorDoc(docForn).nome || docForn.nomeReal) : ((nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '')));
         let dataISO = null;
         if (erp && erp.data) dataISO = converterDataBRparaISO(erp.data);
@@ -443,7 +443,7 @@ function marcarSelecionadasDiretas() {
 let envioControleEmAndamento = false;
 function dadosEnvioNfParaRelacao(it) {
     let fornecedor = nomeTextoSeguro(it.nomeFornecedor).toUpperCase();
-    if (fornecedor && !(it.cnpj && listaFornecedoresSpData.some(f => (f.cnpjs || []).some(c => c.cnpj === it.cnpj)))) {
+    if (fornecedor && !(it.cnpj && docFornecedorSpDataPorCnpj(it.cnpj))) {
         const ap = encontrarApelidoFornecedor(fornecedor);
         if (typeof ap === 'string' && ap) fornecedor = ap.toUpperCase();
     }
@@ -569,7 +569,7 @@ function nomesFornecedorCompativeis(a, b) {
     return comuns >= Math.min(2, menor) && comuns / menor >= 0.5;
 }
 function descFornecedor(cnpj, ...nomes) {
-    const doc = cnpj ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj)) : null;
+    const doc = cnpj ? docFornecedorSpDataPorCnpj(cnpj) : null;
     const todos = nomes.concat(doc ? [doc.nomeExibido, doc.nomeReal] : []).map(nomeTextoSeguro).filter(Boolean);
     return { cnpj: cnpj || null, nomes: todos };
 }
@@ -630,7 +630,7 @@ function montarHistoricoNfs() {
         const serie = (nf && nf.serie) || (erp && erp.serie) || '';
         const cnpjFornecedor = (nf && nf.cnpjFornecedor) || (erp && erp.cnpjFornecedor) || null;
         const nomeFornecedorBruto = (nf && nf.fornecedor) || (erp && erp.fornecedorNomeRelatorio) || '';
-        const docFornecedor = cnpjFornecedor ? listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpjFornecedor)) : null;
+        const docFornecedor = cnpjFornecedor ? docFornecedorSpDataPorCnpj(cnpjFornecedor) : null;
         const nomeFornecedor = docFornecedor ? (apelidoFornecedorDoc(docFornecedor).nome || docFornecedor.nomeReal) : nomeFornecedorBruto;
         const pedido = (nf && nf.pedido) || (erp && erp.vinculo && erp.vinculo.status === 'confirmado' && erp.vinculo.pedido) || null;
         const cotacao = pedido ? listaCotacoes.find(c => c.pedido === pedido) : null;

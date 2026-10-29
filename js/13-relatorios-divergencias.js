@@ -112,6 +112,7 @@ function renderDivergenciasAuditoria() {
         container.innerHTML = '<div class="empty-state">Nenhuma divergência adicionada ainda.</div>';
         return;
     }
+    garantirDatalistSpDataAuditoria();
     container.innerHTML = divergenciasAuditoria.map((d, idx) => {
         const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
         const primeiroProduto = def && d.materiais && d.materiais[0] ? (d.materiais[0].campos.produto || d.materiais[0].campos.produtoFaturado) : (d.campos && (d.campos.produto || d.campos.fornecedorNome));
@@ -123,7 +124,9 @@ function renderDivergenciasAuditoria() {
             `<option value="${key}" ${d.tipo === key ? 'selected' : ''}>${val.label}</option>`).join('');
 
         const renderCampo = (c, valor, onBlurAttr, mat) => {
-            const listaAttr = (c.key === 'produto' || c.key === 'produtoPedido' || c.key === 'produtoFaturado') ? ' list="datalist-produtos-cotacao"' : '';
+            const ehLista = (c.key === 'produto' || c.key === 'produtoPedido' || c.key === 'produtoFaturado');
+            const listaAttr = ehLista ? ` list="${c.key === 'produtoFaturado' ? 'datalist-produtos-spdata' : 'datalist-produtos-cotacao'}" onfocus="audListaFocar(this)" oninput="this.dataset.tocou=1"` : '';
+            if (ehLista) onBlurAttr = onBlurAttr.replace('onblur="', 'onblur="audListaSair(this); ');
             const labelTexto = c.obrigatorio ? `${c.label} *` : c.label;
             if (c.textarea) {
                 return `<div class="campo"><label>${labelTexto}</label><textarea class="form-field" ${onBlurAttr}>${valor}</textarea></div>`;
@@ -270,7 +273,7 @@ function renderCardCotacao(c) {
     // 2.9.8: cartão no padrão do app (iniciais, título, status, 3 quadros e faixa de resumo) — sem botões: tocar abre o pedido.
     const qtdFornecedores = (c.fornecedores || []).length;
     const r = resumoEntregaCotacao(c);
-    const hojeISO = new Date().toISOString().slice(0, 10);
+    const hojeISO = dataLocalISO();
     const vencida = !!c.dataLimite && c.dataLimite < hojeISO;
     const limite = c.dataLimite ? formatarDataBRSimples(c.dataLimite) : '—';
     let st = ['m', 'Aguardando'];
@@ -390,7 +393,7 @@ function abrirNovaCotacao() {
     document.getElementById('cot-pedido').value = '';
     document.getElementById('cot-pedido').disabled = false;
     document.getElementById('cot-origem').value = '';
-    document.getElementById('cot-data-pedido').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('cot-data-pedido').value = dataLocalISO();
     document.getElementById('cot-data-limite').value = '';
     document.getElementById('cot-observacao').value = '';
     document.getElementById('btn-excluir-cotacao').style.display = 'none';

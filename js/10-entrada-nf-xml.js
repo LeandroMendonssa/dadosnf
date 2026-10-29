@@ -36,6 +36,7 @@ let pedidosAdicionaisXml = [];          // pedidos além do principal (pedidoSel
 function cotacoesSelecionadasXml() { return [pedidoSelecionadoXml, ...pedidosAdicionaisXml].filter(Boolean); }
 let nfSalvaXml = false;                 // depois de salvar, trocar o recurso grava na hora
 const SEM_COTACAO_VALOR = '__SEM_COTACAO__';
+let tratamentoBuscaAbertaXml = {}; // chave do item -> 'trocado' | 'aceito' (seletor do item pedido aberto)
 let mostrarJaAssociadosXml = false; // 2.17.0: por padrão a lista esconde os itens da cotação que OUTRO item desta NF já associou; "ver outros itens desse fornecedor" mostra todos
 let mostrarOutrosFornecedoresXml = false; // por padrão a seleção de item prioriza o fornecedor identificado pelo CNPJ; só amplia quando pedido explicitamente
 
@@ -208,14 +209,17 @@ function processarXmlTexto(texto) {
         totais: ['vProd', 'vFrete', 'vSeg', 'vOutro', 'vDesc', 'vIPI', 'vST'].reduce((o, k) => { const el = xmlDocAtual.querySelector('total ICMSTot ' + k); const n = el ? parseFloat(el.textContent) : 0; o[k] = Number.isFinite(n) ? n : 0; return o; }, {}) };
     associacaoFornecedorBuscaAberta = new Set();
     historicoAssociacaoAbertoXml = new Set();
+    tratamentoBuscaAbertaXml = {};
+    // 2.17.3: NF já salva com itens "trocado"/"aceito": reaplica o tratamento (vive no item da NF, não no banco de associações)
+    { const salva = listaNfsProcessadas.find(n => String(n.nf) === String(nNF) && (n.serie || '') === (nfeIdentificacao.serie || '') && mesmoCnpj(n.cnpjFornecedor, cnpjEmit));
+      if (salva) (salva.itens || []).forEach(si => { if (!si.tratamento) return; const it = itensXmlDetectados.find(x => String(x.cProd) === String(si.cProd)); if (it) it.tratamentoXml = { tipo: si.tratamento, codigo: si.tratamento === 'trocado' ? si.substituiCodigo : si.codigoSmartCompras, ...(si.pedidoItem ? { pedido: si.pedidoItem } : {}) }; }); }
 
     // 1ª prioridade: pelas associações de fornecedor já confirmadas dos
     // itens desta NF (mais forte que CNPJ, porque já foi confirmado à mão
     // antes). Se os itens já associados apontarem pra pedidos diferentes,
     // não escolhe nenhum — fica como conflito pra resolução manual.
     const pedidosPorItem = itensXmlDetectados.map(item => {
-        const chave = chaveAssociacaoFornecedor(cnpjEmit, item.cProd);
-        const associacao = bancoAssociacoesFornecedor[chave];
+        const associacao = associacaoEfetivaXml(item) || (item.tratamentoXml ? { codigoSmartCompras: item.tratamentoXml.codigo } : null);
         if (!associacao) return null;
         const cotacaoDoItem = listaCotacoes.find(c => (c.itens || []).some(it => it.codProduto === associacao.codigoSmartCompras));
         return cotacaoDoItem ? { pedido: cotacaoDoItem.pedido, item } : null;
@@ -411,9 +415,19 @@ function aplicarFatorFixoSpData(item, produto) {
     item.conferido = true;
 }
 
+// 2.17.3: tratamento de item cujo produto NÃO é o da cotação. Vive só neste item da NF (nunca no banco de associações do fornecedor):
+//   'aceito'  = o comprador aceitou o produto diferente PARA ESTA cotação: conta como o item pedido (código da cotação), sem divergência
+//               e sem gravar a associação (um 10 ML aceito no lugar do 20 ML não vira "o 20 ML" para as próximas NFs);
+//   'trocado' = veio outro produto no lugar do pedido: não associa a nenhum código; a conferência registra "Solicitamos X, porém foi faturado Y".
+function associacaoEfetivaXml(item) {
+    const t = item && item.tratamentoXml;
+    if (t && t.tipo === 'aceito') return { codigoSmartCompras: t.codigo, ...(t.pedido ? { pedido: t.pedido } : {}), local: true };
+    if (t) return null;
+    return (item && nfeInfoAtual) ? (bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)] || null) : null;
+}
 function statusItemXml(item) {
     const chave = chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd);
-    const associacao = bancoAssociacoesFornecedor[chave];
+    const associacao = associacaoEfetivaXml(item);
     const associacaoSpData = associacao ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === associacao.codigoSmartCompras) : null;
     const produtoSpData = associacaoSpData ? listaProdutosSpData.find(p => p.codigo === associacaoSpData.spDataCodigo) : null;
     aplicarFatorFixoSpData(item, produtoSpData);
@@ -434,6 +448,17 @@ function statusItemXml(item) {
         return { chave, associacao: null, semCotacao: true, chaveDireta, produtoSpData: produtoDireto, conversaoPendente, motivos: motivosDiretos, pronto: motivosDiretos.length === 0 };
     }
 
+    if (item.tratamentoXml && item.tratamentoXml.tipo === 'trocado') {
+        const chaveDireta = chaveDiretaSpData(item);
+        const assocT = listaAssociacoesSpData.find(a => a.codigoSmartCompras === chaveDireta);
+        const produtoT = assocT ? listaProdutosSpData.find(p => p.codigo === assocT.spDataCodigo) : null;
+        aplicarFatorFixoSpData(item, produtoT);
+        conversaoPendente = !!item.suspeito;
+        const motivosT = [];
+        if (!produtoT) motivosT.push('Sem SP Data');
+        if (conversaoPendente) motivosT.push('Conferir conversão');
+        return { chave, associacao: null, trocado: true, associacaoRecurso: { codigoSmartCompras: item.tratamentoXml.codigo, ...(item.tratamentoXml.pedido ? { pedido: item.tratamentoXml.pedido } : {}) }, chaveDireta, produtoSpData: produtoT, conversaoPendente, motivos: motivosT, pronto: motivosT.length === 0 };
+    }
     const motivos = [];
     if (!associacao) motivos.push('Sem associação');
     else if (!produtoSpData) motivos.push('Sem SP Data');
@@ -461,7 +486,7 @@ function calcularResumoPendenciasXml() {
     itensXmlDetectados.forEach(item => {
         const s = statusItemXml(item);
         if (s.pronto) totalmentePronto++;
-        if (s.semCotacao) { if (!s.produtoSpData) semSpDataDireto++; }
+        if (s.semCotacao || s.trocado) { if (!s.produtoSpData) semSpDataDireto++; }
         else if (!s.associacao) semAssociacao++;
         else if (!s.produtoSpData) semSpData++;
         if (s.conversaoPendente) conversaoPendente++;
@@ -519,7 +544,7 @@ function calcularResumoPendenciasXml() {
     const pedidosParaAlerta = new Set(cotacoesSelecionadasXml());
     itensXmlDetectados.forEach(it => {
         if (it.semCotacao) return;
-        const a = bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, it.cProd)];
+        const a = associacaoEfetivaXml(it);
         if (a && a.pedido) pedidosParaAlerta.add(a.pedido);
     });
     [...pedidosParaAlerta].forEach(pedidoAlerta => {
@@ -563,7 +588,7 @@ function calcularResumoPendenciasXml() {
             const codigosDaCotacaoDesteFornecedor = new Set(itensCotacaoDesteFornecedor.map(it => it.codProduto));
             const valorDestaNfFornecedor = itensXmlDetectados.reduce((s, it) => {
                 if (it.semCotacao) return s;
-                const assoc = bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, it.cProd)];
+                const assoc = associacaoEfetivaXml(it);
                 if (!assoc || !codigosDaCotacaoDesteFornecedor.has(assoc.codigoSmartCompras)) return s;
                 if ((assoc.pedido || pedidoSelecionadoXml) !== pedidoAlerta) return s;
                 return s + (it.qComOriginal || 0) * (it.vUnComOriginal || 0);
@@ -828,6 +853,17 @@ function mesmaRaizCnpj(a, b) {
 }
 function normalizarCnpj(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
 // Identidade: só é "o mesmo" se os dois tiverem CNPJ e os dígitos forem idênticos.
+// 2.18.1: CNPJ vem em formatos diferentes (14 dígitos no SP Data/NF; com máscara nas cotações e em parte do ERP). Comparar sempre normalizado.
+// Mapa normalizado -> cadastro do fornecedor, refeito só quando a lista do SP Data é trocada.
+let _mapaCnpjDoc = null, _mapaCnpjDocLista = null;
+function docFornecedorSpDataPorCnpj(cnpj) {
+    const n = normalizarCnpj(cnpj); if (!n) return null;
+    if (_mapaCnpjDocLista !== listaFornecedoresSpData) {
+        _mapaCnpjDocLista = listaFornecedoresSpData; _mapaCnpjDoc = new Map();
+        listaFornecedoresSpData.forEach(f => (f.cnpjs || []).forEach(c => { const k = normalizarCnpj(c.cnpj); if (k && !_mapaCnpjDoc.has(k)) _mapaCnpjDoc.set(k, f); }));
+    }
+    return _mapaCnpjDoc.get(n) || null;
+}
 function mesmoCnpj(a, b) { const x = normalizarCnpj(a); return x !== '' && x === normalizarCnpj(b); }
 function cnpjEmLista(lista, c) { return (lista || []).some(x => mesmoCnpj(x, c)); }
 
@@ -1057,6 +1093,29 @@ function alternarFiltroItensXml(modo) {
     renderAssociacaoCotacaoXml();
 }
 
+function abrirTratamentoXml(chave, tipo) { tratamentoBuscaAbertaXml = tratamentoBuscaAbertaXml[chave] === tipo ? {} : { [chave]: tipo }; renderAssociacaoCotacaoXml(); }
+function definirTratamentoXml(chave, tipo, valor) {
+    const item = itensXmlDetectados.find(i => chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, i.cProd) === chave); if (!item || !valor) return;
+    const sep = String(valor).indexOf('::');
+    const codigo = sep >= 0 ? valor.slice(sep + 2) : valor;
+    let pedido = sep >= 0 ? valor.slice(0, sep) : null;
+    if (!pedido) { const c = cotacoesSelecionadasXml().map(p => listaCotacoes.find(x => x.pedido === p)).find(x => x && (x.itens || []).some(i => i.codProduto === codigo)); pedido = c ? c.pedido : (pedidoSelecionadoXml || null); }
+    item.tratamentoXml = { tipo, codigo, ...(pedido ? { pedido } : {}) };
+    item.semCotacao = false;
+    tratamentoBuscaAbertaXml = {}; associacaoFornecedorBuscaAberta.delete(chave);
+    toast(tipo === 'trocado' ? '✓ Marcado como produto trocado: a conferência vai registrar a ocorrência.' : '✓ Aceito como o item pedido só nesta NF (a associação não é gravada).');
+    renderAssociacaoCotacaoXml();
+}
+function desfazerTratamentoXml(chave) {
+    const item = itensXmlDetectados.find(i => chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, i.cProd) === chave); if (!item) return;
+    delete item.tratamentoXml; tratamentoBuscaAbertaXml = {}; renderAssociacaoCotacaoXml();
+}
+// 2.17.3: associação errada do fornecedor pode ser removida aqui mesmo (antes só dava para trocar por outra)
+function removerAssociacaoFornecedorXml(chave) {
+    if (!bancoAssociacoesFornecedor[chave]) return;
+    showConfirmModal({ title: 'Remover associação', message: 'Remover a associação deste código do fornecedor com o item da cotação? Ela vale para as próximas NFs desse fornecedor; depois o item fica "Não associado".', confirmText: 'Remover', confirmClass: 'warning',
+        onConfirm: async () => { try { await associacoesFornecedorCollection.doc(chave).delete(); delete bancoAssociacoesFornecedor[chave]; toast('✓ Associação removida.'); renderAssociacaoCotacaoXml(); } catch (e) { console.error(e); toast('✕ Erro ao remover a associação.'); } } });
+}
 function alternarJaAssociadosXml() { mostrarJaAssociadosXml = !mostrarJaAssociadosXml; renderAssociacaoCotacaoXml(); }
 function alternarOutrosFornecedoresXml() {
     mostrarOutrosFornecedoresXml = !mostrarOutrosFornecedoresXml;
@@ -1246,7 +1305,13 @@ function renderAssociacaoCotacaoXml() {
                 ${restringeFornecedor ? `<button type="button" class="central-status-toggle" onclick="alternarOutrosFornecedoresXml()">${mostrarOutrosFornecedoresXml ? 'Mostrar só do fornecedor identificado' : 'Mostrar itens de outros fornecedores'}</button>` : ''}
             </div>`;
 
-            if (status.associacao) {
+            const tratX = item.tratamentoXml || null;
+            const itemPedidoX = tratX ? (() => { for (const c of listaCotacoes) { const a = (c.itens || []).find(i => i.codProduto === tratX.codigo && (!tratX.pedido || c.pedido === tratX.pedido)); if (a) return { it: a, c }; } return null; })() : null;
+            const nomePedidoX = tratX ? ((itemPedidoX && (itemPedidoX.it.nomeOficial || itemPedidoX.it.descricao)) || tratX.codigo) : '';
+            if (tratX && tratX.tipo === 'trocado') {
+                // 2.17.3: veio outro produto no lugar do pedido — não associa a nenhum código; o SP Data é do produto que de fato veio
+                cotacaoSpDataHTML = `<strong>Produto trocado.</strong> O pedido era <strong>${escRel(nomePedidoX)}</strong>${itemPedidoX ? ` (pedido ${escRel(itemPedidoX.c.pedido)})` : ''}; a conferência registra "Solicitamos ${escRel(nomePedidoX)}, porém foi faturado ${escRel(item.xProd)}" como ocorrência. Nada é gravado na associação do fornecedor.${renderAssociacaoSpDataWidget({ codProduto: status.chaveDireta, nomeOficial: item.xProd }, 'nf-' + status.chave)}`;
+            } else if (status.associacao) {
                 // Fornecedor da cotação correspondente: SEMPRE derivado do item já
                 // associado (cnpjFornecedor do próprio item na cotação) — nenhuma
                 // associação/coleção nova, só leitura do que já existe. Busca em
@@ -1280,7 +1345,7 @@ function renderAssociacaoCotacaoXml() {
                     'nf-' + status.chave
                 );
 
-                cotacaoSpDataHTML = `Cotação: ${nomeItem}${nomeFornecedorCotacao ? ` (${nomeFornecedorCotacao})` : ''}${pedidoDiferente ? ` <em style="color:var(--text-light);">(pedido ${cotacaoDoItem.pedido}, diferente do selecionado)</em>` : ''}${spDataWidgetHTML}`;
+                cotacaoSpDataHTML = `${tratX && tratX.tipo === 'aceito' ? '<strong>Aceito como o item pedido, só nesta NF</strong> (a associação do fornecedor não é gravada).<br>' : ''}Cotação: ${nomeItem}${nomeFornecedorCotacao ? ` (${nomeFornecedorCotacao})` : ''}${pedidoDiferente ? ` <em style="color:var(--text-light);">(pedido ${cotacaoDoItem.pedido}, diferente do selecionado)</em>` : ''}${spDataWidgetHTML}`;
             } else {
                 // Sugestão automática pelo nome do produto (o mesmo princípio já
                 // usado pra sugerir o SP Data, ver buscarSugestoesSpData): o
@@ -1304,7 +1369,16 @@ function renderAssociacaoCotacaoXml() {
                 }
             }
 
-            acaoHTML = `<button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${status.chave}')">${buscaAberta ? 'Cancelar' : (status.associacao ? 'Corrigir cotação' : 'Associar à cotação')}</button>${buscaAberta ? buscaHTML : ''}`;
+            const abertoTrat = tratamentoBuscaAbertaXml[status.chave] || null;
+            const opcoesPedimos = itensParaOpcoes.map(it => { const cotItem = it._cotacao || cotacaoAtual; const fIt = (cotItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor)); return { valor: multiPedido ? `${it._pedido}::${it.codProduto}` : it.codProduto, titulo: `${multiPedido ? `[Pedido ${it._pedido}] ` : ''}${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'}`, sub: [fIt ? nomeExibicaoFornecedor(fIt.razaoSocial, fIt.cnpj) : '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ') }; });
+            const buscaTratHTML = abertoTrat ? `<div class="central-spdata-busca" onclick="event.stopPropagation()"><div class="xml-item-meta">${abertoTrat === 'trocado' ? 'Qual item da cotação era o pedido (e veio trocado)?' : 'Para qual item da cotação este produto vale (exceção só desta NF)?'}</div>
+                ${htmlSeletorBusca('trat-' + status.chave, { placeholder: 'Buscar item da cotação por código ou nome…', opcoes: opcoesPedimos, aoEscolher: valor => definirTratamentoXml(status.chave, abertoTrat, valor) })}</div>` : '';
+            const botoesTrat = tratX
+                ? `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); desfazerTratamentoXml('${status.chave}')">Desfazer ${tratX.tipo === 'trocado' ? 'produto trocado' : 'exceção'}</button>`
+                : `${(bancoAssociacoesFornecedor[status.chave]) ? `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); removerAssociacaoFornecedorXml('${status.chave}')">Remover associação</button>` : ''}
+                   <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); abrirTratamentoXml('${status.chave}', 'trocado')">${abertoTrat === 'trocado' ? 'Cancelar' : 'Veio produto trocado'}</button>
+                   <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); abrirTratamentoXml('${status.chave}', 'aceito')">${abertoTrat === 'aceito' ? 'Cancelar' : 'Aceito como outro produto'}</button>`;
+            acaoHTML = (tratX ? '' : `<button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${status.chave}')">${buscaAberta ? 'Cancelar' : (status.associacao ? 'Corrigir cotação' : 'Associar à cotação')}</button>${buscaAberta ? buscaHTML : ''}`) + `<div class="xml-item-acao" style="margin-top:4px;">${botoesTrat}</div>${buscaTratHTML}`;
         }
 
         // Item unificado: produto + código do fornecedor + conversão (fator/

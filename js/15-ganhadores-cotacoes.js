@@ -226,7 +226,7 @@ async function confirmarImportacaoXmlSmartCompras() {
             // Data do Pedido + 5 dias (prazo padrão), sempre editável manualmente.
             const dataPedidoDoXml = converterDataBRparaISO(parsed.dataVencimento);
             dadosPrincipal.origem = '';
-            dadosPrincipal.dataPedido = dataPedidoDoXml || new Date().toISOString().slice(0, 10);
+            dadosPrincipal.dataPedido = dataPedidoDoXml || dataLocalISO();
             dadosPrincipal.dataLimite = dataPedidoDoXml ? somarDiasISO(dataPedidoDoXml, 5) : '';
             dadosPrincipal.observacao = '';
             dadosPrincipal.criadoEm = agora;

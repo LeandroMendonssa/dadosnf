@@ -37,7 +37,7 @@ function recursoEsperadoPelaCotacao(cot, codigo) {
 function codigosSmartComprasDestaNf() {
     return [...new Set(itensXmlDetectados
         .filter(item => !item.semCotacao)
-        .map(item => bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(nfeInfoAtual.cnpjEmit, item.cProd)])
+        .map(item => associacaoEfetivaXml(item) || (item.tratamentoXml && item.tratamentoXml.tipo === 'trocado' ? { codigoSmartCompras: item.tratamentoXml.codigo } : null))
         .filter(Boolean)
         .map(a => a.codigoSmartCompras))];
 }
@@ -57,10 +57,11 @@ function recursoPrevistoItemXml(item, status) {
         const proprio = calcularRecursoOficial(destino, 'proprio');
         return { chaveRec, direto: true, cc: calcularRecursoOficial(destino, 'cc'), proprio, valor: rasc || proprio, motivo: rasc ? 'definido manualmente' : 'sem cotação do SmartCompras → Recurso Próprio' };
     }
-    if (!status || !status.associacao) return null;
-    const codigo = status.associacao.codigoSmartCompras;
+    const assocRec = (status && (status.associacao || status.associacaoRecurso)) || null; // 2.17.3: item trocado herda o recurso do item pedido
+    if (!assocRec) return null;
+    const codigo = assocRec.codigoSmartCompras;
     const temItem = c => (c.itens || []).some(i => i.codProduto === codigo);
-    const cotDaAssociacao = status.associacao.pedido ? listaCotacoes.find(c => c.pedido === status.associacao.pedido) : null;
+    const cotDaAssociacao = assocRec.pedido ? listaCotacoes.find(c => c.pedido === assocRec.pedido) : null;
     const cot = (cotDaAssociacao && temItem(cotDaAssociacao)) ? cotDaAssociacao
         : listaCotacoes.find(c => c.pedido === pedidoSelecionadoXml && temItem(c))
         || cotacoesSelecionadasXml().map(p => listaCotacoes.find(c => c.pedido === p)).find(c => c && temItem(c))
@@ -432,7 +433,7 @@ function limparFormularioAuditoria() {
     ['aud-pedido', 'aud-nf', 'aud-obs-geral'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('aud-fornecedor').value = '';
     document.getElementById('aud-destinatario').value = (appConfig.auditoriaTextos && appConfig.auditoriaTextos.destinatario) || '';
-    document.getElementById('aud-data').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('aud-data').value = dataLocalISO();
     cotacaoEncontradaAuditoria = null;
     atualizarInfoCotacaoAuditoria();
     renderDivergenciasAuditoria();
@@ -526,8 +527,12 @@ function atualizarDatalistProdutosAuditoria() {
     const fornMatch = (cotacaoEncontradaAuditoria.fornecedores || []).find(f =>
         upAud(f.razaoSocial) === nomeFornecedorDigitado || upAud(nomeExibicaoFornecedor(f.razaoSocial)) === nomeFornecedorDigitado
     );
+    // 2.17.3: "Produto Pedido"/"Produto" listam TODOS os itens da cotação do pedido (os do fornecedor digitado primeiro, os demais com o nome do
+    // fornecedor no rótulo) — o item pedido pode ser de outro fornecedor, e estar associado a uma NF não o tira da lista.
     const itens = cotacaoEncontradaAuditoria.itens || [];
-    const itensFiltrados = fornMatch ? itens.filter(it => normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(fornMatch.cnpj)) : itens;
+    const doForn = it => fornMatch && normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(fornMatch.cnpj);
+    const itensFiltrados = fornMatch ? itens.filter(doForn).concat(itens.filter(it => !doForn(it))) : itens;
+    const nomeFornDoItem = it => { const f = (cotacaoEncontradaAuditoria.fornecedores || []).find(x => normalizarCnpj(x.cnpj) === normalizarCnpj(it.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : ''; };
 
     const vistos = new Set();
     const opcoes = [];
@@ -537,10 +542,28 @@ function atualizarDatalistProdutosAuditoria() {
         vistos.add(nome);
         const complementar = [
             it.codProduto ? `Cód. ${it.codProduto}` : null,
+            (fornMatch && !doForn(it)) ? nomeFornDoItem(it) : null,
             it.descricao && it.descricao !== nome ? it.descricao : null
         ].filter(Boolean).join(' · ');
         opcoes.push(`<option value="${escRel(nome)}"${complementar ? ` label="${escRel(complementar)}"` : ''}>`);
     });
     datalist.innerHTML = opcoes.join('');
 }
+// 2.17.3: "Produto Faturado" (o que de fato veio) lista o cadastro inteiro do SP Data, sem filtro por cotação nem sugestão — o produto trocado
+// pode nunca ter sido cotado. Montado uma vez (e refeito só se o cadastro mudar de tamanho).
+let _spDataDatalistTam = -1;
+function garantirDatalistSpDataAuditoria() {
+    let dl = document.getElementById('datalist-produtos-spdata');
+    if (!dl) { dl = document.createElement('datalist'); dl.id = 'datalist-produtos-spdata'; document.body.appendChild(dl); _spDataDatalistTam = -1; }
+    if (_spDataDatalistTam === listaProdutosSpData.length) return;
+    _spDataDatalistTam = listaProdutosSpData.length;
+    const vistos = new Set();
+    dl.innerHTML = listaProdutosSpData.filter(p => p.nome).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'))
+        .filter(p => { const k = String(p.nome).toUpperCase(); if (vistos.has(k)) return false; vistos.add(k); return true; })
+        .map(p => `<option value="${escRel(p.nome)}" label="SP Data ${escRel(p.codigo)}${p.unidade ? ' · ' + escRel(p.unidade) : ''}">`).join('');
+}
+// O datalist só mostra o que combina com o texto já escrito: com o campo preenchido (ex.: "…M" vindo da conferência) a lista parece vazia.
+// Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
+function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
+function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
 

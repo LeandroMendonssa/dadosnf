@@ -351,7 +351,7 @@ function toggleConfigTextos() {
 function montarCamposModelosAuditoria() {
     const el = document.getElementById('cfg-modelos'); if (!el || el.dataset.pronto) return;
     el.dataset.pronto = '1';
-    const corpo = document.getElementById('config-textos-body'); if (corpo) corpo.addEventListener('focusout', () => salvarCamposConfigTextos()); // salva ao sair de cada campo
+    const corpo = document.getElementById('config-textos-body'); if (corpo) corpo.onfocusout = () => salvarCamposConfigTextos(); // salva ao sair de cada campo
     el.innerHTML = Object.entries(TIPOS_DIVERGENCIA_AUDITORIA).map(([tipo, def]) => {
         const campos = def.campos.map(c => '{' + c.key + '}').join(' ');
         const extra = tipo === 'avariado' ? ' {data} {fornecedor} {pedido} {nf}' : '';
@@ -608,7 +608,7 @@ async function salvarAuditoriaComoAnotacao() {
         // depois não tinha o que "reabrir": faltava o fato original.
         const statusEHistorico = {
             status: 'pendente',
-            historico: [{ tipo: 'identificacao', data: dataAud || new Date().toISOString().slice(0, 10), observacao: '' }]
+            historico: [{ tipo: 'identificacao', data: dataAud || dataLocalISO(), observacao: '' }]
         };
         if (def && def.multiMaterial) {
             return { tipo: d.tipo, materiais: (d.materiais || []).map(m => ({ ...m.campos, ...(m.ref ? { codProduto: m.ref } : {}) })), observacao: d.observacao || '', ...statusEHistorico };

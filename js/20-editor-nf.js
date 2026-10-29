@@ -309,7 +309,8 @@ function renderEditorNf() {
     cotacoes.forEach(c => {
         const itens = compararFontesPedido(c.pedido, { nfIds: [nf.id] }).filter(i => i.temNf && i.divergencias.some(d => d.tipo !== 'nao_faturado'));
         itens.forEach(i => {
-            divergHTML += `<div class="xml-item-linha pendente"><div class="xml-produto-nome">${escRel(i.nome)}</div><div class="xml-item-cotacao">${i.divergencias.filter(d => d.tipo !== 'nao_faturado').map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div></div>`;
+            // 2.18.1: mesma regra de estado das demais telas (detectada = amarelo; relatada = cinza; resolvida = verde), em vez de tudo "pendente"
+            divergHTML += `<div class="xml-item-linha ${i.estado === 'detectada' ? 'pendente' : ''}"><div class="xml-item-topo"><div class="xml-produto-nome">${escRel(i.nome)}</div>${seloEstadoOcorrencia(i.estado, i.divergencias.length)}</div><div class="xml-item-cotacao">${i.divergencias.filter(d => d.tipo !== 'nao_faturado').map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div></div>`;
         });
     });
     const divergencias = `<div class="card"><div class="xml-item-meta"><strong>Divergências desta NF</strong></div>${divergHTML || '<div class="xml-item-meta">✓ Nenhuma divergência (cotação × NF × ERP) nos itens desta NF.</div>'}</div>`;
