@@ -1816,3 +1816,21 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .cdv-ponto.fim{background:var(--border-color)}
 .cdv-rodape{display:flex;justify-content:flex-end}
 .cdv-rodape .central-status-toggle{margin-left:0;font-size:var(--fs-min);padding:4px 8px}
+
+/* 2.19.0 — ações/sugestões de associação na Entrada de NF: botões em linha que quebram com espaço entre si (antes ficavam colados) */
+.xml-item-acao{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.xml-item-acao > .central-status-toggle, .xml-item-acao > .actions-button{margin:0;max-width:100%;height:auto;min-height:36px;padding:6px var(--space-3);text-align:left;white-space:normal;line-height:1.25}
+
+/* 2.19.0 — Auditoria (lista única) e resumo da NF */
+.aud-card{display:flex;flex-direction:column;gap:var(--space-2)}
+.aud-txt{font-size:var(--fs-aux);line-height:1.45;color:var(--text-dark)}
+.aud-detalhe{display:flex;flex-direction:column;gap:var(--space-2);border-top:1px solid var(--border-color);padding-top:var(--space-2)}
+.aud-sug{background:var(--info-bg);color:var(--text-dark);border-radius:var(--r-sm);padding:var(--space-2) var(--space-3);font-size:var(--fs-aux);line-height:1.4}
+.aud-sug.ok{background:var(--success-bg)}
+.aud-fator{max-width:160px;min-height:36px}
+.aud-lote{margin:0 0 var(--space-3)}
+.nf-total-card{display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux)}
+.nf-total-card .lin{display:flex;justify-content:space-between;gap:var(--space-3)}
+.nf-total-card .lin.dif{border-top:1px solid var(--border-color);padding-top:var(--space-1);font-weight:700}
+.nf-total-card .ok{color:var(--success-text)}
+.nf-total-card .aten{color:var(--warning-text)}
