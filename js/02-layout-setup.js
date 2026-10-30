@@ -243,6 +243,7 @@ function renderTelaMais() {
     let nAtencao = 0; try { nAtencao = totalAtencao(); } catch (e) { }
     const ferramentas = linha("switchToScreen('screen-import', 'Importar Relatório (ERP)')", '<i class="fa-solid fa-file-import"></i>', 'Importar Relatório (ERP)')
         + linha("switchToScreen('screen-atencao', 'Central de notificações'); prepararAtencao()", '<i class="fa-solid fa-bell"></i>', 'Central de notificações' + (nAtencao ? ` <span class="ctl-st err" style="margin-left:6px">${nAtencao}</span>` : ''))
+        + linha("switchToScreen('screen-auditoria-central', 'Auditoria'); prepararCentralAuditoria()", '<i class="fa-solid fa-list-check"></i>', 'Auditoria')
         + linha("switchToScreen('screen-auditoria-retro', 'Auditoria Retroativa'); prepararAuditoriaRetroativa()", '<i class="fa-solid fa-clipboard-check"></i>', 'Auditoria Retroativa')
         + linha("switchToScreen('screen-assistente', 'Assistente'); prepararAssistente()", '<i class="fa-solid fa-comments"></i>', 'Assistente');
     const itens = menuEscondidos();
@@ -284,7 +285,7 @@ function reordenarMenusDOM(order) {
         li.appendChild(a); sidebarNav.appendChild(li);
     }
     // 2.12.2: na tela larga, Central de notificações e Auditoria Retroativa também ficam no menu lateral (antes de Ajustes), como no "Mais"
-    [['screen-atencao', 'Central de notificações', 'fa-bell', 'notifications', "prepararAtencao()"], ['screen-auditoria-retro', 'Auditoria Retroativa', 'fa-clipboard-check', 'fact_check', "prepararAuditoriaRetroativa()"], ['screen-assistente', 'Assistente', 'fa-comments', 'forum', "prepararAssistente()"]].forEach(([id, titulo, fa, mat, prep]) => {
+    [['screen-atencao', 'Central de notificações', 'fa-bell', 'notifications', "prepararAtencao()"], ['screen-auditoria-central', 'Auditoria', 'fa-list-check', 'checklist', "prepararCentralAuditoria()"], ['screen-auditoria-retro', 'Auditoria Retroativa', 'fa-clipboard-check', 'fact_check', "prepararAuditoriaRetroativa()"], ['screen-assistente', 'Assistente', 'fa-comments', 'forum', "prepararAssistente()"]].forEach(([id, titulo, fa, mat, prep]) => {
         const li = document.createElement('li'), a = document.createElement('a');
         a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.destino = id; a.dataset.title = titulo;
         a.innerHTML = `<span class="icon-wrapper"><i class="fa-solid ${fa}"></i><span class="material-icons">${mat}</span></span><span>${titulo}</span>`;

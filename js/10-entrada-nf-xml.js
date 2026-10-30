@@ -329,7 +329,9 @@ function renderIdentificacaoXml(info) {
         info.cnpjEmit ? `<div class="xml-nf-linha txt-aux">CNPJ ${info.cnpjEmit}</div>` : ''
     ].filter(Boolean).join('');
 
-    container.innerHTML = linhas || '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>';
+    // 2.19.0: fornecedor, NF, valor e itens já aparecem no resumo fixo do topo — este card fica só para as informações adicionais (sem repetir).
+    container.style.display = 'none';
+    if (!info.nNF && !info.fornecedor) { container.style.display = 'block'; container.innerHTML = '<div class="central-item-vazio">Não foi possível identificar os dados da NF neste XML.</div>'; }
     // Fase 39: resumo sempre visível no topo (qualquer aba) + aviso de "NF já processada" + Trocar XML.
     const resumoTopo = document.getElementById('xml-resumo-nf');
     if (resumoTopo) {
@@ -350,7 +352,7 @@ function renderIdentificacaoXml(info) {
         infoAdicEl.querySelector('.xml-infadic-texto').textContent = info.infCpl;
     }
 
-    card.style.display = 'block';
+    card.style.display = (info.infCpl || container.style.display !== 'none') ? 'block' : 'none'; // 2.19.0: sem informação adicional, o card nem aparece
 }
 
 // Formata uma quantidade pra exibição: remove zeros desnecessários à direita

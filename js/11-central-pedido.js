@@ -553,12 +553,17 @@ function resolucaoItemComparacao(cotacao, codProduto, auditorias, chegou) {
 //   relatada  = existe auditoria aberta (já está com o responsável: peso de "resolvido", não pede ação sua);
 //   resolvida = a auditoria foi tratada, ou foi marcada como resolvida;
 //   nenhuma   = sem divergência. Todas as telas leem este estado; nenhuma soma por conta própria.
-function estadoOcorrenciaItem(divergencias, resolvido, auditorias) {
-    const temAud = (auditorias || []).length > 0;
-    if (resolvido && ((divergencias || []).length || temAud)) return 'resolvida';
-    if (temAud) return 'relatada';
-    if ((divergencias || []).length) return 'detectada';
-    return 'nenhuma';
+// 2.19.0: gerar/salvar a auditoria NÃO é relatar. Auditoria nova nasce com relatado:false e só vira "relatada" quando você marca
+// (relatadoManual = marca em cotacao.relatadosPorItem). Auditoria antiga (sem o campo) segue valendo como relatada, sem reescrever nada.
+// Diferença só de unidade já aplicada (fator) = resolvida.
+function estadoOcorrenciaItem(divergencias, resolvido, auditorias, relatadoManual) {
+    const divs = divergencias || [];
+    const auds = auditorias || [];
+    if (divs.length && divs.every(d => d.aplicado)) return 'resolvida';
+    if (resolvido && (divs.length || auds.length)) return 'resolvida';
+    if (!divs.length) return auds.length ? 'relatada' : 'nenhuma'; // auditoria aberta sem evidência calculada: segue como antes
+    const temRelato = !!relatadoManual || auds.some(x => x.d.relatado !== false);
+    return temRelato ? 'relatada' : 'detectada';
 }
 const ROTULO_ESTADO_OCORRENCIA = { detectada: 'Divergência', relatada: 'Pendência relatada', resolvida: 'Resolvido', nenhuma: '' };
 // Selo (HTML) do estado: amarelo = em aberto (sua), cinza = relatada, verde = resolvida.
@@ -630,6 +635,13 @@ function compararFontesPedido(pedido, opcoes) {
         const assocSdItem = (!codigoSpDataNf && itemCotacao.codProduto) ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === itemCotacao.codProduto) : null;
         const codigoSpData = codigoSpDataNf || (assocSdItem ? assocSdItem.spDataCodigo : null);
         const nfsQueFaturaram = [...new Set(itensNfTodos.map(it => it.nfNumero))];
+        // 2.19.0: fatores de unidade confirmados por você neste item (cotacao.fatorUnidadePorItem[cod] = {cotNf, nfErp}).
+        //   cotNf: 1 un. da NF = cotNf un. da cotação (ex.: pacote c/50 → 50) · nfErp: 1 un. do ERP = nfErp un. da NF (ex.: ERP em unidade, NF em frasco → 0,001).
+        const fatoresUn = (cotacao.fatorUnidadePorItem || {})[itemCotacao.codProduto] || {};
+        const fCot = Number(fatoresUn.cotNf) > 0 ? Number(fatoresUn.cotNf) : 1;
+        const fErp = Number(fatoresUn.nfErp) > 0 ? Number(fatoresUn.nfErp) : 1;
+        const marcaRelatado = (cotacao.relatadosPorItem || {})[itemCotacao.codProduto] || null;
+        const marcaDescartado = (cotacao.descartadosPorItem || {})[itemCotacao.codProduto] || null;
 
         const entradasErpDoItem = codigoSpDataNf ? entradasErpDoPedido : entradasErpDoPedido.filter(e => cnpjEmLista(entidadeDe(itemCotacao.cnpjFornecedor), e.vinculo.cnpjFornecedor || e.cnpjFornecedor));
         // 2.0.5: com NF do app no item, o ERP só conta se for da MESMA NF (mesmo número) — antes somava as entradas de TODAS as NFs
@@ -646,6 +658,7 @@ function compararFontesPedido(pedido, opcoes) {
             : entradasErpDoItem;
         const itensErp = codigoSpData ? entradasErpComparaveis.flatMap(e => (e.itens || []).filter(it => it.codigoSpData === codigoSpData)) : [];
         const quantidadeLancada = itensErp.length ? itensErp.reduce((s, it) => s + it.quantidade, 0) : null;
+        const quantidadeLancadaEq = quantidadeLancada === null ? null : quantidadeLancada * fErp; // na unidade da NF
 
         const divergencias = [];
         // Fase 31: quanto da entrega deste item já está comprovado — 'nf_completa' (NF/XML do app
@@ -692,19 +705,20 @@ function compararFontesPedido(pedido, opcoes) {
             // recebido/dispensado em outra): quantidade e valor unitário não são
             // comparáveis, então essas duas divergências não são geradas.
             const ignoraUnidade = !!(codigoSpData && (listaProdutosSpData.find(pr => pr.codigo === codigoSpData) || {}).ignorarDivergenciaUnidade);
-            const bateDireto = ignoraUnidade || Number(itemCotacao.quantidade) === quantidadeFaturada;
-            const bateConvertido = Math.abs(Number(itemCotacao.quantidade) - quantidadeFaturadaConvertida) < 0.01;
+            const qNf = quantidadeFaturada * fCot, qNfConv = quantidadeFaturadaConvertida * fCot; // 2.19.0: NF já na unidade da cotação (fator confirmado)
+            const bateDireto = ignoraUnidade || Number(itemCotacao.quantidade) === qNf;
+            const bateConvertido = Math.abs(Number(itemCotacao.quantidade) - qNfConv) < 0.01;
             const qtdCotadaNum = Number(itemCotacao.quantidade);
-            cobertura = (bateDireto || bateConvertido || !Number.isFinite(qtdCotadaNum) || quantidadeFaturada > qtdCotadaNum || quantidadeFaturadaConvertida > qtdCotadaNum) ? 'nf_completa' : 'nf_parcial';
+            cobertura = (bateDireto || bateConvertido || !Number.isFinite(qtdCotadaNum) || qNf > qtdCotadaNum || qNfConv > qtdCotadaNum) ? 'nf_completa' : 'nf_parcial';
             // Soma de TODAS as NFs do pedido pra este produto, já na unidade da cotação.
             // 2.16.2: a quantidade da NF salva JÁ está na unidade da cotação (convertida na Entrada de NF; o fator só registra a razão usada).
             // Só quando a conta pelo fator é a que fecha com o cotado (unidade diferente) vale ela; senão é a quantidade da NF mesmo (antes
             // dividia pelo fator e mostrava, por exemplo, 3/300 para 150 un. faturadas com fator 50).
-            quantidadeEntregue = ignoraUnidade ? null : Math.round(((bateConvertido && !bateDireto) ? quantidadeFaturadaConvertida : quantidadeFaturada) * 100) / 100;
+            quantidadeEntregue = ignoraUnidade ? null : Math.round(((bateConvertido && !bateDireto) ? qNfConv : qNf) * 100) / 100;
             if (!bateDireto && !bateConvertido) {
                 divergencias.push({ tipo: 'quantidade_cotada_nf', nome, quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada, nfs: nfsQueFaturaram });
             }
-            if (quantidadeLancada !== null && quantidadeLancada !== quantidadeFaturada) {
+            if (quantidadeLancada !== null && Math.abs(quantidadeLancadaEq - quantidadeFaturada) > 0.001) {
                 divergencias.push({ tipo: 'quantidade_nf_erp', nome, quantidadeFaturada, quantidadeLancada, nfs: nfsQueFaturaram });
             }
             // Fase 42: valor NF × ERP. Os dois lados estão na unidade de DISPENSAÇÃO (NF = quantidade × fator, valor ÷ fator),
@@ -717,9 +731,9 @@ function compararFontesPedido(pedido, opcoes) {
                 const totaisNf = itensNf.map(linhaNf), totaisErp = itensErp.map(linhaErp);
                 if (totaisNf.every(v => v !== null) && totaisErp.every(v => v !== null) && quantidadeFaturada > 0 && quantidadeLancada > 0) {
                     const valorTotalNf = totaisNf.reduce((a, b) => a + b, 0), valorTotalErp = totaisErp.reduce((a, b) => a + b, 0);
-                    const unitarioNf = valorTotalNf / quantidadeFaturada, unitarioErp = valorTotalErp / quantidadeLancada;
+                    const unitarioNf = valorTotalNf / quantidadeFaturada, unitarioErp = valorTotalErp / quantidadeLancadaEq;
                     const difUnitario = Math.abs(unitarioNf - unitarioErp) > 0.005;
-                    const mesmaQtd = Math.abs(quantidadeFaturada - quantidadeLancada) < 0.001;
+                    const mesmaQtd = Math.abs(quantidadeFaturada - quantidadeLancadaEq) < 0.001;
                     const difTotal = mesmaQtd && Math.abs(valorTotalNf - valorTotalErp) > Math.max(0.02, valorTotalNf * 0.0005);
                     if (difUnitario || difTotal) {
                         divergencias.push({ tipo: 'valor_nf_erp', nome, valorUnitarioNf: unitarioNf, valorUnitarioErp: unitarioErp, valorTotalNf, valorTotalErp, difUnitario, difTotal, nfs: nfsQueFaturaram });
@@ -729,12 +743,37 @@ function compararFontesPedido(pedido, opcoes) {
             if (!ignoraUnidade && valorUnitarioFaturado !== null && itemCotacao.precoUnitario) {
                 const cotado = parseFloat(itemCotacao.precoUnitario);
                 const fatorUltimoItem = itensNf[itensNf.length - 1].fatorAplicado || 1;
-                const bateDiretoValor = Math.abs(cotado - valorUnitarioFaturado) <= 0.005;
-                const bateConvertidoValor = Math.abs(cotado - valorUnitarioFaturado * fatorUltimoItem) <= 0.005;
+                const vNf = valorUnitarioFaturado / fCot; // 2.19.0: na unidade da cotação
+                const bateDiretoValor = Math.abs(cotado - vNf) <= 0.005;
+                const bateConvertidoValor = Math.abs(cotado - vNf * fatorUltimoItem) <= 0.005;
                 if (!bateDiretoValor && !bateConvertidoValor) {
                     divergencias.push({ tipo: 'valor_cotado_nf', nome, valorCotado: cotado, valorFaturado: valorUnitarioFaturado, nfs: nfsQueFaturaram });
                 }
             }
+            // 2.19.0: quantidade E valor mudaram em proporção inversa e o TOTAL fecha = não é divergência, é só a unidade/embalagem (ex.: cotado por unidade, faturado por pacote c/50).
+            // Vira UMA ocorrência "unidade diferente", sugerida (você aplica o fator ou descarta); com o fator já aplicado fica só o registro, resolvido.
+            const razaoLimpa = r => { if (!(r > 0) || !Number.isFinite(r) || Math.abs(r - 1) < 1e-9) return null; const k = r >= 1 ? r : 1 / r; const kk = Math.round(k); if (kk < 2 || Math.abs(k - kk) > 0.01 * k) return null; return r >= 1 ? kk : 1 / kk; };
+            const totalNfItens = itensNf.reduce((a, it) => a + (Number(it.quantidade) || 0) * (Number(it.valorUnitario) || 0), 0);
+            const idxQ = divergencias.findIndex(d => d.tipo === 'quantidade_cotada_nf'), idxV = divergencias.findIndex(d => d.tipo === 'valor_cotado_nf');
+            if (idxQ >= 0 && idxV >= 0) {
+                const qCot = Number(itemCotacao.quantidade), pCot = parseFloat(itemCotacao.precoUnitario);
+                const totalCot = qCot * pCot, fSug = razaoLimpa(qCot / quantidadeFaturada);
+                if (fSug && Number.isFinite(totalCot) && Math.abs(totalCot - totalNfItens) <= Math.max(0.5, totalCot * 0.005)) {
+                    divergencias.splice(Math.max(idxQ, idxV), 1); divergencias.splice(Math.min(idxQ, idxV), 1);
+                    divergencias.push({ tipo: 'unidade_diferente', par: 'cotacao_nf', nome, fator: fSug, quantidadeCotada: qCot, quantidadeFaturada, valorCotado: pCot, valorFaturado: valorUnitarioFaturado, totalCotado: totalCot, totalNf: totalNfItens, nfs: nfsQueFaturaram });
+                }
+            }
+            const idxQe = divergencias.findIndex(d => d.tipo === 'quantidade_nf_erp'), idxVe = divergencias.findIndex(d => d.tipo === 'valor_nf_erp');
+            if (idxQe >= 0 && idxVe >= 0) {
+                const dv = divergencias[idxVe], fSugE = razaoLimpa(quantidadeFaturada / quantidadeLancada);
+                if (fSugE && Math.abs(dv.valorTotalNf - dv.valorTotalErp) <= Math.max(0.5, dv.valorTotalNf * 0.005)) {
+                    divergencias.splice(Math.max(idxQe, idxVe), 1); divergencias.splice(Math.min(idxQe, idxVe), 1);
+                    divergencias.push({ tipo: 'unidade_diferente', par: 'nf_erp', nome, fator: fSugE, quantidadeFaturada, quantidadeLancada, valorUnitarioNf: dv.valorUnitarioNf, valorUnitarioErp: dv.valorUnitarioErp, totalNf: dv.valorTotalNf, totalErp: dv.valorTotalErp, nfs: nfsQueFaturaram });
+                }
+            }
+            // fator já aplicado: fica o registro (resolvido), com o que foi usado
+            if (fCot !== 1) divergencias.push({ tipo: 'unidade_diferente', par: 'cotacao_nf', aplicado: true, nome, fator: fCot, quantidadeCotada: Number(itemCotacao.quantidade), quantidadeFaturada, totalNf: totalNfItens, nfs: nfsQueFaturaram });
+            if (fErp !== 1 && itensErp.length) divergencias.push({ tipo: 'unidade_diferente', par: 'nf_erp', aplicado: true, nome, fator: fErp, quantidadeFaturada, quantidadeLancada, nfs: nfsQueFaturaram });
         }
 
         const nomeItemAud = nome;
@@ -752,7 +791,12 @@ function compararFontesPedido(pedido, opcoes) {
             cobertura,
             divergencias,
             ...resolucao,
-            estado: estadoOcorrenciaItem(divergencias, resolucao.resolvido, resolucao.auditorias)
+            // 2.19.0: descartada (falso positivo excluído por você) some das listas: fica sem divergências e guarda o que foi descartado.
+            descartado: marcaDescartado, divergenciasDescartadas: marcaDescartado ? divergencias : [],
+            relatadoManual: marcaRelatado,
+            fatorCotNfEfetivo: fCot !== 1 ? fCot : ((divergencias.find(d => d.tipo === 'unidade_diferente' && d.par === 'cotacao_nf') || {}).fator || 1),
+            ...(marcaDescartado ? { divergencias: [] } : {}),
+            estado: estadoOcorrenciaItem(marcaDescartado ? [] : divergencias, resolucao.resolvido, resolucao.auditorias, marcaRelatado)
         };
     });
 }
@@ -932,6 +976,12 @@ function textoDivergenciaNatural(div) {
             if (div.difUnitario) partes.push(`valor unitário R$ ${fmt(div.valorUnitarioNf)} na NF × R$ ${fmt(div.valorUnitarioErp)} no ERP`);
             if (div.difTotal) partes.push(`valor total R$ ${fmt(div.valorTotalNf)} na NF × R$ ${fmt(div.valorTotalErp)} no ERP`);
             return `${div.nome}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}: ${partes.join('; ')}.`;
+        }
+        case 'unidade_diferente': {
+            const fmt = v => (Math.round(v * 10000) / 10000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+            const fator = div.fator >= 1 ? String(div.fator) : '1/' + Math.round(1 / div.fator);
+            if (div.par === 'nf_erp') return `${div.nome}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}: a NF traz ${div.quantidadeFaturada} e o ERP ${div.quantidadeLancada}, mas o total é o mesmo${div.totalNf ? ` (R$ ${fmt(div.totalNf)})` : ''} — só a unidade é diferente (fator ${fator})${div.aplicado ? '. Fator aplicado.' : '.'}`;
+            return `${div.nome}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}: cotado ${div.quantidadeCotada} un.${div.valorCotado ? ` a R$ ${fmt(div.valorCotado)}` : ''} e faturado ${div.quantidadeFaturada}${div.valorFaturado ? ` a R$ ${fmt(div.valorFaturado)}` : ''}, mas o total é o mesmo${div.totalNf ? ` (R$ ${fmt(div.totalNf)})` : ''} — só a unidade/embalagem é diferente (fator ${fator})${div.aplicado ? '. Fator aplicado.' : '.'}`;
         }
         case 'produto_trocado':
             return `Solicitamos ${div.nome}${div.quantidadeCotada ? ', ' + div.quantidadeCotada + ' UNID' : ''}, porém foi faturado ${div.produtoFaturado || 'outro produto'}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
@@ -1217,6 +1267,69 @@ async function alterarResolvidoItemComparacao(pedido, codProduto, resolver) {
         if (centralPedidoAtual === pedido) renderCentralPedidoCompleto(pedido);
     } catch (e) {
         console.error('Erro ao alterar resolvido do item:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+    }
+}
+// ===================================================================
+// --- 2.19.0: AÇÕES DA OCORRÊNCIA (uma por item) ---
+// ===================================================================
+// Todas gravam no próprio documento da cotação (mapas por código do item + merge, como resolvidosPorItem; sobrevivem à reimportação):
+//   relatadosPorItem[cod]     = {data}   → marcou como relatada (só você decide; salvar NF/auditoria não relata)
+//   descartadosPorItem[cod]   = {data}   → excluída (falso positivo): some das listas e dá pra restaurar
+//   fatorUnidadePorItem[cod]  = {cotNf?, nfErp?} → fator de unidade confirmado
+async function gravarMarcaItemCotacao(pedido, campo, codProduto, valor) {
+    const cot = listaCotacoes.find(c => c.pedido === pedido);
+    if (!cot || !codProduto) return false;
+    try {
+        const v = valor === null ? firebase.firestore.FieldValue.delete() : valor;
+        await cotacoesCollection.doc(pedido).set({ [campo]: { [codProduto]: v } }, { merge: true });
+        const mapa = { ...(cot[campo] || {}) };
+        if (valor === null) delete mapa[codProduto]; else mapa[codProduto] = valor;
+        cot[campo] = mapa;
+        return true;
+    } catch (e) {
+        console.error('Erro ao gravar marca da ocorrência:', e);
+        toast('✕ Erro ao salvar. Tente novamente.');
+        return false;
+    }
+}
+function refrescarTelasOcorrencias() {
+    try {
+        if (typeof centralPedidoAtual !== 'undefined' && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
+        if (typeof renderResultadoSalvarNF === 'function') renderResultadoSalvarNF();
+        if (typeof renderCentralAuditoria === 'function') renderCentralAuditoria();
+        if (typeof renderAtencao === 'function') renderAtencao();
+    } catch (e) { console.error('Erro ao atualizar telas de ocorrências:', e); }
+}
+async function relatarOcorrenciaItem(pedido, codProduto) {
+    if (await gravarMarcaItemCotacao(pedido, 'relatadosPorItem', codProduto, { data: dataLocalISO() })) { toast('✓ Marcada como relatada.'); refrescarTelasOcorrencias(); }
+}
+async function desfazerRelatoOcorrenciaItem(pedido, codProduto) {
+    if (await gravarMarcaItemCotacao(pedido, 'relatadosPorItem', codProduto, null)) { toast('✓ Voltou para "em aberto".'); refrescarTelasOcorrencias(); }
+}
+async function descartarOcorrenciaItem(pedido, codProduto) {
+    if (await gravarMarcaItemCotacao(pedido, 'descartadosPorItem', codProduto, { data: dataLocalISO() })) { toast('✓ Ocorrência excluída. Dá pra restaurar em "Excluídas".'); refrescarTelasOcorrencias(); }
+}
+async function restaurarOcorrenciaItem(pedido, codProduto) {
+    if (await gravarMarcaItemCotacao(pedido, 'descartadosPorItem', codProduto, null)) { toast('✓ Ocorrência restaurada.'); refrescarTelasOcorrencias(); }
+}
+// par: 'cotacao_nf' (1 un. da NF = fator un. da cotação) ou 'nf_erp' (1 un. do ERP = fator un. da NF). fator null = desfazer.
+async function alterarFatorUnidadeItem(pedido, codProduto, par, fator) {
+    const cot = listaCotacoes.find(c => c.pedido === pedido);
+    if (!cot || !codProduto || (par !== 'cotacao_nf' && par !== 'nf_erp')) return;
+    const chave = par === 'nf_erp' ? 'nfErp' : 'cotNf';
+    try {
+        const v = fator === null ? firebase.firestore.FieldValue.delete() : Math.round(fator * 1e6) / 1e6;
+        await cotacoesCollection.doc(pedido).set({ fatorUnidadePorItem: { [codProduto]: { [chave]: v } } }, { merge: true });
+        const mapa = { ...(cot.fatorUnidadePorItem || {}) };
+        const reg = { ...(mapa[codProduto] || {}) };
+        if (fator === null) delete reg[chave]; else reg[chave] = v;
+        if (Object.keys(reg).length) mapa[codProduto] = reg; else delete mapa[codProduto];
+        cot.fatorUnidadePorItem = mapa;
+        toast(fator === null ? '✓ Fator desfeito.' : '✓ Fator de unidade aplicado — a ocorrência foi resolvida.');
+        refrescarTelasOcorrencias();
+    } catch (e) {
+        console.error('Erro ao gravar fator de unidade:', e);
         toast('✕ Erro ao salvar. Tente novamente.');
     }
 }
@@ -1544,6 +1657,44 @@ function nfExtraDaTela(pedido) {
     return montada ? { id: montada.chave, ...montada.doc } : null;
 }
 
+// 2.19.0: total da NF × cotação, só dos itens que vieram (a NF pode trazer parte dos itens cotados). Compara em dinheiro, já com a unidade
+// convertida (fator de embalagem/unidade), então a diferença é de PREÇO — a de quantidade aparece como ocorrência própria.
+function totalNfContraCotacao(pedido, nfDoc) {
+    const cot = listaCotacoes.find(c => c.pedido === pedido);
+    if (!cot || !nfDoc) return null;
+    const cnpjNf = normalizarCnpj(nfDoc.cnpjFornecedor);
+    let totalNf = 0, totalCot = 0, n = 0;
+    (nfDoc.itens || []).forEach(it => {
+        if (it.tratamento === 'trocado' || (it.pedidoItem && it.pedidoItem !== pedido)) return;
+        const ic = (cot.itens || []).find(x => x.codProduto === it.codigoSmartCompras && (!cnpjNf || normalizarCnpj(x.cnpjFornecedor) === cnpjNf));
+        const pu = ic ? parseFloat(ic.precoUnitario) : NaN;
+        const q = Number(it.quantidade), v = Number(it.valorUnitario);
+        if (!ic || !Number.isFinite(pu) || !Number.isFinite(q) || !Number.isFinite(v)) return;
+        const fat = it.fatorAplicado || 1;
+        const fCot = Number(((cot.fatorUnidadePorItem || {})[ic.codProduto] || {}).cotNf) > 0 ? Number(cot.fatorUnidadePorItem[ic.codProduto].cotNf) : 1;
+        const linhaNf = q * v;
+        // a quantidade da NF pode estar na unidade da cotação ou na de dispensação: vale a leitura que mais se aproxima do valor da NF
+        const c1 = pu * q * fCot, c2 = pu * (q / fat) * fCot;
+        totalNf += linhaNf; totalCot += Math.abs(c1 - linhaNf) <= Math.abs(c2 - linhaNf) ? c1 : c2; n++;
+    });
+    if (!n) return null;
+    const dif = totalNf - totalCot;
+    return { itens: n, totalNf, totalCot, dif, pct: totalCot ? dif / totalCot : 0 };
+}
+function htmlTotalNfContraCotacao(pedidos, nfDoc) {
+    const rs = pedidos.map(p => ({ p, r: totalNfContraCotacao(p, nfDoc) })).filter(x => x.r);
+    if (!rs.length) return '';
+    const fmt = v => 'R$ ' + formatarValorMonetarioBR(Math.abs(v));
+    return rs.map(({ p, r }) => {
+        const ok = Math.abs(r.dif) <= 0.5;
+        const sinal = r.dif > 0.004 ? '+ ' : r.dif < -0.004 ? '− ' : '';
+        return `<div class="card nf-total-card"><div class="xml-eyebrow">Total da NF × cotação${rs.length > 1 ? ' · pedido ' + escRel(p) : ''}</div>
+            <div class="lin"><span>Total da NF (${r.itens} ${r.itens === 1 ? 'item' : 'itens'})</span><b>${fmt(r.totalNf)}</b></div>
+            <div class="lin"><span>Cotado, só desses itens</span><b>${fmt(r.totalCot)}</b></div>
+            <div class="lin dif"><span>Diferença</span><span class="${ok ? 'ok' : 'aten'}">${sinal}${fmt(r.dif)} (${(Math.abs(r.pct) * 100).toFixed(2).replace('.', ',')}%)</span></div></div>`;
+    }).join('');
+}
+
 function renderResultadoSalvarNF() {
     const el = document.getElementById('xml-resultado-salvar');
     if (!el) return;
@@ -1581,14 +1732,23 @@ function renderResultadoSalvarNF() {
     const aguardandoHTML = aguardando > 0
         ? `<div class="xml-item-meta">${aguardando} item(ns) aguardando a confirmação do fator de conversão — só entram na conferência depois de confirmados.</div>` : '';
 
-    // 2.16.0: "Gerar auditoria" só para a divergência ainda sem relato; relatada/resolvida mostram o estado (sem duplicar o registro).
-    const itensComDivergencia = comparacao.filter(item => item.divergencias.length > 0).map(item => `<div class="xml-item-linha ${item.estado === 'detectada' ? 'pendente' : ''}">
-        <div class="xml-item-topo"><div class="xml-produto-nome">${item.nome}${multiPedidoAtivo() ? ` <span class="xml-item-meta">(Pedido ${escRel(item._pedido)})</span>` : ''}</div>${item.estado === 'detectada' ? '' : seloEstadoOcorrencia(item.estado, item.divergencias.length)}</div>
-        <div class="xml-item-cotacao">${item.divergencias.map(d => '• ' + textoDivergenciaNatural(d)).join('<br>')}</div>
-        ${item.estado === 'detectada' ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${escRel(item._pedido)}', '${item.codProduto}')">Gerar auditoria</button>${item.divergencias.some(d => d.tipo === 'quantidade_cotada_nf' || d.tipo === 'valor_cotado_nf') ? ` <button type="button" class="central-status-toggle" onclick="marcarFalsoPositivoUnidade('${escRel(item.codigoSpData || '')}')">Falso positivo (unidade)</button>` : ''}</div>` : ''}
-    </div>`).join('');
+    // 2.19.0: resumo curto. Cada item com ocorrência em aberto: o que houve + ação direta (aplicar fator de unidade, gerar texto).
+    // Salvar a NF só CRIA a ocorrência em aberto; ela só vira "relatada" quando você marca na Auditoria.
+    const abertas = comparacao.filter(item => item.estado === 'detectada');
+    const itensComDivergencia = abertas.map(item => {
+        const sug = item.divergencias.find(d => d.tipo === 'unidade_diferente' && !d.aplicado);
+        const p = escRel(item._pedido), c = escRel(item.codProduto);
+        return `<div class="xml-item-linha pendente">
+        <div class="xml-item-topo"><div class="xml-produto-nome">${escRel(item.nome)}${multiPedidoAtivo() ? ` <span class="xml-item-meta">(Pedido ${p})</span>` : ''}</div></div>
+        <div class="xml-item-cotacao">${item.divergencias.filter(d => !d.aplicado).map(d => '• ' + escRel(textoDivergenciaNatural(d))).join('<br>')}</div>
+        <div class="xml-item-acao">${sug ? `<button type="button" class="central-status-toggle" onclick="alterarFatorUnidadeItem('${p}','${c}','${sug.par}',${sug.fator})">Aplicar fator ${sug.fator >= 1 ? sug.fator : '1/' + Math.round(1 / sug.fator)}</button>` : ''}${item.divergencias.some(d => !d.aplicado && d.tipo !== 'unidade_diferente') ? `<button type="button" class="central-status-toggle" onclick="registrarDivergenciaDaComparacao('${p}','${c}')">Gerar auditoria</button>` : ''}${item.divergencias.some(d => d.tipo === 'quantidade_cotada_nf' || d.tipo === 'valor_cotado_nf') && item.codigoSpData ? `<button type="button" class="central-status-toggle" onclick="marcarFalsoPositivoUnidade('${escRel(item.codigoSpData)}')">Falso positivo (unidade)</button>` : ''}</div>
+    </div>`; }).join('');
+    const revisar = nfSalvaXml && comparacao.some(item => item.divergencias.length > 0)
+        ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="switchToScreen('screen-auditoria-central','Auditoria'); prepararCentralAuditoria()">Revisar na Auditoria</button></div>` : '';
+    const avisoSalvou = nfSalvaXml && abertas.length ? `<div class="xml-item-meta">NF salva: ${abertas.length === 1 ? 'a ocorrência ficou' : 'as ' + abertas.length + ' ocorrências ficaram'} em aberto. Só vira "relatada" quando você marcar na Auditoria.</div>` : '';
+    const totalHTML = htmlTotalNfContraCotacao(cotacoesSelecionadasXml(), nfExtra);
 
-    el.innerHTML = cabecalho + aguardandoHTML + itensComDivergencia;
+    el.innerHTML = cabecalho + aguardandoHTML + totalHTML + itensComDivergencia + avisoSalvou + revisar;
 }
 function marcarFalsoPositivoUnidade(codigoSpData) {
     const produto = codigoSpData ? listaProdutosSpData.find(p => p.codigo === codigoSpData) : null;

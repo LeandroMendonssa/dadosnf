@@ -10,7 +10,37 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.18.1', nome: 'Varredura de erros de lógica', status: 'atual',
+        numero: '2.19.0', nome: 'Central de auditoria', status: 'atual',
+        novidades: [
+            'Nova tela Auditoria (Mais → Auditoria, e no menu lateral): uma lista única de ocorrências, uma por item, de todos os pedidos, com os filtros Em aberto, Relatadas, Resolvidas e Excluídas. Os mesmos dados continuam aparecendo na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios; é aqui que você mexe.',
+            'Salvar não é relatar: gerar o texto da auditoria e salvar a NF só criam a ocorrência em aberto (amarela). Ela só vira "relatada" quando você toca em "Marcar como relatada" (e dá para voltar com "Voltar para em aberto"). Auditorias antigas continuam valendo como relatadas, sem reescrever nada.',
+            'Editar e excluir: cada ocorrência pode ser excluída (falso positivo) e restaurada depois no filtro Excluídas; sai das listas e dos avisos. Também dá para informar à mão o fator de unidade.',
+            'Unidade/embalagem: quando quantidade e valor mudam em proporção inversa e o total fecha (como o campo operatório c/50 cotado por unidade e faturado em pacote, ou a fita de glicemia no ERP), o app mostra UMA ocorrência "só a unidade é diferente" e sugere o fator, em vez de duas divergências. "Aplicar fator" resolve, e vale para as próximas NFs do produto; "Desfazer fator" volta.',
+            'Relatar em lote: com várias ocorrências em aberto do mesmo fornecedor e pedido, um botão relata todas de uma vez.',
+            'Entrada de NF mais enxuta: o card "NF-e carregada", que repetia fornecedor, NF e valor do resumo fixo do topo, só aparece quando há informações adicionais. O resultado mostra o total da NF contra o total cotado só dos itens que vieram (diferença de preço, com a unidade já convertida), as ocorrências em aberto com ação direta (aplicar fator, gerar auditoria) e o atalho "Revisar na Auditoria".',
+            'Botões de sugestão de associação na Entrada de NF: agora quebram de linha com espaço entre si, em vez de ficarem colados.'
+        ],
+        implementado: ['js/39-central-auditoria.js (tela); estadoOcorrenciaItem com relatado manual e unidade aplicada; compararFontesPedido com fatorUnidadePorItem, relatadosPorItem, descartadosPorItem e a ocorrência unidade_diferente; totalNfContraCotacao e htmlTotalNfContraCotacao (js/11); relatado:false nas auditorias novas (js/16), lido em js/04 e js/34; style.css (.aud-*, .nf-total-card, .xml-item-acao).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/04, js/10, js/11, js/14, js/16, js/17, js/29, js/31, js/34 e o novo js/39-central-auditoria.js.'],
+        testar: ['Mais → Auditoria: ver as ocorrências em aberto, tocar em "Abrir" na fita de glicemia e em "Aplicar fator 50": a ocorrência deve passar para Resolvidas. "Desfazer fator" volta.', 'Campo operatório c/50 (NF 922344): deve aparecer uma ocorrência só, de unidade, em vez de quantidade e valor separados.', 'Marcar uma ocorrência como relatada, ver a contagem da Central de notificações cair; "Voltar para em aberto" devolve.', 'Excluir uma ocorrência e restaurá-la no filtro Excluídas.', 'Salvar uma NF com divergência: as ocorrências devem ficar em aberto (amarelo), não relatadas.', 'Entrada de NF: conferir o total da NF × cotação e o espaçamento dos botões "Usar:" de sugestão.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.18.2', nome: 'Padronização visual (CSS)', status: 'concluida',
+        novidades: [
+            'Raios dos cantos: os valores soltos (8, 10, 12, 14, 16, 18, 20, 99, 980 e 999 px) passaram a usar a escala do app: pequeno, médio, grande e pílula. Cartões, campos e botões de todas as telas, inclusive as novas (cartão de item, cartão de divergência, tratamento do item da NF), ficam com o mesmo arredondamento.',
+            'Tamanhos de letra: os meios-tamanhos (9,5, 10,5, 11,5, 12,5 e 13,5 px) foram encaixados na escala (mínimo, auxiliar, corpo, campo) e ganharam degraus nomeados para 11, 14, 18 e 20 px. Mudança visual mínima, mas agora o texto segue uma régua só.',
+            'Cores de status: texto verde, amarelo e vermelho passaram a usar as cores próprias de texto do tema (mais legíveis, inclusive no tema escuro). Foram eliminados vermelhos, laranjas e brancos soltos; o branco sobre fundo preenchido virou a cor "sobre sólido".',
+            'Selos: todos os selos arredondados (estado da ocorrência, status do Controle de NFs, retroativa) têm o mesmo formato de pílula e as mesmas cores de estado; peso 800 foi unificado em 700.',
+            'Nenhuma função nem regra mudou: só o style.css.'
+        ],
+        implementado: ['style.css: novos tokens --fs-xs, --fs-md, --fs-lg, --fs-xl e --on-solid; substituição dos valores soltos por var(--r-*), var(--fs-*) e cores semânticas; remoção de regras de selo duplicadas e sobrescritas.'],
+        mudou: ['Arquivos alterados: style.css e js/14.'],
+        testar: ['Passar pelas telas principais (Cotações, Entrada de NF, Central do pedido, Controle de NFs, Ajustes) nos temas claro e escuro e ver se algum cartão, botão ou selo ficou com canto, letra ou cor estranha.', 'Conferir se os selos de estado (em aberto, relatada, resolvida) continuam legíveis no tema escuro.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.18.1', nome: 'Varredura de erros de lógica', status: 'concluida',
         novidades: [
             'Data errada à noite: várias telas pegavam a data do relógio em UTC, que no Brasil vira o dia seguinte depois das 21h. Afetava a data padrão da Nova Auditoria, o histórico de mudança de status da divergência, a data do pedido ao cadastrar cotação, a data do histórico da auditoria ao salvar, o limite "vencida" de Cotações e os nomes dos arquivos de backup e diagnóstico. Tudo passou a usar a data local.',
             'CNPJ com e sem máscara: as cotações e parte do ERP guardam o CNPJ com pontos e traço, enquanto o SP Data e as NFs guardam só os 14 números. Em 5 lugares do Controle de NFs e do Editor a busca do fornecedor comparava os dois sem normalizar e não achava o cadastro (aparecia o nome cru do ERP no lugar do apelido, e "Enviar para a relação" pedia dados que o app já tinha). Agora a busca ignora a máscara.',

@@ -438,7 +438,10 @@ function divergenciasRel() {
     const todas = [];
     auditoriasBaseRel().forEach(x => x.divergencias.filter(divPassaFiltrosRel).forEach(d => {
         const item = itemCotacaoDaDivergenciaRel(x.pedido, d, x.fornecedorCnpj);
-        todas.push({ pedido: x.pedido, fornecedor: x.fornecedor, fornecedorCnpj: x.fornecedorCnpj || (item && item.cnpjFornecedor) || '', notaFiscal: x.notaFiscal, tipo: d.tipo, data: x.data, status: statusEfetivoDivergenciaRel(d, x, item), linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d), codProduto: item ? item.codProduto : '', registros: 1, origens: [{ anotId: x.anotId, ocIdx: x.ocIdx, dIdx: x.divergencias.indexOf(d) }] });
+        // 2.19.0: auditoria nova só conta como relatada depois que você marca (relatado:false = gerada, ainda não relatada)
+        const cotRel = listaCotacoes.find(c => String(c.pedido) === String(x.pedido));
+        const relatadoDiv = d.relatado !== false || !!(item && cotRel && (cotRel.relatadosPorItem || {})[item.codProduto]);
+        todas.push({ relatado: relatadoDiv, pedido: x.pedido, fornecedor: x.fornecedor, fornecedorCnpj: x.fornecedorCnpj || (item && item.cnpjFornecedor) || '', notaFiscal: x.notaFiscal, tipo: d.tipo, data: x.data, status: statusEfetivoDivergenciaRel(d, x, item), linhas: linhasDeMateriais(d), produtos: produtosDivergenciaRel(d), codProduto: item ? item.codProduto : '', registros: 1, origens: [{ anotId: x.anotId, ocIdx: x.ocIdx, dIdx: x.divergencias.indexOf(d) }] });
     }));
     // Registro refeito a cada etapa (identificação, depois resolução...) do MESMO pedido + tipo + produto vira UMA divergência: vale o mais recente.
     const mapa = new Map(), resultado = [];

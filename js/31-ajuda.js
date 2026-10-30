@@ -34,7 +34,7 @@ const AJUDA_ARTIGOS = [
         'Toque em Salvar. A nota entra na relação de Gerenciar.'
       ],
       dicas: ['Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
-    { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.17.0',
+    { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.18.0',
       resumo: 'Ler o XML, conferir os itens, definir o recurso e salvar.',
       palavras: 'xml entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
       tela: [{ id: 'screen-xml-editor', titulo: 'Entrada de NF', rotulo: 'Abrir Entrada de NF' }],
@@ -44,6 +44,7 @@ const AJUDA_ARTIGOS = [
         'Item por item, confira o fator de conversão (vem da descrição, como "C/10" = 10; a sua correção fica lembrada para a próxima NF), a associação com a cotação e o SP Data.',
         'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, a explicação pelo frete, seguro ou desconto do próprio XML quando houver, e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
         'Na lista de itens da cotação, o app esconde os que outro item da NF já associou e mostra só os do fornecedor; "Ver outros itens desse fornecedor" traz todos de volta (útil quando o fornecedor manda o mesmo produto em dois códigos, marcas ou validades). As sugestões "Parecidos pelo nome" não dependem da ordem das palavras.',
+        'Item que não é o da cotação: "Remover associação" desfaz uma associação errada do fornecedor; "Veio produto trocado" (escolha o item que era o pedido) deixa o item sem associação e a conferência registra "Solicitamos X, porém foi faturado Y"; "Aceito como outro produto" vale como o item pedido só nesta NF e não grava a associação (use quando o comprador aceitou a diferença).',
         'Itens com pendência já abrem sozinhos; o selo mostra o que falta.',
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
@@ -85,6 +86,19 @@ const AJUDA_ARTIGOS = [
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
+    { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.19.0',
+      resumo: 'Ver, relatar, resolver, excluir e restaurar as ocorrências (uma por item) de todos os pedidos.',
+      palavras: 'auditoria ocorrencia divergencia relatar relatada resolvida excluir restaurar unidade fator embalagem falso positivo total nf cotacao',
+      tela: [{ id: 'screen-auditoria-central', titulo: 'Auditoria', rotulo: 'Abrir Auditoria' }],
+      passos: [
+        'Abra Mais → Auditoria. A lista reúne uma ocorrência por item, de todos os pedidos. Os mesmos dados aparecem na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios: aqui é onde você mexe.',
+        'Os filtros são: Em aberto (o app achou e você ainda não relatou), Relatadas (já avisado ao responsável), Resolvidas e Excluídas.',
+        'Salvar uma NF só cria as ocorrências em aberto. Gerar o texto da auditoria também não relata nada: a ocorrência só vira "relatada" quando você toca em "Marcar como relatada". Se marcou sem querer, use "Voltar para em aberto".',
+        'Quando a quantidade e o valor mudam em proporção inversa e o total da NF fecha com o da cotação (por exemplo, cotado por unidade e faturado em pacote com 50), o app mostra UMA ocorrência de unidade e sugere o fator. Toque em "Aplicar fator" para resolver; "Desfazer fator" volta atrás.',
+        'Para um falso positivo, use "Excluir". A ocorrência sai das listas e dos avisos, e dá para recuperar no filtro Excluídas com "Restaurar".',
+        'Com várias ocorrências do mesmo fornecedor em aberto (por exemplo, vários itens não faturados), use "Relatar as N de ..." para marcar todas de uma vez.',
+        'Na Entrada de NF, o resumo mostra o total da NF contra o total cotado só dos itens que vieram. A diferença é de preço, já com a unidade convertida; a de quantidade aparece como ocorrência própria.'
+      ] },
     { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.5',
       resumo: 'Ver o que foi ligado sozinho nas NFs do ERP e resolver só o que depende de você.',
       palavras: 'auditoria retroativa erp nf itens produto pedido sugerido sugestao defasado associacao reprocessar conferencia',
@@ -216,11 +230,12 @@ const AJUDA_ARTIGOS = [
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.17.1',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.18.0',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
       palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
       passos: [
+        'Cada divergência da auditoria é um cartão: tipo, fornecedor, NF e pedido, o texto, a linha do tempo (data e o que foi registrado) e "Alterar status". "Pendência relatada" é a auditoria aberta (já com o responsável).',
         'Ao abrir um produto, o card traz Produto, Quantidade e valores, Cotação e recurso e o SP Data. Em "Cotação e recurso" você vê quantos fornecedores cotaram, o vencedor e o recurso: "Pela cotação" (previsto pelo número de fornecedores, gravado ao salvar a NF) ou "Confirmado na NF".',
         'Em Cotações, toque no cartão do pedido.',
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
@@ -261,7 +276,7 @@ const AJUDA_ARTIGOS = [
         'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação. Se a barra ficar alta ou baixa demais no seu aparelho, use "Altura da barra" (− e +) no menu "⋯".'
       ],
       dicas: [], tutorial: null },
-    { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.17.0',
+    { id: 'nova-auditoria', cat: 'Auditoria', titulo: 'Registrar uma auditoria e gerar mensagem e e-mail', versao: '2.18.0',
       resumo: 'Um formulário gera a mensagem e o e-mail sem digitar duas vezes.',
       palavras: 'auditoria nova divergencia pedido nf fornecedor destinatario email mensagem gerar textos padrao copiar compartilhar salvar anotacao',
       tela: [{ id: 'screen-auditoria-nova', titulo: 'Nova Auditoria', rotulo: 'Abrir Nova Auditoria' }],
@@ -270,6 +285,7 @@ const AJUDA_ARTIGOS = [
         'Preencha Pedido SmartCompras (ao digitar, o app procura a cotação e sugere fornecedor e produtos), Nota Fiscal, Fornecedor, Data da Auditoria e Destinatário do E-mail.',
         'Toque em "Adicionar Divergência", escolha o tipo (não faturado, não entregue, avariado, valor diferente etc.) e preencha os campos; vários materiais cabem na mesma ocorrência.',
         'No campo de produto, escolha da lista da cotação: o produto fica ligado ao item (aparece "Ligado ao item…" com o nome real). Pode renomear o texto à vontade que a ligação continua; "usar este nome" volta ao nome real e "desligar" remove a ligação. Se o produto não está ligado, use "Sem ligação com a cotação — ligar a um item…".',
+        'No tipo "Produto diferente do pedido": "Produto Pedido" lista os itens da cotação (o campo abre mostrando todos) e "Produto Faturado" lista o cadastro inteiro do SP Data, sem filtro, para o produto que veio no lugar.',
         'O Destinatário do E-mail é opcional: em branco, a saudação sai sem nome.',
         'Use Observação Geral se precisar. Em "Configurar Textos Padrão" ajuste o destinatário padrão, a abertura, a frase de fotos, o fechamento e o modelo de frase de cada tipo de divergência: {campo} entra com o valor digitado e [[ trecho ]] só aparece se os campos dentro dele estiverem preenchidos. {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} são substituídos sozinhos na abertura.',
         'Toque em "Gerar Auditoria": o resultado traz as abas Mensagem e E-mail, com Copiar e Compartilhar.',

@@ -60,6 +60,7 @@ function renderControleSeAtivo() {
     });
 
     renderAuditoriaRetroSeAtiva(); // 2.11.0
+    if (typeof renderCentralAuditoriaSeAtiva === 'function') renderCentralAuditoriaSeAtiva(); // 2.19.0
     if (typeof renderAtencaoSeAtiva === 'function') renderAtencaoSeAtiva(); // 2.11.3
     agendarRender('reavaliarItensErp', () => reavaliarItensErp(false), 4000); // 2.11.0: itens do ERP acompanham as associações novas
     renderEditorNfSeAtivo(); // 2.0.7: o Editor da NF acompanha qualquer mudança de dado

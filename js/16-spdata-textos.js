@@ -608,6 +608,7 @@ async function salvarAuditoriaComoAnotacao() {
         // depois não tinha o que "reabrir": faltava o fato original.
         const statusEHistorico = {
             status: 'pendente',
+            relatado: false, // 2.19.0: salvar a auditoria não é relatar — só vira "relatada" quando você marca (Auditoria)
             historico: [{ tipo: 'identificacao', data: dataAud || dataLocalISO(), observacao: '' }]
         };
         if (def && def.multiMaterial) {

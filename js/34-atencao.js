@@ -46,7 +46,7 @@ function itensDeAtencao() {
     // 2.11.6: usa a MESMA lista da tela Relatórios → Divergências (divergenciasRel), com a mesma regra de status
     // ("não faturado" de item que já chegou conta como resolvido), só que sem os filtros da tela.
     const filtrosTela = relatoriosFiltros; relatoriosFiltros = { de: '', ate: '', fornecedor: '', fornecedorExato: false, destino: '', recurso: '', tipo: '', produto: '' };
-    let pendDiv = []; try { pendDiv = divergenciasRel().filter(x => x.status === 'pendente'); } finally { relatoriosFiltros = filtrosTela; }
+    let pendDiv = []; try { pendDiv = divergenciasRel().filter(x => x.status === 'pendente' && x.relatado !== false); } finally { relatoriosFiltros = filtrosTela; }
     // 2.16.0: auditoria aberta = pendência RELATADA (já está com o responsável): pesa como resolvida, então sai da contagem de "precisa de atenção".
     add('baixa', 'divergencias', 'Pendências relatadas', 'Já relatadas ao responsável. Mesma lista de Relatórios → Divergências. Toque para abrir o pedido.',
         pendDiv.map(x => ({ pedido: String(x.pedido || ''), forn: x.fornecedor || '', t: `Pedido ${x.pedido || '—'}${x.fornecedor ? ' · ' + x.fornecedor : ''}`, s: (TIPOS_DIVERGENCIA_AUDITORIA[x.tipo] || {}).label || x.tipo, fn: `abrirCentralPedido('${escRel(x.pedido)}')` })));
