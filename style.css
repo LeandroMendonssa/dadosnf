@@ -1857,3 +1857,15 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 #aviso-firebase div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux)}
 #aviso-firebase b{color:var(--danger);font-size:var(--fs-md)}
 #aviso-firebase button{flex:none;min-height:36px;padding:0 var(--space-3);border:1.5px solid var(--border-color);border-radius:var(--r-pill);background:transparent;color:var(--text-dark);font-weight:600}
+
+/* 2.20.0 — Agenda de trabalho */
+#agenda-conteudo .card{margin-bottom:var(--space-2)}
+.ag-form{display:flex;flex-direction:column;gap:10px}
+.ag-lab{display:flex;flex-direction:column;gap:4px;font-size:var(--fs-small,13px);color:var(--text-light)}
+.ag-linha{display:flex;gap:10px}.ag-linha .ag-lab{flex:1;min-width:0}
+.ag-checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:var(--fs-small,13px)}
+.ag-avisos{flex-direction:column;gap:10px}
+.ag-avisos label{display:flex;gap:10px;align-items:flex-start}
+.ag-avisos span{display:flex;flex-direction:column}.ag-avisos small{color:var(--text-light)}
+.ag-card .xml-item-acao{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ag-data{width:auto}
