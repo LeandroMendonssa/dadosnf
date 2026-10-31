@@ -58,6 +58,8 @@ const IA_FERRAMENTAS = [
       input_schema: { type: 'object', properties: { numero: { type: 'string' }, fornecedor: { type: 'string' } }, required: ['numero'] } },
     { name: 'consultar_pedido', description: 'Situação de um pedido (cotação): origem, datas, fornecedores e, por item, quantidade cotada × faturada (NF do app) × lançada (ERP) × entregue, valor, e divergências detectadas.',
       input_schema: { type: 'object', properties: { pedido: { type: 'string' }, fornecedor: { type: 'string', description: 'opcional: filtrar por fornecedor' } }, required: ['pedido'] } },
+    { name: 'cotacoes_por_fornecedor', description: 'Quantos fornecedores cotaram cada item que um fornecedor ganhou no pedido. Item com menos de 3 cotações é pago com Recurso Próprio. Devolve, por fornecedor ganhador: total de itens, quantos atingiram o mínimo, e a lista dos itens abaixo dele (com o número de cotações). Use para "algum item do fornecedor X ficou abaixo de 3 cotações?", "esse pedido tem item com recurso próprio?".',
+      input_schema: { type: 'object', properties: { pedido: { type: 'string' }, fornecedor: { type: 'string', description: 'opcional: filtrar por fornecedor' } }, required: ['pedido'] } },
     { name: 'buscar_produto', description: 'Procura um material pelo nome ou código em cotações, NFs (XML) e lançamentos do ERP: quantidades, preços, fornecedores e pedidos. Devolve também resumo_precos (compras, última data, último preço, média, mínimo e máximo por produto, já calculados) e, nas cotações, a descricao do SmartCompras, onde costuma aparecer a marca. Use o campo marca para filtrar cotações pela marca.',
       input_schema: { type: 'object', properties: { texto: { type: 'string' }, fornecedor: { type: 'string' }, marca: { type: 'string' } }, required: ['texto'] } },
     { name: 'divergencias', description: 'Divergências de auditoria (pendentes por padrão) com pedido, fornecedor, tipo e produtos. É a mesma lista de Relatórios → Divergências.',
@@ -102,6 +104,17 @@ const IA_EXEC = {
         return { pedido: cot.pedido, origem: cot.origem, data_pedido: cot.dataPedido, data_limite: cot.dataLimite, fornecedores: (cot.fornecedores || []).map(f => f.razaoSocial || f.cnpj),
             itens: iaCorta(itens.map(i => ({ produto: i.nome, fornecedor: iaFornDoCnpj(i.cnpjFornecedor), qtd_cotada: iaNum(i.quantidadeCotada), qtd_nf_xml: i.quantidadeFaturada, qtd_lancada_erp: i.quantidadeLancada, qtd_entregue: i.quantidadeEntregue,
                 nfs: i.nfs, situacao: i.cobertura || (i.temNf || i.temErp ? 'com NF' : 'sem NF'), divergencias: (i.divergencias || []).map(d => d.tipo), estado_ocorrencia: ROTULO_ESTADO_OCORRENCIA[i.estado] || undefined }))) };
+    },
+    cotacoes_por_fornecedor(a) {
+        const cot = listaCotacoes.find(c => String(c.pedido) === String(a.pedido));
+        if (!cot) return { erro: 'Pedido não encontrado.' };
+        const fornecedores = (cot.fornecedores || []).filter(f => !a.fornecedor || iaCasa(nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) + ' ' + (f.razaoSocial || ''), a.fornecedor)).map(f => {
+            const produtos = (cot.itens || []).filter(it => mesmoCnpj(it.cnpjFornecedor, f.cnpj));
+            const r = resumoCotacoesDoFornecedor(cot.pedido, produtos);
+            return { fornecedor: f.razaoSocial || f.cnpj, total_itens: r.total, itens_com_minimo: r.ok, itens_abaixo_do_minimo: r.abaixo.map(x => ({ produto: x.nome, cotaram: x.n })), itens_sem_dado_no_relatorio: r.semDado };
+        });
+        const dadoOk = listaRelatorioGanhadores.some(r => String(r.pedido) === String(cot.pedido));
+        return { pedido: cot.pedido, minimo_de_cotacoes: minimoFornecedoresCC(), relatorio_de_cotacoes_importado: dadoOk, fornecedores };
     },
     buscar_produto(a) {
         const out = { cotacoes: [], nfs_xml: [], erp: [] };
@@ -186,6 +199,7 @@ COMO USAR AS CONSULTAS:
 - As listas vêm da mais recente para a mais antiga (campo data): "última vez que chegou" é a primeira de NFs ou ERP; informe a data e a NF.
 - Confira a premissa: se o item exato pedido não existe (ex.: "jelco 21" quando só há 20G, 22G, 24G), diga isso e mostre os parecidos que existem.
 - "fornecedor" é a empresa que vende (distribuidora), nunca confunda com marca. A marca, quando existe, aparece no texto da descricao das cotações do SmartCompras (ex.: "NOREPINEFRINA 2MG/ML AMPOLA 4ML EPIKABI FRESENIUS KABI" → marca Fresenius Kabi); extraia dali, e use o argumento marca de buscar_produto para filtrar. NF (XML) e ERP não têm campo de marca.
+- "Cotações" de um item = quantos fornecedores cotaram. Item com menos de 3 cotações é pago com Recurso Próprio. Para saber se os itens que um fornecedor ganhou atingiram 3 cotações, use cotacoes_por_fornecedor.
 - Médias, mínimos e máximos de preço: use o resumo_precos já calculado; não refaça contas.
 - Formato: datas em dd/mm/aaaa; use **negrito** para o que importa (produto, valor, data), listas com "- " ou numeradas "1." quando houver mais de um item, e escreva sempre "pedido 1731" e "NF 36435" por extenso, porque o app transforma isso em link clicável.
 - Se o resultado traz "quis_dizer", pergunte ao usuário se era uma dessas palavras; nunca invente nome de medicamento ou material.
@@ -277,6 +291,7 @@ function iaEntender(texto) {
     const nf = (String(texto).match(/\b(?:nf|nfs|nota(?:\s+fiscal)?)\s*(?:n[ºo.]*\s*)?(\d{2,9})\b/i) || [])[1];
     const forn = iaAcharFornecedor(t);
     const so = tem(/\bSEM PEDIDO\b/) ? 'sem-pedido' : tem(/\bSEM RECURSO\b/) ? 'sem-recurso' : tem(/\bSEM PRODUTO\b/) ? 'sem-produto' : tem(/\bSUGERID/) ? 'pedido-sugerido' : tem(/\bESPERANDO\b|\bDECISAO\b/) ? 'decisao-parada' : null;
+    if (pedido && tem(/COTAC|COTAR|COTOU/) && tem(/TRES|\b3\b|MINIMO|PROPRIO|ABAIXO|ALCANC/)) { plano.push(['cotacoes_por_fornecedor', { pedido, ...(forn ? { fornecedor: forn } : {}) }]); return plano; }
     if (pedido) { plano.push(['consultar_pedido', { pedido, ...(forn ? { fornecedor: forn } : {}) }]); if (tem(/DIVERGENC/)) { plano.length = 0; plano.push(['divergencias', { pedido, incluir_resolvidas: tem(/RESOLVID|TODAS/) }]); } return plano; }
     if (nf) { plano.push(['detalhe_nf', { numero: nf, ...(forn ? { fornecedor: forn } : {}) }]); return plano; }
     if (tem(/DIVERGENC/)) { plano.push(['divergencias', { ...(forn ? { fornecedor: forn } : {}), incluir_resolvidas: tem(/RESOLVID|TODAS|HISTORICO/) }]); return plano; }
@@ -304,6 +319,13 @@ const IA_RENDER = {
         if (r.erro) return r.erro;
         return `<b>Pedido ${r.pedido}</b>${r.origem ? ' · ' + r.origem : ''}${r.data_limite ? ' · limite ' + r.data_limite : ''}<br>Fornecedores: ${r.fornecedores.join(', ') || '—'}<br>` + (r.itens.total ? `<b>${r.itens.total} item(ns)</b>${r.itens.total > r.itens.mostrando ? ` (mostrando ${r.itens.mostrando})` : ''}<br>` : '')
             + r.itens.itens.map(i => `• ${i.produto} · ${i.fornecedor}<br>&nbsp;&nbsp;cotado ${i.qtd_cotada ?? '—'}${i.qtd_nf_xml != null ? ' · NF ' + i.qtd_nf_xml : ''}${i.qtd_lancada_erp != null ? ' · ERP ' + i.qtd_lancada_erp : ''}${i.nfs && i.nfs.length ? ' · NFs ' + i.nfs.join(', ') : ''} · ${i.situacao}${i.divergencias.length ? ' · ⚠ ' + i.divergencias.join(', ') : ''}`).join('<br>');
+    },
+    cotacoes_por_fornecedor(r) {
+        if (r.erro) return r.erro;
+        if (!r.relatorio_de_cotacoes_importado) return `Pedido ${r.pedido}: o relatório de cotações (fornecedores ganhadores) ainda não foi importado, então não sei quantos cotaram cada item.`;
+        return `<b>Pedido ${r.pedido}</b> · mínimo ${r.minimo_de_cotacoes} cotações<br>` + r.fornecedores.map(f => `<b>${escRel(f.fornecedor)}</b>: ` + (f.itens_abaixo_do_minimo.length
+            ? `${f.itens_abaixo_do_minimo.length} de ${f.total_itens} item(ns) abaixo de ${r.minimo_de_cotacoes} (Recurso Próprio)<br>` + f.itens_abaixo_do_minimo.map(i => `• ${escRel(i.produto)} (${i.cotaram})`).join('<br>')
+            : `✓ todos os ${f.itens_com_minimo} item(ns) com ${r.minimo_de_cotacoes}+ cotações`)).join('<br><br>');
     },
     buscar_produto(r) {
         const sec = (tit, d, f) => d.total ? `<b>${tit} (${d.total})</b><br>` + d.itens.map(f).join('<br>') : '';
@@ -367,8 +389,34 @@ function iaCopiar(btn) {
     });
 }
 function iaParar() { if (!assistenteOcupado) return; iaInterrompido = true; if (iaCtlUsuario) iaCtlUsuario.abort(); }
+// 2.19.3: a conversa fica guardada NESTE aparelho (localStorage; não usa o Firebase). Volta ao abrir o Assistente; "Nova conversa" apaga.
+// Guarda no máximo as últimas 40 bolhas e ~150 KB; o que vai para a IA continua sendo só as últimas 3 perguntas.
+const IA_HIST_CHAVE = 'iaHistoricoV1';
+function iaSalvarHistorico() {
+    try {
+        const log = document.getElementById('ia-log'); if (!log) return;
+        const bolhas = [...log.children].filter(b => !b.querySelector('.ia-pensando')).slice(-40).map(b => b.outerHTML);
+        if (!bolhas.length) { localStorage.removeItem(IA_HIST_CHAVE); return; }
+        let msgs = iaPodar(assistenteMsgs);
+        let json = JSON.stringify({ bolhas, msgs, em: Date.now() });
+        if (json.length > 150000) json = JSON.stringify({ bolhas, msgs: [], em: Date.now() });
+        if (json.length > 400000) return;
+        localStorage.setItem(IA_HIST_CHAVE, json);
+    } catch (e) { }
+}
+function iaRestaurarHistorico() {
+    try {
+        const raw = localStorage.getItem(IA_HIST_CHAVE); if (!raw) return;
+        const h = JSON.parse(raw); const log = document.getElementById('ia-log');
+        if (!log || !h || !Array.isArray(h.bolhas) || !h.bolhas.length || log.children.length) return;
+        log.innerHTML = h.bolhas.join(''); assistenteMsgs = Array.isArray(h.msgs) ? h.msgs : [];
+        const sug = document.getElementById('ia-sugestoes'); if (sug) sug.style.display = 'none';
+        log.scrollTop = log.scrollHeight;
+    } catch (e) { }
+}
 function iaNovaConversa() {
     if (assistenteOcupado) iaParar();
+    try { localStorage.removeItem(IA_HIST_CHAVE); } catch (e) { }
     assistenteMsgs = []; const log = document.getElementById('ia-log'); if (log) log.innerHTML = '';
     const sug = document.getElementById('ia-sugestoes'); if (sug) sug.style.display = '';
 }
@@ -385,6 +433,7 @@ function prepararAssistente() {
         <div class="ia-rodape-chat"><div class="ia-modo-wrap"><button type="button" class="ia-modo" id="ia-modo" onclick="iaToggleMenuModo(event)"></button>
             <div class="ia-modo-menu" id="ia-modo-menu" style="display:none"></div></div><span class="ia-aviso">Só lê os dados do app e pode errar: confira os números.</span></div>`;
     iaRenderConfig();
+    if (!assistenteOcupado) iaRestaurarHistorico();
 }
 function iaUsaIA() { return !!assistenteUrl && !assistenteModoBasico; }
 function iaToggleMenuModo(ev) { if (ev) ev.stopPropagation(); const m = document.getElementById('ia-modo-menu'); if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
@@ -412,7 +461,7 @@ async function enviarAssistente() {
     const sug = document.getElementById('ia-sugestoes'); if (sug) sug.style.display = 'none';
     iaAdicionarBolha('eu', escRel(texto));
     const t0 = Date.now(), usadas = [];
-    const fim = () => { clearInterval(iaTimer); assistenteOcupado = false; iaCtlUsuario = null; iaBotaoEstado(false); const log = document.getElementById('ia-log'); if (log) log.scrollTop = log.scrollHeight; };
+    const fim = () => { clearInterval(iaTimer); assistenteOcupado = false; iaCtlUsuario = null; iaBotaoEstado(false); const log = document.getElementById('ia-log'); if (log) log.scrollTop = log.scrollHeight; iaSalvarHistorico(); };
     if (!iaUsaIA()) { // modo básico: grátis, sem IA e sem rede
         const r = iaResponderBasico(texto);
         iaAdicionarBolha('ia', `<div class="ia-corpo">${iaLinkar(r.html)}</div>` + iaRodape(Date.now() - t0, 'modo básico', r.usadas));

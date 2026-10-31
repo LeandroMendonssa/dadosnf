@@ -505,9 +505,17 @@ async function salvarNfProcessada() {
 // Antes havia dois núcleos: "Marcar como resolvido" (no item da comparação) e o status da auditoria (Anotações). Agora, quando
 // uma auditoria do pedido cobre o item, o status DELA manda: resolvida ou encerrada = item resolvido, pendente = aberto.
 // O item só usa o botão manual quando não há auditoria ligada a ele.
+// 2.19.2: memória das palavras por texto (o mesmo nome é quebrado em palavras milhares de vezes por tela). Quem chama não deve alterar a lista devolvida.
+const _memoTokensNome = new Map();
 function tokensNomeProduto(s) {
-    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
-        .replace(/[^A-Z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+    const k = String(s || '');
+    let r = _memoTokensNome.get(k);
+    if (!r) {
+        r = k.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+        if (_memoTokensNome.size > 20000) _memoTokensNome.clear();
+        _memoTokensNome.set(k, r);
+    }
+    return r;
 }
 // Mesmo produto se os nomes são iguais, ou se as 3 primeiras palavras (ou as 2, quando um dos nomes tem só 2) são iguais.
 // Ex.: "NIMESULIDA 100MG" combina com "NIMESULIDA 100MG COMP"; "PAPEL SMS PESADO" não combina com "PAPEL SMS LEVE".
@@ -529,6 +537,17 @@ function divergenciasAuditoriaDoItem(pedido, item) {
         // Quando a auditoria tem CNPJ, ele precisa bater com o do item.
         const cnpjOc = normalizarCnpj(oc.fornecedorCnpj);
         if (cnpjOc && cnpjOc !== cnpj) return;
+        // 2.19.1: auditoria sem CNPJ (nome do fornecedor digitado não bateu com a cotação) não pode ser ligada a item de OUTRO fornecedor só porque
+        // o nome do produto é parecido (ex.: dipirona de um fornecedor × dipirona de outro). Se o fornecedor da auditoria não combina com o do item, ignora.
+        if (!cnpjOc && oc.fornecedor) {
+            const cotP = listaCotacoes.find(c => String(c.pedido) === String(pedido));
+            const fItem = cotP && (cotP.fornecedores || []).find(f => normalizarCnpj(f.cnpj) === cnpj);
+            const nomesItem = fItem ? [fItem.razaoSocial, nomeExibicaoFornecedor(fItem.razaoSocial, fItem.cnpj)] : [];
+            const tk = x => tokensNomeProduto(x).filter(t => t.length > 2);
+            const alvo = tk(oc.fornecedor);
+            const combina = nomesItem.some(n => { const t = tk(n); return t.length && alvo.length && (t[0] === alvo[0] || alvo.includes(t[0]) || t.includes(alvo[0])); });
+            if (nomesItem.length && !combina) return;
+        }
         (oc.divergencias || []).forEach((d, divIdx) => {
             const nomes = [...materiaisDaDivergencia(d).map(m => m.produto || m.produtoPedido), d.campos && d.campos.produto].filter(Boolean);
             const porCodigo = item.codProduto && materiaisDaDivergencia(d).some(m => m.codProduto && m.codProduto === item.codProduto);
@@ -567,14 +586,32 @@ function estadoOcorrenciaItem(divergencias, resolvido, auditorias, relatadoManua
 }
 const ROTULO_ESTADO_OCORRENCIA = { detectada: 'Divergência', relatada: 'Pendência relatada', resolvida: 'Resolvido', nenhuma: '' };
 // Selo (HTML) do estado: amarelo = em aberto (sua), cinza = relatada, verde = resolvida.
-function seloEstadoOcorrencia(estado, qtdProblemas) {
+function seloEstadoOcorrencia(estado, qtdProblemas, soNaoChegou) {
+    if (soNaoChegou && estado === 'detectada') return `<span class="xml-item-badge azul">Não chegou</span>`;
+    if (soNaoChegou && estado === 'relatada') return `<span class="xml-item-badge neutro">Não chegou · relatado</span>`;
     if (estado === 'resolvida') return `<span class="xml-item-badge pronto">✓ Resolvido</span>`;
     if (estado === 'relatada') return `<span class="xml-item-badge neutro">Pendência relatada</span>`;
     if (estado === 'detectada') return `<span class="xml-item-badge pendente">⚠ ${qtdProblemas > 1 ? qtdProblemas + ' divergências' : 'Divergência'}</span>`;
     return '';
 }
 
+// 2.19.2: durante UM redesenho de tela (síncrono, sem gravar nada) a comparação de cada pedido é feita uma vez só e reaproveitada.
+// Fora disso nada é guardado, então não há risco de mostrar dado velho depois de uma ação sua.
+let _memoComparacao = null;
+function comMemoComparacao(fn) {
+    if (_memoComparacao) return fn();
+    _memoComparacao = new Map();
+    try { return fn(); } finally { _memoComparacao = null; }
+}
 function compararFontesPedido(pedido, opcoes) {
+    if (_memoComparacao && !opcoes) {
+        const k = String(pedido);
+        if (!_memoComparacao.has(k)) _memoComparacao.set(k, _compararFontesPedidoCalc(pedido, opcoes));
+        return _memoComparacao.get(k).slice();
+    }
+    return _compararFontesPedidoCalc(pedido, opcoes);
+}
+function _compararFontesPedidoCalc(pedido, opcoes) {
     const cotacao = listaCotacoes.find(c => c.pedido === pedido);
     if (!cotacao) return [];
 
@@ -792,6 +829,8 @@ function compararFontesPedido(pedido, opcoes) {
             divergencias,
             ...resolucao,
             // 2.19.0: descartada (falso positivo excluído por você) some das listas: fica sem divergências e guarda o que foi descartado.
+            // 2.19.1: "Não chegou" = só tem divergência de item não faturado (ainda não veio em NF). É "primo" da divergência: detectável e relatável igual, mas fora da contagem de divergências.
+            soNaoChegou: !marcaDescartado && divergencias.length > 0 && divergencias.every(d => d.tipo === 'nao_faturado'),
             descartado: marcaDescartado, divergenciasDescartadas: marcaDescartado ? divergencias : [],
             relatadoManual: marcaRelatado,
             fatorCotNfEfetivo: fCot !== 1 ? fCot : ((divergencias.find(d => d.tipo === 'unidade_diferente' && d.par === 'cotacao_nf') || {}).fator || 1),
@@ -1012,6 +1051,16 @@ function textoDivergenciaNatural(div) {
 // os mesmos dados já resolvidos aqui dentro (nfProcessada/cotação), nunca
 // uma segunda consulta/lógica paralela. Quando um dado não é conhecido,
 // fica ausente/null — a tela mostra "não informado", nunca adivinha.
+// 2.19.1: id para abrir o Editor da NF a partir de uma nota do Gerenciar (NF processada do app; senão, a entrada do ERP ligada). Null se não achar com segurança.
+function idEditorNfDaNota(nota) {
+    const norm = s => s ? s.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
+    if (!norm(nota.nf)) return null;
+    const erpV = listaEntradasErp.find(e => e.notaVinculadaId === nota.id);
+    const cands = listaNfsProcessadas.filter(nf => norm(nf.nf) === norm(nota.nf) && (!erpV || mesmoCnpj(nf.cnpjFornecedor, erpV.cnpjFornecedor)));
+    if (cands.length === 1) return cands[0].id;
+    if (!cands.length && erpV) return erpV.id;
+    return null;
+}
 function calcularAptidaoSaidaNota(nota) {
     const normalize = (str) => str ? str.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
     if (!normalize(nota.nf)) return { status: 'sem_nf', label: 'Sem número de NF — não é possível conferir', badge: 'neutro' };
@@ -1088,7 +1137,7 @@ function renderComparacaoItemHTML(pedido, item, compacto) {
     {
         const resolvido = !!(item.divergencias.length && item.resolvido);
         const comAuditoria = (item.auditorias || []).length > 0;
-        const statusHTML = seloEstadoOcorrencia(item.estado, item.divergencias.length)
+        const statusHTML = seloEstadoOcorrencia(item.estado, item.divergencias.length, item.soNaoChegou)
             || ((!item.temNf && item.temErp) ? `<span class="xml-item-badge pronto">Lançado no ERP (sem NF)</span>`
             : `<span class="xml-item-badge pronto">✓ Confere</span>`);
         const fontesHTML = `Cotado: ${item.quantidadeCotada ?? '—'} · Faturado (NF): ${item.quantidadeFaturada ?? '—'} · Lançado (ERP): ${item.quantidadeLancada ?? '—'}`;
@@ -1184,7 +1233,7 @@ function htmlVinculadasNf(pedido, cnpj) {
         const lig = it ? '→ ' + escRel(String(it.nomeOficial || it.descricao || cod).slice(0, 50)) : 'sem produto da cotação ligado';
         return `<div class="retro-linha"><span>${escRel(i.nome)} · ${escRel(qdtFmt(i.quantidade))} × R$ ${formatValorBR(i.valorUnitario)}<br><small>${lig}</small></span><span class="retro-it ${it ? 'ok' : 'm'}">${it ? '✓' : '·'}</span></div>`;
     }).join('')}</details>`;
-    return vinculadas.map(e => `<div class="central-item-meta"><span>NF ${escRel(e.nf)}${e.serie ? '/' + escRel(e.serie) : ''} registrada no ERP e associada a este pedido · ${nfErpTemXmlNoApp(e, entidadeVinc) ? 'XML processado no app' : 'sem XML processado no app'}</span>${e.vinculo.viaCentral ? `<button type="button" class="central-status-toggle" onclick="desfazerAssociacaoEntradaErpDaCentral('${e.id}', '${pedido}')">Desfazer</button>` : ''}</div>${itensLancados(e)}`).join('');
+    return vinculadas.map(e => `<div class="central-item-meta"><span>NF ${escRel(e.nf)}${e.serie ? '/' + escRel(e.serie) : ''} registrada no ERP e associada a este pedido · ${nfErpTemXmlNoApp(e, entidadeVinc) ? 'XML processado no app' : 'sem XML processado no app'}</span>${e.vinculo.viaCentral ? `<button type="button" class="central-status-toggle" onclick="desfazerAssociacaoEntradaErpDaCentral('${e.id}', '${pedido}')">Desfazer</button>` : ''}</div>`).join(''); // 2.19.1: lista "Itens lançados" removida (cada item já mostra "Confere" na comparação)
 }
 function toggleAssociarNfCentral(cnpj) {
     if (centralAssociarNfAberto.has(cnpj)) centralAssociarNfAberto.delete(cnpj); else centralAssociarNfAberto.add(cnpj);

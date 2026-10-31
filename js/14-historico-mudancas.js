@@ -10,7 +10,72 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.19.0', nome: 'Central de auditoria', status: 'atual',
+        numero: '2.19.5', nome: 'Aviso quando o Firebase nega acesso ou atinge o limite', status: 'atual',
+        novidades: [
+            'Com as regras novas do Firestore, uma conta não aprovada (ou uma regra errada) fazia o app ficar vazio sem explicar nada: o erro só ia para o console do navegador. Agora aparece um aviso no topo, com botão Fechar: "O Firebase negou o acesso aos dados" (peça ao administrador para aprovar em Aprovações de Acesso, ou ajuste as regras).',
+            'O mesmo aviso cobre o limite diário do plano gratuito ("Limite diário do Firebase atingido": volta amanhã) e a sessão expirada. Aparece no máximo uma vez por minuto para cada tipo, e também quando uma gravação é recusada.'
+        ],
+        implementado: ['erroFirebase(msg, error) e TEXTOS_ERRO_FIREBASE em js/05, usados por todos os listeners do Firestore e por um ouvinte de unhandledrejection; estilo #aviso-firebase em style.css.'],
+        mudou: ['Arquivos alterados: style.css, js/05, js/14 e js/31.'],
+        testar: ['Em condições normais nada muda. Para ver o aviso: entre com uma conta Google ou telefone ainda não aprovada (o app já a bloqueia antes), ou peça para eu simular. Se aparecer em uso normal, é sinal de regra do Firestore a ajustar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.4', nome: 'Cadastro de fornecedores guardado no aparelho', status: 'concluida',
+        novidades: [
+            'Firebase gratuito: o cadastro de fornecedores (cerca de 1.170 documentos, que quase não muda) ficava sendo lido inteiro a cada abertura. Agora uma cópia fica guardada neste aparelho por até 12 horas e o app só lê o Firebase de novo quando a cópia vence ou quando você abre uma tela que altera o cadastro (Fornecedores, Importar, Entrada e Editor de NF). Nessas telas ele volta a ser "ao vivo". Somado à 2.19.3, uma abertura comum caiu de cerca de 6.200 para cerca de 2.300 leituras.',
+            'Como o cadastro vem da cópia, os nomes e apelidos dos fornecedores também aparecem mais cedo na abertura.'
+        ],
+        implementado: ['FORN_CACHE_CHAVE, lerCacheFornecedores e salvarCacheFornecedores (js/05); fornecedoresSpData saiu de DADOS_ESSENCIAIS e entrou em DADOS_POR_TELA de screen-fornecedores, screen-import, screen-xml-editor e screen-nf-editor. A cópia é por usuário e se atualiza sempre que o Firebase responde.'],
+        mudou: ['Arquivos alterados: js/05, js/14 e js/31.'],
+        testar: ['Edite um apelido em Fornecedores, volte a outra tela e confira que o novo nome aparece; feche e abra o app e confira de novo.', 'Dê entrada num XML de um fornecedor novo: ele deve aparecer no cadastro.', 'Se alterar o cadastro em outro aparelho, abra Fornecedores neste para atualizar na hora (ou espere até 12 h).', 'No Firebase Console (Firestore → Uso), compare as leituras por dia.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.3', nome: 'Menos leituras do Firebase e conversa do Assistente guardada', status: 'concluida',
+        novidades: [
+            'Firebase gratuito (limite de 50 mil leituras por dia): o app lia cerca de 6.200 documentos a cada abertura. Os produtos do SP Data (cerca de 2.700 documentos, quase metade) deixaram de subir sozinhos em segundo plano: agora sobem só quando você abre uma tela que os usa (Central do pedido, Cotações, Entrada/Editor de NF, SP Data, Nova Auditoria, Auditoria Retroativa e Backup). Uma abertura comum do app caiu para cerca de 3.500 leituras, então cabem quase o dobro de aberturas por dia.',
+            'Assistente: a conversa fica guardada neste aparelho (não usa o Firebase) e volta quando você abre o Assistente de novo, mesmo depois de fechar o app. Guarda as últimas 40 mensagens. "Nova conversa" apaga. A IA continua recebendo só as últimas 3 perguntas.'
+        ],
+        implementado: ['produtosSpData fora de DADOS_SEGUNDO_PLANO e em DADOS_POR_TELA["screen-auditoria-retro"]; o listener refaz a Central do pedido e a associação do XML quando os produtos chegam (js/05). iaSalvarHistorico, iaRestaurarHistorico e IA_HIST_CHAVE (js/37).'],
+        mudou: ['Arquivos alterados: js/05, js/14, js/31 e js/37.'],
+        testar: ['Abra o app e vá direto à Central de um pedido: o nome SP Data dos produtos deve aparecer (pode levar um instante a mais na primeira vez).', 'Abra Cotações, uma NF no Editor da NF e a Nova Auditoria: a lista de produtos do SP Data deve estar completa.', 'Faça uma pergunta ao Assistente, feche e abra o app, abra o Assistente: a conversa deve estar lá. "Nova conversa" deve limpar.', 'No Firebase Console (Firestore → Uso), compare as leituras por dia nos próximos dias.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.2', nome: 'Menos engasgos, cotações por fornecedor e cartão do Gerenciar', status: 'concluida',
+        novidades: [
+            'Cotações por fornecedor: cada fornecedor ganhador, na Central do pedido, mostra logo abaixo do CNPJ se todos os itens dele tiveram 3+ cotações ("✓ Todos os 19 itens têm 3+ cotações") ou quantos ficaram abaixo ("⚠ 2 de 3 itens com menos de 3 cotações · Recurso Próprio"). Aberto o cartão, a lista traz os itens abaixo do mínimo e quantos cotaram cada um. O mínimo é o de Configurações → Análise de cotações (3 se vazio).',
+            'Assistente: nova consulta "cotações por fornecedor". Pergunte, por exemplo, "do pedido 1744, algum item do fornecedor X ficou abaixo de 3 cotações?" (vale na IA e no modo básico).',
+            'Engasgos: a troca de abas, a volta das Cotações e a dock ficaram bem mais rápidas. A checagem de fornecedor que entrou na 2.19.1 e várias contas repetidas (nome de fornecedor, grupo do fornecedor, palavras do produto, comparação do pedido) agora são feitas uma vez só por tela. Nos seus dados, abrir Cotações caiu de cerca de 3 s para menos de 0,3 s no teste.',
+            'Dock e cabeçalho: deixaram de medir a tela inteira a cada mudança em qualquer cartão (era isso que travava a dock e o "voltar" depois de expandir). Só medem quando a tela ativa muda.',
+            'Gerenciar NF: o cartão era desenhado antes de as NFs processadas chegarem e não era redesenhado; por isso "Pedido" ficava em branco e todas diziam "Ainda não passou pela Entrada Segura". Agora ele se atualiza quando os dados chegam. O número do pedido leva direto ao pedido, já aberto no fornecedor da nota.',
+            'Gerenciar NF: tirei o selo "Na relação" (a tela inteira já é a relação; só "Em espera" aparece) e a NF sem XML virou a linha discreta "sem XML processado", sem botão.',
+            'Espaçamentos: Auditoria (cartões e filtros em linhas que quebram, busca com texto mais curto) e Entrada de NF (botões "Ver outros itens desse fornecedor" e "Mostrar itens de outros fornecedores" não ficam mais colados).'
+        ],
+        implementado: ['comMemoComparacao/compararFontesPedido (js/11) e envoltório das telas em js/39; índices e memória em nomeExibicaoFornecedor/docsDaMesmaEntidadeSpData (js/14), cnpjsDaMesmaEntidadeFornecedor (js/10) e tokensNomeProduto (js/11); resumoCotacoesDoFornecedor e htmlResumoCotacoesFornecedor (js/12) usados em js/09; cotacoes_por_fornecedor em js/37; atualizarGerenciarComDados e DADOS_POR_TELA["screen-manage"] em js/05; observador de tela ativa em js/22.'],
+        mudou: ['Arquivos alterados: style.css, js/05, js/09, js/10, js/11, js/12, js/14, js/22, js/31, js/37 e js/39.'],
+        testar: ['Abra Cotações, Mais e as abas da dock em sequência: a troca deve ser imediata e a dock não deve crescer sem rótulos nem exigir vários toques.', 'Em Cotações, expanda alguns pedidos e volte: sem travar.', 'Pedido 1744: cada fornecedor mostra a faixa de cotações (RIOCLARENSE: todos os 19 itens com 3+). Procure um fornecedor com itens abaixo (ex.: FARMATER) e abra o cartão para ver a lista.', 'Gerenciar NF: o número do pedido aparece em todas as NFs com pedido, e tocar nele abre a Central do pedido no cartão daquele fornecedor; sem selo "Na relação"; NF sem XML mostra só o texto discreto.', 'Assistente: pergunte "Do pedido 1744 qual fornecedor não alcançou 3 cotações?".', 'Entrada de NF, item sem associação: confira o espaço entre os dois botões de baixo do seletor. Auditoria: confira o espaço entre os cartões e se os filtros quebram em linhas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.1', nome: 'Não chegou, relato manual e ajustes da Auditoria', status: 'concluida',
+        novidades: [
+            '"Não chegou": item da cotação que ainda não veio em NF deixa de ser contado como divergência. Ganhou selo próprio (azul), contagem à parte, filtro "Não chegou" na Auditoria e aviso discreto ("Quando der") na Central de notificações. Continua detectável e relatável igual a uma divergência. No cartão do fornecedor aparece "20 de 37 itens chegaram" e o tile Itens mostra 20/37.',
+            'Relatar de verdade: no formulário "Alterar status" da divergência, escolher "Pendência relatada" agora é o ato de relatar (antes o histórico registrava "Reaberta — Por WhatsApp"). Auditoria nova aparece como "Gerada, ainda não relatada" até você marcar. O histórico ganhou os rótulos "Relatada" e "Gerada".',
+            'Dipirona e outras: uma auditoria sem CNPJ (nome do fornecedor digitado diferente da cotação) estava sendo ligada a item de OUTRO fornecedor só porque o nome do produto era parecido, e o item aparecia como "Pendência relatada" sem auditoria sua. Agora, sem CNPJ, o fornecedor da auditoria precisa combinar com o do item.',
+            'Exportar divergências do pedido: botão "Exportar divergências do pedido" na Central do pedido (e na Auditoria, ao buscar o número do pedido) gera um texto só com as divergências em aberto de todos os fornecedores, agrupado por fornecedor e NF, e compartilha/copia. Depois pergunta se marca todas como relatadas.',
+            'Gerenciar NF: botão "Editar NF" no cartão da nota, que abre o Editor da NF (trocar o pedido, itens) sem sair pelo Controle.',
+            'NF sem XML: deixou de aparecer como pendência vermelha no Controle de NFs; agora é uma linha discreta "só no ERP · sem XML processado" (com atalho para abrir).',
+            'Removida a lista "Itens lançados" da Central do pedido, que repetia o que cada item já mostra com "Confere".'
+        ],
+        implementado: ['soNaoChegou em compararFontesPedido e seloEstadoOcorrencia(estado, qtd, soNaoChegou) (js/11); filtro e lote por grupo em js/39; relatado/gerada em confirmarAlteracaoStatusCentral (js/09); filtro de fornecedor em divergenciasAuditoriaDoItem; textoDivergenciasPedido/exportarDivergenciasPedido (js/39); idEditorNfDaNota (js/11) usado em js/05; info:true em pendenciasDetalhadasControle (js/17).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/05, js/09, js/11, js/14, js/17, js/20, js/31, js/34 e js/39.'],
+        testar: ['Pedido 1744: o cartão da Supermed deve mostrar "N de M itens chegaram" e os itens faltantes com selo azul "Não chegou", fora da contagem de divergências.', 'Dipirona (DIPHA, cód. 221): não deve mais aparecer como "Pendência relatada".', 'Lidocaína: em "Alterar status", escolher "Pendência relatada" e conferir que o histórico mostra "Relatada", não "Reaberta".', 'Central do pedido → "Exportar divergências do pedido": compartilhar e responder à pergunta de marcar como relatadas.', 'Gerenciar NF: tocar em "Editar NF" no cartão de uma nota.', 'Controle de NFs: NF só do ERP deve mostrar a linha discreta, sem o selo vermelho de pendência.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.0', nome: 'Central de auditoria', status: 'concluida',
         novidades: [
             'Nova tela Auditoria (Mais → Auditoria, e no menu lateral): uma lista única de ocorrências, uma por item, de todos os pedidos, com os filtros Em aberto, Relatadas, Resolvidas e Excluídas. Os mesmos dados continuam aparecendo na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios; é aqui que você mexe.',
             'Salvar não é relatar: gerar o texto da auditoria e salvar a NF só criam a ocorrência em aberto (amarela). Ela só vira "relatada" quando você toca em "Marcar como relatada" (e dá para voltar com "Voltar para em aberto"). Auditorias antigas continuam valendo como relatadas, sem reescrever nada.',
@@ -2386,10 +2451,15 @@ async function salvarMinimosCotacoes() {
 // alias antigo por texto (encontrarApelidoFornecedor) — mantido só como
 // último recurso, sem apagar nada do que já existia.
 // 2.9.4: todos os cadastros ligados a um (matriz/filial/CD associados) — só leitura, inclui o próprio.
+// 2.19.2: índice por id e memória dos nomes, refeitos só quando a lista do SP Data é trocada (antes cada chamada varria os ~1.200 cadastros; a Central e as Cotações chamam isso centenas de vezes).
+let _spPorId = null, _spPorIdLista = null, _memoNomeForn = new Map(), _memoNomeFornLista = null;
+function indiceSpDataPorId() {
+    if (_spPorIdLista !== listaFornecedoresSpData) { _spPorIdLista = listaFornecedoresSpData; _spPorId = {}; listaFornecedoresSpData.forEach(f => { _spPorId[f.id] = f; }); }
+    return _spPorId;
+}
 function docsDaMesmaEntidadeSpData(doc) {
     if (!doc) return [];
-    const porId = {};
-    listaFornecedoresSpData.forEach(f => { porId[f.id] = f; });
+    const porId = indiceSpDataPorId();
     const visitado = new Set(), pilha = [doc.id], docs = [];
     while (pilha.length) {
         const id = pilha.pop();
@@ -2413,8 +2483,16 @@ function apelidoFornecedorDoc(doc) {
     return outro ? { nome: outro.nomeExibido, herdado: true } : { nome: '', herdado: false };
 }
 function nomeExibicaoFornecedor(razaoSocial, cnpj) {
+    if (_memoNomeFornLista !== listaFornecedoresSpData) { _memoNomeFornLista = listaFornecedoresSpData; _memoNomeForn = new Map(); }
+    const chave = normalizarCnpj(cnpj) + '|' + (razaoSocial || '');
+    if (_memoNomeForn.has(chave)) return _memoNomeForn.get(chave);
+    const r = _nomeExibicaoFornecedorCalc(razaoSocial, cnpj);
+    _memoNomeForn.set(chave, r);
+    return r;
+}
+function _nomeExibicaoFornecedorCalc(razaoSocial, cnpj) {
     if (cnpj) {
-        const doc = listaFornecedoresSpData.find(f => f.cnpjs.some(c => mesmoCnpj(c.cnpj, cnpj)));
+        const doc = docFornecedorSpDataPorCnpj(cnpj);
         if (doc) return apelidoFornecedorDoc(doc).nome || doc.nomeReal || razaoSocial || '';
     }
     if (!razaoSocial) return '';

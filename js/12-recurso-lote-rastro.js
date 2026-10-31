@@ -19,6 +19,32 @@ function participantesDoItem(pedido, codigo) {
     const n = item ? Number(item.participantes) : NaN;
     return Number.isFinite(n) ? n : null;
 }
+// 2.19.2: resumo, por fornecedor ganhador, de quantos itens dele atingiram o mínimo de cotações (3 por padrão; abaixo disso a compra é com Recurso Próprio).
+// Lê o mesmo dado do item (relatório de ganhadores do pedido); item sem dado no relatório conta à parte, nunca como "abaixo".
+function resumoCotacoesDoFornecedor(pedido, produtos) {
+    const minimo = minimoFornecedoresCC();
+    const r = { minimo, total: 0, ok: 0, abaixo: [], semDado: 0 };
+    (produtos || []).forEach(it => {
+        r.total++;
+        const n = participantesDoItem(pedido, it.codProduto);
+        if (n === null) r.semDado++;
+        else if (n >= minimo) r.ok++;
+        else r.abaixo.push({ nome: it.nomeOficial || it.descricao || it.codProduto, n });
+    });
+    return r;
+}
+function htmlResumoCotacoesFornecedor(pedido, produtos) {
+    const r = resumoCotacoesDoFornecedor(pedido, produtos);
+    if (!r.total || r.semDado === r.total) return { curto: '', detalhe: '' };
+    const conhecidos = r.total - r.semDado;
+    let curto;
+    if (r.abaixo.length) curto = `<div class="cf-cot3 alerta">⚠ ${r.abaixo.length} de ${r.total} ${r.total === 1 ? 'item' : 'itens'} com menos de ${r.minimo} cotações · Recurso Próprio</div>`;
+    else curto = `<div class="cf-cot3 ok">✓ ${conhecidos === r.total ? (r.total === 1 ? 'O item tem' : 'Todos os ' + r.total + ' itens têm') : conhecidos + ' de ' + r.total + ' itens têm'} ${r.minimo}+ cotações</div>`;
+    const detalhe = r.abaixo.length
+        ? `<div class="ctl-inf cf-inf">Abaixo de ${r.minimo} cotações (Recurso Próprio): ${r.abaixo.map(x => `${escRel(x.nome)} (${x.n})`).join(', ')}${r.semDado ? ` · ${r.semDado} sem dado no relatório` : ''}</div>`
+        : (r.semDado ? `<div class="ctl-inf cf-inf">${r.semDado} ${r.semDado === 1 ? 'item sem dado' : 'itens sem dado'} no relatório de cotações.</div>` : '');
+    return { curto, detalhe };
+}
 function determinarRecursoPorCotacao(pedido, codigo) {
     const n = participantesDoItem(pedido, codigo);
     if (n === null) return null;

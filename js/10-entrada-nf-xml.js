@@ -898,8 +898,15 @@ function chaveAssociacaoFornecedor(cnpjEmit, codigoFornecedor) {
 // Reaproveita a mesma ideia de agrupamento por entidadesRelacionadas usada em
 // listaFornecedoresUnificada(), mas partindo de um CNPJ (não de um id de
 // documento). Só leitura.
+// 2.19.2: memória por CNPJ, refeita só quando a lista do SP Data é trocada (era recalculada, varrendo ~1.200 cadastros, a cada item de cada tela).
+let _memoEntidade = new Map(), _memoEntidadeLista = null;
 function cnpjsDaMesmaEntidadeFornecedor(cnpj) {
     cnpj = normalizarCnpj(cnpj);
+    if (_memoEntidadeLista !== listaFornecedoresSpData) { _memoEntidadeLista = listaFornecedoresSpData; _memoEntidade = new Map(); }
+    if (!_memoEntidade.has(cnpj)) _memoEntidade.set(cnpj, _cnpjsDaMesmaEntidadeCalc(cnpj));
+    return _memoEntidade.get(cnpj).slice();
+}
+function _cnpjsDaMesmaEntidadeCalc(cnpj) {
     const docInicial = listaFornecedoresSpData.find(f => (f.cnpjs || []).some(c => c.cnpj === cnpj));
     if (!docInicial) return [cnpj];
     const porId = {};

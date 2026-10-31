@@ -32,15 +32,20 @@ function itensDeAtencao() {
         semEntrega.map(c => ({ pedido: String(c.pedido), forn: '', t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `prazo ${dataBRdeISO(c.dataLimite)} (${diasDesdeISO(c.dataLimite)} dia(s) atrás) · ${(c.fornecedores || []).length} fornecedor(es)`, fn: `abrirCentralPedido('${escRel(c.pedido)}')` })));
 
     // ---- MÉDIA (Importante): ocorrências detectadas e ainda SEM relato (2.17.0). Mesma contagem "em aberto" do cartão do pedido.
-    const semRelato = [];
+    const semRelato = [], naoChegou = [];
     listaCotacoes.forEach(c => {
         const p = String(c.pedido); if (!nfPorPedido.has(p) && !erpPorPedido.has(p)) return; // sem NF não há o que comparar
         let comp = []; try { comp = compararFontesPedido(c.pedido); } catch (e) { return; }
-        const abertas = comp.filter(x => x.estado === 'detectada');
+        const abertas = comp.filter(x => x.estado === 'detectada' && !x.soNaoChegou);
         if (abertas.length) semRelato.push({ c, abertas });
+        const nc = comp.filter(x => x.estado === 'detectada' && x.soNaoChegou); // 2.19.1: "não chegou" é um aviso à parte, discreto
+        if (nc.length) naoChegou.push({ c, nc });
     });
     add('media', 'ocorrencias-sem-relato', 'Ocorrências detectadas sem relato', 'O app achou diferença entre cotação e NF e ninguém relatou ainda. Abra o pedido e registre a auditoria.',
         semRelato.map(({ c, abertas }) => ({ pedido: String(c.pedido), forn: [...new Set(abertas.map(x => { const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === normalizarCnpj(x.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : ''; }).filter(Boolean))].join(', '), t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `${abertas.length} ocorrência(s) em aberto`, fn: `abrirCentralPedido('${escRel(String(c.pedido))}')` })));
+
+    add('baixa', 'itens-nao-chegaram', 'Itens que ainda não chegaram', 'Itens da cotação que ainda não vieram em NF. Não é divergência: pode vir em outra NF. Dá para relatar na Auditoria.',
+        naoChegou.map(({ c, nc }) => ({ pedido: String(c.pedido), forn: [...new Set(nc.map(x => { const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === normalizarCnpj(x.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : ''; }).filter(Boolean))].join(', '), t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `${nc.length} item(ns) não chegaram`, fn: `abrirCentralPedido('${escRel(String(c.pedido))}')` })));
 
     // ---- MÉDIA: divergências pendentes
     // 2.11.6: usa a MESMA lista da tela Relatórios → Divergências (divergenciasRel), com a mesma regra de status

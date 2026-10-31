@@ -51,13 +51,14 @@ const AJUDA_ARTIGOS = [
         'Salve a NF. Ao salvar, o recurso dos itens é gravado na cotação.'
       ],
       dicas: ['Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.'], tutorial: 'xml-ao-texto' },
-    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.16.0',
+    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.19.2',
       resumo: 'Trabalhar com a relação de notas pendentes.',
       palavras: 'gerenciar notas pendentes espera lote editar arquivar excluir selecionar conferida divergencia',
       tela: [{ id: 'screen-manage', titulo: 'Gerenciar', rotulo: 'Abrir Gerenciar' }],
       passos: [
         'Cada nota mostra um selo de situação: Conferida, Compra direta, Sem pedido vinculado, Pendência relatada, Divergência resolvida ou Divergência (ainda sem relato). O selo olha só os itens daquela NF. Pendência relatada e resolvida têm o mesmo peso: não pedem ação sua. Toque no selo para ir direto ao pedido.',
         'Para agir em várias notas, ative a seleção e marque as notas. Enquanto você seleciona, a dock principal dá lugar à dock de seleção: Todas, marcar como pendente (em espera), remover a pendência, editar em lote, arquivar e excluir. O ✕ à esquerda cancela a seleção.',
+        'O número do pedido no cartão é um atalho: leva direto à Central do pedido, no cartão do fornecedor daquela nota. Notas sem XML processado mostram só a linha discreta "sem XML processado".',
         'Notas em espera não entram na Saída de Texto.',
         'Se aparecer o aviso de notas sem recurso mas com recurso já conhecido pela Entrada de NF, toque em "Aplicar em todas" (ou aplique nota a nota).'
       ],
@@ -86,7 +87,7 @@ const AJUDA_ARTIGOS = [
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
-    { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.19.0',
+    { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.19.1',
       resumo: 'Ver, relatar, resolver, excluir e restaurar as ocorrências (uma por item) de todos os pedidos.',
       palavras: 'auditoria ocorrencia divergencia relatar relatada resolvida excluir restaurar unidade fator embalagem falso positivo total nf cotacao',
       tela: [{ id: 'screen-auditoria-central', titulo: 'Auditoria', rotulo: 'Abrir Auditoria' }],
@@ -97,7 +98,9 @@ const AJUDA_ARTIGOS = [
         'Quando a quantidade e o valor mudam em proporção inversa e o total da NF fecha com o da cotação (por exemplo, cotado por unidade e faturado em pacote com 50), o app mostra UMA ocorrência de unidade e sugere o fator. Toque em "Aplicar fator" para resolver; "Desfazer fator" volta atrás.',
         'Para um falso positivo, use "Excluir". A ocorrência sai das listas e dos avisos, e dá para recuperar no filtro Excluídas com "Restaurar".',
         'Com várias ocorrências do mesmo fornecedor em aberto (por exemplo, vários itens não faturados), use "Relatar as N de ..." para marcar todas de uma vez.',
-        'Na Entrada de NF, o resumo mostra o total da NF contra o total cotado só dos itens que vieram. A diferença é de preço, já com a unidade convertida; a de quantidade aparece como ocorrência própria.'
+        'Na Entrada de NF, o resumo mostra o total da NF contra o total cotado só dos itens que vieram. A diferença é de preço, já com a unidade convertida; a de quantidade aparece como ocorrência própria.',
+        '"Não chegou" é o item da cotação que ainda não veio em NF. Não conta como divergência (pode vir em outra NF), tem selo azul e filtro próprio, e dá para relatar igual. O cartão do fornecedor mostra "20 de 37 itens chegaram".',
+        'Para enviar tudo de uma vez, use "Exportar divergências do pedido" na Central do pedido: gera um texto com as divergências em aberto de todos os fornecedores e depois pergunta se marca como relatadas.'
       ] },
     { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.5',
       resumo: 'Ver o que foi ligado sozinho nas NFs do ERP e resolver só o que depende de você.',
@@ -115,7 +118,7 @@ const AJUDA_ARTIGOS = [
         'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
       ],
       dicas: ['O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.', 'Na entrada (XML e relatório do ERP) o app já mostra "Verificações da entrada" com os avisos que valem conferir na hora.'], tutorial: null },
-    { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.14.0',
+    { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.19.3',
       resumo: 'Uma IA que responde perguntas sobre os dados do app, só lendo, sem alterar nada.',
       palavras: 'assistente ia inteligencia artificial pergunta consulta chat divergencia material quantidade fornecedor pedido nf',
       tela: [{ id: 'screen-assistente', titulo: 'Assistente', rotulo: 'Abrir o Assistente' }],
@@ -125,6 +128,8 @@ const AJUDA_ARTIGOS = [
         'Abra Mais → Assistente e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
         'As respostas vêm com negrito e listas. "pedido 1731" e "NF 36435" aparecem como links: toque para abrir a Central do pedido ou a NF. Enquanto a IA responde, o botão vira "■ Parar" e mostra os segundos; no fim aparece o tempo da resposta e o botão Copiar. "+ Nova conversa" limpa a conversa.',
         'A IA também sabe média, mínimo e máximo dos preços das compras e a marca dos produtos (ela sai da descrição da cotação do SmartCompras): pergunte, por exemplo, "média de preço das últimas compras de atadura crepom 15cm" ou "cotações de norepinefrina da marca Fresenius".',
+        'A conversa fica guardada neste aparelho (as últimas 40 mensagens) e volta quando você abre o Assistente de novo. "+ Nova conversa" apaga o histórico.',
+        'Também responde sobre cotações: "do pedido 1744, algum item do fornecedor X ficou abaixo de 3 cotações?" (item com menos de 3 cotações é pago com Recurso Próprio).',
         'Sob cada resposta aparece "Consultas feitas": são as consultas que o Assistente fez nos dados do app. Ele não inventa números: quando não acha, diz que não achou.',
         'O Assistente só lê. Para resolver algo (confirmar pedido, marcar chegada), use as telas do app.'
       ],
@@ -166,13 +171,14 @@ const AJUDA_ARTIGOS = [
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
       dicas: ['Tocar no selo ou no quadro "Em aberto" do cartão leva direto ao item.'], tutorial: null },
-    { id: 'fornecedores', cat: 'Fornecedores e produtos', titulo: 'Fornecedores: apelido e CNPJs vinculados', versao: '2.10.0',
+    { id: 'fornecedores', cat: 'Fornecedores e produtos', titulo: 'Fornecedores: apelido e CNPJs vinculados', versao: '2.19.4',
       resumo: 'Apelido único para filiais e vínculo automático por CNPJ.',
       palavras: 'fornecedor apelido nome exibicao cnpj vincular desvincular filial grupo',
       tela: [{ id: 'screen-fornecedores', titulo: 'Fornecedores', rotulo: 'Abrir Fornecedores' }],
       passos: [
         'Em Ajustes → Fornecedores, abra o cartão do fornecedor.',
         'Defina o apelido (nome de exibição). Ele vale para todos os CNPJs vinculados ao mesmo fornecedor.',
+        'O cadastro fica guardado neste aparelho por até 12 horas (para gastar menos leituras do Firebase). Ao abrir Fornecedores, Importar ou a Entrada de NF ele é atualizado na hora. Se você mudou algo em outro aparelho, abra Fornecedores aqui para ver.',
         'Para juntar filiais, use "Vincular": digite parte do nome e escolha (o app sugere nomes parecidos).',
         'CNPJs com os mesmos 8 primeiros dígitos (mesma empresa) são vinculados automaticamente ao subir um XML ou importar o relatório.',
         'Para separar um CNPJ do grupo, use "Desvincular este CNPJ".'
@@ -230,7 +236,7 @@ const AJUDA_ARTIGOS = [
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.18.0',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.19.2',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
       palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
@@ -239,6 +245,7 @@ const AJUDA_ARTIGOS = [
         'Ao abrir um produto, o card traz Produto, Quantidade e valores, Cotação e recurso e o SP Data. Em "Cotação e recurso" você vê quantos fornecedores cotaram, o vencedor e o recurso: "Pela cotação" (previsto pelo número de fornecedores, gravado ao salvar a NF) ou "Confirmado na NF".',
         'Em Cotações, toque no cartão do pedido.',
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
+        'Logo abaixo do CNPJ, o cartão diz se todos os itens do fornecedor tiveram 3+ cotações ou quantos ficaram abaixo (esses são pagos com Recurso Próprio). Ao abrir o cartão, a lista mostra quais itens e quantos fornecedores cotaram cada um.',
         'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou ou Desfazer a marca manual.',
         'Em Associar NF, a lista mostra as NFs da mesma entidade do fornecedor. Se ele entregou por outro CNPJ, digite o número da NF: a busca passa a valer para todos os fornecedores e indica o nome e "outro CNPJ".',
         'Ao associar uma NF do histórico, o app liga sozinho os itens à cotação (por SP Data, e também por nome, quantidade e preço próximo, mesmo sem o texto do SmartCompras colado). Só liga quando é inequívoco e nunca troca uma associação sua. Abaixo da NF associada, "Itens lançados" mostra o que foi lançado e a qual produto da cotação cada item ficou ligado. A NF aparece aí mesmo que ainda esteja esperando decisão no Controle. Itens sem nome oficial (relatório do SmartCompras não colado) mostram o nome lançado no ERP, marcado como tal.',
@@ -347,11 +354,12 @@ const AJUDA_ARTIGOS = [
       tela: [{ id: 'screen-observacoes', titulo: 'Observações', rotulo: 'Abrir Observações' }],
       passos: ['Em Ajustes → Observações, mantenha a lista de recursos que aparece ao cadastrar ou editar uma nota e na importação do ERP.'],
       dicas: ['O recurso que você escolhe aqui é o que sai na Saída de Texto.'], tutorial: null },
-    { id: 'conta-acesso', cat: 'Ajustes e dados', titulo: 'Conta, senha e aprovação de pessoas', versao: '2.10.1',
+    { id: 'conta-acesso', cat: 'Ajustes e dados', titulo: 'Conta, senha e aprovação de pessoas', versao: '2.19.5',
       resumo: 'Seu nome, senha e (para o administrador) criar contas e liberar acessos.',
       palavras: 'conta senha nome alterar criar conta aprovacao acesso google telefone admin gerar senha',
       tela: [{ id: 'screen-conta', titulo: 'Conta', rotulo: 'Abrir Conta' }],
       passos: [
+        'Se aparecer o aviso "O Firebase negou o acesso aos dados", a conta não está aprovada (o administrador aprova em Aprovações de Acesso) ou as regras do Firestore precisam de ajuste. "Limite diário do Firebase atingido" é o plano gratuito: volta a funcionar no dia seguinte.',
         'Em Ajustes → Conta, defina seu Nome (só personaliza mensagens) e, se entra por e-mail e senha, use "Alterar Senha".',
         'O administrador cria contas ali mesmo: e-mail, nome (opcional) e senha temporária (mín. 6 caracteres; "Gerar senha" sugere uma). A pessoa já entra aprovada.',
         'Pessoas que entram pelo Google ou telefone aparecem em Aprovações de Acesso; aprove para liberar.'

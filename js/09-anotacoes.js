@@ -178,7 +178,7 @@ let centralFornecedoresAbertos = new Set();
 let centralStatusFormAberto = new Set();
 let voltarAnotacaoEditorParaCentral = null; // guarda o pedido, se o editor de texto foi aberto a partir da Central
 
-const ROTULOS_HISTORICO = { identificacao: 'Identificado', resolucao: 'Resolvido', encerramento: 'Encerrado', reabertura: 'Reaberto' };
+const ROTULOS_HISTORICO = { identificacao: 'Identificado', resolucao: 'Resolvido', encerramento: 'Encerrado', reabertura: 'Reaberto', relato: 'Relatado', geracao: 'Gerado' };
 
 // Fase 37: a cotação individual tem abas (Produtos · Anotações · Relatório · Dados), no mesmo padrão das abas de Relatórios.
 function alternarAbaCentral(aba) {
@@ -240,12 +240,14 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
     // 2.17.2: cartão único e fechado em si mesmo — o que é (tipo), de quem/qual NF/pedido, o texto, e a linha do tempo (o que foi registrado
     // e quando), tudo dentro da mesma moldura. "Pendente" da auditoria = pendência RELATADA (já com o responsável): cinza, não vermelho.
     const def = TIPOS_DIVERGENCIA_AUDITORIA[d.tipo];
-    const rotuloStatus = status === 'pendente' ? 'Pendência relatada' : status === 'resolvida' ? 'Resolvida' : 'Encerrada';
+    // 2.19.1: auditoria nova nasce "gerada" (relatado:false); só é "Pendência relatada" depois de você marcar. Auditoria antiga (sem o campo) segue relatada.
+    const naoRelatada = status === 'pendente' && d.relatado === false;
+    const rotuloStatus = naoRelatada ? 'Gerada, ainda não relatada' : status === 'pendente' ? 'Pendência relatada' : status === 'resolvida' ? 'Resolvida' : 'Encerrada';
     const linhasHTML = linhas.map(l => `<div class="cdv-linha">${escRel(l)}</div>`).join('');
     const chips = [oc.fornecedor ? upAud(oc.fornecedor) : '', oc.notaFiscal ? `NF ${oc.notaFiscal}` : '', centralPedidoAtual ? `Pedido ${centralPedidoAtual}` : ''].filter(Boolean)
         .map(x => `<span class="cdv-chip">${escRel(x)}</span>`).join('');
 
-    const ROT = { identificacao: 'Relatada na auditoria', resolucao: 'Resolvida', encerramento: 'Encerrada', reabertura: 'Reaberta' };
+    const ROT = { identificacao: 'Relatada na auditoria', resolucao: 'Resolvida', encerramento: 'Encerrada', reabertura: 'Reaberta', relato: 'Relatada', geracao: 'Gerada' };
     const historico = d.historico || [];
     const historicoHTML = historico.length ? `<div class="cdv-hist">
         ${historico.map(h => `<div class="cdv-hist-item"><span class="cdv-ponto ${h.tipo === 'resolucao' ? 'ok' : h.tipo === 'encerramento' ? 'fim' : ''}"></span><span class="cdv-hist-data">${escRel(formatarDataBRSimples(h.data))}</span><span>${escRel(ROT[h.tipo] || ROTULOS_HISTORICO[h.tipo] || h.tipo)}${h.observacao ? ' — ' + escRel(h.observacao) : ''}</span></div>`).join('')}
@@ -256,7 +258,8 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
     const statusFormHTML = formAberto ? `
         <div class="central-status-form">
             <select id="central-status-select-${key}" class="form-field">
-                <option value="pendente" ${status === 'pendente' ? 'selected' : ''}>Pendência relatada</option>
+                ${d.relatado === false ? `<option value="gerada" ${status === 'pendente' ? 'selected' : ''}>Gerada, ainda não relatada</option>` : ''}
+                <option value="pendente" ${status === 'pendente' && d.relatado !== false ? 'selected' : ''}>Pendência relatada</option>
                 <option value="resolvida" ${status === 'resolvida' ? 'selected' : ''}>Resolvida</option>
                 <option value="encerrada" ${status === 'encerrada' ? 'selected' : ''}>Encerrada</option>
             </select>
@@ -371,7 +374,11 @@ function renderCentralPedidoCompleto(pedido) {
             // 2.16.0: UMA contagem, pelo estado da ocorrência de cada item (nunca soma comparação + auditoria do mesmo problema).
             // Em aberto = detectada (sem relato: depende de você). Relatada tem o peso de resolvida: aparece, mas não acende o cartão.
             const estadosForn = compForn.map(c => c.estado);
-            const nAbertas = estadosForn.filter(e => e === 'detectada').length;
+            const nAbertas = compForn.filter(c => c.estado === 'detectada' && !c.soNaoChegou).length;
+            const nNaoChegou = compForn.filter(c => c.estado === 'detectada' && c.soNaoChegou).length; // 2.19.1: "não chegou" não é divergência: conta à parte
+            const arrivedSit = ['nf', 'erp', 'resolvido', 'parcial', 'parcial_relatada', 'erp_sem_quantidade'];
+            const nChegaram = entrega && entrega.itens ? entrega.itens.filter(x => arrivedSit.includes(x.situacao)).length : 0;
+            const chegadaTxt = (entrega && entrega.total && nChegaram > 0 && nChegaram < entrega.total) ? `${nChegaram} de ${entrega.total} itens chegaram` : '';
             const nRelatadas = estadosForn.filter(e => e === 'relatada').length + divSoltas.filter(x => (x.d.status || 'pendente') === 'pendente').length;
             const emErro = nAbertas > 0;
             const entregaOk = !!(entrega && (entrega.estado === 'completa' || entrega.estado === 'parcial_relatada')); // 2.16.1: parcial já chegou (falta relatada) pesa como entregue
@@ -382,14 +389,16 @@ function renderCentralPedidoCompleto(pedido) {
             // 2.9.0: cartão no padrão do app — iniciais, nome, status, itens/valor/pendências e (abaixo) as ações; o corpo continua recolhível.
             const valorCot = (typeof valorTotalCotacaoPorFornecedor === 'function') ? valorTotalCotacaoPorFornecedor(cotacao, f.cnpj) : 0;
             const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', entrega.estado === 'parcial_relatada' ? 'Chegou (parcial)' : 'Entregue'] : ['m', 'Aguardando']);
-            const pendTxt = [nAbertas ? `${nAbertas} divergência(s) em aberto` : '', nRelatadas ? `${nRelatadas} pendência(s) relatada(s)` : ''].filter(Boolean).join(' · ');
-            const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('');
+            const pendTxt = [chegadaTxt, nAbertas ? `${nAbertas} divergência(s) em aberto` : '', nNaoChegou ? `${nNaoChegou} não chegou` : '', nRelatadas ? `${nRelatadas} pendência(s) relatada(s)` : ''].filter(Boolean).join(' · ');
+            const cot3 = htmlResumoCotacoesFornecedor(pedido, produtos); // 2.19.2: itens do fornecedor que não atingiram o mínimo de cotações
+            const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('') + cot3.detalhe;
             return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}" data-cnpj="${f.cnpj}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
                     <div class="ctl-av">${iniciaisControle(nomeExibicao)}</div>
                     <div class="cf-topo-info">
                         <div class="cf-nome">${nomeExibicao}</div>
                         ${f.cnpj ? `<div class="cf-cnpj">CNPJ ${formatarCnpjExibicao(f.cnpj)}</div>` : ''}
+                        ${cot3.curto}
                     </div>
                     <span class="ctl-st ${emErro ? 'err ctl-link' : stRot[0]}"${emErro ? ` onclick="event.stopPropagation(); irParaDivergenciaCartao('${f.cnpj}')"` : ''}>${stRot[1]}</span>
                     <i class="fa-solid fa-chevron-right"></i>
@@ -397,7 +406,7 @@ function renderCentralPedidoCompleto(pedido) {
                 ${acoesHTML}
                 <div class="central-colapso"><div class="central-colapso-inner"><div class="central-fornecedor-body">
                     ${faixaHTML}
-                    <div class="cf-tiles"><div><span>Itens</span><strong>${produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div${(nAbertas + nRelatadas) ? ` class="ctl-link" onclick="irParaDivergenciaCartao('${f.cnpj}')"` : ''}><span>Em aberto</span><strong class="${nAbertas ? 'e' : ''}">${nAbertas}</strong></div></div>
+                    <div class="cf-tiles"><div><span>Itens</span><strong>${(entrega && entrega.total && nChegaram > 0 && nChegaram < entrega.total) ? nChegaram + '/' + produtos.length : produtos.length}</strong></div><div><span>Valor cotado</span><strong>${valorCot ? 'R$ ' + formatarValorMonetarioBR(valorCot) : '—'}</strong></div><div${(nAbertas + nRelatadas) ? ` class="ctl-link" onclick="irParaDivergenciaCartao('${f.cnpj}')"` : ''}><span>Em aberto</span><strong class="${nAbertas ? 'e' : ''}">${nAbertas}</strong></div></div>
                     ${detalhesEntregaHTML ? `<div class="cf-detalhes">${detalhesEntregaHTML}</div>` : ''}
                     ${produtosHTML}
                     ${soltasHTML}
@@ -647,7 +656,7 @@ function renderLinhaProduto(it, chaveUnica, ctx) {
     const c = ctx || {};
     // 2.16.0: UMA etiqueta por item, pelo estado da ocorrência (a divergência detectada e a auditoria do mesmo item deixam de ser dois selos).
     const estadoItem = c.estado || (c.comp ? c.comp.estado : 'nenhuma');
-    const seloEstado = seloEstadoOcorrencia(estadoItem, c.comp ? c.comp.divergencias.length : 0);
+    const seloEstado = seloEstadoOcorrencia(estadoItem, c.comp ? c.comp.divergencias.length : 0, c.comp ? c.comp.soNaoChegou : false);
     const badges = seloEstado
         || (c.comp ? ((!c.comp.temNf && c.comp.temErp) ? `<span class="xml-item-badge pronto">Lançado no ERP</span>`
             : `<span class="xml-item-badge pronto">✓ Confere</span>`) : (c.chegou ? `<span class="xml-item-badge pronto">Chegou</span>` : ''));
@@ -700,11 +709,13 @@ async function confirmarAlteracaoStatusCentral(anotacaoId, ocIdx, divIdx) {
     const oc = ocorrencias[ocIdx];
     if (!oc || !oc.divergencias || !oc.divergencias[divIdx]) return;
     const d = oc.divergencias[divIdx];
-    d.status = novoStatus;
+    const statusAnterior = d.status || 'pendente';
+    if (novoStatus === 'gerada') { d.status = 'pendente'; d.relatado = false; } // volta a "gerada, ainda não relatada"
+    else { d.status = novoStatus; if (novoStatus === 'pendente') d.relatado = true; } // escolher "Pendência relatada" é o ato de relatar
     if (!d.historico) d.historico = [];
     // HISTÓRICO NUNCA É APAGADO — só acrescenta uma entrada nova. O texto
     // gerado/salvo na anotação continua exatamente como estava.
-    const tipoEntrada = novoStatus === 'resolvida' ? 'resolucao' : novoStatus === 'encerrada' ? 'encerramento' : 'reabertura';
+    const tipoEntrada = novoStatus === 'resolvida' ? 'resolucao' : novoStatus === 'encerrada' ? 'encerramento' : novoStatus === 'gerada' ? 'geracao' : (statusAnterior === 'pendente' ? 'relato' : 'reabertura');
     d.historico.push({ tipo: tipoEntrada, data: dataLocalISO(), observacao });
 
     try {

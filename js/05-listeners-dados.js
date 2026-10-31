@@ -143,8 +143,7 @@ function iniciarListenerConfiguracoes() {
         } 
       }
     }, error => { 
-        console.error("Erro config:", error); 
-        toast("Erro ao carregar configurações."); 
+        erroFirebase("Erro ao carregar configurações:", error); 
         mostrarLoaderApp(false);
     }); 
 }
@@ -186,6 +185,28 @@ function agendarRender(nome, fn, atrasoMs = 150) {
     }, atrasoMs);
 }
 
+// 2.19.5: avisa na tela quando o Firebase nega ou limita o acesso (antes só ia para o console do navegador e o app ficava "vazio" sem explicação).
+// permission-denied = regras do Firestore (conta não aprovada ou regra a ajustar); resource-exhausted = limite diário do plano gratuito; unavailable = sem rede.
+let _avisoFirebaseCod = '', _avisoFirebaseEm = 0;
+const TEXTOS_ERRO_FIREBASE = {
+    'permission-denied': ['O Firebase negou o acesso aos dados.', 'Sua conta pode não estar aprovada (peça ao administrador para aprovar em Aprovações de Acesso) ou as regras do Firestore precisam de ajuste.'],
+    'resource-exhausted': ['Limite diário do Firebase atingido.', 'O plano gratuito chegou ao limite de leituras ou gravações de hoje. Volta a funcionar amanhã; dá para olhar o consumo em Firestore → Uso, no Console.'],
+    'unauthenticated': ['Sua sessão expirou.', 'Entre de novo no app para continuar.']
+};
+function erroFirebase(msg, error) {
+    console.error(msg, error);
+    const cod = String((error && error.code) || '').replace(/^firestore\//, '');
+    const t = TEXTOS_ERRO_FIREBASE[cod];
+    if (!t) return;
+    if (cod === _avisoFirebaseCod && Date.now() - _avisoFirebaseEm < 60000) return; // um aviso por minuto por tipo
+    _avisoFirebaseCod = cod; _avisoFirebaseEm = Date.now();
+    let b = document.getElementById('aviso-firebase');
+    if (!b) { b = document.createElement('div'); b.id = 'aviso-firebase'; b.setAttribute('role', 'alert'); document.body.appendChild(b); }
+    b.innerHTML = `<div><b>${t[0]}</b><span>${t[1]}</span></div><button type="button" aria-label="Fechar" onclick="this.parentNode.remove()">Fechar</button>`;
+}
+// gravações sem tratamento próprio que o Firebase recusar também geram o aviso
+window.addEventListener('unhandledrejection', e => { const r = e && e.reason; if (r && typeof r.code === 'string' && /permission-denied|resource-exhausted/.test(r.code)) erroFirebase('Gravação recusada:', r); });
+
 // Fase 2.0.2: assinatura sob demanda. Cada coleção tem a sua função de assinar; só as essenciais
 // (configurações, notas, histórico, fornecedores) sobem na abertura. As demais sobem quando a tela que
 // as usa abre (DADOS_POR_TELA) ou, no máximo, em segundo plano logo depois da abertura, uma por vez.
@@ -198,35 +219,39 @@ const ASSINATURAS_DADOS = {
                 return;
             }
             handleSnapshotChanges(snapshot);
-        }, error => toast("Erro ao carregar dados."));
+        }, error => erroFirebase("Erro ao carregar dados:", error));
     },
     historico: () => {
         return historicoCollection.orderBy('dataHistorico','desc').onSnapshot(snapshot => {
             historicoNotas = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
             popularListaHistorico();
             renderAbaAtivaRelatorios();
-        }, error => console.error("Erro ao carregar histórico:", error));
+        }, error => erroFirebase("Erro ao carregar histórico:", error));
     },
     xmlExcecoes: () => {
         return xmlExcecoesCollection.onSnapshot(snapshot => {
             bancoExcecoesXml = {};
             snapshot.docs.forEach(doc => { bancoExcecoesXml[doc.id] = doc.data().fator; });
-        }, error => console.error("Erro ao carregar exceções de XML:", error));
+        }, error => erroFirebase("Erro ao carregar exceções de XML:", error));
     },
     cotacoes: () => {
         return cotacoesCollection.orderBy('atualizadoEm', 'desc').onSnapshot(snapshot => {
             listaCotacoes = snapshot.docs.map(doc => ({ pedido: doc.id, ...doc.data() }));
+            atualizarGerenciarComDados();
             if (document.getElementById('lista-cotacoes-container')) renderListaCotacoes();
             if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
             renderAbaAtivaRelatorios();
             if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
-        }, error => console.error("Erro ao carregar cotações:", error));
+        }, error => erroFirebase("Erro ao carregar cotações:", error));
     },
     produtosSpData: () => {
         return produtosSpDataCollection.onSnapshot(snapshot => {
             listaProdutosSpData = snapshot.docs.map(doc => ({ codigo: doc.id, ...doc.data() }));
             if (document.getElementById('spdata-lista-produtos')) renderListaProdutosSpData();
-        }, error => console.error("Erro ao carregar produtos SP Data:", error));
+            // 2.19.3: os produtos do SP Data (~2.700 documentos) só sobem quando uma tela os usa; quem já está aberta se redesenha ao chegar.
+            if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) agendarRender('central-sp', () => renderCentralPedidoCompleto(centralPedidoAtual), 200);
+            if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
+        }, error => erroFirebase("Erro ao carregar produtos SP Data:", error));
     },
     associacoesSpData: () => {
         return associacoesSpDataCollection.onSnapshot(snapshot => {
@@ -234,14 +259,14 @@ const ASSINATURAS_DADOS = {
             if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
             if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
             agendarRender('reavaliarItensErp', () => reavaliarItensErp(false), 4000); // 2.11.0
-        }, error => console.error("Erro ao carregar associações SP Data:", error));
+        }, error => erroFirebase("Erro ao carregar associações SP Data:", error));
     },
     associacoesFornecedor: () => {
         return associacoesFornecedorCollection.onSnapshot(snapshot => {
             bancoAssociacoesFornecedor = {};
             snapshot.docs.forEach(doc => { bancoAssociacoesFornecedor[doc.id] = doc.data(); });
             if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
-        }, error => console.error("Erro ao carregar associações de fornecedor:", error));
+        }, error => erroFirebase("Erro ao carregar associações de fornecedor:", error));
     },
     // Histórico entradasErp: consumido pela tela de Histórico (Fase 6) via
     // montarHistoricoNfs(), sem coleção própria — só junta com nfsProcessadas
@@ -249,28 +274,31 @@ const ASSINATURAS_DADOS = {
     entradasErp: () => {
         return entradasErpCollection.onSnapshot(snapshot => {
             listaEntradasErp = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            atualizarGerenciarComDados();
             if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
-        }, error => console.error("Erro ao carregar histórico de entradas do ERP:", error));
+        }, error => erroFirebase("Erro ao carregar histórico de entradas do ERP:", error));
     },
     fornecedoresSpData: () => {
         return fornecedoresSpDataCollection.onSnapshot(snapshot => {
             listaFornecedoresSpData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            salvarCacheFornecedores(listaFornecedoresSpData);
             if (document.getElementById('lista-cadastro-fornecedores-spdata')) renderListaFornecedoresUnificada();
             if (DOM.fornDatalist) popularDatalist();
-        }, error => console.error("Erro ao carregar cadastro de fornecedores SP Data:", error));
+        }, error => erroFirebase("Erro ao carregar cadastro de fornecedores SP Data:", error));
     },
     nfsProcessadas: () => {
         return nfsProcessadasCollection.onSnapshot(snapshot => {
             listaNfsProcessadas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            atualizarGerenciarComDados();
             if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
             if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
-        }, error => console.error("Erro ao carregar NFs processadas:", error));
+        }, error => erroFirebase("Erro ao carregar NFs processadas:", error));
     },
     relatorioGanhadores: () => {
         return relatorioGanhadoresCollection.onSnapshot(snapshot => {
             listaRelatorioGanhadores = snapshot.docs.map(doc => doc.data());
             if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
-        }, error => console.error("Erro ao carregar relatório de fornecedores ganhadores:", error));
+        }, error => erroFirebase("Erro ao carregar relatório de fornecedores ganhadores:", error));
     },
     anotacoes: () => {
         return anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
@@ -298,28 +326,45 @@ const ASSINATURAS_DADOS = {
             renderListaAnotacoes();
             renderAbaAtivaRelatorios();
             if (document.getElementById('historico-nfs-navegacao')) renderHistoricoNfs(); renderControleSeAtivo();
-        }, error => console.error("Erro ao carregar anotações:", error));
+        }, error => erroFirebase("Erro ao carregar anotações:", error));
     }
 };
 
-const DADOS_ESSENCIAIS = ['notas', 'historico', 'fornecedoresSpData'];
-const DADOS_SEGUNDO_PLANO = ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'anotacoes', 'xmlExcecoes'];
+// 2.19.2: o cartão do Gerenciar NF usa NFs processadas, ERP e cotações (pedido, aptidão). Ele era desenhado antes de esses dados chegarem e nunca
+// era redesenhado: por isso "Pedido" ficava em branco e todas as NFs diziam que não passaram pela Entrada Segura.
+function atualizarGerenciarComDados() { if (DOM && DOM.listaNotas && notasPendentes.length) agendarRender('gerenciar', rebuildNotasPendentesList, 200); }
+// 2.19.4: o cadastro de fornecedores (~1.200 documentos, quase não muda) fica guardado neste aparelho por até 12 h e só é lido de novo no Firebase
+// quando o cache vence ou quando você abre uma tela que altera o cadastro (Fornecedores, Importar, Entrada/Editor de NF). Nessas telas ele volta a ser "ao vivo".
+const FORN_CACHE_CHAVE = 'fornSpCacheV1', FORN_CACHE_MS = 12 * 3600 * 1000;
+function uidAtualCache() { try { return (auth.currentUser && auth.currentUser.uid) || ''; } catch (e) { return ''; } }
+function lerCacheFornecedores() {
+    try {
+        const c = JSON.parse(localStorage.getItem(FORN_CACHE_CHAVE) || 'null');
+        return (c && c.uid && c.uid === uidAtualCache() && Array.isArray(c.lista) && c.lista.length && (Date.now() - c.em) < FORN_CACHE_MS) ? c : null;
+    } catch (e) { return null; }
+}
+function salvarCacheFornecedores(lista) { try { localStorage.setItem(FORN_CACHE_CHAVE, JSON.stringify({ uid: uidAtualCache(), em: Date.now(), lista })); } catch (e) { } }
+const DADOS_ESSENCIAIS = ['notas', 'historico'];
+const DADOS_SEGUNDO_PLANO = ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'associacoesFornecedor', 'relatorioGanhadores', 'anotacoes', 'xmlExcecoes']; // 2.19.3: produtosSpData saiu daqui (carrega por tela)
 const DADOS_TODOS_TELAS = ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'anotacoes', 'xmlExcecoes', 'fornecedoresSpData'];
 // Quais coleções cada tela precisa. Telas que não aparecem aqui usam só o que já sobe na abertura.
 const DADOS_POR_TELA = {
+    'screen-fornecedores': ['fornecedoresSpData'],
+    'screen-manage': ['nfsProcessadas', 'entradasErp', 'cotacoes', 'anotacoes'],
     'screen-reports': ['cotacoes', 'anotacoes'],
-    'screen-nf-editor': ['nfsProcessadas', 'entradasErp', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'xmlExcecoes'],
+    'screen-nf-editor': ['fornecedoresSpData', 'nfsProcessadas', 'entradasErp', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData', 'relatorioGanhadores', 'xmlExcecoes'],
     'screen-controle-nfs': ['nfsProcessadas', 'entradasErp', 'cotacoes'],
     'screen-equipamentos': ['nfsProcessadas', 'entradasErp'],
-    'screen-xml-editor': ['nfsProcessadas', 'xmlExcecoes', 'associacoesFornecedor', 'associacoesSpData', 'cotacoes', 'produtosSpData', 'entradasErp'],
+    'screen-xml-editor': ['fornecedoresSpData', 'nfsProcessadas', 'xmlExcecoes', 'associacoesFornecedor', 'associacoesSpData', 'cotacoes', 'produtosSpData', 'entradasErp'],
     'screen-spdata': ['produtosSpData', 'associacoesSpData'],
     'screen-cotacoes': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-cotacao-editor': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-central-pedido': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-auditoria-nova': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
+    'screen-auditoria-retro': ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'produtosSpData'],
     'screen-anotacoes': ['anotacoes'],
     'screen-anotacoes-editor': ['anotacoes'],
-    'screen-import': ['entradasErp', 'nfsProcessadas', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData'],
+    'screen-import': ['fornecedoresSpData', 'entradasErp', 'nfsProcessadas', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData'],
     'screen-backup': DADOS_TODOS_TELAS
 };
 let assinaturasFeitas = {};
@@ -353,6 +398,8 @@ async function carregarEstado(){
     dataUnsubscribers.push(iniciarListenerConfiguracoes());
     dataUnsubscribers.push(iniciarListenerPrefsUsuario());
     DADOS_ESSENCIAIS.forEach(assinarDados);
+    const cacheForn = lerCacheFornecedores();
+    if (cacheForn) { listaFornecedoresSpData = cacheForn.lista; if (DOM && DOM.fornDatalist) popularDatalist(); } else assinarDados('fornecedoresSpData');
     agendarAssinaturasSegundoPlano();
 }
 
@@ -388,6 +435,7 @@ function rebuildNotasPendentesList(){
         // CNPJ, destino, recurso confirmado) — sempre visível aqui, mesmo
         // fora do modo de seleção, só informativo, nunca bloqueia nada.
         const aptidao = calcularAptidaoSaidaNota(nota);
+        const idNfEd = idEditorNfDaNota(nota); // 2.19.1: link para o Editor da NF (trocar pedido, itens...) direto do Gerenciar
         const recSugerido = (!nota.obs && aptidao.recursos && aptidao.recursos.length === 1) ? aptidao.recursos[0] : '';
         const aplicarRecursoHTML = recSugerido ? `<button class="action-chip" onclick="event.stopPropagation(); aplicarRecursoSugeridoNota('${nota.id}')">Aplicar recurso: ${recSugerido}</button>` : '';
         // 2.9.6: no cartão o selo é curto (o texto completo fica no title); antes ocupava até 3 linhas em letras minúsculas.
@@ -417,11 +465,12 @@ function rebuildNotasPendentesList(){
         const infHTML = (infPartes.length || aplicarRecursoHTML) ? `<div class="ctl-inf">${infPartes.join(' · ')}${aplicarRecursoHTML ? `<div style="margin-top:8px">${aplicarRecursoHTML}</div>` : ''}</div>` : '';
         return `${checkboxHTML}<div class="ctl-top"><div class="ctl-av">${iniciaisControle(nota.fornecedor)}</div>
             <div class="ctl-nm"><b>${titulo}</b><small>Criada em ${(new Date(nota.dataCriacao)).toLocaleDateString('pt-BR')}</small></div>
-            <span class="ctl-st ${nota.emEspera ? 'm' : ''}">${nota.emEspera ? 'Em espera' : 'Na relação'}</span></div>
+            ${nota.emEspera ? '<span class="ctl-st m">Em espera</span>' : ''}</div>
         <div class="ctl-dd"><div><span>Vencimento</span><strong>${venc}</strong></div><div><span>Prazo</span><strong class="${prazoCls.trim()}">${prazoTxt}</strong></div><div${aptidao.pedido ? ` class="ctl-link" onclick="event.stopPropagation(); irParaPedidoFornecedor('${aptidao.pedido}', '${aptidao.cnpjFornecedor || ''}')"` : ''}><span>Pedido</span><strong>${aptidao.pedido || '—'}</strong></div></div>
-        <div class="ctl-vl"><b>${valorTxt}</b>${aptidaoHTML}</div>
+        <div class="ctl-vl"><b>${valorTxt}</b>${aptidao.status === 'nao_conferida' ? '' : aptidaoHTML}</div>
+        ${aptidao.status === 'nao_conferida' ? '<div class="ctl-discreta">sem XML processado</div>' : ''}
         ${infHTML}
-        <div class="ctl-bar" style="grid-template-columns:repeat(4,1fr)">${bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;
+        <div class="ctl-bar" style="grid-template-columns:repeat(${idNfEd ? 5 : 4},1fr)">${bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${idNfEd ? bt('ger', 'Editar NF', `abrirEditorNf('${String(idNfEd).replace(/'/g, "\\'")}')`) : ''}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;
     };
 
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".

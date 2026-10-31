@@ -176,7 +176,10 @@
         const wrapper = document.querySelector('.screen-wrapper');
         if (wrapper) {
             wrapper.addEventListener('scroll', e => { if (e.target && e.target.classList && e.target.classList.contains('app-screen')) { atualizarBordaCabecalho(); if (e.target.classList.contains('active')) aoRolarTela(e.target); } }, true);
-            if (typeof MutationObserver === 'function') new MutationObserver(() => { atualizarBordaCabecalho(); aoTrocarTela(); }).observe(wrapper, { subtree: true, attributes: true, attributeFilter: ['class'] });
+            if (typeof MutationObserver === 'function') { // 2.19.2: só reage quando a TELA ATIVA muda (antes cada mudança de classe em qualquer cartão forçava medir o layout inteiro: o engasgo ao expandir/voltar)
+                let telaVista = null;
+                new MutationObserver(() => { const a = document.querySelector('.app-screen.active'); if (a === telaVista) return; telaVista = a; atualizarBordaCabecalho(); aoTrocarTela(); }).observe(wrapper, { subtree: true, attributes: true, attributeFilter: ['class'] });
+            }
         }
         if (typeof MutationObserver === 'function') new MutationObserver(agendarAtualizacao).observe(document.body, { attributes: true, attributeFilter: ['class'] }); // teclado abre/fecha
         agendarRecolher(); // ao abrir o app a dock aparece completa e recolhe sozinha se você não mexer
