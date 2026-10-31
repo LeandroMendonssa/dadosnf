@@ -118,6 +118,16 @@ const AJUDA_ARTIGOS = [
         'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
       ],
       dicas: ['O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.', 'Na entrada (XML e relatório do ERP) o app já mostra "Verificações da entrada" com os avisos que valem conferir na hora.'], tutorial: null },
+    { id: 'agenda-trabalho', cat: 'Ajustes e dados', titulo: 'Agenda de trabalho: entregas, reuniões e lembretes', versao: '2.20.0',
+      resumo: 'Cadastre entregas de reagentes, reuniões e lembretes, com aviso na véspera e no dia.',
+      palavras: 'agenda lembrete reuniao entrega reagente calendario aviso notificacao centervida expansao hora repetir',
+      tela: [{ id: 'screen-agenda', titulo: 'Agenda de trabalho', rotulo: 'Abrir a Agenda de trabalho' }],
+      passos: [
+        'Em Mais → Agenda de trabalho, use + Entrega, + Reunião ou + Lembrete. Escolha a data (ou "de/até" para janelas), a hora se quiser, se repete e se avisa na véspera e no dia.',
+        '"Carregar calendário" cadastra o calendário de entregas 2026 (Expansão e Centervida). Quando a entrega chegar, toque em "Marcar como entregue" e informe o dia em que chegou.',
+        'Entrega que passou da janela sem ser marcada aparece como atrasada, também na Central de notificações.',
+        '"Avisos que você quer receber" define o que deve notificar (entregas, reuniões, lembretes, NFs vencendo, ocorrências, pedidos parados). As notificações no iPhone chegam numa etapa seguinte.'
+      ] },
     { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.19.3',
       resumo: 'Uma IA que responde perguntas sobre os dados do app, só lendo, sem alterar nada.',
       palavras: 'assistente ia inteligencia artificial pergunta consulta chat divergencia material quantidade fornecedor pedido nf',

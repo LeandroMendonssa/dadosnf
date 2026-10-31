@@ -10,7 +10,20 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.19.5', nome: 'Aviso quando o Firebase nega acesso ou atinge o limite', status: 'atual',
+        numero: '2.20.0', nome: 'Agenda de trabalho e escolha de avisos (etapa 1)', status: 'atual',
+        novidades: [
+            'Nova tela Mais → Agenda de trabalho: entregas, reuniões e lembretes num lugar só, como num app de agenda. Cada lembrete tem data (ou janela "de/até"), hora opcional escolhida por você, repetição (semanal, a cada 4 semanas, mensal, anual) e avisos na véspera e no dia.',
+            'Entregas de reagentes: o botão "Carregar calendário" cadastra de uma vez o calendário 2026 (Expansão em janelas, Centervida em dias fixos). Ao chegar, "Marcar como entregue" pede o dia em que realmente chegou; se a janela passar sem marcar, aparece como atrasada.',
+            'A Central de notificações passa a mostrar o que está na agenda hoje, amanhã e as entregas atrasadas.',
+            'O app pergunta quais avisos você quer receber (entregas, reuniões, lembretes, NFs vencendo, ocorrências em aberto, pedidos parados). A escolha fica na sua conta e será usada nas notificações do iPhone (etapa 2).'
+        ],
+        implementado: ['js/40-agenda-trabalho.js (novo), tela screen-agenda, documento config/agendaTrabalho (sem coleção nova, não precisa mudar as regras do Firestore), avisos em config/prefs_<uid>.avisos.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/05, js/14, js/24, js/29, js/31, js/34 e js/40 (novo).'],
+        testar: ['Mais → Agenda de trabalho: responda a pergunta de avisos, toque em "Carregar calendário" e confira se a próxima Centervida (06/11) e a janela da Expansão (13/11 a 20/11) aparecem.', 'Crie uma reunião com hora, edite, marque como concluída e exclua.', 'Abra a Agenda em outro aparelho e veja se os lembretes aparecem. As notificações no iPhone vêm na etapa 2.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.19.5', nome: 'Aviso quando o Firebase nega acesso ou atinge o limite', status: 'concluida',
         novidades: [
             'Com as regras novas do Firestore, uma conta não aprovada (ou uma regra errada) fazia o app ficar vazio sem explicar nada: o erro só ia para o console do navegador. Agora aparece um aviso no topo, com botão Fechar: "O Firebase negou o acesso aos dados" (peça ao administrador para aprovar em Aprovações de Acesso, ou ajuste as regras).',
             'O mesmo aviso cobre o limite diário do plano gratuito ("Limite diário do Firebase atingido": volta amanhã) e a sessão expirada. Aparece no máximo uma vez por minuto para cada tipo, e também quando uma gravação é recusada.'

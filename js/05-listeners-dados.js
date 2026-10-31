@@ -51,6 +51,8 @@ function iniciarListenerPrefsUsuario() {
     return firestore.collection('config').doc('prefs_' + u.uid).onSnapshot(doc => {
         try {
             prefsUsuarioIndisponivel = false;
+            prefsAvisos = (doc.exists && doc.data() && doc.data().avisos) || null;
+            if (typeof renderAgendaSeAtiva === 'function') renderAgendaSeAtiva();
             prefsUsuario = (doc.exists && doc.data() && doc.data().personalizacao) || {};
             appConfig.personalizacao = { ...appConfig.personalizacao, ...prefsUsuario };
             migrarMenuOrderConfig();

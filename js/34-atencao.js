@@ -81,6 +81,7 @@ function itensDeAtencao() {
     const semCnpj = listaFornecedoresSpData.filter(f => !(f.cnpjs || []).length);
     add('baixa', 'forn-sem-cnpj', 'Fornecedores sem CNPJ no SP Data', 'Sem CNPJ, o app não acha o pedido das NFs do ERP sozinho.',
         semCnpj.length ? [{ pedido: '', forn: '', t: `${semCnpj.length} fornecedor(es) sem CNPJ`, s: 'abrir o cadastro de Fornecedores', fn: "switchToScreen('screen-fornecedores','Fornecedores')" }] : []);
+    try { if (typeof agendaGruposAtencao === 'function') agendaGruposAtencao().forEach(g => add(g.nivel, g.id, g.titulo, g.dica, g.linhas)); } catch (e) { console.error('Agenda na Central:', e); }
     return grupos;
 }
 function totalAtencao() { try { return itensDeAtencao().reduce((s, g) => s + (g.nivel === 'baixa' ? 0 : g.linhas.length), 0); } catch (e) { return 0; } }
