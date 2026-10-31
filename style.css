@@ -1834,3 +1834,26 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .nf-total-card .lin.dif{border-top:1px solid var(--border-color);padding-top:var(--space-1);font-weight:700}
 .nf-total-card .ok{color:var(--success-text)}
 .nf-total-card .aten{color:var(--warning-text)}
+
+/* 2.19.1 — avisos discretos (NF sem XML) e "Não chegou" */
+.ctl-discreta{font-size:var(--fs-min);color:var(--text-light);padding:0 var(--space-1);margin-top:var(--space-1)}
+.ctl-discreta a{color:var(--accent-text);cursor:pointer;margin-left:var(--space-1)}
+
+/* 2.19.2: faixa de cotações por fornecedor ganhador (Central do pedido) */
+.cf-cot3{font-size:var(--fs-min);font-weight:600;margin-top:var(--space-1)}
+.cf-cot3.ok{color:var(--success-text)}
+.cf-cot3.alerta{color:var(--warning-text)}
+
+/* 2.19.2: espaçamentos (prints do usuário) */
+.central-spdata-busca > .central-status-toggle{display:inline-flex;margin:var(--space-2) var(--space-2) 0 0;height:auto;min-height:36px;padding:6px var(--space-3);text-align:left;white-space:normal;line-height:1.25;max-width:100%}
+#auditoria-central-conteudo > * + *{margin-top:var(--space-3)}
+#auditoria-central-conteudo > .ctl-card{margin-bottom:0}
+#auditoria-central-conteudo .retro-chips{flex-wrap:wrap;overflow:visible;padding:0}
+#auditoria-central-conteudo .card > .form-field{margin-top:var(--space-3)}
+.ctl-discreta{margin-top:var(--space-2)}
+
+/* 2.19.5: aviso de acesso negado/limite do Firebase */
+#aviso-firebase{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
+#aviso-firebase div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux)}
+#aviso-firebase b{color:var(--danger);font-size:var(--fs-md)}
+#aviso-firebase button{flex:none;min-height:36px;padding:0 var(--space-3);border:1.5px solid var(--border-color);border-radius:var(--r-pill);background:transparent;color:var(--text-dark);font-weight:600}

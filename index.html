@@ -551,6 +551,7 @@
 
                 <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="relatorio" onclick="alternarAbaCentral('relatorio')">Relatório</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
                     <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                    <button class="actions-button is-neutral" onclick="exportarDivergenciasPedido(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-share-nodes"></i></span> Exportar divergências do pedido</button>
                     <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
                 </div>
 
