@@ -10,7 +10,19 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.0', nome: 'Agenda de trabalho e escolha de avisos (etapa 1)', status: 'atual',
+        numero: '2.20.1', nome: 'Notificações no iPhone (etapa 2)', status: 'atual',
+        novidades: [
+            'Na Agenda de trabalho há o cartão "Notificações neste aparelho": Ativar, Enviar teste e Desativar. As notificações chegam mesmo com o app fechado (no iPhone, o app precisa estar na Tela de Início).',
+            'Um Worker na Cloudflare confere a agenda a cada 15 minutos e avisa na véspera e no dia, na hora que você escolheu em cada lembrete (sem hora: 08:00), e no último dia da janela das entregas. Também avisa, uma vez por dia às 08:00, as NFs da relação que vencem hoje ou amanhã.',
+            'Tocar na notificação abre o app na Agenda. A escolha de avisos da etapa 1 é respeitada; ocorrências em aberto e pedidos parados ainda não são enviados ao iPhone.'
+        ],
+        implementado: ['sw.js (service worker), js/41-notificacoes-push.js, avisos/worker-avisos.js (Worker com cron, envio Web Push com VAPID e leitura do Firestore por conta de serviço), passo a passo em avisos/COMO-INSTALAR-OS-AVISOS.md. Aparelhos ficam em config/push_<uid>, sem coleção nova.'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/31, js/40; novos: sw.js, js/41-notificacoes-push.js e a pasta avisos.'],
+        testar: ['Depois de instalar o Worker (passo a passo): no iPhone, abra o app pelo ícone da Tela de Início, Agenda → Ativar notificações → Enviar teste.', 'Crie um lembrete para daqui a uns 20 minutos, com a hora certa e "Avisar no dia", e feche o app: a notificação deve chegar.', 'Toque na notificação: o app abre na Agenda.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.20.0', nome: 'Agenda de trabalho e escolha de avisos (etapa 1)', status: 'concluida',
         novidades: [
             'Nova tela Mais → Agenda de trabalho: entregas, reuniões e lembretes num lugar só, como num app de agenda. Cada lembrete tem data (ou janela "de/até"), hora opcional escolhida por você, repetição (semanal, a cada 4 semanas, mensal, anual) e avisos na véspera e no dia.',
             'Entregas de reagentes: o botão "Carregar calendário" cadastra de uma vez o calendário 2026 (Expansão em janelas, Centervida em dias fixos). Ao chegar, "Marcar como entregue" pede o dia em que realmente chegou; se a janela passar sem marcar, aparece como atrasada.',

@@ -25,8 +25,8 @@ const AGENDA_AVISOS = [
     ['reunioes', 'Reuniões', 'Véspera e antes do horário marcado'],
     ['lembretes', 'Outros lembretes', 'Véspera e no dia'],
     ['nfVencendo', 'NFs vencendo hoje ou amanhã', 'Notas da relação perto do vencimento'],
-    ['ocorrencias', 'Ocorrências em aberto sem relato', 'Divergências que o app achou e você ainda não relatou'],
-    ['pedidosParados', 'Pedidos parados', 'Prazo vencido e sem sinal de entrega']
+    ['ocorrencias', 'Ocorrências em aberto sem relato', 'Divergências que o app achou e você ainda não relatou (no iPhone, em breve)'],
+    ['pedidosParados', 'Pedidos parados', 'Prazo vencido e sem sinal de entrega (no iPhone, em breve)']
 ];
 
 // ---------------- datas (sempre texto AAAA-MM-DD, no dia local) ----------------
@@ -188,14 +188,14 @@ async function agendaCarregarCalendario() {
 function agendaAvisosAtuais() { const p = prefsAvisos || {}; const r = {}; AGENDA_AVISOS.forEach(([k]) => { r[k] = p[k] !== false; }); return r; }
 async function agendaSalvarAvisos() {
     const novo = { definido: true }; AGENDA_AVISOS.forEach(([k]) => { novo[k] = !!(document.getElementById('ag-av-' + k) || {}).checked; });
-    try { await prefsUsuarioDocRef().set({ avisos: novo }, { merge: true }); prefsAvisos = novo; agendaPrefsAberto = false; renderAgenda(); toast('✓ Escolha salva.'); }
+    try { await prefsUsuarioDocRef().set({ avisos: novo }, { merge: true }); prefsAvisos = novo; agendaPrefsAberto = false; if (typeof pushSincronizarAvisos === 'function') pushSincronizarAvisos(); renderAgenda(); toast('✓ Escolha salva.'); }
     catch (e) { erroFirebase('Erro ao salvar a escolha de avisos:', e); toast('✕ Não consegui salvar a escolha.'); }
 }
 function agendaPrefsHTML() {
     const at = agendaAvisosAtuais(), definido = !!(prefsAvisos && prefsAvisos.definido);
     const resumo = AGENDA_AVISOS.filter(([k]) => at[k]).map(([, t]) => t).join(', ') || 'nenhum';
     if (!agendaPrefsAberto) return `<div class="card" id="ag-prefs"><div class="xml-item-meta"><b>Avisos que você quer receber</b><br>${definido ? escRel(resumo) : 'Você ainda não escolheu.'}</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaAlternarPrefs()">${definido ? 'Mudar' : 'Escolher'}</button></div></div>`;
-    return `<div class="card" id="ag-prefs"><div class="xml-item-meta"><b>Quais avisos você quer receber?</b><br>Isso vale para as notificações no iPhone (em breve). A Central de notificações do app continua mostrando tudo.</div>
+    return `<div class="card" id="ag-prefs"><div class="xml-item-meta"><b>Quais avisos você quer receber?</b><br>Isso vale para as notificações no iPhone. A Central de notificações do app continua mostrando tudo.</div>
         <div class="ag-checks ag-avisos">${AGENDA_AVISOS.map(([k, t, d]) => `<label><input type="checkbox" id="ag-av-${k}"${at[k] ? ' checked' : ''}><span><b>${t}</b><small>${d}</small></span></label>`).join('')}</div>
         <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaSalvarAvisos()">Salvar escolha</button>${definido ? '<button type="button" class="central-status-toggle" onclick="agendaAlternarPrefs()">Cancelar</button>' : ''}</div></div>`;
 }
@@ -222,7 +222,7 @@ function renderAgenda() {
             + sec('Mais adiante', l.filter(o => o.estado === 'futura' && o.de > limite30).slice(0, 20));
         if (!corpo) corpo = '<div class="card"><div class="xml-item-meta">Nenhum lembrete pela frente. Use os botões acima para cadastrar.</div></div>';
     }
-    el.innerHTML = agendaPrefsHTML() + (agendaForm ? agendaFormHTML() : novos) + calendario + chips + corpo;
+    el.innerHTML = agendaPrefsHTML() + (typeof pushCartaoHTML === 'function' ? pushCartaoHTML() : '') + (agendaForm ? agendaFormHTML() : novos) + calendario + chips + corpo;
 }
 
 // ---------------- Central de notificações (só leitura) ----------------
