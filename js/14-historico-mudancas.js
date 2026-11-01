@@ -10,7 +10,17 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.1', nome: 'Notificações no iPhone (etapa 2)', status: 'atual',
+        numero: '2.20.2', nome: 'Acabamento da Agenda de trabalho', status: 'atual',
+        novidades: [
+            'Agenda de trabalho: cartões com o mesmo padrão das outras telas (espaçamento, bordas), títulos e textos empilhados em vez de lado a lado, e caixas de seleção alinhadas com o texto na escolha de avisos.'
+        ],
+        implementado: ['Cartões da Agenda passam a usar .ctl-card; regras #agenda-conteudo em style.css para textos em bloco, formulário e caixas de seleção.'],
+        mudou: ['Arquivos alterados: style.css, js/14, js/40 e js/41.'],
+        testar: ['Mais → Agenda de trabalho → Mudar (avisos): caixas alinhadas à esquerda, texto ao lado. Abra + Reunião e confira espaçamentos e botões.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.20.1', nome: 'Notificações no iPhone (etapa 2)', status: 'concluida',
         novidades: [
             'Na Agenda de trabalho há o cartão "Notificações neste aparelho": Ativar, Enviar teste e Desativar. As notificações chegam mesmo com o app fechado (no iPhone, o app precisa estar na Tela de Início).',
             'Um Worker na Cloudflare confere a agenda a cada 15 minutos e avisa na véspera e no dia, na hora que você escolheu em cada lembrete (sem hora: 08:00), e no último dia da janela das entregas. Também avisa, uma vez por dia às 08:00, as NFs da relação que vencem hoje ou amanhã.',

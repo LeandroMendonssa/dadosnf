@@ -59,9 +59,9 @@ function pushSincronizarAvisos() { if (!pushEstado.ativo) return; pushDocRef().s
 
 function pushCartaoHTML() {
     const e = pushEstado;
-    if (!e.suporte) return `<div class="card"><div class="xml-item-meta"><b>Notificações neste aparelho</b><br>${escRel(e.motivo || 'Verificando…')}</div></div>`;
+    if (!e.suporte) return `<div class="ctl-card ag-bloco"><div class="xml-item-meta"><b>Notificações neste aparelho</b><br>${escRel(e.motivo || 'Verificando…')}</div></div>`;
     const blocked = e.permissao === 'denied';
-    return `<div class="card"><div class="xml-item-meta"><b>Notificações neste aparelho</b><br>${e.ativo ? 'Ativadas. Você recebe os avisos escolhidos abaixo, mesmo com o app fechado.' : blocked ? 'Bloqueadas. Libere em Ajustes do iPhone → Notificações → este app.' : 'Desativadas. Toque em Ativar e permita quando o iPhone perguntar.'}</div>
+    return `<div class="ctl-card ag-bloco"><div class="xml-item-meta"><b>Notificações neste aparelho</b><br>${e.ativo ? 'Ativadas. Você recebe os avisos escolhidos abaixo, mesmo com o app fechado.' : blocked ? 'Bloqueadas. Libere em Ajustes do iPhone → Notificações → este app.' : 'Desativadas. Toque em Ativar e permita quando o iPhone perguntar.'}</div>
         <div class="xml-item-acao">${e.ativo ? '<button type="button" class="central-status-toggle" onclick="pushTeste()">Enviar teste</button><button type="button" class="central-status-toggle" onclick="pushDesativar()">Desativar</button>' : `<button type="button" class="central-status-toggle" onclick="pushAtivar()"${e.ocupado || blocked ? ' disabled' : ''}>${e.ocupado ? 'Ativando…' : 'Ativar notificações'}</button>`}</div></div>`;
 }
 // abrir pelo toque na notificação

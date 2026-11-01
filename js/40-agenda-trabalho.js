@@ -122,7 +122,7 @@ function agendaFormHTML() {
     const f = agendaForm; if (!f) return '';
     const ehEnt = f.tipo === 'entrega', ehReu = f.tipo === 'reuniao';
     const opt = (obj, sel) => Object.entries(obj).map(([k, v]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${v}</option>`).join('');
-    return `<div class="card ag-form"><div class="xml-item-meta"><b>${f.id ? 'Editar lembrete' : 'Novo lembrete'}</b></div>
+    return `<div class="ctl-card ag-form"><div class="xml-item-meta"><b>${f.id ? 'Editar lembrete' : 'Novo lembrete'}</b></div>
         <label class="ag-lab">Tipo<select class="form-field" id="ag-tipo" onchange="agendaTrocarTipo(this.value)">${opt(AGENDA_TIPOS, f.tipo)}</select></label>
         <label class="ag-lab">Título<input type="text" class="form-field" id="ag-titulo" value="${escA(f.titulo)}" placeholder="${ehEnt ? 'Ex.: Entrega de reagentes' : ehReu ? 'Ex.: Reunião de compras' : 'Ex.: Conferir contrato'}"></label>
         <label class="ag-lab">${ehEnt ? 'Empresa' : ehReu ? 'Local ou com quem' : 'Detalhe'}<input type="text" class="form-field" id="ag-empresa" value="${escA(f.empresa)}"></label>
@@ -194,8 +194,8 @@ async function agendaSalvarAvisos() {
 function agendaPrefsHTML() {
     const at = agendaAvisosAtuais(), definido = !!(prefsAvisos && prefsAvisos.definido);
     const resumo = AGENDA_AVISOS.filter(([k]) => at[k]).map(([, t]) => t).join(', ') || 'nenhum';
-    if (!agendaPrefsAberto) return `<div class="card" id="ag-prefs"><div class="xml-item-meta"><b>Avisos que você quer receber</b><br>${definido ? escRel(resumo) : 'Você ainda não escolheu.'}</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaAlternarPrefs()">${definido ? 'Mudar' : 'Escolher'}</button></div></div>`;
-    return `<div class="card" id="ag-prefs"><div class="xml-item-meta"><b>Quais avisos você quer receber?</b><br>Isso vale para as notificações no iPhone. A Central de notificações do app continua mostrando tudo.</div>
+    if (!agendaPrefsAberto) return `<div class="ctl-card ag-bloco" id="ag-prefs"><div class="xml-item-meta"><b>Avisos que você quer receber</b><br>${definido ? escRel(resumo) : 'Você ainda não escolheu.'}</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaAlternarPrefs()">${definido ? 'Mudar' : 'Escolher'}</button></div></div>`;
+    return `<div class="ctl-card ag-bloco" id="ag-prefs"><div class="xml-item-meta"><b>Quais avisos você quer receber?</b><br>Isso vale para as notificações no iPhone. A Central de notificações do app continua mostrando tudo.</div>
         <div class="ag-checks ag-avisos">${AGENDA_AVISOS.map(([k, t, d]) => `<label><input type="checkbox" id="ag-av-${k}"${at[k] ? ' checked' : ''}><span><b>${t}</b><small>${d}</small></span></label>`).join('')}</div>
         <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaSalvarAvisos()">Salvar escolha</button>${definido ? '<button type="button" class="central-status-toggle" onclick="agendaAlternarPrefs()">Cancelar</button>' : ''}</div></div>`;
 }
@@ -206,11 +206,11 @@ function renderAgenda() {
     const hoje = dataLocalISO();
     const chips = `<div class="retro-chips">${[['proximos', 'Próximos'], ['historico', 'Histórico']].map(([k, t]) => `<button type="button" class="retro-chip${agendaAba === k ? ' on' : ''}" onclick="agendaMudarAba('${k}')">${t}</button>`).join('')}</div>`;
     const novos = `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaNovo('entrega')">+ Entrega</button><button type="button" class="central-status-toggle" onclick="agendaNovo('reuniao')">+ Reunião</button><button type="button" class="central-status-toggle" onclick="agendaNovo('lembrete')">+ Lembrete</button></div>`;
-    const calendario = (!Object.values(listaAgenda).some(x => x && x.origem === 'calendario-2026')) ? `<div class="card"><div class="xml-item-meta"><b>Calendário de entregas 2026</b><br>Carrega de uma vez as janelas da Expansão (reagentes) e as datas da Centervida (controle). Cada uma vira um lembrete que você pode editar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaCarregarCalendario()">Carregar calendário</button></div></div>` : '';
+    const calendario = (!Object.values(listaAgenda).some(x => x && x.origem === 'calendario-2026')) ? `<div class="ctl-card ag-bloco"><div class="xml-item-meta"><b>Calendário de entregas 2026</b><br>Carrega de uma vez as janelas da Expansão (reagentes) e as datas da Centervida (controle). Cada uma vira um lembrete que você pode editar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="agendaCarregarCalendario()">Carregar calendário</button></div></div>` : '';
     let corpo = '';
     if (agendaAba === 'historico') {
         const l = agLista(120, 0).filter(o => o.estado === 'feita' || o.estado === 'passou').reverse();
-        corpo = l.length ? l.map(agendaCartao).join('') : '<div class="card"><div class="xml-item-meta">Nada concluído nos últimos 4 meses.</div></div>';
+        corpo = l.length ? l.map(agendaCartao).join('') : '<div class="ctl-card ag-bloco"><div class="xml-item-meta">Nada concluído nos últimos 4 meses.</div></div>';
     } else {
         const l = agLista(60, 400).filter(o => o.estado !== 'feita' && o.estado !== 'passou');
         const sec = (titulo, arr) => arr.length ? `<div class="central-secao-titulo">${titulo}</div>` + arr.map(agendaCartao).join('') : '';
@@ -220,7 +220,7 @@ function renderAgenda() {
             + sec('Amanhã', l.filter(o => o.estado === 'vespera'))
             + sec('Próximos 30 dias', l.filter(o => o.estado === 'futura' && o.de <= limite30))
             + sec('Mais adiante', l.filter(o => o.estado === 'futura' && o.de > limite30).slice(0, 20));
-        if (!corpo) corpo = '<div class="card"><div class="xml-item-meta">Nenhum lembrete pela frente. Use os botões acima para cadastrar.</div></div>';
+        if (!corpo) corpo = '<div class="ctl-card ag-bloco"><div class="xml-item-meta">Nenhum lembrete pela frente. Use os botões acima para cadastrar.</div></div>';
     }
     el.innerHTML = agendaPrefsHTML() + (typeof pushCartaoHTML === 'function' ? pushCartaoHTML() : '') + (agendaForm ? agendaFormHTML() : novos) + calendario + chips + corpo;
 }
