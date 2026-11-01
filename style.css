@@ -1879,3 +1879,14 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .ag-avisos label span small{color:var(--text-light);font-size:var(--fs-min,12px);line-height:1.35}
 .ag-data{width:auto}
 #agenda-conteudo .retro-chips{margin:4px 0 8px}
+
+/* 2.20.5 — Uso do Firebase */
+#uso-firebase-conteudo{display:flex;flex-direction:column}
+#uso-firebase-conteudo .xml-item-meta{display:block;margin:0 0 8px;font-size:var(--fs-small,13px);line-height:1.45;color:var(--text-light);text-align:left}
+#uso-firebase-conteudo .xml-item-meta b{display:block;margin-bottom:2px;font-size:var(--fs-input,16px);color:var(--text-primary,inherit)}
+#uso-firebase-conteudo .xml-item-acao{margin-top:4px;display:flex;flex-wrap:wrap;gap:8px}
+.uso-grande{font-size:32px;font-weight:700;line-height:1.1;margin:4px 0 10px;text-align:left}.uso-grande small{font-size:var(--fs-small,14px);font-weight:500;color:var(--text-light)}
+.uso-barra{height:8px;border-radius:99px;background:var(--border-color);overflow:hidden;margin-bottom:10px}.uso-barra i{display:block;height:100%;background:var(--accent-color)}
+.uso-lin{position:relative;display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border-color);font-size:var(--fs-small,14px);text-align:left}
+.uso-lin span{min-width:0;overflow-wrap:anywhere}.uso-lin b{flex:none;font-variant-numeric:tabular-nums}
+.uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
