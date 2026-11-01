@@ -1858,14 +1858,24 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 #aviso-firebase b{color:var(--danger);font-size:var(--fs-md)}
 #aviso-firebase button{flex:none;min-height:36px;padding:0 var(--space-3);border:1.5px solid var(--border-color);border-radius:var(--r-pill);background:transparent;color:var(--text-dark);font-weight:600}
 
-/* 2.20.0 — Agenda de trabalho */
-#agenda-conteudo .card{margin-bottom:var(--space-2)}
-.ag-form{display:flex;flex-direction:column;gap:10px}
-.ag-lab{display:flex;flex-direction:column;gap:4px;font-size:var(--fs-small,13px);color:var(--text-light)}
+/* 2.20.0 — Agenda de trabalho (2.20.2: usa os mesmos cartões das outras telas, textos em bloco e caixas de seleção alinhadas) */
+#agenda-conteudo{display:flex;flex-direction:column}
+#agenda-conteudo .xml-item-meta{display:block;margin:0;font-size:var(--fs-small,13px);line-height:1.45;color:var(--text-light);text-align:left}
+#agenda-conteudo .xml-item-meta b{display:block;margin-bottom:2px;font-size:var(--fs-input,16px);color:var(--text-primary,inherit)}
+#agenda-conteudo .xml-item-acao{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#agenda-conteudo .xml-item-acao .central-status-toggle:disabled{opacity:.5}
+.ag-card .aud-txt{margin-top:8px}
+.ag-form{display:flex;flex-direction:column;gap:12px}
+.ag-lab{display:flex;flex-direction:column;gap:4px;font-size:var(--fs-small,13px);color:var(--text-light);text-align:left}
+.ag-lab .form-field{width:100%;box-sizing:border-box}
 .ag-linha{display:flex;gap:10px}.ag-linha .ag-lab{flex:1;min-width:0}
-.ag-checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:var(--fs-small,13px)}
-.ag-avisos{flex-direction:column;gap:10px}
-.ag-avisos label{display:flex;gap:10px;align-items:flex-start}
-.ag-avisos span{display:flex;flex-direction:column}.ag-avisos small{color:var(--text-light)}
-.ag-card .xml-item-acao{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ag-checks{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:var(--fs-small,13px);text-align:left}
+.ag-checks label{display:flex;align-items:center;gap:8px;text-align:left}
+#agenda-conteudo input[type=checkbox]{width:20px;height:20px;min-width:20px;margin:0;padding:0;flex:none;accent-color:var(--accent-color)}
+.ag-avisos{flex-direction:column;gap:14px;margin-top:12px}
+.ag-avisos label{display:grid;grid-template-columns:22px 1fr;gap:12px;align-items:start;width:100%}
+.ag-avisos label span{display:flex;flex-direction:column;gap:2px;text-align:left}
+.ag-avisos label span b{font-size:var(--fs-small,14px);font-weight:600}
+.ag-avisos label span small{color:var(--text-light);font-size:var(--fs-min,12px);line-height:1.35}
 .ag-data{width:auto}
+#agenda-conteudo .retro-chips{margin:4px 0 8px}
