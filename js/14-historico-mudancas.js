@@ -10,7 +10,19 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.3', nome: 'Endereço do serviço de avisos corrigido', status: 'atual',
+        numero: '2.20.4', nome: 'Menos leituras no Firebase: cópia dos dados no aparelho', status: 'atual',
+        novidades: [
+            'Hoje o Firebase registrou 69 mil leituras (o plano gratuito vai até 50 mil por dia, zerando às 06:00 de Brasília). O app não guardava cópia dos dados no aparelho: cada vez que o iPhone fechava e abria o app, lia tudo de novo.',
+            'Agora o app guarda uma cópia local. Reabrindo em até cerca de 30 minutos, só é cobrado o que mudou. Passando disso, o Firebase relê tudo, então a economia é grande para aberturas seguidas, mas não elimina o gasto.',
+            'O cadastro de fornecedores continua com a cópia de 12 horas da versão 2.19.4.'
+        ],
+        implementado: ['firestore.enablePersistence({ synchronizeTabs: true }) em js/01, com falha silenciosa quando o navegador não permite.'],
+        mudou: ['Arquivos alterados: js/01 e js/14.'],
+        testar: ['Use o app normalmente e confira, no console do Firebase (Firestore → Uso), se as leituras do dia sobem bem mais devagar que hoje.', 'Mude algo em um aparelho e veja se aparece no outro (continua em tempo real).', 'Em modo anônimo do navegador o app deve abrir igual, só sem a economia.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.3', nome: 'Endereço do serviço de avisos corrigido', status: 'concluida',
         novidades: ['O botão "Enviar teste" das notificações apontava para o endereço errado do Worker e falhava com "Não consegui falar com o serviço de avisos". Agora usa o endereço da sua conta.'],
         implementado: ['PUSH_URL em js/41 corrigida para avisos-auditoria.leandromendoncadesign.workers.dev.'],
         mudou: ['Arquivos alterados: js/14 e js/41.'],
