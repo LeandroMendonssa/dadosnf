@@ -9,6 +9,7 @@
         'screen-observacoes': 'observacao texto padrao nota',
         'screen-spdata': 'produtos sp data sku catalogo',
         'screen-config-analise-cotacoes': 'analise cotacao ganhador preco regra',
+        'screen-uso-firebase': 'firebase uso leituras cota limite gratis consumo requisicoes contador',
         'screen-agenda': 'agenda lembrete reuniao entrega reagente calendario aviso notificacao centervida expansao',
         'screen-atencao': 'atencao pendencia urgente vencida vencido parado alerta o que precisa',
         'screen-auditoria-central': 'auditoria ocorrencia divergencia relatar relatada excluir restaurar unidade fator falso positivo',

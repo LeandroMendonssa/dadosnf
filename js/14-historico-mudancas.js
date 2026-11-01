@@ -10,7 +10,18 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.4', nome: 'Menos leituras no Firebase: cópia dos dados no aparelho', status: 'atual',
+        numero: '2.20.5', nome: 'Contador de leituras do Firebase', status: 'atual',
+        novidades: [
+            'Nova tela Mais → Uso do Firebase: mostra quantas leituras do Firebase este aparelho gastou hoje, por coleção, por tela e por abertura do app, com a barra em relação ao limite grátis de 50 mil por dia.',
+            'Serve para descobrir de onde vieram as 69 mil leituras de ontem. Use o app normalmente por um dia, nos aparelhos que costuma usar, e me diga o que aparece.'
+        ],
+        implementado: ['js/00-uso-firebase.js (novo): intercepta onSnapshot/get do Firestore e soma só o que veio do servidor; guarda em localStorage (usoFbV1), sem gravar nada no Firebase. Tela screen-uso-firebase.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/14, js/29, js/31; novo: js/00-uso-firebase.js.'],
+        testar: ['Abra o app, use por alguns minutos e vá em Mais → Uso do Firebase: os números devem subir conforme você troca de tela.', 'Feche e abra o app: deve aparecer uma nova linha em "Aberturas do app hoje".', 'Compare o total do dia com Firestore → Uso no console do Firebase (a soma dos seus aparelhos deve ficar próxima).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.4', nome: 'Menos leituras no Firebase: cópia dos dados no aparelho', status: 'concluida',
         novidades: [
             'Hoje o Firebase registrou 69 mil leituras (o plano gratuito vai até 50 mil por dia, zerando às 06:00 de Brasília). O app não guardava cópia dos dados no aparelho: cada vez que o iPhone fechava e abria o app, lia tudo de novo.',
             'Agora o app guarda uma cópia local. Reabrindo em até cerca de 30 minutos, só é cobrado o que mudou. Passando disso, o Firebase relê tudo, então a economia é grande para aberturas seguidas, mas não elimina o gasto.',

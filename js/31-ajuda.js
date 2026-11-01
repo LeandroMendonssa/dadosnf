@@ -118,6 +118,15 @@ const AJUDA_ARTIGOS = [
         'Use os filtros (Pedido sugerido, Sem pedido, Itens sem produto, Itens defasados) e toque em \"Ver itens\" para ver cada item e se ele tem produto. \"Abrir NF\" leva ao Editor da NF.'
       ],
       dicas: ['O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.', 'Na entrada (XML e relatório do ERP) o app já mostra "Verificações da entrada" com os avisos que valem conferir na hora.'], tutorial: null },
+    { id: 'uso-firebase', cat: 'Ajustes e dados', titulo: 'Uso do Firebase: quantas leituras o app gastou', versao: '2.20.5',
+      resumo: 'Mostra, neste aparelho, quantas leituras do Firebase foram gastas hoje, por coleção, por tela e por abertura do app.',
+      palavras: 'firebase uso leituras cota limite gratis consumo requisicoes contador',
+      tela: [{ id: 'screen-uso-firebase', titulo: 'Uso do Firebase', rotulo: 'Abrir Uso do Firebase' }],
+      passos: [
+        'Em Mais → Uso do Firebase aparece o total de leituras de hoje neste aparelho, a barra em relação ao limite grátis de 50 mil e quais coleções e telas mais gastaram.',
+        '"Aberturas do app hoje" lista cada vez que o app foi aberto ou recarregado, com as leituras daquela abertura. Serve para achar o que está gastando.',
+        'O limite de 50 mil vale para o projeto inteiro, somando todos os aparelhos. Cada aparelho mostra só o seu gasto. O total oficial está no console do Firebase (Firestore → Uso).'
+      ] },
     { id: 'agenda-trabalho', cat: 'Ajustes e dados', titulo: 'Agenda de trabalho: entregas, reuniões e lembretes', versao: '2.20.0',
       resumo: 'Cadastre entregas de reagentes, reuniões e lembretes, com aviso na véspera e no dia.',
       palavras: 'agenda lembrete reuniao entrega reagente calendario aviso notificacao centervida expansao hora repetir',

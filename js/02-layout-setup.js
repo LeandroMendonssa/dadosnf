@@ -244,6 +244,7 @@ function renderTelaMais() {
     const ferramentas = linha("switchToScreen('screen-import', 'Importar Relatório (ERP)')", '<i class="fa-solid fa-file-import"></i>', 'Importar Relatório (ERP)')
         + linha("switchToScreen('screen-atencao', 'Central de notificações'); prepararAtencao()", '<i class="fa-solid fa-bell"></i>', 'Central de notificações' + (nAtencao ? ` <span class="ctl-st err" style="margin-left:6px">${nAtencao}</span>` : ''))
         + linha("switchToScreen('screen-agenda', 'Agenda de trabalho'); prepararAgenda()", '<i class="fa-solid fa-calendar-days"></i>', 'Agenda de trabalho')
+        + linha("switchToScreen('screen-uso-firebase', 'Uso do Firebase'); prepararUsoFirebase()", '<i class="fa-solid fa-gauge-high"></i>', 'Uso do Firebase')
         + linha("switchToScreen('screen-auditoria-central', 'Auditoria'); prepararCentralAuditoria()", '<i class="fa-solid fa-list-check"></i>', 'Auditoria')
         + linha("switchToScreen('screen-auditoria-retro', 'Auditoria Retroativa'); prepararAuditoriaRetroativa()", '<i class="fa-solid fa-clipboard-check"></i>', 'Auditoria Retroativa')
         + linha("switchToScreen('screen-assistente', 'Assistente'); prepararAssistente()", '<i class="fa-solid fa-comments"></i>', 'Assistente');
