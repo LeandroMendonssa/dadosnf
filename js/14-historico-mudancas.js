@@ -10,7 +10,23 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.5', nome: 'Contador de leituras do Firebase', status: 'atual',
+        numero: '2.20.7', nome: 'Uso do Firebase separa servidor e cópia local', status: 'atual',
+        novidades: ['Os prints mostraram a cópia local "ativa" nos dois visualizadores, mas várias aberturas ainda gastando cerca de 1.900 leituras. Para descobrir se os dados vêm do servidor (cobrados) ou da cópia no aparelho (grátis), a tela Uso do Firebase agora mostra os dois totais, as consultas únicas (get) e, em cada abertura, as leituras cobradas e as vindas da cópia.'],
+        implementado: ['js/00: separa snapshots do servidor e do cache (metadata.fromCache) e conta get() à parte.'],
+        mudou: ['Arquivos alterados: js/00 e js/14.'],
+        testar: ['Abra o app, vá em Mais → Uso do Firebase, feche e abra de novo duas ou três vezes e me mande o print do cartão do dia e de "Aberturas do app hoje".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.6', nome: 'Uso do Firebase mostra se a cópia local está ativa', status: 'concluida',
+        novidades: ['Em Mais → Uso do Firebase, o cartão do dia agora diz se a cópia dos dados está ativa neste aparelho. Os prints mostraram que no visualizador "localhost" do editor cada abertura gastava de 1.900 a 2.500 leituras, enquanto no visualizador próprio a segunda abertura gastou zero.'],
+        implementado: ['window.cacheLocalFirestore em js/01 (ativo ou indisponível com o código do erro) exibido em js/00.'],
+        mudou: ['Arquivos alterados: js/00, js/01 e js/14.'],
+        testar: ['Abra Mais → Uso do Firebase no visualizador localhost e no visualizador próprio e veja o que aparece em "Cópia dos dados neste aparelho". Se aparecer "indisponível", mande o texto entre parênteses.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.5', nome: 'Contador de leituras do Firebase', status: 'concluida',
         novidades: [
             'Nova tela Mais → Uso do Firebase: mostra quantas leituras do Firebase este aparelho gastou hoje, por coleção, por tela e por abertura do app, com a barra em relação ao limite grátis de 50 mil por dia.',
             'Serve para descobrir de onde vieram as 69 mil leituras de ontem. Use o app normalmente por um dia, nos aparelhos que costuma usar, e me diga o que aparece.'
