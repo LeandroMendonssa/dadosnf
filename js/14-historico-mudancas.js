@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.2', nome: 'Acabamento da Agenda de trabalho', status: 'atual',
+        numero: '2.20.3', nome: 'Endereço do serviço de avisos corrigido', status: 'atual',
+        novidades: ['O botão "Enviar teste" das notificações apontava para o endereço errado do Worker e falhava com "Não consegui falar com o serviço de avisos". Agora usa o endereço da sua conta.'],
+        implementado: ['PUSH_URL em js/41 corrigida para avisos-auditoria.leandromendoncadesign.workers.dev.'],
+        mudou: ['Arquivos alterados: js/14 e js/41.'],
+        testar: ['Agenda de trabalho → Enviar teste: a notificação deve chegar em alguns segundos.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.20.2', nome: 'Acabamento da Agenda de trabalho', status: 'concluida',
         novidades: [
             'Agenda de trabalho: cartões com o mesmo padrão das outras telas (espaçamento, bordas), títulos e textos empilhados em vez de lado a lado, e caixas de seleção alinhadas com o texto na escolha de avisos.'
         ],

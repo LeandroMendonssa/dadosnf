@@ -1,7 +1,7 @@
 // 41-notificacoes-push.js — Avisos no iPhone (2.20.1): ativar/desativar notificações neste aparelho e mandar um teste.
 // O envio mesmo é feito pelo Worker "avisos-auditoria" (Cloudflare), que lê a agenda e manda o push. Aqui só ficam o cadastro do aparelho
 // (config/push_<uid>.subs.<id>) e a cópia da escolha de avisos (config/push_<uid>.avisos), que o Worker lê.
-const PUSH_URL = 'https://avisos-auditoria.aseleandro.workers.dev';
+const PUSH_URL = 'https://avisos-auditoria.leandromendoncadesign.workers.dev';
 const PUSH_VAPID_PUBLICA = 'BMt0bb-qJP1tMXYEsGJ3jVcBMOfy3fQlLlXMxbkfwUvrdL8rolHF9CfHj9pv7_FTHnDhTmyqQEkFl4x9ymf1IF4';
 let pushEstado = { suporte: false, motivo: '', permissao: 'default', ativo: false, ocupado: false };
 const pushDocRef = () => firestore.collection('config').doc('push_' + auth.currentUser.uid);
