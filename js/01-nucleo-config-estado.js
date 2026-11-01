@@ -17,7 +17,8 @@ if (!firebase.apps.length) {
 const firestore = firebase.firestore();
 // 2.20.4: guarda uma cópia dos dados no aparelho (IndexedDB). Ao reabrir o app em até ~30 min, o Firestore só cobra a leitura do que mudou, em vez de reler tudo.
 // Falha sem problema (aba anônima, navegador sem suporte): o app segue como antes.
-try { firestore.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Cache local do Firestore indisponível:', e && e.code)); } catch (e) { console.warn('Cache local do Firestore:', e); }
+window.cacheLocalFirestore = 'tentando';   // mostrado em Mais → Uso do Firebase
+try { firestore.enablePersistence({ synchronizeTabs: true }).then(() => { window.cacheLocalFirestore = 'ativo'; }).catch(e => { window.cacheLocalFirestore = 'indisponível (' + ((e && e.code) || 'erro') + ')'; console.warn('Cache local do Firestore indisponível:', e && e.code); }); } catch (e) { window.cacheLocalFirestore = 'indisponível (' + ((e && e.code) || 'erro') + ')'; console.warn('Cache local do Firestore:', e); }
 
 // --- REFERÊNCIAS ---
 const notasCollection = firestore.collection('notas');
