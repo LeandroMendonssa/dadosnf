@@ -10,7 +10,20 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.7', nome: 'Uso do Firebase separa servidor e cópia local', status: 'atual',
+        numero: '2.20.8', nome: 'Aviso quando falta subir algum arquivo da atualização', status: 'atual',
+        novidades: [
+            'O app agora confere se todos os arquivos da última atualização chegaram. Cada atualização do Histórico lista os arquivos que mudaram; cada arquivo carrega com a própria versão. Se algum ficou antigo, ou nem carregou, aparece um aviso no topo: "Atualização incompleta", com o nome do arquivo, a versão que ele tem e a que precisa.',
+            'Vale para as atualizações a partir desta (2.20.8). O aviso só aparece se o index.html e o js/43 desta versão estiverem no lugar.',
+            'Os testes mostraram que, pelo ícone da Tela de Início, abrir o app três vezes seguidas custou zero leituras do servidor: a cópia local funciona no uso real.'
+        ],
+        implementado: ['js/43-verificar-arquivos.js (novo); campo "arquivos" nas entradas do histórico; carimbo ARQ_V no fim de cada js alterado; meta app-versao no index.html e --css-versao no style.css; estilo #aviso-arquivos.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/14 e js/43 (novo).'],
+        testar: ['Depois de subir os 4 arquivos e recarregar, nenhum aviso deve aparecer.', 'Teste o aviso: suba tudo menos o style.css (ou deixe o js/14 antigo) e recarregue; deve aparecer "Atualização incompleta" citando o arquivo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.7', nome: 'Uso do Firebase separa servidor e cópia local', status: 'concluida',
         novidades: ['Os prints mostraram a cópia local "ativa" nos dois visualizadores, mas várias aberturas ainda gastando cerca de 1.900 leituras. Para descobrir se os dados vêm do servidor (cobrados) ou da cópia no aparelho (grátis), a tela Uso do Firebase agora mostra os dois totais, as consultas únicas (get) e, em cada abertura, as leituras cobradas e as vindas da cópia.'],
         implementado: ['js/00: separa snapshots do servidor e do cache (metadata.fromCache) e conta get() à parte.'],
         mudou: ['Arquivos alterados: js/00 e js/14.'],
@@ -2823,3 +2836,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.20.8';
