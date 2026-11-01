@@ -10,7 +10,19 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.20.8', nome: 'Aviso quando falta subir algum arquivo da atualização', status: 'atual',
+        numero: '2.20.9', nome: 'Avisos de ocorrências e pedidos parados no iPhone + diagnóstico das notificações', status: 'atual',
+        novidades: [
+            'Ocorrências em aberto sem relato e pedidos parados sem entrega agora também chegam como notificação no iPhone, uma vez por dia, a partir das 08:00. O app anota os números no Firebase depois de carregar os dados; o Worker lê essa anotação. Os números refletem a última vez que o app foi aberto.',
+            'Novo botão "Diagnóstico" no cartão de notificações da Agenda: mostra passo a passo o que funciona (ícone da Tela de Início, permissão, sw.js, inscrição, cadastro no Firebase, Worker, última rodada) e onde parou.'
+        ],
+        implementado: ['js/41: publicarResumoAvisos (config/avisosResumo, ~45 s após abrir, só se mudou ou passaram 6 h) e pushDiagnostico/pushDiagHTML. Worker: passo 2b do resumo diário e gravação de config/pushStatus a cada rodada. js/40 e js/31: textos sem "em breve".'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/40-agenda-trabalho.js', 'js/41-notificacoes-push.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/14, js/31, js/40, js/41, js/43 e worker.js (colar de novo no Cloudflare e implantar).'],
+        testar: ['Cole o novo worker.js no Cloudflare (Editar código → Implantar).', 'Na Agenda, toque em Diagnóstico: cada linha deve vir com ✓; o Worker deve aparecer como "versão 2.20.9".', 'Depois de uma rodada do Worker (até 15 min), o Diagnóstico mostra "Última rodada há N min".', 'Mantenha ocorrências e pedidos parados marcados; no dia seguinte, depois das 08:00, deve chegar a notificação "Pendências na auditoria".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.8', nome: 'Aviso quando falta subir algum arquivo da atualização', status: 'concluida',
         novidades: [
             'O app agora confere se todos os arquivos da última atualização chegaram. Cada atualização do Histórico lista os arquivos que mudaram; cada arquivo carrega com a própria versão. Se algum ficou antigo, ou nem carregou, aparece um aviso no topo: "Atualização incompleta", com o nome do arquivo, a versão que ele tem e a que precisa.',
             'Vale para as atualizações a partir desta (2.20.8). O aviso só aparece se o index.html e o js/43 desta versão estiverem no lugar.',
@@ -2836,4 +2848,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.20.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.20.9';

@@ -12,6 +12,7 @@ function arqVerificar() {
     try { tem['style.css'] = (getComputedStyle(document.documentElement).getPropertyValue('--css-versao') || '').replace(/['"\s]/g, '') || '0'; } catch (e) { tem['style.css'] = '0'; }
     const problemas = [];
     Object.entries(esperado).forEach(([arq, ver]) => {
+        if (!/^js\//.test(arq) && arq !== 'index.html' && arq !== 'style.css') return;   // sw.js e a pasta avisos não dá para conferir daqui
         const atual = /\.js$/.test(arq) ? (reg[arq] || '0') : (tem[arq] || '0');
         if (arqVerNum(atual) < arqVerNum(ver)) problemas.push({ arq, atual, ver });
     });
@@ -24,4 +25,4 @@ function arqMostrarAviso(problemas) {
     document.body.appendChild(b);
 }
 window.addEventListener('load', () => { setTimeout(() => { try { const p = arqVerificar(); if (p.length) { console.warn('Arquivos desatualizados:', p); arqMostrarAviso(p); } } catch (e) { console.error('Verificação de arquivos:', e); } }, 1500); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.20.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.20.9';

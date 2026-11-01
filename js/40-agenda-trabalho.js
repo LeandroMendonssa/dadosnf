@@ -25,8 +25,8 @@ const AGENDA_AVISOS = [
     ['reunioes', 'Reuniões', 'Véspera e antes do horário marcado'],
     ['lembretes', 'Outros lembretes', 'Véspera e no dia'],
     ['nfVencendo', 'NFs vencendo hoje ou amanhã', 'Notas da relação perto do vencimento'],
-    ['ocorrencias', 'Ocorrências em aberto sem relato', 'Divergências que o app achou e você ainda não relatou (no iPhone, em breve)'],
-    ['pedidosParados', 'Pedidos parados', 'Prazo vencido e sem sinal de entrega (no iPhone, em breve)']
+    ['ocorrencias', 'Ocorrências em aberto sem relato', 'Divergências que o app achou e você ainda não relatou'],
+    ['pedidosParados', 'Pedidos parados', 'Prazo vencido e sem sinal de entrega']
 ];
 
 // ---------------- datas (sempre texto AAAA-MM-DD, no dia local) ----------------
@@ -237,3 +237,4 @@ function agendaGruposAtencao() {
     if (vesp.length) g.push({ nivel: 'media', id: 'agenda-amanha', titulo: 'Amanhã na agenda', dica: 'Começa amanhã.', linhas: vesp.map(linha) });
     return g;
 }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/40-agenda-trabalho.js'] = '2.20.9';

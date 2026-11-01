@@ -135,7 +135,7 @@ const AJUDA_ARTIGOS = [
         'Em Mais → Agenda de trabalho, use + Entrega, + Reunião ou + Lembrete. Escolha a data (ou "de/até" para janelas), a hora se quiser, se repete e se avisa na véspera e no dia.',
         '"Carregar calendário" cadastra o calendário de entregas 2026 (Expansão e Centervida). Quando a entrega chegar, toque em "Marcar como entregue" e informe o dia em que chegou.',
         'Entrega que passou da janela sem ser marcada aparece como atrasada, também na Central de notificações.',
-        '"Avisos que você quer receber" define o que deve notificar (entregas, reuniões, lembretes, NFs vencendo; ocorrências e pedidos parados ainda não vão ao iPhone).',
+        '"Avisos que você quer receber" define o que deve notificar (entregas, reuniões, lembretes, NFs vencendo, ocorrências sem relato e pedidos parados; esses dois chegam uma vez por dia e refletem a última vez que o app foi aberto).',
         'Notificações no iPhone: abra o app pelo ícone da Tela de Início, toque em "Ativar notificações" no cartão da Agenda e permita. "Enviar teste" confirma que funciona. Precisa do Worker de avisos instalado (veja a pasta avisos).'
       ] },
     { id: 'assistente', cat: 'Ajustes e dados', titulo: 'Assistente: perguntar sobre NFs, pedidos, materiais e fornecedores', versao: '2.19.3',
@@ -545,3 +545,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.20.9';
