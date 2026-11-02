@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.21.3', nome: 'Anotações antigas voltam a aparecer na lista', status: 'atual',
+        numero: '2.22.0', nome: 'Cache dos catálogos no aparelho (menos leituras do Firebase)', status: 'atual',
+        novidades: ['Produtos, fornecedores, associações e exceções de XML agora ficam guardados no aparelho. Ao abrir o app, ele confere uma única versão no Firebase: se nada mudou, usa a cópia local e quase não gasta leituras; se mudou, baixa de novo uma vez.', 'Ao editar um produto, fornecedor ou associação, o app atualiza só aquele item e avisa os outros aparelhos pela versão. Nada muda no uso: as telas mostram os mesmos dados de sempre.'],
+        implementado: ['js/44-catalogo-cache.js (novo): cache em IndexedDB, documento config/catalogosVersao, catalogoOnSnapshot e interceptação das gravações nas 5 coleções; em qualquer falha volta para a escuta normal do Firestore.', 'js/05: os 5 listeners de catálogo usam catalogoOnSnapshot.'],
+        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/05, js/14, js/31 e js/44 (novo).'],
+        testar: ['1ª abertura depois de atualizar: o Uso do Firebase mostra a leitura dos catálogos (uma vez só, como antes).', 'Feche e abra o app de novo: em Mais → Uso do Firebase, produtosSpData, fornecedoresSpData, associacoesSpData, associacoesFornecedor e xmlExcecoes devem ficar com 0 ou quase 0 leituras do servidor.', 'Edite um fornecedor ou um produto, confira que aparece atualizado na hora e que continua certo depois de fechar e abrir.', 'Se tiver outro aparelho: edite num e abra no outro; a alteração deve aparecer na abertura seguinte.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.21.3', nome: 'Anotações antigas voltam a aparecer na lista', status: 'concluida',
         novidades: ['A lista de anotações agora traz todas as anotações, inclusive as criadas antes do campo de data de atualização existir. Antes, algumas sumiam da lista e só voltavam ao abrir o pedido vinculado.'],
         implementado: ['js/05: listener de anotacoesTexto sem orderBy; ordenação feita no app (atualizadoEm, depois criadoEm).'],
         arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
@@ -2892,4 +2901,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.21.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.0';

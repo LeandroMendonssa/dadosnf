@@ -73,6 +73,16 @@ const AJUDA_ARTIGOS = [
         'Ao importar um relatório do ERP ou enviar uma NF para a relação, o app busca no servidor as NFs de mesmo número, para não reimportar uma nota que já foi arquivada.'
       ],
       dicas: ['Notas antigas só entram na lista quando carregadas; o botão de limpeza do legado some enquanto a lista estiver parcial.'], tutorial: null },
+    { id: 'cache-catalogos', cat: 'Configurações', titulo: 'Cache dos catálogos no aparelho', versao: '2.22.0',
+      resumo: 'Como o app guarda produtos, fornecedores e associações no aparelho para gastar menos leituras do Firebase.',
+      palavras: 'cache catalogo produtos fornecedores associacoes xml leituras cota firebase uso versao aparelho',
+      tela: [],
+      passos: [
+        'Produtos, fornecedores, associações e exceções de XML ficam guardados no aparelho. Ao abrir, o app confere uma versão no Firebase: igual = usa a cópia local; diferente = baixa de novo uma vez.',
+        'Ao editar um item desses cadastros, o app atualiza só aquele item e muda a versão, para os outros aparelhos baixarem na próxima abertura.',
+        'Para conferir, abra Mais → Uso do Firebase: depois da primeira abertura, esses cadastros devem aparecer com poucas leituras do servidor.'
+      ],
+      dicas: ['Se limpar os dados do site ou remover o atalho da tela inicial, a cópia local some e o app baixa tudo de novo uma vez.'], tutorial: null },
     { id: 'saida-texto', cat: 'Notas fiscais', titulo: 'Saída de Texto: copiar, compartilhar e arquivar', versao: '2.10.0',
       resumo: 'Gerar o texto das notas e arquivar depois de enviar.',
       palavras: 'exportar saida texto copiar compartilhar pdf arquivar ordenar recurso contabilizacao',
@@ -555,4 +565,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.21.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.22.0';

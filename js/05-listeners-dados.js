@@ -228,7 +228,7 @@ const ASSINATURAS_DADOS = {
         return historicoDesligar;
     },
     xmlExcecoes: () => {
-        return xmlExcecoesCollection.onSnapshot(snapshot => {
+        return catalogoOnSnapshot('xmlExcecoes', xmlExcecoesCollection, snapshot => {
             bancoExcecoesXml = {};
             snapshot.docs.forEach(doc => { bancoExcecoesXml[doc.id] = doc.data().fator; });
         }, error => erroFirebase("Erro ao carregar exceções de XML:", error));
@@ -244,7 +244,7 @@ const ASSINATURAS_DADOS = {
         }, error => erroFirebase("Erro ao carregar cotações:", error));
     },
     produtosSpData: () => {
-        return produtosSpDataCollection.onSnapshot(snapshot => {
+        return catalogoOnSnapshot('produtosSpData', produtosSpDataCollection, snapshot => {
             listaProdutosSpData = snapshot.docs.map(doc => ({ codigo: doc.id, ...doc.data() }));
             if (document.getElementById('spdata-lista-produtos')) renderListaProdutosSpData();
             // 2.19.3: os produtos do SP Data (~2.700 documentos) só sobem quando uma tela os usa; quem já está aberta se redesenha ao chegar.
@@ -253,7 +253,7 @@ const ASSINATURAS_DADOS = {
         }, error => erroFirebase("Erro ao carregar produtos SP Data:", error));
     },
     associacoesSpData: () => {
-        return associacoesSpDataCollection.onSnapshot(snapshot => {
+        return catalogoOnSnapshot('associacoesSpData', associacoesSpDataCollection, snapshot => {
             listaAssociacoesSpData = snapshot.docs.map(doc => ({ codigoSmartCompras: doc.id, ...doc.data() }));
             if (document.getElementById('central-fornecedores-container') && centralPedidoAtual) renderCentralPedidoCompleto(centralPedidoAtual);
             if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
@@ -261,7 +261,7 @@ const ASSINATURAS_DADOS = {
         }, error => erroFirebase("Erro ao carregar associações SP Data:", error));
     },
     associacoesFornecedor: () => {
-        return associacoesFornecedorCollection.onSnapshot(snapshot => {
+        return catalogoOnSnapshot('associacoesFornecedor', associacoesFornecedorCollection, snapshot => {
             bancoAssociacoesFornecedor = {};
             snapshot.docs.forEach(doc => { bancoAssociacoesFornecedor[doc.id] = doc.data(); });
             if (document.getElementById('xml-card-associacao') && nfeInfoAtual) renderAssociacaoCotacaoXml();
@@ -278,7 +278,7 @@ const ASSINATURAS_DADOS = {
         }, error => erroFirebase("Erro ao carregar histórico de entradas do ERP:", error));
     },
     fornecedoresSpData: () => {
-        return fornecedoresSpDataCollection.onSnapshot(snapshot => {
+        return catalogoOnSnapshot('fornecedoresSpData', fornecedoresSpDataCollection, snapshot => {
             listaFornecedoresSpData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             salvarCacheFornecedores(listaFornecedoresSpData);
             if (document.getElementById('lista-cadastro-fornecedores-spdata')) renderListaFornecedoresUnificada();
@@ -634,4 +634,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.21.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.22.0';
