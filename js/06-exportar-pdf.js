@@ -167,7 +167,7 @@ function bulkArquivarNotas() {
                         const nota = notasPendentes.find(n => n.id === id);
                         if (!nota) return;
                         const { id: _id, ...notaData } = nota;
-                        notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+                        notaData.dataHistorico = (new Date).toLocaleString('pt-BR'); notaData.arquivadoEmIso = new Date().toISOString();
                         registrarOrigemNaNotaArquivada(notaData, id);
                         batch.set(historicoCollection.doc(), notaData);
                         batch.delete(notasCollection.doc(id));
@@ -420,4 +420,4 @@ document.addEventListener('keydown', (event) => {
     else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
     else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && screen.id === 'screen-add') salvarBtn.click(); }
 });
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.21.0';

@@ -72,6 +72,7 @@ async function salvarNota(){
     }
 
     // VERIFICAÇÃO DE DUPLICIDADE
+    await historicoPrepararNfs([nf]);
     const duplicata = verificarDuplicidade(fornecedor, nf);
     
     if (duplicata) {
@@ -198,4 +199,4 @@ function limparFormularioPrincipal(comFoco=true){
     
     if(comFoco) setTimeout(()=>DOM.nf.focus(), 350);
 }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/03-dados-notas.js'] = '2.21.0';

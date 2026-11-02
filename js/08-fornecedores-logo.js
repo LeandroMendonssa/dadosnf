@@ -370,7 +370,7 @@ async function arquivarNotaIndividual(id) {
         confirmClass: 'success',
         onConfirm: async () => {
             const { id: _id, ...notaData } = nota;
-            notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+            notaData.dataHistorico = (new Date).toLocaleString('pt-BR'); notaData.arquivadoEmIso = new Date().toISOString();
             registrarOrigemNaNotaArquivada(notaData, id); // Fase 38
             const batch = firestore.batch();
             batch.set(historicoCollection.doc(), notaData);
@@ -397,7 +397,7 @@ async function limpar(){
             const batch = firestore.batch();
             for (const nota of notasParaArquivar) {
                 const {id, ...notaData} = nota;
-                notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+                notaData.dataHistorico = (new Date).toLocaleString('pt-BR'); notaData.arquivadoEmIso = new Date().toISOString();
                 registrarOrigemNaNotaArquivada(notaData, id); // Fase 38
                 batch.set(historicoCollection.doc(), notaData);
                 batch.delete(notasCollection.doc(id));
@@ -414,3 +414,4 @@ async function limpar(){
     });
 }
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.21.0';

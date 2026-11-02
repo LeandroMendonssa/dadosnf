@@ -304,6 +304,7 @@ function enriquecerItensEntradaErp(itens) {
 
 async function salvarEntradasErp(blocosParsed) {
     if (!blocosParsed || !blocosParsed.length) return { salvos: 0, erros: 0, associacoesSpDataAutomaticas: 0 };
+    await historicoPrepararNfs(blocosParsed.map(b => b.nf));
     const agora = new Date().toISOString();
     // Mapa dos docs já existentes — usado só pra decidir o statusFluxo (ver
     // resolverStatusFluxoEntradaErp), que precisa ser "grudento" em
@@ -545,7 +546,7 @@ function handleImportFileUpload(event) {
     event.target.value = ''; // permite selecionar o mesmo arquivo de novo depois
 }
 
-function processarRelatorioImportacao() {
+async function processarRelatorioImportacao() {
     try {
         const textarea = document.getElementById('import-textarea');
         if (!textarea) return toast('Erro interno: campo de texto não encontrado. Atualize a página (Ctrl+Shift+R) e tente de novo.');
@@ -562,6 +563,7 @@ function processarRelatorioImportacao() {
             return;
         }
 
+        await historicoPrepararNfs(notas.map(n => n.nf));
         notasImportadasPreview = notas;
         mostrarApenasNovasImportacao = true;
         renderPreviewImportacao();
@@ -889,3 +891,4 @@ async function confirmarImportacaoLote() {
         }
     });
 }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/19-erp-reconciliacao.js'] = '2.21.0';

@@ -320,8 +320,8 @@ function renderControleNfs() {
             <button type="button" class="ctl-mes-h" onclick="alternarMesControle('${chaveMes}', ${atual})"><b>${nome}</b><span>${itens.length} NF · R$ ${formatarValorMonetarioBR(total)}<i class="ctl-chev"></i></span></button>
             <div class="central-colapso"><div class="central-colapso-inner">${itens.map(renderCardControleNf).join('')}</div></div></div>`;
     }).join('');
-    const acaoLegado = (abaControle === 'arquivadas' && !termo && historicoNotas.length)
-        ? `<div class="acao-legado"><button type="button" class="central-status-toggle is-danger" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>` : '';
+    const acaoLegado = (abaControle === 'arquivadas' ? historicoBannerHTML() : '') + ((abaControle === 'arquivadas' && !termo && historicoNotas.length && !historicoParcial)
+        ? `<div class="acao-legado"><button type="button" class="central-status-toggle is-danger" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>` : '');
     lista.innerHTML = `<div class="controle-subtitulo">${subtitulos[abaControle]}</div>` + avisoProvaveis +
         (pagina.length ? htmlGrupos : `<div class="empty-state">${termo ? 'Nada encontrado para essa busca.' : vazios[abaControle]}</div>`) +
         (visiveis.length > pagina.length ? `<div class="actions mt-3"><button type="button" class="actions-button is-neutral" onclick="carregarMaisControle()">Carregar mais (${visiveis.length - pagina.length} restante(s))</button></div>` : '') + acaoLegado;
@@ -390,7 +390,7 @@ async function voltarNfParaAberto(chave) {
 async function arquivarItemControle(it) {
     if (it.nota) {
         const { id, ...notaData } = it.nota;
-        notaData.dataHistorico = (new Date).toLocaleString('pt-BR');
+        notaData.dataHistorico = (new Date).toLocaleString('pt-BR'); notaData.arquivadoEmIso = new Date().toISOString();
         registrarOrigemNaNotaArquivada(notaData, id);
         const batch = firestore.batch();
         batch.set(historicoCollection.doc(), notaData);
@@ -489,6 +489,7 @@ async function enviarNfParaRelacao(chave) {
         toast(`Esta NF não tem ${faltando.join(' / ')} registrado — complete e toque em Salvar.`);
         return;
     }
+    await historicoPrepararNfs([d.nf]);
     const duplicata = verificarDuplicidade(d.fornecedor, d.nf, d.valor);
     const executar = async () => {
         envioControleEmAndamento = true;
@@ -941,9 +942,9 @@ function renderHistoricoNfsAgora() {
     const todos = montarLinhaDoTempoHistorico();
     const termo = normalizarBuscaRel(historicoFiltroTexto.trim());
 
-    const acaoLegadoHTML = historicoNotas.length
+    const acaoLegadoHTML = historicoBannerHTML() + (historicoNotas.length && !historicoParcial
         ? `<div class="acao-legado"><button type="button" class="central-status-toggle is-danger" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>`
-        : '';
+        : '');
 
     // Busca sobrepõe a navegação: mostra resultado achatado de qualquer Ano/Mês.
     if (termo) {
@@ -1002,3 +1003,4 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.21.0';

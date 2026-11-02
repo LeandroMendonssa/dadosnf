@@ -10,38 +10,7 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.21.3', nome: 'Anotações antigas voltam a aparecer na lista', status: 'atual',
-        novidades: ['A lista de anotações agora traz todas as anotações, inclusive as criadas antes do campo de data de atualização existir. Antes, algumas sumiam da lista e só voltavam ao abrir o pedido vinculado.'],
-        implementado: ['js/05: listener de anotacoesTexto sem orderBy; ordenação feita no app (atualizadoEm, depois criadoEm).'],
-        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
-        mudou: ['Arquivos alterados: index.html, js/05 e js/14.'],
-        testar: ['Abra Anotações: as anotações antigas devem aparecer sem precisar abrir o pedido vinculado.', 'Confira que a ordem continua da mais recente para a mais antiga.'],
-        testarLinks: []
-    },
-    {
-        numero: '2.21.2', nome: 'Ajuste do aviso de notas arquivadas (espaçamento)', status: 'concluida',
-        novidades: ['O aviso de notas arquivadas e o indicador de carregamento agora têm o mesmo espaçamento do bloco "Limpar registros" e não grudam no botão de cima.'],
-        implementado: ['js/05: historicoBannerHTML dentro de .acao-legado.'],
-        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
-        mudou: ['Arquivos alterados: index.html, js/05 e js/14.'],
-        testar: ['Abra a aba Arquivadas e confira que o aviso tem espaço acima, igual ao bloco "Limpar registros".'],
-        testarLinks: []
-    },
-    {
-        numero: '2.21.1', nome: 'Correção: histórico de NFs parava o Firestore; indicador de carregamento', status: 'concluida',
-        novidades: [
-            'Correção de um erro interno do Firestore que aparecia depois de tocar em "Carregar todas as arquivadas" e deixava de gravar dados. Cada lista do histórico agora é desligada uma só vez.',
-            'Ao carregar as notas arquivadas, aparece um indicador "Carregando as notas arquivadas…" em vez de a tela ficar parada.',
-            'O botão "Carregar todas as arquivadas" ficou alinhado no mesmo padrão dos demais botões da tela.'
-        ],
-        implementado: ['js/05: historicoEscuta com dono único (historicoDesligar chamado uma vez por escuta), historicoAssinar sem desligar a escuta nova, banner com indicador e botão no padrão xml-item-acao.'],
-        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
-        mudou: ['Arquivos alterados: index.html, js/05 e js/14.'],
-        testar: ['Feche o app por completo (pelo seletor de apps) e abra de novo, para descartar o estado com erro.', 'Na aba Arquivadas, veja o aviso dos últimos 2 meses e toque em "Carregar todas as arquivadas": deve aparecer o indicador e depois a lista completa.', 'Grave algo qualquer (ex.: uma anotação) depois de carregar: não deve aparecer "INTERNAL ASSERTION FAILED" no console.'],
-        testarLinks: []
-    },
-    {
-        numero: '2.21.0', nome: 'Histórico de NFs arquivadas: só os últimos 2 meses na abertura', status: 'concluida',
+        numero: '2.21.0', nome: 'Histórico de NFs arquivadas: só os últimos 2 meses na abertura', status: 'atual',
         novidades: [
             'As notas arquivadas mais antigas que 2 meses deixam de ser carregadas ao abrir o app. Elas continuam no servidor e voltam quando você toca em "Carregar todas as arquivadas" ou abre um relatório de arquivadas.',
             'Ao importar um relatório do ERP ou enviar uma NF para a relação, o app busca no servidor as NFs de mesmo número, então uma NF antiga já arquivada não é reimportada.',
@@ -2892,4 +2861,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.21.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.21.0';
