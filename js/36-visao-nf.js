@@ -55,7 +55,7 @@ function visoesNf() {
         if (nf && nfSemPedidoPendente(nf)) pendencias.push({ id: 'sem-pedido', nivel: 'media', texto: 'sem pedido e sem marca de compra direta' });
         if (pedidoSt === 'sugerido') pendencias.push({ id: 'pedido-sugerido', nivel: 'media', texto: `pedido ${pedidoSugerido} sugerido, falta confirmar` });
         if (nf) {
-            const semProd = nf.semCotacaoSmartCompras ? 0 : (nf.itens || []).filter(i => !i.semCotacao && !i.codigoSmartCompras).length; // compra direta marcada: não há produto de cotação para associar
+            const semProd = nf.semCotacaoSmartCompras ? 0 : (nf.itens || []).filter(i => !i.semCotacao && !i.tratamento && !i.codigoSmartCompras).length; // 2.17.3: item trocado já foi tratado. compra direta marcada: não há produto de cotação para associar
             if (semProd) pendencias.push({ id: 'sem-produto', nivel: 'baixa', texto: `${semProd} item(ns) sem associação` });
             const semRec = itens.filter(i => !i.recurso).length;
             if (semRec) pendencias.push({ id: 'sem-recurso', nivel: 'baixa', texto: `${semRec} de ${itens.length} item(ns) sem recurso` });

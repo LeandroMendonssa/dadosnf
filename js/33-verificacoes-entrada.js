@@ -25,7 +25,7 @@ function verificacoesNfXml() {
     const porCod = new Map();
     itensXmlDetectados.forEach(it => {
         if (it.semCotacao) return;
-        const a = bancoAssociacoesFornecedor[chaveAssociacaoFornecedor(info.cnpjEmit, it.cProd)];
+        const a = associacaoEfetivaXml(it);
         if (!a || !a.codigoSmartCompras) return;
         if (!porCod.has(a.codigoSmartCompras)) porCod.set(a.codigoSmartCompras, []);
         porCod.get(a.codigoSmartCompras).push(it);

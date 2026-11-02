@@ -63,6 +63,16 @@ const AJUDA_ARTIGOS = [
         'Se aparecer o aviso de notas sem recurso mas com recurso já conhecido pela Entrada de NF, toque em "Aplicar em todas" (ou aplique nota a nota).'
       ],
       dicas: ['O app só aplica o recurso quando a NF tem um único recurso; com mais de um, você escolhe em Editar.'], tutorial: null },
+    { id: 'historico-arquivadas', cat: 'Notas fiscais', titulo: 'Notas arquivadas: o que aparece ao abrir o app', versao: '2.21.0',
+      resumo: 'Por que só algumas notas arquivadas aparecem e como carregar as demais.',
+      palavras: 'historico arquivadas antigas carregar todas servidor lentidao relatorio controle duplicada repetida',
+      tela: [{ id: 'screen-controle-nfs', titulo: 'Controle de NFs', rotulo: 'Abrir Controle de NFs' }],
+      passos: [
+        'Ao abrir o app, aparecem as notas arquivadas dos últimos 2 meses. As mais antigas ficam no servidor, para o app abrir mais rápido e gastar menos da cota do Firebase.',
+        'Quando precisar delas, toque em "Carregar todas as arquivadas" no aviso que aparece na aba Arquivadas (ou ao abrir um relatório de arquivadas).',
+        'Ao importar um relatório do ERP ou enviar uma NF para a relação, o app busca no servidor as NFs de mesmo número, para não reimportar uma nota que já foi arquivada.'
+      ],
+      dicas: ['Notas antigas só entram na lista quando carregadas; o botão de limpeza do legado some enquanto a lista estiver parcial.'], tutorial: null },
     { id: 'saida-texto', cat: 'Notas fiscais', titulo: 'Saída de Texto: copiar, compartilhar e arquivar', versao: '2.10.0',
       resumo: 'Gerar o texto das notas e arquivar depois de enviar.',
       palavras: 'exportar saida texto copiar compartilhar pdf arquivar ordenar recurso contabilizacao',
@@ -545,4 +555,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.20.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.21.0';

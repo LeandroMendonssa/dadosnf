@@ -120,6 +120,7 @@ function filtrarRelatorios(valor) {
 
 function filtrarStatusNotasRelatorio(status) {
     relatoriosFiltroStatusNotas = status;
+    if (status !== 'pendente') historicoCarregarTudo();   // 2.21.0: relatório de arquivadas precisa do histórico completo
     ['pendente', 'arquivada', 'todas'].forEach(s => {
         const btn = document.getElementById(`relatorios-filtro-notas-${s}`);
         if (btn) btn.classList.toggle('active', s === status);
@@ -604,4 +605,4 @@ function renderFiltrosAtivosRelatorio() {
     el.style.display = 'flex';
     el.innerHTML = `<span style="flex:1;">Filtros ativos: ${partes.map(escRel).join(' · ')}</span><button type="button" class="action-chip edit-chip" onclick="limparFiltrosRelatorio()">Limpar</button>`;
 }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/04-relatorios-base.js'] = '2.21.0';
