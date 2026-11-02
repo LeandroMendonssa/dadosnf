@@ -10,7 +10,43 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.22.0', nome: 'Cache dos catálogos no aparelho (menos leituras do Firebase)', status: 'atual',
+        numero: '2.22.4', nome: 'Correção: cotações demoravam ~5 s com o cache dos catálogos; relatório copiável estável', status: 'atual',
+        novidades: ['Corrigida a demora de cerca de 5 segundos ao abrir Cotações e uma cotação: o indicador de carregamento esperava um sinal que o cache dos catálogos não enviava e só saía por tempo limite.', 'O campo de texto do relatório não fecha mais sozinho (a tela de uso não se redesenha enquanto o relatório está aberto), e a barra inferior volta ao normal.'],
+        implementado: ['js/28: window.__primeiroSnapMarcar expõe o marcador de primeira resposta.', 'js/44: catalogoOnSnapshot marca a primeira resposta (cópia, servidor e escuta normal).', 'js/00: a atualização automática da tela de uso pausa com o relatório aberto.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/28-transicoes-ios.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14, js/28 e js/44.'],
+        testar: ['Com o cache ligado, abra Cotações e uma cotação: o carregamento deve sumir em menos de 1 segundo.', 'Em Mais → Uso do Firebase, gere o relatório e toque no texto: ele deve continuar aberto e a barra inferior não deve sumir.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.3', nome: 'Relatório de uso em texto copiável', status: 'concluida',
+        novidades: ['Em Mais → Uso do Firebase há o botão "Gerar relatório", que mostra um texto simples (toque para selecionar tudo e copiar) com leituras, telas, aberturas, cache dos catálogos com tempos e travadas da tela.'],
+        implementado: ['js/44: catalogoRelatorioTexto, medição de travadas (travadas), contadores de entregas e tempo de leitura por catálogo.', 'js/00: cartão "Relatório para copiar" com campo de texto.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14 e js/44.'],
+        testar: ['Use o app por alguns minutos (Cotações, abrir uma cotação, voltar).', 'Abra Mais → Uso do Firebase, role até "Relatório para copiar", toque em "Gerar relatório", toque no texto, copie tudo e cole na conversa.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.2', nome: 'Cache dos catálogos: exibe a cópia na hora, mede o tempo e permite desligar', status: 'concluida',
+        novidades: ['Os cadastros agora aparecem na hora a partir da cópia local; a conferência da versão no Firebase acontece depois, sem segurar a tela.', 'No cartão "Cache dos catálogos" (Mais → Uso do Firebase) aparece o tempo de cada cadastro e um botão para desligar o cache como teste, voltando ao comportamento da versão 2.21.3.'],
+        implementado: ['js/44: catalogoOnSnapshot entrega o cache antes de consultar a versão; medição de tempo (catalogoDiag.ms/msCb); chave localStorage catalogoCacheOff e botão catalogoAlternar.'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/14 e js/44.'],
+        testar: ['Abra as Cotações e uma cotação; compare a demora.', 'Em Mais → Uso do Firebase → Cache dos catálogos, toque em "Desligar cache dos catálogos (teste)", feche e abra o app e repita; compare a demora e me conte qual ficou mais rápido.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.1', nome: 'Cache dos catálogos: proteção contra falha e diagnóstico', status: 'concluida',
+        novidades: ['Se o app não conseguir gravar a versão do cache no Firebase, ele volta a carregar os cadastros do jeito de antes (sem ficar baixando tudo a cada abertura).', 'Em Mais → Uso do Firebase há um novo cartão "Cache dos catálogos" mostrando, para cada cadastro, se veio da cópia local, do servidor ou da escuta normal, e o motivo de qualquer falha.'],
+        implementado: ['js/44: criação da versão antes do download; falha => escuta normal; versão que não grava invalida a cópia local; catalogoDiag/catalogoDiagHTML.', 'js/00: cartão de diagnóstico na tela de uso.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14 e js/44.'],
+        testar: ['Abra o app, use uma cotação, volte, e confira em Mais → Uso do Firebase o cartão "Cache dos catálogos".', 'Feche e abra de novo: os cadastros devem aparecer como "cópia local" e a cotação abrir sem demora.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.0', nome: 'Cache dos catálogos no aparelho (menos leituras do Firebase)', status: 'concluida',
         novidades: ['Produtos, fornecedores, associações e exceções de XML agora ficam guardados no aparelho. Ao abrir o app, ele confere uma única versão no Firebase: se nada mudou, usa a cópia local e quase não gasta leituras; se mudou, baixa de novo uma vez.', 'Ao editar um produto, fornecedor ou associação, o app atualiza só aquele item e avisa os outros aparelhos pela versão. Nada muda no uso: as telas mostram os mesmos dados de sempre.'],
         implementado: ['js/44-catalogo-cache.js (novo): cache em IndexedDB, documento config/catalogosVersao, catalogoOnSnapshot e interceptação das gravações nas 5 coleções; em qualquer falha volta para a escuta normal do Firestore.', 'js/05: os 5 listeners de catálogo usam catalogoOnSnapshot.'],
         arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/44-catalogo-cache.js'],
@@ -2901,4 +2937,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.4';

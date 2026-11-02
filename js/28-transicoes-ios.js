@@ -77,6 +77,7 @@
 
     // ---------- carregamento: sabe quando a primeira resposta de cada coleção chegou ----------
     const primeiroSnap = {};
+    window.__primeiroSnapMarcar = n => { if (n) primeiroSnap[n] = true; };   // 2.22.4: o cache dos catálogos (js/44) avisa que a 1ª resposta chegou
     let hookOk = false;
     try {
         const Q = firebase.firestore.Query;
@@ -208,3 +209,4 @@
         mostrarCarregando(screenId);
     };
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/28-transicoes-ios.js'] = '2.22.4';

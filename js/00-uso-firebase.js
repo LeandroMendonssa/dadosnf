@@ -50,7 +50,7 @@ try { if (window.firebase && firebase.firestore) usoFbInstalar(firebase.firestor
 // ---------------- tela Mais → Uso do Firebase ----------------
 const usoFbN = n => Number(n || 0).toLocaleString('pt-BR');
 const usoFbHora = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-function prepararUsoFirebase() { renderUsoFirebase(); clearInterval(window._usoFbRender); window._usoFbRender = setInterval(() => { const t = document.getElementById('screen-uso-firebase'); if (t && t.classList.contains('active')) renderUsoFirebase(); else clearInterval(window._usoFbRender); }, 2500); }
+function prepararUsoFirebase() { renderUsoFirebase(); clearInterval(window._usoFbRender); window._usoFbRender = setInterval(() => { const t = document.getElementById('screen-uso-firebase'); if (t && t.classList.contains('active')) { const r = document.getElementById('uso-relatorio'); if (!(r && r.style.display !== 'none')) renderUsoFirebase(); } else clearInterval(window._usoFbRender); }, 2500); }
 function usoFbLinhas(obj, total) {
     const l = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
     return l.length ? l.map(([k, v]) => `<div class="uso-lin"><span>${escRel(k)}</span><b>${usoFbN(v)}</b><i style="width:${Math.max(2, Math.round(v / (total || 1) * 100))}%"></i></div>`).join('') : '<div class="xml-item-meta">Nada ainda.</div>';
@@ -68,6 +68,12 @@ function renderUsoFirebase() {
         <div class="ctl-card"><div class="xml-item-meta"><b>Por tela</b>Em que tela você estava quando os dados chegaram</div>${usoFbLinhas(usoFb.tela, usoFb.total)}</div>
         <div class="ctl-card"><div class="xml-item-meta"><b>Aberturas do app hoje</b>Cada vez que o app foi aberto ou recarregado</div>
         ${sess.length ? sess.map(s => { const top = Object.entries(s.c || {}).sort((a, b) => b[1] - a[1])[0]; return `<div class="uso-lin"><span>${usoFbHora(s.t)} · ${escRel(s.ap)}${top ? ' · mais: ' + escRel(top[0]) : ''}</span><b>${usoFbN(s.n)}<small style="font-weight:400"> / ${usoFbN(s.k)} cópia</small></b></div>`; }).join('') : '<div class="xml-item-meta">Nenhuma ainda.</div>'}</div>
+        ${typeof catalogoDiagHTML === 'function' ? catalogoDiagHTML() : ''}
+        <div class="ctl-card"><div class="xml-item-meta"><b>Relatório para copiar</b>Gera um texto simples para você colar na conversa</div>
+        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoRelatorioGerar()">Gerar relatório</button></div>
+        <textarea id="uso-relatorio" readonly rows="14" style="display:none;width:100%;box-sizing:border-box;margin-top:10px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit" onclick="this.select()"></textarea></div>
         <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoFbZerar()">Zerar contagem deste aparelho</button></div>`;
 }
+function usoRelatorioGerar() { const t = document.getElementById('uso-relatorio'); if (!t || typeof catalogoRelatorioTexto !== 'function') return; t.value = catalogoRelatorioTexto(); t.style.display = 'block'; t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) { } }
 function usoFbZerar() { showConfirmModal({ title: 'Zerar a contagem?', message: 'Só apaga o que este aparelho anotou. Não mexe no Firebase.', confirmText: 'Zerar', confirmClass: 'danger', onConfirm: () => { usoFb = { dia: usoFbDia(), total: 0, cache: 0, get: 0, col: {}, tela: {}, sessoes: [] }; usoFbSessao = { t: Date.now(), ap: usoFbAparelho(), n: 0, k: 0, c: {}, dia: usoFb.dia }; usoFb.sessoes.push(usoFbSessao); usoFbSalvar(); renderUsoFirebase(); } }); }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/00-uso-firebase.js'] = '2.22.4';
