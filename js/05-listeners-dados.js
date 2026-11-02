@@ -224,11 +224,8 @@ const ASSINATURAS_DADOS = {
         }, error => erroFirebase("Erro ao carregar dados:", error));
     },
     historico: () => {
-        return historicoCollection.orderBy('dataHistorico','desc').onSnapshot(snapshot => {
-            historicoNotas = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
-            popularListaHistorico();
-            renderAbaAtivaRelatorios();
-        }, error => erroFirebase("Erro ao carregar histórico:", error));
+        historicoIniciar();
+        return historicoDesligar;
     },
     xmlExcecoes: () => {
         return xmlExcecoesCollection.onSnapshot(snapshot => {
@@ -303,8 +300,10 @@ const ASSINATURAS_DADOS = {
         }, error => erroFirebase("Erro ao carregar relatório de fornecedores ganhadores:", error));
     },
     anotacoes: () => {
-        return anotacoesTextoCollection.orderBy('atualizadoEm','desc').onSnapshot(async snapshot => {
-            listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
+        // 2.21.3: sem orderBy no Firestore. Anotações sem o campo atualizadoEm sumiam da consulta; agora vêm todas e a ordem é feita aqui.
+        return anotacoesTextoCollection.onSnapshot(async snapshot => {
+            listaAnotacoes = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}))
+                .sort((x, y) => String(y.atualizadoEm || y.criadoEm || '').localeCompare(String(x.atualizadoEm || x.criadoEm || '')));
 
             // Migração única: se não existe nenhuma anotação nova ainda, mas havia
             // texto no campo antigo (uma anotação só), traz ele pra cá como a
@@ -557,3 +556,82 @@ function atualizarContadorGerenciar() {
     counterEl.title = `${total} nota${total === 1 ? '' : 's'}${pendentesCount > 0 ? ` · ${pendentesCount} pendente${pendentesCount === 1 ? '' : 's'}` : ''}`;
 }
 
+
+// ---- 2.21.0: histórico de NFs arquivadas. Só as dos últimos 2 meses entram na abertura; as mais antigas
+// ficam no servidor e vêm sob demanda (relatórios, controle, conferência de NF repetida).
+const HISTORICO_JANELA_MESES = 2;
+let historicoParcial = false, historicoEscuta = null, historicoCarregando = false;
+// Só uma escuta de histórico por vez. Cada escuta é desligada UMA vez (ao ser trocada ou no reset),
+// senão o Firestore 8.10 entra em "Unexpected state" e para de gravar.
+function historicoDesligar() {
+    const e = historicoEscuta; historicoEscuta = null; historicoCarregando = false;
+    if (e) { try { e.parar(); } catch (err) { console.warn('Histórico: desligar', err); } }
+}
+function historicoLimiteIso() { const d = new Date(); d.setMonth(d.getMonth() - HISTORICO_JANELA_MESES); return d.toISOString(); }
+// 'dd/mm/aaaa, hh:mm:ss' (texto antigo do arquivamento) → ISO. Texto irreconhecível vira data antiga (vai para o grupo "antigo").
+function historicoDataDoTexto(t) {
+    const m = String(t || '').match(/(\d{2})\/(\d{2})\/(\d{4})(?:,?\s+(\d{2}):(\d{2}))?/);
+    if (!m) return '1900-01-01T00:00:00.000Z';
+    return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).toISOString();
+}
+// Uma vez só: grava arquivadoEmIso nas NFs antigas (feito na sessão de carga completa). Depois disso a flag config/historicoMigracao.feito = true libera a carga parcial.
+async function historicoBackfill(docs) {
+    const faltam = docs.filter(d => !d.data().arquivadoEmIso);
+    if (!faltam.length) return;
+    for (let i = 0; i < faltam.length; i += 400) {
+        const b = firestore.batch();
+        faltam.slice(i, i + 400).forEach(d => b.update(d.ref, { arquivadoEmIso: historicoDataDoTexto(d.data().dataHistorico) }));
+        await b.commit();
+    }
+    await firestore.collection('config').doc('historicoMigracao').set({ feito: true, quando: new Date().toISOString(), docs: faltam.length }, { merge: true });
+}
+function historicoAssinar(completo) {
+    historicoDesligar();
+    historicoParcial = !completo;
+    historicoCarregando = true;
+    const q = completo
+        ? historicoCollection.orderBy('dataHistorico', 'desc')
+        : historicoCollection.where('arquivadoEmIso', '>=', historicoLimiteIso()).orderBy('arquivadoEmIso', 'desc');
+    const minha = { parar: null };
+    historicoEscuta = minha;
+    minha.parar = q.onSnapshot(snapshot => {
+        if (historicoEscuta !== minha) return;   // escuta antiga: ignora
+        historicoNotas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        historicoCarregando = false;
+        popularListaHistorico();
+        renderAbaAtivaRelatorios();
+        if (typeof renderControleSeAtivo === 'function') renderControleSeAtivo();
+        if (completo) historicoBackfill(snapshot.docs).catch(e => console.warn('Histórico (migração):', e && e.code));
+    }, error => { historicoCarregando = false; erroFirebase("Erro ao carregar histórico:", error); });
+}
+async function historicoIniciar() {
+    let pronto = false;
+    try { const c = await firestore.collection('config').doc('historicoMigracao').get(); pronto = !!(c.exists && c.data().feito === true); } catch (e) { pronto = false; }
+    historicoAssinar(!pronto);
+}
+// Carrega todas as arquivadas (botão "Carregar todas" e filtro "arquivada"/"todas" nos relatórios).
+function historicoCarregarTudo() {
+    if (!historicoParcial) return;
+    historicoAssinar(true);
+    if (typeof renderControleSeAtivo === 'function') renderControleSeAtivo();
+    if (typeof popularListaHistorico === 'function') popularListaHistorico();
+}
+// Antes de conferir se uma NF já foi arquivada, busca no servidor as que possam bater (modo parcial).
+async function historicoPrepararNfs(nfs) {
+    if (!historicoParcial) return;
+    const vals = new Set();
+    (nfs || []).forEach(n => { const t = String(n || '').trim(); if (t) { vals.add(t); const d = t.replace(/\D/g, ''); if (d) vals.add(d); } });
+    const lista = [...vals];
+    for (let i = 0; i < lista.length; i += 10) {
+        try {
+            const s = await historicoCollection.where('nf', 'in', lista.slice(i, i + 10)).get();
+            s.docs.forEach(d => { if (!historicoNotas.some(h => h.id === d.id)) historicoNotas.push({ id: d.id, ...d.data() }); });
+        } catch (e) { console.warn('Histórico sob demanda:', e && e.code); }
+    }
+}
+function historicoBannerHTML() {
+    if (!historicoParcial && !historicoCarregando) return '';
+    if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
+    return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
+}
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.21.3';
