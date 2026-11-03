@@ -632,7 +632,8 @@ async function salvarAuditoriaComoAnotacao() {
     const fornecedorCnpj = fornMatch ? fornMatch.cnpj : '';
 
     const agora = new Date().toISOString();
-    const novaOcorrencia = { notaFiscal: nfCampo, fornecedor, fornecedorCnpj, data: dataAud, observacaoGeral, divergencias: divergenciasAtuais, criadoEm: agora };
+    // 2.22.6: o Firestore recusa campos undefined (ex.: quantidade em branco); a cópia JSON tira esses campos antes de gravar
+    const novaOcorrencia = JSON.parse(JSON.stringify({ notaFiscal: nfCampo, fornecedor, fornecedorCnpj, data: dataAud, observacaoGeral, divergencias: divergenciasAtuais, criadoEm: agora }));
 
     // Lê o texto JÁ REVISADO no bloco "Mensagem" (o usuário pode ter editado
     // ou formatado depois de gerar, item 8) em vez de regenerar do zero —
@@ -715,3 +716,4 @@ async function salvarAuditoriaComoAnotacao() {
 }
 
 // ===================================================================
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/16-spdata-textos.js'] = '2.22.6';

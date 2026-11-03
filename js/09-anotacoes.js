@@ -334,7 +334,9 @@ function renderCentralPedidoCompleto(pedido) {
             // 2.1.3: botões (chegou / abrir NF / associar NF) ficam FORA da parte que expande, sempre visíveis no card.
             const dadosEnt = dadosEntregaFornecedor(pedido, f, entrega);
             // 2.9.3: fechado, o cartão mostra só o cabeçalho e a barra de ações; faixa de entrega e números ficam no topo da parte que expande.
-            const acoesLista = dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)];
+            // 2.22.6: botão para gerar de uma vez as auditorias de todas as ocorrências em aberto deste fornecedor (voltou ao cartão)
+            const nLoteAud = compForn.filter(c => c.estado === 'detectada' && c.codProduto).length;
+            const acoesLista = (dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)]).concat(nLoteAud > 1 ? [{ i: 'dir', t: `Gerar auditorias (${nLoteAud})`, fn: `registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }] : []);
             const acoesHTML = `<div class="ctl-bar cf-bar">${acoesLista.map(a => `<button type="button" onclick="event.stopPropagation(); ${a.fn}">${ICONES_CTRL[a.i] || ''}<span>${a.t}</span></button>`).join('')}</div>
                 ${htmlPainelAssociarNf(pedido, f.cnpj)}`;
             const detalhesEntregaHTML = ((dadosEnt && dadosEnt.detalhes) || '') + htmlVinculadasNf(pedido, f.cnpj);
@@ -1175,4 +1177,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.22.6';

@@ -1025,7 +1025,7 @@ function textoDivergenciaNatural(div) {
         case 'produto_trocado':
             return `Solicitamos ${div.nome}${div.quantidadeCotada ? ', ' + div.quantidadeCotada + ' UNID' : ''}, porém foi faturado ${div.produtoFaturado || 'outro produto'}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
         case 'valor_cotado_nf':
-            return `${div.nome} foi cotado a R$ ${div.valorCotado.toFixed(2)}, porém foi faturado a R$ ${div.valorFaturado.toFixed(2)}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
+            return `${div.nome} foi cotado a R$ ${precoUnitarioTexto(div.valorCotado)}, porém foi faturado a R$ ${precoUnitarioTexto(div.valorFaturado)}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
         default:
             return `Divergência em ${div.nome}.`;
     }
@@ -1458,18 +1458,20 @@ const MAPA_TIPO_DIVERGENCIA_COMPARACAO = {
 // (quantidade cotada/faturada, valor cotado/faturado), nunca inventa dado.
 function camposMaterialDivergencia(tipoEstruturado, item, div) {
     const campos = { produto: item.nome };
+    // 2.22.6: a quantidade vem da divergência e, se ela não trouxer (ex.: valor diferente), da própria linha do item (cotado/faturado). Nunca undefined.
+    const nz = (...v) => { for (const x of v) if (x != null && x !== '') return x; return ''; };
     if (tipoEstruturado === 'produto_diferente') { // 2.17.3: Solicitamos {produtoPedido}, porém foi faturado {produtoFaturado}
-        return { produtoPedido: item.nome, produtoFaturado: div.produtoFaturado || '', quantidade: div.quantidadeCotada, unidade: '' };
+        return { produtoPedido: item.nome, produtoFaturado: div.produtoFaturado || '', quantidade: nz(div.quantidadeCotada, item.quantidadeCotada), unidade: '' };
     }
     if (tipoEstruturado === 'nao_faturado') {
-        campos.quantidade = div.quantidadeCotada;
+        campos.quantidade = nz(div.quantidadeCotada, item.quantidadeCotada);
     } else if (tipoEstruturado === 'quantidade_diferente') {
-        campos.quantidadeCotada = div.quantidadeCotada;
-        campos.quantidadeFaturada = div.quantidadeFaturada;
+        campos.quantidadeCotada = nz(div.quantidadeCotada, item.quantidadeCotada);
+        campos.quantidadeFaturada = nz(div.quantidadeFaturada, item.quantidadeFaturada);
     } else if (tipoEstruturado === 'valor_diferente') {
-        campos.quantidade = div.quantidadeFaturada != null ? div.quantidadeFaturada : div.quantidadeCotada;
-        campos.valorCotado = div.valorCotado != null ? div.valorCotado.toFixed(2) : '';
-        campos.valorFaturado = div.valorFaturado != null ? div.valorFaturado.toFixed(2) : '';
+        campos.quantidade = nz(div.quantidadeFaturada, item.quantidadeFaturada, div.quantidadeCotada, item.quantidadeCotada);
+        campos.valorCotado = div.valorCotado != null ? precoUnitarioTexto(div.valorCotado) : '';
+        campos.valorFaturado = div.valorFaturado != null ? precoUnitarioTexto(div.valorFaturado) : '';
     }
     return campos;
 }
@@ -1559,7 +1561,7 @@ function registrarDivergenciaDaComparacao(pedido, codProduto) {
             algumaMudanca = true;
         }
         if (materialExistente && !materialExistente.ref && item.codProduto) materialExistente.ref = item.codProduto;
-        const linhaRecurso = recurso ? `Recurso ${item.nome}: ${recurso}` : null;
+        const linhaRecurso = (recurso && tipoEstruturado !== 'valor_diferente') ? `Recurso ${item.nome}: ${recurso}` : null; // 2.22.6: divergência de valor não leva a linha de recurso
         if (linhaRecurso && !card.observacao.includes(linhaRecurso)) {
             card.observacao = (card.observacao ? card.observacao + '\n' : '') + linhaRecurso;
         }
@@ -1805,4 +1807,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.22.6';

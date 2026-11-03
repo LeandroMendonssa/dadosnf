@@ -218,10 +218,16 @@ function processarXmlTexto(texto) {
     // itens desta NF (mais forte que CNPJ, porque já foi confirmado à mão
     // antes). Se os itens já associados apontarem pra pedidos diferentes,
     // não escolhe nenhum — fica como conflito pra resolução manual.
+    // 2.22.5: quando o mesmo produto está em mais de um pedido, escolhe o pedido citado na NF ("SMART 1744" nas informações
+    // adicionais) e, depois, o que tem o CNPJ do emitente; só então a ordem da lista. Antes pegava o primeiro pedido com o produto.
+    const pedidoCitadoNf = (() => { try { const e = xmlDocAtual.querySelector('infAdic infCpl'); const m = e && e.textContent.match(/SMART\s*#?\s*(\d{3,6})/i); return m ? m[1] : null; } catch (er) { return null; } })();
     const pedidosPorItem = itensXmlDetectados.map(item => {
         const associacao = associacaoEfetivaXml(item) || (item.tratamentoXml ? { codigoSmartCompras: item.tratamentoXml.codigo } : null);
         if (!associacao) return null;
-        const cotacaoDoItem = listaCotacoes.find(c => (c.itens || []).some(it => it.codProduto === associacao.codigoSmartCompras));
+        const candidatas = listaCotacoes.filter(c => (c.itens || []).some(it => it.codProduto === associacao.codigoSmartCompras));
+        const cotacaoDoItem = (pedidoCitadoNf && candidatas.find(c => String(c.pedido) === pedidoCitadoNf))
+            || candidatas.find(c => (c.fornecedores || []).some(f => mesmoCnpj(f.cnpj, cnpjEmit)))
+            || candidatas[0];
         return cotacaoDoItem ? { pedido: cotacaoDoItem.pedido, item } : null;
     }).filter(Boolean);
     const pedidosDistintos = [...new Set(pedidosPorItem.map(p => p.pedido))];
@@ -1583,4 +1589,4 @@ function aplicarPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     renderAssociacaoCotacaoXml();
     toast(`Produto de referência: SP Data ${possibilidade.spDataCodigo}. O código do item (${item.cProd}) não foi alterado.`);
 }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.22.5';

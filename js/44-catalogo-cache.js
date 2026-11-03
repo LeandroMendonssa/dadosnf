@@ -187,7 +187,7 @@ function catalogoInstalarEscritas(F) {
 }
 // ---- medição de travadas da tela (quanto tempo o app ficou sem responder) e relatório em texto
 const travadas = [];
-(function () { let ult = Date.now(); setInterval(() => { const n = Date.now(), d = n - ult - 250; ult = n; if (d > 300) { let t = ''; try { const a = document.querySelector('.app-screen.active'); t = a ? a.id : ''; } catch (e) { } travadas.push({ t: n, ms: d, tela: t }); if (travadas.length > 40) travadas.shift(); } }, 250); })();
+(function () { let ult = Date.now(); document.addEventListener('visibilitychange', () => { ult = Date.now(); }); setInterval(() => { const n = Date.now(), d = n - ult - 250; ult = n; if (document.hidden) return; if (d > 300) { let t = ''; try { const a = document.querySelector('.app-screen.active'); t = a ? a.id : ''; } catch (e) { } travadas.push({ t: n, ms: d, tela: t }); if (travadas.length > 40) travadas.shift(); } }, 250); })();
 function catalogoRelatorioTexto() {
     const L = [], hh = t => new Date(t).toLocaleTimeString('pt-BR'), N = x => (x == null ? '-' : x);
     let ver = ''; try { ver = document.querySelector('meta[name="app-versao"]').content; } catch (e) { }
@@ -205,4 +205,4 @@ function catalogoRelatorioTexto() {
     return L.join('\n');
 }
 try { if (window.firebase && firebase.firestore) catalogoInstalarEscritas(firebase.firestore); } catch (e) { console.warn('Cache de catálogos: gravações não monitoradas:', e); }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.22.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.22.6';

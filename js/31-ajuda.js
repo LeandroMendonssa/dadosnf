@@ -45,6 +45,7 @@ const AJUDA_ARTIGOS = [
         'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, a explicação pelo frete, seguro ou desconto do próprio XML quando houver, e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
         'Na lista de itens da cotação, o app esconde os que outro item da NF já associou e mostra só os do fornecedor; "Ver outros itens desse fornecedor" traz todos de volta (útil quando o fornecedor manda o mesmo produto em dois códigos, marcas ou validades). As sugestões "Parecidos pelo nome" não dependem da ordem das palavras.',
         'Item que não é o da cotação: "Remover associação" desfaz uma associação errada do fornecedor; "Veio produto trocado" (escolha o item que era o pedido) deixa o item sem associação e a conferência registra "Solicitamos X, porém foi faturado Y"; "Aceito como outro produto" vale como o item pedido só nesta NF e não grava a associação (use quando o comprador aceitou a diferença).',
+        'Quando o mesmo produto está em mais de um pedido, o app escolhe o pedido citado na NF ("SMART 1744" nas informações adicionais) e, depois, o que tem o CNPJ do fornecedor da nota.',
         'Itens com pendência já abrem sozinhos; o selo mostra o que falta.',
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
@@ -286,7 +287,7 @@ const AJUDA_ARTIGOS = [
         'Em Cotações, toque no cartão do pedido.',
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
         'Logo abaixo do CNPJ, o cartão diz se todos os itens do fornecedor tiveram 3+ cotações ou quantos ficaram abaixo (esses são pagos com Recurso Próprio). Ao abrir o cartão, a lista mostra quais itens e quantos fornecedores cotaram cada um.',
-        'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou ou Desfazer a marca manual.',
+        'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou ou Desfazer a marca manual. Quando o fornecedor tem mais de uma ocorrência em aberto, aparece também "Gerar auditorias (N)": ele junta todas no mesmo rascunho de auditoria, já classificadas e com as quantidades preenchidas.',
         'Em Associar NF, a lista mostra as NFs da mesma entidade do fornecedor. Se ele entregou por outro CNPJ, digite o número da NF: a busca passa a valer para todos os fornecedores e indica o nome e "outro CNPJ".',
         'Ao associar uma NF do histórico, o app liga sozinho os itens à cotação (por SP Data, e também por nome, quantidade e preço próximo, mesmo sem o texto do SmartCompras colado). Só liga quando é inequívoco e nunca troca uma associação sua. Abaixo da NF associada, "Itens lançados" mostra o que foi lançado e a qual produto da cotação cada item ficou ligado. A NF aparece aí mesmo que ainda esteja esperando decisão no Controle. Itens sem nome oficial (relatório do SmartCompras não colado) mostram o nome lançado no ERP, marcado como tal.',
         'No topo do pedido, "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez como "já chegou" (manual); o mesmo botão passa a "Desfazer marcas de entrega de todos".',
@@ -565,4 +566,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.22.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.22.6';

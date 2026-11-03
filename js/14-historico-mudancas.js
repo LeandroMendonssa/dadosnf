@@ -10,7 +10,25 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.22.4', nome: 'Correção: cotações demoravam ~5 s com o cache dos catálogos; relatório copiável estável', status: 'atual',
+        numero: '2.22.6', nome: 'Auditoria: erro ao salvar sem quantidade, quantidade automática e botão para gerar todas', status: 'atual',
+        novidades: ['Corrigido o erro ao salvar uma auditoria de valor diferente sem quantidade (o Firestore recusava o campo vazio). Agora o app grava normalmente.', 'A quantidade da auditoria é preenchida sozinha a partir do item (quantidade faturada na NF, ou a cotada), em vez de ficar em branco.', 'Voltou o botão "Gerar auditorias (N)" no cartão do fornecedor: junta todas as ocorrências em aberto dele no mesmo rascunho.', 'A auditoria de valor diferente não acrescenta mais a linha "Recurso <produto>: C/C ..." nas observações.', 'Preços unitários pequenos agora aparecem com até 4 casas nas verificações e nas auditorias (cotado 0,0863 × faturado 0,0932, em vez dos dois como 0,09).', 'O relatório de uso deixou de registrar como travada o tempo em que o app ficou em segundo plano.'],
+        implementado: ['js/16: novaOcorrencia sem campos undefined (cópia JSON).', 'js/11: camposMaterialDivergencia com quantidade vinda do item; sem linha de recurso para valor_diferente.', 'js/09: botão registrarTodasDivergenciasDoFornecedor no cartão do fornecedor (2 ou mais ocorrências em aberto).', 'js/44: medição de travadas ignora segundo plano.', 'js/18: formatPrecoUnitarioBR e precoUnitarioTexto; js/33 e js/11 usam nas mensagens de valor.', 'js/31: Ajuda do cartão do fornecedor.'],
+        arquivos: ['index.html', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/16-spdata-textos.js', 'js/18-erp-fornecedores-spdata.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/11, js/14, js/16, js/18, js/31, js/33 e js/44.'],
+        testar: ['Em Cotações, abra um pedido com divergência de valor e toque em "Gerar auditoria": a quantidade deve vir preenchida e salvar sem erro.', 'Num fornecedor com 2 ou mais ocorrências em aberto, deve aparecer "Gerar auditorias (N)" entre os botões do cartão; toque e confira o rascunho.', 'Confira que as observações de valor diferente não trazem "Recurso ...".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.5', nome: 'Correção: item da NF ligado ao pedido errado quando o produto está em dois pedidos', status: 'concluida',
+        novidades: ['Quando o mesmo produto está em mais de um pedido, o app agora escolhe o pedido citado na NF ("SMART 1744" nas informações adicionais) e, depois, o pedido que tem o CNPJ do emitente. Antes pegava o primeiro pedido da lista que tivesse o produto, o que gerava mensagens contraditórias (500 × 1000, preço de outro fornecedor).'],
+        implementado: ['js/10: pedidoCitadoNf e escolha da cotação por item (pedido citado → CNPJ do emitente → primeira da lista).', 'js/31: Ajuda de Entrada de NF.'],
+        arquivos: ['index.html', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados: index.html, js/10, js/14 e js/31.'],
+        testar: ['Carregue de novo o XML da NF 1800899 (C.B.S.): a agulha deve ir para o pedido 1744 (1000 un., cotada a R$ 0,0863 pela C.B.S.) e os itens devem ficar todos no pedido 1744.', 'Confira que NFs sem "SMART nnnn" nas informações continuam sendo associadas como antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.4', nome: 'Correção: cotações demoravam ~5 s com o cache dos catálogos; relatório copiável estável', status: 'concluida',
         novidades: ['Corrigida a demora de cerca de 5 segundos ao abrir Cotações e uma cotação: o indicador de carregamento esperava um sinal que o cache dos catálogos não enviava e só saía por tempo limite.', 'O campo de texto do relatório não fecha mais sozinho (a tela de uso não se redesenha enquanto o relatório está aberto), e a barra inferior volta ao normal.'],
         implementado: ['js/28: window.__primeiroSnapMarcar expõe o marcador de primeira resposta.', 'js/44: catalogoOnSnapshot marca a primeira resposta (cópia, servidor e escuta normal).', 'js/00: a atualização automática da tela de uso pausa com o relatório aberto.'],
         arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/28-transicoes-ios.js', 'js/44-catalogo-cache.js'],
@@ -2937,4 +2955,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.6';

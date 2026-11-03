@@ -162,7 +162,7 @@ function verificacoesItensXml(erp) {
                 // mostra o valor na mesma unidade do cotado: a do XML ou a convertida pelo fator, a que mais se aproxima
                 const v = Math.abs(valorUn - cotado) <= Math.abs(ult.vUnComOriginal - cotado) ? valorUn : ult.vUnComOriginal;
                 const dif = ((v - cotado) / cotado) * 100;
-                r.push({ nivel: 'atencao', texto: `${nome}: valor unitário do XML R$ ${formatValorBR(v)}${fator !== 1 ? ' (já com o fator ' + numeroLimpo(fator) + ')' : ''} × cotado R$ ${formatValorBR(cotado)} (${dif > 0 ? '+' : ''}${dif.toFixed(1).replace('.', ',')}%).` });
+                r.push({ nivel: 'atencao', texto: `${nome}: valor unitário do XML R$ ${formatPrecoUnitarioBR(v)}${fator !== 1 ? ' (já com o fator ' + numeroLimpo(fator) + ')' : ''} × cotado R$ ${formatPrecoUnitarioBR(cotado)} (${dif > 0 ? '+' : ''}${dif.toFixed(1).replace('.', ',')}%).` });
             }
         }
 
@@ -206,3 +206,4 @@ function verificacoesItensXml(erp) {
     }
     return r;
 }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/33-verificacoes-entrada.js'] = '2.22.6';

@@ -31,6 +31,9 @@ function parseValorBR(str) {
     return isNaN(n) ? 0 : n;
 }
 
+// 2.22.6: preço UNITÁRIO com até 4 casas (0,0863 e 0,0932 não viram os dois "0,09")
+function formatPrecoUnitarioBR(num) { return (Number(num) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); }
+function precoUnitarioTexto(num) { const n = +Number(num).toFixed(4); return n.toFixed(Math.max(2, (String(n).split('.')[1] || '').length)); }
 function formatValorBR(num) {
     return (num || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -892,3 +895,4 @@ function vincularEntidadeSelecionada(chave, principalId) {
 }
 
 // ===================================================================
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.22.6';
