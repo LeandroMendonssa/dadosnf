@@ -238,7 +238,7 @@ function itensCorrespondentesCotacao(cotacao, termo) {
 // Fase 34: resumo de entrega do pedido (quantos fornecedores completos/parciais/aguardando).
 // Só leitura: usa as mesmas funções do card do fornecedor na Central (Fase 31). Nunca quebra a lista.
 function resumoEntregaCotacao(c) {
-    const r = { completa: 0, parcial: 0, parcialRel: 0, erp: 0, aguardando: 0, divergencias: 0, total: 0 };
+    const r = { completa: 0, parcial: 0, parcialRel: 0, erp: 0, aguardando: 0, cancelada: 0, divergencias: 0, total: 0 };
     try {
         const fornecedores = c.fornecedores || [];
         if (!fornecedores.length || !(c.itens || []).length) return r;
@@ -247,7 +247,9 @@ function resumoEntregaCotacao(c) {
         fornecedores.forEach(f => {
             const compForn = comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === normalizarCnpj(f.cnpj));
             const e = calcularEntregaFornecedorPedido(c.pedido, f, compForn);
-            if (!e || !e.total) return;
+            if (!e) return;
+            if (e.estado === 'cancelada') { r.cancelada++; return; } // 2.22.7: cancelada não conta como entregue nem pendente
+            if (!e.total) return;
             r.total++;
             if (e.estado === 'completa') r.completa++;
             else if (e.estado === 'parcial_relatada') r.parcialRel++; // 2.16.1: chegou parcial, falta relatada
@@ -266,6 +268,7 @@ function chipsResumoEntrega(r) {
         r.parcialRel ? chip('neutro', `◐ ${r.parcialRel} parcial (já chegou)`) : '',
         r.erp ? chip('neutro', `◐ ${r.erp} NF no ERP`) : '',
         r.aguardando ? chip('neutro', `○ ${r.aguardando} aguardando`) : '',
+        r.cancelada ? chip('neutro', `⊘ ${r.cancelada} cancelada${r.cancelada === 1 ? '' : 's'}`) : '',
         r.divergencias ? chip('pendente', `${r.divergencias} divergência${r.divergencias === 1 ? '' : 's'}`) : ''
     ].filter(Boolean).join('');
 }
@@ -281,12 +284,14 @@ function renderCardCotacao(c) {
     else if (r.total && r.completa === r.total) st = ['ok', 'Completo'];
     else if (r.total && r.completa + r.parcialRel === r.total) st = ['ok', 'Concluído']; // 2.16.1: tudo chegou; a falta já foi relatada
     else if (r.completa || r.parcial || r.parcialRel || r.erp) st = ['', 'Em andamento'];
+    else if (r.cancelada && !r.total) st = ['m', 'Cancelada'];
     const partes = [
         r.completa ? `✓ ${r.completa} completa${r.completa === 1 ? '' : 's'}` : '',
         r.parcial ? `◐ ${r.parcial} parcial${r.parcial === 1 ? '' : 'is'}` : '',
         r.parcialRel ? `◐ ${r.parcialRel} parcial (já chegou)` : '',
         r.erp ? `◐ ${r.erp} NF no ERP` : '',
-        r.aguardando ? `○ ${r.aguardando} aguardando` : ''
+        r.aguardando ? `○ ${r.aguardando} aguardando` : '',
+        r.cancelada ? `⊘ ${r.cancelada} cancelada${r.cancelada === 1 ? '' : 's'}` : ''
     ].filter(Boolean);
     const iniciais = (typeof iniciaisControle === 'function') ? iniciaisControle(c.origem || '#') : '#';
     return `<div class="ctl-card cot-card" onclick="abrirCentralPedido('${c.pedido}')">
@@ -548,3 +553,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.22.7';

@@ -915,8 +915,9 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
         const usaNf = itens.some(i => i.situacao === 'nf'), usaErp = itens.some(i => i.situacao === 'erp');
         origem = usaNf && usaErp ? 'misto' : usaErp ? 'erp' : 'xml';
     } else if (manual) {
-        estado = 'completa';
-        origem = manual.tipo === 'parcial_resolvida' ? 'parcial_resolvida' : 'manual';
+        // 2.22.7: "entrega cancelada" é um estado próprio: não é chegada, não é pendência e não gera aviso de "não chegou".
+        if (manual.tipo === 'cancelada') { estado = 'cancelada'; origem = 'cancelada'; }
+        else { estado = 'completa'; origem = manual.tipo === 'parcial_resolvida' ? 'parcial_resolvida' : 'manual'; }
     }
 
     const datas = nfsApp.map(n => n.data).concat(nfsErp.map(n => n.data)).filter(Boolean).sort();
@@ -938,6 +939,7 @@ function calcularEntregaFornecedorPedido(pedido, fornecedor, compItens) {
 // Texto/classe do selo e frases de apoio do card do fornecedor.
 function rotuloEntregaFornecedor(e) {
     if (!e) return { texto: '', classe: 'neutro' };
+    if (e.estado === 'cancelada') return { texto: '⊘ Entrega cancelada', classe: 'neutro', curto: '⊘ entrega cancelada' };
     if (e.estado === 'completa') {
         if (e.origem === 'manual') return { texto: '✓ Já chegou (confirmado manualmente)', classe: 'pronto', curto: '✓ já chegou (manual)' };
         if (e.origem === 'parcial_resolvida') return { texto: '✓ Entrega parcial resolvida (manual)', classe: 'pronto', curto: '✓ parcial resolvida (manual)' };
@@ -958,6 +960,7 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     if (e.estado === 'completa' && e.origem === 'xml') linhas.push(`Calculado pelo XML processado no app${e.dataChegada ? ' · concluída em ' + formatarDataBRSimples(e.dataChegada) : ''}.`);
     else if (e.estado === 'completa' && e.origem === 'erp') linhas.push(`Calculado pela entrada registrada no ERP${e.dataChegada ? ' · em ' + formatarDataBRSimples(e.dataChegada) : ''}.`);
     else if (e.estado === 'completa' && e.origem === 'misto') linhas.push(`Calculado por XML no app + entrada no ERP${e.dataChegada ? ' · concluída em ' + formatarDataBRSimples(e.dataChegada) : ''}.`);
+    else if (e.manual && e.origem === 'cancelada') linhas.push(`Marcado como entrega cancelada${e.manual.data ? ' em ' + formatarDataBRSimples(e.manual.data) : ''} — o app não espera mais esta entrega e não avisa que não chegou.`);
     else if (e.manual) linhas.push(`${e.origem === 'parcial_resolvida' ? 'Parcial marcada como resolvida' : 'Marcado como já chegou'} manualmente${e.manual.data ? ' em ' + formatarDataBRSimples(e.manual.data) : ''} — o app não tem NF/ERP que comprove todos os itens.`);
     if (e.manual && e.estadoAuto === 'completa') linhas.push(`Também havia marca manual em ${formatarDataBRSimples(e.manual.data)} (já não é necessária).`);
     if (e.estado !== 'completa' || e.estadoAuto !== 'completa') {
@@ -969,7 +972,7 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     if (e.nfsApp.length) linhas.push(`XML no app: ${e.nfsApp.map(fmtNf).join(' · ')}.`);
     if (e.passos.length) linhas.push(`Histórico: ${e.passos.map(p => `${fmtNf(p)} → ${p.cobertos}/${p.total} itens`).join(' · ')}.`);
     const botoes = e.manual
-        ? `<button type="button" class="action-chip edit-chip" onclick="alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)">Desfazer marca manual</button>`
+        ? `<button type="button" class="action-chip edit-chip" onclick="alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)">${e.origem === 'cancelada' ? 'Desfazer cancelamento' : 'Desfazer marca manual'}</button>`
         : (e.estadoAuto === 'completa' || e.estadoAuto === 'parcial_relatada') ? ''
         : e.estadoAuto === 'parcial'
             ? `<button type="button" class="action-chip edit-chip" onclick="alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true, 'parcial_resolvida')">Marcar parcial como resolvida</button>`
@@ -985,10 +988,12 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     // 2.9.3: ações em formato de dados (ícone + rótulo + função) para a barra de ações do cartão.
     const acoes = e.nfsApp.map(n => ({ i: 'dir', t: `Abrir NF ${n.nf}`, fn: `abrirNfDaDivergencia('${pedido}', '${escRel(n.nf)}')` }));
     acoes.push(acaoAssociarNf(pedido, fornecedor.cnpj));
-    if (e.manual) acoes.push({ i: 'reab', t: 'Desfazer marca manual', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
+    if (e.manual) acoes.push({ i: 'reab', t: e.origem === 'cancelada' ? 'Desfazer cancelamento' : 'Desfazer marca manual', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
     else if (e.estadoAuto === 'parcial_relatada') { /* já chegou, falta relatada: nada a marcar */ }
     else if (e.estadoAuto === 'parcial') acoes.push({ i: 'fin', t: 'Marcar parcial resolvida', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true, 'parcial_resolvida')` });
     else if (e.estadoAuto !== 'completa') acoes.push({ i: 'fin', t: 'Marcar como já chegou', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` });
+    // 2.22.7: entrega cancelada pelo fornecedor/compras: para de avisar que não chegou
+    if (!e.manual && e.estadoAuto !== 'completa' && e.estadoAuto !== 'parcial_relatada') acoes.push({ i: 'reab', t: 'Entrega cancelada', fn: `confirmarEntregaCanceladaFornecedor('${pedido}', '${fornecedor.cnpj}')` });
     return {
         acoes,
         badge: `<span class="xml-item-badge ${r.classe}">${r.texto}</span>`,
@@ -1395,6 +1400,47 @@ function htmlBotaoTodosChegaram(cotacao) {
         ? `<button type="button" class="action-chip edit-chip" onclick="marcarTodosChegaramCotacao('${p}', true)">Marcar toda a cotação como entregue</button>`
         : `<button type="button" class="action-chip edit-chip" onclick="marcarTodosChegaramCotacao('${p}', false)">Desfazer marcas de entrega de todos</button>`;
 }
+// 2.22.7: entrega cancelada — por fornecedor (cartão) ou no pedido todo (cabeçalho).
+function htmlBotaoCancelarEntregaPedido(cotacao) {
+    const cnpjs = cnpjsFornecedoresDaCotacao(cotacao); if (!cnpjs.length) return '';
+    const mapa = cotacao.chegadasPorFornecedor || {};
+    const p = escRel(String(cotacao.pedido));
+    if (cnpjs.every(c => mapa[c] && mapa[c].tipo === 'cancelada')) return `<button type="button" class="action-chip edit-chip" onclick="cancelarEntregaPedidoCotacao('${p}', false)">Desfazer cancelamento do pedido</button>`;
+    if (!cnpjs.some(c => !mapa[c])) return '';
+    return `<button type="button" class="action-chip edit-chip" onclick="cancelarEntregaPedidoCotacao('${p}', true)">Entrega cancelada (pedido todo)</button>`;
+}
+function confirmarEntregaCanceladaFornecedor(pedido, cnpj) {
+    showConfirmModal({
+        title: 'Entrega cancelada', message: 'Marcar a entrega deste fornecedor como cancelada? O app deixa de esperar essa entrega e não avisa mais que não chegou. Dá para desfazer depois.',
+        confirmText: 'Marcar cancelada', confirmClass: 'warning',
+        onConfirm: () => alterarChegadaFornecedorCotacao(pedido, cnpj, true, 'cancelada')
+    });
+}
+function cancelarEntregaPedidoCotacao(pedido, cancelar) {
+    const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido)); if (!cot) return;
+    const cnpjs = cnpjsFornecedoresDaCotacao(cot);
+    const mapa0 = cot.chegadasPorFornecedor || {};
+    const alvos = cancelar ? cnpjs.filter(c => !mapa0[c]) : cnpjs.filter(c => mapa0[c] && mapa0[c].tipo === 'cancelada');
+    if (!alvos.length) return;
+    showConfirmModal({
+        title: cancelar ? 'Entrega cancelada (pedido todo)' : 'Desfazer cancelamento',
+        message: cancelar ? `Marcar a entrega de ${alvos.length} fornecedor(es) do pedido ${pedido} como cancelada? Fornecedores que já têm marca (já chegou) não mudam. Dá para desfazer depois.` : `Remover o cancelamento de ${alvos.length} fornecedor(es) do pedido ${pedido}?`,
+        confirmText: cancelar ? 'Cancelar entrega' : 'Desfazer', confirmClass: cancelar ? 'warning' : 'danger',
+        onConfirm: async () => {
+            try {
+                const upd = {}, mapa = { ...mapa0 };
+                alvos.forEach(c => {
+                    if (cancelar) { const v = { data: dataLocalISO(), tipo: 'cancelada' }; upd[c] = v; mapa[c] = v; }
+                    else { upd[c] = firebase.firestore.FieldValue.delete(); delete mapa[c]; }
+                });
+                await cotacoesCollection.doc(String(cot.pedido)).set({ chegadasPorFornecedor: upd }, { merge: true });
+                cot.chegadasPorFornecedor = mapa;
+                toast(cancelar ? `✓ Entrega cancelada em ${alvos.length} fornecedor(es).` : '✓ Cancelamento removido.');
+                if (centralPedidoAtual === pedido) renderCentralPedidoCompleto(pedido);
+            } catch (e) { console.error('Erro ao cancelar entrega:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+        }
+    });
+}
 function marcarTodosChegaramCotacao(pedido, chegou) {
     const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido)); if (!cot) return;
     const cnpjs = cnpjsFornecedoresDaCotacao(cot);
@@ -1431,7 +1477,7 @@ async function alterarChegadaFornecedorCotacao(pedido, cnpj, chegou, tipo) {
         const mapa = { ...(cot.chegadasPorFornecedor || {}) };
         if (chegou) mapa[chave] = valor; else delete mapa[chave];
         cot.chegadasPorFornecedor = mapa;
-        toast(chegou ? (tipo === 'parcial_resolvida' ? '✓ Entrega parcial marcada como resolvida.' : '✓ Fornecedor marcado como já chegou (manual).') : '✓ Marca manual removida.');
+        toast(chegou ? (tipo === 'cancelada' ? '✓ Entrega marcada como cancelada.' : tipo === 'parcial_resolvida' ? '✓ Entrega parcial marcada como resolvida.' : '✓ Fornecedor marcado como já chegou (manual).') : '✓ Marca manual removida.');
         if (centralPedidoAtual === pedido) renderCentralPedidoCompleto(pedido);
     } catch (e) {
         console.error('Erro ao alterar chegada do fornecedor:', e);
@@ -1807,4 +1853,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.22.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.22.7';

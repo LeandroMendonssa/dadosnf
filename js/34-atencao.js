@@ -26,7 +26,7 @@ function itensDeAtencao() {
     const nfPorPedido = new Set(), erpPorPedido = new Set();
     listaNfsProcessadas.forEach(n => [n.pedido, ...(n.pedidos || [])].filter(Boolean).forEach(p => nfPorPedido.add(String(p))));
     listaEntradasErp.forEach(e => { const p = pedidoDoErpConfirmado(e); if (p) erpPorPedido.add(String(p)); });
-    const semEntrega = listaCotacoes.filter(c => { const lim = (c.dataLimite || '').slice(0, 10); return lim && lim < hoje && !nfPorPedido.has(String(c.pedido)) && !erpPorPedido.has(String(c.pedido)) && !Object.keys(c.chegadasPorFornecedor || {}).length && (c.itens || []).length; })
+    const semEntrega = listaCotacoes.filter(c => { const lim = (c.dataLimite || '').slice(0, 10); return lim && lim < hoje && !nfPorPedido.has(String(c.pedido)) && !erpPorPedido.has(String(c.pedido)) && !(() => { const m = c.chegadasPorFornecedor || {}, ks = Object.keys(m); if (!ks.length) return false; if (ks.some(k => m[k] && m[k].tipo !== 'cancelada')) return true; const cn = cnpjsFornecedoresDaCotacao(c); return !cn.length || cn.every(x => m[x]); })() && (c.itens || []).length; })
         .sort((a, b) => String(a.dataLimite).localeCompare(String(b.dataLimite)));
     add('alta', 'pedidos-sem-entrega', 'Pedidos com prazo vencido e sem sinal de entrega', 'Sem NF no app, sem NF do ERP ligada e sem marca de "já chegou".',
         semEntrega.map(c => ({ pedido: String(c.pedido), forn: '', t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `prazo ${dataBRdeISO(c.dataLimite)} (${diasDesdeISO(c.dataLimite)} dia(s) atrás) · ${(c.fornecedores || []).length} fornecedor(es)`, fn: `abrirCentralPedido('${escRel(c.pedido)}')` })));
@@ -132,3 +132,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.22.7';

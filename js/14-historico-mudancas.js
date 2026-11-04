@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.22.6', nome: 'Auditoria: erro ao salvar sem quantidade, quantidade automática e botão para gerar todas', status: 'atual',
+        numero: '2.22.7', nome: 'Entrega cancelada: parar de avisar que não chegou', status: 'atual',
+        novidades: ['Novo botão "Entrega cancelada" em cada fornecedor do pedido: o app deixa de esperar aquela entrega e para de avisar que não chegou.', 'No topo do pedido, o botão "Entrega cancelada (pedido todo)" marca todos os fornecedores sem marca de uma vez.', 'Dá para desfazer (um a um ou o pedido todo). O pedido deixa de aparecer em "sem sinal de entrega" e no aviso de pedido parado.'],
+        implementado: ['Marca chegadasPorFornecedor[cnpj] = { data, tipo:\'cancelada\' }; calcularEntregaFornecedorPedido devolve estado \'cancelada\' (js/11).', 'Selo e texto próprios (rotuloEntregaFornecedor), botões no cartão e no cabeçalho, confirmação antes de salvar.', 'resumoEntregaCotacao/chips e cartão da lista mostram "cancelada" sem contar como entregue nem pendente (js/13); js/34: pedido sem entrega ignora cancelados (só some se todos os fornecedores têm marca).'],
+        arquivos: ['index.html', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/34-atencao.js'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/11, js/13, js/14, js/31 e js/34.'],
+        testar: ['Abra um pedido atrasado, toque em "Entrega cancelada" num fornecedor e confirme: o selo vira "Entrega cancelada" e some o "não chegou" daquele fornecedor.', 'Toque em "Desfazer cancelamento": volta ao estado anterior.', 'No topo do pedido, "Entrega cancelada (pedido todo)": todos os fornecedores ficam cancelados; o pedido sai de Atenção > sem sinal de entrega.', 'Pedido com um fornecedor cancelado e outro sem entrega, com prazo vencido: continua avisando só do outro.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.6', nome: 'Auditoria: erro ao salvar sem quantidade, quantidade automática e botão para gerar todas', status: 'concluida',
         novidades: ['Corrigido o erro ao salvar uma auditoria de valor diferente sem quantidade (o Firestore recusava o campo vazio). Agora o app grava normalmente.', 'A quantidade da auditoria é preenchida sozinha a partir do item (quantidade faturada na NF, ou a cotada), em vez de ficar em branco.', 'Voltou o botão "Gerar auditorias (N)" no cartão do fornecedor: junta todas as ocorrências em aberto dele no mesmo rascunho.', 'A auditoria de valor diferente não acrescenta mais a linha "Recurso <produto>: C/C ..." nas observações.', 'Preços unitários pequenos agora aparecem com até 4 casas nas verificações e nas auditorias (cotado 0,0863 × faturado 0,0932, em vez dos dois como 0,09).', 'O relatório de uso deixou de registrar como travada o tempo em que o app ficou em segundo plano.'],
         implementado: ['js/16: novaOcorrencia sem campos undefined (cópia JSON).', 'js/11: camposMaterialDivergencia com quantidade vinda do item; sem linha de recurso para valor_diferente.', 'js/09: botão registrarTodasDivergenciasDoFornecedor no cartão do fornecedor (2 ou mais ocorrências em aberto).', 'js/44: medição de travadas ignora segundo plano.', 'js/18: formatPrecoUnitarioBR e precoUnitarioTexto; js/33 e js/11 usam nas mensagens de valor.', 'js/31: Ajuda do cartão do fornecedor.'],
         arquivos: ['index.html', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/16-spdata-textos.js', 'js/18-erp-fornecedores-spdata.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js', 'js/44-catalogo-cache.js'],
@@ -2955,4 +2964,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.7';

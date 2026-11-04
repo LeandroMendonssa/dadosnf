@@ -289,7 +289,7 @@ function renderCentralPedidoCompleto(pedido) {
     if (subEl) {
         if (cotacao) {
             const nForn = (cotacao.fornecedores || []).length;
-            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div><div class="actions-row" style="margin-top:8px">${htmlBotaoTodosChegaram(cotacao)}</div>`;
+            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div><div class="actions-row" style="margin-top:8px">${htmlBotaoTodosChegaram(cotacao)}${htmlBotaoCancelarEntregaPedido(cotacao)}</div>`;
             subEl.style.display = 'block';
         } else { subEl.innerHTML = ''; subEl.style.display = 'none'; }
     }
@@ -390,7 +390,7 @@ function renderCentralPedidoCompleto(pedido) {
 
             // 2.9.0: cartão no padrão do app — iniciais, nome, status, itens/valor/pendências e (abaixo) as ações; o corpo continua recolhível.
             const valorCot = (typeof valorTotalCotacaoPorFornecedor === 'function') ? valorTotalCotacaoPorFornecedor(cotacao, f.cnpj) : 0;
-            const stRot = emErro ? ['', 'Com pendência'] : (entregaOk ? ['ok', entrega.estado === 'parcial_relatada' ? 'Chegou (parcial)' : 'Entregue'] : ['m', 'Aguardando']);
+            const stRot = emErro ? ['', 'Com pendência'] : (entrega && entrega.estado === 'cancelada' ? ['m', 'Entrega cancelada'] : entregaOk ? ['ok', entrega.estado === 'parcial_relatada' ? 'Chegou (parcial)' : 'Entregue'] : ['m', 'Aguardando']);
             const pendTxt = [chegadaTxt, nAbertas ? `${nAbertas} divergência(s) em aberto` : '', nNaoChegou ? `${nNaoChegou} não chegou` : '', nRelatadas ? `${nRelatadas} pendência(s) relatada(s)` : ''].filter(Boolean).join(' · ');
             const cot3 = htmlResumoCotacoesFornecedor(pedido, produtos); // 2.19.2: itens do fornecedor que não atingiram o mínimo de cotações
             const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('') + cot3.detalhe;
@@ -1177,4 +1177,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.22.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.22.7';
