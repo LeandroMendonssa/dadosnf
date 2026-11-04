@@ -30,7 +30,7 @@ function gerarPdfSaida() {
 
     // Cabeçalho: logo (se configurada em Configurações → Personalização) +
     // título do documento.
-    const logo = appConfig.personalizacao && appConfig.personalizacao.logoBase64;
+    const logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : (appConfig.personalizacao && appConfig.personalizacao.logoBase64);
     if (logo) {
         try { doc.addImage(logo, 'PNG', margin, y - 10, 55, 42); } catch (e) { console.error('Logo inválida pro PDF:', e); }
     }
@@ -420,4 +420,4 @@ document.addEventListener('keydown', (event) => {
     else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
     else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && screen.id === 'screen-add') salvarBtn.click(); }
 });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.21.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.23.1';

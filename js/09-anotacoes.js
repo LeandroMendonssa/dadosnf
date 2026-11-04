@@ -38,10 +38,11 @@ function renderListaAnotacoes() {
         const concluida = a.status === 'concluido';
         const sinalizada = !!a.sinalizada;
         const selecionada = selecaoAnotacoesAtiva && anotacoesSelecionadas.has(a.id);
-        return `<div class="nota-item anotacao-item ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : (a.pedido ? `abrirCentralPedido('${a.pedido}')` : `abrirAnotacao('${a.id}')`)}">            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
+        return `<div class="nota-item anotacao-item ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : `abrirAnotacao('${a.id}')`}">            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
             <div class="nota-detalhes">${snippet}${snippet.length >= 90 ? '…' : ''}</div>
             <div class="nota-data">Atualizado em: ${data}</div>
             ${!selecaoAnotacoesAtiva ? `<div class="anotacao-card-actions">
+                ${a.pedido && listaCotacoes.some(c => String(c.pedido) === String(a.pedido)) ? `<button type="button" class="anotacao-icon-btn" title="Abrir a cotação do pedido ${escRel(String(a.pedido))}" onclick="event.stopPropagation(); abrirCentralPedido('${escRel(String(a.pedido))}')"><i class="fa-solid fa-file-invoice"></i></button>` : ''}
                 <button type="button" class="anotacao-icon-btn ${sinalizada ? 'is-flagged' : ''}" title="Sinalizar" onclick="event.stopPropagation(); toggleFlagAnotacao('${a.id}')"><i class="fa-solid fa-flag"></i></button>
                 <button type="button" class="anotacao-icon-btn ${concluida ? 'is-done' : ''}" title="${concluida ? 'Reabrir' : 'Concluir'}" onclick="event.stopPropagation(); toggleConcluidaAnotacao('${a.id}')"><i class="fa-solid fa-check"></i></button>
                 <button type="button" class="anotacao-icon-btn is-delete" title="Excluir" onclick="event.stopPropagation(); excluirAnotacaoRapida('${a.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -293,7 +294,7 @@ function renderCentralPedidoCompleto(pedido) {
     if (subEl) {
         if (cotacao) {
             const nForn = (cotacao.fornecedores || []).length;
-            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div><div class="actions-row" style="margin-top:8px">${htmlBotaoTodosChegaram(cotacao)}${htmlBotaoCancelarEntregaPedido(cotacao)}</div>`;
+            subEl.innerHTML = `<div class="central-sub-linha">${nForn} fornecedor${nForn === 1 ? '' : 'es'}${cotacao.dataLimite ? ' · limite ' + formatarDataBRSimples(cotacao.dataLimite) : ''}</div><div class="nota-chips">${chipsResumoEntrega(resumoEntregaCotacao(cotacao))}</div><div class="actions-row" style="margin-top:8px">${htmlBotaoTodosChegaram(cotacao)}${htmlBotaoCancelarEntregaPedido(cotacao)}<button type="button" class="action-chip edit-chip" onclick="abrirExportarCotacao('${escRel(String(pedido))}')"><i class="fa-solid fa-file-export"></i> Exportar relatório</button></div>`;
             subEl.style.display = 'block';
         } else { subEl.innerHTML = ''; subEl.style.display = 'none'; }
     }
@@ -1190,4 +1191,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.23.1';

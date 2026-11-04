@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.23.0', nome: 'Fixar cotação no topo, relatório da cotação, prazo em dias úteis e ajuste das Anotações', status: 'atual',
+        numero: '2.23.1', nome: 'Anotações abrem a nota, ajuste da logo e botão do relatório no topo do pedido', status: 'atual',
+        novidades: ['Anotações: tocar numa anotação de um pedido (ex.: 1744) agora abre a anotação, não mais a cotação. Quando a nota é de um pedido que existe em Cotações, o cartão ganhou um botão pequeno para abrir a cotação.', 'Configurações > Logo da Instituição: novo painel "Como a logo sai na impressão", com prévia do quadro e controles de enquadramento (manter a proporção, preencher ou esticar), tamanho e posição. Por padrão a logo agora mantém a proporção, o que corrige a deformação nos PDFs.', 'O botão "Exportar relatório" saiu da aba Anotações e foi para o topo do pedido, junto dos outros botões do resumo.'],
+        implementado: ['js/09: clique da lista de anotações sempre chama abrirAnotacao; botão "abrir cotação" (abrirCentralPedido) no cartão; botão de exportar nas ações do resumo do pedido.', 'js/08: logoAjuste (modo, zoom, x, y) guardado com a logo (compartilhado), prepararLogoImpressao/logoParaImpressao e painel de prévia; js/06 e js/45 usam a logo já enquadrada; js/02: refaz a prévia quando o ajuste muda.'],
+        arquivos: ['index.html', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/45-exportar-cotacao.js'],
+        mudou: ['Arquivos alterados: index.html, js/02, js/06, js/08, js/09, js/14, js/31 e js/45.'],
+        testar: ['Anotações: toque numa anotação de pedido (ex.: 1744): deve abrir a nota. O ícone de documento no cartão abre a cotação.', 'Configurações > Logo da Instituição: com a logo enviada, mude o enquadramento, o tamanho e a posição e veja a prévia; depois gere um PDF (Exportar > PDF) e confira que a logo não está deformada.', 'Abra um pedido: o botão "Exportar relatório" está no topo, abaixo do resumo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.23.0', nome: 'Fixar cotação no topo, relatório da cotação, prazo em dias úteis e ajuste das Anotações', status: 'concluida',
         novidades: ['Cotações: botão "Selecionar" (mesma seleção em lote e mesma Dock de Anotações) com "Fixar" e "Soltar". Cotações fixadas ficam no topo, com um pino, e a fixação vale nos seus aparelhos.', 'Dentro da cotação (aba Anotações): "Exportar relatório da cotação", Básico ou Completo, em TXT, Word ou PDF. O completo traz divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque.', 'A data limite sugerida ao importar um pedido agora conta 5 dias ÚTEIS (segunda a sexta), não corridos.', 'Anotações: o app deixou de refazer a leitura do texto a cada movimento do dedo (isso podia segurar o app em nota grande). Além disso, o relatório de uso passou a registrar a última nota aberta, para investigarmos se o travamento voltar.'],
         implementado: ['js/13: seleção em lote de cotações, fixadaEm no documento da cotação (merge), ordenarCotacoes com fixadas primeiro; js/38: contexto "cotacoes" na Dock de seleção.', 'js/45 (novo): dadosRelatorioCotacao, textoRelatorioCotacao, htmlRelatorioCotacao (.doc) e gerarPdfRelatorioCotacao (jsPDF); janela de exportação no index.html.', 'js/14: somarDiasUteisISO; js/15: data limite = pedido + 5 dias úteis.', 'js/09: selectionchange com atraso (150 ms) e medição da nota ao abrir; js/44: bloco "ÚLTIMA ANOTAÇÃO ABERTA" no relatório de uso.'],
         arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/15-ganhadores-cotacoes.js', 'js/31-ajuda.js', 'js/38-dock-selecao.js', 'js/44-catalogo-cache.js', 'js/45-exportar-cotacao.js'],
@@ -2982,4 +2991,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.1';

@@ -214,7 +214,7 @@ function aplicarPersonalizacoes() {
     // menus e logo só são refeitos quando mudam (reordenar recria a barra inferior, o menu lateral e a tela "Mais")
     const sigMenu = JSON.stringify([menuOrder, appConfig.personalizacao.menuHidden]);
     if (sigMenu !== ultimaSigMenuDOM) { ultimaSigMenuDOM = sigMenu; reordenarMenusDOM(menuOrder || Object.keys(menuDetails)); popularListaReordenar(); }
-    const sigLogo = assinaturaCampoPersonalizacao(appConfig.personalizacao.logoBase64);
+    const sigLogo = assinaturaCampoPersonalizacao(appConfig.personalizacao.logoBase64) + JSON.stringify(appConfig.personalizacao.logoAjuste || null);
     if (sigLogo !== ultimaSigLogoDOM) { ultimaSigLogoDOM = sigLogo; atualizarPreviewLogo(); }
     const currentActiveScreen = document.querySelector('.app-screen.active');
     if (currentActiveScreen) { const screenId = currentActiveScreen.id;
@@ -363,3 +363,4 @@ function reordenarMenusDOM(order) {
         }).observe(tela, { attributes: true, attributeFilter: ['class'] });
     }
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.23.1';

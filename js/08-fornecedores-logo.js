@@ -240,7 +240,7 @@ function semearAssinaturaPersonalizacao() {
     Object.keys(p).forEach(k => { personalizacaoSalvaJson[k] = assinaturaCampoPersonalizacao(p[k]); });
 }
 // 2.4.0: só a logo é da instituição (documento compartilhado); o resto da aparência é da conta logada (config/prefs_{uid}).
-const CAMPOS_PERSONALIZACAO_COMPARTILHADOS = ['logoBase64'];
+const CAMPOS_PERSONALIZACAO_COMPARTILHADOS = ['logoBase64', 'logoAjuste'];
 let avisoPrefsCompartilhadoMostrado = false;
 function salvarPersonalizacao() {
     const p = appConfig.personalizacao || {}, doUsuario = {}, compartilhado = {};
@@ -291,7 +291,67 @@ function atualizarPreviewLogo() {
         container.style.display = 'none';
         if (btnRemover) btnRemover.style.display = 'none';
     }
+    const ajuste = document.getElementById('logo-ajuste-painel'); if (ajuste) ajuste.style.display = logo ? 'block' : 'none';
+    logoAjusteDesenharControles();
+    prepararLogoImpressao();
 }
+
+// 2.23.1: ajuste da logo para impressão (PDF/Word). Antes ela era esticada para caber num quadro fixo e saía deformada.
+// O quadro de impressão tem proporção fixa (55 x 42); aqui se escolhe como a imagem entra nele: manter a proporção (padrão),
+// preencher cortando as sobras, ou esticar (comportamento antigo), com zoom e posição. A imagem original nunca é alterada.
+const LOGO_QUADRO = { w: 440, h: 336 };   // pixels de renderização; no papel: 55 x 42 pt
+const LOGO_AJUSTE_PADRAO = { modo: 'conter', zoom: 100, x: 0, y: 0 };
+let logoImpressaoCache = { sig: '', url: null }, logoImgEl = null, logoImgSrc = '';
+function logoAjusteAtual() { return { ...LOGO_AJUSTE_PADRAO, ...((appConfig.personalizacao && appConfig.personalizacao.logoAjuste) || {}) }; }
+function logoCarregarImagem(src) {
+    return new Promise(res => {
+        if (logoImgEl && logoImgSrc === src && logoImgEl.complete) return res(logoImgEl);
+        const im = new Image(); im.onload = () => { logoImgEl = im; logoImgSrc = src; res(im); }; im.onerror = () => res(null); im.src = src;
+    });
+}
+function logoDesenharNoCanvas(cv, im, a) {
+    const { w, h } = LOGO_QUADRO; cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, w, h);
+    if (!im || !im.naturalWidth) return;
+    const iw = im.naturalWidth, ih = im.naturalHeight, z = (+a.zoom || 100) / 100;
+    let sx, sy;
+    if (a.modo === 'esticar') { sx = w / iw; sy = h / ih; }
+    else { const s = a.modo === 'cobrir' ? Math.max(w / iw, h / ih) : Math.min(w / iw, h / ih); sx = sy = s; }
+    const dw = iw * sx * z, dh = ih * sy * z, cx = w / 2 + (+a.x || 0) / 100 * (w / 2), cy = h / 2 + (+a.y || 0) / 100 * (h / 2);
+    ctx.drawImage(im, cx - dw / 2, cy - dh / 2, dw, dh);
+}
+async function prepararLogoImpressao() {
+    const logo = appConfig.personalizacao && appConfig.personalizacao.logoBase64;
+    if (!logo) { logoImpressaoCache = { sig: '', url: null }; return null; }
+    const a = logoAjusteAtual(), sig = assinaturaCampoPersonalizacao(logo) + JSON.stringify(a);
+    if (logoImpressaoCache.sig === sig) return logoImpressaoCache.url;
+    const im = await logoCarregarImagem(logo); if (!im) return null;
+    const cv = document.createElement('canvas'); logoDesenharNoCanvas(cv, im, a);
+    logoImpressaoCache = { sig, url: cv.toDataURL('image/png') };
+    return logoImpressaoCache.url;
+}
+// logo já pronta para colocar no PDF/Word (quadro 55 x 42 pt); se ainda não foi preparada usa a original
+function logoParaImpressao() { const l = appConfig.personalizacao && appConfig.personalizacao.logoBase64; return l ? (logoImpressaoCache.url || l) : null; }
+async function logoAjusteDesenharControles() {
+    const painel = document.getElementById('logo-ajuste-painel'), logo = appConfig.personalizacao && appConfig.personalizacao.logoBase64;
+    if (!painel || !logo) return;
+    const a = logoAjusteAtual();
+    const set = (id, v) => { const el = document.getElementById(id); if (el && el !== document.activeElement) el.value = v; };
+    set('logo-aj-modo', a.modo); set('logo-aj-zoom', a.zoom); set('logo-aj-x', a.x); set('logo-aj-y', a.y);
+    const t = document.getElementById('logo-aj-zoom-txt'); if (t) t.textContent = a.zoom + '%';
+    const im = await logoCarregarImagem(logo), cv = document.getElementById('logo-preview-canvas');
+    if (cv) logoDesenharNoCanvas(cv, im, a);
+}
+let logoAjusteTimer = 0;
+function logoAjusteMudou(final) {
+    const lerNum = id => +(document.getElementById(id) || {}).value || 0;
+    const modoEl = document.getElementById('logo-aj-modo');
+    appConfig.personalizacao.logoAjuste = { modo: modoEl ? modoEl.value : 'conter', zoom: lerNum('logo-aj-zoom') || 100, x: lerNum('logo-aj-x'), y: lerNum('logo-aj-y') };
+    logoAjusteDesenharControles();
+    clearTimeout(logoAjusteTimer);
+    logoAjusteTimer = setTimeout(() => { salvarPersonalizacao(); prepararLogoImpressao(); }, final ? 0 : 600);
+}
+function logoAjusteRestaurar() { appConfig.personalizacao.logoAjuste = { ...LOGO_AJUSTE_PADRAO }; logoAjusteDesenharControles(); salvarPersonalizacao(); prepararLogoImpressao(); toast('Ajuste da logo restaurado.'); }
 
 function handleLogoUpload(event) {
     const file = event.target.files && event.target.files[0];
@@ -301,9 +361,10 @@ function handleLogoUpload(event) {
     const reader = new FileReader();
     reader.onload = () => {
         appConfig.personalizacao.logoBase64 = reader.result;
+        appConfig.personalizacao.logoAjuste = { ...LOGO_AJUSTE_PADRAO };
         salvarPersonalizacao();
         atualizarPreviewLogo();
-        toast('✓ Logo salva — será usada nos próximos PDFs da aba Exportar.');
+        toast('✓ Logo salva. Ajuste o enquadramento logo abaixo, se precisar.');
     };
     reader.onerror = () => toast('✕ Não foi possível ler o arquivo.');
     reader.readAsDataURL(file);
@@ -312,6 +373,7 @@ function handleLogoUpload(event) {
 
 function removerLogo() {
     appConfig.personalizacao.logoBase64 = null;
+    appConfig.personalizacao.logoAjuste = null;
     salvarPersonalizacao();
     atualizarPreviewLogo();
     toast('Logo removida.');
@@ -414,4 +476,4 @@ async function limpar(){
     });
 }
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.21.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.23.1';

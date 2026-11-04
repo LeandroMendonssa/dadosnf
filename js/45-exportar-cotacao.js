@@ -172,8 +172,8 @@ function gerarPdfRelatorioCotacao(d, nivel) {
         doc.splitTextToSize(String(t), LARG - ind).forEach(l => { nova(tam + 4); doc.text(l, M + ind, y + tam); y += tam + 3.5; });
     };
     const regua = () => { nova(10); doc.setDrawColor(170); doc.line(M, y + 2, W - M, y + 2); y += 8; };
-    const logo = appConfig.personalizacao && appConfig.personalizacao.logoBase64;
-    if (logo) { try { doc.addImage(logo, 'PNG', W - M - 48, M - 8, 48, 36); } catch (err) { /* logo inválida: segue sem */ } }
+    const logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : (appConfig.personalizacao && appConfig.personalizacao.logoBase64);
+    if (logo) { try { doc.addImage(logo, 'PNG', W - M - 55, M - 8, 55, 42); } catch (err) { /* logo inválida: segue sem */ } }
     txt(`Cotação ${d.pedido} — Relatório ${completo ? 'completo' : 'básico'}`, { size: 16, bold: true });
     txt([d.origem && 'Origem: ' + d.origem, 'Pedido em ' + dataRelCot(d.dataPedido), 'Limite de entrega ' + dataRelCot(d.dataLimite)].filter(Boolean).join('  ·  '), { size: 9, cor: [90, 90, 90] });
     txt('Gerado em ' + d.geradoEm, { size: 9, cor: [90, 90, 90] });
@@ -246,4 +246,4 @@ async function exportarCotacaoRelatorio(formato) {
         if (ok) { closeAllModals(); toast('✓ Relatório gerado.'); }
     } catch (err) { console.error('Exportar cotação:', err); toast('✕ Erro ao gerar o relatório.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/45-exportar-cotacao.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/45-exportar-cotacao.js'] = '2.23.1';

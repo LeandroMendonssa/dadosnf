@@ -210,7 +210,7 @@ const AJUDA_ARTIGOS = [
         'Para complementar com o Relatório de Fornecedores Ganhadores, toque em "Complementar com relatório": o campo abre, você cola o texto ou envia o arquivo, toca em Processar e confirma. Ele informa quantos fornecedores participaram de cada item e fecha sozinho ao terminar.',
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
         'Para fixar pedidos no topo da lista: toque em "Selecionar", marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
-        'Dentro do pedido, na aba Anotações, "Exportar relatório da cotação" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF.',
+        'Dentro do pedido, no topo (abaixo do resumo), "Exportar relatório" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF.',
         'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
@@ -245,7 +245,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'personalizacao tema animacao dock menu web computador mac',
       tela: [{ id: 'screen-personalizacao', titulo: 'Personalização', rotulo: 'Abrir Personalização' }],
       passos: [
-        'Em Ajustes → Personalização você escolhe aparência, animações, dock, menus e logo.',
+        'Em Ajustes → Personalização você escolhe aparência, animações, dock, menus e logo (na logo há uma prévia para ajustar enquadramento, tamanho e posição na impressão; por padrão ela mantém a proporção).',
         'No computador (mouse e tela larga) o app entra em modo web: sem dock que encolhe nem telas deslizando; só dissolve curto, estilo macOS. Todas as abas ficam juntas no menu, na ordem escolhida (não existe "Na barra / Em Mais" no computador).',
         'Para ver o modo web no celular, abra o app com ?plataforma=web no endereço (?plataforma=aparelho volta ao normal).'
       ],
@@ -315,7 +315,7 @@ const AJUDA_ARTIGOS = [
         'Os cartões de pedido seguem o padrão do app; tocar abre o pedido.'
       ],
       dicas: [], tutorial: null },
-    { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.15.0',
+    { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.23.1',
       resumo: 'Lista de anotações em aberto e arquivadas.',
       palavras: 'anotacoes em aberto arquivadas selecionar enviada financeiro exportar relatorio nova anotacao',
       tela: [{ id: 'screen-anotacoes', titulo: 'Anotações', rotulo: 'Abrir Anotações' }],
@@ -324,6 +324,7 @@ const AJUDA_ARTIGOS = [
         '"Nova Anotação" cria uma anotação livre; "Nova Auditoria" abre o formulário de auditoria (veja o artigo seguinte).',
         'Com "Selecionar", marque as anotações: a dock de seleção aparece embaixo com o ✕ (cancelar) e o botão Exportar.',
         '"Exportar Relatório" gera o relatório das anotações.',
+        'Tocar numa anotação de pedido abre a anotação. Se o pedido existe em Cotações, o ícone de documento no cartão abre a cotação.',
         'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação. Se a barra ficar alta ou baixa demais no seu aparelho, use "Altura da barra" (− e +) no menu "⋯".'
       ],
       dicas: [], tutorial: null },
@@ -569,4 +570,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.23.1';
