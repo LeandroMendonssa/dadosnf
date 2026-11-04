@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.22.7">
+    <meta name="app-versao" content="2.23.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -478,6 +478,10 @@
                 <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
                     <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
                     <button class="actions-button is-neutral" id="btn-complementar-relatorio" onclick="alternarComplementarRelatorio()"><span class="icon-wrapper"><i class="fa-solid fa-file-circle-plus"></i></span> Complementar com relatório</button>
+                    <button class="actions-button" id="btn-selecionar-cotacoes" onclick="alternarSelecaoCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
+                </div>
+                <div class="actions-row anotacoes-bulk-bar" id="cotacoes-bulk-bar" style="display:none;">
+                    <span id="cotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas cotações para selecionar</span>
                 </div>
                 <input type="file" id="cotacao-xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
 
@@ -559,6 +563,7 @@
                 <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="relatorio" onclick="alternarAbaCentral('relatorio')">Relatório</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
                     <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
                     <button class="actions-button is-neutral" onclick="exportarDivergenciasPedido(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-share-nodes"></i></span> Exportar divergências do pedido</button>
+                    <button class="actions-button is-neutral" onclick="abrirExportarCotacao(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-file-export"></i></span> Exportar relatório da cotação</button>
                     <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
                 </div>
 
@@ -965,6 +970,20 @@
 
   </div>
   
+  <div id="export-cot-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2>Exportar relatório da cotação</h2>
+          <p id="export-cot-sub"></p>
+          <div class="xml-filtro-toggle"><button type="button" class="xml-filtro-btn active" data-nivel="basico" onclick="escolherNivelExportCotacao('basico')">Básico</button><button type="button" class="xml-filtro-btn" data-nivel="completo" onclick="escolherNivelExportCotacao('completo')">Completo</button></div>
+          <p id="export-cot-desc" style="font-size:12px;color:var(--text-light);margin:10px 0 14px;"></p>
+          <div class="actions-row">
+              <button type="button" class="actions-button is-neutral" onclick="exportarCotacaoRelatorio('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
+              <button type="button" class="actions-button is-neutral" onclick="exportarCotacaoRelatorio('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
+              <button type="button" class="actions-button is-neutral" onclick="exportarCotacaoRelatorio('pdf')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> PDF</button>
+          </div>
+          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
+      </div>
+  </div>
   <div id="confirm-modal" class="modal-screen"> 
       <div class="modal-content"> 
           <h2 id="confirm-title"></h2> 
@@ -1042,6 +1061,7 @@
   <script src="js/39-central-auditoria.js"></script>
   <script src="js/40-agenda-trabalho.js"></script>
   <script src="js/41-notificacoes-push.js"></script>
+  <script src="js/45-exportar-cotacao.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 </body>
