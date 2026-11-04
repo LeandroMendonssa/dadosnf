@@ -152,9 +152,13 @@ function abrirAnotacao(id, viaCentral) {
     if (!viaCentral) voltarAnotacaoEditorParaCentral = null; // reseta se aberta direto da lista, não da Central
     anotacaoAtualId = id;
     document.getElementById('anotacao-titulo').value = nota.titulo || '';
-    document.getElementById('anotacao-corpo').innerHTML = nota.conteudo || '';
+    // 2.23.0: mede a nota (tamanho/imagens/tempo) para o relatório de uso; se travar de novo, o relatório mostra o porquê.
+    const t0 = Date.now(), html = nota.conteudo || '';
+    document.getElementById('anotacao-corpo').innerHTML = html;
     aplicarEstadoEspacamentoEditor(nota.espacamentoLinha || '', !!nota.paragrafoCompacto);
     switchToScreen('screen-anotacoes-editor', nota.titulo || 'Anotação');
+    window.__notaDiag = { id, chars: html.length, imgs: (html.match(/<img/gi) || []).length, nos: document.querySelectorAll('#anotacao-corpo *').length, ms: Date.now() - t0 };
+    try { localStorage.setItem('notaDiag', JSON.stringify({ ...window.__notaDiag, em: new Date().toISOString() })); } catch (e) {}
     setTimeout(atualizarEstadoToolbarAnotacao, 300);
 }
 
@@ -967,12 +971,21 @@ function atualizarEstadoToolbarAnotacao() {
         try { btn.disabled = !document.queryCommandEnabled(cmd); } catch (e) { /* navegador sem suporte — deixa habilitado */ }
     });
 }
+// 2.23.0: no iPhone o selectionchange dispara dezenas de vezes por segundo; os queryCommand* custam caro em nota grande e podiam
+// segurar o app (toques sem resposta). Agora só roda uma vez, logo depois que a seleção para de mudar.
+let _selToolbarTimer = 0;
 document.addEventListener('selectionchange', () => {
-    const editor = document.getElementById('anotacao-corpo');
-    if (!editor) return;
-    const sel = window.getSelection();
-    if (!sel || !sel.anchorNode || !editor.contains(sel.anchorNode)) return;
-    atualizarEstadoToolbarAnotacao();
+    if (_selToolbarTimer) return;
+    const tela = document.getElementById('screen-anotacoes-editor');
+    if (!tela || !tela.classList.contains('active')) return;
+    _selToolbarTimer = setTimeout(() => {
+        _selToolbarTimer = 0;
+        const editor = document.getElementById('anotacao-corpo');
+        if (!editor) return;
+        const sel = window.getSelection();
+        if (!sel || !sel.anchorNode || !editor.contains(sel.anchorNode)) return;
+        atualizarEstadoToolbarAnotacao();
+    }, 150);
 });
 
 // --- Popovers da barra de ferramentas (cor, tamanho, grade de tabela) ---
@@ -1177,4 +1190,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.22.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.23.0';
