@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.23.1', nome: 'Anotações abrem a nota, ajuste da logo e botão do relatório no topo do pedido', status: 'atual',
+        numero: '2.23.2', nome: 'Relatório da cotação com visual padronizado (Word e PDF) e distinção de divergência e observação', status: 'atual',
+        novidades: ['O PDF do relatório da cotação agora tem o mesmo visual do Word: cabeçalho com a logo, quadros de totais, tabelas, cartões por fornecedor e selos coloridos de status (Concluída, Parcial, Pendente, Cancelada).', 'Divergência e observação ficam bem distintas: DIVERGÊNCIA em vermelho (com o status Em aberto, Relatada ou Resolvida) e OBSERVAÇÃO em azul (a observação do pedido e o comentário do SmartCompras em cada item).', 'Na entrega parcial, os itens não entregues aparecem num quadro vermelho e com a linha rosada. O Word tem o mesmo layout e o TXT usa as mesmas marcações.', 'O PDF numera as páginas e repete o cabeçalho das tabelas quando a lista passa de uma página.'],
+        implementado: ['js/45: htmlRelatorioCotacao (tabelas, para o Word) e gerarPdfRelatorioCotacao (jsPDF desenhado à mão: quadros, selos, tabelas com quebra de página, rodapé com página x de y); dados com obsPedido; textoRelatorioCotacao com [DIVERGÊNCIA]/[OBSERVAÇÃO].'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/45-exportar-cotacao.js'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/31 e js/45.'],
+        testar: ['Abra um pedido, toque em "Exportar relatório" e gere Básico e Completo em PDF, Word e TXT. Compare o PDF com o protótipo aprovado.', 'Num pedido com entrega parcial, confira o quadro vermelho de itens não entregues e as linhas rosadas.', 'Confira se a logo aparece no cabeçalho do PDF e do Word, sem deformar. Se a logo não aparecer no Word, me avise.', 'Se o pedido tiver observação em "Dados do pedido", ela aparece no relatório completo como OBSERVAÇÃO.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.23.1', nome: 'Anotações abrem a nota, ajuste da logo e botão do relatório no topo do pedido', status: 'concluida',
         novidades: ['Anotações: tocar numa anotação de um pedido (ex.: 1744) agora abre a anotação, não mais a cotação. Quando a nota é de um pedido que existe em Cotações, o cartão ganhou um botão pequeno para abrir a cotação.', 'Configurações > Logo da Instituição: novo painel "Como a logo sai na impressão", com prévia do quadro e controles de enquadramento (manter a proporção, preencher ou esticar), tamanho e posição. Por padrão a logo agora mantém a proporção, o que corrige a deformação nos PDFs.', 'O botão "Exportar relatório" saiu da aba Anotações e foi para o topo do pedido, junto dos outros botões do resumo.'],
         implementado: ['js/09: clique da lista de anotações sempre chama abrirAnotacao; botão "abrir cotação" (abrirCentralPedido) no cartão; botão de exportar nas ações do resumo do pedido.', 'js/08: logoAjuste (modo, zoom, x, y) guardado com a logo (compartilhado), prepararLogoImpressao/logoParaImpressao e painel de prévia; js/06 e js/45 usam a logo já enquadrada; js/02: refaz a prévia quando o ajuste muda.'],
         arquivos: ['index.html', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/45-exportar-cotacao.js'],
@@ -2991,4 +3000,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.2';
