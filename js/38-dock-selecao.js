@@ -22,6 +22,13 @@ const DOCK_SELECAO_TELAS = {
         tela: 'screen-anotacoes', sair: 'toggleModoSelecaoAnotacoes()',
         acoes: [{ ic: 'fab fa-whatsapp', t: 'Exportar relatório', f: 'exportarAnotacoesWhatsapp()', rotulo: 'Exportar', primaria: true }]
     },
+    cotacoes: {
+        tela: 'screen-cotacoes', sair: 'alternarSelecaoCotacoes()',
+        acoes: [
+            { ic: 'fa-solid fa-thumbtack', t: 'Fixar no topo', f: 'fixarCotacoesSelecionadas(true)', rotulo: 'Fixar', primaria: true },
+            { ic: 'fa-solid fa-ban', t: 'Soltar do topo', f: 'fixarCotacoesSelecionadas(false)', rotulo: 'Soltar' }
+        ]
+    },
     controle: {
         tela: 'screen-controle-nfs', sair: 'alternarSelecaoControle()',
         acoes: [
@@ -64,3 +71,4 @@ function dockSelecaoReavaliar() {
     const alvo = document.querySelector('.main-content') || document.body;
     new MutationObserver(re).observe(alvo, { subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/38-dock-selecao.js'] = '2.23.0';

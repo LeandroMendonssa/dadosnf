@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.22.7', nome: 'Entrega cancelada: parar de avisar que não chegou', status: 'atual',
+        numero: '2.23.0', nome: 'Fixar cotação no topo, relatório da cotação, prazo em dias úteis e ajuste das Anotações', status: 'atual',
+        novidades: ['Cotações: botão "Selecionar" (mesma seleção em lote e mesma Dock de Anotações) com "Fixar" e "Soltar". Cotações fixadas ficam no topo, com um pino, e a fixação vale nos seus aparelhos.', 'Dentro da cotação (aba Anotações): "Exportar relatório da cotação", Básico ou Completo, em TXT, Word ou PDF. O completo traz divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque.', 'A data limite sugerida ao importar um pedido agora conta 5 dias ÚTEIS (segunda a sexta), não corridos.', 'Anotações: o app deixou de refazer a leitura do texto a cada movimento do dedo (isso podia segurar o app em nota grande). Além disso, o relatório de uso passou a registrar a última nota aberta, para investigarmos se o travamento voltar.'],
+        implementado: ['js/13: seleção em lote de cotações, fixadaEm no documento da cotação (merge), ordenarCotacoes com fixadas primeiro; js/38: contexto "cotacoes" na Dock de seleção.', 'js/45 (novo): dadosRelatorioCotacao, textoRelatorioCotacao, htmlRelatorioCotacao (.doc) e gerarPdfRelatorioCotacao (jsPDF); janela de exportação no index.html.', 'js/14: somarDiasUteisISO; js/15: data limite = pedido + 5 dias úteis.', 'js/09: selectionchange com atraso (150 ms) e medição da nota ao abrir; js/44: bloco "ÚLTIMA ANOTAÇÃO ABERTA" no relatório de uso.'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/15-ganhadores-cotacoes.js', 'js/31-ajuda.js', 'js/38-dock-selecao.js', 'js/44-catalogo-cache.js', 'js/45-exportar-cotacao.js'],
+        mudou: ['Arquivo novo: js/45-exportar-cotacao.js. Alterados: index.html, style.css, js/09, js/13, js/14, js/15, js/31, js/38 e js/44.'],
+        testar: ['Cotações > Selecionar: marque 2 pedidos, toque em "Fixar" na Dock: eles sobem para o topo com o pino. Selecione de novo e toque em "Soltar".', 'Abra um pedido > aba Anotações > "Exportar relatório da cotação": gere Básico e Completo em TXT, Word e PDF e abra cada arquivo (no iPhone, a folha de compartilhar permite salvar em Arquivos).', 'Num pedido com entrega parcial, confira no Completo os itens não entregues em destaque (vermelho no Word/PDF).', 'Importe um pedido novo e confira que a data limite caiu 5 dias úteis depois da data do pedido.', 'Anotações: abra várias notas (inclusive uma grande) e volte pelo botão do topo. Se travar de novo, anote a hora e me mande o relatório de uso (Configurações > Uso do Firebase).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.7', nome: 'Entrega cancelada: parar de avisar que não chegou', status: 'concluida',
         novidades: ['Novo botão "Entrega cancelada" em cada fornecedor do pedido: o app deixa de esperar aquela entrega e para de avisar que não chegou.', 'No topo do pedido, o botão "Entrega cancelada (pedido todo)" marca todos os fornecedores sem marca de uma vez.', 'Dá para desfazer (um a um ou o pedido todo). O pedido deixa de aparecer em "sem sinal de entrega" e no aviso de pedido parado.'],
         implementado: ['Marca chegadasPorFornecedor[cnpj] = { data, tipo:\'cancelada\' }; calcularEntregaFornecedorPedido devolve estado \'cancelada\' (js/11).', 'Selo e texto próprios (rotuloEntregaFornecedor), botões no cartão e no cabeçalho, confirmação antes de salvar.', 'resumoEntregaCotacao/chips e cartão da lista mostram "cancelada" sem contar como entregue nem pendente (js/13); js/34: pedido sem entrega ignora cancelados (só some se todos os fornecedores têm marca).'],
         arquivos: ['index.html', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/34-atencao.js'],
@@ -2887,6 +2896,15 @@ function somarDiasISO(dataISO, dias) {
     return d.toLocaleDateString('en-CA'); // 2.18.1: data local (toISOString dá a data em UTC)
 }
 
+// 2.23.0: prazo de entrega padrão em DIAS ÚTEIS (segunda a sexta; feriados não entram na conta).
+function somarDiasUteisISO(dataISO, dias) {
+    if (!dataISO) return '';
+    const d = new Date(dataISO + 'T00:00:00');
+    let falta = Math.max(0, dias | 0);
+    while (falta > 0) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) falta--; }
+    return d.toLocaleDateString('en-CA');
+}
+
 function calcularDiffCotacao(antiga, nova) {
     const diffs = [];
     const fornAntigos = new Map((antiga.fornecedores || []).map(f => [normalizarCnpj(f.cnpj), f]));
@@ -2964,4 +2982,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.22.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.0';

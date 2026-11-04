@@ -200,9 +200,11 @@ function catalogoRelatorioTexto() {
     try { (usoFb.sessoes || []).filter(s => s.dia === usoFb.dia).slice().reverse().forEach(s => { const top = Object.entries(s.c || {}).sort((a, b) => b[1] - a[1])[0]; L.push('  ' + hh(s.t) + ' | servidor ' + s.n + ' | cópia ' + (s.k || 0) + (top ? ' | mais: ' + top[0] : '')); }); } catch (e) { }
     L.push(''); L.push('CACHE DOS CATÁLOGOS (nesta abertura)');
     Object.keys(catalogoDiag).forEach(n => { const d = catalogoDiag[n]; L.push('  ' + n + ': ' + d.como + ' | docs ' + N(d.docs) + ' | total ' + N(d.ms) + ' ms | ler ' + N(d.msLer) + ' ms | exibir ' + N(d.msCb) + ' ms | entregas ' + N(d.entregas) + ' | por gravação ' + N(d.porEscrita) + (d.erro ? ' | erro: ' + d.erro : '')); });
+    L.push(''); L.push('ÚLTIMA ANOTAÇÃO ABERTA (neste aparelho)');
+    try { const nd = JSON.parse(localStorage.getItem('notaDiag') || 'null'); L.push(nd ? '  ' + nd.em + ' | ' + N(nd.chars) + ' caracteres | ' + nd.imgs + ' imagem(ns) | ' + N(nd.nos) + ' elementos | abriu em ' + nd.ms + ' ms' : '  nenhuma'); } catch (e) { L.push('  (sem dado)'); }
     L.push(''); L.push('TRAVADAS DA TELA (app sem responder >0,3 s), mais recentes por último');
     if (!travadas.length) L.push('  nenhuma'); travadas.forEach(x => L.push('  ' + hh(x.t) + ' | ' + (x.ms / 1000).toFixed(1) + ' s | tela ' + (x.tela || '?')));
     return L.join('\n');
 }
 try { if (window.firebase && firebase.firestore) catalogoInstalarEscritas(firebase.firestore); } catch (e) { console.warn('Cache de catálogos: gravações não monitoradas:', e); }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.22.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.23.0';

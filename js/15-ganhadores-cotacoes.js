@@ -223,11 +223,11 @@ async function confirmarImportacaoXmlSmartCompras() {
             // Data do Pedido = data de finalização do pedido no XML (Data_Vencimento
             // do Cabeçalho) — antes ficava com a data do dia da importação, que não
             // tem relação com quando o pedido de fato fechou. Data Limite sugerida =
-            // Data do Pedido + 5 dias (prazo padrão), sempre editável manualmente.
+            // Data do Pedido + 5 dias ÚTEIS (prazo padrão, 2.23.0), sempre editável manualmente.
             const dataPedidoDoXml = converterDataBRparaISO(parsed.dataVencimento);
             dadosPrincipal.origem = '';
             dadosPrincipal.dataPedido = dataPedidoDoXml || dataLocalISO();
-            dadosPrincipal.dataLimite = dataPedidoDoXml ? somarDiasISO(dataPedidoDoXml, 5) : '';
+            dadosPrincipal.dataLimite = dataPedidoDoXml ? somarDiasUteisISO(dataPedidoDoXml, 5) : '';
             dadosPrincipal.observacao = '';
             dadosPrincipal.criadoEm = agora;
             await cotacoesCollection.doc(parsed.pedido).set(dadosPrincipal);
@@ -535,4 +535,4 @@ function cancelarImportacaoSpData() {
 function atualizarContagemSpData() {
     renderListaProdutosSpData();
 }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/15-ganhadores-cotacoes.js'] = '2.23.0';

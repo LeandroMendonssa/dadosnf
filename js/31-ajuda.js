@@ -201,7 +201,7 @@ const AJUDA_ARTIGOS = [
         'Ao importar o relatório do ERP, o campo Recurso da nota vem preenchido com o recurso da NF (quando ele é único).'
       ],
       dicas: ['Itens sem Origem na cotação ou sem destino não são alterados pelo botão da NF inteira.'], tutorial: 'xml-ao-texto' },
-    { id: 'cotacoes', cat: 'Cotações e recurso', titulo: 'Cotações: importar e acompanhar pedidos', versao: '2.16.0',
+    { id: 'cotacoes', cat: 'Cotações e recurso', titulo: 'Cotações: importar e acompanhar pedidos', versao: '2.23.0',
       resumo: 'Importar o XML do SmartCompras e o relatório de ganhadores.',
       palavras: 'cotacoes smartcompras importar xml ganhadores pedido fornecedores divergencia previa',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
@@ -209,6 +209,9 @@ const AJUDA_ARTIGOS = [
         'Em Cotações, toque em "Adicionar cotação (XML)", escolha o XML do SmartCompras, confira a Prévia da Importação e confirme. A cotação só nasce do XML.',
         'Para complementar com o Relatório de Fornecedores Ganhadores, toque em "Complementar com relatório": o campo abre, você cola o texto ou envia o arquivo, toca em Processar e confirma. Ele informa quantos fornecedores participaram de cada item e fecha sozinho ao terminar.',
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
+        'Para fixar pedidos no topo da lista: toque em "Selecionar", marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
+        'Dentro do pedido, na aba Anotações, "Exportar relatório da cotação" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF.',
+        'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
       dicas: ['Tocar no selo ou no quadro "Em aberto" do cartão leva direto ao item.'], tutorial: null },
@@ -566,4 +569,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.22.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.23.0';

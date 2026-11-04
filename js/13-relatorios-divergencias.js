@@ -294,9 +294,10 @@ function renderCardCotacao(c) {
         r.cancelada ? `⊘ ${r.cancelada} cancelada${r.cancelada === 1 ? '' : 's'}` : ''
     ].filter(Boolean);
     const iniciais = (typeof iniciaisControle === 'function') ? iniciaisControle(c.origem || '#') : '#';
-    return `<div class="ctl-card cot-card" onclick="abrirCentralPedido('${c.pedido}')">
+    const marcada = selecaoCotacoesAtiva && cotacoesSelecionadas.has(String(c.pedido));
+    return `<div class="ctl-card cot-card${marcada ? ' sel' : ''}${selecaoCotacoesAtiva ? ' selecionavel' : ''}" onclick="${selecaoCotacoesAtiva ? `toggleSelecionadaCotacao('${escRel(String(c.pedido))}')` : `abrirCentralPedido('${c.pedido}')`}">
         <div class="ctl-top"><div class="ctl-av">${escRel(iniciais)}</div>
-            <div class="ctl-nm"><b>${escRel(c.pedido)}</b><small>${escRel(c.origem || 'Sem origem')}</small></div>
+            <div class="ctl-nm"><b>${escRel(c.pedido)}${c.fixadaEm ? ' <i class="fa-solid fa-thumbtack cot-pin" title="Fixada no topo"></i>' : ''}</b><small>${escRel(c.origem || 'Sem origem')}</small></div>
             <span class="ctl-st ${st[0]}">${st[1]}</span></div>
         <div class="ctl-dd"><div><span>Fornecedores</span><strong>${qtdFornecedores}</strong></div><div><span>Limite</span><strong class="${vencida ? 'atr' : ''}">${limite}</strong></div><div><span>Itens</span><strong>${(c.itens || []).length}</strong></div></div>
         ${partes.length ? `<div class="ctl-inf">${partes.join(' · ')}</div>` : ''}
@@ -335,12 +336,39 @@ function renderCardResultadoItem(cotacao, item) {
 function ordenarCotacoes(lista) {
     // 'entrada' já vem nessa ordem da query (orderBy atualizadoEm desc, ver
     // listener); só precisa reordenar explicitamente pro modo 'pedido'.
-    if (ordenacaoCotacoes !== 'pedido') return lista;
-    return [...lista].sort((a, b) => {
+    let base = lista;
+    if (ordenacaoCotacoes === 'pedido') base = [...lista].sort((a, b) => {
         const na = parseInt(a.pedido, 10), nb = parseInt(b.pedido, 10);
         if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
         return a.pedido.localeCompare(b.pedido);
     });
+    // 2.23.0: cotações fixadas ficam no topo (a mais recentemente fixada primeiro), nos dois modos de ordenação.
+    const fixadas = base.filter(c => c.fixadaEm).sort((a, b) => String(b.fixadaEm).localeCompare(String(a.fixadaEm)));
+    return fixadas.length ? fixadas.concat(base.filter(c => !c.fixadaEm)) : base;
+}
+
+// 2.23.0: seleção em lote na lista de Cotações (mesmo padrão de Anotações/Controle de NFs, com a dock de seleção do js/38) para FIXAR no topo.
+let selecaoCotacoesAtiva = false;
+const cotacoesSelecionadas = new Set();
+function alternarSelecaoCotacoes() { selecaoCotacoesAtiva = !selecaoCotacoesAtiva; cotacoesSelecionadas.clear(); atualizarBarraSelecaoCotacoes(); renderListaCotacoes(); }
+function toggleSelecionadaCotacao(pedido) { const p = String(pedido); if (cotacoesSelecionadas.has(p)) cotacoesSelecionadas.delete(p); else cotacoesSelecionadas.add(p); atualizarBarraSelecaoCotacoes(); renderListaCotacoes(); }
+function atualizarBarraSelecaoCotacoes() {
+    const btn = document.getElementById('btn-selecionar-cotacoes'), barra = document.getElementById('cotacoes-bulk-bar'), info = document.getElementById('cotacoes-selecao-contador');
+    if (btn) btn.classList.toggle('active', selecaoCotacoesAtiva);
+    if (barra) barra.style.display = selecaoCotacoesAtiva ? 'flex' : 'none';
+    if (info) info.textContent = cotacoesSelecionadas.size ? `${cotacoesSelecionadas.size} selecionada(s)` : 'Toque nas cotações para selecionar';
+    if (typeof dockSelecaoAtualizar === 'function') dockSelecaoAtualizar('cotacoes', selecaoCotacoesAtiva, cotacoesSelecionadas.size, false);
+}
+async function fixarCotacoesSelecionadas(fixar) {
+    const pedidos = [...cotacoesSelecionadas]; if (!pedidos.length) return toast('Selecione ao menos uma cotação.');
+    try {
+        const batch = firestore.batch(), agora = new Date().toISOString();
+        pedidos.forEach((p, i) => batch.set(cotacoesCollection.doc(p), { fixadaEm: fixar ? new Date(Date.parse(agora) + i).toISOString() : firebase.firestore.FieldValue.delete() }, { merge: true }));
+        await batch.commit();
+        pedidos.forEach((p, i) => { const c = listaCotacoes.find(x => String(x.pedido) === p); if (c) { if (fixar) c.fixadaEm = new Date(Date.parse(agora) + i).toISOString(); else delete c.fixadaEm; } });
+        toast(fixar ? `✓ ${pedidos.length} cotação(ões) fixada(s) no topo.` : `✓ ${pedidos.length} cotação(ões) solta(s) do topo.`);
+        selecaoCotacoesAtiva = false; cotacoesSelecionadas.clear(); atualizarBarraSelecaoCotacoes(); renderListaCotacoes();
+    } catch (e) { console.error('Erro ao fixar cotações:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
 }
 
 function renderListaCotacoes() {
@@ -553,4 +581,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.22.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.23.0';
