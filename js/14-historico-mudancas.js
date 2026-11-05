@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.23.3', nome: 'Uso do Firebase de todos os aparelhos: relatório geral e individual', status: 'atual',
+        numero: '2.23.4', nome: 'Cópia dos catálogos vale 14 dias (fim do download diário)', status: 'atual',
+        novidades: ['A cópia dos cadastros neste aparelho agora vale 14 dias em vez de 24 horas. Antes, cada aparelho baixava os cadastros inteiros uma vez por dia (de 1 a 5 mil leituras). Agora só baixa de novo se alguém alterar o cadastro (a versão no servidor muda) ou passarem 14 dias.'],
+        implementado: ['js/44: CATALOGO_TTL_MS de 24 h para 14 dias; a conferência do token de versão (config/catalogosVersao) continua em toda abertura.'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/14 e js/44.'],
+        testar: ['Depois de atualizar, abra o app uma vez (pode gastar leituras: a cópia antiga é refeita). Nos dias seguintes, abra o app pela manhã e veja em Mais > Uso do Firebase: os catálogos devem aparecer como "copia" e o total de leituras da abertura deve ficar baixo (centenas, não milhares).', 'Altere algo num cadastro (ex.: vincule um produto) e confira no outro aparelho que a mudança aparece após reabrir.'],
+        testarLinks: [{ rotulo: 'Abrir Uso do Firebase', acao: 'uso-firebase' }]
+    },
+    {
+        numero: '2.23.3', nome: 'Uso do Firebase de todos os aparelhos: relatório geral e individual', status: 'concluida',
         novidades: ['Mais > Uso do Firebase ganhou o cartão "Todos os aparelhos · hoje": soma das leituras de todos os aparelhos que abriram o app, comparada ao limite de 50 mil.', 'Cada aparelho aparece separado (nome, versão, leituras, cópia local, aberturas e coleções que mais gastaram). Você pode renomear este aparelho e remover da lista os que não usa mais.', 'Novo botão "Gerar relatório geral": texto para copiar com o total, a soma por coleção e por tela e o detalhe de cada aparelho (aberturas, catálogos, travadas).'],
         implementado: ['js/46 (novo): cada aparelho publica um resumo do próprio dia em config/usoAparelhos (campo aparelhos.<id>, merge), no máximo a cada 4 min e só se mudou, e ao sair do app; leitura de todos = 1 leitura; relatório geral em texto.', 'js/00: cartão dos aparelhos na tela de uso. index.html: script js/46.'],
         arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/46-uso-aparelhos.js'],
@@ -3009,4 +3018,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.4';

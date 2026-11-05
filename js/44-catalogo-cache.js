@@ -4,7 +4,7 @@
 // Toda gravação nessas coleções (feita por este app) avisa a versão e atualiza só o documento alterado.
 // Se algo falhar aqui, o app volta para a escuta normal do Firestore (nada deixa de funcionar).
 const CATALOGOS = ['produtosSpData', 'fornecedoresSpData', 'associacoesSpData', 'associacoesFornecedor', 'xmlExcecoes'];
-const CATALOGO_TTL_MS = 24 * 3600e3;            // segurança: depois de 24 h baixa tudo de novo
+const CATALOGO_TTL_MS = 14 * 24 * 3600e3;       // segurança: depois de 14 dias baixa tudo de novo (2.23.4: era 24 h, o que forçava um download completo por dia em cada aparelho). A frescura de verdade vem do token de versão.
 const CATALOGO_LIMITE_DOCS = 300;                // gravação em lote maior que isso: baixa a coleção inteira
 const catalogoEstado = {};                       // nome → { mapa, cb, col, versao, em, uid }
 let catalogoVersoesPromessa = null;
@@ -207,4 +207,4 @@ function catalogoRelatorioTexto() {
     return L.join('\n');
 }
 try { if (window.firebase && firebase.firestore) catalogoInstalarEscritas(firebase.firestore); } catch (e) { console.warn('Cache de catálogos: gravações não monitoradas:', e); }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.23.4';
