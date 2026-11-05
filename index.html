@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.23.4">
+    <meta name="app-versao" content="2.24.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -479,6 +479,7 @@
                     <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
                     <button class="actions-button is-neutral" id="btn-complementar-relatorio" onclick="alternarComplementarRelatorio()"><span class="icon-wrapper"><i class="fa-solid fa-file-circle-plus"></i></span> Complementar com relatório</button>
                     <button class="actions-button" id="btn-selecionar-cotacoes" onclick="alternarSelecaoCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
+                    <button class="actions-button is-neutral" onclick="abrirResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-list"></i></span> Resumo de pendências</button>
                 </div>
                 <div class="actions-row anotacoes-bulk-bar" id="cotacoes-bulk-bar" style="display:none;">
                     <span id="cotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas cotações para selecionar</span>
@@ -984,6 +985,20 @@
 
   </div>
   
+  <div id="resumo-pend-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2>Resumo de pendências de entrega</h2>
+          <p style="font-size:12px;color:var(--text-light);margin:0 0 8px;">Informe os pedidos (separe por vírgula). Lista os fornecedores sem pendência e, abaixo, o que falta de cada um.</p>
+          <input type="text" id="resumo-pend-pedidos" class="form-field" inputmode="numeric" placeholder="Ex.: 1748, 1749, 1750" oninput="gerarResumoPendencias()">
+          <textarea id="resumo-pend-texto" readonly rows="12" style="width:100%;box-sizing:border-box;margin-top:10px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
+          <div class="actions-row">
+              <button type="button" class="actions-button is-primary" onclick="copiarResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
+              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
+          </div>
+          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
+      </div>
+  </div>
   <div id="export-cot-modal" class="modal-screen">
       <div class="modal-content">
           <h2>Exportar relatório da cotação</h2>
@@ -1077,6 +1092,7 @@
   <script src="js/41-notificacoes-push.js"></script>
   <script src="js/45-exportar-cotacao.js"></script>
   <script src="js/46-uso-aparelhos.js"></script>
+  <script src="js/47-resumo-pendencias.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 </body>
