@@ -26,7 +26,8 @@ const DOCK_SELECAO_TELAS = {
         tela: 'screen-cotacoes', sair: 'alternarSelecaoCotacoes()',
         acoes: [
             { ic: 'fa-solid fa-thumbtack', t: 'Fixar no topo', f: 'fixarCotacoesSelecionadas(true)', rotulo: 'Fixar', primaria: true },
-            { ic: 'fa-solid fa-ban', t: 'Soltar do topo', f: 'fixarCotacoesSelecionadas(false)', rotulo: 'Soltar' }
+            { ic: 'fa-solid fa-ban', t: 'Soltar do topo', f: 'fixarCotacoesSelecionadas(false)', rotulo: 'Soltar' },
+            { ic: 'fa-solid fa-clipboard-list', t: 'Resumo de pendências dos pedidos selecionados', f: 'abrirResumoPendenciasSelecionadas()', rotulo: 'Pendências' }
         ]
     },
     controle: {
@@ -71,4 +72,4 @@ function dockSelecaoReavaliar() {
     const alvo = document.querySelector('.main-content') || document.body;
     new MutationObserver(re).observe(alvo, { subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/38-dock-selecao.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/38-dock-selecao.js'] = '2.24.0';

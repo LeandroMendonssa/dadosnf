@@ -82,7 +82,7 @@ function envolverComRetorno(nome) {
     w.__comRetorno = true;
     window[nome] = w;
 }
-['abrirEditorNf', 'abrirCentralPedido', 'abrirControleNfs', 'verNoGerenciarNf'].forEach(envolverComRetorno);
+['abrirEditorNf', 'abrirCentralPedido', 'abrirControleNfs', 'verNoGerenciarNf', 'registrarDivergenciaDaComparacao', 'registrarTodasDivergenciasDoFornecedor'].forEach(envolverComRetorno); // 2.24.0: auditoria aberta a partir da cotação volta para a cotação
 
 // ===================================================================
 // --- 2.9.7: ALVO COM DESTAQUE (como o "achar na página" da Apple) ---
@@ -225,3 +225,4 @@ function irParaPendenciaControle(chave, tipo) {
     if (document.body) aplicar(); else document.addEventListener('DOMContentLoaded', aplicar);
     if (mq.addEventListener) mq.addEventListener('change', aplicar); else if (mq.addListener) mq.addListener(aplicar);
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.24.0';

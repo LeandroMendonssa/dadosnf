@@ -64,6 +64,8 @@ const IA_FERRAMENTAS = [
       input_schema: { type: 'object', properties: { texto: { type: 'string' }, fornecedor: { type: 'string' }, marca: { type: 'string' } }, required: ['texto'] } },
     { name: 'divergencias', description: 'Divergências de auditoria (pendentes por padrão) com pedido, fornecedor, tipo e produtos. É a mesma lista de Relatórios → Divergências.',
       input_schema: { type: 'object', properties: { pedido: { type: 'string' }, fornecedor: { type: 'string' }, incluir_resolvidas: { type: 'boolean' } } } },
+    { name: 'resumo_pendencias_entrega', description: 'Relatório de pendências de entrega por fornecedor de um ou mais pedidos, no formato pronto para copiar (fornecedores sem pendência + pendências: itens não faturados, divergências, recurso a confirmar). Use para "entregas pendentes dos pedidos X, Y".',
+      input_schema: { type: 'object', properties: { pedidos: { type: 'string', description: 'números dos pedidos separados por vírgula' } }, required: ['pedidos'] } },
     { name: 'pendencias', description: 'Resumo da Central de notificações: o que está parado ou envelhecendo, por grupo e urgência.', input_schema: { type: 'object', properties: {} } },
     { name: 'fornecedor', description: 'Resumo de um fornecedor: CNPJs, pedidos em que participa, NFs (quantidade e total), divergências pendentes.',
       input_schema: { type: 'object', properties: { nome: { type: 'string' } }, required: ['nome'] } }
@@ -162,6 +164,7 @@ const IA_EXEC = {
         if (a.fornecedor) l = l.filter(x => iaCasa(x.fornecedor, a.fornecedor));
         return iaCorta(l.map(x => ({ pedido: x.pedido, fornecedor: x.fornecedor, nf: x.notaFiscal || undefined, tipo: (TIPOS_DIVERGENCIA_AUDITORIA[x.tipo] || {}).label || x.tipo, produtos: x.produtos, status: x.status, data: x.data })));
     },
+    resumo_pendencias_entrega(a) { const ps = pedidosDoTextoResumo(a.pedidos); if (!ps.length) return { erro: 'Informe os pedidos.' }; return { texto: textoResumoPendencias(ps) }; },
     pendencias() {
         return itensDeAtencao().map(g => ({ grupo: g.titulo, urgencia: g.nivel, quantidade: g.linhas.length, exemplos: g.linhas.slice(0, 5).map(l => `${l.t} — ${l.s}`) }));
     },
@@ -291,6 +294,7 @@ function iaEntender(texto) {
     const nf = (String(texto).match(/\b(?:nf|nfs|nota(?:\s+fiscal)?)\s*(?:n[ºo.]*\s*)?(\d{2,9})\b/i) || [])[1];
     const forn = iaAcharFornecedor(t);
     const so = tem(/\bSEM PEDIDO\b/) ? 'sem-pedido' : tem(/\bSEM RECURSO\b/) ? 'sem-recurso' : tem(/\bSEM PRODUTO\b/) ? 'sem-produto' : tem(/\bSUGERID/) ? 'pedido-sugerido' : tem(/\bESPERANDO\b|\bDECISAO\b/) ? 'decisao-parada' : null;
+    if (pedido && tem(/PENDENCIA|PENDENTE/) && tem(/ENTREGA|RESUMO|FORNECEDOR|CHEGAR|CHEGOU/) && !tem(/DIVERGENC/)) { plano.push(['resumo_pendencias_entrega', { pedidos: (String(texto).match(/\b\d{3,6}\b/g) || []).join(',') }]); return plano; }
     if (pedido && tem(/COTAC|COTAR|COTOU/) && tem(/TRES|\b3\b|MINIMO|PROPRIO|ABAIXO|ALCANC/)) { plano.push(['cotacoes_por_fornecedor', { pedido, ...(forn ? { fornecedor: forn } : {}) }]); return plano; }
     if (pedido) { plano.push(['consultar_pedido', { pedido, ...(forn ? { fornecedor: forn } : {}) }]); if (tem(/DIVERGENC/)) { plano.length = 0; plano.push(['divergencias', { pedido, incluir_resolvidas: tem(/RESOLVID|TODAS/) }]); } return plano; }
     if (nf) { plano.push(['detalhe_nf', { numero: nf, ...(forn ? { fornecedor: forn } : {}) }]); return plano; }
@@ -340,6 +344,7 @@ const IA_RENDER = {
         if (!r.total) return '✓ Nenhuma divergência encontrada.';
         return `<b>${r.total} divergência(s)</b>${r.total > r.mostrando ? ` (mostrando ${r.mostrando})` : ''}<br>` + r.itens.map(d => `• pedido ${d.pedido} · ${d.fornecedor || '—'} · ${d.tipo}${d.produtos && d.produtos.length ? ' · ' + d.produtos.slice(0, 2).join(', ') : ''}${d.status !== 'pendente' ? ' · ' + d.status : ''}`).join('<br>');
     },
+    resumo_pendencias_entrega(r) { return r.erro ? r.erro : '<pre style="white-space:pre-wrap;font:inherit;margin:0">' + String(r.texto).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>'; },
     pendencias(r) {
         if (!r.length) return '✓ Nada parado por aqui.';
         return r.map(g => `<b>${g.grupo}</b> (${g.quantidade}) · ${({ alta: 'urgente', media: 'importante', baixa: 'quando der' })[g.urgencia] || ''}<br>` + g.exemplos.map(e => '• ' + e).join('<br>')).join('<br><br>');
@@ -483,3 +488,4 @@ async function enviarAssistente() {
     }
     fim();
 }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/37-assistente.js'] = '2.24.0';

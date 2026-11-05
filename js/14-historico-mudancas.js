@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.23.4', nome: 'Cópia dos catálogos vale 14 dias (fim do download diário)', status: 'atual',
+        numero: '2.24.0', nome: 'Resumo de pendências de entrega por pedido, etiqueta de entrega parcial e voltar da auditoria', status: 'atual',
+        novidades: ['Novo "Resumo de pendências" em Cotações: informe vários pedidos e receba o texto pronto (fornecedores sem pendência + PENDÊNCIAS por fornecedor com NF, itens não faturados, divergências e recurso a confirmar). Copia ou baixa em TXT/Word. Também sai pelo Assistente ("entregas pendentes dos pedidos 1748, 1749").', 'Fornecedor que recebeu parte dos itens agora mostra "Entrega parcial" no cartão (antes aparecia "Aguardando").', 'Ao gerar auditoria a partir da cotação, o botão voltar retorna à cotação, com os fornecedores que estavam abertos, e não mais às Anotações.'],
+        implementado: ['js/47 (novo): dadosResumoPendenciasPedido/textoResumoPendencias reaproveitam dadosRelatorioCotacao e resumoCotacoesDoFornecedor; modal em index.html; botão em Cotações e ação "Pendências" na barra de seleção (js/38).', 'js/37: ferramenta resumo_pendencias_entrega e regra do modo básico.', 'js/09: selo do cartão do fornecedor "Entrega parcial" quando estado parcial.', 'js/30: registrarDivergenciaDaComparacao e registrarTodasDivergenciasDoFornecedor entram na pilha de retorno.'],
+        arquivos: ['index.html', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/38-dock-selecao.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/14, js/30, js/31, js/37, js/38 e js/47 (novo).'],
+        testar: ['Cotações > Resumo de pendências: digite 1748, 1749, 1750 e compare o texto com o que você espera (fornecedores sem pendência, PENDÊNCIAS, NF, itens não faturados, recurso). Copie, baixe em TXT e em Word.', 'Cotações > Selecionar, marque pedidos e toque em "Pendências" na barra de baixo.', 'Assistente: "entregas pendentes dos pedidos 1748, 1749, 1750".', 'Abra um pedido, expanda um fornecedor, toque em gerar auditoria de uma ocorrência e depois em voltar: deve voltar ao pedido com o fornecedor aberto.', 'Fornecedor com alguns itens entregues e um faltando: o selo deve ser "Entrega parcial".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.23.4', nome: 'Cópia dos catálogos vale 14 dias (fim do download diário)', status: 'concluida',
         novidades: ['A cópia dos cadastros neste aparelho agora vale 14 dias em vez de 24 horas. Antes, cada aparelho baixava os cadastros inteiros uma vez por dia (de 1 a 5 mil leituras). Agora só baixa de novo se alguém alterar o cadastro (a versão no servidor muda) ou passarem 14 dias.'],
         implementado: ['js/44: CATALOGO_TTL_MS de 24 h para 14 dias; a conferência do token de versão (config/catalogosVersao) continua em toda abertura.'],
         arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
@@ -3018,4 +3027,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.0';
