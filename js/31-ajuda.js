@@ -146,7 +146,9 @@ const AJUDA_ARTIGOS = [
       passos: [
         'Em Mais → Uso do Firebase aparece o total de leituras de hoje neste aparelho, a barra em relação ao limite grátis de 50 mil e quais coleções e telas mais gastaram.',
         '"Aberturas do app hoje" lista cada vez que o app foi aberto ou recarregado, com as leituras daquela abertura. Serve para achar o que está gastando.',
-        'O limite de 50 mil vale para o projeto inteiro, somando todos os aparelhos. Cada aparelho mostra só o seu gasto. O total oficial está no console do Firebase (Firestore → Uso).'
+        'O cartão "Todos os aparelhos · hoje" soma o que cada aparelho publicou (a cada ~4 min) e lista cada um separado. Use "Renomear este aparelho" para dar nomes e "Atualizar aparelhos" para ver o mais recente.',
+        '"Gerar relatório geral" monta um texto com o total, a soma por coleção e tela e o detalhe de cada aparelho, para copiar e colar na conversa.',
+        'O limite de 50 mil vale para o projeto inteiro. O total oficial está no console do Firebase (Firestore → Uso); a soma do app pode ficar um pouco abaixo se algum aparelho ainda não publicou.'
       ] },
     { id: 'agenda-trabalho', cat: 'Ajustes e dados', titulo: 'Agenda de trabalho: entregas, reuniões e lembretes', versao: '2.20.0',
       resumo: 'Cadastre entregas de reagentes, reuniões e lembretes, com aviso na véspera e no dia.',
@@ -570,4 +572,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.23.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.23.3';

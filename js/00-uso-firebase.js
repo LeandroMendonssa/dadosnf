@@ -68,6 +68,7 @@ function renderUsoFirebase() {
         <div class="ctl-card"><div class="xml-item-meta"><b>Por tela</b>Em que tela você estava quando os dados chegaram</div>${usoFbLinhas(usoFb.tela, usoFb.total)}</div>
         <div class="ctl-card"><div class="xml-item-meta"><b>Aberturas do app hoje</b>Cada vez que o app foi aberto ou recarregado</div>
         ${sess.length ? sess.map(s => { const top = Object.entries(s.c || {}).sort((a, b) => b[1] - a[1])[0]; return `<div class="uso-lin"><span>${usoFbHora(s.t)} · ${escRel(s.ap)}${top ? ' · mais: ' + escRel(top[0]) : ''}</span><b>${usoFbN(s.n)}<small style="font-weight:400"> / ${usoFbN(s.k)} cópia</small></b></div>`; }).join('') : '<div class="xml-item-meta">Nenhuma ainda.</div>'}</div>
+        ${typeof usoAparelhosHTML === 'function' ? usoAparelhosHTML() : ''}
         ${typeof catalogoDiagHTML === 'function' ? catalogoDiagHTML() : ''}
         <div class="ctl-card"><div class="xml-item-meta"><b>Relatório para copiar</b>Gera um texto simples para você colar na conversa</div>
         <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoRelatorioGerar()">Gerar relatório</button></div>
@@ -76,4 +77,4 @@ function renderUsoFirebase() {
 }
 function usoRelatorioGerar() { const t = document.getElementById('uso-relatorio'); if (!t || typeof catalogoRelatorioTexto !== 'function') return; t.value = catalogoRelatorioTexto(); t.style.display = 'block'; t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) { } }
 function usoFbZerar() { showConfirmModal({ title: 'Zerar a contagem?', message: 'Só apaga o que este aparelho anotou. Não mexe no Firebase.', confirmText: 'Zerar', confirmClass: 'danger', onConfirm: () => { usoFb = { dia: usoFbDia(), total: 0, cache: 0, get: 0, col: {}, tela: {}, sessoes: [] }; usoFbSessao = { t: Date.now(), ap: usoFbAparelho(), n: 0, k: 0, c: {}, dia: usoFb.dia }; usoFb.sessoes.push(usoFbSessao); usoFbSalvar(); renderUsoFirebase(); } }); }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/00-uso-firebase.js'] = '2.22.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/00-uso-firebase.js'] = '2.23.3';

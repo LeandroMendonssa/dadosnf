@@ -13,6 +13,7 @@ const ACOES_NOVIDADE = {
     'controle-nfs': () => abrirControleNfs(),
     'historico-mudancas': () => switchToScreen('screen-historico-mudancas', 'Histórico de Mudanças'),
     'personalizacao': () => switchToScreen('screen-personalizacao', 'Personalização'),
+    'uso-firebase': () => { switchToScreen('screen-uso-firebase', 'Uso do Firebase'); prepararUsoFirebase(); },
     'agenda': () => { switchToScreen('screen-agenda', 'Agenda de trabalho'); prepararAgenda(); },
     'equipamentos': () => switchToScreen('screen-equipamentos', 'Equipamentos'),
     'aprovacoes': () => switchToScreen('screen-aprovacoes', 'Aprovações de Acesso'),
@@ -70,3 +71,4 @@ function agendarNovidadesVersao() {
     setTimeout(tentar, 2000);
 }
 auth.onAuthStateChanged(user => { if (user) agendarNovidadesVersao(); });
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.23.3';

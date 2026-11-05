@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.23.2', nome: 'Relatório da cotação com visual padronizado (Word e PDF) e distinção de divergência e observação', status: 'atual',
+        numero: '2.23.3', nome: 'Uso do Firebase de todos os aparelhos: relatório geral e individual', status: 'atual',
+        novidades: ['Mais > Uso do Firebase ganhou o cartão "Todos os aparelhos · hoje": soma das leituras de todos os aparelhos que abriram o app, comparada ao limite de 50 mil.', 'Cada aparelho aparece separado (nome, versão, leituras, cópia local, aberturas e coleções que mais gastaram). Você pode renomear este aparelho e remover da lista os que não usa mais.', 'Novo botão "Gerar relatório geral": texto para copiar com o total, a soma por coleção e por tela e o detalhe de cada aparelho (aberturas, catálogos, travadas).'],
+        implementado: ['js/46 (novo): cada aparelho publica um resumo do próprio dia em config/usoAparelhos (campo aparelhos.<id>, merge), no máximo a cada 4 min e só se mudou, e ao sair do app; leitura de todos = 1 leitura; relatório geral em texto.', 'js/00: cartão dos aparelhos na tela de uso. index.html: script js/46.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/46-uso-aparelhos.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14, js/24, js/31 e js/46 (novo).'],
+        testar: ['Abra o app no iPhone e no computador, espere ~1 minuto e abra Mais > Uso do Firebase em um deles: os dois aparelhos devem aparecer (toque em "Atualizar aparelhos" se faltar um).', 'Toque em "Renomear este aparelho", dê um nome (ex.: iPhone Alessandro) e confira que aparece na lista.', 'Toque em "Gerar relatório geral" e confira o texto com o total e cada aparelho.', 'Se aparecer erro vermelho de leitura/publicação, me avise: as regras do Firebase precisam liberar config/usoAparelhos.'],
+        testarLinks: [{ rotulo: 'Abrir Uso do Firebase', acao: 'uso-firebase' }]
+    },
+    {
+        numero: '2.23.2', nome: 'Relatório da cotação com visual padronizado (Word e PDF) e distinção de divergência e observação', status: 'concluida',
         novidades: ['O PDF do relatório da cotação agora tem o mesmo visual do Word: cabeçalho com a logo, quadros de totais, tabelas, cartões por fornecedor e selos coloridos de status (Concluída, Parcial, Pendente, Cancelada).', 'Divergência e observação ficam bem distintas: DIVERGÊNCIA em vermelho (com o status Em aberto, Relatada ou Resolvida) e OBSERVAÇÃO em azul (a observação do pedido e o comentário do SmartCompras em cada item).', 'Na entrega parcial, os itens não entregues aparecem num quadro vermelho e com a linha rosada. O Word tem o mesmo layout e o TXT usa as mesmas marcações.', 'O PDF numera as páginas e repete o cabeçalho das tabelas quando a lista passa de uma página.'],
         implementado: ['js/45: htmlRelatorioCotacao (tabelas, para o Word) e gerarPdfRelatorioCotacao (jsPDF desenhado à mão: quadros, selos, tabelas com quebra de página, rodapé com página x de y); dados com obsPedido; textoRelatorioCotacao com [DIVERGÊNCIA]/[OBSERVAÇÃO].'],
         arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/45-exportar-cotacao.js'],
@@ -3000,4 +3009,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.23.3';
