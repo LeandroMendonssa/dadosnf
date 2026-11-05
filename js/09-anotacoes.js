@@ -249,7 +249,7 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
     const naoRelatada = status === 'pendente' && d.relatado === false;
     const rotuloStatus = naoRelatada ? 'Gerada, ainda não relatada' : status === 'pendente' ? 'Pendência relatada' : status === 'resolvida' ? 'Resolvida' : 'Encerrada';
     const linhasHTML = linhas.map(l => `<div class="cdv-linha">${escRel(l)}</div>`).join('');
-    const chips = [oc.fornecedor ? upAud(oc.fornecedor) : '', oc.notaFiscal ? `NF ${oc.notaFiscal}` : '', centralPedidoAtual ? `Pedido ${centralPedidoAtual}` : ''].filter(Boolean)
+    const chips = [oc.fornecedor ? upAud(nomeExibicaoFornecedor(oc.fornecedor, oc.fornecedorCnpj) || oc.fornecedor) : '', oc.notaFiscal ? `NF ${oc.notaFiscal}` : '', centralPedidoAtual ? `Pedido ${centralPedidoAtual}` : ''].filter(Boolean)
         .map(x => `<span class="cdv-chip">${escRel(x)}</span>`).join('');
 
     const ROT = { identificacao: 'Relatada na auditoria', resolucao: 'Resolvida', encerramento: 'Encerrada', reabertura: 'Reaberta', relato: 'Relatada', geracao: 'Gerada' };
@@ -1191,4 +1191,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.24.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.24.1';

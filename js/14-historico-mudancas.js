@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.24.0', nome: 'Resumo de pendências de entrega por pedido, etiqueta de entrega parcial e voltar da auditoria', status: 'atual',
+        numero: '2.24.1', nome: 'Resumo de pendências no formato pedido e apelido do fornecedor', status: 'atual',
+        novidades: ['O Resumo de pendências agora sai no seu formato: data, fornecedores sem pendência (pelo apelido) e, em PENDÊNCIAS, somente os produtos que o fornecedor não faturou e que ainda não foram relatados. Saíram o "nenhum item recebido" e o aviso de cotações mínimas.', 'Apelido do fornecedor: quando o CNPJ (ex.: filial) não tem apelido próprio, o app usa o apelido de outro CNPJ da mesma entidade. O resultado da auditoria também mostra o apelido.'],
+        implementado: ['js/47: dadosResumoPendenciasPedido usa só itens em aberto "não faturado" (estado detectada); cabeçalho DATA; refaz o texto quando o cadastro de fornecedores carrega.', 'js/14: _nomeExibicaoFornecedorCalc procura apelido na mesma entidade. js/09: chip do fornecedor na auditoria usa nomeExibicaoFornecedor.'],
+        arquivos: ['js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'index.html'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/14, js/31 e js/47.'],
+        testar: ['Cotações > Resumo de pendências com 1748, 1749, 1750: compare com o formato que você descreveu. O SOMA deve sair como "SOMA".', 'Marque um item não faturado como relatado e gere de novo: ele deve sumir do resumo.', 'Se algum fornecedor ainda sair com o nome completo, me diga qual (é o apelido que falta no cadastro de Fornecedores).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.0', nome: 'Resumo de pendências de entrega por pedido, etiqueta de entrega parcial e voltar da auditoria', status: 'concluida',
         novidades: ['Novo "Resumo de pendências" em Cotações: informe vários pedidos e receba o texto pronto (fornecedores sem pendência + PENDÊNCIAS por fornecedor com NF, itens não faturados, divergências e recurso a confirmar). Copia ou baixa em TXT/Word. Também sai pelo Assistente ("entregas pendentes dos pedidos 1748, 1749").', 'Fornecedor que recebeu parte dos itens agora mostra "Entrega parcial" no cartão (antes aparecia "Aguardando").', 'Ao gerar auditoria a partir da cotação, o botão voltar retorna à cotação, com os fornecedores que estavam abertos, e não mais às Anotações.'],
         implementado: ['js/47 (novo): dadosResumoPendenciasPedido/textoResumoPendencias reaproveitam dadosRelatorioCotacao e resumoCotacoesDoFornecedor; modal em index.html; botão em Cotações e ação "Pendências" na barra de seleção (js/38).', 'js/37: ferramenta resumo_pendencias_entrega e regra do modo básico.', 'js/09: selo do cartão do fornecedor "Entrega parcial" quando estado parcial.', 'js/30: registrarDivergenciaDaComparacao e registrarTodasDivergenciasDoFornecedor entram na pilha de retorno.'],
         arquivos: ['index.html', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/38-dock-selecao.js', 'js/47-resumo-pendencias.js'],
@@ -2770,7 +2779,11 @@ function nomeExibicaoFornecedor(razaoSocial, cnpj) {
 function _nomeExibicaoFornecedorCalc(razaoSocial, cnpj) {
     if (cnpj) {
         const doc = docFornecedorSpDataPorCnpj(cnpj);
-        if (doc) return apelidoFornecedorDoc(doc).nome || doc.nomeReal || razaoSocial || '';
+        const apel = doc ? apelidoFornecedorDoc(doc).nome : '';
+        if (apel) return apel;
+        // 2.24.1: CNPJ (ex.: filial) sem apelido próprio: usa o apelido de qualquer CNPJ da mesma entidade
+        try { for (const c of cnpjsDaMesmaEntidadeFornecedor(cnpj)) { const d = docFornecedorSpDataPorCnpj(c), n = d ? apelidoFornecedorDoc(d).nome : ''; if (n) return n; } } catch (e) { /* segue para o nome */ }
+        if (doc) return doc.nomeReal || razaoSocial || '';
     }
     if (!razaoSocial) return '';
     const porNome = listaFornecedoresSpData.find(f => (f.nomeReal || '').toUpperCase() === razaoSocial.toUpperCase());
@@ -3027,4 +3040,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.1';

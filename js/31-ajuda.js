@@ -213,7 +213,7 @@ const AJUDA_ARTIGOS = [
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
         'Para fixar pedidos no topo da lista: toque em "Selecionar", marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
         'Dentro do pedido, no topo (abaixo do resumo), "Exportar relatório" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF. O PDF e o Word têm o mesmo visual: selos coloridos de status, divergência em vermelho, observação do SmartCompras em azul e, na entrega parcial, os itens não entregues em destaque.',
-        'Resumo de pendências: em Cotações toque em "Resumo de pendências" (ou selecione cotações e use "Pendências" na barra de baixo), informe os pedidos (ex.: 1748, 1749, 1750) e copie ou baixe em TXT/Word. Mostra, por pedido, os fornecedores sem pendência e, em PENDÊNCIAS, o que falta de cada um (itens não faturados, divergências com a NF, recurso a confirmar). O Assistente também monta: "entregas pendentes dos pedidos 1748, 1749".',
+        'Resumo de pendências: em Cotações toque em "Resumo de pendências" (ou selecione cotações e use "Pendências" na barra de baixo) e informe os pedidos (ex.: 1748, 1749, 1750). O texto traz a data, os fornecedores (pelo apelido) e, em PENDÊNCIAS, só os produtos que o fornecedor não faturou e que ainda não foram relatados. Copie ou baixe em TXT/Word. O Assistente também monta: "entregas pendentes dos pedidos 1748, 1749".',
         'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
@@ -573,4 +573,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.24.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.24.1';
