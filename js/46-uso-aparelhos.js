@@ -107,7 +107,9 @@ function usoAparelhosHTML() {
         ${ehEu ? `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoApRenomear()">Renomear este aparelho</button></div>` : `<div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoApRemover('${e(a.id)}')">Remover da lista</button></div>`}</div>`;
     });
     return h + `<div class="ctl-card"><div class="xml-item-meta"><b>Relatório de todos os aparelhos</b>Geral + cada aparelho, em texto para copiar</div>
-        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoRelatorioGeralGerar()">Gerar relatório geral</button></div></div>`;
+        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoRelatorioGeralGerar()">Gerar relatório geral</button></div>
+        <div id="uso-rel-geral-area" style="display:none"><textarea id="uso-relatorio-geral" readonly rows="14" style="display:block;width:100%;box-sizing:border-box;margin-top:10px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
+        <div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="usoCopiarTexto('uso-relatorio-geral')">Copiar relatório</button></div></div></div>`;
 }
 
 function usoRelatorioGeralTexto() {
@@ -133,17 +135,31 @@ function usoRelatorioGeralTexto() {
     });
     return L.join('\n') + '\n';
 }
+let usoRelGeralTexto = '';   // guarda o texto: se a tela for redesenhada, o relatório volta sozinho
+function usoRelatorioGeralMostrar() {
+    const t = document.getElementById('uso-relatorio-geral'), area = document.getElementById('uso-rel-geral-area');
+    if (!t || !area || !usoRelGeralTexto) return;
+    t.value = usoRelGeralTexto; area.style.display = 'block';
+}
 function usoRelatorioGeralGerar() {
-    const t = document.getElementById('uso-relatorio'); if (!t) return;
-    const pronto = () => { t.value = usoRelatorioGeralTexto(); t.style.display = 'block'; t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) { } };
+    const pronto = () => { usoRelGeralTexto = usoRelatorioGeralTexto(); usoRelatorioGeralMostrar(); const a = document.getElementById('uso-rel-geral-area'); if (a && a.scrollIntoView) a.scrollIntoView({ block: 'center' }); };
     if (usoApCache.carregado) return pronto();
     usoApCarregar().then(pronto);
+}
+// copia o texto de um campo (usa a área de transferência; se o iPhone recusar, seleciona o texto para copiar na mão)
+function usoCopiarTexto(id) {
+    const t = document.getElementById(id); if (!t || !t.value) return toast('Gere o relatório primeiro.');
+    const ok = () => toast('Relatório copiado.');
+    const manual = () => { try { t.removeAttribute('readonly'); t.focus(); t.setSelectionRange(0, t.value.length); const r = document.execCommand && document.execCommand('copy'); t.setAttribute('readonly', ''); if (r) return ok(); } catch (e) { } toast('Selecionei o texto: toque em Copiar no menu do iPhone.'); };
+    try { if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t.value).then(ok, manual); } catch (e) { }
+    manual();
 }
 
 // publica sozinho: logo depois de abrir (para pegar as primeiras leituras), a cada 4 min e ao sair do app
 (function usoApIniciar() {
+    setInterval(() => { try { if (usoRelGeralTexto && document.getElementById('uso-relatorio-geral') && !document.getElementById('uso-relatorio-geral').value) usoRelatorioGeralMostrar(); } catch (e) { } }, 1500);
     setTimeout(() => usoApPublicar(false), 25000);
     setInterval(() => usoApPublicar(false), USO_AP_INTERVALO);
     document.addEventListener('visibilitychange', () => { if (document.hidden) { usoApUltimoPublicar = 0; usoApPublicar(true); } });
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/46-uso-aparelhos.js'] = '2.23.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/46-uso-aparelhos.js'] = '2.24.5';

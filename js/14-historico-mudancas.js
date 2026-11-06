@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.24.4', nome: 'Travamentos, apelido no resumo, ERP não importado e centavos do ERP', status: 'atual',
+        numero: '2.24.5', nome: 'Botão Copiar nos relatórios de uso do Firebase', status: 'atual',
+        novidades: ['Uso do Firebase: o relatório geral agora aparece logo abaixo do botão "Gerar relatório geral" e tem o botão "Copiar relatório". O relatório simples também ganhou "Copiar".', 'O texto do relatório geral não some mais se a tela for redesenhada enquanto você está lendo.'],
+        implementado: ['js/46: área do relatório geral com botão Copiar (área de transferência, com plano B de selecionar o texto) e texto guardado em memória. js/00: botão Copiar no relatório simples.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/46-uso-aparelhos.js'],
+        mudou: ['Arquivos alterados desde a 2.24.4: index.html, js/00, js/14 e js/46.'],
+        testar: ['iPhone: Mais > Uso do Firebase > Gerar relatório geral: o texto aparece logo abaixo; toque em Copiar relatório e cole em uma conversa.', 'iPhone: no relatório simples, Gerar relatório e depois Copiar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.4', nome: 'Travamentos, apelido no resumo, ERP não importado e centavos do ERP', status: 'concluida',
         novidades: ['Resumo de pendências agora usa o apelido (nome de exibição) em Não entregaram e em Pendências.', 'Tela Assinatura dos relatórios salva ao sair de cada campo (antes salvava a cada tecla e travava o app).', 'Editor da NF só se redesenha quando algo da NF muda de verdade (antes redesenhava a cada atualização de qualquer dado, causando as travadas).', 'Controle de NFs: NF com XML e sem relatório ERP importado deixa de contar como "1 pendência": aparece só uma nota discreta "ERP ainda não importado".', 'Divergência de valor total NF × ERP ignora diferença de centavos causada pelo arredondamento do unitário do ERP em produtos com quantidade grande (gotas, doses).', 'Entrada de NF: o fator aceita fração (1/100) ou decimal (0,01) para dividir a quantidade (cotado por caixa, NF por unidade).'],
         implementado: ['js/47: nome via nomeExibicaoFornecedor. index.html: campos da assinatura com onchange.', 'js/20: assinatura dos dados do editor antes de redesenhar. js/17: pendência de ERP vira informativa. js/11: tolerância quantidade × 0,00005 no valor total. js/10: fator fracionário.'],
         arquivos: ['index.html', 'js/10-entrada-nf-xml.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
@@ -3067,4 +3076,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.5';
