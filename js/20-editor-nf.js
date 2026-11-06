@@ -20,8 +20,10 @@ function abrirEditorNf(nfId) {
     screenParentMap['screen-nf-editor'] = origem; closeBtnBackScreen['screen-nf-editor'] = origem; // o "voltar" leva de volta a quem abriu
     const tituloTela = nf ? tituloFornNf(nf.fornecedor || (nf.xmlDados && nf.xmlDados.emit && nf.xmlDados.emit.xNome), nf.cnpjFornecedor, nf.nf) : tituloFornNf(erpSo.fornecedorNomeRelatorio, erpSo.cnpjFornecedor, erpSo.nf);
     switchToScreen('screen-nf-editor', tituloTela || `NF ${nf ? nf.nf : erpSo.nf}`);
+    _editorNfSig = '';
     renderEditorNf();
 }
+let _editorNfSig = '';
 function renderEditorNfSeAtivo() {
     agendarRender('editorNf', () => {
         const tela = document.getElementById('screen-nf-editor');
@@ -29,6 +31,13 @@ function renderEditorNfSeAtivo() {
         // não redesenha enquanto a pessoa digita num campo do editor (senão o texto e a lista abertos somem)
         const ae = document.activeElement;
         if (ae && ae.tagName === 'INPUT' && ae.closest && ae.closest('#nf-editor-conteudo')) { renderEditorNfSeAtivo(); return; }
+        // 2.24.4: só redesenha se algo da NF realmente mudou (antes redesenhava a cada atualização de qualquer dado e travava o app)
+        try {
+            const nfA = listaNfsProcessadas.find(n => n.id === nfEditorId), erpA = listaEntradasErp.filter(e => e.id === nfEditorId || (nfA && String(e.nf) === String(nfA.nf) && normalizarCnpj(e.cnpjFornecedor) === normalizarCnpj(nfA.cnpjFornecedor)));
+            const sig = [nfEditorId, nfEditorAba, JSON.stringify(nfA || null), JSON.stringify(erpA), nfA ? JSON.stringify(cotacoesDaNf(nfA)) : '', listaAnotacoes.length, listaNfsProcessadas.length, listaEntradasErp.length].join('|');
+            if (sig === _editorNfSig) return;
+            _editorNfSig = sig;
+        } catch (e) { _editorNfSig = ''; }
         renderEditorNf();
     }, 1200);
 }
@@ -797,3 +806,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.24.4';

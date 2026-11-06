@@ -791,7 +791,11 @@ function alternarItemXmlAberto(idx) {
 }
 
 function atualizarFatorXml(idx, valor) {
-    const fator = parseInt(valor, 10) || 1;
+    // 2.24.4: aceita fração (1/100) ou decimal (0,01) para o caso inverso: cotado por caixa, NF por unidade (a quantidade é DIVIDIDA)
+    let fator = 1; const t = String(valor || '').trim().replace(',', '.');
+    const mf = t.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+    if (mf && parseFloat(mf[2]) > 0) fator = parseFloat(mf[1]) / parseFloat(mf[2]); else if (parseFloat(t) > 0) fator = parseFloat(t);
+    fator = fator >= 1 ? Math.round(fator * 10000) / 10000 : Math.round(fator * 1e7) / 1e7;
     itensXmlDetectados[idx].fator = fator;
     itensXmlDetectados[idx].suspeito = false;
     itensXmlDetectados[idx].conferido = true;
@@ -1421,7 +1425,7 @@ function renderAssociacaoCotacaoXml() {
                 <span class="xml-item-badge ${status.pronto ? 'pronto' : 'pendente'}">${status.pronto ? '✓ Pronto' : status.motivos.join(' · ')}</span>
             </div>
             <div class="xml-item-conversao">
-                Fator: <input type="number" min="1" class="fator-input ${item.suspeito ? 'suspeito' : ''}" value="${item.fator}" onchange="atualizarFatorXml(${idx}, this.value)">
+                Fator: <input type="text" inputmode="decimal" title="Multiplica a quantidade da NF. Para dividir, use fração (1/100) ou decimal (0,01)." class="fator-input ${item.suspeito ? 'suspeito' : ''}" value="${(item.fator > 0 && item.fator < 1 && Math.abs(1 / item.fator - Math.round(1 / item.fator)) < 1e-6) ? '1/' + Math.round(1 / item.fator) : item.fator}" onchange="atualizarFatorXml(${idx}, this.value)">
                 ${item.suspeito ? `<button type="button" class="central-status-toggle" onclick="confirmarFatorXml(${idx})">✓ Confirmar fator</button>` : ''}
                 <span class="xml-preview-linha">${formatarPreviewXml(item)}</span>
             </div>
@@ -1589,4 +1593,4 @@ function aplicarPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     renderAssociacaoCotacaoXml();
     toast(`Produto de referência: SP Data ${possibilidade.spDataCodigo}. O código do item (${item.cProd}) não foi alterado.`);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.22.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.24.4';

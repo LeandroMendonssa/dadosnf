@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.24.3', nome: 'Resumo de pendências no layout aprovado, com assinatura e texto editável', status: 'atual',
+        numero: '2.24.4', nome: 'Travamentos, apelido no resumo, ERP não importado e centavos do ERP', status: 'atual',
+        novidades: ['Resumo de pendências agora usa o apelido (nome de exibição) em Não entregaram e em Pendências.', 'Tela Assinatura dos relatórios salva ao sair de cada campo (antes salvava a cada tecla e travava o app).', 'Editor da NF só se redesenha quando algo da NF muda de verdade (antes redesenhava a cada atualização de qualquer dado, causando as travadas).', 'Controle de NFs: NF com XML e sem relatório ERP importado deixa de contar como "1 pendência": aparece só uma nota discreta "ERP ainda não importado".', 'Divergência de valor total NF × ERP ignora diferença de centavos causada pelo arredondamento do unitário do ERP em produtos com quantidade grande (gotas, doses).', 'Entrada de NF: o fator aceita fração (1/100) ou decimal (0,01) para dividir a quantidade (cotado por caixa, NF por unidade).'],
+        implementado: ['js/47: nome via nomeExibicaoFornecedor. index.html: campos da assinatura com onchange.', 'js/20: assinatura dos dados do editor antes de redesenhar. js/17: pendência de ERP vira informativa. js/11: tolerância quantidade × 0,00005 no valor total. js/10: fator fracionário.'],
+        arquivos: ['index.html', 'js/10-entrada-nf-xml.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados desde a 2.24.3: index.html, js/10, js/11, js/14, js/17, js/20, js/31 e js/47.'],
+        testar: ['iPhone: abra a NF INTENSIVEMED 428615 no Controle de NFs: não deve mais mostrar "1 pendência", só "ERP ainda não importado".', 'iPhone: abra o editor de uma NF, role e mexa nas abas; confira se parou de travar e veja o relatório de uso (Travadas da tela).', 'iPhone: Personalização > Assinatura dos relatórios: preencha, saia do campo e confira se não trava e se aparece no PDF do resumo.', 'iPhone: gere o resumo do 1749 e confira os apelidos (SOMA, DISKMED, FUTURA...).', 'iPhone: pedido 1749, clonazepam/haloperidol: a divergência de centavos (12,75 × 12,70) não deve mais aparecer.', 'Na Entrada de NF, digite 1/100 no fator de um item e veja o preview dividir a quantidade.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.3', nome: 'Resumo de pendências no layout aprovado, com assinatura e texto editável', status: 'concluida',
         novidades: ['Resumo de pendências redesenhado (layout B2): data no topo, título grande, uma faixa por pedido com o número em destaque, "Não entregaram:" (só fornecedores sem nenhuma entrega) e "Pendências:" (fornecedores que entregaram mas não faturaram produtos ainda não relatados). Sem cartões; só negrito para destacar.', 'Assinatura no rodapé de todas as páginas (logo da instituição, seu nome, cargo, e-mail, telefone, site e endereço) e aviso "Desconsiderar pendências já resolvidas ou sinalizadas.".', 'Você pode digitar/editar o texto gerado: PDF, Word e TXT saem exatamente com o que está no campo.', 'Novo em Personalização: Assinatura dos relatórios (cada usuário tem a sua).'],
         implementado: ['js/47: novo texto, parser de blocos, PDF (jsPDF) e Word no layout B2, assinatura em todas as páginas; linhas manuais em texto corrido dentro do pedido.', 'index.html: tela Assinatura dos relatórios, campo de texto editável. js/01 e js/29: navegação e busca da nova tela.'],
         arquivos: ['index.html', 'js/01-nucleo-config-estado.js', 'js/14-historico-mudancas.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
@@ -3058,4 +3067,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.4';

@@ -771,7 +771,7 @@ function _compararFontesPedidoCalc(pedido, opcoes) {
                     const unitarioNf = valorTotalNf / quantidadeFaturada, unitarioErp = valorTotalErp / quantidadeLancadaEq;
                     const difUnitario = Math.abs(unitarioNf - unitarioErp) > 0.005;
                     const mesmaQtd = Math.abs(quantidadeFaturada - quantidadeLancadaEq) < 0.001;
-                    const difTotal = mesmaQtd && Math.abs(valorTotalNf - valorTotalErp) > Math.max(0.02, valorTotalNf * 0.0005);
+                    const difTotal = mesmaQtd && Math.abs(valorTotalNf - valorTotalErp) > Math.max(0.02, valorTotalNf * 0.0005, quantidadeFaturada * 0.00005); // 2.24.4: o ERP arredonda o unitário em 4 casas; com quantidade grande (gotas/doses) isso gera centavos de diferença que não são divergência
                     if (difUnitario || difTotal) {
                         divergencias.push({ tipo: 'valor_nf_erp', nome, valorUnitarioNf: unitarioNf, valorUnitarioErp: unitarioErp, valorTotalNf, valorTotalErp, difUnitario, difTotal, nfs: nfsQueFaturaram });
                     }
@@ -1853,4 +1853,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.22.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.24.4';

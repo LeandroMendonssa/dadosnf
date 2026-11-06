@@ -41,7 +41,7 @@ const AJUDA_ARTIGOS = [
       passos: [
         'Abra Entrada de NF e carregue o arquivo XML da nota.',
         'Em "Pedido/Cotação correspondente", confirme o pedido. Se a NF não tem cotação do SmartCompras (compra direta), informe o Destino dos itens (Santa Casa ou CTI).',
-        'Item por item, confira o fator de conversão (vem da descrição, como "C/10" = 10; a sua correção fica lembrada para a próxima NF), a associação com a cotação e o SP Data.',
+        'Item por item, confira o fator de conversão (vem da descrição, como "C/10" = 10; a sua correção fica lembrada para a próxima NF). O fator multiplica a quantidade da NF; para o caso inverso (cotado por caixa, NF por unidade) digite uma fração, como 1/100, ou decimal, como 0,01, a associação com a cotação e o SP Data.',
         'Se o quadro "Verificações da entrada" aparecer, leia antes de seguir: ele avisa itens ligados ao mesmo produto, valor unitário ou quantidade diferentes da cotação, quantidade diferente da lançada no ERP, valor total diferente do ERP (com a diferença, a explicação pelo frete, seguro ou desconto do próprio XML quando houver, e o botão "Abrir lançamento do ERP"), fornecedor fora do pedido e datas estranhas. Entrega parcial aparece só como informação. Só avisa; nada é bloqueado.',
         'Na lista de itens da cotação, o app esconde os que outro item da NF já associou e mostra só os do fornecedor; "Ver outros itens desse fornecedor" traz todos de volta (útil quando o fornecedor manda o mesmo produto em dois códigos, marcas ou validades). As sugestões "Parecidos pelo nome" não dependem da ordem das palavras.',
         'Item que não é o da cotação: "Remover associação" desfaz uma associação errada do fornecedor; "Veio produto trocado" (escolha o item que era o pedido) deixa o item sem associação e a conferência registra "Solicitamos X, porém foi faturado Y"; "Aceito como outro produto" vale como o item pedido só nesta NF e não grava a associação (use quando o comprador aceitou a diferença).',
@@ -573,4 +573,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.24.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.24.4';
