@@ -33,7 +33,7 @@ function dadosResumoPendenciasPedido(pedido) {
     const nota = (typeof listaAnotacoes !== 'undefined' ? listaAnotacoes : []).find(a => String(a.pedido) === String(cot.pedido));
     const r = { pedido: String(pedido), naoEntregaram: [], pend: [] };
     d.fornecedores.forEach(f => {
-        const nome = maiusculoResumo(f.nome), ch = normalizarCnpj(f.cnpj);
+        const nome = maiusculoResumo((() => { try { return nomeExibicaoFornecedor(f.nome, f.cnpj) || f.nome; } catch (e) { return f.nome; } })()), ch = normalizarCnpj(f.cnpj);
         if (f.status.chave === 'cancelada') return;
         const linhas = [], nfs = [], visto = new Set();
         const add = t => { const k = maiusculoResumo(t).replace(/\s+/g, ' ').trim(); if (k && !visto.has(k)) { visto.add(k); linhas.push(t); } };
@@ -116,7 +116,7 @@ function assinaturaSalvarCampos() {
         const v = {}; ASSINATURA_CAMPOS.forEach(c => { const el = document.getElementById('assin-' + c); v[c] = el ? el.value.trim() : ''; });
         appConfig.personalizacao = { ...(appConfig.personalizacao || {}), assinatura: v };
         try { salvarPersonalizacao(); } catch (e) { console.error('Assinatura:', e); }
-    }, 600);
+    }, 400);
 }
 document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-screen="screen-pz-assinatura"]'); if (a) setTimeout(assinaturaPreencherCampos, 50); });
 
@@ -268,4 +268,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.24.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.24.4';
