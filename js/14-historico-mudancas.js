@@ -10,7 +10,25 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.24.1', nome: 'Resumo de pendências no formato pedido e apelido do fornecedor', status: 'atual',
+        numero: '2.24.3', nome: 'Resumo de pendências no layout aprovado, com assinatura e texto editável', status: 'atual',
+        novidades: ['Resumo de pendências redesenhado (layout B2): data no topo, título grande, uma faixa por pedido com o número em destaque, "Não entregaram:" (só fornecedores sem nenhuma entrega) e "Pendências:" (fornecedores que entregaram mas não faturaram produtos ainda não relatados). Sem cartões; só negrito para destacar.', 'Assinatura no rodapé de todas as páginas (logo da instituição, seu nome, cargo, e-mail, telefone, site e endereço) e aviso "Desconsiderar pendências já resolvidas ou sinalizadas.".', 'Você pode digitar/editar o texto gerado: PDF, Word e TXT saem exatamente com o que está no campo.', 'Novo em Personalização: Assinatura dos relatórios (cada usuário tem a sua).'],
+        implementado: ['js/47: novo texto, parser de blocos, PDF (jsPDF) e Word no layout B2, assinatura em todas as páginas; linhas manuais em texto corrido dentro do pedido.', 'index.html: tela Assinatura dos relatórios, campo de texto editável. js/01 e js/29: navegação e busca da nova tela.'],
+        arquivos: ['index.html', 'js/01-nucleo-config-estado.js', 'js/14-historico-mudancas.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados: index.html, js/01, js/14, js/29, js/31 e js/47.'],
+        testar: ['No iPhone: Configurações > Personalização > Assinatura dos relatórios: preencha cargo, e-mail, telefone, site e endereço.', 'Cotações > Resumo de pendências: 1748, 1749, 1750. Confira apelidos, Não entregaram e Pendências.', 'Digite uma observação no texto e toque em PDF, Word e TXT: ela deve sair nos três. A assinatura fica no fim de cada página.', 'Fornecedor só com NF no ERP não aparece em Não entregaram; só aparece em Pendências se houver auditoria de produto não faturado ainda não relatada.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.2', nome: 'Resumo de pendências em PDF e Word com o visual do relatório da cotação', status: 'concluida',
+        novidades: ['O Resumo de pendências agora exporta em PDF e Word no mesmo estilo do relatório da cotação: cabeçalho com logo, faixa do pedido (origem e limite), totais (fornecedores, sem pendência, com pendência, itens não faturados), fornecedores sem pendência em selos verdes e cartão vermelho para cada fornecedor com produtos não faturados.', 'O texto para copiar e o TXT continuam iguais.'],
+        implementado: ['js/47: dadosResumoPendenciasLista, htmlResumoPendencias (Word) e gerarPdfResumoPendencias (jsPDF desenhado à mão, reaproveitando cores e selos do js/45). Botão PDF no modal (index.html).'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/31 e js/47.'],
+        testar: ['Cotações > Resumo de pendências, digite 1748, 1749, 1750 e toque em PDF: confira o visual e se o iPhone oferece compartilhar/abrir o arquivo.', 'Gere também em Word e compare com o PDF.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.1', nome: 'Resumo de pendências no formato pedido e apelido do fornecedor', status: 'concluida',
         novidades: ['O Resumo de pendências agora sai no seu formato: data, fornecedores sem pendência (pelo apelido) e, em PENDÊNCIAS, somente os produtos que o fornecedor não faturou e que ainda não foram relatados. Saíram o "nenhum item recebido" e o aviso de cotações mínimas.', 'Apelido do fornecedor: quando o CNPJ (ex.: filial) não tem apelido próprio, o app usa o apelido de outro CNPJ da mesma entidade. O resultado da auditoria também mostra o apelido.'],
         implementado: ['js/47: dadosResumoPendenciasPedido usa só itens em aberto "não faturado" (estado detectada); cabeçalho DATA; refaz o texto quando o cadastro de fornecedores carrega.', 'js/14: _nomeExibicaoFornecedorCalc procura apelido na mesma entidade. js/09: chip do fornecedor na auditoria usa nomeExibicaoFornecedor.'],
         arquivos: ['js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'index.html'],
@@ -3040,4 +3058,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.3';

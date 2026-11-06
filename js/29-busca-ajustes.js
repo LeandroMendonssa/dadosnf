@@ -41,7 +41,8 @@
         ['Recolher a dock', 'dock recolher encolher expandir rolar', 'screen-pz-dock', 'Dock e Navegação', 'dock-encolher'],
         ['Reduzir Movimento (dock)', 'dock reduzir movimento acessibilidade', 'screen-pz-dock', 'Dock e Navegação', 'dock-movimento'],
         ['Ordem dos Menus e barra inferior', 'menu ordem barra mais reordenar ordenar mover itens', 'screen-pz-menus', 'Menus e Barra Inferior', 'menu-reorder-list'],
-        ['Logo da Instituição', 'logo imagem pdf cabecalho instituicao enviar', 'screen-pz-logo', 'Logo da Instituição', 'logo-upload-input']
+        ['Logo da Instituição', 'logo imagem pdf cabecalho instituicao enviar', 'screen-pz-logo', 'Logo da Instituição', 'logo-upload-input'],
+        ['Assinatura dos relatórios', 'assinatura nome cargo email telefone site endereco relatorio resumo pendencias', 'screen-pz-assinatura', 'Assinatura dos relatórios', 'assin-nome']
     ].map(o => ({ t: o[0], k: o[1], tela: o[2], tituloTela: o[3], alvo: o[4], caminho: PZ + ' › ' + o[3], icone: 'fa-sliders', cor: '#8e8e93' }));
 
     function entradas() {
@@ -95,3 +96,4 @@
     window.buscaAjustes = { procurar };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.24.3';
