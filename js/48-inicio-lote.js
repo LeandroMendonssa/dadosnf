@@ -4,8 +4,51 @@
 const escIni = s => (typeof escRel === 'function' ? escRel(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
 const MESES_INI = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'], DIAS_INI = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 function inicioSaudacao() { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; }
+// 2.25.1: o nome e a contagem de fornecedores ficam guardados neste aparelho (por usuário) para a tela já abrir preenchida; depois se atualizam sozinhos.
+const INI_CACHE_CHAVE = 'iniCacheV1';
+function iniUid() { try { return (auth.currentUser && auth.currentUser.uid) || ''; } catch (e) { return ''; } }
+function iniLerCache() { try { const c = JSON.parse(localStorage.getItem(INI_CACHE_CHAVE) || 'null'); return c && c.uid && c.uid === iniUid() ? c : {}; } catch (e) { return {}; } }
+function iniGravarCache(parte) { try { const uid = iniUid(); if (!uid) return; localStorage.setItem(INI_CACHE_CHAVE, JSON.stringify(Object.assign({}, iniLerCache(), parte, { uid }))); } catch (e) { } }
 function inicioPrimeiroNome() {
-    try { const n = (typeof assinaturaRelatorio === 'function' && assinaturaRelatorio().nome) || (auth.currentUser && (auth.currentUser.displayName || '')) || ''; return String(n).trim().split(/\s+/)[0] || ''; } catch (e) { return ''; }
+    let n = '';
+    try { n = (typeof assinaturaRelatorio === 'function' && assinaturaRelatorio().nome) || (auth.currentUser && (auth.currentUser.displayName || '')) || ''; } catch (e) { }
+    n = String(n).trim().split(/\s+/)[0] || '';
+    if (n) { if (iniLerCache().nome !== n) iniGravarCache({ nome: n }); return n; }
+    return iniLerCache().nome || '';
+}
+// Fornecedores que ainda não chegaram (nada entregue) + os que chegaram parcialmente com MAIS de 2 itens faltando (1 ou 2 itens faltando não conta).
+// Só considera pedidos recentes (INI_JANELA_DIAS) para pedidos antigos esquecidos não inflarem o número. Usa só dados já carregados: nenhuma leitura nova.
+const INI_JANELA_DIAS = 60, INI_MIN_ITENS_FALTANDO = 3;
+let _iniSigForn = '', _iniCalculando = false;
+function inicioContarFornecedores() {
+    const lim = Date.now() - INI_JANELA_DIAS * 86400000, r = { nao: 0, achegar: 0 };
+    comMemoComparacao(() => (listaCotacoes || []).forEach(cot => {
+        const ref = Date.parse(cot.dataPedido || cot.atualizadoEm || '') || 0; if (ref && ref < lim) return;
+        let comp; try { comp = compararFontesPedido(cot.pedido); } catch (e) { return; }
+        const vistos = new Set();
+        (cot.fornecedores || []).forEach(f => {
+            const ch = normalizarCnpj(f.cnpj); if (!ch || vistos.has(ch)) return; vistos.add(ch);
+            const itens = (cot.itens || []).filter(it => normalizarCnpj(it.cnpjFornecedor) === ch); if (!itens.length) return;
+            let e; try { e = calcularEntregaFornecedorPedido(cot.pedido, f, comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === ch)); } catch (er) { return; }
+            const st = statusEntregaRelCot(e);
+            if (st.chave === 'cancelada' || st.chave === 'concluida') return;
+            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) r.nao++; return; }
+            const faltam = itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).length;
+            if (faltam >= INI_MIN_ITENS_FALTANDO) r.achegar++;
+        });
+    }));
+    return r;
+}
+// recalcula só quando os dados mudaram e fora do caminho de desenho da tela (não trava a abertura)
+function inicioAtualizarFornecedores() {
+    if (_iniCalculando || !listaCotacoes || !listaCotacoes.length) return;
+    const sig = [listaCotacoes.length, (listaNfsProcessadas || []).length, (listaEntradasErp || []).length, (listaCotacoes[0] || {}).atualizadoEm || '', (listaAnotacoes || []).length].join('|');
+    if (sig === _iniSigForn) return;
+    _iniCalculando = true;
+    setTimeout(() => {
+        try { const r = inicioContarFornecedores(); _iniSigForn = sig; iniGravarCache({ forn: r }); renderInicioSeAtivo(); } catch (e) { console.error('Início: fornecedores', e); }
+        _iniCalculando = false;
+    }, 50);
 }
 function inicioDados() {
     const abertas = (notasPendentes || []).filter(n => n && !n.enviada && n.vencimento);
@@ -16,7 +59,12 @@ function inicioDados() {
 }
 function renderInicio() {
     const el = document.getElementById('inicio-conteudo'); if (!el) return;
-    const d = inicioDados(), agora = new Date(), nome = inicioPrimeiroNome();
+    ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'associacoesFornecedor'].forEach(n => { try { assinarDados(n); } catch (e) { } });   // já subiriam em segundo plano; aqui sobem logo ao abrir (sem leitura extra)
+    inicioAtualizarFornecedores();
+    const d = inicioDados(), agora = new Date(), nome = inicioPrimeiroNome(), pf = iniLerCache().forn;
+    const kForn = pf
+        ? `<button type="button" class="ini-k n" onclick="abrirResumoPendencias()"><b>${pf.nao + pf.achegar}</b><span>fornecedores a chegar<br>${pf.nao} não chegaram · ${pf.achegar} com mais de 2 itens faltando</span></button>`
+        : `<button type="button" class="ini-k n" onclick="abrirResumoPendencias()"><b>…</b><span>fornecedores a chegar<br>calculando</span></button>`;
     const dataTxt = `${DIAS_INI[agora.getDay()]}, ${String(agora.getDate()).padStart(2, '0')} de ${MESES_INI[agora.getMonth()]}`;
     const k = (cls, n, txt, acao) => `<button type="button" class="ini-k ${cls}" onclick="${acao}"><b>${n}</b><span>${txt}</span></button>`;
     const at = (ic, txt, acao, forte) => `<button type="button" class="ini-at${forte ? ' forte' : ''}" onclick="${acao}"><i class="${ic}"></i><span>${txt}</span></button>`;
@@ -33,7 +81,7 @@ function renderInicio() {
             ${k('r', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
             ${k('y', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
             ${k('g', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Gerenciar')")}
-            ${k('n', '→', 'Pendências de entrega dos pedidos', 'abrirResumoPendencias()')}
+            ${kForn}
         </div>
         <div class="ini-tit">Atalhos</div>
         <div class="ini-ats">
@@ -93,5 +141,5 @@ function loteBuscar() {
 }
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
-window.addEventListener('load', () => { setTimeout(renderInicioSeAtivo, 600); setInterval(renderInicioSeAtivo, 20000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.25.0';
+window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); });
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.25.1';

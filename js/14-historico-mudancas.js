@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.25.0', nome: 'Tela inicial e busca de lote', status: 'atual',
+        numero: '2.25.1', nome: 'Início mais rápido e fornecedores a chegar', status: 'atual',
+        novidades: ['O Início abre já com o seu nome e com o último número de fornecedores (guardados neste aparelho) e atualiza sozinho em seguida.', 'O bloco de pendências agora mostra um número só: fornecedores que ainda não chegaram + fornecedores que chegaram com MAIS de 2 itens faltando. Quem só deixou de faturar 1 ou 2 itens não entra.', 'Toque no bloco para abrir o Resumo de pendências.'],
+        implementado: ['js/48: cache do nome e da contagem por usuário (iniCacheV1), inicioContarFornecedores (usa calcularEntregaFornecedorPedido, statusEntregaRelCot e situacaoItemRelCot; pedidos dos últimos 60 dias), recálculo só quando os dados mudam e fora do desenho da tela; cotações, NFs, ERP e associações sobem ao abrir o Início (já subiam em segundo plano: sem leitura extra).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.25.0: index.html, style.css, js/14, js/31 e js/48.'],
+        testar: ['iPhone: feche e abra o app: o nome e o bloco de fornecedores devem aparecer logo (na primeira vez depois da atualização o bloco mostra "calculando" por um instante).', 'iPhone: confira o número do bloco com o Resumo de pendências de um pedido recente: "não chegaram" deve bater com NÃO ENTREGARAM.', 'iPhone: fornecedor com só 1 ou 2 itens faltando não deve ser contado.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.0', nome: 'Tela inicial e busca de lote', status: 'concluida',
         novidades: ['Nova tela inicial (Início), que passa a abrir sozinha: saudação, busca de NF/fornecedor/pedido, contadores (vencidas, hoje/amanhã, abertas na relação), atalhos e próximos vencimentos.', 'Busca de lote (atalho no Início): procura por lote, produto e validade nas NFs processadas e mostra a NF, o fornecedor (apelido) e o pedido; toque no resultado para abrir a NF.', 'O Início fica em primeiro na barra de baixo. Para a barra não apertar, Exportar passou para "Mais" (dá para trazer de volta em Personalização > Menus).'],
         implementado: ['js/48-inicio-lote.js novo: painel usa só dados já carregados na abertura (sem leituras novas); a busca de lote carrega as NFs processadas só quando você a abre.', 'index.html: telas Início e Buscar lote, Início ativo na abertura. js/01: menu Início e tela de lote. js/02: migração do menu. js/05: carga das NFs para a busca de lote e redesenho do Início. style.css: estilos.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
@@ -3094,4 +3103,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.1';

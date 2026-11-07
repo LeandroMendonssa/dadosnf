@@ -13,7 +13,7 @@ const AJUDA_ARTIGOS = [
       resumo: 'Para que serve cada aba da barra inferior.',
       palavras: 'abas menu dock barra navegar inicio',
       passos: [
-        'Início: tela que abre sozinha, com o que vence, atalhos para as telas, busca de NF/fornecedor/pedido e a Busca de lote (lote, produto e validade nas NFs processadas; só encontra NFs que tiveram o lote gravado).',
+        'Início: tela que abre sozinha, com o que vence, atalhos para as telas, busca de NF/fornecedor/pedido o número de fornecedores a chegar (não chegaram ou com mais de 2 itens faltando, pedidos dos últimos 60 dias) e a Busca de lote (lote, produto e validade nas NFs processadas; só encontra NFs que tiveram o lote gravado).',
         'Adicionar: cadastro rápido de uma nota (data, NF, vencimento, valor, fornecedor e recurso).',
         'Gerenciar: a relação de notas pendentes, com seleção em lote, espera, edição e arquivamento.',
         'Exportar: monta a Saída de Texto (copiar, compartilhar, gerar PDF) e arquiva as notas enviadas.',
@@ -574,4 +574,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.25.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.25.1';
