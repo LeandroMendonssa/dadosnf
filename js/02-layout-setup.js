@@ -185,6 +185,8 @@ function aplicarPersonalizacoes() {
     {
         const cfgP = appConfig.personalizacao;
         if (!Array.isArray(cfgP.menuHidden)) cfgP.menuHidden = [];
+        // 2.25.0: o Início entra em primeiro, visível; para a barra não ficar apertada, Exportar vai para "Mais" (volta em Personalização > Menus)
+        if (Array.isArray(cfgP.menuOrder) && !cfgP.menuOrder.includes('screen-inicio')) { cfgP.menuOrder = ['screen-inicio', ...cfgP.menuOrder]; if (!cfgP.menuHidden.includes('screen-export')) cfgP.menuHidden = [...cfgP.menuHidden, 'screen-export']; }
         const novos = Object.keys(menuDetails).filter(id => !(cfgP.menuOrder || []).includes(id));
         if (novos.length) { cfgP.menuOrder = [...(cfgP.menuOrder || []), ...novos]; cfgP.menuHidden = [...new Set([...cfgP.menuHidden, ...novos])]; }
     }
@@ -363,4 +365,4 @@ function reordenarMenusDOM(order) {
         }).observe(tela, { attributes: true, attributeFilter: ['class'] });
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.23.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.25.0';

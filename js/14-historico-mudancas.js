@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.24.6', nome: 'Vão no card do produto, linhas do relatório de uso e aviso de atualização geral', status: 'atual',
+        numero: '2.25.0', nome: 'Tela inicial e busca de lote', status: 'atual',
+        novidades: ['Nova tela inicial (Início), que passa a abrir sozinha: saudação, busca de NF/fornecedor/pedido, contadores (vencidas, hoje/amanhã, abertas na relação), atalhos e próximos vencimentos.', 'Busca de lote (atalho no Início): procura por lote, produto e validade nas NFs processadas e mostra a NF, o fornecedor (apelido) e o pedido; toque no resultado para abrir a NF.', 'O Início fica em primeiro na barra de baixo. Para a barra não apertar, Exportar passou para "Mais" (dá para trazer de volta em Personalização > Menus).'],
+        implementado: ['js/48-inicio-lote.js novo: painel usa só dados já carregados na abertura (sem leituras novas); a busca de lote carrega as NFs processadas só quando você a abre.', 'index.html: telas Início e Buscar lote, Início ativo na abertura. js/01: menu Início e tela de lote. js/02: migração do menu. js/05: carga das NFs para a busca de lote e redesenho do Início. style.css: estilos.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.24.6: index.html, style.css, js/01, js/02, js/05, js/14, js/31 e novo js/48-inicio-lote.js.'],
+        testar: ['iPhone: abra o app: deve abrir no Início, com a saudação e os contadores; a barra de baixo tem Início em primeiro.', 'iPhone: toque em cada atalho e confira que abre a tela certa e que o voltar funciona.', 'iPhone: digite um fornecedor na busca do Início e confira a lista no Controle de NFs.', 'iPhone: Início > Buscar lote: digite um lote de uma NF recente (veja no editor da NF) e confira o resultado; toque nele para abrir a NF.', 'iPhone: Exportar agora está em Mais; confira em Personalização > Menus se quiser trazer de volta.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.6', nome: 'Vão no card do produto, linhas do relatório de uso e aviso de atualização geral', status: 'concluida',
         novidades: ['Card do produto na central do pedido: some a linha pontilhada duplicada com o vão entre o bloco "Cotação e recurso" e o "SP Data".', 'Uso do Firebase: as barras de cada linha não passam mais da largura da tela (apareciam linhas infinitas em aparelhos cuja soma de leituras era menor que a da cópia local).', 'Aviso de atualização incompleta agora mostra o total ("Faltam 2 de 8 arquivos da versão X"), com a lista em "Ver arquivos" e botão Recarregar.'],
         implementado: ['style.css: .cdet .central-spdata-linha sem borda superior; estilo do "Ver arquivos". js/00: largura da barra limitada a 100%. js/43: resumo geral e botão Recarregar.'],
         arquivos: ['index.html', 'style.css', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
@@ -3085,4 +3094,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.0';
