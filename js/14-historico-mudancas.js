@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.24.5', nome: 'Botão Copiar nos relatórios de uso do Firebase', status: 'atual',
+        numero: '2.24.6', nome: 'Vão no card do produto, linhas do relatório de uso e aviso de atualização geral', status: 'atual',
+        novidades: ['Card do produto na central do pedido: some a linha pontilhada duplicada com o vão entre o bloco "Cotação e recurso" e o "SP Data".', 'Uso do Firebase: as barras de cada linha não passam mais da largura da tela (apareciam linhas infinitas em aparelhos cuja soma de leituras era menor que a da cópia local).', 'Aviso de atualização incompleta agora mostra o total ("Faltam 2 de 8 arquivos da versão X"), com a lista em "Ver arquivos" e botão Recarregar.'],
+        implementado: ['style.css: .cdet .central-spdata-linha sem borda superior; estilo do "Ver arquivos". js/00: largura da barra limitada a 100%. js/43: resumo geral e botão Recarregar.'],
+        arquivos: ['index.html', 'style.css', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados desde a 2.24.5: index.html, style.css, js/00, js/14 e js/43.'],
+        testar: ['iPhone: pedido 1749, abra o item TOUCA DESCARTÁVEL SANFONADA: entre "Recurso" e "SP Data" deve haver só uma linha pontilhada.', 'iPhone: Mais > Uso do Firebase, role até os aparelhos: não deve haver linhas azuis atravessando a tela.', 'Subindo arquivos pela metade (de propósito ou por falha), o aviso deve dizer quantos faltam do total.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.5', nome: 'Botão Copiar nos relatórios de uso do Firebase', status: 'concluida',
         novidades: ['Uso do Firebase: o relatório geral agora aparece logo abaixo do botão "Gerar relatório geral" e tem o botão "Copiar relatório". O relatório simples também ganhou "Copiar".', 'O texto do relatório geral não some mais se a tela for redesenhada enquanto você está lendo.'],
         implementado: ['js/46: área do relatório geral com botão Copiar (área de transferência, com plano B de selecionar o texto) e texto guardado em memória. js/00: botão Copiar no relatório simples.'],
         arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/46-uso-aparelhos.js'],
@@ -3076,4 +3085,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.24.6';
