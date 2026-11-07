@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.25.1', nome: 'Início mais rápido e fornecedores a chegar', status: 'atual',
+        numero: '2.25.2', nome: 'Alterar status da auditoria dentro do item', status: 'atual',
+        novidades: ['Central do pedido: quando o item tem "Pendência relatada na auditoria", o bloco da auditoria (com o botão "Alterar status") agora aparece dentro do próprio item, logo abaixo da comparação, em vez de ficar lá no fim do fornecedor ou da tela.'],
+        implementado: ['js/09: a divergência da auditoria vai para o item que a comparação Cotação × NF × ERP já ligou a ela (antes só o nome do produto decidia e, quando não batia, ela caía em "Outras divergências"). Auditoria sem CNPJ ligada a um item também aparece no item e sai de "Outras ocorrências".'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados desde a 2.25.1: index.html, style.css, js/09 e js/14.'],
+        testar: ['iPhone: pedido 1749, item EQUIPO 02 VIAS C/ CLAMP (divergência com pendência relatada): abra o item e confira que, abaixo da comparação, aparece "Divergências (auditoria)" com o botão "Alterar status".', 'iPhone: toque em Alterar status, escolha Resolvida e confirme: o selo do item deve mudar para resolvido.', 'iPhone: confira que a mesma auditoria não aparece repetida no fim da tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.1', nome: 'Início mais rápido e fornecedores a chegar', status: 'concluida',
         novidades: ['O Início abre já com o seu nome e com o último número de fornecedores (guardados neste aparelho) e atualiza sozinho em seguida.', 'O bloco de pendências agora mostra um número só: fornecedores que ainda não chegaram + fornecedores que chegaram com MAIS de 2 itens faltando. Quem só deixou de faturar 1 ou 2 itens não entra.', 'Toque no bloco para abrir o Resumo de pendências.'],
         implementado: ['js/48: cache do nome e da contagem por usuário (iniCacheV1), inicioContarFornecedores (usa calcularEntregaFornecedorPedido, statusEntregaRelCot e situacaoItemRelCot; pedidos dos últimos 60 dias), recálculo só quando os dados mudam e fora do desenho da tela; cotações, NFs, ERP e associações sobem ao abrir o Início (já subiam em segundo plano: sem leitura extra).'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
@@ -3103,4 +3112,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.2';

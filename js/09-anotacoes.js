@@ -326,11 +326,14 @@ function renderCentralPedidoCompleto(pedido) {
 
     if (cotacao) {
         const compItens = compararFontesPedido(pedido);
+        const audLigadas = new Map();   // "ocIdx-divIdx" → CNPJ do fornecedor do item a que a comparação ligou a auditoria
+        compItens.forEach(c => (c.auditorias || []).forEach(a => { const k = `${a.ocIdx}-${a.divIdx}`; if (!audLigadas.has(k)) audLigadas.set(k, normalizarCnpj(c.cnpjFornecedor)); }));
         const normNome = x => String(x || '').trim().toUpperCase();
         const fornecedoresHTML = (cotacao.fornecedores || []).map(f => {
             const nomeExibicao = nomeExibicaoFornecedor(f.razaoSocial, f.cnpj);
             const produtos = (cotacao.itens || []).filter(it => normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(f.cnpj));
-            const divergenciasForn = todasDivergencias.filter(x => normalizarCnpj(x.oc.fornecedorCnpj) === normalizarCnpj(f.cnpj));
+            // 2.25.2: auditoria sem CNPJ que a comparação já ligou a um item deste fornecedor aparece no item (e não só no fim da tela)
+            const divergenciasForn = todasDivergencias.filter(x => normalizarCnpj(x.oc.fornecedorCnpj) === normalizarCnpj(f.cnpj) || (!x.oc.fornecedorCnpj && audLigadas.get(`${x.ocIdx}-${x.divIdx}`) === normalizarCnpj(f.cnpj)));
             const aberto = centralFornecedoresAbertos.has(f.cnpj);
             const compForn = compItens.filter(item => normalizarCnpj(item.cnpjFornecedor) === normalizarCnpj(f.cnpj));
             const chegada = (cotacao.chegadasPorFornecedor || {})[normalizarCnpj(f.cnpj)] || null;
@@ -353,10 +356,16 @@ function renderCentralPedidoCompleto(pedido) {
             // nenhuma divergência some nem aparece duplicada.
             const divPorProduto = {};
             const divSoltas = [];
+            // 2.25.2: a comparação do item já sabe quais auditorias são dele (mesmo critério do aviso "Pendência relatada na auditoria"
+            // dentro do card). Antes a divergência podia cair em "Outras divergências", lá no fim do fornecedor, e o aviso do item
+            // ficava sem o "Alterar status" por perto. Agora o bloco vai para o item que mostra o aviso.
+            const prodPorAud = {};
+            compForn.forEach(c => (c.auditorias || []).forEach(a => { if (c.codProduto && prodPorAud[`${a.ocIdx}-${a.divIdx}`] === undefined) prodPorAud[`${a.ocIdx}-${a.divIdx}`] = c.codProduto; }));
             divergenciasForn.forEach(x => {
                 const nomes = materiaisDaDivergencia(x.d).map(m => normNome(m.produto || m.produtoPedido)).filter(Boolean);
                 const codsRef = materiaisDaDivergencia(x.d).map(m => m.codProduto).filter(Boolean);
-                const alvo = produtos.find(it => codsRef.includes(it.codProduto)) || (nomes.length ? produtos.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) : null); // 2.0.9: mesmo critério da comparação
+                const codComp = prodPorAud[`${x.ocIdx}-${x.divIdx}`];
+                const alvo = (codComp && produtos.find(it => it.codProduto === codComp)) || produtos.find(it => codsRef.includes(it.codProduto)) || (nomes.length ? produtos.find(it => nomes.some(n => nomesProdutoCombinam(n, it.nomeOficial || it.descricao || it.codProduto))) : null); // 2.0.9: mesmo critério da comparação
                 if (alvo) (divPorProduto[alvo.codProduto] = divPorProduto[alvo.codProduto] || []).push(x);
                 else divSoltas.push(x);
             });
@@ -421,7 +430,7 @@ function renderCentralPedidoCompleto(pedido) {
             </div>`;
         }).join('');
 
-        const semFornecedor = todasDivergencias.filter(x => !x.oc.fornecedorCnpj);
+        const semFornecedor = todasDivergencias.filter(x => !x.oc.fornecedorCnpj && !audLigadas.has(`${x.ocIdx}-${x.divIdx}`));
         const abertoSem = centralFornecedoresAbertos.has('_sem_cnpj');
         const semFornecedorHTML = semFornecedor.length ? `<div class="central-fornecedor${abertoSem ? ' aberto' : ''}">
             <div class="central-fornecedor-header cf-simples" onclick="toggleCentralFornecedor('_sem_cnpj', this)">
@@ -1191,4 +1200,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.24.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.25.2';
