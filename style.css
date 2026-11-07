@@ -1893,7 +1893,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.23.0'; }
+:root { --css-versao: '2.24.6'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1903,3 +1903,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .push-diag{margin-top:var(--space-3)}
 .push-dica{display:block;margin-top:2px;color:var(--text-light)}
 .push-ic{width:22px;text-align:center}.push-ic.ok{color:var(--success,#1f8a4c)}.push-ic.aviso{color:var(--warning,#b7791f)}.push-ic.erro{color:var(--danger)}
+
+/* 2.24.6: o bloco anterior já tem a linha pontilhada; a do SP Data duplicava e deixava um vão entre as duas */
+.cdet .central-spdata-linha{border-top:none;margin-top:0;padding-top:0}
+#aviso-arquivos details summary{cursor:pointer;color:var(--accent-color);font-weight:600}
