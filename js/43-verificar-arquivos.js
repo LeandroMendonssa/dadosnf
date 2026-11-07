@@ -20,16 +20,9 @@ function arqVerificar() {
 }
 function arqMostrarAviso(problemas) {
     if (!problemas.length || document.getElementById('aviso-arquivos')) return;
-    // 2.24.6: resumo geral primeiro (quantos arquivos faltam do total da última atualização); a lista fica em "Ver arquivos"
-    const fases = (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []), ult = fases[0] || {};
-    const total = (ult.arquivos || []).filter(a => /^js\//.test(a) || a === 'index.html' || a === 'style.css').length;
-    const faltam = problemas.length, alvo = problemas.reduce((m, p) => arqVerNum(p.ver) > arqVerNum(m) ? p.ver : m, '0');
-    const resumo = total && faltam <= total ? `Faltam ${faltam} de ${total} arquivos da versão ${escRel(ult.numero || alvo)}.` : `${faltam} arquivo(s) estão antigos ou não carregaram (versão ${escRel(alvo)}).`;
     const b = document.createElement('div'); b.id = 'aviso-arquivos'; b.setAttribute('role', 'alert');
-    b.innerHTML = `<div><b>Atualização incompleta</b><span>${resumo} Se a publicação ainda está em andamento, espere o aviso de conclusão e recarregue.</span>
-        <details><summary>Ver arquivos</summary><span>${problemas.map(p => `${escRel(p.arq)} (${p.atual === '0' ? 'sem versão' : escRel(p.atual)}, precisa ${escRel(p.ver)})`).join('; ')}</span></details></div>
-        <button type="button" onclick="location.reload()">Recarregar</button><button type="button" onclick="this.parentNode.remove()">Fechar</button>`;
+    b.innerHTML = `<div><b>Atualização incompleta</b><span>Estes arquivos estão antigos ou não carregaram: ${problemas.map(p => `${escRel(p.arq)} (${p.atual === '0' ? 'sem versão' : escRel(p.atual)}, precisa ${escRel(p.ver)})`).join('; ')}. Suba de novo e recarregue o app.</span></div><button type="button" onclick="this.parentNode.remove()">Fechar</button>`;
     document.body.appendChild(b);
 }
 window.addEventListener('load', () => { setTimeout(() => { try { const p = arqVerificar(); if (p.length) { console.warn('Arquivos desatualizados:', p); arqMostrarAviso(p); } } catch (e) { console.error('Verificação de arquivos:', e); } }, 1500); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.24.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.20.9';
