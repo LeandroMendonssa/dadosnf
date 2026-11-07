@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.24.6">
+    <meta name="app-versao" content="2.25.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -134,7 +134,7 @@
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-chevron-left"></i><span class="material-icons">chevron_left</span>
                     </span></button>
-            <h1 id="main-header-title" class="header-title">Adicionar</h1>
+            <h1 id="main-header-title" class="header-title">Início</h1>
             <div class="header-actions">
                 <span id="manage-counter" class="manage-counter header-counter" style="display: none;">0 notas</span>
                 <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
@@ -161,7 +161,18 @@
 
         <div class="screen-wrapper">
             
-            <div class="app-screen active" id="screen-add">
+            <div class="app-screen active" id="screen-inicio"><div id="inicio-conteudo"></div></div>
+            <div class="app-screen" id="screen-lote">
+                <div class="card card-plain">
+                    <p class="desc-tela">Procura em todas as NFs processadas (Entrada de NF). O lote e a validade vêm do XML ou do texto do produto, e só aparecem em NFs que tiveram o lote gravado.</p>
+                    <div class="campo"><label for="lote-q">Lote</label><input type="text" id="lote-q" class="form-field" placeholder="Ex: 24A0731" autocomplete="off" autocapitalize="characters"></div>
+                    <div class="campo"><label for="lote-prod">Produto (opcional)</label><input type="text" id="lote-prod" class="form-field" placeholder="Parte do nome" autocomplete="off"></div>
+                    <div class="campo"><label for="lote-val">Validade (opcional)</label><input type="text" id="lote-val" class="form-field" placeholder="mm/aaaa ou dd/mm/aaaa" inputmode="numeric" autocomplete="off"></div>
+                    <div class="actions"><button type="button" class="actions-button is-primary" onclick="loteBuscar()">Buscar</button></div>
+                </div>
+                <div id="lote-resultado"></div>
+            </div>
+            <div class="app-screen" id="screen-add">
                 <div class="card card-plain">
                     <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
                     <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"><div id="nf-sugestoes"></div></div>
@@ -1106,6 +1117,7 @@
   <script src="js/45-exportar-cotacao.js"></script>
   <script src="js/46-uso-aparelhos.js"></script>
   <script src="js/47-resumo-pendencias.js"></script>
+  <script src="js/48-inicio-lote.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 </body>

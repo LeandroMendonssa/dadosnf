@@ -1893,7 +1893,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.24.6'; }
+:root { --css-versao: '2.25.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1907,3 +1907,22 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 /* 2.24.6: o bloco anterior já tem a linha pontilhada; a do SP Data duplicava e deixava um vão entre as duas */
 .cdet .central-spdata-linha{border-top:none;margin-top:0;padding-top:0}
 #aviso-arquivos details summary{cursor:pointer;color:var(--accent-color);font-weight:600}
+
+/* 2.25.0: tela inicial e busca de lote */
+#inicio-conteudo{padding:0 0 120px}
+.ini-h1{font-size:26px;margin:4px 0 2px;color:var(--text-dark)}.ini-sub{color:var(--text-light);font-size:var(--fs-aux);margin-bottom:12px}
+.ini-busca{display:flex;align-items:center;gap:8px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:0 14px;margin-bottom:14px}
+.ini-busca input{flex:1;border:0;background:transparent;padding:13px 0;font-size:16px;color:var(--text-dark);outline:none;min-width:0}.ini-busca i{color:var(--text-light)}
+.ini-tit{font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin:6px 2px 8px}
+.ini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ini-k{text-align:left;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:12px;color:var(--text-dark)}.ini-k b{display:block;font-size:26px}.ini-k span{font-size:12px;color:var(--text-light)}
+.ini-k.r b{color:var(--button-danger)}.ini-k.y b{color:#b7791f}.ini-k.g b{color:#1f8a3b}
+.ini-ats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.ini-at{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:78px;padding:10px 4px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;color:var(--text-dark);font-size:12px;font-weight:600;text-align:center}
+.ini-at i{font-size:20px;color:var(--accent-color)}.ini-at.forte{background:var(--accent-color);border-color:var(--accent-color);color:#fff}.ini-at.forte i{color:#fff}
+.ini-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:18px;padding:4px 14px;margin-bottom:12px}
+.ini-lin{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--border-color)}.ini-lin:first-child{border-top:0}.ini-lin small{display:block;color:var(--text-light);font-size:12px}
+.ini-chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 9px;white-space:nowrap;background:var(--bg-tertiary);color:var(--text-dark)}.ini-chip.r{background:#fde4e2;color:#c62828}.ini-chip.y{background:#fdf3d0;color:#8a6100}
+.ini-vazio{color:var(--text-light);font-size:var(--fs-aux);padding:12px 4px}
+.ini-res{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:12px;margin-bottom:8px;color:var(--text-dark)}.ini-res span{font-size:13px}.ini-res small{color:var(--text-light);font-size:12px}
+#screen-lote{padding-bottom:120px}
