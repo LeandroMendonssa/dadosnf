@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.25.3">
+    <meta name="app-versao" content="2.25.4">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -409,10 +409,10 @@
                     <p class="desc-tela">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
                     <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
                         <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
-                        <div>Toque para escolher o arquivo .xml da NF-e</div>
+                        <div>Toque para escolher o arquivo .xml da NF-e (pode ser .txt)</div>
                         <div id="xml-nome-arquivo" style="font-size:12px;color:var(--accent-color);font-weight:600;"></div>
                     </div>
-                    <input type="file" id="xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXml(this.files[0])">
+                    <input type="file" id="xml-file-input" accept=".xml,.txt,text/xml,application/xml,text/plain" style="display:none;" onchange="handleArquivoXml(this.files[0])">
                     <div class="campo mt-4" >
                         <label>Unidade de Dispensação (destino)</label>
                         <input type="text" id="xml-unidade-destino" class="form-field" value="UN">
@@ -495,7 +495,7 @@
                 <div class="actions-row anotacoes-bulk-bar" id="cotacoes-bulk-bar" style="display:none;">
                     <span id="cotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas cotações para selecionar</span>
                 </div>
-                <input type="file" id="cotacao-xml-file-input" accept=".xml" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
+                <input type="file" id="cotacao-xml-file-input" accept=".xml,.txt,text/xml,application/xml,text/plain" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
 
                 <div class="card" id="card-preview-importacao-xml" style="display:none; margin-bottom:16px;">
                     <h3 class="card-titulo card-titulo-sm">Prévia da Importação</h3>
