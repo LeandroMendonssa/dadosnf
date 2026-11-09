@@ -36,8 +36,8 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
     { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.18.0',
-      resumo: 'Ler o XML, conferir os itens, definir o recurso e salvar.',
-      palavras: 'xml entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
+      resumo: 'Ler o XML (também aceita .txt, como o iPhone salva), conferir os itens, definir o recurso e salvar.',
+      palavras: 'xml txt iphone entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
       tela: [{ id: 'screen-xml-editor', titulo: 'Entrada de NF', rotulo: 'Abrir Entrada de NF' }],
       passos: [
         'Abra Entrada de NF e carregue o arquivo XML da nota.',
@@ -574,4 +574,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.25.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.25.4';

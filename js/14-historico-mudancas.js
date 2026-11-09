@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.25.3', nome: 'Divergência de valor com diferença unitária e total', status: 'atual',
+        numero: '2.25.4', nome: 'XML salvo como .txt no iPhone', status: 'atual',
+        novidades: ['O seletor de arquivo da NF-e (Entrada de NF por XML) e o da cotação do SmartCompras agora aceitam arquivos .txt, além de .xml. O iPhone costuma salvar o XML baixado como .txt e o seletor deixava esses arquivos apagados.', 'O app lê pelo conteúdo, não pela extensão: arquivos com BOM ou linhas em branco antes do "<?xml" também funcionam.', 'Ao baixar a NF corrigida, o nome sai "...-corrigido.xml" mesmo que o original fosse .txt.'],
+        implementado: ['index.html: accept=".xml,.txt,text/xml,application/xml,text/plain" nos dois seletores de XML; js/10: remove BOM/espaços iniciais antes de ler e mensagem de erro mais clara; js/14: mesmo tratamento no XML do SmartCompras; js/12: nome do arquivo corrigido.'],
+        arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.25.3: index.html, style.css, js/10, js/12, js/14 e js/31.'],
+        testar: ['iPhone: baixe um XML de NF-e (que o iPhone salve como .txt), vá em Entrada de NF por XML, toque para escolher o arquivo e confirme que o .txt aparece selecionável e a NF é lida.', 'iPhone: faça o mesmo na importação de cotação do SmartCompras (Cotações > Importar XML).', 'iPhone: escolha um arquivo .txt qualquer que não seja XML e confirme a mensagem "não é um XML válido".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.3', nome: 'Divergência de valor com diferença unitária e total', status: 'concluida',
         novidades: ['Auditoria, tipo "Valor diferente do pedido": os campos agora são "Valor unitário cotado" e "Valor unitário faturado", e logo abaixo o app calcula na hora a diferença por unidade e a diferença no total (a mais ou a menos), com a quantidade informada.', 'O texto gerado (Mensagem e E-mail) passa a trazer: "cotado a X, faturado a Y (diferença de R$ A a mais por unidade e de R$ B a mais no total)". Se a quantidade não estiver preenchida, sai só a diferença unitária.', 'Ocorrências já registradas desse tipo também mostram a diferença, porque o texto é refeito a partir dos campos.'],
         implementado: ['js/16: numeroDeTextoBR, moedaAud, diferencaValoresAud e campos calculados no modelo ({diferencaUnitaria}, {diferencaTotal}, {sentidoDiferenca}, {totalCotado}, {totalFaturado}); modelo antigo sem edição migra sozinho para o novo; lista de campos do modelo atualizada.', 'js/01: novo modelo padrão de valor_diferente. js/12: rótulos. js/13: prévia da diferença no formulário, atualizada ao sair do campo. js/31: Ajuda.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/12-recurso-lote-rastro.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/16-spdata-textos.js', 'js/31-ajuda.js'],
@@ -3076,7 +3085,7 @@ function handleArquivoXmlSmartCompras(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const parsed = parseXmlSmartCompras(e.target.result);
+            const parsed = parseXmlSmartCompras(String(e.target.result || '').replace(/^\uFEFF/, '').replace(/^[\s\u0000]+/, ''));   // 2.25.4: aceita .txt/BOM
             const existente = listaCotacoes.find(c => c.pedido === parsed.pedido) || null;
             const diff = existente ? calcularDiffCotacao(existente, parsed) : [];
             importacaoXmlPendente = { parsed, existente, diff };
@@ -3121,4 +3130,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.4';

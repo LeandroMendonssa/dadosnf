@@ -80,11 +80,13 @@ function handleArquivoXml(file) {
 }
 
 function processarXmlTexto(texto) {
+    // 2.25.4: o iPhone costuma salvar o XML baixado como ".txt" (e às vezes com BOM/linhas em branco antes do "<"): o conteúdo é que vale, não a extensão.
+    texto = String(texto == null ? '' : texto).replace(/^\uFEFF/, '').replace(/^[\s\u0000]+/, '');
     const parser = new DOMParser();
     xmlDocAtual = parser.parseFromString(texto, 'application/xml');
     xmlTextoAtual = texto;
     if (xmlDocAtual.querySelector('parsererror')) {
-        toast('✕ Esse arquivo não é um XML válido.');
+        toast('✕ Esse arquivo não é um XML válido (a extensão .txt não é problema; o conteúdo precisa começar com <?xml ou <nfeProc).');
         xmlDocAtual = null;
         return;
     }
@@ -1593,4 +1595,4 @@ function aplicarPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     renderAssociacaoCotacaoXml();
     toast(`Produto de referência: SP Data ${possibilidade.spDataCodigo}. O código do item (${item.cProd}) não foi alterado.`);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.24.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.25.4';
