@@ -414,8 +414,8 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
     'valor_diferente': { label: 'Valor diferente do pedido', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' },
-        { key: 'valorCotado', label: 'Valor Cotado' },
-        { key: 'valorFaturado', label: 'Valor Faturado' }
+        { key: 'valorCotado', label: 'Valor unitário cotado' },
+        { key: 'valorFaturado', label: 'Valor unitário faturado' }
     ]},
     'desacordo_especificacao': { label: 'Produto em desacordo com a especificação', multiMaterial: true, campos: [
         { key: 'produto', label: 'Produto', maiusculo: true },
@@ -592,4 +592,4 @@ function garantirDatalistSpDataAuditoria() {
 // Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
-
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.25.3';

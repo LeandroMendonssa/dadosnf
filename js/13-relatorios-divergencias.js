@@ -37,6 +37,10 @@ function atualizarObservacaoOcorrencia(id, valor) {
 }
 
 // --- Materiais dentro de uma mesma ocorrência de divergência ---
+function htmlDifValorAud(campos) {
+    const df = diferencaValoresAud(campos); if (!df) return '';
+    return `🧮 Diferença: <b>${df.unitaria}</b> ${df.sentido} por unidade` + (df.total ? ` · <b>${df.total}</b> ${df.sentido} no total (cotado ${df.totalCotado} × faturado ${df.totalFaturado})` : ' · informe a quantidade para ver o total');
+}
 function adicionarMaterialDivergencia(divergenciaId) {
     const d = divergenciasAuditoria.find(d => d.id === divergenciaId);
     if (!d) return;
@@ -55,6 +59,10 @@ function atualizarCampoMaterial(divergenciaId, materialId, key, valor, maiusculo
     const m = d.materiais.find(m => m.id === materialId);
     if (!m) return;
     m.campos[key] = maiusculo ? upAud(valor) : valor;
+    if (['quantidade', 'valorCotado', 'valorFaturado'].includes(key)) {   // 2.25.3: atualiza a diferença na hora, sem redesenhar o formulário
+        const box = document.getElementById(`aud-dif-${divergenciaId}-${materialId}`), h = htmlDifValorAud(m.campos);
+        if (box) { box.innerHTML = h; box.style.display = h ? '' : 'none'; }
+    }
 
     // Item 12: se o produto digitado bate com um item da cotação encontrada
     // pro pedido, preenche a quantidade automaticamente — só se o campo
@@ -140,7 +148,7 @@ function renderDivergenciasAuditoria() {
                 const camposMaterial = def.campos.map(c => {
                     const valor = m.campos[c.key] || '';
                     const onBlurAttr = `onblur="atualizarCampoMaterial(${d.id}, ${m.id}, '${c.key}', this.value, ${!!c.maiusculo})"`;
-                    return renderCampo(c, valor, onBlurAttr, m);
+                    return renderCampo(c, valor, onBlurAttr, m) + (d.tipo === 'valor_diferente' && c.key === 'valorFaturado' ? `<div class="aud-vinculo ok" id="aud-dif-${d.id}-${m.id}"${htmlDifValorAud(m.campos) ? '' : ' style="display:none"'}>${htmlDifValorAud(m.campos)}</div>` : '');
                 }).join('');
                 return `<div class="material-divergencia">
                     <div class="material-divergencia-header">
@@ -581,4 +589,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.23.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.25.3';

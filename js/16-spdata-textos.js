@@ -354,7 +354,7 @@ function montarCamposModelosAuditoria() {
     const corpo = document.getElementById('config-textos-body'); if (corpo) corpo.onfocusout = () => salvarCamposConfigTextos(); // salva ao sair de cada campo
     el.innerHTML = Object.entries(TIPOS_DIVERGENCIA_AUDITORIA).map(([tipo, def]) => {
         const campos = def.campos.map(c => '{' + c.key + '}').join(' ');
-        const extra = tipo === 'avariado' ? ' {data} {fornecedor} {pedido} {nf}' : '';
+        const extra = tipo === 'avariado' ? ' {data} {fornecedor} {pedido} {nf}' : (tipo === 'valor_diferente' ? ' {diferencaUnitaria} {diferencaTotal} {sentidoDiferenca} {totalCotado} {totalFaturado} (calculados) · [[ trecho ]] só aparece se todos os campos dentro dele existirem' : '');
         return `<div class="campo"><label>${def.label}</label><textarea id="cfg-modelo_${tipo}" class="form-field" rows="3"></textarea>
             <div style="color:var(--text-light);font-size:11px;margin-top:2px;">Campos: ${campos}${extra} · <a onclick="restaurarModeloAuditoria('${tipo}')" style="cursor:pointer;text-decoration:underline;">restaurar este modelo</a></div></div>`;
     }).join('');
@@ -406,8 +406,27 @@ function restaurarTextosPadrao() {
 // {campo} = valor do campo (vazio vira "?"); [[ trecho ]] = só aparece se TODOS os {campos} dentro dele estiverem preenchidos (pode aninhar);
 // \n = linha em branco. Nomes de produto/fornecedor saem em MAIÚSCULAS, como antes.
 const CAMPOS_MAIUSCULOS_MODELO = ['produto', 'produtoPedido', 'produtoFaturado', 'fornecedorNome', 'condicaoCotada', 'condicaoCobrada'];
+// 2.25.3: "Valor diferente do pedido" calcula sozinho a diferença unitária e a total (faturado − cotado) a partir de quantidade e valores unitários.
+function numeroDeTextoBR(s) {
+    let t = String(s == null ? '' : s).replace(/[^\d,.\-]/g, ''); if (!/\d/.test(t)) return null;
+    t = t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t;   // "1.234,56" → 1234.56 · "0.70" (já com ponto decimal) fica como está
+    const n = parseFloat(t); return isNaN(n) ? null : n;
+}
+function moedaAud(n) { return 'R$ ' + (+Math.abs(n).toFixed(4)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); }
+function diferencaValoresAud(c) {
+    c = c || {};
+    const q = numeroDeTextoBR(c.quantidade), vc = numeroDeTextoBR(c.valorCotado), vf = numeroDeTextoBR(c.valorFaturado);
+    if (vc == null || vf == null || Math.abs(vf - vc) < 0.00005) return null;
+    const dU = vf - vc, sentido = dU > 0 ? 'a mais' : 'a menos', r = { unitaria: moedaAud(dU), sentido, dU };
+    if (q != null && q > 0) { r.total = moedaAud(Math.round((vf * q - vc * q) * 100) / 100); r.totalCotado = moedaAud(vc * q); r.totalFaturado = moedaAud(vf * q); }
+    return r;
+}
 function aplicarModeloAuditoria(tpl, campos, ctx) {
     const vals = Object.assign({}, campos || {}, ctx || {});
+    if (vals.valorCotado != null && vals.valorFaturado != null && vals.diferencaUnitaria == null) {
+        const df = diferencaValoresAud(vals);
+        if (df) { vals.diferencaUnitaria = df.unitaria; vals.sentidoDiferenca = df.sentido; if (df.total) { vals.diferencaTotal = df.total; vals.totalCotado = df.totalCotado; vals.totalFaturado = df.totalFaturado; } }
+    }
     const valor = k => {
         let v = vals[k]; v = (v == null ? '' : String(v)).trim();
         return v && CAMPOS_MAIUSCULOS_MODELO.includes(k) ? upAud(v) : v;
@@ -423,8 +442,10 @@ function aplicarModeloAuditoria(tpl, campos, ctx) {
     }
     return t.replace(/\{(\w+)\}/g, (_, k) => valor(k) || '?').replace(/[ \t]+\n/g, '\n').trim();
 }
+const MODELO_VALOR_ANTIGO = '{produto}, quantidade {quantidade}: cotado a {valorCotado}, faturado a {valorFaturado}.';
 function modeloDoTipo(tipo) {
     const t = (appConfig.auditoriaTextos || {})['modelo_' + tipo];
+    if (tipo === 'valor_diferente' && t && String(t).trim() === MODELO_VALOR_ANTIGO) return AUDITORIA_TEXTOS_DEFAULT.modelo_valor_diferente;   // quem nunca mexeu no modelo recebe o novo (com as diferenças)
     return (t && String(t).trim()) ? t : (AUDITORIA_TEXTOS_DEFAULT['modelo_' + tipo] || '');
 }
 function linhaMaterial(tipo, m) {
@@ -716,4 +737,4 @@ async function salvarAuditoriaComoAnotacao() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/16-spdata-textos.js'] = '2.22.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/16-spdata-textos.js'] = '2.25.3';

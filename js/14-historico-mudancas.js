@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.25.2', nome: 'Alterar status da auditoria dentro do item', status: 'atual',
+        numero: '2.25.3', nome: 'Divergência de valor com diferença unitária e total', status: 'atual',
+        novidades: ['Auditoria, tipo "Valor diferente do pedido": os campos agora são "Valor unitário cotado" e "Valor unitário faturado", e logo abaixo o app calcula na hora a diferença por unidade e a diferença no total (a mais ou a menos), com a quantidade informada.', 'O texto gerado (Mensagem e E-mail) passa a trazer: "cotado a X, faturado a Y (diferença de R$ A a mais por unidade e de R$ B a mais no total)". Se a quantidade não estiver preenchida, sai só a diferença unitária.', 'Ocorrências já registradas desse tipo também mostram a diferença, porque o texto é refeito a partir dos campos.'],
+        implementado: ['js/16: numeroDeTextoBR, moedaAud, diferencaValoresAud e campos calculados no modelo ({diferencaUnitaria}, {diferencaTotal}, {sentidoDiferenca}, {totalCotado}, {totalFaturado}); modelo antigo sem edição migra sozinho para o novo; lista de campos do modelo atualizada.', 'js/01: novo modelo padrão de valor_diferente. js/12: rótulos. js/13: prévia da diferença no formulário, atualizada ao sair do campo. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/12-recurso-lote-rastro.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/16-spdata-textos.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.25.2: index.html, style.css, js/01, js/12, js/13, js/14, js/16 e js/31.', 'Se você já editou o modelo de "Valor diferente do pedido" em Configurar Textos Padrão, o seu texto é mantido; para incluir a diferença, use "restaurar este modelo" ou acrescente [[ (diferença de {diferencaUnitaria} {sentidoDiferenca} por unidade e de {diferencaTotal} no total) ]].'],
+        testar: ['iPhone: Auditoria > nova divergência > "Valor diferente do pedido": informe produto, quantidade 10, valor unitário cotado 4,00 e faturado 4,80 e toque fora do campo: deve aparecer "Diferença: R$ 0,80 a mais por unidade · R$ 8,00 a mais no total".', 'iPhone: gere a auditoria e confira a frase na Mensagem e no E-mail.', 'iPhone: troque para faturado menor que o cotado e confira "a menos"; deixe a quantidade vazia e confira que só a diferença unitária aparece.', 'iPhone: abra uma divergência de valor vinda da Central do pedido e confira que a diferença aparece.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.2', nome: 'Alterar status da auditoria dentro do item', status: 'concluida',
         novidades: ['Central do pedido: quando o item tem "Pendência relatada na auditoria", o bloco da auditoria (com o botão "Alterar status") agora aparece dentro do próprio item, logo abaixo da comparação, em vez de ficar lá no fim do fornecedor ou da tela.'],
         implementado: ['js/09: a divergência da auditoria vai para o item que a comparação Cotação × NF × ERP já ligou a ela (antes só o nome do produto decidia e, quando não batia, ela caía em "Outras divergências"). Auditoria sem CNPJ ligada a um item também aparece no item e sai de "Outras ocorrências".'],
         arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js'],
@@ -3112,4 +3121,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.3';

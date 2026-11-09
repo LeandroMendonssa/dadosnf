@@ -466,7 +466,7 @@ const TUTORIAIS = {
           mock: (e, A) => `<div class="card${A('tipo')}"><div class="aj-chips">${Object.entries(TIPOS_DEMO).map(([k, l]) => `<button type="button" class="central-status-toggle${e.tipo === k ? ' aj-sel' : ''}" onclick="tutorialSet('tipo','${k}')">${l}</button>`).join('')}</div></div>` },
         { t: 'Preencha o material', d: 'Os campos mudam conforme o tipo escolhido. Vários materiais cabem na mesma ocorrência, sem criar outra auditoria.', alvo: 'campos',
           mock: (e, A) => { const t = e.tipo || 'nao_entregue';
-              const campos = t === 'valor_diferente' ? [['Produto', 'DIPIRONA 500 MG/ML'], ['Quantidade', '10'], ['Valor Cotado', 'R$ 4,00'], ['Valor Faturado', 'R$ 4,80']]
+              const campos = t === 'valor_diferente' ? [['Produto', 'DIPIRONA 500 MG/ML'], ['Quantidade', '10'], ['Valor unitário cotado', 'R$ 4,00'], ['Valor unitário faturado', 'R$ 4,80'], ['Diferença (calculada)', 'R$ 0,80 a mais por unidade · R$ 8,00 a mais no total']]
                   : t === 'avariado' ? [['Produto', 'SORO FISIOLÓGICO 0,9%'], ['Quantidade', '3'], ['Tipo de Avaria', 'quebradas'], ['Lote', 'L2231'], ['Validade', '30/06/2028']]
                   : [['Produto', 'LUVA NITRÍLICA M'], ['Quantidade', '5']];
               return `<div class="card${A('campos')}"><strong>${TIPOS_DEMO[t]}</strong>${campos.map(c => `<div class="aj-campo"><small>${c[0]}</small><div class="aj-input">${c[1]}</div></div>`).join('')}</div>`; } },
@@ -574,4 +574,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.25.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.25.3';

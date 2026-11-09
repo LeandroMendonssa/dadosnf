@@ -127,7 +127,7 @@ const AUDITORIA_TEXTOS_DEFAULT = {
     modelo_quantidade_diferente: '{produto}: cotado {quantidadeCotada}[[ {unidade}]], porém faturado {quantidadeFaturada}[[ {unidade}]].',
     modelo_avariado: 'Gostaria de informar que, no dia {data}, após recebermos os materiais do fornecedor {fornecedor} foram identificadas {quantidade} {unidade} danificadas ({tipoDano}) do medicamento {produto}, referente ao Pedido nº {pedido}, N.F. {nf}.[[\n\nAs {unidade} pertencem ao lote {lote}, com validade para {validade}.]]\n\nSegue em anexo o registro fotográfico das unidades avariadas.',
     modelo_solicitar_carta_correcao: '{produto}: solicitamos carta de correção, lote informado {loteInformado} e recebido {loteRecebido}, validade informada {validadeInformada} e recebida {validadeRecebida}.',
-    modelo_valor_diferente: '{produto}, quantidade {quantidade}: cotado a {valorCotado}, faturado a {valorFaturado}.',
+    modelo_valor_diferente: '{produto}, quantidade {quantidade}: cotado a {valorCotado}, faturado a {valorFaturado}[[ (diferença de {diferencaUnitaria} {sentidoDiferenca} por unidade[[ e de {diferencaTotal} {sentidoDiferenca} no total]])]].',
     modelo_desacordo_especificacao: '{produto}: pedimos especificação {especificacaoEsperada}, porém recebemos {especificacaoRecebida}.',
     modelo_fornecedor_nao_entregou: '[[{fornecedorNome}: ]]ainda não entregou o pedido[[, já são {diasEmAberto} dias em aberto]].[[ {observacao}]]',
     modelo_frete_indevido: 'A cotação foi aprovada com frete {condicaoCotada}, porém o fornecedor cobrou frete[[ no valor de {valorFrete}]][[ ({condicaoCobrada})]], em desacordo com a condição aprovada.[[ {observacao}]]',
@@ -211,4 +211,4 @@ const closeBtnBackScreen = { 'screen-lote': 'screen-inicio', 'screen-personaliza
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.25.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.25.3';
