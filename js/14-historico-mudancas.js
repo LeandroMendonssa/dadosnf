@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.25.4', nome: 'XML salvo como .txt no iPhone', status: 'atual',
+        numero: '2.26.0', nome: 'PDF da NF (DANFE) direto do XML', status: 'atual',
+        novidades: ['Entrada de NF: novo botão "Baixar PDF (DANFE)" ao lado de "Baixar XML Corrigido". Ele monta o DANFE em A4 no padrão da Sefaz (canhoto, emitente, chave com código de barras, destinatário, entrega, fatura, impostos, transportador, itens e dados adicionais), em várias páginas quando a nota tem muitos itens.', 'O PDF sai exatamente como o XML original: quantidades, unidades e valores como o fornecedor emitiu, sem o fator de conversão. A conversão do app continua normal e só vale para o XML corrigido e para a conferência.', 'Nomes longos de empresa e campos de texto agora reduzem a fonte ou quebram em duas linhas dentro da caixa, e o campo "Inscrição estadual do subst. tribut." fica em branco quando a NF não traz o dado (sem zeros).'],
+        implementado: ['js/49-danfe.js (novo): leitor do XML da NF-e, escritor de PDF próprio (fonte Times padrão), código de barras Code 128 da chave, paginação dos itens, ajuste de texto nas caixas; usa xmlTextoAtual (texto original). index.html: botão e script. Não grava nada no Firebase.', 'Não inclui logo do emitente, marca d\'água, NF de serviço (ISSQN), contingência nem marca de cancelada.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.25.4: index.html, style.css, js/14, js/31 e js/49 (novo).'],
+        testar: ['iPhone: carregue um XML em Entrada de NF, toque em "Baixar PDF (DANFE)" e salve/abra o PDF pela folha de compartilhamento (Salvar em Arquivos).', 'Compare com o PDF original do fornecedor: nome, chave, itens, quantidades e totais iguais; sem texto passando da caixa e sem zeros no campo de IE do substituto.', 'Carregue uma NF com fator de conversão diferente de 1 e confirme que o PDF mostra a quantidade e a unidade originais do XML, enquanto a tela segue convertida.', 'Teste uma NF com muitos itens (mais de 12): o PDF deve ter mais de uma página, com o cabeçalho repetido.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.4', nome: 'XML salvo como .txt no iPhone', status: 'concluida',
         novidades: ['O seletor de arquivo da NF-e (Entrada de NF por XML) e o da cotação do SmartCompras agora aceitam arquivos .txt, além de .xml. O iPhone costuma salvar o XML baixado como .txt e o seletor deixava esses arquivos apagados.', 'O app lê pelo conteúdo, não pela extensão: arquivos com BOM ou linhas em branco antes do "<?xml" também funcionam.', 'Ao baixar a NF corrigida, o nome sai "...-corrigido.xml" mesmo que o original fosse .txt.'],
         implementado: ['index.html: accept=".xml,.txt,text/xml,application/xml,text/plain" nos dois seletores de XML; js/10: remove BOM/espaços iniciais antes de ler e mensagem de erro mais clara; js/14: mesmo tratamento no XML do SmartCompras; js/12: nome do arquivo corrigido.'],
         arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js'],
@@ -3130,4 +3139,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.25.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.26.0';
