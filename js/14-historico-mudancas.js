@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.26.0', nome: 'PDF da NF (DANFE) direto do XML', status: 'atual',
+        numero: '2.26.1', nome: 'Lote e validade no PDF da NF (DANFE)', status: 'atual',
+        novidades: ['O PDF (DANFE) agora mostra lote, quantidade do lote, fabricação e validade de cada item quando o XML traz o grupo <rastro> (o caso de NFs de medicamentos): uma linha "Lote: X Qtde: N Fab: dd/mm/aaaa Val: dd/mm/aaaa" abaixo da descrição, como no DANFE oficial. Antes só saía o que estava escrito no texto adicional do produto.', 'Os valores saem como vieram no XML, sem conversão.'],
+        implementado: ['js/49: lerNFe lê os <rastro> de cada item e desenharDanfe acrescenta as linhas à descrição (espaço fixo entre rótulo e valor para não quebrar no meio).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.26.0: index.html, style.css, js/14 e js/49.'],
+        testar: ['iPhone: carregue o XML da Disk Med Pádua (NF 818.036), toque em "Baixar PDF (DANFE)" e confira que cada item tem a linha de lote, quantidade, fabricação e validade iguais às do XML.', 'Uma NF sem <rastro> (lote só no texto) deve continuar saindo como antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.26.0', nome: 'PDF da NF (DANFE) direto do XML', status: 'concluida',
         novidades: ['Entrada de NF: novo botão "Baixar PDF (DANFE)" ao lado de "Baixar XML Corrigido". Ele monta o DANFE em A4 no padrão da Sefaz (canhoto, emitente, chave com código de barras, destinatário, entrega, fatura, impostos, transportador, itens e dados adicionais), em várias páginas quando a nota tem muitos itens.', 'O PDF sai exatamente como o XML original: quantidades, unidades e valores como o fornecedor emitiu, sem o fator de conversão. A conversão do app continua normal e só vale para o XML corrigido e para a conferência.', 'Nomes longos de empresa e campos de texto agora reduzem a fonte ou quebram em duas linhas dentro da caixa, e o campo "Inscrição estadual do subst. tribut." fica em branco quando a NF não traz o dado (sem zeros).'],
         implementado: ['js/49-danfe.js (novo): leitor do XML da NF-e, escritor de PDF próprio (fonte Times padrão), código de barras Code 128 da chave, paginação dos itens, ajuste de texto nas caixas; usa xmlTextoAtual (texto original). index.html: botão e script. Não grava nada no Firebase.', 'Não inclui logo do emitente, marca d\'água, NF de serviço (ISSQN), contingência nem marca de cancelada.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/49-danfe.js'],
@@ -3139,4 +3148,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.26.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.26.1';

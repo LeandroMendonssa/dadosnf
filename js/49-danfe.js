@@ -97,7 +97,8 @@ function lerNFe(texto) {
     const ic = icms && icms.firstElementChild;
     return { cod: q(p, 'cProd'), nome: q(p, 'xProd'), ncm: q(p, 'NCM'), cfop: q(p, 'CFOP'), un: q(p, 'uCom'), qtd: q(p, 'qCom'), vun: q(p, 'vUnCom'), vtot: q(p, 'vProd'), vdesc: q(p, 'vDesc'),
       cst: ic ? (q(ic, 'orig') + '/' + (q(ic, 'CST') || q(ic, 'CSOSN'))) : '', bc: ic ? q(ic, 'vBC') : '', vicms: ic ? q(ic, 'vICMS') : '', picms: ic ? q(ic, 'pICMS') : '',
-      vipi: ipi ? q(ipi, 'vIPI') : '', pipi: ipi ? q(ipi, 'pIPI') : '', adic: q(det, 'infAdProd') };
+      vipi: ipi ? q(ipi, 'vIPI') : '', pipi: ipi ? q(ipi, 'pIPI') : '', adic: q(det, 'infAdProd'),
+      rastros: [...p.querySelectorAll('rastro')].map(r => ({ lote: q(r, 'nLote'), qtd: q(r, 'qLote'), fab: q(r, 'dFab'), val: q(r, 'dVal') })) };
   });
   return {
     chave, nNF: ide ? q(ide, 'nNF') : '', serie: ide ? q(ide, 'serie') : '', tpNF: ide ? q(ide, 'tpNF') : '1', natOp: ide ? q(ide, 'natOp') : '', dhEmi: dts, dhSai: sai,
@@ -210,7 +211,9 @@ function desenharDanfe(d, S, opt) {
   const COLS = [2, 21, 73, 85, 95, 103, 109, 125, 137, 149, 159, 171, 183, 193, 201, 208];
   const itens = d.itens.map(it => {
     const adic = opt.nLiteral ? it.adic.replace(/\\n/g, '\n') : it.adic;
-    const linhas = wrap(it.nome, 51, 'R', 7).concat(adic ? wrap(adic, 51, 'R', 7) : []);
+    // lote/validade estruturados (<rastro>), como o DANFE oficial: "Lote: X Qtde: N Fab: dd/mm/aaaa Val: dd/mm/aaaa" (valores como vieram no XML)
+    const rast = (it.rastros || []).filter(r => r.lote).map(r => 'Lote:\u00A0' + r.lote + (r.qtd ? ' Qtde:\u00A0' + num(r.qtd, 3) : '') + (r.fab ? ' Fab:\u00A0' + mdate(r.fab) : '') + (r.val ? ' Val:\u00A0' + mdate(r.val) : ''));   // espaço fixo: o rótulo não se separa do valor na quebra de linha
+    const linhas = wrap(it.nome, 51, 'R', 7).concat(adic ? wrap(adic, 51, 'R', 7) : [], ...rast.map(s => wrap(s, 51, 'R', 7)));
     return { it, linhas, h: rowH(Math.max(1, linhas.length)) };
   });
   const FIRST_TOP = 183, BOT_FULL = 272, BOT_CONT = 289.5, ADIC_Y = 278;
@@ -361,4 +364,4 @@ async function baixarDanfePdf() {
 window.baixarDanfePdf = baixarDanfePdf;
 window.gerarDanfePdf = gerarDanfePdf;
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.26.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.26.1';
