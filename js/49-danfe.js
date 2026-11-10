@@ -355,8 +355,9 @@ function gerarDanfePdf(texto) {
   const pdf = new PdfOut(); desenharDanfe(d, pdf, { nLiteral: false });
   return { bytes: pdf.finish(), nome: nomeArquivoDanfe(d), dados: d };
 }
-async function baixarDanfePdf() {
-  const texto = (typeof xmlTextoAtual !== 'undefined' && xmlTextoAtual) ? String(xmlTextoAtual) : '';
+async function baixarDanfePdf(textoXml) {
+  // sem argumento: XML carregado na Entrada de NF; com argumento: texto do XML original guardado (Editor de NF)
+  const texto = textoXml ? String(textoXml) : ((typeof xmlTextoAtual !== 'undefined' && xmlTextoAtual) ? String(xmlTextoAtual) : '');
   if (!texto) { toast('Carregue o XML da NF primeiro.'); return; }
   let r;
   try { r = gerarDanfePdf(texto); } catch (err) { console.error(err); toast('✕ ' + ((err && err.message) || 'Não consegui montar o PDF desta NF.')); return; }
@@ -372,7 +373,15 @@ async function baixarDanfePdf() {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   toast('✓ PDF (DANFE) baixado!');
 }
+// Editor de NF: usa o XML original guardado junto da NF (xmlDados.xmlOriginal), sem passar pela conversão
+function baixarDanfePdfDaNf(nfId) {
+  const nf = (typeof listaNfsProcessadas !== 'undefined' ? listaNfsProcessadas : []).find(n => n.id === nfId);
+  const xml = nf && nf.xmlDados && nf.xmlDados.xmlOriginal;
+  if (!xml) { toast('O XML original desta NF não está guardado (NF antiga ou arquivo muito grande).'); return; }
+  return baixarDanfePdf(xml);
+}
+window.baixarDanfePdfDaNf = baixarDanfePdfDaNf;
 window.baixarDanfePdf = baixarDanfePdf;
 window.gerarDanfePdf = gerarDanfePdf;
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.27.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.27.1';

@@ -51,7 +51,7 @@ const AJUDA_ARTIGOS = [
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
         'Salve a NF. Ao salvar, o recurso dos itens é gravado na cotação.',
-        '"Baixar PDF (DANFE)" gera o PDF da nota no padrão da Sefaz, exatamente como o XML original (sem o fator de conversão). No iPhone, salve pela folha de compartilhamento em "Salvar em Arquivos".'
+        '"Baixar PDF (DANFE)" gera o PDF da nota no padrão da Sefaz, exatamente como o XML original (sem o fator de conversão). No iPhone, salve pela folha de compartilhamento em "Salvar em Arquivos". No computador baixa direto. Também dá para gerar o PDF no Editor de NF, aba XML (usa o XML original guardado da NF).'
       ],
       dicas: ['Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.'], tutorial: 'xml-ao-texto' },
     { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.19.2',
@@ -575,4 +575,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.26.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.27.1';

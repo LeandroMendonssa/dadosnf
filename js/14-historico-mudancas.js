@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.27.0', nome: 'PDF do DANFE com fonte embutida e download no computador', status: 'atual',
+        numero: '2.27.1', nome: 'PDF da NF (DANFE) também no Editor de NF', status: 'atual',
+        novidades: ['Editor de NF, aba XML: novo cartão "PDF da NF (DANFE)" com o botão "Baixar PDF (DANFE)". Ele gera o PDF a partir do XML original que ficou guardado junto da NF, como o fornecedor emitiu, sem conversão de unidade. Vale para qualquer NF já processada, sem precisar subir o XML de novo.', 'Se a NF não tem o XML original guardado (NF antiga ou arquivo acima de 500 KB), o cartão avisa e o botão não aparece.'],
+        implementado: ['js/20: cartão na aba XML do editor. js/49: baixarDanfePdfDaNf(nfId) lê xmlDados.xmlOriginal e reutiliza o mesmo gerador da Entrada de NF. Nada é gravado no Firebase.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.27.0: index.html, style.css, js/14, js/20, js/31 e js/49.'],
+        testar: ['Abra uma NF já processada (Controle de NFs ou pela central do pedido), vá na aba XML do editor e toque em "Baixar PDF (DANFE)".', 'Confira que o PDF bate com o da Entrada de NF e que o cartão fica bem encaixado, sem sobrepor o botão ao texto, no iPhone.', 'Abra uma NF antiga (sem XML guardado), se tiver: deve aparecer só o aviso, sem botão.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.27.0', nome: 'PDF do DANFE com fonte embutida e download no computador', status: 'concluida',
         novidades: ['A fonte do PDF (Liberation Serif, equivalente ao Times) agora vai embutida no arquivo. Antes o PDF dependia da fonte de cada leitor, o que dava aparência diferente e levemente desfocada em alguns aparelhos; agora o texto sai nítido e igual em qualquer lugar.', 'No computador, "Baixar PDF (DANFE)" baixa o arquivo direto pelo navegador, sem abrir a janela de compartilhar do Windows. No iPhone/iPad/Android continua a folha de compartilhamento (Salvar em Arquivos), que é o caminho que funciona bem.'],
         implementado: ['js/50-danfe-fontes.js (novo): subconjunto da fonte em Regular, Negrito e Itálico (licença SIL OFL). js/49: PdfOut embute a fonte como TrueType WinAnsi (volta para Times padrão se o arquivo de fontes faltar) e só usa o compartilhamento em aparelho móvel. O PDF fica em torno de 120 KB.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/49-danfe.js', 'js/50-danfe-fontes.js'],
@@ -3157,4 +3166,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.27.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.27.1';

@@ -499,6 +499,11 @@ function renderEditorNf() {
 
     // ---- XML ----
     const paneXml = !xd ? semXml : `
+        <div class="card"><div class="xml-produto-nome">PDF da NF (DANFE)</div>
+            ${xd.xmlOriginal ? `<div class="xml-item-meta" style="margin-bottom:10px;">Gera o PDF no padrão da Sefaz a partir do XML original, como o fornecedor emitiu (sem conversão de unidade).</div>
+            <div class="actions-row"><button type="button" class="actions-button is-neutral" onclick="baixarDanfePdfDaNf('${escRel(nf.id)}')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> Baixar PDF (DANFE)</button></div>`
+            : `<div class="xml-item-meta">O XML original desta NF não ficou guardado (NF antiga ou arquivo muito grande), então não dá para gerar o PDF por aqui. Abra o XML na Entrada de NF.</div>`}
+        </div>
         <div class="card"><div class="xml-produto-nome">Identificação</div>
             ${linhaXml('Chave de acesso', xd.chave)}${linhaXml('Natureza da operação', xd.natOp)}${linhaXml('Modelo', xd.mod)}
             ${linhaXml('Tipo', xd.tpNF === '1' ? 'Saída' : xd.tpNF === '0' ? 'Entrada' : xd.tpNF)}${linhaXml('Finalidade', xd.finNFe)}
@@ -806,4 +811,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.24.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.27.1';
