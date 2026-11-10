@@ -32,7 +32,16 @@ function PdfOut() {
     const objs = []; const add = s => { objs.push(s); return objs.length; };
     add('<< /Type /Catalog /Pages 2 0 R >>');
     add(null);   // 2: Pages, preenchido depois
-    const fonts = ['Times-Roman', 'Times-Bold', 'Times-Italic'].map(n => add('<< /Type /Font /Subtype /Type1 /BaseFont /' + n + ' /Encoding /WinAnsiEncoding >>'));
+    // Fonte embutida (Liberation Serif, js/50): o PDF aparece igual em qualquer leitor. Sem ela, cai nas fontes Times padrão do PDF.
+    const FT = (typeof window !== 'undefined' && window.DANFE_FONTES) || null;
+    const fonts = ['R', 'B', 'I'].map((k, i) => {
+      const f = FT && FT[k];
+      if (!f) return add('<< /Type /Font /Subtype /Type1 /BaseFont /' + ['Times-Roman', 'Times-Bold', 'Times-Italic'][i] + ' /Encoding /WinAnsiEncoding >>');
+      const bin = atob(f.b64), tag = 'DNFE' + 'RBI'[i] + 'X+LiberationSerif' + ['', '-Bold', '-Italic'][i];
+      const ff = add('<< /Length ' + bin.length + ' /Length1 ' + bin.length + ' >>\nstream\n' + bin + '\nendstream');
+      const fd = add('<< /Type /FontDescriptor /FontName /' + tag + ' /Flags ' + (k === 'I' ? 98 : 34) + ' /FontBBox [' + f.bbox.join(' ') + '] /ItalicAngle ' + f.ital + ' /Ascent ' + f.asc + ' /Descent ' + f.desc + ' /CapHeight 662 /StemV ' + (k === 'B' ? 140 : 80) + ' /FontFile2 ' + ff + ' 0 R >>');
+      return add('<< /Type /Font /Subtype /TrueType /BaseFont /' + tag + ' /Encoding /WinAnsiEncoding /FirstChar 32 /LastChar 255 /Widths [' + f.w.join(' ') + '] /FontDescriptor ' + fd + ' 0 R >>');
+    });
     const kids = [];
     pages.forEach(p => {
       const body = '0 g 0 G\n' + p.join('\n');
@@ -41,7 +50,7 @@ function PdfOut() {
       kids.push(pg + ' 0 R');
     });
     objs[1] = '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + kids.length + ' >>';
-    const info = add('<< /Producer (Prototipo DANFE) /Title (DANFE) >>');
+    const info = add('<< /Producer (App Auditoria NF) /Title (DANFE) >>');
     let out = '%PDF-1.4\n'; const offs = [];
     objs.forEach((o, i) => { offs.push(out.length); out += (i + 1) + ' 0 obj\n' + o + '\nendobj\n'; });
     const xr = out.length;
@@ -354,7 +363,9 @@ async function baixarDanfePdf() {
   const blob = new Blob([r.bytes], { type: 'application/pdf' });
   try {
     const arq = typeof File === 'function' ? new File([blob], r.nome, { type: 'application/pdf' }) : null;
-    if (arq && navigator.canShare && navigator.canShare({ files: [arq] })) { await navigator.share({ files: [arq], title: r.nome }); toast('✓ PDF pronto'); return; }
+    // folha de compartilhamento só em celular/tablet (iPhone: é o caminho para "Salvar em Arquivos"); no computador baixa direto
+    const movel = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '') || (/Macintosh/i.test(navigator.userAgent || '') && navigator.maxTouchPoints > 1);
+    if (movel && arq && navigator.canShare && navigator.canShare({ files: [arq] })) { await navigator.share({ files: [arq], title: r.nome }); toast('✓ PDF pronto'); return; }
   } catch (err) { if (err && err.name === 'AbortError') return; /* qualquer outra falha: cai no download comum */ }
   const url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = r.nome; document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -364,4 +375,4 @@ async function baixarDanfePdf() {
 window.baixarDanfePdf = baixarDanfePdf;
 window.gerarDanfePdf = gerarDanfePdf;
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.26.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.27.0';

@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.26.1', nome: 'Lote e validade no PDF da NF (DANFE)', status: 'atual',
+        numero: '2.27.0', nome: 'PDF do DANFE com fonte embutida e download no computador', status: 'atual',
+        novidades: ['A fonte do PDF (Liberation Serif, equivalente ao Times) agora vai embutida no arquivo. Antes o PDF dependia da fonte de cada leitor, o que dava aparência diferente e levemente desfocada em alguns aparelhos; agora o texto sai nítido e igual em qualquer lugar.', 'No computador, "Baixar PDF (DANFE)" baixa o arquivo direto pelo navegador, sem abrir a janela de compartilhar do Windows. No iPhone/iPad/Android continua a folha de compartilhamento (Salvar em Arquivos), que é o caminho que funciona bem.'],
+        implementado: ['js/50-danfe-fontes.js (novo): subconjunto da fonte em Regular, Negrito e Itálico (licença SIL OFL). js/49: PdfOut embute a fonte como TrueType WinAnsi (volta para Times padrão se o arquivo de fontes faltar) e só usa o compartilhamento em aparelho móvel. O PDF fica em torno de 120 KB.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/49-danfe.js', 'js/50-danfe-fontes.js'],
+        mudou: ['Arquivos alterados desde a 2.26.1: index.html, style.css, js/14, js/49 e js/50 (novo).'],
+        testar: ['Computador: toque em "Baixar PDF (DANFE)"; o arquivo deve baixar direto (barra de downloads do navegador), sem a janela Compartilhar.', 'Abra o PDF e compare com o do site: fonte, nitidez e dar zoom (o texto não deve ficar borrado).', 'iPhone: continua abrindo a folha de compartilhamento; salve em Arquivos e abra o PDF.', 'Abra o PDF e use a busca/seleção de texto para conferir que o texto continua selecionável.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.26.1', nome: 'Lote e validade no PDF da NF (DANFE)', status: 'concluida',
         novidades: ['O PDF (DANFE) agora mostra lote, quantidade do lote, fabricação e validade de cada item quando o XML traz o grupo <rastro> (o caso de NFs de medicamentos): uma linha "Lote: X Qtde: N Fab: dd/mm/aaaa Val: dd/mm/aaaa" abaixo da descrição, como no DANFE oficial. Antes só saía o que estava escrito no texto adicional do produto.', 'Os valores saem como vieram no XML, sem conversão.'],
         implementado: ['js/49: lerNFe lê os <rastro> de cada item e desenharDanfe acrescenta as linhas à descrição (espaço fixo entre rótulo e valor para não quebrar no meio).'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/49-danfe.js'],
@@ -3148,4 +3157,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.26.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.27.0';
