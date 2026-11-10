@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.25.4">
+    <meta name="app-versao" content="2.26.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -434,6 +434,7 @@
                 <div class="actions-row" id="xml-acoes-finais" style="display:none;"> <div id="xml-acoes-status" class="xml-acoes-status"></div>
                     <button class="actions-button is-primary" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
                     <button class="actions-button is-neutral" id="xml-btn-baixar" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
+                    <button class="actions-button is-neutral" id="xml-btn-danfe" onclick="baixarDanfePdf()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> Baixar PDF (DANFE)</button>
                 </div>
                 <div class="actions-row" style="margin:16px 0 20px;">
                     <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
@@ -1118,6 +1119,7 @@
   <script src="js/46-uso-aparelhos.js"></script>
   <script src="js/47-resumo-pendencias.js"></script>
   <script src="js/48-inicio-lote.js"></script>
+  <script src="js/49-danfe.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 </body>
