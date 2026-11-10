@@ -439,7 +439,7 @@ function rebuildNotasPendentesList(){
         const aptidao = calcularAptidaoSaidaNota(nota);
         const idNfEd = idEditorNfDaNota(nota); // 2.19.1: link para o Editor da NF (trocar pedido, itens...) direto do Gerenciar
         const recSugerido = (!nota.obs && aptidao.recursos && aptidao.recursos.length === 1) ? aptidao.recursos[0] : '';
-        const aplicarRecursoHTML = recSugerido ? `<button class="action-chip" onclick="event.stopPropagation(); aplicarRecursoSugeridoNota('${nota.id}')">Aplicar recurso: ${recSugerido}</button>` : '';
+        const aplicarRecursoHTML = (recSugerido && (Date.now() - _autoRecFalhouEm < 60000)) ? `<button class="action-chip" onclick="event.stopPropagation(); aplicarRecursoSugeridoNota('${nota.id}')">Aplicar recurso: ${recSugerido}</button>` : '';
         // 2.9.6: no cartão o selo é curto (o texto completo fica no title); antes ocupava até 3 linhas em letras minúsculas.
         const aptidaoCurta = { apta: '✓ Conferida', sem_cotacao: '✓ Compra direta', sem_pedido: 'Sem pedido vinculado', auditoria_pendente: 'Pendência relatada', pendencia_relatada: 'Pendência relatada', divergencia_com_auditoria_resolvida: 'Divergência resolvida', divergencia_sem_auditoria: '⚠ Divergência' }[aptidao.status] || aptidao.label;
         const aptidaoHTML = `<span class="xml-item-badge ${aptidao.badge} ctl-link" title="${aptidao.label.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); irParaAptidaoNota('${nota.id}')">${aptidaoCurta}</span>`;
@@ -635,4 +635,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.25.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.28.0';

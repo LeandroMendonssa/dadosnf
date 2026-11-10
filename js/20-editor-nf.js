@@ -688,17 +688,37 @@ function htmlDadosNfErp(erp, fornNome, pedido) {
     return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
         <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
             <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorErpSo('${id}')">Salvar</button></div>
-            <div class="xml-item-meta">O nome fica lembrado: nas próximas importações do ERP com este nome, o fornecedor já vem certo.</div></div>
+            <div class="xml-item-meta">O nome vale para todas as NFs deste CNPJ; nas próximas importações do ERP com este nome, o fornecedor já vem certo.</div></div>
         ${recursoDaCotacao ? `<div class="nfe-trocar"><span class="nfe-rot">Recurso</span><div class="xml-item-meta">Vem da cotação do pedido: <strong>${escRel(recursoDaCotacao.join(', '))}</strong>.</div><details class="retro-det"><summary>Mudar só nesta NF</summary>${sel}</details></div>` : `<div class="nfe-trocar"><span class="nfe-rot">Recurso</span>${sel}</div>`}
         <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${erp.semPedido && !pedido ? 'checked' : ''} ${pedido ? 'disabled' : ''} onchange="definirSemPedidoErpSo('${id}', this.checked)"> <span>Esta NF não tem pedido (compra direta)</span></label>${pedido ? '<div class="xml-item-meta">Há pedido vinculado; para marcar “sem pedido”, mova a NF para nenhum pedido primeiro.</div>' : ''}</div></div>`;
 }
 async function definirRecursoErpSo(id, valor) {
-    try { await entradasErpCollection.doc(id).update({ recursoManual: valor || '' }); toast(valor ? '✓ Recurso definido.' : '✓ Recurso removido.'); }
+    try {
+        await entradasErpCollection.doc(id).update({ recursoManual: valor || '' }); toast(valor ? '✓ Recurso definido.' : '✓ Recurso removido.');
+        const e = listaEntradasErp.find(x => x.id === id); // 2.28.0: reflete na nota ligada
+        if (valor && e && e.notaVinculadaId) { const n = notasPendentes.find(x => x.id === e.notaVinculadaId); if (n && n.obs !== valor) { n.obs = valor; await notasCollection.doc(n.id).update({ obs: valor }); DOM.saida.value = buildSaidaText(notasPendentes.filter(x => !x.emEspera)); atualizarContadorExportacao(); rebuildNotasPendentesList(); } }
+    }
     catch (e) { console.error(e); toast('✕ Erro ao salvar o recurso.'); }
 }
 async function definirSemPedidoErpSo(id, marcado) {
     try { await entradasErpCollection.doc(id).update({ semPedido: !!marcado }); toast(marcado ? '✓ Marcada como sem pedido.' : '✓ Marca de “sem pedido” removida.'); }
     catch (e) { console.error(e); toast('✕ Erro ao salvar.'); }
+}
+// 2.28.0: o nome escolhido vale para TODAS as NFs do mesmo CNPJ (NFs do XML, NFs só do ERP e notas do Gerenciar), não só a que está aberta.
+async function aplicarNomeFornecedorPorCnpj(cnpj, novo, nfIdAtual, erpIdAtual) {
+    if (!normalizarCnpj(cnpj)) return 0;
+    const alvos = [];
+    listaNfsProcessadas.forEach(n => { if (mesmoCnpj(n.cnpjFornecedor, cnpj) && n.id !== nfIdAtual && n.fornecedorNomeEditado !== novo) alvos.push({ ref: nfsProcessadasCollection.doc(n.id), dados: { fornecedorNomeEditado: novo } }); });
+    listaEntradasErp.forEach(e => { if (mesmoCnpj(e.cnpjFornecedor, cnpj) && e.id !== erpIdAtual && e.fornecedorNomeEditado !== novo) alvos.push({ ref: entradasErpCollection.doc(e.id), dados: { fornecedorNomeEditado: novo } }); });
+    const notas = [];
+    notasPendentes.forEach(n => { try { const ap = calcularAptidaoSaidaNota(n); if (ap && mesmoCnpj(ap.cnpjFornecedor, cnpj) && n.fornecedor !== novo) { notas.push(n); alvos.push({ ref: notasCollection.doc(n.id), dados: { fornecedor: novo } }); } } catch (e) { /* nota sem conferência: fica como está */ } });
+    for (let i = 0; i < alvos.length; i += 400) {
+        const batch = firestore.batch();
+        alvos.slice(i, i + 400).forEach(a => batch.update(a.ref, a.dados));
+        await batch.commit();
+    }
+    if (notas.length) { notas.forEach(n => { n.fornecedor = novo; }); try { DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao(); rebuildNotasPendentesList(); } catch (e) { /* a lista se atualiza no próximo retorno do banco */ } }
+    return alvos.length;
 }
 async function salvarNomeFornecedorErpSo(id) {
     const erp = listaEntradasErp.find(e => e.id === id); const inp = document.getElementById('nfed-nome-forn');
@@ -713,7 +733,8 @@ async function salvarNomeFornecedorErpSo(id) {
             await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
             await adicionarFornecedor(novo, true);
         }
-        toast('✓ Nome do fornecedor salvo.');
+        const outras = await aplicarNomeFornecedorPorCnpj(erp.cnpjFornecedor, novo, null, id);
+        toast(outras ? `✓ Nome salvo e aplicado em mais ${outras} registro(s) deste fornecedor.` : '✓ Nome do fornecedor salvo.');
     } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
 }
 
@@ -727,19 +748,19 @@ function destinoDaNfSalva(nf) {
 }
 function recursosAtuaisDaNf(nf) {
     const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
-    return [...new Set((nf.itens || []).map(it => (it.semCotacao || nf.semCotacaoSmartCompras) ? it.recurso : (cot && it.codigoSmartCompras ? ((cot.recursosPorItem || {})[it.codigoSmartCompras] || recursoEsperadoPelaCotacao(cot, it.codigoSmartCompras) || null) : null)).filter(Boolean))];
+    return unificarRecursosNf((nf.itens || []).map(it => (it.semCotacao || nf.semCotacaoSmartCompras) ? it.recurso : (cot && it.codigoSmartCompras ? ((cot.recursosPorItem || {})[it.codigoSmartCompras] || recursoEsperadoPelaCotacao(cot, it.codigoSmartCompras) || null) : null)));
 }
 function htmlDadosNf(nf, fornecedorNome) {
     const id = escRel(nf.id);
     const atuais = recursosAtuaisDaNf(nf);
     const destino = destinoDaNfSalva(nf);
     const rotCC = destino ? calcularRecursoOficial(destino, 'cc') : 'C/C', rotPR = destino ? calcularRecursoOficial(destino, 'proprio') : 'Recurso Próprio';
-    const resumo = atuais.length === 0 ? 'Nenhum item com recurso definido.' : (atuais.length === 1 ? `Todos os itens com recurso: <strong>${escRel(atuais[0])}</strong>.` : `Itens com recursos diferentes: ${atuais.map(escRel).join(', ')}.`);
+    const resumo = atuais.length === 0 ? 'Nenhum item com recurso definido.' : `Recurso da NF: <strong>${escRel(atuais[0])}</strong>. É definido sozinho: se algum item teve menos de 3 cotações, a NF inteira é Recurso Próprio.`;
     const direta = !!(nf.semCotacaoSmartCompras || (nf.itens || []).some(i => i.semCotacao));
     return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
         <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
             <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornecedorNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorNfSalva('${id}')">Salvar</button></div>
-            <div class="xml-item-meta">O nome fica lembrado nas próximas importações.</div></div>
+            <div class="xml-item-meta">O nome vale para todas as NFs deste CNPJ e fica lembrado nas próximas importações.</div></div>
         <div class="nfe-trocar"><span class="nfe-rot">Recurso da NF inteira</span><div class="xml-item-meta">${resumo}${destino ? '' : (direta ? ' Escolha abaixo o destino (Santa Casa ou CTI).' : ' Defina antes a origem (destino) da cotação do pedido.')}</div>
             <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'cc')">${escRel(rotCC)}</button> <button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'proprio')">${escRel(rotPR)}</button></div></div>
         <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${direta ? 'checked' : ''} onchange="definirCompraDiretaNf('${id}', this.checked)"> <span>Esta NF não tem cotação (compra direta)</span></label>
@@ -758,7 +779,8 @@ async function salvarNomeFornecedorNfSalva(id) {
             await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
             await adicionarFornecedor(novo, true);
         }
-        toast('✓ Nome do fornecedor salvo.');
+        const outras = await aplicarNomeFornecedorPorCnpj(nf.cnpjFornecedor, novo, id, null);
+        toast(outras ? `✓ Nome salvo e aplicado em mais ${outras} registro(s) deste fornecedor.` : '✓ Nome do fornecedor salvo.');
     } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
 }
 async function definirRecursoNfSalva(id, tipo) {
@@ -777,6 +799,7 @@ async function definirRecursoNfSalva(id, tipo) {
         if (Object.keys(novosCot).length) { await gravarRecursoCotacaoXml(cot, novosCot); }
         if (diretos) await nfsProcessadasCollection.doc(id).update({ itens });
         toast(Object.keys(novosCot).length || diretos ? `✓ Recurso da NF definido: ${oficial}.` : 'Nenhum item com base para definir o recurso.');
+        if (Object.keys(novosCot).length || diretos) await sincronizarRecursoDaNfComNotas(id, oficial); // 2.28.0: reflete na nota do Gerenciar/Exportar sem botão
         renderEditorNf();
     } catch (e) { console.error(e); toast('✕ Erro ao salvar o recurso.'); }
 }
@@ -811,4 +834,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.27.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.28.0';

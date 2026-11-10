@@ -218,9 +218,43 @@ async function aplicarRecursosSugeridosTodos() {
         toast(`✓ Recurso aplicado em ${alvos.length} nota(s).`);
     } catch (e) { console.error('Erro ao aplicar recursos:', e); toast('✕ Erro ao aplicar os recursos.'); }
 }
+// 2.28.0: o recurso conhecido pela NF vai para a nota sozinho (sem botão "Aplicar"): a Saída de Texto já sai com ele.
+// Só preenche nota SEM recurso; o que foi escolhido à mão nunca é sobrescrito aqui. Se a gravação falhar, o botão manual volta a aparecer.
+let _autoRecRodando = false, _autoRecFalhouEm = 0;
+async function autoAplicarRecursosSugeridos() {
+    if (_autoRecRodando || (Date.now() - _autoRecFalhouEm < 60000)) return;
+    const alvos = notasPendentes.map(n => ({ n, rec: recursoSugeridoDaNota(n) })).filter(x => x.rec);
+    if (!alvos.length) return;
+    _autoRecRodando = true;
+    try {
+        for (let i = 0; i < alvos.length; i += 400) {
+            const batch = firestore.batch();
+            alvos.slice(i, i + 400).forEach(({ n, rec }) => { n.obs = rec; batch.update(notasCollection.doc(n.id), { obs: rec }); });
+            await batch.commit();
+        }
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        rebuildNotasPendentesList();
+    } catch (e) { console.error('Erro ao aplicar recursos automaticamente:', e); _autoRecFalhouEm = Date.now(); alvos.forEach(({ n }) => { n.obs = ''; }); rebuildNotasPendentesList(); }
+    finally { _autoRecRodando = false; }
+}
+// Quando o recurso é definido no Editor de NF, a nota correspondente (se já estiver na relação) recebe o mesmo recurso na hora, mesmo que já tivesse outro.
+async function sincronizarRecursoDaNfComNotas(nfId, recurso) {
+    if (!recurso) return;
+    const alvos = notasPendentes.filter(n => idEditorNfDaNota(n) === nfId && n.obs !== recurso);
+    if (!alvos.length) return;
+    try {
+        const batch = firestore.batch();
+        alvos.forEach(n => { n.obs = recurso; batch.update(notasCollection.doc(n.id), { obs: recurso }); });
+        await batch.commit();
+        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        rebuildNotasPendentesList();
+    } catch (e) { console.error('Erro ao refletir o recurso na nota:', e); toast('✕ O recurso foi salvo na NF, mas não consegui refletir na nota do Gerenciar.'); }
+}
 function atualizarAvisoRecursosGerenciar() {
     const el = document.getElementById('gerenciar-aplicar-recursos'); if (!el) return;
-    const n = notasPendentes.filter(x => recursoSugeridoDaNota(x)).length;
+    autoAplicarRecursosSugeridos();
+    const falhou = Date.now() - _autoRecFalhouEm < 60000;
+    const n = falhou ? notasPendentes.filter(x => recursoSugeridoDaNota(x)).length : 0;
     el.style.display = n ? 'flex' : 'none';
     const t = document.getElementById('gerenciar-aplicar-recursos-txt'); if (t) t.textContent = `${n} nota(s) sem recurso, mas o recurso já é conhecido pela Entrada de NF`;
 }
@@ -420,4 +454,4 @@ document.addEventListener('keydown', (event) => {
     else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
     else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && screen.id === 'screen-add') salvarBtn.click(); }
 });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.23.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.28.0';

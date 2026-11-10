@@ -38,7 +38,7 @@ function visoesNf() {
         const itens = nf && (nf.itens || []).length
             ? nf.itens.map(i => ({ fonte: 'xml', nome: i.xProd, qtd: i.quantidade, valorUnit: i.valorUnitario, total: null, codigoSmartCompras: i.codigoSmartCompras || null, codigoSpData: i.codigoSpData || null, cProd: i.cProd, semCotacao: !!(i.semCotacao || nf.semCotacaoSmartCompras), recurso: recursoDe(i.codigoSmartCompras, i.semCotacao || nf.semCotacaoSmartCompras, i.recurso) }))
             : ((erp && erp.itens) || []).map(i => { const cod = i.codigoSmartComprasRelacionado || codigoProdutoAtualDoItemErp(i) || null; return { fonte: 'erp', nome: i.nome, qtd: i.quantidade, valorUnit: i.valorUnitario, total: i.valorTotal != null ? i.valorTotal : null, codigoSmartCompras: cod, codigoSpData: i.codigoSpData || null, cProd: null, semCotacao: false, recurso: (erp && erp.recursoManual) || recursoDe(cod, false, '') }; });
-        const recursos = [...new Set(itens.map(i => i.recurso).filter(Boolean))];
+        const recursos = unificarRecursosNf(itens.map(i => i.recurso)); // 2.28.0: um recurso por NF
         const recursoOrigem = !recursos.length ? null : ((erp && erp.recursoManual) || itens.some(i => i.semCotacao && i.recurso) ? 'manual' : 'cotacao');
 
         const fin = (erp && erp.financeiro) || {};
@@ -73,3 +73,5 @@ function visoesNf() {
 function visaoNfPorId(id) { return visoesNf().find(v => v.id === id || (v.nf && v.nf.id === id) || (v.erp && v.erp.id === id)) || null; }
 // Pendências de todas as NFs com um id (ex.: 'sem-pedido'), prontas para listar
 function pendenciasNf(idPendencia) { return visoesNf().filter(v => v.pendencias.some(p => p.id === idPendencia)).map(v => ({ v, p: v.pendencias.find(p => p.id === idPendencia) })); }
+
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.28.0';

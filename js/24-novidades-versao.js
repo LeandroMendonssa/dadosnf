@@ -37,6 +37,7 @@ function mostrarNovidadesVersao(forcar) {
     document.getElementById('novidades-titulo').textContent = `Versão ${fase.numero}`;
     document.getElementById('novidades-corpo').innerHTML =
         `<div class="novidades-nome">${escRel(fase.nome)}</div>` +
+        (fase.data ? `<div class="xml-item-meta" style="margin:-6px 0 10px;">Atualizada em ${escRel(fase.data)}</div>` : '') +
         `<ul class="novidades-lista">${itens.map(i => `<li>${escRel(i)}</li>`).join('')}</ul>` +
         (novidadesLinksAtuais.length
             ? `<div class="novidades-testar"><strong>Para testar</strong><div class="novidades-links">${novidadesLinksAtuais.map((l, k) => `<button type="button" class="central-status-toggle" onclick="irParaNovidade(${k})">${escRel(l.rotulo)}</button>`).join('')}</div></div>`
@@ -71,4 +72,4 @@ function agendarNovidadesVersao() {
     setTimeout(tentar, 2000);
 }
 auth.onAuthStateChanged(user => { if (user) agendarNovidadesVersao(); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.23.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.28.0';

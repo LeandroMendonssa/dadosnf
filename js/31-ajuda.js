@@ -276,9 +276,9 @@ const AJUDA_ARTIGOS = [
         'Abra o editor tocando numa NF no Controle de NFs (ou pelos botões dos cartões).',
         'No topo, os selos mostram a situação: XML processado, vínculo com o ERP e se o XML completo está guardado.',
         'As abas organizam os dados: Itens, Financeiro (pagamento e ERP), Fiscal, Emitente/Dest., Transporte e XML.',
-        'NFs que só existem no relatório do ERP mostram um aviso de "sem XML" e o cartão "Dados desta NF": ali você edita o nome do fornecedor (o app lembra para as próximas importações), escolhe o recurso e marca "não tem pedido" (compra direta).',
+        'NFs que só existem no relatório do ERP mostram um aviso de "sem XML" e o cartão "Dados desta NF": ali você edita o nome do fornecedor (vale para todas as NFs do mesmo CNPJ e o app lembra para as próximas importações), escolhe o recurso e marca "não tem pedido" (compra direta).',
         'Quando a NF do ERP já está ligada a um pedido cujo recurso o app conhece pela cotação, o cartão mostra "Vem da cotação do pedido" em vez de perguntar; "Mudar só nesta NF" continua disponível.',
-        'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (C/C ou próprio, conforme a origem do pedido) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
+        'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (uma NF tem um recurso só: se algum item teve menos de 3 cotações, é Recurso Próprio; senão C/C. O app define sozinho e leva para o Gerenciar e para Exportar; você só troca aqui se precisar) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
         'Ao marcar "Esta NF não tem cotação (compra direta)", aparece "Destino da compra direta": escolha Santa Casa ou CTI. Com o destino, os botões de recurso (C/C ou próprio) funcionam mesmo sem cotação do SmartCompras, e a NF deixa de aparecer como "sem produto da cotação".',
         'Se aparecer o aviso "Itens diferentes com o mesmo produto da cotação", dois itens da NF estão associados ao mesmo produto: corrija a associação na aba Itens.',
         'No cartão do topo, "Cotações desta NF" lista o pedido principal e os complementares. Mesmo com a NF já enviada ao Controle, "Adicionar outra cotação a esta NF" inclui mais um pedido (como a cotação adicional da Entrada de NF) e "Remover" tira um complementar.',
@@ -575,4 +575,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.27.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.28.0';

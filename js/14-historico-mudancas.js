@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.27.1', nome: 'PDF da NF (DANFE) também no Editor de NF', status: 'atual',
+        numero: '2.28.0', nome: 'Um recurso só por NF, automático, e nome do fornecedor para todas as NFs', status: 'atual', data: '10/11/2026 às 19:00',
+        novidades: ['Cada NF tem um recurso só. Se algum item dela teve menos de 3 cotações, a NF inteira é Recurso Próprio; se todos tiveram 3 ou mais, é C/C. O app decide sozinho, sem perguntar, e as telas deixam de mostrar "C/C e Recurso Próprio" na mesma nota.', 'O recurso da NF vai sozinho para a nota do Gerenciar e para a Saída de Texto (Exportar). O botão "Aplicar recurso" só reaparece se a gravação automática falhar. Ao trocar o recurso no Editor de NF, a mudança aparece em Exportar na hora.', 'Editor de NF: o nome do fornecedor agora vale para todas as NFs do mesmo CNPJ (NFs com XML, NFs só do ERP e notas do Gerenciar), não só para a NF aberta.', 'Histórico de mudanças e aviso de novidades mostram a data e a hora da atualização (a partir desta versão).'],
+        implementado: ['js/11: unificarRecursosNf (Recurso Próprio vence); a conferência da nota lê o recurso esperado pela cotação quando o item não tem recurso gravado. js/36 e js/20: mesma regra no Editor e nas visões. js/12: ao salvar a NF na Entrada, todos os itens vão para Recurso Próprio se algum for, e o quadro "Recurso da NF inteira" explica isso. js/06: autoAplicarRecursosSugeridos (só nota sem recurso) e sincronizarRecursoDaNfComNotas (troca feita no Editor sobrescreve a nota daquela NF). js/20: aplicarNomeFornecedorPorCnpj. js/14 e js/24: campo "data" nas entradas do histórico.', 'Não alterado: o Controle de NFs continua contando "vencida" como pendência (o "1 pendência" das NFs só do ERP é a nota vencida, não a falta de XML).'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/11-central-pedido.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/36-visao-nf.js'],
+        mudou: ['Arquivos alterados desde a 2.27.1: index.html, style.css, js/05, js/06, js/11, js/12, js/14, js/20, js/24, js/31 e js/36.'],
+        testar: ['Abra a NF Omnielmaster 32642 (pedido 1749) no Editor: em "Dados desta NF" deve aparecer um recurso só (Recurso Próprio CTI), sem "recursos diferentes".', 'Gerenciar: o cartão da Supermed 923251 deve mostrar um recurso só na linha cinza; confira que nenhum botão "Aplicar recurso" aparece.', 'No Editor de NF, troque o recurso da NF (C/C ↔ Recurso Próprio) e vá direto a Exportar: a Saída de Texto já deve sair com o recurso novo, sem passar pelo Gerenciar.', 'Editor de NF da HDL: mude o nome do fornecedor e salve; confira no Controle de NFs e no Gerenciar que as outras NFs da HDL mudaram também.', 'Mais → Histórico de mudanças: esta versão mostra "Atualizada em" com data e hora.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.27.1', nome: 'PDF da NF (DANFE) também no Editor de NF', status: 'concluida',
         novidades: ['Editor de NF, aba XML: novo cartão "PDF da NF (DANFE)" com o botão "Baixar PDF (DANFE)". Ele gera o PDF a partir do XML original que ficou guardado junto da NF, como o fornecedor emitiu, sem conversão de unidade. Vale para qualquer NF já processada, sem precisar subir o XML de novo.', 'Se a NF não tem o XML original guardado (NF antiga ou arquivo acima de 500 KB), o cartão avisa e o botão não aparece.'],
         implementado: ['js/20: cartão na aba XML do editor. js/49: baixarDanfePdfDaNf(nfId) lê xmlDados.xmlOriginal e reutiliza o mesmo gerador da Entrada de NF. Nada é gravado no Firebase.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/49-danfe.js'],
@@ -2818,6 +2827,7 @@ function renderHistoricoMudancas() {
             ? `<div class="nota-detalhes"><strong>${titulo}:</strong><br>${itens.map(i => '• ' + escRel(i)).join('<br>')}</div>` : '';
         return `<div class="card hmud-item${atual ? ' hmud-atual' : ''}">
             <div class="nota-info">${atual ? '<span class="xml-item-badge pronto">VERSÃO ATUAL</span> ' : ''}${ehV2(fase) ? 'Versão' : 'Fase'} ${escRel(fase.numero)} — ${escRel(fase.nome)}</div>
+            ${fase.data ? `<div class="xml-item-meta">Atualizada em ${escRel(fase.data)}</div>` : ''}
             ${listaHTML('O que foi implementado', fase.implementado)}
             ${listaHTML('O que mudou nesta versão', fase.mudou)}
             ${listaHTML('O que testar', fase.testar)}
@@ -3166,4 +3176,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.27.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.28.0';

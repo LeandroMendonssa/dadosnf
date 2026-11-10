@@ -247,7 +247,7 @@ function htmlRecursoTodosNfXml() {
     let resumo;
     if (valores.size === 1 && [...valores][0]) resumo = `Os ${alvos.length} itens estão em <strong>${escRel([...valores][0])}</strong>.`;
     else if (valores.has('')) resumo = `${alvos.filter(a => !a.r.valor).length} de ${alvos.length} itens ainda sem recurso.`;
-    else resumo = `Os ${alvos.length} itens estão com recursos diferentes.`;
+    else resumo = `Há itens em C/C e em Recurso Próprio: ao salvar, a NF inteira fica em ${escRel(mesmaOrigem ? alvos[0].r.proprio : 'Recurso Próprio')} (uma NF tem um recurso só).`;
     return `<div class="xml-recurso-todos"><div class="xml-recurso-todos-txt"><strong>Recurso da NF inteira</strong><span>${resumo}</span></div>`
         + `<div class="xml-recurso-todos-bt"><button type="button" class="central-status-toggle" onclick="definirRecursoTodosNfXml('cc')">${escRel(rotCC)}</button>`
         + `<button type="button" class="central-status-toggle" onclick="definirRecursoTodosNfXml('proprio')">${escRel(rotPR)}</button></div></div>`;
@@ -306,13 +306,16 @@ async function definirRecursoNfXml(idx, tipo) {
 async function aplicarRecursoPorCotacaoNf() {
     if (!nfeInfoAtual) return [];
     const porCotacao = new Map();
+    // 2.28.0: uma NF tem UM recurso só: se algum item é Recurso Próprio (menos de 3 cotações), todos os itens desta NF ficam em Recurso Próprio.
+    const temProprio = alvosRecursoTodosXml().some(a => a.r.valor && a.r.valor === a.r.proprio);
     itensXmlDetectados.forEach(item => {
         if (item.semCotacao) return;
         const r = recursoPrevistoItemXml(item, statusItemXml(item));
         if (!r || !r.valor || !r.cotacao) return;
-        if ((r.cotacao.recursosPorItem || {})[r.codigo] === r.valor) return;
+        const valor = (temProprio && r.proprio) ? r.proprio : r.valor;
+        if ((r.cotacao.recursosPorItem || {})[r.codigo] === valor) return;
         if (!porCotacao.has(r.cotacao)) porCotacao.set(r.cotacao, {});
-        porCotacao.get(r.cotacao)[r.codigo] = r.valor;
+        porCotacao.get(r.cotacao)[r.codigo] = valor;
     });
     const aplicados = [];
     for (const [cotacao, novos] of porCotacao) {
@@ -592,4 +595,4 @@ function garantirDatalistSpDataAuditoria() {
 // Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.25.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.28.0';

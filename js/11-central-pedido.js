@@ -1066,6 +1066,14 @@ function idEditorNfDaNota(nota) {
     if (!cands.length && erpV) return erpV.id;
     return null;
 }
+// 2.28.0: uma NF tem UM recurso só. Se algum item dela ficou com Recurso Próprio (menos de 3 cotações), a NF inteira é Recurso Próprio;
+// caso contrário é o único recurso que os itens têm (C/C). Nunca devolve mais de um.
+function unificarRecursosNf(lista) {
+    const u = [...new Set((lista || []).filter(Boolean))];
+    if (u.length <= 1) return u;
+    const proprio = u.find(r => /pr[oó]pri/i.test(r));
+    return [proprio || u[0]];
+}
 function calcularAptidaoSaidaNota(nota) {
     const normalize = (str) => str ? str.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
     if (!normalize(nota.nf)) return { status: 'sem_nf', label: 'Sem número de NF — não é possível conferir', badge: 'neutro' };
@@ -1089,7 +1097,7 @@ function calcularAptidaoSaidaNota(nota) {
     const itensDiretos = (nfProcessada.itens || []).filter(it => it.semCotacao);
     const recursosDiretos = [...new Set(itensDiretos.map(it => it.recurso).filter(Boolean))];
     if (!nfProcessada.pedido && (nfProcessada.semCotacaoSmartCompras || itensDiretos.length)) {
-        return { status: 'sem_cotacao', label: '✓ Conferida — compra direta, sem cotação do SmartCompras', badge: 'pronto', cnpjFornecedor: nfProcessada.cnpjFornecedor || null, destino: nfProcessada.destino || null, recursos: recursosDiretos };
+        return { status: 'sem_cotacao', label: '✓ Conferida — compra direta, sem cotação do SmartCompras', badge: 'pronto', cnpjFornecedor: nfProcessada.cnpjFornecedor || null, destino: nfProcessada.destino || null, recursos: unificarRecursosNf(recursosDiretos) };
     }
     if (!nfProcessada.pedido) {
         return { status: 'sem_pedido', label: 'Conferida, mas sem pedido/cotação vinculado', badge: 'neutro', cnpjFornecedor: nfProcessada.cnpjFornecedor || null };
@@ -1098,7 +1106,7 @@ function calcularAptidaoSaidaNota(nota) {
     const cotacao = listaCotacoes.find(c => c.pedido === nfProcessada.pedido);
     const codigosDestaNf = (nfProcessada.itens || []).map(it => it.codigoSmartCompras).filter(Boolean);
     const destino = cotacao ? (cotacao.origem || null) : null;
-    const recursos = [...new Set([...(cotacao ? codigosDestaNf.map(cod => (cotacao.recursosPorItem || {})[cod]) : []), ...recursosDiretos].filter(Boolean))];
+    const recursos = unificarRecursosNf([...(cotacao ? codigosDestaNf.map(cod => (cotacao.recursosPorItem || {})[cod] || recursoEsperadoPelaCotacao(cotacao, cod)) : []), ...recursosDiretos]); // 2.28.0: item sem recurso gravado vale o que as cotações indicam (menos de 3 = Recurso Próprio); NF = um recurso só
     const base = { pedido: nfProcessada.pedido, cnpjFornecedor: nfProcessada.cnpjFornecedor || null, destino, recursos };
 
     // 2.16.0: o selo da NF lê o estado da ocorrência DOS ITENS DESTA NF (antes, qualquer auditoria pendente do pedido
@@ -1853,4 +1861,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.24.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.28.0';
