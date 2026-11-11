@@ -260,6 +260,7 @@ function renderCardControleNf(it) {
         <div class="ctl-dd"><div><span>Lançada</span><strong>${dataCurtaControle(it.dataISO)}</strong></div><div><span>Vencimento</span><strong>${escRel(vencCurtoControle(it.venc))}</strong></div><div><span>Pedido</span><strong>${escRel(it.pedido || '—')}</strong></div></div>
         <div class="ctl-vl"><b>${valor}</b>${aba === 'aberto' ? (pend.length ? `<span class="ctl-pd${primeiroAlvo && !sel ? ' ctl-link' : ''}"${primeiroAlvo && !sel ? ` onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', '${primeiroAlvo.tipo}')"` : ''}><i>!</i>${pend.length} pendência${pend.length > 1 ? 's' : ''}</span>` : '<span class="ctl-pd ok"><i>✓</i>Em dia</span>') : ''}</div>
         ${(aba === 'aberto' && semXmlDiscreto) ? `<div class="ctl-discreta">só no ERP · sem XML processado${it.erp ? ` <a class="ctl-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', 'xml')">abrir</a>` : ''}</div>` : ''}
+        ${aba === 'aberto' && typeof linhaRecebimentoFisico === 'function' ? linhaRecebimentoFisico(it) : ''}
         ${(aba === 'aberto' && semErpDiscreto && !semXmlDiscreto) ? `<div class="ctl-discreta">ERP ainda não importado${it.nf ? ` <a class="ctl-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', 'erp')">abrir</a>` : ''}</div>` : ''}
         ${pend.length ? `<div class="ctl-inf">${pendDet.map(x => x.tipo && !sel ? `<a class="ctl-pend-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', '${x.tipo}')">${escRel(x.txt)}</a>` : escRel(x.txt)).join(' · ')}</div>` : ''}${notaAdv}
         ${botoes.length && !sel ? `<div class="ctl-bar" style="grid-template-columns:repeat(${Math.min(botoes.length, 4)},1fr)">${botoes.join('')}</div>` : ''}
@@ -1004,4 +1005,4 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.24.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.29.0';
