@@ -464,6 +464,8 @@ function rebuildNotasPendentesList(){
         const venc = String(nota.vencimento || '').replace(/^(\d{2}\/\d{2}\/)\d{2}(\d{2})$/, '$1$2') || '—';
         const valorTxt = nota.valor ? 'R$ ' + String(nota.valor).replace(/^R\$\s*/, '') : '—';
         const infPartes = [...complementoPartes.filter(p => !/^Pedido /.test(p))];
+        const dvNota = (typeof divergenciaNotaComFonte === 'function') ? divergenciaNotaComFonte(nota) : null;
+        const divergHTML = dvNota ? `<div class="ctl-inf" style="margin-top:6px"><div style="margin-bottom:6px">⚠ A ${dvNota.fonte.origem} mudou: ${dvNota.difs.join(' · ')}</div><button class="action-chip" onclick="event.stopPropagation(); usarDadosDaNf('${nota.id}')">Usar da ${dvNota.fonte.origem}</button></div>` : '';
         const infHTML = (infPartes.length || aplicarRecursoHTML) ? `<div class="ctl-inf">${infPartes.join(' · ')}${aplicarRecursoHTML ? `<div style="margin-top:8px">${aplicarRecursoHTML}</div>` : ''}</div>` : '';
         return `${checkboxHTML}<div class="ctl-top"><div class="ctl-av">${iniciaisControle(nota.fornecedor)}</div>
             <div class="ctl-nm"><b>${titulo}</b><small>Criada em ${(new Date(nota.dataCriacao)).toLocaleDateString('pt-BR')}</small></div>
@@ -472,6 +474,7 @@ function rebuildNotasPendentesList(){
         <div class="ctl-vl"><b>${valorTxt}</b>${aptidao.status === 'nao_conferida' ? '' : aptidaoHTML}</div>
         ${aptidao.status === 'nao_conferida' ? '<div class="ctl-discreta">sem XML processado</div>' : ''}
         ${infHTML}
+        ${divergHTML}
         <div class="ctl-bar" style="grid-template-columns:repeat(${idNfEd ? 5 : 4},1fr)">${bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${idNfEd ? bt('ger', 'Editar NF', `abrirEditorNf('${String(idNfEd).replace(/'/g, "\\'")}')`) : ''}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;
     };
 
@@ -635,4 +638,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.28.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.29.0';

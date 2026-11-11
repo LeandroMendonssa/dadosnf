@@ -108,7 +108,7 @@ const AJUDA_ARTIGOS = [
         'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Gerenciar.',
         'O botão Selecionar (igual ao de Anotações) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).',
-        'Recebimento físico: no Editor da NF, o cartão "Recebimento físico" controla as fotos (NF, um rótulo de lote/validade por item e a foto ampla), a entrada no SPData, a entrega ao setor, a assinatura e o arquivamento da requisição. O texto padrão (FORNECEDOR EM MAIÚSCULO + NÚMERO DA NF, sem pontos) tem botão Copiar, e há um botão para copiar o separador ●●●. O app não guarda fotos, só as marcações. NFs novas já entram no controle; nas antigas, toque em "Controlar o recebimento desta NF". No Controle de NFs, a linha "Físico · falta: ..." mostra o que falta; toque em "abrir".'
+        'No Gerenciar, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
     { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.19.1',
