@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.29.0', nome: 'Gerenciar avisa quando o valor ou o vencimento da nota ficou diferente da NF', status: 'atual', data: '11/11/2026 às 07:00',
+        numero: '2.30.0', nome: 'Aviso de possível NF duplicada pelos itens', status: 'atual', data: '11/11/2026 às 21:00',
+        novidades: ['Entrada de NF: se a NF carregada tem número diferente de uma já salva do mesmo fornecedor mas traz os mesmos itens com as mesmas quantidades, aparece um quadro vermelho "Possível duplicidade" no topo. O mesmo acontece quando o pedido já recebeu por completo o item em outra NF.', 'Abrir de novo uma NF com o mesmo número é atualização e não gera esse aviso. É só aviso: nunca bloqueia o salvar.'],
+        implementado: ['js/33: duplicidadeNfPorItensXml e htmlDuplicidadeNfXml (compara por código SmartCompras, ou pelo código do fornecedor quando não há associação; só NFs já salvas do mesmo CNPJ ou entidade). js/10: quadro no topo da Entrada de NF. style.css: estilo .dup-nf-alerta. Não considera ainda recebimentos que só existem na Auditoria retroativa ou no ERP.'],
+        arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.29.0: index.html, style.css, js/10, js/14, js/24, js/31 e js/33.'],
+        testar: ['No iPhone, carregue o XML de uma NF que já foi salva (mesmo número): não deve aparecer o quadro vermelho.', 'Se tiver um XML com número diferente e os mesmos itens de uma NF já salva do mesmo fornecedor, o quadro vermelho deve aparecer no topo, citando a NF anterior.', 'Uma NF comum, de itens novos, não deve mostrar o quadro.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.29.0', nome: 'Gerenciar avisa quando o valor ou o vencimento da nota ficou diferente da NF', status: 'concluida', data: '11/11/2026 às 07:00',
         novidades: ['A nota do Gerenciar é uma cópia feita na hora do envio. Se a NF ou o ERP ligado mudar depois (ERP reimportado, XML corrigido), o cartão agora mostra "A ERP mudou: valor … → …" com o botão "Usar da ERP" (ou "Usar da XML"). Nada é trocado sozinho: dado financeiro só muda quando você toca.', 'Se você editou a nota de propósito, o aviso não volta até a NF/ERP mudar de novo.'],
         implementado: ['js/17: fonteDaNota, divergenciaNotaComFonte e usarDadosDaNf (compara valor e vencimento da nota com o ERP, ou com o XML se não houver ERP). js/05: aviso no cartão do Gerenciar. js/08: salvarEdicao grava divergenciaIgnorada com a assinatura da fonte. Sem leitura nova no Firebase.'],
         arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js'],
@@ -3185,4 +3194,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.29.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.30.0';

@@ -47,6 +47,7 @@ const AJUDA_ARTIGOS = [
         'Na lista de itens da cotação, o app esconde os que outro item da NF já associou e mostra só os do fornecedor; "Ver outros itens desse fornecedor" traz todos de volta (útil quando o fornecedor manda o mesmo produto em dois códigos, marcas ou validades). As sugestões "Parecidos pelo nome" não dependem da ordem das palavras.',
         'Item que não é o da cotação: "Remover associação" desfaz uma associação errada do fornecedor; "Veio produto trocado" (escolha o item que era o pedido) deixa o item sem associação e a conferência registra "Solicitamos X, porém foi faturado Y"; "Aceito como outro produto" vale como o item pedido só nesta NF e não grava a associação (use quando o comprador aceitou a diferença).',
         'Quando o mesmo produto está em mais de um pedido, o app escolhe o pedido citado na NF ("SMART 1744" nas informações adicionais) e, depois, o que tem o CNPJ do fornecedor da nota.',
+        'Se aparecer o quadro vermelho "Possível duplicidade", esta NF (de número diferente) traz os mesmos itens e quantidades de outra NF do fornecedor, ou itens que o pedido já recebeu por completo. É só um aviso: confira antes de salvar. Abrir de novo a mesma NF (mesmo número) é atualização e não gera esse aviso.',
         'Itens com pendência já abrem sozinhos; o selo mostra o que falta.',
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
@@ -576,4 +577,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.29.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.30.0';

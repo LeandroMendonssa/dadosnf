@@ -1440,7 +1440,7 @@ function renderAssociacaoCotacaoXml() {
         </div>`;
     }).join('');
 
-    container.innerHTML = avisoSemCotacoesHTML + htmlAlertasEntrada(verificacoesNfXml()) + conflitoHTML + sugestaoPedidoHTML + htmlRecursoTodosNfXml() + filtroHTML + linhasItens;
+    container.innerHTML = avisoSemCotacoesHTML + htmlDuplicidadeNfXml() + htmlAlertasEntrada(verificacoesNfXml()) + conflitoHTML + sugestaoPedidoHTML + htmlRecursoTodosNfXml() + filtroHTML + linhasItens;
     renderResumoPendenciasXml();
     renderResumoCodigosXml();
     renderResultadoSalvarNF(); // conferência ao vivo, antes de salvar
@@ -1595,4 +1595,4 @@ function aplicarPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     renderAssociacaoCotacaoXml();
     toast(`Produto de referência: SP Data ${possibilidade.spDataCodigo}. O código do item (${item.cProd}) não foi alterado.`);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.25.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.30.0';
