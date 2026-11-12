@@ -1220,6 +1220,11 @@ body[data-theme="dark"]{ --glass-tint: rgba(44,44,46,.56); --glass-tint-strong: 
 
 /* 2.3.0: alertas empilhados com respiro e botões alinhados à esquerda */
 .nfe-alerta{margin-bottom:12px}
+.dup-nf-alerta{margin-bottom:12px;border:2px solid var(--danger);background:var(--danger-bg)}
+.dup-nf-tit{font-weight:700;font-size:var(--fs-aux);color:var(--danger)}
+.dup-nf-linha{margin-top:8px}
+.dup-nf-linha ul{margin:4px 0 0;padding-left:18px}
+.dup-nf-obs{margin-top:8px;opacity:.85}
 .nfe-acoes .central-status-toggle{margin-left:0}
 
 /* 2.3.1: popup de novidades da versão */
@@ -1893,7 +1898,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.29.0'; }
+:root { --css-versao: '2.30.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
