@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.30.0">
+    <meta name="app-versao" content="2.31.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -279,12 +279,25 @@
                     <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-danfe-fonte" data-title="Fonte do PDF da NF" onclick="danfeFonteRender()"><i class="icon fa-solid fa-font" style="background-color: #ff9500;"></i> Fonte do PDF da NF <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a class="settings-action-danger" onclick="handleLogout()">Sair</a></li>
                 </ul>
             </div>
             
+            <div class="app-screen" id="screen-danfe-fonte">
+                <div class="card">
+                    <p class="desc-tela">O PDF da NF usa uma fonte parecida com a Times. Se você quiser a fonte exata (por exemplo a Times New Roman do seu Windows), carregue aqui os arquivos dela. Eles ficam guardados só neste aparelho (nunca vão para o Firebase nem para o GitHub) e o PDF passa a usar essa fonte. O tamanho e a posição do texto não mudam.</p>
+                    <div id="danfe-fonte-estado" style="margin:10px 0"></div>
+                    <label class="actions-button is-primary" style="cursor:pointer"><span class="icon-wrapper"><i class="fa-solid fa-upload"></i></span> Carregar arquivos da fonte (.ttf)<input type="file" accept=".ttf,font/ttf" multiple style="display:none" onchange="danfeFonteCarregar(this)"></label>
+                    <button class="actions-button is-neutral" style="margin-top:10px" onclick="danfeFonteRemover()"><span class="icon-wrapper"><i class="fa-solid fa-rotate-left"></i></span> Voltar à fonte padrão</button>
+                    <div id="danfe-fonte-msg" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
+                </div>
+                <div class="card mt-4">
+                    <p class="desc-tela">Escolha de uma vez os três arquivos: Normal, Negrito e Itálico (Times New Roman: <b>times.ttf</b>, <b>timesbd.ttf</b> e <b>timesi.ttf</b>, na pasta de fontes do Windows). Só vale com Normal e Negrito; sem o Itálico, ele usa a fonte padrão. Cada aparelho guarda a sua própria cópia: faça o mesmo no iPhone e no computador. No iPhone, deixe os arquivos no app Arquivos (iCloud Drive) para escolhê-los aqui. O uso da fonte segue a licença que você já tem dela.</p>
+                </div>
+            </div>
             <div class="app-screen" id="screen-import">
                 <div class="card">
                     <div class="campo">
@@ -1121,6 +1134,7 @@
   <script src="js/48-inicio-lote.js"></script>
   <script src="js/49-danfe.js"></script>
   <script src="js/50-danfe-fontes.js"></script>
+  <script src="js/52-danfe-fonte-propria.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 </body>
