@@ -18,6 +18,7 @@
         'screen-historico-mudancas': 'historico mudanca versao novidade atualizacao',
         'screen-personalizacao': 'aparencia tema personalizar visual',
         'screen-backup': 'backup copia seguranca dados restaurar exportar',
+        'screen-danfe-fonte': 'fonte pdf nf danfe times new roman ttf letra tipografia',
         'screen-conta': 'conta senha email perfil usuario sair',
         'screen-aprovacoes': 'aprovacao acesso usuario criar conta admin liberar'
     };
@@ -96,4 +97,4 @@
     window.buscaAjustes = { procurar };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.24.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.31.0';

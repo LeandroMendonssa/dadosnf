@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.30.0', nome: 'Aviso de possível NF duplicada pelos itens', status: 'atual', data: '11/11/2026 às 21:00',
+        numero: '2.31.0', nome: 'Fonte própria no PDF da NF (DANFE)', status: 'atual', data: '12/11/2026 às 05:00',
+        novidades: ['Ajustes > Fonte do PDF da NF: você carrega os arquivos .ttf da sua fonte (Times New Roman: times.ttf, timesbd.ttf e timesi.ttf) e o PDF da NF passa a usar essa fonte exata. Os arquivos ficam só neste aparelho (nunca no Firebase nem no GitHub). Sem carregar nada, nada muda: continua a fonte padrão do app.', 'Cada aparelho guarda a sua cópia (iPhone e computador separados). "Voltar à fonte padrão" apaga a cópia.'],
+        implementado: ['js/52 (novo): leitura do .ttf (larguras, medidas, licença de incorporação), armazenamento em IndexedDB e a tela. js/49: usa a fonte própria quando existe (Normal e Negrito obrigatórios). js/01 e js/29: a nova tela em Ajustes e na busca. O PDF embute a fonte inteira (fica maior que o PDF com a fonte padrão).'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/49-danfe.js', 'js/52-danfe-fonte-propria.js'],
+        mudou: ['Arquivos alterados desde a 2.30.0: index.html, style.css, js/01, js/14, js/24, js/29, js/31, js/49 e o novo js/52.'],
+        testar: ['iPhone: Ajustes > Fonte do PDF da NF. Antes de carregar nada, baixe um PDF da NF: deve sair igual ao de antes.', 'Coloque times.ttf, timesbd.ttf e timesi.ttf no app Arquivos, carregue os três e baixe o PDF de novo: confira se as letras são as da Times New Roman e se nada mudou de lugar.', 'Toque em "Voltar à fonte padrão" e baixe de novo: deve voltar ao padrão.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.30.0', nome: 'Aviso de possível NF duplicada pelos itens', status: 'concluida', data: '11/11/2026 às 21:00',
         novidades: ['Entrada de NF: se a NF carregada tem número diferente de uma já salva do mesmo fornecedor mas traz os mesmos itens com as mesmas quantidades, aparece um quadro vermelho "Possível duplicidade" no topo. O mesmo acontece quando o pedido já recebeu por completo o item em outra NF.', 'Abrir de novo uma NF com o mesmo número é atualização e não gera esse aviso. É só aviso: nunca bloqueia o salvar.'],
         implementado: ['js/33: duplicidadeNfPorItensXml e htmlDuplicidadeNfXml (compara por código SmartCompras, ou pelo código do fornecedor quando não há associação; só NFs já salvas do mesmo CNPJ ou entidade). js/10: quadro no topo da Entrada de NF. style.css: estilo .dup-nf-alerta. Não considera ainda recebimentos que só existem na Auditoria retroativa ou no ERP.'],
         arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js'],
@@ -3194,4 +3203,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.30.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.31.0';

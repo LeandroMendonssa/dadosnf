@@ -34,10 +34,11 @@ function PdfOut() {
     add(null);   // 2: Pages, preenchido depois
     // Fonte embutida (Liberation Serif, js/50): o PDF aparece igual em qualquer leitor. Sem ela, cai nas fontes Times padrão do PDF.
     const FT = (typeof window !== 'undefined' && window.DANFE_FONTES) || null;
+    const FU = (typeof window !== 'undefined' && window.DANFE_FONTES_USUARIO) || null; // 2.31.0: fonte própria carregada pelo usuário (js/52)
     const fonts = ['R', 'B', 'I'].map((k, i) => {
-      const f = FT && FT[k];
+      const f = (FU && FU[k]) || (FT && FT[k]);
       if (!f) return add('<< /Type /Font /Subtype /Type1 /BaseFont /' + ['Times-Roman', 'Times-Bold', 'Times-Italic'][i] + ' /Encoding /WinAnsiEncoding >>');
-      const bin = atob(f.b64), tag = 'DNFE' + 'RBI'[i] + 'X+LiberationSerif' + ['', '-Bold', '-Italic'][i];
+      const bin = f.bin || atob(f.b64), tag = 'DNFE' + 'RBI'[i] + 'X+' + (f.bin ? 'FontePropria' : 'LiberationSerif') + ['', '-Bold', '-Italic'][i];
       const ff = add('<< /Length ' + bin.length + ' /Length1 ' + bin.length + ' >>\nstream\n' + bin + '\nendstream');
       const fd = add('<< /Type /FontDescriptor /FontName /' + tag + ' /Flags ' + (k === 'I' ? 98 : 34) + ' /FontBBox [' + f.bbox.join(' ') + '] /ItalicAngle ' + f.ital + ' /Ascent ' + f.asc + ' /Descent ' + f.desc + ' /CapHeight 662 /StemV ' + (k === 'B' ? 140 : 80) + ' /FontFile2 ' + ff + ' 0 R >>');
       return add('<< /Type /Font /Subtype /TrueType /BaseFont /' + tag + ' /Encoding /WinAnsiEncoding /FirstChar 32 /LastChar 255 /Widths [' + f.w.join(' ') + '] /FontDescriptor ' + fd + ' 0 R >>');
@@ -359,6 +360,7 @@ async function baixarDanfePdf(textoXml) {
   // sem argumento: XML carregado na Entrada de NF; com argumento: texto do XML original guardado (Editor de NF)
   const texto = textoXml ? String(textoXml) : ((typeof xmlTextoAtual !== 'undefined' && xmlTextoAtual) ? String(xmlTextoAtual) : '');
   if (!texto) { toast('Carregue o XML da NF primeiro.'); return; }
+  try { if (window.danfeFontesProntas) await window.danfeFontesProntas; } catch (e) {}
   let r;
   try { r = gerarDanfePdf(texto); } catch (err) { console.error(err); toast('✕ ' + ((err && err.message) || 'Não consegui montar o PDF desta NF.')); return; }
   const blob = new Blob([r.bytes], { type: 'application/pdf' });
@@ -384,4 +386,4 @@ window.baixarDanfePdfDaNf = baixarDanfePdfDaNf;
 window.baixarDanfePdf = baixarDanfePdf;
 window.gerarDanfePdf = gerarDanfePdf;
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.27.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.31.0';
