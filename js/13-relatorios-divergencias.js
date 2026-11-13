@@ -333,7 +333,7 @@ function renderCardResultadoItem(cotacao, item) {
         produtoSpData ? `SP Data ${produtoSpData.codigo}` : ''
     ].filter(Boolean).join(' · ');
     const iniciaisP = (typeof iniciaisControle === 'function') ? iniciaisControle(nomeProduto) : '';
-    return `<div class="ctl-card cot-card" onclick="abrirCentralPedido('${cotacao.pedido}')">
+    return `<div class="ctl-card cot-card" onclick="irParaProdutoPedido('${escRel(String(cotacao.pedido))}','${escRel(String(item.cnpjFornecedor || ''))}','${escRel(String(item.codProduto || ''))}')">
         <div class="ctl-top"><div class="ctl-av">${escRel(iniciaisP)}</div>
             <div class="ctl-nm"><b>${escRel(nomeProduto)}</b><small>Pedido ${escRel(cotacao.pedido)}${cotacao.origem ? ' · ' + escRel(cotacao.origem) : ''}</small></div></div>
         <div class="ctl-dd"><div><span>Quantidade</span><strong>${escRel(item.quantidade || '—')}</strong></div><div><span>Valor unit.</span><strong>${item.precoUnitario ? 'R$ ' + escRel(item.precoUnitario) : '—'}</strong></div><div><span>Cód.</span><strong>${escRel(item.codProduto || '—')}</strong></div></div>
@@ -589,4 +589,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.25.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.35.0';

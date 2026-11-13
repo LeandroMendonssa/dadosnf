@@ -150,6 +150,19 @@ function irParaFornecedorPedido(pedido, cnpj) {
         return card;
     });
 }
+// 2.35.0: resultado da pesquisa por produto (Cotações): abre o pedido, expande o fornecedor e rola até o produto (ou só o fornecedor, se o produto não for achado).
+function irParaProdutoPedido(pedido, cnpj, codProduto) {
+    abrirCentralPedido(String(pedido));
+    const chave = cnpj ? chaveFornecedorNoPedido(pedido, cnpj) : null;
+    if (!chave) return;
+    centralFornecedoresAbertos.add(chave); renderCentralPedidoCompleto(String(pedido));
+    destacarAlvo(() => {
+        const card = [...document.querySelectorAll('#central-fornecedores-container .central-fornecedor')].find(c => c.dataset.cnpj === chave);
+        if (!card) return null;
+        card.classList.add('aberto');
+        return (codProduto && abrirProdutoNoCartao(card, codProduto)) || card;
+    });
+}
 // Abre (se estiver fechado) o produto com este código dentro do cartão do fornecedor e devolve o elemento dele.
 function abrirProdutoNoCartao(card, codProduto) {
     const prod = [...card.querySelectorAll('.central-prod')].find(p => { const cab = p.querySelector('.central-prod-cab'); return cab && (cab.getAttribute('onclick') || '').includes("'" + codProduto + "'"); });
@@ -238,4 +251,4 @@ function irParaPendenciaControle(chave, tipo) {
     if (document.body) aplicar(); else document.addEventListener('DOMContentLoaded', aplicar);
     if (mq.addEventListener) mq.addEventListener('change', aplicar); else if (mq.addListener) mq.addListener(aplicar);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.34.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.35.0';

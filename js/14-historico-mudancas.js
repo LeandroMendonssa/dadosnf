@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.34.0', nome: 'Fornecedores a chegar: toque leva ao cartão do fornecedor', status: 'atual', data: '13/11/2026 às 07:00',
+        numero: '2.35.0', nome: 'Pesquisa por produto leva ao fornecedor e ao produto no pedido', status: 'atual', data: '13/11/2026 às 07:30',
+        novidades: ['Em Cotações, ao pesquisar um produto e tocar no resultado, o app abre o pedido, expande o cartão do fornecedor daquele item e rola até o produto (antes só abria o pedido, no topo).'],
+        implementado: ['js/30: irParaProdutoPedido (abre o pedido, expande o fornecedor, abre e destaca o produto; se o produto não for achado, destaca o fornecedor). js/13: o resultado da pesquisa por produto chama essa função.'],
+        arquivos: ['index.html', 'style.css', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/30-navegacao.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.34.0: index.html, style.css, js/13, js/14, js/24, js/30 e js/31.'],
+        testar: ['iPhone: em Cotações, pesquise um produto e toque em um resultado: deve abrir o pedido com o fornecedor expandido e o produto na tela. Teste também um pedido com vários fornecedores.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.34.0', nome: 'Fornecedores a chegar: toque leva ao cartão do fornecedor', status: 'concluida', data: '13/11/2026 às 07:00',
         novidades: ['Na lista de Início > fornecedores a chegar, tocar em um fornecedor agora abre o pedido na Central, expande o cartão desse fornecedor e rola até ele (antes só abria o pedido).'],
         implementado: ['js/30: irParaFornecedorPedido (abre o pedido, expande e destaca o cartão). js/48: a lista passa a guardar o CNPJ do fornecedor e o toque chama a nova função. Se o número em cache for antigo (sem CNPJ), só abre o pedido, como antes.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
@@ -3230,4 +3239,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.32.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.35.0';
