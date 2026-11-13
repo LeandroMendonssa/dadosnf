@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.36.0">
+    <meta name="app-versao" content="2.37.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -1033,9 +1033,15 @@
   <div id="resumo-pend-modal" class="modal-screen">
       <div class="modal-content">
           <h2>Resumo de pendências de entrega</h2>
-          <p style="font-size:12px;color:var(--text-light);margin:0 0 8px;">Informe os pedidos (separe por vírgula). O texto abaixo pode ser editado: o PDF, o Word e o TXT saem exatamente do que estiver nele.</p>
-          <input type="text" id="resumo-pend-pedidos" class="form-field" inputmode="numeric" placeholder="Ex.: 1748, 1749, 1750" oninput="gerarResumoPendencias()">
-          <textarea id="resumo-pend-texto" rows="14" oninput="this.dataset.editado='1'" style="width:100%;box-sizing:border-box;margin-top:10px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
+          <p style="font-size:12px;color:var(--text-light);margin:0 0 8px;">Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência. Só entram ocorrências de auditoria ainda não relatadas.</p>
+          <label class="rp-op"><input type="checkbox" id="rp-nao" onchange="resumoPendOpcaoMudou()"><span><b>Fornecedores que não entregaram</b><small>lista simples sob o número do pedido</small></span><i id="rp-n-nao"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-nf" onchange="resumoPendOpcaoMudou()"><span><b>Produtos não faturados</b><small>“..., quantidade 10, não foi faturado.”</small></span><i id="rp-n-nf"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-div" onchange="resumoPendOpcaoMudou()"><span><b>Divergências em aberto</b><small>quantidade, valor, troca de produto etc. das ocorrências da auditoria</small></span><i id="rp-n-div"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-obs" onchange="resumoPendOpcaoMudou()"><span><b>Observação da ocorrência</b><small>o que você escreveu na observação da auditoria (ex.: confirmar recurso)</small></span><i id="rp-n-obs"></i></label>
+          <input type="text" id="resumo-pend-pedidos" class="form-field" inputmode="numeric" placeholder="Incluir também outros pedidos (opcional): 1748, 1749" oninput="gerarResumoPendencias('extras')" style="margin-top:8px">
+          <div class="rp-papel" id="rp-previa"></div>
+          <button type="button" class="actions-button is-ghost" onclick="resumoPendAlternarEdicao()" style="margin-top:8px"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i></span> Editar texto</button>
+          <textarea id="resumo-pend-texto" rows="14" oninput="resumoPendTextoEditado()" style="display:none;width:100%;box-sizing:border-box;margin-top:8px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
           <div class="actions-row">
               <button type="button" class="actions-button is-primary" onclick="copiarResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
               <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
