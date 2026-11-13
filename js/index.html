@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="app-versao" content="2.37.1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Minhas Notas</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Minhas Notas">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f0f2f5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" href="icones/icone-192.png">
+    <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Slab:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+     
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="is-loading" data-theme="light" data-icon-theme="solid">
+
+  <div id="app-loader">
+      <div class="app-loader-content">
+          <div class="apple-spinner">
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+          </div>
+          <div class="app-loader-title">Carregando</div>
+      </div>
+  </div>
+    
+  <div id="login-screen" style="display: none;"> 
+      <div class="login-box">
+          <div id="login-intro">
+              <div class="icon"><i class="fas fa-lock" id="login-icon"></i></div>
+              <h1>Entrar</h1>
+              <p>Acesse sua conta para continuar.</p>
+          </div>
+
+          <div id="login-email-step">
+              <form id="login-email-form" onsubmit="event.preventDefault(); handleLoginEmail();">
+                  <input type="email" id="login-email-input" placeholder="E-mail" autocomplete="username">
+                  <input type="password" id="login-password-input" placeholder="Senha" autocomplete="current-password" class="mt-3">
+                  <div id="login-error-message" class="error-message"></div>
+                  <button type="submit" id="login-button" class="actions-button w-full mt-4" >Entrar</button>
+              </form>
+              <a class="login-link" onclick="handleForgotPassword()">Esqueci minha senha</a>
+
+              <div class="login-divider"><span>ou</span></div>
+
+              <button class="actions-button" style="width:100%;" onclick="handleLoginGoogle()"><span class="icon-wrapper"><i class="fa-brands fa-google"></i></span> Continuar com Google</button>
+              <button class="actions-button w-full mt-3"  onclick="mostrarEtapaTelefone()"><span class="icon-wrapper"><i class="fa-solid fa-phone"></i></span> Continuar com telefone</button>
+          </div>
+
+          <div id="login-phone-step" style="display:none;">
+              <form onsubmit="event.preventDefault(); enviarCodigoTelefone();">
+                  <input type="tel" id="login-phone-input" placeholder="+55 11 91234-5678" autocomplete="tel">
+                  <div id="login-phone-error-message" class="error-message"></div>
+                  <div id="recaptcha-container" style="display:flex;justify-content:center;margin-top:12px;"></div>
+                  <button type="submit" class="actions-button w-full mt-4" >Enviar código</button>
+              </form>
+              <a class="login-link" onclick="voltarParaEmailStep()">Voltar</a>
+          </div>
+
+          <div id="login-phone-code-step" style="display:none;">
+              <p style="margin-top:0;">Digite o código de 6 dígitos enviado por SMS.</p>
+              <form onsubmit="event.preventDefault(); confirmarCodigoTelefone();">
+                  <input type="tel" id="login-phone-code-input" placeholder="000000" maxlength="6" inputmode="numeric">
+                  <div id="login-phone-code-error-message" class="error-message"></div>
+                  <button type="submit" class="actions-button w-full mt-4" >Confirmar</button>
+              </form>
+              <a class="login-link" onclick="voltarParaEmailStep()">Cancelar</a>
+          </div>
+
+          <div id="login-pending-step" style="display:none;">
+              <div class="icon" style="color:#ff9f0a;"><i class="fa-solid fa-hourglass-half"></i></div>
+              <h1>Acesso Solicitado</h1>
+              <p id="login-pending-message">Seu acesso está aguardando aprovação.</p>
+              <button class="actions-button" style="width:100%;" onclick="voltarParaEmailStep()">Entendi</button>
+          </div>
+      </div> 
+  </div>
+
+  <div id="security-check-screen" style="display: none;"> 
+      <div class="login-box"> 
+          <div class="icon"><i class="fas fa-shield-alt"></i></div> 
+          <h1>Verificação de Segurança</h1> 
+          <p>Por favor, digite sua senha atual para prosseguir.</p> 
+          <form onsubmit="event.preventDefault(); handleSecurityCheck();">
+              <input type="password" id="security-check-password-input" placeholder="••••••••" autocomplete="current-password"> 
+              <div id="security-check-error-message" class="error-message"></div> 
+              <div class="actions mt-5" > 
+                  <button type="button" class="actions-button is-neutral" onclick="cancelSecurityCheck()">Cancelar</button> 
+                  <button type="submit" class="actions-button">Verificar</button> 
+              </div> 
+          </form>
+      </div> 
+  </div>
+
+  <div id="password-change-screen" style="display: none;"> 
+      <div class="login-box"> 
+          <div class="icon"><i class="fas fa-key"></i></div> 
+          <h1>Alterar Senha</h1> 
+          <p>Crie uma nova senha para sua conta.</p> 
+          <form onsubmit="event.preventDefault(); handleSaveNewPassword();">
+              <input type="password" id="new-password-input" placeholder="Nova Senha (mín. 6 caracteres)" autocomplete="new-password"> 
+              <input type="password" id="confirm-password-input" placeholder="Confirmar Senha" autocomplete="new-password" class="mt-4"> 
+              <div id="password-error-message" class="error-message"></div> 
+              <div class="actions mt-5" > 
+                  <button type="button" class="actions-button is-neutral" onclick="closePasswordChangeScreen()">Cancelar</button> 
+                  <button type="submit" class="actions-button">Salvar</button> 
+              </div> 
+          </form>
+      </div> 
+  </div>
+    
+  <div class="app-container" id="app-container" style="display: flex;">
+    
+    <nav class="sidebar"> 
+        <div class="sidebar-header">Minhas Notas</div> 
+        <ul id="sidebar-nav" class="sidebar-nav"></ul> 
+    </nav>
+    
+    <div class="main-content">
+        <header class="header">
+            <button class="header-action back-button" id="close-btn" aria-label="Voltar" title="Voltar" style="display: none;">
+                    <span class="icon-wrapper">
+                        <i class="fa-solid fa-chevron-left"></i><span class="material-icons">chevron_left</span>
+                    </span></button>
+            <h1 id="main-header-title" class="header-title">Início</h1>
+            <div class="header-actions">
+                <span id="manage-counter" class="manage-counter header-counter" style="display: none;">0 notas</span>
+                <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
+                <button class="header-action" id="sync-btn" onclick="sincronizarManualmente(this)" style="display: flex;">
+                    <span class="icon-wrapper">
+                        <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
+                    </span>
+                </button>
+                <div class="nota-capsula" id="nota-capsula" onmousedown="event.preventDefault()">
+                    <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
+                        <span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span>
+                    </button>
+                    <button class="header-action nota-ok" id="nota-done-btn" onclick="concluirAnotacao()" title="Concluir" aria-label="Concluir">
+                        <span class="icon-wrapper"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+                <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;" title="Selecionar em lote (editar)">
+                    <span class="icon-wrapper">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                </button>
+            </div>
+        </header>
+
+        <div class="screen-wrapper">
+            
+            <div class="app-screen active" id="screen-inicio"><div id="inicio-conteudo"></div></div>
+            <div class="app-screen" id="screen-lote">
+                <div class="card card-plain">
+                    <p class="desc-tela">Procura em todas as NFs processadas (Entrada de NF). O lote e a validade vêm do XML ou do texto do produto, e só aparecem em NFs que tiveram o lote gravado.</p>
+                    <div class="campo"><label for="lote-q">Lote</label><input type="text" id="lote-q" class="form-field" placeholder="Ex: 24A0731" autocomplete="off" autocapitalize="characters"></div>
+                    <div class="campo"><label for="lote-prod">Produto (opcional)</label><input type="text" id="lote-prod" class="form-field" placeholder="Parte do nome" autocomplete="off"></div>
+                    <div class="campo"><label for="lote-val">Validade (opcional)</label><input type="text" id="lote-val" class="form-field" placeholder="mm/aaaa ou dd/mm/aaaa" inputmode="numeric" autocomplete="off"></div>
+                    <div class="actions"><button type="button" class="actions-button is-primary" onclick="loteBuscar()">Buscar</button></div>
+                </div>
+                <div id="lote-resultado"></div>
+            </div>
+            <div class="app-screen" id="screen-add">
+                <div class="card card-plain">
+                    <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
+                    <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"><div id="nf-sugestoes"></div></div>
+                    <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
+                    <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" class="form-field" placeholder="Ex: 1200,50" inputmode="decimal" onblur="formatarValorBlur(event)"></div>
+                    <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" class="form-field" placeholder="Nome do fornecedor" list="fornecedores-sugeridos" value="" onblur="aplicarApelidoNoCampo(this)"><datalist id="fornecedores-sugeridos"></datalist></div>
+                    <div class="campo"><label for="obs">Observações</label><select id="obs" class="form-field"><option value="">Recurso a ser pago</option></select></div>
+                    
+                    <div class="actions">
+                        <button id="salvarBtn" class="actions-button is-primary" onclick="salvarNota()">
+                            <span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="app-screen" id="screen-manage"> 
+                <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
+                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
+            </div>
+            
+            
+            <div class="app-screen" id="screen-export">
+                <div id="export-info-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; color: var(--text-light); font-size: 14px;">
+                     <span>Contabilização:</span>
+                     <span style="background: var(--bg-secondary); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-dark);"><span id="total-notas-export">0</span> notas</span>
+                </div>
+
+                <textarea id="saida" readonly="" placeholder="O texto das notas pendentes aparecerá aqui..."></textarea>
+                <div class="actions">
+                    <button class="actions-button" onclick="ordenarExportacao()"><span class="icon-wrapper"><i class="fa-solid fa-sort-alpha-down"></i><span class="material-icons">sort_by_alpha</span></span> Ordenar por Recurso</button>
+                    <button class="actions-button is-primary" onclick="exportar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i><span class="material-icons">content_copy</span></span> Copiar</button>
+                    <button class="actions-button is-whatsapp" onclick="compartilharLista()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i><span class="material-icons">share</span></span> Compartilhar</button>
+                    <button class="actions-button is-neutral" onclick="gerarPdfSaida()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i><span class="material-icons">picture_as_pdf</span></span> Gerar PDF</button>
+                    </div>
+                <div class="actions actions-destrutivas"><button class="actions-button is-danger" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button></div>
+            </div>
+
+            <div class="app-screen" id="screen-reports">
+                <div class="card vencimentos-card">
+                    <div class="cab">
+                        <i class="fa-solid fa-calendar-week"></i>
+                        <div>
+                            <h3 class="card-titulo card-titulo-sm">Próximos Vencimentos</h3>
+                            <p>Notas vencendo nos próximos 7 dias.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="lista-relatorios" class="nota-list">
+                     <div class="empty-state">Nenhuma nota próxima do vencimento.</div>
+                </div>
+
+                <div class="xml-filtro-toggle mt-5" >
+                    <button type="button" class="xml-filtro-btn active" id="relatorios-tab-btn-pedidos" onclick="mudarAbaRelatorios('pedidos')">Pedidos</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-notas" onclick="mudarAbaRelatorios('notas')">Notas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-divergencias" onclick="mudarAbaRelatorios('divergencias')">Divergências</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-auditorias" onclick="mudarAbaRelatorios('auditorias')">Auditorias</button>
+                </div>
+
+                <input type="text" id="relatorios-busca" class="form-field mt-3"  placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarRelatorios(this.value)">
+
+                <details class="mt-3">
+                    <summary class="filtros-resumo">Filtros (período, fornecedor, destino, recurso, tipo)</summary>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+                        <div class="campo"><label>De</label><input type="date" id="rel-f-de" class="form-field" onchange="definirFiltroRelatorio('de', this.value)"></div>
+                        <div class="campo"><label>Até</label><input type="date" id="rel-f-ate" class="form-field" onchange="definirFiltroRelatorio('ate', this.value)"></div>
+                    </div>
+                    <div class="campo"><label>Fornecedor</label><input type="text" id="rel-f-fornecedor" class="form-field" list="rel-f-fornecedores" placeholder="Digite ou escolha..." oninput="definirFiltroRelatorio('fornecedor', this.value)"><datalist id="rel-f-fornecedores"></datalist></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="campo"><label>Destino</label><select id="rel-f-destino" class="form-field" onchange="definirFiltroRelatorio('destino', this.value)"><option value="">Todos</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div>
+                        <div class="campo"><label>Recurso</label><select id="rel-f-recurso" class="form-field" onchange="definirFiltroRelatorio('recurso', this.value)"><option value="">Todos</option></select></div>
+                    </div>
+                    <div class="campo"><label>Tipo de divergência</label><select id="rel-f-tipo" class="form-field" onchange="definirFiltroRelatorio('tipo', this.value)"><option value="">Todos</option></select></div>
+                </details>
+                <div id="relatorios-filtros-ativos" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-light);"></div>
+                <div id="relatorios-indicadores" class="mt-3"></div>
+
+                <div class="xml-filtro-toggle mt-3" id="relatorios-subfiltro-notas"  style="display:none">
+                    <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-notas-pendente" onclick="filtrarStatusNotasRelatorio('pendente')">Pendentes</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-arquivada" onclick="filtrarStatusNotasRelatorio('arquivada')">Arquivadas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-todas" onclick="filtrarStatusNotasRelatorio('todas')">Todas</button>
+                </div>
+
+                <div class="xml-filtro-toggle mt-3" id="relatorios-subfiltro-divergencias"  style="display:none">
+                    <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-div-pendente" onclick="filtrarStatusDivergenciaRelatorio('pendente')">Pendentes</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-resolvida" onclick="filtrarStatusDivergenciaRelatorio('resolvida')">Resolvidas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-encerrada" onclick="filtrarStatusDivergenciaRelatorio('encerrada')">Encerradas</button>
+                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-todas" onclick="filtrarStatusDivergenciaRelatorio('todas')">Todas</button>
+                </div>
+
+                <p id="relatorios-resumo" style="margin:12px 0 6px;font-size:12px;color:var(--text-light);"></p>
+                <div id="relatorios-conteudo-aba" class="nota-list"></div>
+            </div>
+
+            <div class="app-screen" id="screen-settings">
+                <div class="campo ajustes-busca"><input type="search" id="ajustes-busca" class="form-field" placeholder="Buscar em Ajustes..." autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Buscar em Ajustes"></div>
+                <ul class="settings-list-group" id="ajustes-resultados" style="display:none;"></ul>
+                <ul class="settings-list-group" id="ajustes-lista">
+                    <li><a data-screen="screen-fornecedores" data-title="Fornecedores"><i class="icon fa-solid fa-truck" style="background-color: #f5a623;"></i> Fornecedores <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-ajuda" data-title="Ajuda" onclick="prepararAjuda()"><i class="icon fa-solid fa-circle-question" style="background-color: #007aff;"></i> Ajuda <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-backup" data-title="Backup dos Dados"><i class="icon fa-solid fa-cloud-arrow-down" style="background-color: #34c759;"></i> Backup dos Dados <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-danfe-fonte" data-title="Fonte do PDF da NF" onclick="danfeFonteRender()"><i class="icon fa-solid fa-font" style="background-color: #ff9500;"></i> Fonte do PDF da NF <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-conta" data-title="Conta"><i class="icon fa-solid fa-key" style="background-color: #4cd964;"></i> Conta <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li id="menu-aprovacoes" style="display:none;"><a data-screen="screen-aprovacoes" data-title="Aprovações de Acesso"><i class="icon fa-solid fa-user-check" style="background-color: #5856d6;"></i> Aprovações de Acesso <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a class="settings-action-danger" onclick="handleLogout()">Sair</a></li>
+                </ul>
+            </div>
+            
+            <div class="app-screen" id="screen-danfe-fonte">
+                <div class="card">
+                    <p class="desc-tela">O PDF da NF usa uma fonte parecida com a Times. Se você quiser a fonte exata (por exemplo a Times New Roman do seu Windows), carregue aqui os arquivos dela. Eles ficam guardados só neste aparelho (nunca vão para o Firebase nem para o GitHub) e o PDF passa a usar essa fonte. O tamanho e a posição do texto não mudam.</p>
+                    <div id="danfe-fonte-estado" style="margin:10px 0"></div>
+                    <label class="actions-button is-primary" style="cursor:pointer"><span class="icon-wrapper"><i class="fa-solid fa-upload"></i></span> Carregar arquivos da fonte (.ttf)<input type="file" accept=".ttf,font/ttf" multiple style="display:none" onchange="danfeFonteCarregar(this)"></label>
+                    <button class="actions-button is-neutral" style="margin-top:10px" onclick="danfeFonteRemover()"><span class="icon-wrapper"><i class="fa-solid fa-rotate-left"></i></span> Voltar à fonte padrão</button>
+                    <div id="danfe-fonte-msg" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
+                </div>
+                <div class="card mt-4">
+                    <p class="desc-tela">Escolha de uma vez os três arquivos: Normal, Negrito e Itálico (Times New Roman: <b>times.ttf</b>, <b>timesbd.ttf</b> e <b>timesi.ttf</b>, na pasta de fontes do Windows). Só vale com Normal e Negrito; sem o Itálico, ele usa a fonte padrão. Cada aparelho guarda a sua própria cópia: faça o mesmo no iPhone e no computador. No iPhone, deixe os arquivos no app Arquivos (iCloud Drive) para escolhê-los aqui. O uso da fonte segue a licença que você já tem dela.</p>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-import">
+                <div class="card">
+                    <div class="campo">
+                        <label for="import-textarea">Cole aqui o texto do relatório do ERP (Relação de Notas Fiscais)</label>
+                        <textarea id="import-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do arquivo TXT exportado pelo ERP, ou use os botões abaixo..."></textarea>
+                    </div>
+                    <input type="file" id="import-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleImportFileUpload(event)">
+                    <div class="actions" style="gap: 10px;">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('import-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo TXT</button>
+                        <button class="actions-button is-neutral" onclick="colarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                    </div>
+                    <div class="actions">
+                        <button class="actions-button is-primary" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
+                    </div>
+                </div>
+                <div id="import-preview-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-config-analise-cotacoes">
+                <div class="card">
+                    <p style="margin:0 0 12px;font-size:12px;color:var(--text-light);">Define o recurso dos itens na Entrada de NF: com pelo menos este número de fornecedores cotando, o item é C/C (recurso público/externo); com menos, é Recurso Próprio. Em branco, valem 3 (C/C) e 1 (Recurso Próprio). Abaixo do mínimo de Recurso Próprio, ou sem o relatório de ganhadores do pedido, a escolha fica manual.</p>
+                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em C/C</label><input type="number" min="1" id="config-minimo-cc" class="form-field" placeholder="Padrão: 3"></div>
+                    <div class="campo"><label>Mínimo de fornecedores cotando — itens em Recurso Próprio</label><input type="number" min="1" id="config-minimo-proprio" class="form-field" placeholder="Padrão: 1"></div>
+                    <button class="actions-button is-primary" onclick="salvarMinimosCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-fornecedores">
+                <div class="card card-plain">
+                    <p id="contador-fornecedores-spdata" style="margin: 0 0 12px; font-size: 12px; color: var(--text-light);">0 fornecedor(es) cadastrado(s)</p>
+                    <input type="text" class="form-field" placeholder="Buscar por código, razão social, apelido ou CNPJ..." oninput="filtrarCadastroFornecedoresSpData(this.value)">
+                    <div id="lista-cadastro-fornecedores-spdata" class="mt-3"></div>
+                </div>
+                <div class="card mt-4 importar-colapso" id="forn-importar">
+                    <button type="button" class="imp-cab" onclick="this.parentElement.classList.toggle('aberto')"><span class="imp-ic"><i class="fa-solid fa-file-import"></i></span><span class="imp-tx"><b>Importar/Atualizar Cadastro</b><small>Colar ou subir o relatório de fornecedores do SP Data</small></span><i class="fa-solid fa-chevron-right imp-seta"></i></button>
+                    <div class="imp-corpo-wrap"><div class="imp-corpo-int"><div class="importar-corpo">
+                    <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light); line-height: 1.4;">Cole ou envie o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Usado pra confirmar automaticamente a qual NF/cotação um lançamento do relatório de entrada do ERP corresponde — nunca por semelhança de nome. Atualização incremental: nunca apaga fornecedores, CNPJs ou apelidos já cadastrados.</p>
+                    <textarea id="import-fornspdata-textarea" class="form-field import-textarea" placeholder="Cole aqui o conteúdo do relatório de cadastro de fornecedores..."></textarea>
+                    <input type="file" id="import-fornspdata-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleFornecedoresSpDataFileUpload(event)">
+                    <div class="actions" style="gap: 10px;">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('import-fornspdata-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
+                        <button class="actions-button is-neutral" onclick="colarCadastroFornecedoresSpData()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
+                    </div>
+                    <div class="actions">
+                        <button class="actions-button" onclick="processarCadastroFornecedoresSpData()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Cadastro</button>
+                    </div>
+                    <div id="import-fornspdata-preview"></div>
+                    </div>
+                </div></div>
+                </div>
+
+                <div style="display:none;">
+                    <input type="text" id="forn-manage" placeholder="Digite para adicionar...">
+                    <input type="text" id="forn-filter" oninput="filtrarFornecedores(this.value)">
+                    <button id="forn-select-mode-btn" onclick="toggleSelectionModeFornecedores()">Selecionar Múltiplos</button>
+                    <span id="forn-counter"></span>
+                    <button id="bulk-select-all-fornecedores" onclick="selecionarTodosFornecedoresVisiveisToggle()">Todos Visíveis</button>
+                    <ul id="lista-fornecedores-manage" class="manage-list"></ul>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-ajuda">
+                <div id="ajuda-conteudo"></div>
+            </div>
+
+            <div class="app-screen" id="screen-atencao">
+                <div id="atencao-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-uso-firebase">
+                <div id="uso-firebase-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-agenda">
+                <div id="agenda-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-assistente">
+                <div id="assistente-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-auditoria-central">
+                <div id="auditoria-central-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-auditoria-retro">
+                <div id="retro-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-historico-mudancas">
+                <div id="historico-mudancas-lista"></div>
+            </div>
+            <div class="app-screen" id="screen-backup">
+                <div class="card">
+                    <p class="desc-tela">Baixa um arquivo com todas as suas notas pendentes, histórico, anotações, fornecedores e configurações — uma cópia de segurança que fica salva no seu dispositivo, independente do Firebase.</p>
+                    <button class="actions-button is-primary" onclick="baixarBackupCompleto()"><span class="icon-wrapper"><i class="fa-solid fa-cloud-arrow-down"></i></span> Baixar Backup (JSON)</button>
+                    <div id="backup-status" style="margin-top:12px;font-size:13px;color:var(--text-light);text-align:center;"></div>
+                </div>
+                <div class="card mt-4">
+                    <p class="desc-tela">Exporta TODOS os dados do app (NFs processadas, entradas do ERP, cotações, associações, fornecedores, exceções de conversão e o resto) num único arquivo, para analisar casos reais fora do app. Só lê os dados; não altera nada.</p>
+                    <button class="actions-button" onclick="baixarDadosDiagnostico()"><span class="icon-wrapper"><i class="fa-solid fa-file-export"></i></span> Exportar dados para diagnóstico (JSON)</button>
+                </div>
+                <div class="card mt-4" >
+                    <p class="desc-tela">Guarde o arquivo em um lugar seguro (iCloud Drive, Google Drive, e-mail para você mesmo). Ele não é enviado a lugar nenhum — o download acontece direto no seu navegador.</p>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-xml-editor">
+                <div class="card xml-resumo-topo" id="xml-resumo-nf" style="display:none;"></div> <div class="xml-filtro-toggle xml-abas" id="xml-abas"> <button type="button" class="xml-filtro-btn active" data-aba="itens" onclick="alternarAbaXml('itens')">Itens <span class="xml-aba-cont"></span><span class="xml-aba-ponto"></span></button> <button type="button" class="xml-filtro-btn" data-aba="pedido" onclick="alternarAbaXml('pedido')">Pedido <span class="xml-aba-ponto"></span></button> <button type="button" class="xml-filtro-btn" data-aba="nf" onclick="alternarAbaXml('nf')">NF <span class="xml-aba-ponto"></span></button> </div> <div id="xml-estado-nf" class="mt-4" style="display:none"></div>  <div class="xml-aba-pane ativa" data-aba="itens"> <div class="card mt-4" id="xml-card-associacao" style="display:none"> <p class="desc-tela">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p> <div id="xml-associacao-container" class="mt-3"></div> </div>  </div> <div class="xml-aba-pane" data-aba="pedido"> <div class="card mt-4" id="xml-card-pedido"> <div class="campo">
+                        <label>Pedido/Cotação correspondente</label>
+                        <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
+                        <div id="xml-pedido-caption" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
+                        <div id="xml-cotacao-adicional-box" class="mt-3" style="display:none;"></div>
+                        <label class="mt-3" style="display:flex;gap:10px;align-items:center;font-size:13px;font-weight:600;color:var(--text-dark);">
+                            <input type="checkbox" id="xml-sem-cotacao-nf" onchange="alternarSemCotacaoNfXml(this.checked)" class="checkbox-grande">
+                            Esta NF não possui cotação do SmartCompras (compra direta)
+                        </label>
+                    </div>
+                    <div id="xml-destino-sem-cotacao" class="campo mt-3" style="display:none;">
+                        <label>Destino dos itens sem cotação</label>
+                        <select class="form-field" id="xml-destino-sem-cotacao-select" onchange="definirDestinoSemCotacaoXml(this.value)">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
+                    </div>
+                    <div id="xml-resumo-codigos" style="display:none;margin-top:10px;padding:8px 10px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);"></div> </div> <div id="xml-informativos-nf" class="mt-4" style="display:none"></div>
+
+                 </div> <div class="xml-aba-pane" data-aba="nf"> <div class="card" id="xml-card-importar">
+                    <p class="desc-tela">Importe o XML da NF-e do fornecedor: o sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação correspondente antes de seguir pro ERP.</p>
+                    <div class="xml-dropzone" id="xml-dropzone" onclick="document.getElementById('xml-file-input').click()">
+                        <i class="fa-solid fa-file-arrow-up" style="font-size:22px;color:var(--text-light);"></i>
+                        <div>Toque para escolher o arquivo .xml da NF-e (pode ser .txt)</div>
+                        <div id="xml-nome-arquivo" style="font-size:12px;color:var(--accent-color);font-weight:600;"></div>
+                    </div>
+                    <input type="file" id="xml-file-input" accept=".xml,.txt,text/xml,application/xml,text/plain" style="display:none;" onchange="handleArquivoXml(this.files[0])">
+                    <div class="campo mt-4" >
+                        <label>Unidade de Dispensação (destino)</label>
+                        <input type="text" id="xml-unidade-destino" class="form-field" value="UN">
+                    </div>
+                </div>
+
+                <div class="card mt-4" id="xml-card-identificacao"  style="display:none">
+                    <div class="xml-eyebrow">Informações da NF-e</div>
+                    <div id="xml-identificacao-container" style="font-size:13px;line-height:1.6;"></div>
+                    <div id="xml-identificacao-infadic" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color);">
+                        <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;"><strong>Informações adicionais da NF (só consulta — não usado pra decidir pedido/produto):</strong></div>
+                        <div class="xml-infadic-texto" style="font-size:12px;color:var(--text-light);white-space:pre-line;"></div>
+                    </div>
+                </div>
+
+                 </div> <div id="xml-resultado-salvar" class="mt-4" style="display:none"></div>
+                <div id="xml-sugestao-recurso" class="mt-4" style="display:none"></div>
+
+                <div class="actions-row" id="xml-acoes-finais" style="display:none;"> <div id="xml-acoes-status" class="xml-acoes-status"></div>
+                    <button class="actions-button is-primary" id="xml-btn-salvar" onclick="salvarEntradaNF()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar NF</button>
+                    <button class="actions-button is-neutral" id="xml-btn-baixar" onclick="baixarXmlConvertido()"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar XML Corrigido</button>
+                    <button class="actions-button is-neutral" id="xml-btn-danfe" onclick="baixarDanfePdf()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> Baixar PDF (DANFE)</button>
+                </div>
+                <div class="actions-row" style="margin:16px 0 20px;">
+                    <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-spdata">
+                <div class="card importar-colapso" id="spdata-importar">
+                    <button type="button" class="imp-cab" onclick="this.parentElement.classList.toggle('aberto')"><span class="imp-ic"><i class="fa-solid fa-file-import"></i></span><span class="imp-tx"><b>Importar relatório do SGH</b><small>Colar o texto para cadastrar ou atualizar produtos</small></span><i class="fa-solid fa-chevron-right imp-seta"></i></button>
+                    <div class="imp-corpo-wrap"><div class="imp-corpo-int"><div class="importar-corpo">
+                    <p class="desc-tela">Cole o texto do relatório do SGH com Código, Nome e Unidade — qualquer um deles funciona (Listagem de itens, por grupo, por subgrupo...), mas prefira um com coluna de nome mais larga, como "Itens por subgrupo II", pra vir menos cortado.</p>
+                    <div class="campo"><textarea id="spdata-inventario-texto" class="form-field" style="min-height:96px;" placeholder="Cole aqui o relatório de inventário..."></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="processarInventarioSpDataColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="spdata-preview" style="display:none;">
+                        <div id="spdata-resumo"></div>
+                        <div class="actions-row mt-3" >
+                            <button class="actions-button is-success" onclick="confirmarImportacaoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
+                            <button class="actions-button is-neutral" onclick="cancelarImportacaoSpData()">Cancelar</button>
+                        </div>
+                    </div>
+                    </div>
+                </div></div>
+                </div>
+                <div class="card card-plain mt-4" >
+                    <div class="actions-row" style="margin:0 0 12px;">
+                        <button class="actions-button is-primary" onclick="toggleFormNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Cadastrar produto</button>
+                    </div>
+                    <div class="card" id="spdata-form-novo" style="display:none;margin-bottom:14px;">
+                        <div class="campo"><label>Código SP Data</label><input type="text" id="spdata-novo-codigo" class="form-field" placeholder="Código"></div>
+                        <div class="campo"><label>Nome</label><input type="text" id="spdata-novo-nome" class="form-field" placeholder="Nome do produto"></div>
+                        <div class="campo"><label>Unidade</label><input type="text" id="spdata-novo-unidade" class="form-field" placeholder="Ex: UNID, CX"></div>
+                        <div class="actions-row">
+                            <button class="actions-button is-success" onclick="salvarNovoProdutoSpData()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar</button>
+                            <button class="actions-button is-neutral" onclick="toggleFormNovoProdutoSpData()">Cancelar</button>
+                        </div>
+                    </div>
+                    <div class="campo mb-3" ><input type="text" id="spdata-busca" class="form-field" placeholder="Buscar por código ou nome..." oninput="filtrarProdutosSpData(this.value)"></div>
+                    <div id="spdata-lista-produtos" class="nota-list"></div>
+                    <p style="margin:10px 0 0;font-size:12px;color:var(--text-light);" id="spdata-total-cadastrados"></p>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-cotacoes">
+                <div class="campo mb-3" ><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
+                <div class="campo mb-3" >
+                    <select id="cotacoes-ordenacao" class="form-field" onchange="alternarOrdenacaoCotacoes(this.value)">
+                        <option value="entrada">Ordenar por: mais recentes primeiro</option>
+                        <option value="pedido">Ordenar por: número do pedido</option>
+                    </select>
+                </div>
+                <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
+                    <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
+                    <button class="actions-button is-neutral" id="btn-complementar-relatorio" onclick="alternarComplementarRelatorio()"><span class="icon-wrapper"><i class="fa-solid fa-file-circle-plus"></i></span> Complementar com relatório</button>
+                    <button class="actions-button" id="btn-selecionar-cotacoes" onclick="alternarSelecaoCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
+                    <button class="actions-button is-neutral" onclick="abrirResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-list"></i></span> Resumo de pendências</button>
+                </div>
+                <div class="actions-row anotacoes-bulk-bar" id="cotacoes-bulk-bar" style="display:none;">
+                    <span id="cotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas cotações para selecionar</span>
+                </div>
+                <input type="file" id="cotacao-xml-file-input" accept=".xml,.txt,text/xml,application/xml,text/plain" style="display:none;" onchange="handleArquivoXmlSmartCompras(this.files[0])">
+
+                <div class="card" id="card-preview-importacao-xml" style="display:none; margin-bottom:16px;">
+                    <h3 class="card-titulo card-titulo-sm">Prévia da Importação</h3>
+                    <div id="resumo-importacao-xml"></div>
+                    <div id="diff-importacao-xml"></div>
+                    <div class="actions-row mt-4" >
+                        <button class="actions-button is-success" onclick="confirmarImportacaoXmlSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
+                        <button class="actions-button is-neutral" onclick="cancelarImportacaoXml()">Cancelar</button>
+                    </div>
+                </div>
+
+                <div class="card mb-4" id="card-complementar-relatorio" style="display:none;">
+                    <h3 class="card-titulo card-titulo-sm">Relatório de Fornecedores Ganhadores</h3>
+                    <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">Complementa a cotação com a quantidade de fornecedores que participaram de cada item (nunca decide recurso/pagamento sozinho). Cole o texto ou envie o arquivo do relatório.</p>
+                    <textarea id="ganhadores-textarea" class="form-field import-textarea" placeholder="Cole aqui o relatório de fornecedores ganhadores..."></textarea>
+                    <input type="file" id="ganhadores-file-input" accept=".txt,text/plain" style="display:none;" onchange="handleRelatorioGanhadoresFileUpload(event)">
+                    <div class="actions" style="gap:10px;">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('ganhadores-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo</button>
+                        <button class="actions-button" onclick="processarRelatorioGanhadoresColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar</button>
+                    </div>
+                    <div class="central-relatorio-preview mt-3" id="ganhadores-preview"  style="display:none">
+                        <div id="ganhadores-resumo"></div>
+                        <div class="actions-row mt-3" id="ganhadores-actions"  style="display:none">
+                            <button class="actions-button is-success" onclick="confirmarImportacaoGanhadores()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar Importação</button>
+                            <button class="actions-button is-neutral" onclick="cancelarImportacaoGanhadores()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="lista-cotacoes-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-cotacao-editor">
+                <div class="card">
+                    <h3 class="card-titulo">Dados do Pedido</h3>
+                    <div class="campo"><label>Pedido SmartCompras</label><input type="text" id="cot-pedido" class="form-field" placeholder="1698"></div>
+                    <div class="campo"><label>Origem</label>
+                        <select id="cot-origem" class="form-field">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
+                    </div>
+                    <div class="campo"><label>Data do Pedido</label><input type="date" id="cot-data-pedido" class="form-field"></div>
+                    <div class="campo"><label>Data Limite de Entrega</label><input type="date" id="cot-data-limite" class="form-field"></div>
+                    <div class="campo"><label>Observação</label><textarea id="cot-observacao" class="form-field"></textarea></div>
+                </div>
+
+                <div class="card mt-4" >
+                    <h3 class="card-titulo">Fornecedores</h3>
+                    <div id="lista-fornecedores-cotacao"><div class="empty-state">Nenhum fornecedor adicionado ainda.</div></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="adicionarFornecedorCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Fornecedor</button>
+                        <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Atualizar via XML</button>
+                    </div>
+                </div>
+
+                <div class="actions-row" style="margin: 20px 0;">
+                    <button class="actions-button is-primary" onclick="salvarCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Cotação</button>
+                </div>
+                <div class="actions-row" style="margin: 20px 0;" id="btn-excluir-cotacao">
+                    <button class="actions-button is-danger" onclick="excluirCotacao()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Excluir Cotação</button>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-nf-editor">
+                <div id="nf-editor-conteudo"></div>
+            </div>
+            <div class="app-screen" id="screen-central-pedido">
+                <h3 id="central-titulo-pedido" class="tela-lead"></h3> <div id="central-subtitulo-pedido" class="central-subtitulo" style="display:none;"></div>
+
+                <div class="card" id="central-sem-cotacao" style="display:none;">
+                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma cotação cadastrada para este pedido ainda.</p>
+                    <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click(); switchToScreen('screen-cotacoes','Cotações')"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
+                </div>
+
+                <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="relatorio" onclick="alternarAbaCentral('relatorio')">Relatório</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
+                    <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                    <button class="actions-button is-neutral" onclick="exportarDivergenciasPedido(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-share-nodes"></i></span> Exportar divergências do pedido</button>
+                    <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
+                </div>
+
+                <div class="card" id="central-anotacao-card" style="display:none;">
+                    <div id="central-anotacao-conteudo" class="form-field" contenteditable="true" style="min-height:100px;line-height:1.5;" oninput="agendarSalvarAnotacaoInlineCentral()"></div>
+                    <p style="margin:8px 0 0;font-size:12px;color:var(--text-light);">Salva automaticamente. Pra formatação completa (cores, tabelas, negrito), use a edição completa.</p>
+                    <div class="actions-row mt-3" >
+                        <button class="actions-button is-neutral" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-expand"></i></span> Abrir Edição Completa</button>
+                    </div>
+                </div>
+                <div class="card" id="central-anotacao-vazia" style="display:none;">
+                    <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma anotação para este pedido ainda.</p>
+                    <button class="actions-button" onclick="criarAnotacaoInlineCentral()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Criar Anotação</button>
+                </div>
+            </div> <div class="central-aba-pane" data-aba="relatorio"><div class="card" id="central-relatorio-card"><h3 class="card-titulo card-titulo-sm">Complementar com Relatório do SmartCompras</h3>
+                    <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
+                    <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="processarRelatorioSmartComprasColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar Relatório</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
+                        <div id="relatorio-smartcompras-resumo"></div>
+                        <div class="actions-row mt-3" >
+                            <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
+                            <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
+                        </div>
+                    </div>
+                </div></div> <div class="central-aba-pane" data-aba="dados"><div class="card" id="central-header-card" style="display:none;">
+                    <div class="campo"><label>Origem</label>
+                        <select id="central-origem" class="form-field" onchange="salvarCabecalhoCotacaoCentral()">
+                            <option value="">Selecione...</option>
+                            <option value="Santa Casa">Santa Casa</option>
+                            <option value="CTI">CTI</option>
+                        </select>
+                    </div>
+                    <div class="campo"><label>Data do Pedido</label><input type="date" id="central-data-pedido" class="form-field" onchange="salvarCabecalhoCotacaoCentral()"></div>
+                    <div class="campo"><label>Data Limite</label><input type="date" id="central-data-limite" class="form-field" onchange="salvarCabecalhoCotacaoCentral()"></div>
+                    <div class="campo"><label>Observação</label><textarea id="central-observacao-cotacao" class="form-field" onblur="salvarCabecalhoCotacaoCentral()"></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Atualizar via XML</button>
+                        <button class="actions-button is-neutral" onclick="abrirCotacaoParaEdicao(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-truck"></i></span> Editar Fornecedores</button>
+                    </div>
+                </div></div>
+      </div>
+<div class="app-screen" id="screen-conta">
+                <div class="card">
+                    <div class="conta-info">
+                        <div class="conta-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <div class="conta-email" id="conta-email">—</div>
+                            <div class="conta-provider" id="conta-provider">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-4" >
+                    <div class="campo">
+                        <label for="conta-nome-input">Nome</label>
+                        <input type="text" id="conta-nome-input" placeholder="Como podemos te chamar?">
+                    </div>
+                    <p style="color:var(--text-light);font-size:13px;margin:-4px 0 14px;">Usado só pra personalizar as mensagens do app. Deixe em branco se preferir.</p>
+                    <button class="actions-button" onclick="salvarNomeConta()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar Nome</button>
+                </div>
+                <div class="card mt-4" id="conta-senha-card" >
+                    <p class="desc-tela">Sua conta usa login por e-mail e senha. Você pode alterar sua senha a qualquer momento.</p>
+                    <button class="actions-button" onclick="abrirModalSenhaComVerificacao()"><span class="icon-wrapper"><i class="fa-solid fa-key"></i></span> Alterar Senha</button>
+                </div>
+                <div class="card mt-4" id="conta-senha-indisponivel"  style="display:none">
+                    <p class="desc-tela">Sua conta usa login pelo Google ou telefone — a senha é gerenciada por eles, não há senha para alterar aqui.</p>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-aprovacoes">
+                <div class="card">
+                    <p class="desc-tela"><strong>Criar conta</strong> (e-mail e senha). A pessoa já entra aprovada; você continua conectado.</p>
+                    <div class="modal-campo"><label for="nova-conta-email">E-mail</label><input type="email" id="nova-conta-email" class="form-field" autocomplete="off" autocapitalize="off" placeholder="pessoa@exemplo.com"></div>
+                    <div class="modal-campo"><label for="nova-conta-nome">Nome (opcional)</label><input type="text" id="nova-conta-nome" class="form-field" autocomplete="off" placeholder="Nome de quem vai usar"></div>
+                    <div class="modal-campo"><label for="nova-conta-senha">Senha temporária (mín. 6 caracteres)</label><input type="password" id="nova-conta-senha" class="form-field" autocomplete="new-password"></div>
+                    <div class="actions-row" style="gap:8px;">
+                        <button class="actions-button" type="button" onclick="preencherSenhaTemporaria()"><span class="icon-wrapper"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar senha</button>
+                        <button class="actions-button is-primary" type="button" id="nova-conta-btn" onclick="criarContaNoApp()"><span class="icon-wrapper"><i class="fa-solid fa-user-plus"></i></span> Criar conta</button>
+                    </div>
+                    <p id="nova-conta-resultado" class="desc-tela" style="display:none;margin-top:10px;"></p>
+                </div>
+                <div class="card">
+                    <p class="desc-tela">Pessoas que entraram pelo Google ou telefone aparecem aqui. Aprove para liberar o acesso delas ao app.</p>
+                    <ul id="lista-aprovacoes" class="approval-list"><li class="empty-state">Carregando...</li></ul>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-observacoes">
+                <div class="card">
+                     <div class="modal-campo"><label>Nova Observação</label><input type="text" id="obs-manage" placeholder="Ex: C/C UPA"></div>
+                     <button class="actions-button is-primary" onclick="adicionarObservacaoManage()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i><span class="material-icons">add</span></span> Adicionar Observação</button>
+                     <ul id="lista-observacoes-manage" class="manage-list"></ul>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-personalizacao">
+                <div class="card">
+                    <p class="desc-tela">Tema, fonte, menus, dock e as demais opções destas telas valem <strong>só para a sua conta</strong> e acompanham você em qualquer aparelho. A logo da instituição é a mesma para todos.</p>
+                </div>
+                <ul class="settings-list-group">
+                    <li><a data-screen="screen-pz-aparencia" data-title="Aparência"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> <span class="pz-txt">Aparência<small>Tema, ícones, fonte e densidade das listas</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-animacoes" data-title="Animações e Transições"><i class="icon fa-solid fa-wand-magic-sparkles" style="background-color: #af52de;"></i> <span class="pz-txt">Animações e Transições<small>Velocidade e efeito ao trocar de tela</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-dock" data-title="Dock e Navegação"><i class="icon fa-solid fa-table-cells-large" style="background-color: #007aff;"></i> <span class="pz-txt">Dock e Navegação<small>Vidro, recolhimento e ícones da barra</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-menus" data-title="Menus e Barra Inferior"><i class="icon fa-solid fa-bars-staggered" style="background-color: #34c759;"></i> <span class="pz-txt">Menus e Barra Inferior<small>Ordem e o que fica na barra ou em "Mais"</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-assinatura" data-title="Assinatura dos relatórios"><i class="icon fa-solid fa-signature" style="background-color: #5856d6;"></i> <span class="pz-txt">Assinatura dos relatórios<small>Nome, cargo e contatos no fim do resumo de pendências</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-pz-logo" data-title="Logo da Instituição"><i class="icon fa-solid fa-image" style="background-color: #f5a623;"></i> <span class="pz-txt">Logo da Instituição<small>Aparece nos PDFs e é a mesma para todos</small></span> <i class="fa-solid fa-chevron-right"></i></a></li>
+                </ul>
+            </div>
+            <div class="app-screen" id="screen-pz-aparencia">
+                <div class="card">
+                    <div class="campo"> <label for="theme-select">Tema do Aplicativo</label> <select id="theme-select"> <option value="light">Claro</option> <option value="dark">Escuro</option> <option value="ocean">Oceano</option> <option value="sunset">Pôr do Sol</option> <option value="forest">Floresta</option> <option value="plum">Ameixa</option> <option value="wine">Vinho</option> </select> </div>
+                    <div class="campo"> <label for="icon-theme-select">Estilo dos Ícones</label> <select id="icon-theme-select"> <option value="solid">Sólido (Padrão)</option> <option value="material">Material (Google)</option> <option value="outline">Contorno (Leve)</option> <option value="duotone">Duplo Tom</option> </select> </div>
+                    <div class="campo"> <label for="font-select">Fonte do Aplicativo</label> <select id="font-select"> <option value="arial">Arial (padrão)</option> <option value="sans">Sistema (SF / Inter)</option> <option value="serif">Serif (Roboto Slab)</option> <option value="mono">Mono (Source Code)</option> <option value="montserrat">Montserrat</option> </select> </div>
+                    <div class="campo"> <label for="density-select">Densidade das Listas</label> <select id="density-select" onchange="alterarDensidade(this.value)"> <option value="confortavel">Confortável</option> <option value="compacta">Compacta</option> </select> </div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-animacoes">
+                <div class="card">
+                    <div class="campo"> <label for="animation-speed-slider" class="dock-label-linha"> <span>Velocidade das Animações</span> <span id="animation-speed-value">Normal</span> </label> <input type="range" id="animation-speed-slider" min="0" max="3" step="1" value="2"> </div>
+                    <div class="campo"> <label for="tab-duracao-slider" class="dock-label-linha"> <span>Duração da troca de aba</span> <span id="tab-duracao-valor">360 ms</span> </label> <input type="range" id="tab-duracao-slider" min="120" max="700" step="20" value="360"> </div>
+                    <div class="campo">
+                        <label>Efeito ao trocar de aba</label>
+                        <div class="transition-options" id="aba-efeito-options">
+                            <button class="transition-option" data-value="padrao" onclick="escolherEfeitoAba('padrao')">Padrão (iPhone)</button>
+                            <button class="transition-option" data-value="empurrar" onclick="escolherEfeitoAba('empurrar')">Entrar e voltar</button>
+                            <button class="transition-option" data-value="esmaecer" onclick="escolherEfeitoAba('esmaecer')">Esmaecer</button>
+                            <button class="transition-option" data-value="deslizar" onclick="escolherEfeitoAba('deslizar')">Deslizar</button>
+                            <button class="transition-option" data-value="subir" onclick="escolherEfeitoAba('subir')">Subir</button>
+                            <button class="transition-option" data-value="zoom" onclick="escolherEfeitoAba('zoom')">Zoom</button>
+                            <button class="transition-option" data-value="nenhum" onclick="escolherEfeitoAba('nenhum')" style="grid-column: span 2;">Instantâneo</button>
+                        </div>
+                        <div class="campo-dica">Vale só ao trocar de aba. "Entrar e voltar" usa o mesmo deslizar do iPhone dos submenus (para a direita ao ir a uma aba mais à direita, e o inverso ao voltar). Entrar e voltar de submenus é sempre o deslizar do iPhone, fixo.</div>
+                    </div>
+                    <div class="campo">
+                        <label>Pré-visualizar</label>
+                        <div class="transition-demo-stage">
+                            <div class="app-screen transition-demo-screen demo-on" id="transition-demo-a">Tela A</div>
+                            <div class="app-screen transition-demo-screen" id="transition-demo-b">Tela B</div>
+                        </div>
+                        <div class="actions-row" style="gap:8px;margin-top:12px;">
+                            <button class="actions-button" onclick="testarTransicaoTela('troca')"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Trocar de aba</button>
+                            <button class="actions-button" onclick="testarTransicaoTela('submenu')"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Entrar e voltar</button>
+                        </div>
+                    </div>
+                    <div class="campo"> <label for="cascata-select">Cascata dos itens</label> <select id="cascata-select" onchange="escolherCascata(this.value)"> <option value="sim">Ligada (padrão)</option> <option value="nao">Desligada</option> </select> <div class="campo-dica">Os primeiros itens de cada tela entram um após o outro. Desligue se achar cansativo.</div> </div>
+                    <div class="pz-campo-sep"></div>
+                    <div class="campo">
+                        <label>Carregamento</label>
+                        <div class="transition-options" id="carregamento-options">
+                            <button class="transition-option" data-value="blocos" onclick="escolherCarregamento('blocos')">Blocos com brilho</button>
+                            <button class="transition-option" data-value="texto" onclick="escolherCarregamento('texto')">Texto</button>
+                        </div>
+                        <div class="campo-dica">Mostrado na primeira vez que você abre uma tela enquanto os dados dela chegam.</div>
+                        <button class="actions-button mt-3" onclick="testarCarregamento()"><span class="icon-wrapper"><i class="fa-solid fa-play"></i></span> Testar Carregamento</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="app-screen" id="screen-pz-dock">
+                <div class="card">
+                    <div class="campo"> <label for="tab-icons-select">Ícones na Navegação</label> <select id="tab-icons-select" onchange="alterarIconesAbas(this.value)"> <option value="on">Mostrar</option> <option value="off">Ocultar (só texto)</option> </select> </div>
+<div class="pz-campo-sep"></div>
+<div class="campo-dica" style="margin:0 0 16px">Estilo, contraste e movimento da barra de navegação. Tudo vem ligado por padrão.</div>
+                    <div class="campo"> <label for="dock-estilo">Estilo da dock</label> <select id="dock-estilo" onchange="alterarDockOpcao('dockEstilo', this.value)"> <option value="liquido">Vidro líquido (padrão)</option> <option value="classico">Clássico (versão 2.2.0)</option> </select> </div>
+                    <div class="campo"> <label for="dock-espessura" class="dock-label-linha"> <span>Espessura do vidro</span> <span id="dock-espessura-valor">60%</span> </label> <input type="range" id="dock-espessura" min="0" max="100" step="5" value="60" oninput="previaDockEspessura(this.value)" onchange="alterarDockOpcao('dockEspessura', parseInt(this.value, 10))"> <div class="campo-dica">Esquerda: mais fino, deixa ver mais o fundo. Direita: mais grosso, rótulos com mais contraste.</div> </div>
+                    <div class="campo"> <label for="dock-velocidade">Velocidade da troca de aba</label> <select id="dock-velocidade" onchange="alterarDockOpcao('dockVelocidade', this.value)"> <option value="rapida">Rápida</option> <option value="normal">Normal (padrão)</option> <option value="lenta">Lenta</option> </select> </div>
+                    <div class="campo"> <label for="dock-encolher">Recolher a dock fora da troca de aba</label> <select id="dock-encolher" onchange="alterarDockOpcao('dockEncolher', this.value)"> <option value="sim">Sim (padrão)</option> <option value="nao">Não, sempre expandida</option> </select> <div class="campo-dica">Recolhida, ela expande ao tocar, trocar de aba ou rolar para cima.</div> </div>
+                    <div class="campo"> <label for="dock-movimento">Se o aparelho estiver com "Reduzir Movimento"</label> <select id="dock-movimento" onchange="alterarDockOpcao('dockMovimento', this.value)"> <option value="respeitar">Respeitar o aparelho (padrão)</option> <option value="sempre">Sempre animar</option> </select> <div class="campo-dica" id="dock-movimento-diag"></div> </div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-menus">
+                <div class="card">
+                    <div class="campo"> <label>Ordem dos Menus e barra inferior</label> <div class="campo-dica">Desmarque "Na barra" para mandar um destino para a tela "Mais". O botão "Mais" fica sempre na barra, com as ferramentas (ex.: Importar Relatório ERP).</div> <div id="menu-reorder-list" class="reorder-list"></div> </div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-assinatura">
+                <div class="card">
+                    <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">Sai no fim de cada página do Resumo de pendências (PDF e Word), junto da logo da instituição. É só sua: cada usuário tem a própria assinatura. Campo vazio não aparece.</p>
+                    <div class="campo"><label>Nome (se vazio, usa o nome da conta)</label><input type="text" id="assin-nome" class="form-field" onchange="assinaturaSalvarCampos()"></div>
+                    <div class="campo"><label>Cargo / setor</label><input type="text" id="assin-cargo" class="form-field" placeholder="Ex.: Almoxarifado" onchange="assinaturaSalvarCampos()"></div>
+                    <div class="campo"><label>E-mail</label><input type="text" id="assin-email" class="form-field" inputmode="email" onchange="assinaturaSalvarCampos()"></div>
+                    <div class="campo"><label>Telefone / ramal</label><input type="text" id="assin-telefone" class="form-field" onchange="assinaturaSalvarCampos()"></div>
+                    <div class="campo"><label>Site</label><input type="text" id="assin-site" class="form-field" onchange="assinaturaSalvarCampos()"></div>
+                    <div class="campo"><label>Endereço</label><input type="text" id="assin-endereco" class="form-field" onchange="assinaturaSalvarCampos()"></div>
+                </div>
+            </div>
+            <div class="app-screen" id="screen-pz-logo">
+                <div class="card">
+                    <div class="campo">
+                        <label>Logo da Instituição (aparece no cabeçalho do PDF da aba Exportar)</label>
+                        <div id="logo-preview-container" style="margin:8px 0;display:none;"><img id="logo-preview-img" style="max-width:160px;max-height:80px;display:block;"></div>
+                        <input type="file" id="logo-upload-input" accept="image/png" onchange="handleLogoUpload(event)" style="display:none;">
+                        <div class="actions-row" style="gap:8px;">
+                            <button class="actions-button" onclick="document.getElementById('logo-upload-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-upload"></i></span> Enviar Logo (PNG)</button>
+                            <button class="actions-button is-danger" id="logo-remove-btn" onclick="removerLogo()" style="display:none;"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Remover</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" id="logo-ajuste-painel" style="display:none;">
+                    <h3 class="card-titulo card-titulo-sm">Como a logo sai na impressão</h3>
+                    <p style="margin:0 0 10px;color:var(--text-light);font-size:12px;">O quadro tracejado é o espaço da logo no PDF e no Word. Escolha como a imagem entra nele.</p>
+                    <div style="display:flex;justify-content:center;margin:6px 0 14px;"><canvas id="logo-preview-canvas" style="width:220px;height:168px;border:1.5px dashed var(--border-color);border-radius:8px;background:repeating-conic-gradient(var(--bg-tertiary) 0% 25%,transparent 0% 50%) 0 0/16px 16px;"></canvas></div>
+                    <div class="campo"><label>Enquadramento</label>
+                        <select id="logo-aj-modo" class="form-field" onchange="logoAjusteMudou(true)">
+                            <option value="conter">Manter a proporção (inteira dentro do quadro)</option>
+                            <option value="cobrir">Preencher o quadro (corta as sobras)</option>
+                            <option value="esticar">Esticar para caber (pode deformar)</option>
+                        </select></div>
+                    <div class="campo"><label>Tamanho <span id="logo-aj-zoom-txt" style="color:var(--text-light);font-weight:400;">100%</span></label><input type="range" id="logo-aj-zoom" min="30" max="300" step="5" value="100" oninput="logoAjusteMudou(false)" onchange="logoAjusteMudou(true)" style="width:100%"></div>
+                    <div class="campo"><label>Posição horizontal</label><input type="range" id="logo-aj-x" min="-100" max="100" step="2" value="0" oninput="logoAjusteMudou(false)" onchange="logoAjusteMudou(true)" style="width:100%"></div>
+                    <div class="campo"><label>Posição vertical</label><input type="range" id="logo-aj-y" min="-100" max="100" step="2" value="0" oninput="logoAjusteMudou(false)" onchange="logoAjusteMudou(true)" style="width:100%"></div>
+                    <div class="actions-row"><button class="actions-button is-neutral" onclick="logoAjusteRestaurar()"><span class="icon-wrapper"><i class="fa-solid fa-rotate-left"></i></span> Restaurar padrão</button></div>
+                </div>
+            </div>
+
+            
+            <div class="app-screen" id="screen-equipamentos">
+                <div id="equipamentos-status" class="card" style="margin:16px;">⚠ O módulo de Equipamentos não carregou. Confira se <strong>js/26-equipamentos.js</strong> e <strong>js/27-equipamentos-ponte.js</strong> estão na pasta <strong>js</strong> e se este é o <strong>index.html</strong> novo (versão 2.5.x).</div>
+                <div id="equipamentos-root"></div>
+            </div>
+            <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div>
+      <div class="app-screen" id="screen-controle-nfs">
+        <div id="controle-atencao-banner"></div>
+        <div class="campo mb-4"><input type="text" id="controle-busca" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarControle(this.value)"></div>
+        <div class="xml-filtro-toggle" id="controle-abas">
+          <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
+          <button type="button" class="xml-filtro-btn" data-aba="arquivadas" onclick="alternarAbaControle('arquivadas')">Arquivadas <span class="controle-cont">0</span></button>
+        </div>
+        <div class="actions-row controle-topo"><button type="button" id="controle-btn-selecionar" class="actions-button" onclick="alternarSelecaoControle()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button></div>
+        <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><div class="ctl-selbtns"><button type="button" id="controle-sel-fin" class="action-chip" onclick="marcarSelecionadasEnviadas()" disabled>Enviada ao financeiro</button><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div></div>
+        <div id="controle-lista" class="nota-list"></div>
+      </div> <div class="app-screen" id="screen-anotacoes" style="">
+                <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
+                <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
+                    <button class="actions-button is-primary" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
+                    <button class="actions-button is-neutral" onclick="abrirNovaAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
+                    <button class="actions-button" id="btn-selecionar-anotacoes" onclick="toggleModoSelecaoAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
+                </div>
+                <div class="actions-row anotacoes-bulk-bar" id="anotacoes-bulk-bar" style="display:none;">
+                    <span id="anotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas anotações para selecionar</span>
+                    <button class="actions-button is-whatsapp" onclick="exportarAnotacoesWhatsapp()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i></span> Exportar Relatório</button>
+                </div>
+                <div id="lista-anotacoes-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-auditoria-nova">
+                <div class="card">
+                    <h3 class="card-titulo">Dados da Auditoria</h3>
+                    <div class="campo"><label>Pedido SmartCompras (Cotação)</label><input type="text" id="aud-pedido" class="form-field" placeholder="1690" oninput="buscarCotacaoParaAuditoria()"></div>
+                    <div class="aud-cotacao-info" id="aud-cotacao-info" style="display:none;"></div>
+                    <div class="campo"><label>Nota Fiscal</label><input type="text" id="aud-nf" class="form-field" placeholder="374609"></div>
+                    <div class="campo"><label>Fornecedor</label><input type="text" id="aud-fornecedor" class="form-field uppercase-field" placeholder="DISKMED" list="datalist-fornecedores-cotacao" oninput="atualizarDatalistProdutosAuditoria()"></div>
+                    <datalist id="datalist-fornecedores-cotacao"></datalist>
+                    <datalist id="datalist-produtos-cotacao"></datalist>
+                    <div class="campo"><label>Data da Auditoria</label><input type="date" id="aud-data" class="form-field"></div>
+                    <div class="campo"><label>Destinatário do E-mail</label><input type="text" id="aud-destinatario" class="form-field" value="" placeholder="Nome de quem recebe (opcional)"></div>
+                    <div class="campo"><label>Observação Geral</label><textarea id="aud-obs-geral" class="form-field" placeholder="Ex: inicialmente havia faltado um volume, mas foi encontrado depois..."></textarea></div>
+                </div>
+
+                <div class="card mt-4" >
+                    <h3 class="card-titulo">Divergências</h3>
+                    <div id="lista-divergencias"><div class="empty-state" id="divergencias-vazio">Nenhuma divergência adicionada ainda.</div></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="adicionarDivergencia()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Adicionar Divergência</button>
+                    </div>
+                </div>
+
+                <div class="card mt-4" >
+                    <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleConfigTextos()">
+                        <h3 class="card-titulo card-titulo-sm">⚙️ Configurar Textos Padrão</h3>
+                        <i class="fa-solid fa-chevron-down" id="config-chevron" style="color:var(--text-light);transition:transform .25s var(--ease-out);"></i>
+                    </div>
+                    <div id="config-textos-body" class="mt-4" style="display:none">
+                        <p style="color:var(--text-light);font-size:12px;margin-top:0;">Ajuste o tom das frases usadas na geração. Use {DESTINATARIO}, {FORNECEDOR}, {NF} e {PEDIDO} na abertura — são substituídas automaticamente.</p>
+                        <div class="campo"><label>Destinatário padrão do e-mail (opcional)</label><input type="text" id="cfg-destinatario" class="form-field" placeholder="Em branco: a saudação sai sem nome"></div>
+                        <div class="campo"><label>Abertura do E-mail</label><textarea id="cfg-saudacao" class="form-field"></textarea></div>
+                        <div class="campo"><label>Frase — Fotos em Anexo</label><input type="text" id="cfg-fotosAnexo" class="form-field"></div>
+                        <div class="campo"><label>Fechamento do E-mail</label><input type="text" id="cfg-fechamento" class="form-field"></div>
+                        <div class="campo"><label>Modelos por tipo de divergência</label>
+                            <p style="color:var(--text-light);font-size:12px;margin:0 0 8px;">Escreva como cada tipo aparece no texto. Use <b>{campo}</b> para o valor digitado (vazio vira "?") e <b>[[ trecho ]]</b> para algo que só aparece se os campos dentro dele estiverem preenchidos. Os campos de cada tipo estão sob o modelo.</p>
+                            <div id="cfg-modelos"></div></div>
+                        <div class="actions-row"><button class="actions-button is-neutral" onclick="restaurarTextosPadrao()">Restaurar Padrão</button></div>
+                    </div>
+                </div>
+
+                <div class="actions-row" style="margin: 20px 0;">
+                    <button class="actions-button is-primary" onclick="gerarSaidasAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Gerar Auditoria</button>
+                </div>
+
+                <div class="card" id="card-resultado-auditoria" style="display:none;">
+                    <h3 class="card-titulo">Resultado</h3>
+                    <div class="output-tabs">
+                        <button class="output-tab active" onclick="mostrarSaidaAuditoria('mensagem', this)">Mensagem</button>
+                        <button class="output-tab" onclick="mostrarSaidaAuditoria('email', this)">E-mail</button>
+                    </div>
+                    <div class="output-block active" id="output-mensagem" contenteditable="true"></div>
+                    <div class="output-block" id="output-email" contenteditable="true"></div>
+                    <div class="actions-row" style="margin-top:14px;">
+                        <button class="actions-button" id="btn-copiar-saida" onclick="copiarSaidaAuditoriaAtual()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+                        <button class="actions-button is-whatsapp" onclick="compartilharSaidaAuditoriaAtual()"><span class="icon-wrapper"><i class="fa-solid fa-share-nodes"></i></span> Compartilhar</button>
+                        <button class="actions-button is-success" onclick="salvarAuditoriaComoAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Salvar como Anotação</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-anotacoes-editor">
+                <div class="campo">
+                    <input type="text" id="anotacao-titulo" class="form-field" placeholder="Título da anotação" style="font-size: 18px; font-weight: 700;" oninput="agendarAutoSaveAnotacao()">
+                </div>
+                <div id="central-pedido-container" style="display:none;"></div>
+                <div id="anotacao-corpo" class="rte-editor" contenteditable="true" oninput="agendarAutoSaveAnotacao()" onpaste="setTimeout(agendarAutoSaveAnotacao, 50)"></div>
+            </div>
+        </div>
+
+        <div id="rte-dock" class="rte-dock">
+                <div class="rte-toolbar">
+                    <button type="button" data-cmd="undo" title="Desfazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('undo')"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" data-cmd="redo" title="Refazer" disabled onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('redo')"><i class="fa-solid fa-rotate-right"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" data-cmd="bold" title="Negrito" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('bold')"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" data-cmd="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('italic')"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" data-cmd="underline" title="Sublinhado" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('underline')"><i class="fa-solid fa-underline"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" data-block="H2" title="Título" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'H2')"><i class="fa-solid fa-heading"></i></button>
+                    <button type="button" data-block="P" title="Texto normal" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('formatBlock', 'P')"><i class="fa-solid fa-paragraph"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <button type="button" title="Lista" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" title="Lista Numerada" onmousedown="event.preventDefault()" onclick="formatarTextoAnotacao('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
+                    <span class="rte-toolbar-divider"></span>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Cor do Texto" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-color-popover')"><i class="fa-solid fa-palette"></i></button>
+                        <div id="rte-color-popover" class="rte-popover" style="display:none;">
+                            <div class="rte-color-grid">
+                                <button type="button" class="rte-color-swatch" style="background:#1c1c1e" title="Preto" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#1c1c1e')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#ff3b30" title="Vermelho" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#ff3b30')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#ff9500" title="Laranja" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#ff9500')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#ffcc00" title="Amarelo" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#ffcc00')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#34c759" title="Verde" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#34c759')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#007aff" title="Azul" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#007aff')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#5856d6" title="Roxo" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#5856d6')"></button>
+                                <button type="button" class="rte-color-swatch" style="background:#af52de" title="Violeta" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('#af52de')"></button>
+                            </div>
+                            <button type="button" class="rte-popover-reset" onmousedown="event.preventDefault()" onclick="aplicarCorTextoAnotacao('')">Remover cor</button>
+                        </div>
+                    </div>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Tamanho do Texto" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-size-popover')"><i class="fa-solid fa-text-height"></i></button>
+                        <div id="rte-size-popover" class="rte-popover rte-popover-list" style="display:none;">
+                            <button type="button" class="rte-size-option" data-size="12" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(12)"><span>12px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="14" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(14)"><span>14px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="16" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(16)"><span>16px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="18" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(18)"><span>18px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="22" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(22)"><span>22px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-size="28" onmousedown="event.preventDefault()" onclick="aplicarTamanhoTextoAnotacao(28)"><span>28px</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                        </div>
+                    </div>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Espaçamento entre Linhas" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-spacing-popover')"><i class="fa-solid fa-grip-lines"></i></button>
+                        <div id="rte-spacing-popover" class="rte-popover rte-popover-list" style="display:none;">
+                            <button type="button" class="rte-size-option" data-spacing="simples" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('simples')"><span>Simples</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-spacing="115" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('115')"><span>1,15</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-spacing="15" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('15')"><span>1,5</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <button type="button" class="rte-size-option" data-spacing="duplo" onmousedown="event.preventDefault()" onclick="aplicarEspacamentoLinhaAnotacao('duplo')"><span>Duplo</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                            <div class="rte-popover-divider"></div>
+                            <button type="button" class="rte-size-option" id="rte-btn-compacto" onmousedown="event.preventDefault()" onclick="alternarParagrafoCompactoAnotacao()"><span>Compactar parágrafos</span><i class="fa-solid fa-check rte-option-check"></i></button>
+                        </div>
+                    </div>
+                    <span class="rte-toolbar-divider"></span>
+                    <div class="rte-popover-wrap">
+                        <button type="button" title="Inserir Tabela" onmousedown="event.preventDefault()" onclick="toggleRtePopover('rte-table-popover')"><i class="fa-solid fa-table"></i></button>
+                        <div id="rte-table-popover" class="rte-popover rte-popover-table" style="display:none;">
+                            <div id="rte-table-grid" class="rte-table-grid"></div>
+                            <div id="rte-table-grid-label" class="rte-table-grid-label">Selecione o tamanho</div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <div id="nota-menu" class="nota-menu" style="display:none;" onmousedown="event.preventDefault()">
+            <button type="button" onclick="menuNotaAcao('copiar')"><span>Copiar tudo</span><i class="fa-solid fa-copy"></i></button>
+            <button type="button" onclick="menuNotaAcao('colar')"><span>Colar</span><i class="fa-solid fa-paste"></i></button>
+            <button type="button" onclick="menuNotaAcao('limpar')"><span>Limpar texto</span><i class="fa-solid fa-eraser"></i></button>
+            <div class="nota-menu-sep"></div>
+            <div class="nota-menu-altura"><span>Altura da barra</span><div class="nota-menu-passo"><button type="button" onclick="ajustarAlturaBarraNotas(-4)" aria-label="Descer a barra"><i class="fa-solid fa-minus"></i></button><span id="nota-altura-valor">0 px</span><button type="button" onclick="ajustarAlturaBarraNotas(4)" aria-label="Subir a barra"><i class="fa-solid fa-plus"></i></button></div></div>
+            <div class="nota-menu-sep"></div>
+            <button type="button" class="nota-menu-del" onclick="menuNotaAcao('excluir')"><span>Excluir</span><i class="fa-solid fa-trash"></i></button>
+        </div>
+
+        <nav id="tab-bar" class="tab-bar"></nav>
+        <div id="dock-selecao" class="dock-selecao" role="toolbar" aria-label="Ações da seleção"></div>
+
+        <div id="bulk-action-bar-notas" class="bulk-action-bar">
+            <div class="bulk-action-bar-inner">
+                <div class="bulk-select-info">
+                    <span id="bulk-count-notas">0 selecionadas</span>
+                </div>
+                <div class="bulk-buttons">
+                    <button onclick="bulkMarcarPendente(true)" title="Marcar como pendente" disabled><i class="fa-solid fa-clock"></i></button>
+                    <button onclick="bulkMarcarPendente(false)" title="Remover pendência" disabled><i class="fa-solid fa-rotate-left"></i></button>
+                    <button onclick="abrirEdicaoEmLoteNotas()" title="Editar em lote" disabled><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="bulkArquivarNotas()" title="Arquivar selecionadas" disabled><i class="fa-solid fa-box-archive"></i></button> <button onclick="bulkExcluirNotas()" class="danger" title="Excluir selecionadas" disabled><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="bulk-action-bar-fornecedores" class="bulk-action-bar">
+            <div class="bulk-action-bar-inner">
+                <div class="bulk-select-info">
+                    <span id="bulk-count-fornecedores">0 selecionados</span>
+                </div>
+                <div class="bulk-buttons">
+                    <button onclick="bulkIgnorarFornecedores(true)" title="Ignorar na importação do ERP" disabled><i class="fa-solid fa-ban"></i></button>
+                    <button onclick="bulkIgnorarFornecedores(false)" title="Voltar a considerar na importação" disabled><i class="fa-solid fa-rotate-left"></i></button>
+                    <button id="bulk-excluir-fornecedores-btn" onclick="bulkExcluirFornecedores()" class="danger" title="Excluir selecionados" disabled><i class="fa-solid fa-trash"></i> Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bulk-edit-notas-modal" class="modal-screen">
+        <div class="modal-content modal-md">
+            <h3 class="card-titulo card-titulo-sm">Editar em Lote</h3>
+            <p style="margin: 0 0 20px; font-size: 13px; color: var(--text-light);">Alterando <strong id="bulk-edit-count">0</strong> nota(s). Deixe em branco os campos que não quer alterar.</p>
+            <div class="campo"><label>Fornecedor</label><input type="text" id="bulk-edit-forn" placeholder="Não alterar" list="fornecedores-sugeridos"></div>
+            <div class="campo"><label>Vencimento</label><input type="text" id="bulk-edit-venc" placeholder="Não alterar (dd/mm/aaaa)" oninput="formatarDataInput(this)"></div>
+            <div class="campo"><label>Recurso</label><select id="bulk-edit-obs"><option value="">Não alterar</option></select></div>
+            <div class="actions" style="gap: 10px;">
+                <button class="actions-button is-neutral" onclick="fecharEdicaoEmLoteNotas()">Cancelar</button>
+                <button class="actions-button is-primary" onclick="salvarEdicaoEmLoteNotas()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+  
+  <div id="forn-chegar-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2 id="forn-chegar-tit">Fornecedores a chegar</h2>
+          <p style="font-size:12px;color:var(--text-light);margin:0 0 4px;">Toque em um fornecedor para abrir o pedido. O resumo para enviar fica em Início &gt; Resumo de pendências.</p>
+          <div id="forn-chegar-lista" style="max-height:60vh;overflow:auto"></div>
+          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
+      </div>
+  </div>
+  <div id="resumo-pend-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2>Resumo de pendências de entrega</h2>
+          <p style="font-size:12px;color:var(--text-light);margin:0 0 8px;">Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência. Só entram ocorrências de auditoria ainda não relatadas.</p>
+          <label class="rp-op"><input type="checkbox" id="rp-nao" onchange="resumoPendOpcaoMudou()"><span><b>Fornecedores que não entregaram</b><small>lista simples sob o número do pedido</small></span><i id="rp-n-nao"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-nf" onchange="resumoPendOpcaoMudou()"><span><b>Produtos não faturados</b><small>“..., quantidade 10, não foi faturado.”</small></span><i id="rp-n-nf"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-div" onchange="resumoPendOpcaoMudou()"><span><b>Divergências em aberto</b><small>quantidade, valor, troca de produto etc. das ocorrências da auditoria</small></span><i id="rp-n-div"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-obs" onchange="resumoPendOpcaoMudou()"><span><b>Observação da ocorrência</b><small>o que você escreveu na observação da auditoria (ex.: confirmar recurso)</small></span><i id="rp-n-obs"></i></label>
+          <input type="text" id="resumo-pend-pedidos" class="form-field" inputmode="numeric" placeholder="Incluir também outros pedidos (opcional): 1748, 1749" oninput="gerarResumoPendencias('extras')" style="margin-top:8px">
+          <div class="rp-papel" id="rp-previa"></div>
+          <button type="button" class="actions-button is-ghost" onclick="resumoPendAlternarEdicao()" style="margin-top:8px"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i></span> Editar texto</button>
+          <textarea id="resumo-pend-texto" rows="14" oninput="resumoPendTextoEditado()" style="display:none;width:100%;box-sizing:border-box;margin-top:8px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
+          <div class="actions-row">
+              <button type="button" class="actions-button is-primary" onclick="copiarResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
+              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
+              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('pdf')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> PDF</button>
+          </div>
+          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
+      </div>
+  </div>
+  <div id="export-cot-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2>Exportar relatório da cotação</h2>
+          <p id="export-cot-sub"></p>
+          <div class="xml-filtro-toggle"><button type="button" class="xml-filtro-btn active" data-nivel="basico" onclick="escolherNivelExportCotacao('basico')">Básico</button><button type="button" class="xml-filtro-btn" data-nivel="completo" onclick="escolherNivelExportCotacao('completo')">Completo</button></div>
+          <p id="export-cot-desc" style="font-size:12px;color:var(--text-light);margin:10px 0 14px;"></p>
+          <div class="actions-row">
+              <button type="button" class="actions-button is-neutral" onclick="exportarCotacaoRelatorio('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
+              <button type="button" class="actions-button is-neutral" onclick="exportarCotacaoRelatorio('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
+              <button type="button" class="actions-button is-neutral" onclick="exportarCotacaoRelatorio('pdf')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> PDF</button>
+          </div>
+          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
+      </div>
+  </div>
+  <div id="confirm-modal" class="modal-screen"> 
+      <div class="modal-content"> 
+          <h2 id="confirm-title"></h2> 
+          <p id="confirm-message"></p> 
+          <div class="confirm-actions"> 
+              <button id="cancel-btn" class="actions-button is-ghost">Cancelar</button> 
+              <button id="confirm-btn" class="actions-button">Confirmar</button> 
+          </div> 
+      </div> 
+  </div>
+  
+  <div id="novidades-modal" class="modal-screen">
+      <div class="modal-content novidades-content">
+          <div class="novidades-selo">Novidades</div>
+          <h2 id="novidades-titulo"></h2>
+          <div id="novidades-corpo"></div>
+          <div class="confirm-actions">
+              <button type="button" class="actions-button is-ghost" onclick="irParaHistoricoDeMudancas()">Ver histórico completo</button>
+              <button type="button" class="actions-button" onclick="fecharNovidades()">Entendi</button>
+          </div>
+      </div>
+  </div>
+
+  <div id="toast" class="toast" style="display: none;">
+      <span id="toast-icon" class="toast-icon"></span>
+      <span id="toast-text" class="toast-text">Nota salva com sucesso!</span>
+  </div>
+      
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  
+  <!-- v2.0.1: script dividido em arquivos comuns (sem import/export). A ORDEM importa: cada arquivo continua de onde o anterior parou. -->
+  <script src="js/00-uso-firebase.js"></script>
+  <script src="js/01-nucleo-config-estado.js"></script>
+  <script src="js/02-layout-setup.js"></script>
+  <script src="js/03-dados-notas.js"></script>
+  <script src="js/04-relatorios-base.js"></script>
+  <script src="js/05-listeners-dados.js"></script>
+  <script src="js/44-catalogo-cache.js"></script>
+  <script src="js/06-exportar-pdf.js"></script>
+  <script src="js/07-login-conta-backup.js"></script>
+  <script src="js/08-fornecedores-logo.js"></script>
+  <script src="js/09-anotacoes.js"></script>
+  <script src="js/10-entrada-nf-xml.js"></script>
+  <script src="js/11-central-pedido.js"></script>
+  <script src="js/12-recurso-lote-rastro.js"></script>
+  <script src="js/13-relatorios-divergencias.js"></script>
+  <script src="js/14-historico-mudancas.js"></script>
+  <script src="js/15-ganhadores-cotacoes.js"></script>
+  <script src="js/16-spdata-textos.js"></script>
+  <script src="js/17-historico-controle-nfs.js"></script>
+  <script src="js/18-erp-fornecedores-spdata.js"></script>
+  <script src="js/19-erp-reconciliacao.js"></script>
+  <script src="js/20-editor-nf.js"></script>
+  <script src="js/21-seletor-busca.js"></script>
+  <script src="js/22-vidro-liquido.js"></script>
+  <script src="js/23-conferencia-automatica.js"></script>
+  <script src="js/24-novidades-versao.js"></script>
+  <script src="js/25-contas-admin.js"></script>
+  <script src="js/26-equipamentos.js"></script>
+  <script src="js/27-equipamentos-ponte.js"></script>
+  <script src="js/28-transicoes-ios.js"></script>
+  <script src="js/29-busca-ajustes.js"></script>
+  <script src="js/30-navegacao.js"></script>
+  <script src="js/31-ajuda.js"></script>
+  <script src="js/32-auditoria-retroativa.js"></script>
+  <script src="js/33-verificacoes-entrada.js"></script>
+  <script src="js/34-atencao.js"></script>
+  <script src="js/35-aprendizado-pedido.js"></script>
+  <script src="js/36-visao-nf.js"></script>
+  <script src="js/37-assistente.js"></script>
+  <script src="js/38-dock-selecao.js"></script>
+  <script src="js/39-central-auditoria.js"></script>
+  <script src="js/40-agenda-trabalho.js"></script>
+  <script src="js/41-notificacoes-push.js"></script>
+  <script src="js/45-exportar-cotacao.js"></script>
+  <script src="js/46-uso-aparelhos.js"></script>
+  <script src="js/47-resumo-pendencias.js"></script>
+  <script src="js/48-inicio-lote.js"></script>
+  <script src="js/49-danfe.js"></script>
+  <script src="js/50-danfe-fontes.js"></script>
+  <script src="js/52-danfe-fonte-propria.js"></script>
+  <script src="js/53-nf-duplicada.js"></script>
+  <script src="js/43-verificar-arquivos.js"></script>
+
+</body>
+</html>
