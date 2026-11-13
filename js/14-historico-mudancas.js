@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.31.0', nome: 'Fonte própria no PDF da NF (DANFE)', status: 'atual', data: '12/11/2026 às 05:00',
+        numero: '2.32.0', nome: 'Início: fornecedores a chegar mostra quais e de qual pedido', status: 'atual', data: '12/11/2026 às 21:20',
+        novidades: ['Na tela Início, tocar em "fornecedores a chegar" agora abre a lista: cada pedido com os fornecedores que ainda não chegaram ou estão parciais. Tocar num fornecedor abre o pedido.', 'O resumo de pendências para enviar continua no atalho "Resumo de pendências" do Início (o toque no número não abre mais o gerador).'],
+        implementado: ['js/48: inicioContarFornecedores devolve também a lista (pedido, destino, fornecedor, situação), guardada junto com a contagem; abrirFornecedoresAChegar e renderFornecedoresAChegar. index.html: janela forn-chegar-modal. style.css: botão da linha. Mesma conta do número: lista e total sempre batem. Sem leitura nova no Firebase.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.31.0: index.html, style.css, js/14, js/24, js/31 e js/48.'],
+        testar: ['iPhone: na tela Início, toque em "fornecedores a chegar": deve abrir a lista com o mesmo total do número, agrupada por pedido.', 'Toque em um fornecedor da lista: deve abrir a Central do pedido correspondente.', 'O atalho "Resumo de pendências" continua abrindo o gerador de resumo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.31.0', nome: 'Fonte própria no PDF da NF (DANFE)', status: 'concluida', data: '12/11/2026 às 05:00',
         novidades: ['Ajustes > Fonte do PDF da NF: você carrega os arquivos .ttf da sua fonte (Times New Roman: times.ttf, timesbd.ttf e timesi.ttf) e o PDF da NF passa a usar essa fonte exata. Os arquivos ficam só neste aparelho (nunca no Firebase nem no GitHub). Sem carregar nada, nada muda: continua a fonte padrão do app.', 'Cada aparelho guarda a sua cópia (iPhone e computador separados). "Voltar à fonte padrão" apaga a cópia.'],
         implementado: ['js/52 (novo): leitura do .ttf (larguras, medidas, licença de incorporação), armazenamento em IndexedDB e a tela. js/49: usa a fonte própria quando existe (Normal e Negrito obrigatórios). js/01 e js/29: a nova tela em Ajustes e na busca. O PDF embute a fonte inteira (fica maior que o PDF com a fonte padrão).'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/49-danfe.js', 'js/52-danfe-fonte-propria.js'],
@@ -3203,4 +3212,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.31.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.32.0';

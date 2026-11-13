@@ -21,7 +21,8 @@ function inicioPrimeiroNome() {
 const INI_JANELA_DIAS = 60, INI_MIN_ITENS_FALTANDO = 3;
 let _iniSigForn = '', _iniCalculando = false;
 function inicioContarFornecedores() {
-    const lim = Date.now() - INI_JANELA_DIAS * 86400000, r = { nao: 0, achegar: 0 };
+    const lim = Date.now() - INI_JANELA_DIAS * 86400000, r = { nao: 0, achegar: 0, lista: [] };
+    const nomeF = f => { let n = f.nome || f.fornecedor || f.razaoSocial || ''; try { n = nomeExibicaoFornecedor(n, f.cnpj || '') || n; } catch (e) { } return String(n); };
     comMemoComparacao(() => (listaCotacoes || []).forEach(cot => {
         const ref = Date.parse(cot.dataPedido || cot.atualizadoEm || '') || 0; if (ref && ref < lim) return;
         let comp; try { comp = compararFontesPedido(cot.pedido); } catch (e) { return; }
@@ -32,9 +33,9 @@ function inicioContarFornecedores() {
             let e; try { e = calcularEntregaFornecedorPedido(cot.pedido, f, comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === ch)); } catch (er) { return; }
             const st = statusEntregaRelCot(e);
             if (st.chave === 'cancelada' || st.chave === 'concluida') return;
-            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) r.nao++; return; }
+            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) { r.nao++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), t: 'nao', n: itens.length }); } return; }
             const faltam = itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).length;
-            if (faltam >= INI_MIN_ITENS_FALTANDO) r.achegar++;
+            if (faltam >= INI_MIN_ITENS_FALTANDO) { r.achegar++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), t: 'achegar', n: faltam }); }
         });
     }));
     return r;
@@ -63,8 +64,8 @@ function renderInicio() {
     inicioAtualizarFornecedores();
     const d = inicioDados(), agora = new Date(), nome = inicioPrimeiroNome(), pf = iniLerCache().forn;
     const kForn = pf
-        ? `<button type="button" class="ini-k n" onclick="abrirResumoPendencias()"><b>${pf.nao + pf.achegar}</b><span>fornecedores a chegar<br>${pf.nao} não chegaram · ${pf.achegar} com mais de 2 itens faltando</span></button>`
-        : `<button type="button" class="ini-k n" onclick="abrirResumoPendencias()"><b>…</b><span>fornecedores a chegar<br>calculando</span></button>`;
+        ? `<button type="button" class="ini-k n" onclick="abrirFornecedoresAChegar()"><b>${pf.nao + pf.achegar}</b><span>fornecedores a chegar<br>${pf.nao} não chegaram · ${pf.achegar} com mais de 2 itens faltando</span></button>`
+        : `<button type="button" class="ini-k n" onclick="abrirFornecedoresAChegar()"><b>…</b><span>fornecedores a chegar<br>calculando</span></button>`;
     const dataTxt = `${DIAS_INI[agora.getDay()]}, ${String(agora.getDate()).padStart(2, '0')} de ${MESES_INI[agora.getMonth()]}`;
     const k = (cls, n, txt, acao) => `<button type="button" class="ini-k ${cls}" onclick="${acao}"><b>${n}</b><span>${txt}</span></button>`;
     const at = (ic, txt, acao, forte) => `<button type="button" class="ini-at${forte ? ' forte' : ''}" onclick="${acao}"><i class="${ic}"></i><span>${txt}</span></button>`;
@@ -97,6 +98,32 @@ function renderInicio() {
         </div>
         <div class="ini-tit">Próximos vencimentos</div>
         <div class="ini-card">${linhasProx}</div>`;
+}
+// 2.32.0: toque em "fornecedores a chegar" mostra QUEM e de qual PEDIDO (antes abria o gerador de resumo). Usa os mesmos dados do número.
+function abrirFornecedoresAChegar() {
+    const m = document.getElementById('forn-chegar-modal'); if (!m) return;
+    m.classList.add('active');
+    const corpo = document.getElementById('forn-chegar-lista');
+    let pf = iniLerCache().forn;
+    if (!pf || !Array.isArray(pf.lista)) {
+        corpo.innerHTML = '<div class="ini-vazio">Calculando…</div>';
+        setTimeout(() => { try { pf = inicioContarFornecedores(); iniGravarCache({ forn: pf }); } catch (e) { pf = null; } renderFornecedoresAChegar(pf); }, 30);
+        return;
+    }
+    renderFornecedoresAChegar(pf);
+}
+function renderFornecedoresAChegar(pf) {
+    const corpo = document.getElementById('forn-chegar-lista'), tit = document.getElementById('forn-chegar-tit'); if (!corpo) return;
+    const lista = (pf && pf.lista) || [];
+    if (tit) tit.textContent = lista.length ? `${lista.length} fornecedor(es) a chegar` : 'Fornecedores a chegar';
+    if (!lista.length) { corpo.innerHTML = '<div class="ini-vazio">Nenhum fornecedor pendente nos pedidos dos últimos ' + INI_JANELA_DIAS + ' dias.</div>'; return; }
+    const por = {}; lista.forEach(x => { (por[x.p] = por[x.p] || { o: x.o, itens: [] }).itens.push(x); });
+    const pedidos = Object.keys(por).sort((a, b) => (parseInt(b, 10) || 0) - (parseInt(a, 10) || 0));
+    corpo.innerHTML = pedidos.map(p => {
+        const g = por[p]; g.itens.sort((a, b) => (a.t === b.t ? a.f.localeCompare(b.f, 'pt-BR') : a.t === 'nao' ? -1 : 1));
+        return `<div class="ini-tit" style="margin-top:12px">Pedido ${escIni(p)}${g.o ? ' · ' + escIni(g.o) : ''}</div><div class="ini-card">` +
+            g.itens.map(x => `<button type="button" class="ini-lin" style="width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left" onclick="closeAllModals(); abrirCentralPedido('${escIni(p)}')"><div>${escIni(x.f)}<small>${x.t === 'nao' ? 'Não chegou (' + x.n + ' item(ns))' : 'Faltam ' + x.n + ' item(ns)'}</small></div><span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span></button>`).join('') + '</div>';
+    }).join('');
 }
 function renderInicioSeAtivo() { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) renderInicio(); }
 function inicioBuscar(txt) {
@@ -142,4 +169,4 @@ function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.25.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.32.0';
