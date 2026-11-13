@@ -628,7 +628,10 @@ function _compararFontesPedidoCalc(pedido, opcoes) {
     // histórico "NF a NF" da entrega) e opcoes.semErp ignora o ERP nessa reconstrução.
     const apenasNfIds = opcoes && opcoes.nfIds ? opcoes.nfIds : null;
     const nfsDoPedido = listaNfsProcessadas.filter(nf => nfPertenceAoPedido(nf) && !(nfExtra && nf.id === nfExtra.id) && !dupExcluida(nf) && (!apenasNfIds || apenasNfIds.includes(nf.id))).concat(nfExtra && !dupExcluida({ ...nfExtra, id: nfExtra.id + '#tela' }) ? [nfExtra] : []);
-    const entradasErpDoPedido = (opcoes && opcoes.semErp) ? [] : listaEntradasErp.filter(e => pedidoDoErpConfirmado(e) === String(pedido));
+    // 2.36.0: a entrada do ERP de uma NF em duplicidade também sai da conta (senão o ERP "dobra" o recebido e os avisos item a item continuam)
+    const nfsDupDoPedido = listaNfsProcessadas.filter(nf => nfPertenceAoPedido(nf) && dupExcluida(nf));
+    const erpDeNfDuplicada = e => nfsDupDoPedido.some(nf => normNfNumero(nf.nf) === normNfNumero(e.nf) && cnpjEmLista(cnpjsDaMesmaEntidadeFornecedor(nf.cnpjFornecedor), (e.vinculo && e.vinculo.cnpjFornecedor) || e.cnpjFornecedor));
+    const entradasErpDoPedido = (opcoes && opcoes.semErp) ? [] : listaEntradasErp.filter(e => pedidoDoErpConfirmado(e) === String(pedido) && !erpDeNfDuplicada(e));
     // Fase 31: fornecedor com mais de um CNPJ (mesma entidade) — a entrada do ERP pode
     // estar no CNPJ irmão do que está na cotação. Sem entidade cadastrada, vale só o CNPJ exato.
     const cacheEntidade = {};
@@ -1863,4 +1866,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.33.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.36.0';

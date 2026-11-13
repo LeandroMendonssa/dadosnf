@@ -43,7 +43,12 @@ function inicioContarFornecedores() {
 // recalcula só quando os dados mudaram e fora do caminho de desenho da tela (não trava a abertura)
 function inicioAtualizarFornecedores() {
     if (_iniCalculando || !listaCotacoes || !listaCotacoes.length) return;
-    const sig = [listaCotacoes.length, (listaNfsProcessadas || []).length, (listaEntradasErp || []).length, (listaCotacoes[0] || {}).atualizadoEm || '', (listaAnotacoes || []).length].join('|');
+    // 2.36.0: assinatura de TUDO que muda o resultado (datas de alteração, "chegou", decisões de duplicidade). Só CPU local, nenhuma leitura no Firebase.
+    const mx = (l, ...ks) => (l || []).reduce((m, x) => { for (const k of ks) { const v = x && x[k]; if (v && String(v) > m) m = String(v); } return m; }, '');
+    const nCheg = listaCotacoes.reduce((n, c) => n + Object.keys(c.chegadasPorFornecedor || {}).length, 0);
+    const nDup = (listaNfsProcessadas || []).reduce((n, x) => n + (x.duplicidade && x.duplicidade.decisao ? 1 : 0), 0);
+    const sig = [listaCotacoes.length, (listaNfsProcessadas || []).length, (listaEntradasErp || []).length, (listaAnotacoes || []).length, nCheg, nDup,
+        mx(listaCotacoes, 'atualizadoEm'), mx(listaNfsProcessadas, 'processadoEm', 'atualizadoEm'), mx(listaEntradasErp, 'atualizadoEm', 'data')].join('|');
     if (sig === _iniSigForn) return;
     _iniCalculando = true;
     setTimeout(() => {
@@ -76,7 +81,8 @@ function renderInicio() {
     }).join('') || '<div class="ini-vazio">Nenhuma NF aberta na relação.</div>';
     el.innerHTML = `
         <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}</div>
-        <form class="ini-busca" onsubmit="event.preventDefault(); inicioBuscar(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor ou pedido" autocomplete="off" enterkeyhint="search"></form>
+        <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
+        <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
         <div class="ini-grid">
             ${k('r', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
@@ -125,7 +131,27 @@ function renderFornecedoresAChegar(pf) {
             g.itens.map(x => `<button type="button" class="ini-lin" style="width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${x.t === 'nao' ? 'Não chegou (' + x.n + ' item(ns))' : 'Faltam ' + x.n + ' item(ns)'}</small></div><span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span></button>`).join('') + '</div>';
     }).join('');
 }
-function renderInicioSeAtivo() { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) renderInicio(); }
+function renderInicioSeAtivo() {
+    const t = document.getElementById('screen-inicio'); if (!t || !t.classList.contains('active')) return;
+    const a = document.activeElement; if (a && a.closest && a.closest('.ini-busca')) return;   // 2.36.0: não apaga o que você está digitando
+    renderInicio();
+}
+// 2.36.0: busca da tela inicial também acha PRODUTOS (nas cotações); toque no resultado leva ao fornecedor e ao produto no pedido.
+function inicioBuscarProdutos(txt) {
+    const box = document.getElementById('ini-busca-res'); if (!box) return;
+    const termo = String(txt || '').trim().toUpperCase();
+    if (termo.length < 2) { box.innerHTML = ''; return; }
+    const blocos = []; let total = 0;
+    (listaCotacoes || []).forEach(c => itensCorrespondentesCotacao(c, termo).forEach(it => { total++; if (blocos.length < 25) blocos.push(renderCardResultadoItem(c, it)); }));
+    const verNfs = `<button type="button" class="central-status-toggle" style="margin:0 0 8px" onclick="inicioBuscar(document.querySelector('.ini-busca input').value)">Buscar “${escIni(String(txt).trim())}” nas NFs, fornecedores e pedidos</button>`;
+    box.innerHTML = verNfs + (total ? `<div class="ini-tit">Produtos nas cotações (${total}${total > blocos.length ? ', mostrando ' + blocos.length : ''})</div>${blocos.join('')}` : '<div class="ini-vazio">Nenhum produto encontrado nas cotações.</div>');
+}
+function inicioEnviarBusca(txt) {
+    const termo = String(txt || '').trim().toUpperCase(); if (!termo) return;
+    const temProduto = (listaCotacoes || []).some(c => itensCorrespondentesCotacao(c, termo).length);
+    if (temProduto) { inicioBuscarProdutos(txt); const i = document.querySelector('.ini-busca input'); if (i) i.blur(); return; }
+    inicioBuscar(txt);
+}
 function inicioBuscar(txt) {
     txt = String(txt || '').trim(); if (!txt) return;
     abaControle = 'aberto'; filtroControle = txt; selecionadasControle.clear(); selecaoControleAtiva = false; limiteControle = 60;
@@ -168,5 +194,5 @@ function loteBuscar() {
 }
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
-window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.34.0';
+window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.36.0';

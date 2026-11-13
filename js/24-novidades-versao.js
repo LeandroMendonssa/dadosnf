@@ -72,4 +72,4 @@ function agendarNovidadesVersao() {
     setTimeout(tentar, 2000);
 }
 auth.onAuthStateChanged(user => { if (user) agendarNovidadesVersao(); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.35.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.36.0';

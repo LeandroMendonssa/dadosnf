@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.35.0', nome: 'Pesquisa por produto leva ao fornecedor e ao produto no pedido', status: 'atual', data: '13/11/2026 às 07:30',
+        numero: '2.36.0', nome: 'Início atualiza na hora, busca de produtos no Início e ERP da NF duplicada', status: 'atual', data: '13/11/2026 às 17:30',
+        novidades: ['Início: o número de "fornecedores a chegar" agora atualiza sozinho em poucos segundos quando você marca "chegou", registra uma NF ou decide uma duplicidade. Não usa leitura nova do Firebase: só confere, no próprio aparelho, os dados que já chegam em tempo real.', 'Início: a busca agora também procura PRODUTOS nas cotações (além de NF, fornecedor e pedido). Tocar no produto abre o pedido no fornecedor e no produto. A busca continua na tela de Cotações.', 'Início: a tela não se refaz mais enquanto você digita na busca, e some a segunda borda cinza ao tocar nela.', 'NF duplicada: a entrada do ERP dessa mesma NF também sai da conta do pedido, para não "dobrar" o recebido e manter os avisos item a item.'],
+        implementado: ['js/48: assinatura ampliada (datas de alteração, chegadas, decisões de duplicidade), conferência a cada 3 s só com a tela Início aberta, inicioBuscarProdutos/inicioEnviarBusca (reaproveita itensCorrespondentesCotacao e renderCardResultadoItem), renderInicioSeAtivo não desenha com a busca em foco. style.css: foco da busca sem borda dupla. js/11: entradas do ERP de NF duplicada excluídas em _compararFontesPedidoCalc.'],
+        arquivos: ['index.html', 'style.css', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.35.0: index.html, style.css, js/11, js/14, js/24, js/31 e js/48.'],
+        testar: ['iPhone: marque "chegou" em um fornecedor e volte ao Início: o número deve mudar em até uns 3 segundos. Registre/atualize uma NF e confira também.', 'Início: digite um produto na busca (ex.: dipirona): devem aparecer os pedidos/fornecedores; toque em um e confira o posicionamento. Verifique que o teclado não some sozinho e que não há borda dupla.', 'Pedido 1744 (SUPERMED): se os avisos item a item da NF 924664 continuarem, me envie um diagnóstico novo exportado com a tela aberta.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.35.0', nome: 'Pesquisa por produto leva ao fornecedor e ao produto no pedido', status: 'concluida', data: '13/11/2026 às 07:30',
         novidades: ['Em Cotações, ao pesquisar um produto e tocar no resultado, o app abre o pedido, expande o cartão do fornecedor daquele item e rola até o produto (antes só abria o pedido, no topo).'],
         implementado: ['js/30: irParaProdutoPedido (abre o pedido, expande o fornecedor, abre e destaca o produto; se o produto não for achado, destaca o fornecedor). js/13: o resultado da pesquisa por produto chama essa função.'],
         arquivos: ['index.html', 'style.css', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/30-navegacao.js', 'js/31-ajuda.js'],
@@ -3239,4 +3248,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.35.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.36.0';
