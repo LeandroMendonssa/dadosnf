@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.33.0', nome: 'NF duplicada tratada como uma ocorrência só (NF inteira)', status: 'atual', data: '13/11/2026 às 06:30',
+        numero: '2.34.0', nome: 'Fornecedores a chegar: toque leva ao cartão do fornecedor', status: 'atual', data: '13/11/2026 às 07:00',
+        novidades: ['Na lista de Início > fornecedores a chegar, tocar em um fornecedor agora abre o pedido na Central, expande o cartão desse fornecedor e rola até ele (antes só abria o pedido).'],
+        implementado: ['js/30: irParaFornecedorPedido (abre o pedido, expande e destaca o cartão). js/48: a lista passa a guardar o CNPJ do fornecedor e o toque chama a nova função. Se o número em cache for antigo (sem CNPJ), só abre o pedido, como antes.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.33.0: index.html, style.css, js/14, js/24, js/30, js/31 e js/48.'],
+        testar: ['iPhone: Início > toque em "fornecedores a chegar" > toque em um fornecedor: deve abrir o pedido com o cartão dele aberto e na tela. Se o cartão não abrir, feche e reabra a lista uma vez (o cálculo antigo em cache não tem o fornecedor).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.33.0', nome: 'NF duplicada tratada como uma ocorrência só (NF inteira)', status: 'concluida', data: '13/11/2026 às 06:30',
         novidades: ['Uma NF é considerada duplicada quando TODOS os seus itens já chegaram em outra NF do mesmo pedido e do mesmo fornecedor, com número de NF diferente. Mesmo número de NF continua sendo atualização e nunca avisa. Se vier algum item novo (que ainda não chegou), NÃO é duplicidade: fica como divergência por item.', 'Entrada de NF: quadro vermelho "Possível NF duplicada" com o botão Decidir: Aceito (ficamos com o material), Não aceito com devolução total, Não aceito com devolução parcial (você marca os itens) ou Não é duplicidade. Dá para salvar a NF sem decidir.', 'Central do pedido: aparece UM grupo "NF X recebida em duplicidade" (Pedido duplicado / Duplicidade resolvida) com os itens recolhidos, Resolver e Gerar auditoria (1). A NF duplicada deixa de somar no recebido, então somem as dezenas de divergências "quantidade acima" item a item.', 'Auditoria: novo tipo "NF em duplicidade" com texto pronto: a NF veio em duplicidade pelo pedido, aceito ou não aceito, devolução total/parcial.'],
         implementado: ['js/53 (novo): dupAnalisar/dupInfo (detecção por NF inteira, compara só com NFs salvas antes), decisão salva em duplicidade na NF, quadro da Entrada, grupo da Central e dupGerarAuditoria. js/11: NF duplicada fora da soma do pedido e decisão preservada ao salvar. js/09: grupo no cartão do fornecedor e ação Pedido duplicado. js/12 e js/01: tipo e modelo nf_duplicada. js/33: removida a detecção antiga por itens.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js', 'js/53-nf-duplicada.js'],

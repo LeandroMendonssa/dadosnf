@@ -137,6 +137,19 @@ function irParaDivergenciaPedido(pedido, cnpj, codProduto) {
         return abrirItemComDivergenciaNoCartao(card);
     });
 }
+// 2.34.0: Início > fornecedores a chegar: abre o pedido, expande o cartão do fornecedor e rola até ele (sem cnpj, só abre o pedido).
+function irParaFornecedorPedido(pedido, cnpj) {
+    abrirCentralPedido(String(pedido));
+    const chave = cnpj ? chaveFornecedorNoPedido(pedido, cnpj) : null;
+    if (!chave) return;
+    centralFornecedoresAbertos.add(chave); renderCentralPedidoCompleto(String(pedido));
+    destacarAlvo(() => {
+        const card = [...document.querySelectorAll('#central-fornecedores-container .central-fornecedor')].find(c => c.dataset.cnpj === chave);
+        if (!card) return null;
+        card.classList.add('aberto');
+        return card;
+    });
+}
 // Abre (se estiver fechado) o produto com este código dentro do cartão do fornecedor e devolve o elemento dele.
 function abrirProdutoNoCartao(card, codProduto) {
     const prod = [...card.querySelectorAll('.central-prod')].find(p => { const cab = p.querySelector('.central-prod-cab'); return cab && (cab.getAttribute('onclick') || '').includes("'" + codProduto + "'"); });
@@ -225,4 +238,4 @@ function irParaPendenciaControle(chave, tipo) {
     if (document.body) aplicar(); else document.addEventListener('DOMContentLoaded', aplicar);
     if (mq.addEventListener) mq.addEventListener('change', aplicar); else if (mq.addListener) mq.addListener(aplicar);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.24.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.34.0';
