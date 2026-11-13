@@ -22,55 +22,91 @@ const itemLinhaResumo = (nome, qtd, resto) => `${maiusculoResumo(nome)}${qtd !==
 function dataExtensoResumo() { const s = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }); return s.charAt(0).toUpperCase() + s.slice(1) + '.'; }
 
 // ---------- dados ----------
-// { pedido, naoEntregaram:[nomes], pend:[{ nome, nfs:[], linhas:[] }] } ou null
-// Regras: "não entregaram" = fornecedor sem nenhuma NF recebida (aguardando). "Pendências" = fornecedor que entregou mas tem produto
-// NÃO FATURADO ainda não relatado (detectado pelo app ou em auditoria gerada e ainda não relatada). Quem entregou tudo, quem teve a
-// entrega cancelada e quem só tem NF no ERP (sem auditoria de produto) não aparece.
+// 2.37.0: os pedidos entram SOZINHOS (mesmo critério e janela da tela inicial: fornecedor que ainda não entregou ou que entregou e deixou pendência).
+// Cada linha leva o seu tipo: 'nf' (produto não faturado), 'div' (outra divergência de auditoria) e 'obs' (observação da ocorrência).
+// Só entram ocorrências de auditoria ainda "geradas, não relatadas" (resolvida/relatada = já sinalizada). Anotações de texto livre NÃO são usadas.
+// { pedido, nao:[nomes], forn:[{ nome, linhas:[{k,t,nf}] }] } ou null
+const RP_TIPOS = ['nao', 'nf', 'div', 'obs'], RP_PADRAO = { nao: true, nf: true, div: false, obs: false };
 function dadosResumoPendenciasPedido(pedido) {
     const d = dadosRelatorioCotacao(pedido); if (!d) return null;
     const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido)) || {};
     const comp = compararFontesPedido(cot.pedido);
-    const nota = (typeof listaAnotacoes !== 'undefined' ? listaAnotacoes : []).find(a => String(a.pedido) === String(cot.pedido));
-    const r = { pedido: String(pedido), naoEntregaram: [], pend: [] };
+    const nota = (typeof listaAnotacoes !== 'undefined' ? listaAnotacoes : []).find(a => String(a.pedido) === String(cot.pedido) && Array.isArray(a.ocorrencias));
+    const r = { pedido: String(pedido), nao: [], forn: [] };
     d.fornecedores.forEach(f => {
         const nome = maiusculoResumo((() => { try { return nomeExibicaoFornecedor(f.nome, f.cnpj) || f.nome; } catch (e) { return f.nome; } })()), ch = normalizarCnpj(f.cnpj);
         if (f.status.chave === 'cancelada') return;
-        const linhas = [], nfs = [], visto = new Set();
-        const add = t => { const k = maiusculoResumo(t).replace(/\s+/g, ' ').trim(); if (k && !visto.has(k)) { visto.add(k); linhas.push(t); } };
+        const linhas = [], visto = new Set();
+        const add = (k, t, nf) => { const c = maiusculoResumo(t).replace(/\s+/g, ' ').trim(); if (c && !visto.has(c)) { visto.add(c); linhas.push({ k, t, nf: nf ? String(nf) : '' }); } };
         // (a) detectado pelo app e ainda sem auditoria
         comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === ch && x.estado === 'detectada' && x.soNaoChegou).forEach(x => {
             const dv = (x.divergencias || []).find(v => v.tipo === 'nao_faturado') || {};
             const it = (cot.itens || []).find(i => i.codProduto === x.codProduto) || {};
             const qtd = dv.quantidadeCotada !== undefined && dv.quantidadeCotada !== '' ? dv.quantidadeCotada : it.quantidade;
-            add(itemLinhaResumo(x.nome || it.nomeOficial || it.descricao || x.codProduto, qtd, 'não foi faturado.'));
+            add('nf', itemLinhaResumo(x.nome || it.nomeOficial || it.descricao || x.codProduto, qtd, 'não foi faturado.'));
         });
-        // (b) auditoria já gerada de produto não faturado, ainda não relatada (relatada/resolvida = "já sinalizada": não entra)
-        ((nota && nota.ocorrencias) || []).filter(oc => normalizarCnpj(oc.fornecedorCnpj) === ch).forEach(oc => (oc.divergencias || []).forEach(dv => {
-            if (dv.tipo !== 'nao_faturado' || (dv.status || 'pendente') !== 'pendente' || dv.relatado !== false) return;
-            let ls = []; try { ls = linhasDeMateriais(dv); } catch (e) { /* tipo antigo */ }
-            ls.forEach(add); if (ls.length && oc.notaFiscal && !nfs.includes(String(oc.notaFiscal))) nfs.push(String(oc.notaFiscal));
-        }));
-        if (linhas.length) r.pend.push({ nome, nfs, linhas });
-        else if (f.status.chave === 'pendente' && !/ERP/i.test(f.status.detalhe || '')) r.naoEntregaram.push(nome);
+        // (b) ocorrências de auditoria geradas e ainda não relatadas (é aqui que está o rastro correto: NF, divergência e observação)
+        ((nota && nota.ocorrencias) || []).filter(oc => normalizarCnpj(oc.fornecedorCnpj) === ch || (!oc.fornecedorCnpj && oc.fornecedor && maiusculoResumo(oc.fornecedor) === nome)).forEach(oc => {
+            let teve = false;
+            (oc.divergencias || []).forEach(dv => {
+                if ((dv.status || 'pendente') !== 'pendente' || dv.relatado !== false) return;
+                let ls = []; try { ls = linhasDeMateriais(dv); } catch (e) { /* tipo antigo */ }
+                ls.forEach(t => add(dv.tipo === 'nao_faturado' ? 'nf' : 'div', t, oc.notaFiscal)); if (ls.length) teve = true;
+            });
+            if (teve && String(oc.observacaoGeral || '').trim()) add('obs', String(oc.observacaoGeral).trim(), oc.notaFiscal);
+        });
+        if (linhas.length) r.forn.push({ nome, linhas });
+        else if (f.status.chave === 'pendente' && !/ERP/i.test(f.status.detalhe || '')) r.nao.push(nome);
     });
-    r.naoEntregaram.sort((a, b) => a.localeCompare(b)); r.pend.sort((a, b) => a.nome.localeCompare(b.nome));
+    r.nao.sort((a, b) => a.localeCompare(b)); r.forn.sort((a, b) => a.nome.localeCompare(b.nome));
     return r;
 }
-
-function textoResumoPendencias(pedidos) {
-    const L = [dataExtensoResumo(), 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', ''], naoAchados = [];
-    pedidos.forEach(p => {
+// todos os pedidos recentes (e os extras digitados) já calculados; as caixinhas só filtram isto depois
+function dadosResumoTodos(extras) {
+    const lim = Date.now() - (typeof INI_JANELA_DIAS === 'number' ? INI_JANELA_DIAS : 60) * 86400000, out = [], ja = new Set();
+    const tenta = (p, forcar) => {
+        if (ja.has(String(p))) return; ja.add(String(p));
         let r; try { r = dadosResumoPendenciasPedido(p); } catch (e) { console.error('Resumo de pendências', p, e); r = null; }
-        if (!r) { naoAchados.push(p); return; }
+        out.push({ pedido: String(p), forcado: !!forcar, achou: !!r, r: r || { pedido: String(p), nao: [], forn: [] } });
+    };
+    comMemoComparacao(() => {
+        (listaCotacoes || []).forEach(c => { const ref = Date.parse(c.dataPedido || c.atualizadoEm || '') || 0; if (ref && ref < lim) return; tenta(c.pedido, false); });
+        (extras || []).forEach(p => tenta(p, true));
+    });
+    return out.sort((a, b) => (Number(a.pedido) || 0) - (Number(b.pedido) || 0));
+}
+function filtrarResumoPedido(r, op) {
+    const nao = op.nao ? r.nao : [];
+    const forn = r.forn.map(f => ({ nome: f.nome, linhas: f.linhas.filter(l => op[l.k]) })).filter(f => f.linhas.length);
+    return { pedido: r.pedido, nao, forn };
+}
+function contagemResumo(todos) {
+    const c = { nao: 0, nf: 0, div: 0, obs: 0 };
+    todos.forEach(x => { c.nao += x.r.nao.length; x.r.forn.forEach(f => f.linhas.forEach(l => c[l.k]++)); });
+    return c;
+}
+
+function textoResumoPendencias(todos, op) {
+    const L = [dataExtensoResumo(), 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', ''], naoAchados = [];
+    let algum = false;
+    todos.forEach(x => {
+        if (x.forcado && !x.achou) { naoAchados.push(x.pedido); return; }
+        const r = filtrarResumoPedido(x.r, op);
+        if (!r.nao.length && !r.forn.length && !x.forcado) return;
+        algum = true;
         L.push(`PEDIDO ${r.pedido}`, '');
-        if (r.naoEntregaram.length) { L.push('NÃO ENTREGARAM:'); r.naoEntregaram.forEach(n => L.push(n)); L.push(''); }
-        if (r.pend.length) {
+        if (r.nao.length) { L.push('NÃO ENTREGARAM:'); r.nao.forEach(n => L.push(n)); L.push(''); }
+        if (r.forn.length) {
             L.push('PENDÊNCIAS:', '');
-            r.pend.forEach(x => { L.push(x.nome + (x.nfs.length ? ' - N.F. ' + x.nfs.join(', ') : ':')); x.linhas.forEach(l => L.push(l)); L.push(''); });
+            r.forn.forEach(f => {
+                const nfs = [...new Set(f.linhas.map(l => l.nf).filter(Boolean))];
+                L.push(f.nome + (nfs.length ? ' - N.F. ' + nfs.join(', ') : ':')); f.linhas.forEach(l => L.push(l.t)); L.push('');
+            });
         }
-        if (!r.naoEntregaram.length && !r.pend.length) L.push('Sem pendências de entrega.', '');
+        if (!r.nao.length && !r.forn.length) L.push('Sem pendências de entrega.', '');
         L.push('');
     });
+    if (!algum) L.push('Nenhum pedido com pendência de entrega no momento.', '');
     if (naoAchados.length) L.push(`Pedido(s) não encontrado(s) em Cotações: ${naoAchados.join(', ')}.`, '');
     L.push(NOTA_RESUMO_PADRAO);
     return L.join('\n').replace(/\n{4,}/g, '\n\n\n').trimEnd() + '\n';
@@ -130,29 +166,22 @@ ${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333
 <p style="margin:10pt 0 0;text-align:right;font-size:8.5pt;font-style:italic;color:#444444">${e(b.nota || '')}</p>`;
     let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Resumo de pendências</title>
 <style>@page WordSection1{size:21cm 29.7cm;margin:1.3cm 1.6cm 4.6cm 1.6cm;mso-footer:f1}div.WordSection1{page:WordSection1}
-body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}table{border-collapse:collapse}td{vertical-align:top}
-.lb{font-size:9.5pt;font-weight:bold;text-transform:uppercase;margin:0 0 6pt}</style></head><body><div class="WordSection1">
-<p style="text-align:right;font-size:9pt;font-style:italic;color:#444444">${e(b.data)}</p>
-<p style="font-size:21pt;font-weight:bold;color:${RS_AZUL};margin:16pt 0 20pt;line-height:1.15">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
+body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
+<p style="text-align:right;font-size:9.5pt;font-style:italic">${e(b.data)}</p>
+<p style="font-size:16pt;font-weight:bold;text-decoration:underline;text-align:center;margin:14pt 30pt 18pt;line-height:1.25">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
 ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
     b.pedidos.forEach(p => {
-        h += `<table width="100%" style="border-top:3pt solid ${RS_AZUL};margin-top:4pt"><tr><td width="92" style="padding:14pt 0 14pt"><p style="font-size:8.5pt;font-weight:bold;color:#333333">PEDIDO</p><p style="font-size:27pt;font-weight:bold;color:${RS_AZUL};line-height:1">${e(p.num)}</p></td>
-<td style="border-left:1pt solid #bbbbbb;padding:14pt 0 14pt 16pt">`;
-        let nomes = [];
-        const fechaNomes = () => { if (!nomes.length) return; h += '<table width="100%" style="margin-bottom:4pt">'; for (let i = 0; i < nomes.length; i += 2) h += `<tr><td width="50%" style="padding:2pt 0">${e(nomes[i])}</td><td style="padding:2pt 0">${nomes[i + 1] ? e(nomes[i + 1]) : ''}</td></tr>`; h += '</table>'; nomes = []; };
-        let primeiro = true;
+        h += `<p style="font-weight:bold;margin:12pt 0 6pt">PEDIDO ${e(p.num)}</p>`;
         p.toks.forEach((t, i) => {
-            if (t.k !== 'nome') fechaNomes();
-            if (t.k === 'rotulo') { h += `<p class="lb" style="${primeiro ? '' : 'margin-top:14pt'}">${e(t.t)}</p>`; }
-            else if (t.k === 'nome') nomes.push(t.t);
-            else if (t.k === 'forn') h += `<p style="font-size:11pt;font-weight:bold;margin-top:2pt">${e(t.t)}</p>`;
-            else if (t.k === 'item') h += `<p style="font-style:italic;line-height:1.35;margin:2pt 0 ${(p.toks[i + 1] && p.toks[i + 1].k === 'item') ? 2 : 11}pt">${e(t.t)}</p>`;
+            if (t.k === 'rotulo') { if (!/^N[ãa]o entregaram/i.test(t.t)) h += `<p style="font-weight:bold;margin:10pt 0 6pt">${e(t.t.toUpperCase())}</p>`; }
+            else if (t.k === 'nome') h += `<p style="margin:0 0 ${(p.toks[i + 1] && p.toks[i + 1].k === 'nome') ? 0 : 8}pt">${e(t.t)}</p>`;
+            else if (t.k === 'forn') h += `<p style="font-weight:bold;margin-top:6pt">${e(t.t)}</p>`;
+            else if (t.k === 'item') h += `<p style="font-style:italic;line-height:1.3;margin:0 0 ${(p.toks[i + 1] && p.toks[i + 1].k === 'item') ? 0 : 8}pt">${e(t.t)}</p>`;
             else h += `<p style="margin-bottom:6pt">${e(t.t)}</p>`;
-            primeiro = false;
         });
-        fechaNomes(); h += '</td></tr></table>';
+        h += '<p style="border-bottom:1pt solid #000000;margin:6pt 0 0;font-size:2pt">&nbsp;</p>';
     });
-    h += `<table width="100%" style="border-top:1pt solid ${RS_AZUL}"><tr><td></td></tr></table></div>
+    h += `</div>
 <div style="mso-element:footer" id="f1">${assHtml}</div></body></html>`;
     return h;
 }
@@ -160,50 +189,46 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
 // ---------- PDF (jsPDF) ----------
 function gerarPdfResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 46, LARG = W - 2 * M, SIDE = 92, GAP = 18, XC = M + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - 146;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 46, LARG = W - 2 * M, SIDE = 92, GAP = 18, XC = M + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - 150;
     const s = assinaturaRelatorio(), logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null;
     const fill = h => { const c = rgbRelCot(h); doc.setFillColor(c[0], c[1], c[2]); }, draw = h => { const c = rgbRelCot(h); doc.setDrawColor(c[0], c[1], c[2]); }, ink = h => { const c = rgbRelCot(h); doc.setTextColor(c[0], c[1], c[2]); };
     const fonte = (tam, est) => { doc.setFont('helvetica', est || 'normal'); doc.setFontSize(tam); };
     const quebra = (t, larg, tam, est) => { fonte(tam, est); return doc.splitTextToSize(String(t), Math.max(30, larg)); };
     let y = 36;
-    // ---- topo
-    if (b.data) { fonte(9, 'italic'); ink('#444444'); doc.text(b.data, W - M, y + 8, { align: 'right' }); }
-    y += 22;
-    const tit = quebra(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', LARG, 21, 'bold');
-    fonte(21, 'bold'); ink(RS_AZUL); tit.forEach((l, i) => doc.text(l, M, y + 20 + i * 24)); y += tit.length * 24 + 24;
+    // ---- topo (layout do relatório antigo: sem tabela, sem cores)
+    if (b.data) { fonte(9.5, 'italic'); ink('#111111'); doc.text(b.data, W - M, y + 8, { align: 'right' }); }
+    y += 30;
+    const tit = quebra(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', LARG * 0.8, 16, 'bold');
+    fonte(16, 'bold'); ink('#000000'); draw('#000000'); doc.setLineWidth(1);
+    tit.forEach((l, i) => { const yy = y + 16 + i * 20, w = doc.getTextWidth(l); doc.text(l, W / 2, yy, { align: 'center' }); doc.line(W / 2 - w / 2, yy + 2.5, W / 2 + w / 2, yy + 2.5); });
+    y += tit.length * 20 + 22;
     b.previa.forEach(t => { const ls = quebra(t, LARG, 10.5); fonte(10.5); ink('#111111'); ls.forEach((l, i) => doc.text(l, M, y + 10 + i * 14.5)); y += ls.length * 14.5 + 8; });
     // ---- pedidos
-    let y0 = 0, pagIni = 0;
-    const barraVertical = (ini, fim) => { if (fim > ini) { draw('#bbbbbb'); doc.setLineWidth(1); doc.line(M + SIDE, ini, M + SIDE, fim); } };
-    const garantir = (alt) => { if (y + alt > LIM) { barraVertical(y0, y); doc.addPage(); y = 40; y0 = y; return true; } return false; };
+    const garantir = alt => { if (y + alt > LIM) { doc.addPage(); y = 40; } };
     b.pedidos.forEach(p => {
-        if (y + 90 > LIM) { doc.addPage(); y = 40; }
-        fill(RS_AZUL); doc.rect(M, y, LARG, 3, 'F'); y += 3 + 16; y0 = y - 16;
-        fonte(8.5, 'bold'); ink('#333333'); doc.text('PEDIDO', M, y + 8);
-        fonte(27, 'bold'); ink(RS_AZUL); doc.text(String(p.num), M, y + 36);
+        garantir(60);
+        fonte(10.5, 'bold'); ink('#000000'); doc.text('PEDIDO ' + p.num, M, y + 10); y += 22;
         const toks = p.toks; let i = 0, primeiro = true;
         while (i < toks.length) {
             const t = toks[i];
             if (t.k === 'rotulo') {
-                if (!primeiro) y += 14; garantir(30); fonte(9.5, 'bold'); ink('#111111'); doc.text(t.t.toUpperCase(), XC, y + 9); y += 18; i++;
+                if (/^N[ãa]o entregaram/i.test(t.t)) { i++; continue; }   // a lista simples de quem não entregou fica sem rótulo, como no relatório antigo
+                garantir(34); fonte(10.5, 'bold'); ink('#000000'); doc.text(t.t.toUpperCase(), M, y + 10); y += 22; i++;
             } else if (t.k === 'nome') {
-                const grupo = []; while (i < toks.length && toks[i].k === 'nome') grupo.push(toks[i++].t);
-                for (let g = 0; g < grupo.length; g += 2) {
-                    garantir(18); fonte(10.5); ink('#111111'); doc.text(grupo[g], XC, y + 10); if (grupo[g + 1]) doc.text(grupo[g + 1], XC + WC / 2, y + 10); y += 17;
-                }
+                garantir(16); fonte(10.5); ink('#111111'); doc.text(t.t, M, y + 10); y += 14.5; i++;
+                if (!(toks[i] && toks[i].k === 'nome')) y += 8;
             } else if (t.k === 'forn') {
-                const ls = quebra(t.t, WC, 11, 'bold'); garantir(ls.length * 14 + 18); fonte(11, 'bold'); ink('#111111'); ls.forEach((l, k) => doc.text(l, XC, y + 11 + k * 14)); y += ls.length * 14 + 3; i++;
+                const ls = quebra(t.t, LARG, 10.5, 'bold'); garantir(ls.length * 14.5 + 18); fonte(10.5, 'bold'); ink('#000000'); ls.forEach((l, k) => doc.text(l, M, y + 10 + k * 14.5)); y += ls.length * 14.5; i++;
             } else if (t.k === 'item') {
-                const ls = quebra(t.t, WC, 10.5, 'italic'); garantir(ls.length * 14.5 + 4); fonte(10.5, 'italic'); ink('#222222'); ls.forEach((l, k) => doc.text(l, XC, y + 10.5 + k * 14.5));
-                y += ls.length * 14.5 + ((toks[i + 1] && toks[i + 1].k === 'item') ? 3 : 13); i++;
+                const ls = quebra(t.t, LARG, 10.5, 'italic'); garantir(ls.length * 14.5 + 4); fonte(10.5, 'italic'); ink('#111111'); ls.forEach((l, k) => doc.text(l, M, y + 10 + k * 14.5));
+                y += ls.length * 14.5 + ((toks[i + 1] && toks[i + 1].k === 'item') ? 0 : 12); i++;
             } else {
-                const ls = quebra(t.t, WC, 10.5); garantir(ls.length * 14.5 + 6); fonte(10.5); ink('#111111'); ls.forEach((l, k) => doc.text(l, XC, y + 10.5 + k * 14.5)); y += ls.length * 14.5 + 6; i++;
+                const ls = quebra(t.t, LARG, 10.5); garantir(ls.length * 14.5 + 6); fonte(10.5); ink('#111111'); ls.forEach((l, k) => doc.text(l, M, y + 10 + k * 14.5)); y += ls.length * 14.5 + 6; i++;
             }
             primeiro = false;
         }
-        y += 6; barraVertical(y0, y); y += 10;
+        y += 2; draw('#000000'); doc.setLineWidth(0.8); doc.line(M, y, W - M, y); y += 16;
     });
-    if (b.pedidos.length) { draw(RS_AZUL); doc.setLineWidth(1); doc.line(M, y, W - M, y); }
     // ---- assinatura + aviso no fim de TODAS as páginas
     const linhasAss = [['email', s.email], ['fone', s.telefone], ['site', s.site], ['pin', s.endereco]].filter(x => x[1]);
     const ico = (tipo, x, yy) => {
@@ -231,32 +256,72 @@ function gerarPdfResumoPendencias(texto) {
 }
 
 // ---------- tela (janela) de uso ----------
+const RP_CHAVE = 'resumoPendOpcoesV1';
+let resumoPendTodos = [];
+function rpOpcoes() { const o = {}; RP_TIPOS.forEach(k => { const el = document.getElementById('rp-' + k); o[k] = el ? el.checked : RP_PADRAO[k]; }); return o; }
+function rpRestaurarOpcoes() {
+    let sv = {}; try { sv = JSON.parse(localStorage.getItem(RP_CHAVE) || '{}') || {}; } catch (e) { sv = {}; }
+    RP_TIPOS.forEach(k => { const el = document.getElementById('rp-' + k); if (el) el.checked = (k in sv) ? !!sv[k] : RP_PADRAO[k]; });
+}
+function rpGuardarOpcoes() { try { localStorage.setItem(RP_CHAVE, JSON.stringify(rpOpcoes())); } catch (e) { /* sem armazenamento */ } }
 function abrirResumoPendencias(pedidosIniciais) {
     try { if (typeof assinarDados === 'function') assinarDados('fornecedoresSpData'); } catch (e) { }   // apelidos dos fornecedores
     const lista = Array.isArray(pedidosIniciais) ? pedidosIniciais : (pedidosIniciais ? [pedidosIniciais] : []);
-    const campo = document.getElementById('resumo-pend-pedidos'); if (campo && lista.length) campo.value = lista.join(', ');
+    const campo = document.getElementById('resumo-pend-pedidos'); if (campo) campo.value = lista.join(', ');
+    rpRestaurarOpcoes();
+    const ed = document.getElementById('resumo-pend-texto'); if (ed) { ed.style.display = 'none'; ed.dataset.editado = ''; }
     const m = document.getElementById('resumo-pend-modal'); if (m) m.classList.add('active');
-    gerarResumoPendencias(); setTimeout(() => { const m2 = document.getElementById('resumo-pend-modal'), a = document.getElementById('resumo-pend-texto'); if (m2 && m2.classList.contains('active') && a && a.dataset.editado !== '1') gerarResumoPendencias(); }, 1500);   // refaz quando o cadastro de fornecedores terminar de carregar (se você ainda não editou o texto)
+    gerarResumoPendencias(true);
+    setTimeout(() => { const m2 = document.getElementById('resumo-pend-modal'), a = document.getElementById('resumo-pend-texto'); if (m2 && m2.classList.contains('active') && a && a.dataset.editado !== '1') gerarResumoPendencias(true); }, 1500);
 }
 function abrirResumoPendenciasSelecionadas() {
     const sel = typeof cotacoesSelecionadas !== 'undefined' ? [...cotacoesSelecionadas] : [];
     if (!sel.length) return toast('Selecione ao menos uma cotação.');
     abrirResumoPendencias(sel);
 }
-// monta o texto a partir dos pedidos digitados (e descarta edições anteriores)
-function gerarResumoPendencias() {
-    const campo = document.getElementById('resumo-pend-pedidos'), area = document.getElementById('resumo-pend-texto'); if (!campo || !area) return;
-    resumoPendPedidos = pedidosDoTextoResumo(campo.value); area.dataset.editado = '';
-    area.value = resumoPendPedidos.length ? textoResumoPendencias(resumoPendPedidos) : '';
+// recalcula os dados (recalcular=true) ou só reaplica as caixinhas; descarta edições feitas à mão
+function gerarResumoPendencias(recalcular) {
+    const campo = document.getElementById('resumo-pend-pedidos'), area = document.getElementById('resumo-pend-texto'); if (!area) return;
+    resumoPendPedidos = pedidosDoTextoResumo(campo ? campo.value : '');
+    if (recalcular === true || !resumoPendTodos.length || recalcular === 'extras') resumoPendTodos = dadosResumoTodos(resumoPendPedidos);
+    const op = rpOpcoes(), c = contagemResumo(resumoPendTodos);
+    RP_TIPOS.forEach(k => { const el = document.getElementById('rp-n-' + k); if (el) el.textContent = c[k] + (k === 'nao' ? ' fornec.' : ' item(ns)'); });
+    area.dataset.editado = '';
+    area.value = textoResumoPendencias(resumoPendTodos, op);
+    resumoPendPedidos = resumoPendTodos.filter(x => x.r.nao.length || x.r.forn.length || x.forcado).map(x => x.pedido);
+    rpAtualizarPrevia();
 }
+function resumoPendOpcaoMudou() { rpGuardarOpcoes(); gerarResumoPendencias(); }
+function rpAtualizarPrevia() {
+    const el = document.getElementById('rp-previa'), area = document.getElementById('resumo-pend-texto'); if (!el || !area) return;
+    const b = blocosResumoPendencias(area.value), e = escRel, s = assinaturaRelatorio();
+    let h = `<div class="rp-dt">${e(b.data)}</div><div class="rp-tt">${e(b.titulo)}</div>${b.previa.map(t => `<div>${e(t)}</div>`).join('')}`;
+    b.pedidos.forEach(p => {
+        h += `<div class="rp-pd">PEDIDO ${e(p.num)}</div>`;
+        p.toks.forEach(t => {
+            if (t.k === 'rotulo') { if (!/^N[ãa]o entregaram/i.test(t.t)) h += `<div class="rp-rot">${e(t.t.toUpperCase())}</div>`; }
+            else if (t.k === 'forn') h += `<div class="rp-fn">${e(t.t)}</div>`;
+            else if (t.k === 'item') h += `<div class="rp-it">${e(t.t)}</div>`;
+            else h += `<div>${e(t.t)}</div>`;
+        });
+        h += '<hr>';
+    });
+    h += `<div class="rp-ass"><b>${e(s.nome || '')}</b>${s.cargo ? ' · ' + e(s.cargo) : ''}</div><div class="rp-nt">${e(b.nota || '')}</div>`;
+    el.innerHTML = h;
+}
+function resumoPendAlternarEdicao() {
+    const a = document.getElementById('resumo-pend-texto'); if (!a) return;
+    a.style.display = a.style.display === 'none' ? 'block' : 'none';
+}
+function resumoPendTextoEditado() { const a = document.getElementById('resumo-pend-texto'); if (a) a.dataset.editado = '1'; rpAtualizarPrevia(); }
 function textoAtualResumo() { const a = document.getElementById('resumo-pend-texto'); return a ? a.value : ''; }
 async function copiarResumoPendencias() {
-    const t = textoAtualResumo(); if (!t.trim()) return toast('Informe os números dos pedidos.');
+    const t = textoAtualResumo(); if (!t.trim()) return toast('Não há pendências para exportar.');
     try { await navigator.clipboard.writeText(t); toast('✓ Resumo copiado.'); }
     catch (e) { const a = document.getElementById('resumo-pend-texto'); if (a) { a.focus(); a.select(); } toast('Selecione e copie o texto.'); }
 }
 async function baixarResumoPendencias(formato) {
-    const texto = textoAtualResumo(); if (!texto.trim()) return toast('Informe os números dos pedidos.');
+    const texto = textoAtualResumo(); if (!texto.trim()) return toast('Não há pendências para exportar.');
     const base = 'Resumo-pendencias-' + (resumoPendPedidos.slice(0, 4).join('-') || 'pedidos');
     try {
         let ok = false;
@@ -268,4 +333,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.24.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.37.0';

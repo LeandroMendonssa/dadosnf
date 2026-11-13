@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.36.0', nome: 'Início atualiza na hora, busca de produtos no Início e ERP da NF duplicada', status: 'atual', data: '13/11/2026 às 17:30',
+        numero: '2.37.0', nome: 'Resumo de pendências: pedidos automáticos, caixinhas, prévia e layout antigo', status: 'atual', data: '13/11/2026 às 18:10',
+        novidades: ['Os pedidos entram sozinhos no resumo: todo pedido recente (mesma janela de 60 dias do Início) com fornecedor que não entregou ou que entregou e deixou pendência. Dá para incluir outros pedidos digitando o número (opcional).', 'Caixinhas do que entra: fornecedores que não entregaram e produtos não faturados (ligadas), divergências em aberto e observação da ocorrência (desligadas). A última escolha fica guardada neste aparelho.', 'Só entram ocorrências de auditoria ainda não relatadas (o rastro da auditoria: fornecedor, NF, divergência e observação). Anotações de texto livre não são usadas.', 'Prévia na tela e PDF/Word no layout do relatório antigo: sem tabelas, título centralizado e sublinhado, lista simples de quem não entregou sob o pedido, fornecedor com NF em negrito, itens em itálico, linha entre pedidos, assinatura e a frase final. "Editar texto" continua.'],
+        implementado: ['js/47: dadosResumoPendenciasPedido devolve linhas com tipo (nf/div/obs) lidas das ocorrências; dadosResumoTodos/filtrarResumoPedido/contagemResumo; textoResumoPendencias aceita as opções; PDF (gerarPdfResumoPendencias) e Word (htmlResumoPendencias) refeitos no layout antigo; prévia e caixinhas. index.html: modal do resumo. style.css: estilos da prévia. js/37: assistente ajustado.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados desde a 2.36.0: index.html, style.css, js/14, js/24, js/31, js/37 e js/47.'],
+        testar: ['iPhone: Início > Resumo de pendências: confira se aparecem todos os pedidos que têm fornecedor a chegar (compare com a lista de "fornecedores a chegar").', 'Marque Divergências e Observação da ocorrência e veja a prévia mudar; desmarque e volte.', 'Gere PDF e Word e compare com o PDF antigo (layout, linhas entre pedidos, assinatura). O PDF não foi conferido visualmente fora do app: me diga se algo estiver desalinhado.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.36.0', nome: 'Início atualiza na hora, busca de produtos no Início e ERP da NF duplicada', status: 'concluida', data: '13/11/2026 às 17:30',
         novidades: ['Início: o número de "fornecedores a chegar" agora atualiza sozinho em poucos segundos quando você marca "chegou", registra uma NF ou decide uma duplicidade. Não usa leitura nova do Firebase: só confere, no próprio aparelho, os dados que já chegam em tempo real.', 'Início: a busca agora também procura PRODUTOS nas cotações (além de NF, fornecedor e pedido). Tocar no produto abre o pedido no fornecedor e no produto. A busca continua na tela de Cotações.', 'Início: a tela não se refaz mais enquanto você digita na busca, e some a segunda borda cinza ao tocar nela.', 'NF duplicada: a entrada do ERP dessa mesma NF também sai da conta do pedido, para não "dobrar" o recebido e manter os avisos item a item.'],
         implementado: ['js/48: assinatura ampliada (datas de alteração, chegadas, decisões de duplicidade), conferência a cada 3 s só com a tela Início aberta, inicioBuscarProdutos/inicioEnviarBusca (reaproveita itensCorrespondentesCotacao e renderCardResultadoItem), renderInicioSeAtivo não desenha com a busca em foco. style.css: foco da busca sem borda dupla. js/11: entradas do ERP de NF duplicada excluídas em _compararFontesPedidoCalc.'],
         arquivos: ['index.html', 'style.css', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
@@ -3248,4 +3257,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.36.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.37.0';

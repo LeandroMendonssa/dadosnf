@@ -164,7 +164,7 @@ const IA_EXEC = {
         if (a.fornecedor) l = l.filter(x => iaCasa(x.fornecedor, a.fornecedor));
         return iaCorta(l.map(x => ({ pedido: x.pedido, fornecedor: x.fornecedor, nf: x.notaFiscal || undefined, tipo: (TIPOS_DIVERGENCIA_AUDITORIA[x.tipo] || {}).label || x.tipo, produtos: x.produtos, status: x.status, data: x.data })));
     },
-    resumo_pendencias_entrega(a) { const ps = pedidosDoTextoResumo(a.pedidos); if (!ps.length) return { erro: 'Informe os pedidos.' }; return { texto: textoResumoPendencias(ps) }; },
+    resumo_pendencias_entrega(a) { const ps = pedidosDoTextoResumo(a.pedidos); if (!ps.length) return { erro: 'Informe os pedidos.' }; return { texto: textoResumoPendencias(dadosResumoTodos(ps).filter(x => ps.includes(x.pedido)), { ...RP_PADRAO }) }; },
     pendencias() {
         return itensDeAtencao().map(g => ({ grupo: g.titulo, urgencia: g.nivel, quantidade: g.linhas.length, exemplos: g.linhas.slice(0, 5).map(l => `${l.t} — ${l.s}`) }));
     },
@@ -488,4 +488,4 @@ async function enviarAssistente() {
     }
     fim();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/37-assistente.js'] = '2.24.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/37-assistente.js'] = '2.37.0';
