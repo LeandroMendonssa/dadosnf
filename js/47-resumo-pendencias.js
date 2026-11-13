@@ -165,7 +165,7 @@ ${s.nome ? `<p style="margin:0;font-size:11pt;font-weight:bold;color:${RS_AZUL}"
 ${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333333"><span style="color:${RS_TEAL}">${i}</span>&nbsp; ${e(t)}</p>`).join('')}</td></tr></table>
 <p style="margin:10pt 0 0;text-align:right;font-size:8.5pt;font-style:italic;color:#444444">${e(b.nota || '')}</p>`;
     let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Resumo de pendências</title>
-<style>@page WordSection1{size:21cm 29.7cm;margin:1.3cm 1.6cm 4.6cm 1.6cm;mso-footer:f1}div.WordSection1{page:WordSection1}
+<style>@page WordSection1{size:21cm 29.7cm;margin:1.3cm 1.6cm 1.6cm 1.6cm}div.WordSection1{page:WordSection1}
 body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
 <p style="text-align:right;font-size:9.5pt;font-style:italic">${e(b.data)}</p>
 <p style="font-size:16pt;font-weight:bold;text-decoration:underline;text-align:center;margin:14pt 30pt 18pt;line-height:1.25">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
@@ -181,15 +181,14 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
         });
         h += '<p style="border-bottom:1pt solid #000000;margin:6pt 0 0;font-size:2pt">&nbsp;</p>';
     });
-    h += `</div>
-<div style="mso-element:footer" id="f1">${assHtml}</div></body></html>`;
+    h += `<div style="margin-top:22pt">${assHtml}</div></div></body></html>`;
     return h;
 }
 
 // ---------- PDF (jsPDF) ----------
 function gerarPdfResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 46, LARG = W - 2 * M, SIDE = 92, GAP = 18, XC = M + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - 150;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 46, LARG = W - 2 * M, SIDE = 92, GAP = 18, XC = M + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - 44;
     const s = assinaturaRelatorio(), logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null;
     const fill = h => { const c = rgbRelCot(h); doc.setFillColor(c[0], c[1], c[2]); }, draw = h => { const c = rgbRelCot(h); doc.setDrawColor(c[0], c[1], c[2]); }, ink = h => { const c = rgbRelCot(h); doc.setTextColor(c[0], c[1], c[2]); };
     const fonte = (tam, est) => { doc.setFont('helvetica', est || 'normal'); doc.setFontSize(tam); };
@@ -229,7 +228,8 @@ function gerarPdfResumoPendencias(texto) {
         }
         y += 2; draw('#000000'); doc.setLineWidth(0.8); doc.line(M, y, W - M, y); y += 16;
     });
-    // ---- assinatura + aviso no fim de TODAS as páginas
+    // ---- assinatura + aviso: UMA vez, no fim do documento (última página); se não couber, vai para uma página nova
+    if (b.pedidos.length && y > H - 170) { doc.addPage(); y = 40; }
     const linhasAss = [['email', s.email], ['fone', s.telefone], ['site', s.site], ['pin', s.endereco]].filter(x => x[1]);
     const ico = (tipo, x, yy) => {
         draw(RS_TEAL); doc.setLineWidth(0.8);
@@ -242,7 +242,7 @@ function gerarPdfResumoPendencias(texto) {
     fonte(11, 'bold'); largTxt = Math.max(largTxt, doc.getTextWidth(s.nome || '')); fonte(8.5); largTxt = Math.max(largTxt, doc.getTextWidth(s.cargo || ''));
     const altTxt = (s.nome ? 14 : 0) + (s.cargo ? 15 : 0) + linhasAss.length * 11.5, altBloco = Math.max(logo ? 62 : 0, altTxt);
     const largTot = (logo ? 82 + 32 : 0) + largTxt, n = doc.getNumberOfPages();
-    for (let pg = 1; pg <= n; pg++) {
+    for (let pg = n; pg <= n; pg++) {
         doc.setPage(pg);
         const yb = H - 50, yt = yb - altBloco; let x = M + (LARG - largTot) / 2;
         if (logo) { try { doc.addImage(logo, 'PNG', x, yt + (altBloco - 62) / 2, 82, 62); } catch (err) { /* logo inválida: segue sem */ } x += 82 + 16; draw('#bbbbbb'); doc.setLineWidth(0.8); doc.line(x, yt + 1, x, yb - 1); x += 16; }
@@ -333,4 +333,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.37.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.37.1';

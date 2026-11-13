@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.37.0', nome: 'Resumo de pendências: pedidos automáticos, caixinhas, prévia e layout antigo', status: 'atual', data: '13/11/2026 às 18:10',
+        numero: '2.37.1', nome: 'Resumo de pendências: prévia completa e assinatura só no fim', status: 'atual', data: '13/11/2026 às 18:30',
+        novidades: ['A prévia do resumo agora aparece inteira (a tela rola), e não mais numa janelinha pequena.', 'A assinatura e a frase "Desconsiderar pendências já resolvidas ou sinalizadas." saem uma única vez, no final do documento (PDF e Word), e não em todas as páginas. Se não couber na última página, vão para uma página nova.'],
+        implementado: ['js/47: assinatura e aviso desenhados só na última página do PDF (o espaço reservado no rodapé das outras páginas foi liberado); no Word a assinatura passou do rodapé repetido para o fim do corpo. style.css: prévia sem altura máxima.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados desde a 2.37.0: index.html, style.css, js/14, js/24, js/31 e js/47.'],
+        testar: ['iPhone: abra o Resumo de pendências e role: a prévia deve aparecer inteira.', 'Gere o PDF com vários pedidos (2 páginas ou mais): assinatura e aviso só na última página. Confira também o Word.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.37.0', nome: 'Resumo de pendências: pedidos automáticos, caixinhas, prévia e layout antigo', status: 'concluida', data: '13/11/2026 às 18:10',
         novidades: ['Os pedidos entram sozinhos no resumo: todo pedido recente (mesma janela de 60 dias do Início) com fornecedor que não entregou ou que entregou e deixou pendência. Dá para incluir outros pedidos digitando o número (opcional).', 'Caixinhas do que entra: fornecedores que não entregaram e produtos não faturados (ligadas), divergências em aberto e observação da ocorrência (desligadas). A última escolha fica guardada neste aparelho.', 'Só entram ocorrências de auditoria ainda não relatadas (o rastro da auditoria: fornecedor, NF, divergência e observação). Anotações de texto livre não são usadas.', 'Prévia na tela e PDF/Word no layout do relatório antigo: sem tabelas, título centralizado e sublinhado, lista simples de quem não entregou sob o pedido, fornecedor com NF em negrito, itens em itálico, linha entre pedidos, assinatura e a frase final. "Editar texto" continua.'],
         implementado: ['js/47: dadosResumoPendenciasPedido devolve linhas com tipo (nf/div/obs) lidas das ocorrências; dadosResumoTodos/filtrarResumoPedido/contagemResumo; textoResumoPendencias aceita as opções; PDF (gerarPdfResumoPendencias) e Word (htmlResumoPendencias) refeitos no layout antigo; prévia e caixinhas. index.html: modal do resumo. style.css: estilos da prévia. js/37: assistente ajustado.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/47-resumo-pendencias.js'],
@@ -3257,4 +3266,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.37.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.37.1';
