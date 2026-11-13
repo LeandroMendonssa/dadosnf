@@ -209,7 +209,7 @@ function abrirCentralPedido(pedido) {
 // (Central do Pedido via linhasDeMateriais, e a saída da Auditoria via
 // gerarCorpoAuditoria) — um ajusta, o outro acompanha automaticamente.
 function textoOcorrenciaUnica(tipo, c) {
-    if (tipo === 'fornecedor_nao_entregou' || tipo === 'frete_indevido') return aplicarModeloAuditoria(modeloDoTipo(tipo), c || {}, {});
+    if (tipo === 'fornecedor_nao_entregou' || tipo === 'frete_indevido' || tipo === 'nf_duplicada') return aplicarModeloAuditoria(modeloDoTipo(tipo), c || {}, {});
     return '';
 }
 
@@ -344,10 +344,11 @@ function renderCentralPedidoCompleto(pedido) {
             // 2.9.3: fechado, o cartão mostra só o cabeçalho e a barra de ações; faixa de entrega e números ficam no topo da parte que expande.
             // 2.22.6: botão para gerar de uma vez as auditorias de todas as ocorrências em aberto deste fornecedor (voltou ao cartão)
             const nLoteAud = compForn.filter(c => c.estado === 'detectada' && c.codProduto).length;
-            const acoesLista = (dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)]).concat(nLoteAud > 1 ? [{ i: 'dir', t: `Gerar auditorias (${nLoteAud})`, fn: `registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }] : []);
+            const acoesLista = (dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)]).concat(nLoteAud > 1 ? [{ i: 'dir', t: `Gerar auditorias (${nLoteAud})`, fn: `registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }] : [])
+                .concat(dupQtdAbertasFornecedor(pedido, f.cnpj) ? [{ i: 'dir', t: `Pedido duplicado (${dupQtdAbertasFornecedor(pedido, f.cnpj)})`, fn: `centralFornecedoresAbertos.add('${escRel(String(f.cnpj))}'); renderCentralPedidoCompleto('${escRel(String(pedido))}')` }] : []);
             const acoesHTML = `<div class="ctl-bar cf-bar">${acoesLista.map(a => `<button type="button" onclick="event.stopPropagation(); ${a.fn}">${ICONES_CTRL[a.i] || ''}<span>${a.t}</span></button>`).join('')}</div>
                 ${htmlPainelAssociarNf(pedido, f.cnpj)}`;
-            const detalhesEntregaHTML = ((dadosEnt && dadosEnt.detalhes) || '') + htmlVinculadasNf(pedido, f.cnpj);
+            const detalhesEntregaHTML = htmlDuplicidadeCentral(pedido, f.cnpj) + ((dadosEnt && dadosEnt.detalhes) || '') + htmlVinculadasNf(pedido, f.cnpj);
 
             // Fase 27: cada divergência da auditoria vai pra linha do PRIMEIRO
             // produto cujo nome bate EXATAMENTE (sem aproximação) com um dos
@@ -1200,4 +1201,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.25.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.33.0';

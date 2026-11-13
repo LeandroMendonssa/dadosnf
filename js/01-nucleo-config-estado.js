@@ -130,6 +130,7 @@ const AUDITORIA_TEXTOS_DEFAULT = {
     modelo_valor_diferente: '{produto}, quantidade {quantidade}: cotado a {valorCotado}, faturado a {valorFaturado}[[ (diferença de {diferencaUnitaria} {sentidoDiferenca} por unidade[[ e de {diferencaTotal} {sentidoDiferenca} no total]])]].',
     modelo_desacordo_especificacao: '{produto}: pedimos especificação {especificacaoEsperada}, porém recebemos {especificacaoRecebida}.',
     modelo_fornecedor_nao_entregou: '[[{fornecedorNome}: ]]ainda não entregou o pedido[[, já são {diasEmAberto} dias em aberto]].[[ {observacao}]]',
+    modelo_nf_duplicada: 'A NF {nfDuplicada}[[, referente ao pedido {pedido}]], veio em duplicidade: todos os itens já haviam sido entregues na NF {nfOriginal}.[[ {desfecho}]][[ {observacao}]]',
     modelo_frete_indevido: 'A cotação foi aprovada com frete {condicaoCotada}, porém o fornecedor cobrou frete[[ no valor de {valorFrete}]][[ ({condicaoCobrada})]], em desacordo com a condição aprovada.[[ {observacao}]]',
     modelo_outro: '[[{produto}: ]]{observacao}'
 };
@@ -211,4 +212,4 @@ const closeBtnBackScreen = { 'screen-danfe-fonte': 'screen-settings', 'screen-lo
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.31.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.33.0';

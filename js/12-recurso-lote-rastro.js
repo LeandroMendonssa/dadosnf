@@ -430,6 +430,13 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
         { key: 'diasEmAberto', label: 'Dias em aberto sem entrega' },
         { key: 'observacao', label: 'Observação', textarea: true }
     ]},
+    'nf_duplicada': { label: 'NF em duplicidade (pedido já entregue)', multiMaterial: false, campos: [
+        { key: 'nfDuplicada', label: 'NF que veio em duplicidade' },
+        { key: 'nfOriginal', label: 'NF em que os itens já tinham chegado' },
+        { key: 'pedido', label: 'Pedido' },
+        { key: 'desfecho', label: 'Desfecho (aceito / devolução total ou parcial)', textarea: true },
+        { key: 'observacao', label: 'Observação', textarea: true }
+    ]},
     'frete_indevido': { label: 'Frete em desacordo com a cotação (CIF/FOB)', multiMaterial: false, campos: [
         { key: 'condicaoCotada', label: 'Condição cotada/aprovada', placeholder: 'CIF' },
         { key: 'condicaoCobrada', label: 'Condição efetivamente cobrada', placeholder: 'FOB' },
@@ -595,4 +602,4 @@ function garantirDatalistSpDataAuditoria() {
 // Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.28.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.33.0';

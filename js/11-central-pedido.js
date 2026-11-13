@@ -483,6 +483,8 @@ function montarNfProcessadaAtual(opcoes) {
         ...(algumDireto ? { semCotacaoSmartCompras: itensXmlDetectados.every(i => i.semCotacao), destino: (cotSel && cotSel.origem) || destinoSemCotacaoXml || null } : {}),
         ...(multi ? { pedidos: pedidosSelecionados } : {})
     };
+    const decDup = (typeof dupDecisaoDe === 'function') ? dupDecisaoDe(chave) : null; // 2.33.0
+    if (decDup) doc.duplicidade = decDup;
     return { chave, doc };
 }
 
@@ -625,7 +627,7 @@ function _compararFontesPedidoCalc(pedido, opcoes) {
     // Fase 31 (só leitura): opcoes.nfIds limita as NFs do app (usado pra reconstruir o
     // histórico "NF a NF" da entrega) e opcoes.semErp ignora o ERP nessa reconstrução.
     const apenasNfIds = opcoes && opcoes.nfIds ? opcoes.nfIds : null;
-    const nfsDoPedido = listaNfsProcessadas.filter(nf => nfPertenceAoPedido(nf) && !(nfExtra && nf.id === nfExtra.id) && (!apenasNfIds || apenasNfIds.includes(nf.id))).concat(nfExtra ? [nfExtra] : []);
+    const nfsDoPedido = listaNfsProcessadas.filter(nf => nfPertenceAoPedido(nf) && !(nfExtra && nf.id === nfExtra.id) && !dupExcluida(nf) && (!apenasNfIds || apenasNfIds.includes(nf.id))).concat(nfExtra && !dupExcluida({ ...nfExtra, id: nfExtra.id + '#tela' }) ? [nfExtra] : []);
     const entradasErpDoPedido = (opcoes && opcoes.semErp) ? [] : listaEntradasErp.filter(e => pedidoDoErpConfirmado(e) === String(pedido));
     // Fase 31: fornecedor com mais de um CNPJ (mesma entidade) — a entrada do ERP pode
     // estar no CNPJ irmão do que está na cotação. Sem entidade cadastrada, vale só o CNPJ exato.
@@ -1861,4 +1863,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.28.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.33.0';
