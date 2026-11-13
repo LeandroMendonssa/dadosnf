@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.31.0">
+    <meta name="app-versao" content="2.32.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -1022,6 +1022,14 @@
 
   </div>
   
+  <div id="forn-chegar-modal" class="modal-screen">
+      <div class="modal-content">
+          <h2 id="forn-chegar-tit">Fornecedores a chegar</h2>
+          <p style="font-size:12px;color:var(--text-light);margin:0 0 4px;">Toque em um fornecedor para abrir o pedido. O resumo para enviar fica em Início &gt; Resumo de pendências.</p>
+          <div id="forn-chegar-lista" style="max-height:60vh;overflow:auto"></div>
+          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
+      </div>
+  </div>
   <div id="resumo-pend-modal" class="modal-screen">
       <div class="modal-content">
           <h2>Resumo de pendências de entrega</h2>
