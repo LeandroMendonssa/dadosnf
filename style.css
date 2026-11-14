@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.39.0'; }
+:root { --css-versao: '2.39.1'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1947,3 +1947,15 @@ button.ini-lin{font:inherit;color:inherit;cursor:pointer}
 .rp-papel .rp-dt{text-align:right;font-style:italic;font-size:11px}.rp-papel .rp-tt{text-align:center;font-weight:700;text-decoration:underline;font-size:15px;margin:12px 0 14px;line-height:1.25}
 .rp-papel .rp-pd,.rp-papel .rp-rot,.rp-papel .rp-fn{font-weight:700}.rp-papel .rp-pd{margin:12px 0 6px}.rp-papel .rp-rot{margin:10px 0 4px}.rp-papel .rp-fn{margin-top:8px}
 .rp-papel .rp-it{font-style:italic}.rp-papel hr{border:0;border-top:1px solid #111;margin:12px 0 0}.rp-papel .rp-ass{font-size:10.5px;color:#333;margin-top:12px}.rp-papel .rp-nt{text-align:right;font-style:italic;font-size:10.5px;margin-top:8px}
+
+/* 2.39.1 — Entrada de NF: aba "Por XML | Manual (sem XML)" no topo; o formulário manual não fica no meio da NF */
+#screen-xml-editor .entrada-modo{margin:0 0 var(--space-4)}
+#screen-xml-editor .entrada-modo .xml-filtro-btn{flex:1}
+#screen-xml-editor:not(.modo-manual) #add-nf-manual{display:none}
+#screen-xml-editor.modo-manual > *:not(#entrada-modo):not(#add-nf-manual){display:none !important}
+#add-nf-manual{margin-top:0}
+#add-nf-manual .actions{margin-top:var(--space-4)}
+/* nome do arquivo comprido (ex.: DanfeRápida-3126…) não estoura o cartão */
+#xml-nome-arquivo{overflow-wrap:anywhere;word-break:break-all;min-width:0;max-width:100%}
+.xml-dropzone > *{min-width:0}
+#screen-xml-editor.xml-carregada .xml-dropzone{flex-wrap:wrap;text-align:left}

@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.39.0">
+    <meta name="app-versao" content="2.39.1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -381,6 +381,21 @@
                 </div>
             </div>
             <div class="app-screen" id="screen-xml-editor">
+                <div class="xml-filtro-toggle entrada-modo" id="entrada-modo"><button type="button" class="xml-filtro-btn active" data-modo="xml" onclick="definirModoEntrada('xml')">Por XML</button><button type="button" class="xml-filtro-btn" data-modo="manual" onclick="definirModoEntrada('manual')">Manual (sem XML)</button></div>
+                <div class="card card-plain" id="add-nf-manual">
+                    <p class="desc-tela">Cadastro manual: use quando a NF não tem XML. Com XML, volte para "Por XML".</p>
+                    <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
+                    <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"><div id="nf-sugestoes"></div></div>
+                    <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
+                    <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" class="form-field" placeholder="Ex: 1200,50" inputmode="decimal" onblur="formatarValorBlur(event)"></div>
+                    <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" class="form-field" placeholder="Nome do fornecedor" list="fornecedores-sugeridos" value="" onblur="aplicarApelidoNoCampo(this)"><datalist id="fornecedores-sugeridos"></datalist></div>
+                    <div class="campo"><label for="obs">Observações</label><select id="obs" class="form-field"><option value="">Recurso a ser pago</option></select></div>
+                    <div class="actions">
+                        <button id="salvarBtn" class="actions-button is-primary" onclick="salvarNota()">
+                            <span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar
+                        </button>
+                    </div>
+                </div>
                 <div class="card xml-resumo-topo" id="xml-resumo-nf" style="display:none;"></div> <div class="xml-filtro-toggle xml-abas" id="xml-abas"> <button type="button" class="xml-filtro-btn active" data-aba="itens" onclick="alternarAbaXml('itens')">Itens <span class="xml-aba-cont"></span><span class="xml-aba-ponto"></span></button> <button type="button" class="xml-filtro-btn" data-aba="pedido" onclick="alternarAbaXml('pedido')">Pedido <span class="xml-aba-ponto"></span></button> <button type="button" class="xml-filtro-btn" data-aba="nf" onclick="alternarAbaXml('nf')">NF <span class="xml-aba-ponto"></span></button> </div> <div id="xml-estado-nf" class="mt-4" style="display:none"></div>  <div class="xml-aba-pane ativa" data-aba="itens"> <div class="card mt-4" id="xml-card-associacao" style="display:none"> <p class="desc-tela">Fator de conversão, código do fornecedor, cotação e SP Data — tudo por item. O fator vem da descrição do produto (ex: "C/10" = 10); sua correção fica lembrada pra próxima nota desse fornecedor e produto.</p> <div id="xml-associacao-container" class="mt-3"></div> </div>  </div> <div class="xml-aba-pane" data-aba="pedido"> <div class="card mt-4" id="xml-card-pedido"> <div class="campo">
                         <label>Pedido/Cotação correspondente</label>
                         <select class="form-field" id="xml-associacao-pedido" onchange="selecionarPedidoAssociacaoXml(this.value)"></select>
@@ -413,22 +428,6 @@
                         <label>Unidade de Dispensação (destino)</label>
                         <input type="text" id="xml-unidade-destino" class="form-field" value="UN">
                     </div>
-                </div>
-                <div class="card importar-colapso aberto" id="add-nf-manual">
-                    <button type="button" class="imp-cab" onclick="this.parentElement.classList.toggle('aberto')"><span class="imp-ic"><i class="fa-solid fa-plus-circle"></i></span><span class="imp-tx"><b>Adicionar NF manualmente</b><small>Sem XML: digite data, número, vencimento, valor e fornecedor</small></span><i class="fa-solid fa-chevron-right imp-seta"></i></button>
-                    <div class="imp-corpo-wrap"><div class="imp-corpo-int"><div class="importar-corpo">
-                    <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
-                    <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"><div id="nf-sugestoes"></div></div>
-                    <div class="campo"><label for="venc">Vencimento</label><input type="text" id="venc" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
-                    <div class="campo"><label for="valor">Valor Total</label><input id="valor" type="text" class="form-field" placeholder="Ex: 1200,50" inputmode="decimal" onblur="formatarValorBlur(event)"></div>
-                    <div class="campo"><label for="forn">Nome do Fornecedor</label><input type="text" id="forn" class="form-field" placeholder="Nome do fornecedor" list="fornecedores-sugeridos" value="" onblur="aplicarApelidoNoCampo(this)"><datalist id="fornecedores-sugeridos"></datalist></div>
-                    <div class="campo"><label for="obs">Observações</label><select id="obs" class="form-field"><option value="">Recurso a ser pago</option></select></div>
-                    <div class="actions">
-                        <button id="salvarBtn" class="actions-button is-primary" onclick="salvarNota()">
-                            <span class="icon-wrapper"><i class="fa-solid fa-save"></i><span class="material-icons">save</span></span> Salvar
-                        </button>
-                    </div>
-                    </div></div></div>
                 </div>
 
                 <div class="card mt-4" id="xml-card-identificacao"  style="display:none">
