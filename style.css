@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.39.1'; }
+:root { --css-versao: '2.40.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1959,3 +1959,18 @@ button.ini-lin{font:inherit;color:inherit;cursor:pointer}
 #xml-nome-arquivo{overflow-wrap:anywhere;word-break:break-all;min-width:0;max-width:100%}
 .xml-dropzone > *{min-width:0}
 #screen-xml-editor.xml-carregada .xml-dropzone{flex-wrap:wrap;text-align:left}
+
+/* 2.40.0 — espaçamento padrão na Entrada de NF (cartões e blocos não ficam mais colados); :where mantém qualquer margem já definida por classe */
+:where(#screen-xml-editor .xml-aba-pane) > :where(* + *){margin-top:12px}
+:where(#screen-xml-editor) > :where(.card + .card, .xml-abas + *){margin-top:12px}
+.xml-estado-card + .card, .xml-estado-card + .xml-estado-card{margin-top:12px}
+#xml-informativos-nf{padding-left:8px;padding-right:8px}
+.cotacao-adicional-linha{margin-bottom:14px}
+.cotacao-adicional-linha + *{margin-top:0}
+/* Histórico de Mudanças: versões dos arquivos */
+.arq-versoes{margin-bottom:12px}
+.arq-versoes summary{cursor:pointer;font-weight:600}
+.arq-lista{margin:10px 0;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-aux)}
+.arq-lin{display:flex;justify-content:space-between;gap:10px;color:var(--text-dark)}
+.arq-lin span:first-child{overflow-wrap:anywhere}.arq-lin span:last-child{flex:none;color:var(--text-light)}
+.arq-ruim{color:var(--button-danger,#c0392b)}.arq-bom{color:var(--button-success);font-weight:500}
