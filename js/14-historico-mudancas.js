@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.37.1', nome: 'Resumo de pendências: prévia completa e assinatura só no fim', status: 'atual', data: '13/11/2026 às 18:30',
+        numero: '2.38.0', nome: 'Central de notificações: atualiza sozinha e leva ao produto', status: 'atual', data: '13/11/2026 às 19:10',
+        novidades: ['Central de notificações: a tela agora se refaz ao entrar e, com ela aberta, em até 3 segundos depois que algo muda (marcar chegou, resolver ocorrência, decidir duplicidade, enviar nota, NF nova). Antes ela só se refazia em poucos casos, por isso avisos já resolvidos ficavam presos ao voltar de um pedido.', 'Ocorrências detectadas e itens que ainda não chegaram: uma linha por pedido e fornecedor (antes uma por pedido), mostrando os primeiros produtos. O toque abre o pedido já no fornecedor e no produto, com rolagem e destaque.', 'Pendências relatadas: o toque também abre o fornecedor e o produto da divergência.', 'Novo grupo "NFs recebidas em duplicidade sem decisão": a NF duplicada não entra mais na conta item a item, então ela passa a ser avisada aqui até você decidir.'],
+        implementado: ['js/34: atencaoAssinatura (assinatura dos dados), re-render ao entrar na tela e a cada 3 s quando muda, linhasPorFornecedor, grupo nf-duplicada e fn das linhas via irParaDivergenciaPedido/irParaFornecedorPedido.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js'],
+        mudou: ['Arquivos alterados desde a 2.37.1: index.html, style.css, js/14, js/24, js/31 e js/34.'],
+        testar: ['iPhone: abra a Central de notificações, toque numa ocorrência de produto: deve abrir o pedido no fornecedor e no produto.', 'Resolva algo (ex.: marque chegou ou relate uma ocorrência), volte à Central: o aviso deve ter saído. Se algum aviso ficar preso, anote qual grupo é e me diga (ou exporte o diagnóstico).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.37.1', nome: 'Resumo de pendências: prévia completa e assinatura só no fim', status: 'concluida', data: '13/11/2026 às 18:30',
         novidades: ['A prévia do resumo agora aparece inteira (a tela rola), e não mais numa janelinha pequena.', 'A assinatura e a frase "Desconsiderar pendências já resolvidas ou sinalizadas." saem uma única vez, no final do documento (PDF e Word), e não em todas as páginas. Se não couber na última página, vão para uma página nova.'],
         implementado: ['js/47: assinatura e aviso desenhados só na última página do PDF (o espaço reservado no rodapé das outras páginas foi liberado); no Word a assinatura passou do rodapé repetido para o fim do corpo. style.css: prévia sem altura máxima.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
@@ -3266,4 +3275,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.37.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.38.0';

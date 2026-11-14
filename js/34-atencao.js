@@ -41,11 +41,32 @@ function itensDeAtencao() {
         const nc = comp.filter(x => x.estado === 'detectada' && x.soNaoChegou); // 2.19.1: "não chegou" é um aviso à parte, discreto
         if (nc.length) naoChegou.push({ c, nc });
     });
-    add('media', 'ocorrencias-sem-relato', 'Ocorrências detectadas sem relato', 'O app achou diferença entre cotação e NF e ninguém relatou ainda. Abra o pedido e registre a auditoria.',
-        semRelato.map(({ c, abertas }) => ({ pedido: String(c.pedido), forn: [...new Set(abertas.map(x => { const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === normalizarCnpj(x.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : ''; }).filter(Boolean))].join(', '), t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `${abertas.length} ocorrência(s) em aberto`, fn: `abrirCentralPedido('${escRel(String(c.pedido))}')` })));
+    // 2.38.0: uma linha por PEDIDO + FORNECEDOR (antes: uma por pedido), e o toque já abre o fornecedor e o primeiro produto da lista
+    const linhasPorFornecedor = (lista, sufixo, comProdutos) => lista.flatMap(({ c, abertas, nc }) => {
+        const itens = abertas || nc, porForn = new Map();
+        itens.forEach(x => { const k = normalizarCnpj(x.cnpjFornecedor) || ''; if (!porForn.has(k)) porForn.set(k, []); porForn.get(k).push(x); });
+        return [...porForn.entries()].map(([k, xs]) => {
+            const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === k), nome = f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : '';
+            const nomes = [...new Set(xs.map(x => x.nome || x.codProduto).filter(Boolean))], cod = (xs.find(x => x.codProduto) || {}).codProduto || '';
+            return { pedido: String(c.pedido), forn: nome, t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}${nome ? ' · ' + nome : ''}`,
+                s: `${xs.length} ${sufixo}` + (comProdutos && nomes.length ? ': ' + nomes.slice(0, 3).join(', ') + (nomes.length > 3 ? '…' : '') : ''),
+                fn: `irParaDivergenciaPedido('${escRel(String(c.pedido))}','${escRel(String(f ? f.cnpj : (xs[0].cnpjFornecedor || '')))}','${escRel(String(cod))}')` };
+        });
+    });
+    add('media', 'ocorrencias-sem-relato', 'Ocorrências detectadas sem relato', 'O app achou diferença entre cotação e NF e ninguém relatou ainda. Toque para abrir o fornecedor e o produto no pedido e registrar a auditoria.',
+        linhasPorFornecedor(semRelato, 'ocorrência(s) em aberto', true));
+
+    // 2.38.0: NF que veio em duplicidade e ainda sem decisão (aceito / devolução): sai da conta item a item, então precisa aparecer aqui
+    try {
+        add('media', 'nf-duplicada', 'NFs recebidas em duplicidade sem decisão', 'Todos os itens já tinham chegado em outra NF do pedido. Decida: aceito, devolução total ou parcial.',
+            listaNfsProcessadas.filter(n => !(n.duplicidade && n.duplicidade.decisao) && dupInfo(n)).map(n => {
+                const info = dupInfo(n), f = (listaCotacoes.find(c => String(c.pedido) === String(n.pedido)) || {}).fornecedores;
+                return { pedido: String(n.pedido || ''), forn: n.fornecedor || '', t: `Pedido ${n.pedido || '—'} · ${n.fornecedor || ''} · NF ${n.nf}`, s: `${info.itens.length} itens já vieram na NF ${info.orig.join(', ')}`, fn: `irParaFornecedorPedido('${escRel(String(n.pedido))}','${escRel(String(n.cnpjFornecedor || ''))}')` };
+            }));
+    } catch (e) { console.error('Central: NF duplicada', e); }
 
     add('baixa', 'itens-nao-chegaram', 'Itens que ainda não chegaram', 'Itens da cotação que ainda não vieram em NF. Não é divergência: pode vir em outra NF. Dá para relatar na Auditoria.',
-        naoChegou.map(({ c, nc }) => ({ pedido: String(c.pedido), forn: [...new Set(nc.map(x => { const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === normalizarCnpj(x.cnpjFornecedor)); return f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : ''; }).filter(Boolean))].join(', '), t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `${nc.length} item(ns) não chegaram`, fn: `abrirCentralPedido('${escRel(String(c.pedido))}')` })));
+        linhasPorFornecedor(naoChegou, 'item(ns) não chegaram', true));
 
     // ---- MÉDIA: divergências pendentes
     // 2.11.6: usa a MESMA lista da tela Relatórios → Divergências (divergenciasRel), com a mesma regra de status
@@ -54,7 +75,7 @@ function itensDeAtencao() {
     let pendDiv = []; try { pendDiv = divergenciasRel().filter(x => x.status === 'pendente' && x.relatado !== false); } finally { relatoriosFiltros = filtrosTela; }
     // 2.16.0: auditoria aberta = pendência RELATADA (já está com o responsável): pesa como resolvida, então sai da contagem de "precisa de atenção".
     add('baixa', 'divergencias', 'Pendências relatadas', 'Já relatadas ao responsável. Mesma lista de Relatórios → Divergências. Toque para abrir o pedido.',
-        pendDiv.map(x => ({ pedido: String(x.pedido || ''), forn: x.fornecedor || '', t: `Pedido ${x.pedido || '—'}${x.fornecedor ? ' · ' + x.fornecedor : ''}`, s: (TIPOS_DIVERGENCIA_AUDITORIA[x.tipo] || {}).label || x.tipo, fn: `abrirCentralPedido('${escRel(x.pedido)}')` })));
+        pendDiv.map(x => ({ pedido: String(x.pedido || ''), forn: x.fornecedor || '', t: `Pedido ${x.pedido || '—'}${x.fornecedor ? ' · ' + x.fornecedor : ''}${(x.produtos || [])[0] ? ' · ' + x.produtos[0] : ''}`, s: (TIPOS_DIVERGENCIA_AUDITORIA[x.tipo] || {}).label || x.tipo, fn: x.pedido ? `irParaDivergenciaPedido('${escRel(String(x.pedido))}','${escRel(String(x.fornecedorCnpj || ''))}','${escRel(String(x.codProduto || ''))}')` : `abrirCentralPedido('')` })));
 
     // ---- MÉDIA: NFs do ERP com pedido sugerido / itens defasados
     // 2.12.0: as pendências de cada NF vêm da visão única (mesma regra do Controle, do Editor e da Auditoria): uma NF com pedido já
@@ -89,9 +110,23 @@ function totalAtencao() { try { return itensDeAtencao().reduce((s, g) => s + (g.
 const ATENCAO_NIVEIS = { alta: ['Urgente', 'err'], media: ['Importante', ''], baixa: ['Quando der', 'm'] };
 function toggleGrupoAtencao(id) { if (atencaoAbertos.has(id)) atencaoAbertos.delete(id); else atencaoAbertos.add(id); renderAtencao(); }
 function prepararAtencao() { atencaoModo = 'urgencia'; atencaoAbertos = new Set(itensDeAtencao().filter(g => g.nivel === 'alta').map(g => g.id)); renderAtencao(); }
+// 2.38.0: a tela não se refazia ao voltar de um pedido nem quando os dados mudavam (daí avisos "presos" depois de resolvidos).
+// Agora refaz ao entrar na tela e, enquanto ela está aberta, confere a cada 3 s uma assinatura barata dos dados (só CPU local, sem Firebase).
+let _atnSig = '';
+function atencaoAssinatura() {
+    const mx = (l, ...ks) => (l || []).reduce((m, x) => { for (const k of ks) { const v = x && x[k]; if (v && String(v) > m) m = String(v); } return m; }, '');
+    let nPend = 0, nRel = 0; (listaAnotacoes || []).forEach(a => (a.ocorrencias || []).forEach(oc => (oc.divergencias || []).forEach(d => { if ((d.status || 'pendente') === 'pendente') nPend++; if (d.relatado === false) nRel++; })));
+    const cotN = (listaCotacoes || []).reduce((n, c) => n + Object.keys(c.chegadasPorFornecedor || {}).length + Object.keys(c.relatadosPorItem || {}).length + Object.keys(c.recursosPorItem || {}).length, 0);
+    const nDup = (listaNfsProcessadas || []).reduce((n, x) => n + (x.duplicidade && x.duplicidade.decisao ? 1 : 0), 0);
+    return [(notasPendentes || []).length, (notasPendentes || []).filter(n => n.enviada).length, (listaCotacoes || []).length, (listaNfsProcessadas || []).length, (listaEntradasErp || []).length, (listaAnotacoes || []).length, nPend, nRel, cotN, nDup,
+        mx(listaCotacoes, 'atualizadoEm'), mx(listaNfsProcessadas, 'processadoEm', 'atualizadoEm'), mx(listaEntradasErp, 'atualizadoEm', 'data'), mx(listaAnotacoes, 'atualizadoEm'), (listaFornecedoresSpData || []).length].join('|');
+}
+(function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-atencao') renderAtencao(); return r; }; })();
+setInterval(() => { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active') && atencaoAssinatura() !== _atnSig) renderAtencao(); }, 3000);
 function renderAtencaoSeAtiva() { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active')) renderAtencao(); }
 function renderAtencao() {
     const el = document.getElementById('atencao-conteudo'); if (!el) return;
+    _atnSig = atencaoAssinatura();
     const grupos = itensDeAtencao();
     if (!grupos.length) { el.innerHTML = '<div class="card"><div class="xml-item-meta">✓ Nada parado por aqui. Tudo em dia.</div></div>'; return; }
     const ordem = { alta: 0, media: 1, baixa: 2 };
@@ -132,4 +167,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.22.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.38.0';
