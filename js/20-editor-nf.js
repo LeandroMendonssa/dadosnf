@@ -573,15 +573,15 @@ function htmlTratamentoNfItem(nf, it, idx, opcoes, ic) {
     if (it.tratamento) {
         const cod = it.tratamento === 'trocado' ? it.substituiCodigo : it.codigoSmartCompras;
         return `<div class="nfe-dica" style="margin:10px 0 6px"><strong>${it.tratamento === 'trocado' ? 'Produto trocado' : 'Aceito como o item pedido, só nesta NF'}</strong>: ${escRel(nomeDe(cod))}.${it.tratamento === 'trocado' ? ' A conferência registra "Solicitamos X, porém foi faturado Y".' : ' A associação do fornecedor não é gravada.'}</div>
-            <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="desfazerTratamentoNfItem('${escRel(nf.id)}', ${idx})">Desfazer ${it.tratamento === 'trocado' ? 'produto trocado' : 'aceite'}</button></div>`;
+            <div class="nfe-acoes"><button type="button" class="action-chip" style="color:var(--accent-text)" onclick="desfazerTratamentoNfItem('${escRel(nf.id)}', ${idx})">Desfazer ${it.tratamento === 'trocado' ? 'produto trocado' : 'aceite'}</button></div>`;
     }
     if (!opcoes.length) return '';
     const aberto = nfEditorTratAberto[idx] || '';
     const sel = aberto ? `<div class="nfe-dica" style="margin:8px 0 4px">${aberto === 'trocado' ? 'Qual item da cotação foi pedido (e veio outro no lugar)?' : 'Qual item da cotação este produto vai valer, só nesta NF?'}</div>` +
         htmlSeletorBusca(`nfed-trat-${idx}-${aberto}`, { placeholder: 'Buscar item da cotação por código ou nome…', opcoes, valorAtual: '', aoEscolher: valor => tratarNfItem(nf.id, idx, aberto, valor) }) : '';
     return `<div class="nfe-dica" style="margin:12px 0 6px">Veio outro produto no lugar do pedido?</div>
-        <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="abrirTratamentoNfItem(${idx}, 'trocado')">${aberto === 'trocado' ? 'Cancelar' : 'Produto trocado'}</button>
-        <button type="button" class="central-status-toggle" onclick="abrirTratamentoNfItem(${idx}, 'aceito')">${aberto === 'aceito' ? 'Cancelar' : 'Aceitar como o item pedido'}</button></div>${sel}`;
+        <div class="nfe-acoes"><button type="button" class="action-chip" style="color:var(--accent-text)" onclick="abrirTratamentoNfItem(${idx}, 'trocado')">${aberto === 'trocado' ? 'Cancelar' : 'Produto trocado'}</button>
+        <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="abrirTratamentoNfItem(${idx}, 'aceito')">${aberto === 'aceito' ? 'Cancelar' : 'Aceitar como o item pedido'}</button></div>${sel}`;
 }
 async function tratarNfItem(nfId, idx, tipo, codigo) {
     const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
@@ -894,4 +894,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.39.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.39.1';

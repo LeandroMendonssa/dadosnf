@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.39.0', nome: 'Editor de NF resolve produto trocado; Adicionar NF unida à Entrada de NF', status: 'atual', data: '14/11/2026 às 11:40',
+        numero: '2.39.1', nome: 'Entrada de NF: Manual vira aba no topo; ajustes de espaço', status: 'atual', data: '14/11/2026 às 12:05',
+        novidades: ['Entrada de NF agora tem duas abas no topo: "Por XML" e "Manual (sem XML)". O cadastro manual não fica mais no meio da NF que está sendo editada. Ao subir um XML, o app volta para "Por XML".', 'Botões "Produto trocado" e "Aceitar como o item pedido" no Editor de NF agora são botões com contorno e espaço entre eles (antes pareciam texto colado).', 'Nome de arquivo XML comprido não estoura mais o cartão de importação.'],
+        implementado: ['index.html: #entrada-modo e #add-nf-manual como filho direto da tela; style.css: .modo-manual esconde o resto da tela; js/10: definirModoEntrada e redirecionamento do atalho antigo; js/20: botões action-chip.'],
+        arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.39.0: index.html, style.css, js/10, js/14, js/20, js/24 e js/31.'],
+        testar: ['iPhone: Entrada de NF: alterne "Por XML" e "Manual (sem XML)"; suba um XML estando em Manual e veja voltar para "Por XML".', 'iPhone: Início > "Adicionar nota" abre a aba Manual; salve uma NF manual.', 'iPhone: Editor de NF > item sem associação: confira o espaço dos botões "Produto trocado" e "Aceitar como o item pedido".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.39.0', nome: 'Editor de NF resolve produto trocado; Adicionar NF unida à Entrada de NF', status: 'concluida', data: '14/11/2026 às 11:40',
         novidades: ['Editor de NF (aba Itens): o item agora pode ser marcado como "Produto trocado" ou "Aceitar como o item pedido" depois de salvar, sem subir o XML de novo. "Desfazer" volta o item a ficar sem associação.', 'Editor de NF: botão "Baixar XML" (o XML original guardado da NF).', 'PDFs e XMLs de NF baixados agora se chamam "APELIDO DO FORNECEDOR + número da NF" (ex.: FUTURA 38301.pdf).', 'Central de notificações: "Fornecedores sem CNPJ" agora lista cada fornecedor; tocar abre o cadastro já filtrado nele.', 'A aba Adicionar foi unida à Entrada de NF: vira o cartão "Adicionar NF manualmente", aberto enquanto não há XML e recolhido ao carregar um XML. Atalhos antigos abrem a Entrada de NF com o cartão aberto.'],
         implementado: ['js/20: htmlTratamentoNfItem, tratarNfItem, desfazerTratamentoNfItem (mesmos campos da Entrada de NF: tratamento, substituiCodigo, pedidoItem); associar de verdade limpa o tratamento. js/49: nomeArquivoDanfe e baixarXmlDaNf. js/34: irParaFornecedorCadastro. index/js/01/05/06/10: cartão add-nf-manual, tela screen-add removida do menu (com migração) e redirecionada.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/49-danfe.js'],
@@ -3293,4 +3302,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.39.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.39.1';

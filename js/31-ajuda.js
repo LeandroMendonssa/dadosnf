@@ -24,17 +24,17 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['No computador a barra não encolhe; no iPhone ela fica só com ícones e abre ao tocar.'], tutorial: null },
     { id: 'adicionar-nf', cat: 'Notas fiscais', titulo: 'Adicionar uma nota manualmente', versao: '2.10.0',
-      resumo: 'Cadastrar uma NF sem XML, no cartão "Adicionar NF manualmente" da Entrada de NF.',
+      resumo: 'Cadastrar uma NF sem XML, na aba "Manual (sem XML)" da Entrada de NF.',
       palavras: 'adicionar nota nf cadastrar manual vencimento valor fornecedor recurso salvar',
       tela: [{ id: 'screen-xml-editor', titulo: 'Entrada de NF', rotulo: 'Abrir Entrada de NF' }],
       passos: [
-        'Abra a Entrada de NF (a antiga aba Adicionar foi unida a ela). O cartão "Adicionar NF manualmente" fica aberto enquanto nenhum XML foi carregado; ao subir um XML, ele recolhe sozinho e dá para reabrir tocando no título.',
+        'Abra a Entrada de NF (a antiga aba Adicionar foi unida a ela). No topo há duas abas: "Por XML" (padrão) e "Manual (sem XML)". Toque em Manual para ver só o formulário; ao subir um XML o app volta sozinho para "Por XML".',
         'Preencha Data, NF, Vencimento e Valor Total.',
         'Informe o Nome do Fornecedor (se ele tem apelido cadastrado, o app usa o apelido).',
         'Em Observações, escolha o Recurso a ser pago.',
         'Toque em Salvar. A nota entra na relação de Gerenciar.'
       ],
-      dicas: ['Os atalhos antigos "Adicionar nota" (Início e Controle) abrem a Entrada de NF já com este cartão aberto.', 'Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
+      dicas: ['Os atalhos antigos "Adicionar nota" (Início e Controle) abrem a Entrada de NF já na aba Manual.', 'Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
     { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.18.0',
       resumo: 'Ler o XML (também aceita .txt, como o iPhone salva), conferir os itens, definir o recurso e salvar.',
       palavras: 'xml txt iphone entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
@@ -578,4 +578,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.39.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.39.1';

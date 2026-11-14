@@ -200,7 +200,7 @@ function processarXmlTexto(texto) {
     document.getElementById('xml-card-associacao').style.display = 'block';
     document.getElementById('xml-acoes-finais').style.display = 'flex';
     document.getElementById('screen-xml-editor').classList.add('xml-carregada'); // Fase 33: importador compacto
-    { const am = document.getElementById('add-nf-manual'); if (am) am.classList.remove('aberto'); } // 2.39.0: com XML carregado, o cadastro manual recolhe
+    definirModoEntrada('xml'); // 2.39.0: com XML carregado, a aba Manual sai de cena
     alternarAbaXml('itens'); // Fase 39: cada XML novo abre na aba Itens
     renderIdentificacaoXml(nfeIdentificacao);
 
@@ -1596,18 +1596,20 @@ function aplicarPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     renderAssociacaoCotacaoXml();
     toast(`Produto de referência: SP Data ${possibilidade.spDataCodigo}. O código do item (${item.cProd}) não foi alterado.`);
 }
-// 2.39.0: "Adicionar NF" virou um cartão da Entrada de NF. Atalhos antigos (Início, Controle, Ajuda) continuam funcionando: abrem a Entrada de NF
-// já com o cadastro manual aberto.
+// 2.39.1: "Adicionar NF" virou a aba "Manual (sem XML)" no topo da Entrada de NF (o formulário não fica mais no meio da NF que está sendo editada).
+// Atalhos antigos (Início, Controle, Ajuda) abrem a Entrada de NF já na aba Manual.
+function definirModoEntrada(modo) {
+    const tela = document.getElementById('screen-xml-editor'); if (!tela) return;
+    tela.classList.toggle('modo-manual', modo === 'manual');
+    document.querySelectorAll('#entrada-modo .xml-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.modo === (modo === 'manual' ? 'manual' : 'xml')));
+    if (modo === 'manual') tela.scrollTop = 0;
+}
+window.definirModoEntrada = definirModoEntrada;
 (function () {
     const orig = switchToScreen;
     switchToScreen = function (id, t) {
-        if (id === 'screen-add') {
-            id = 'screen-xml-editor'; t = 'Entrada de NF';
-            const am = document.getElementById('add-nf-manual'); if (am) am.classList.add('aberto');
-            try { if (typeof alternarAbaXml === 'function' && xmlDocAtual) alternarAbaXml('nf'); } catch (e) { /* segue */ }
-            if (am) setTimeout(() => am.scrollIntoView({ block: 'center', behavior: 'smooth' }), 400);
-        }
+        if (id === 'screen-add') { id = 'screen-xml-editor'; t = 'Entrada de NF'; definirModoEntrada('manual'); }
         return orig.call(this, id, t);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.39.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.39.1';
