@@ -24,17 +24,17 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['No computador a barra não encolhe; no iPhone ela fica só com ícones e abre ao tocar.'], tutorial: null },
     { id: 'adicionar-nf', cat: 'Notas fiscais', titulo: 'Adicionar uma nota manualmente', versao: '2.10.0',
-      resumo: 'Cadastrar uma NF pela aba Adicionar.',
+      resumo: 'Cadastrar uma NF sem XML, no cartão "Adicionar NF manualmente" da Entrada de NF.',
       palavras: 'adicionar nota nf cadastrar manual vencimento valor fornecedor recurso salvar',
-      tela: [{ id: 'screen-add', titulo: 'Adicionar', rotulo: 'Abrir Adicionar' }],
+      tela: [{ id: 'screen-xml-editor', titulo: 'Entrada de NF', rotulo: 'Abrir Entrada de NF' }],
       passos: [
-        'Abra a aba Adicionar.',
+        'Abra a Entrada de NF (a antiga aba Adicionar foi unida a ela). O cartão "Adicionar NF manualmente" fica aberto enquanto nenhum XML foi carregado; ao subir um XML, ele recolhe sozinho e dá para reabrir tocando no título.',
         'Preencha Data, NF, Vencimento e Valor Total.',
         'Informe o Nome do Fornecedor (se ele tem apelido cadastrado, o app usa o apelido).',
         'Em Observações, escolha o Recurso a ser pago.',
         'Toque em Salvar. A nota entra na relação de Gerenciar.'
       ],
-      dicas: ['Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
+      dicas: ['Os atalhos antigos "Adicionar nota" (Início e Controle) abrem a Entrada de NF já com este cartão aberto.', 'Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
     { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.18.0',
       resumo: 'Ler o XML (também aceita .txt, como o iPhone salva), conferir os itens, definir o recurso e salvar.',
       palavras: 'xml txt iphone entrada nf itens fator conversao cotacao sp data lote validade salvar associar pedido',
@@ -52,7 +52,7 @@ const AJUDA_ARTIGOS = [
         'Defina o recurso: um botão por item, ou "Recurso da NF inteira" no quadro acima dos itens (veja o artigo de Recurso).',
         'Lote e validade escritos no texto do produto entram no XML sozinhos; só os casos impossíveis ficam com aviso.',
         'Salve a NF. Ao salvar, o recurso dos itens é gravado na cotação.',
-        '"Baixar PDF (DANFE)" gera o PDF da nota no padrão da Sefaz, exatamente como o XML original (sem o fator de conversão). No iPhone, salve pela folha de compartilhamento em "Salvar em Arquivos". No computador baixa direto. Também dá para gerar o PDF no Editor de NF, aba XML (usa o XML original guardado da NF). Para usar a fonte exata (ex.: Times New Roman), abra Ajustes > Fonte do PDF da NF e carregue os arquivos .ttf; ficam só neste aparelho.'
+        'O PDF e o XML baixados usam o nome "APELIDO DO FORNECEDOR + número da NF" (ex.: FUTURA 38301.pdf). "Baixar PDF (DANFE)" gera o PDF da nota no padrão da Sefaz, exatamente como o XML original (sem o fator de conversão). No iPhone, salve pela folha de compartilhamento em "Salvar em Arquivos". No computador baixa direto. Também dá para gerar o PDF no Editor de NF, aba XML (usa o XML original guardado da NF). Para usar a fonte exata (ex.: Times New Roman), abra Ajustes > Fonte do PDF da NF e carregue os arquivos .ttf; ficam só neste aparelho.'
       ],
       dicas: ['Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.'], tutorial: 'xml-ao-texto' },
     { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.19.2',
@@ -279,6 +279,7 @@ const AJUDA_ARTIGOS = [
         'No topo, os selos mostram a situação: XML processado, vínculo com o ERP e se o XML completo está guardado.',
         'As abas organizam os dados: Itens, Financeiro (pagamento e ERP), Fiscal, Emitente/Dest., Transporte e XML.',
         'NFs que só existem no relatório do ERP mostram um aviso de "sem XML" e o cartão "Dados desta NF": ali você edita o nome do fornecedor (vale para todas as NFs do mesmo CNPJ e o app lembra para as próximas importações), escolhe o recurso e marca "não tem pedido" (compra direta).',
+        'Na aba Itens, em cada item, o bloco "Item da cotação" também permite marcar "Produto trocado" (veio outro produto no lugar do pedido) ou "Aceitar como o item pedido" (vale só nesta NF, sem gravar associação do fornecedor), sem precisar subir o XML de novo. "Desfazer" volta o item para sem associação. Na aba XML há "Baixar XML" (e o PDF).',
         'Quando a NF do ERP já está ligada a um pedido cujo recurso o app conhece pela cotação, o cartão mostra "Vem da cotação do pedido" em vez de perguntar; "Mudar só nesta NF" continua disponível.',
         'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (uma NF tem um recurso só: se algum item teve menos de 3 cotações, é Recurso Próprio; senão C/C. O app define sozinho e leva para o Gerenciar e para Exportar; você só troca aqui se precisar) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
         'Ao marcar "Esta NF não tem cotação (compra direta)", aparece "Destino da compra direta": escolha Santa Casa ou CTI. Com o destino, os botões de recurso (C/C ou próprio) funcionam mesmo sem cotação do SmartCompras, e a NF deixa de aparecer como "sem produto da cotação".',
@@ -577,4 +578,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.38.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.39.0';

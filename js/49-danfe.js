@@ -347,9 +347,12 @@ function desenharDanfe(d, S, opt) {
 
 /* ============ Integração com a Entrada de NF ============ */
 function nomeArquivoDanfe(d) {
+  // 2.39.0: padrão do app, "APELIDO DO FORNECEDOR + número da NF" (sem apelido, usa o nome do XML)
   const limpa = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, ' ').trim();
-  const forn = limpa(d.emit.nome).split(' ').slice(0, 3).join(' ');
-  return ('DANFE NF ' + (d.nNF || 'sem numero') + (forn ? ' - ' + forn : '') + '.pdf').replace(/\s+/g, ' ');
+  let forn = '';
+  try { if (typeof nomeExibicaoFornecedor === 'function') forn = nomeExibicaoFornecedor(d.emit.nome, d.emit.doc); } catch (e) { /* cai no nome do XML */ }
+  forn = limpa(forn || d.emit.nome).split(' ').slice(0, 4).join(' ');
+  return ((forn ? forn + ' ' : '') + (d.nNF || 'sem numero') + '.pdf').replace(/\s+/g, ' ');
 }
 function gerarDanfePdf(texto) {
   const d = lerNFe(texto);
@@ -383,7 +386,21 @@ function baixarDanfePdfDaNf(nfId) {
   return baixarDanfePdf(xml);
 }
 window.baixarDanfePdfDaNf = baixarDanfePdfDaNf;
+// 2.39.0: baixa o XML original guardado na NF (mesmo nome do PDF, com .xml)
+function baixarXmlDaNf(nfId) {
+  const nf = (typeof listaNfsProcessadas !== 'undefined' ? listaNfsProcessadas : []).find(n => n.id === nfId);
+  const xml = nf && nf.xmlDados && nf.xmlDados.xmlOriginal;
+  if (!xml) { toast('O XML original desta NF não está guardado (NF antiga ou arquivo muito grande).'); return; }
+  let nome = 'NF.xml';
+  try { nome = nomeArquivoDanfe(lerNFe(String(xml))).replace(/\.pdf$/, '.xml'); } catch (e) { nome = ('NF ' + (nf.nf || '') + '.xml').replace(/\s+/g, ' '); }
+  const blob = new Blob([xml], { type: 'application/xml' });
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = nome; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('✓ XML baixado!');
+}
+window.baixarXmlDaNf = baixarXmlDaNf;
 window.baixarDanfePdf = baixarDanfePdf;
-window.gerarDanfePdf = gerarDanfePdf;
+window.gerarDanfePdf = gerarDanfePdf; window.nomeArquivoDanfe = nomeArquivoDanfe;
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.31.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.39.0';

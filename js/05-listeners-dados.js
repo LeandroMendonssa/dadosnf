@@ -35,6 +35,10 @@ function migrarMenuOrderConfig() {
     }
     // ------------------------------------------------------------
 
+    // --- 2.39.0: "Adicionar NF" foi unida à Entrada de NF — tira a entrada antiga da ordem e das escondidas ---
+    if (appConfig.personalizacao.menuOrder) appConfig.personalizacao.menuOrder = appConfig.personalizacao.menuOrder.filter(id => id !== 'screen-add');
+    if (appConfig.personalizacao.menuHidden) appConfig.personalizacao.menuHidden = appConfig.personalizacao.menuHidden.filter(id => id !== 'screen-add');
+    if (Array.isArray(appConfig.personalizacao.menuForaDaBarra)) appConfig.personalizacao.menuForaDaBarra = appConfig.personalizacao.menuForaDaBarra.filter(id => id !== 'screen-add');
     // --- 2.9.0: o Histórico de NFs foi unido ao Controle de NFs — tira a entrada antiga da ordem e das escondidas ---
     if (appConfig.personalizacao.menuOrder) appConfig.personalizacao.menuOrder = appConfig.personalizacao.menuOrder.filter(id => id !== 'screen-history');
     if (appConfig.personalizacao.menuHidden) appConfig.personalizacao.menuHidden = appConfig.personalizacao.menuHidden.filter(id => id !== 'screen-history');
@@ -638,4 +642,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.29.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.39.0';

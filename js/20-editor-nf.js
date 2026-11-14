@@ -410,9 +410,10 @@ function renderEditorNf() {
         });
         const linhaEdicao = `<tr id="nfed-edit-${idx}" class="nf-edit" style="display:${nfEditorAbertos.has(idx) ? '' : 'none'}"><td colspan="8">
             <div class="nfe-sec">
-                <div class="nfe-sec-tit">Item da cotação ${ic ? '' : badge('pendente', 'sem associação')}</div>
-                <div class="nfe-atual ${ic ? '' : 'falta'}">${ic ? `${escRel(it.codigoSmartCompras)} — ${escRel(nomeIc)}<small>pedido ${escRel(ic._pedido)}</small>` : (it.codigoSmartCompras ? `SmartCompras ${escRel(it.codigoSmartCompras)} <small>não está na cotação do pedido</small>` : 'Nenhum item da cotação associado')}</div>
+                <div class="nfe-sec-tit">Item da cotação ${ic ? (it.tratamento === 'aceito' ? badge('neutro', 'aceito só nesta NF') : '') : (it.tratamento === 'trocado' ? badge('neutro', 'produto trocado') : badge('pendente', 'sem associação'))}</div>
+                <div class="nfe-atual ${ic || it.tratamento === 'trocado' ? '' : 'falta'}">${it.tratamento === 'trocado' ? 'Veio outro produto no lugar do pedido' : ic ? `${escRel(it.codigoSmartCompras)} — ${escRel(nomeIc)}<small>pedido ${escRel(ic._pedido)}</small>` : (it.codigoSmartCompras ? `SmartCompras ${escRel(it.codigoSmartCompras)} <small>não está na cotação do pedido</small>` : 'Nenhum item da cotação associado')}</div>
                 ${seletorAssoc}
+                ${htmlTratamentoNfItem(nf, it, idx, opcoesAssoc, ic)}
             </div>
             <div class="nfe-sec">
                 <div class="nfe-sec-tit">Produto SP Data ${it.codigoSpData ? '' : badge('pendente', 'sem SP Data')}</div>
@@ -501,7 +502,8 @@ function renderEditorNf() {
     const paneXml = !xd ? semXml : `
         <div class="card"><div class="xml-produto-nome">PDF da NF (DANFE)</div>
             ${xd.xmlOriginal ? `<div class="xml-item-meta" style="margin-bottom:10px;">Gera o PDF no padrão da Sefaz a partir do XML original, como o fornecedor emitiu (sem conversão de unidade).</div>
-            <div class="actions-row"><button type="button" class="actions-button is-neutral" onclick="baixarDanfePdfDaNf('${escRel(nf.id)}')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> Baixar PDF (DANFE)</button></div>`
+            <div class="actions-row"><button type="button" class="actions-button is-neutral" onclick="baixarDanfePdfDaNf('${escRel(nf.id)}')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> Baixar PDF (DANFE)</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarXmlDaNf('${escRel(nf.id)}')"><span class="icon-wrapper"><i class="fa-solid fa-file-code"></i></span> Baixar XML</button></div>`
             : `<div class="xml-item-meta">O XML original desta NF não ficou guardado (NF antiga ou arquivo muito grande), então não dá para gerar o PDF por aqui. Abra o XML na Entrada de NF.</div>`}
         </div>
         <div class="card"><div class="xml-produto-nome">Identificação</div>
@@ -547,7 +549,7 @@ function trocarSmartComprasNfItem(nfId, idx, codigo) {
                 const existente = bancoAssociacoesFornecedor[chave];
                 const historico = existente ? [...(existente.historico || [])] : [];
                 historico.push({ codigoSmartCompras: codigo, confirmadoEm: agora, tipo: existente ? 'correcao' : 'confirmacao' });
-                const novos = nf.itens.map((x, k) => k !== idx ? x : { ...x, codigoSmartCompras: codigo, codigoSpData: novoSp });
+                const novos = nf.itens.map((x, k) => { if (k !== idx) return x; const { tratamento, substituiCodigo, ...resto } = x; return { ...resto, codigoSmartCompras: codigo, codigoSpData: novoSp }; }); // 2.39.0: associar de verdade desfaz "trocado/aceito"
                 await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
                 await associacoesFornecedorCollection.doc(chave).set({
                     cnpjFornecedor: nf.cnpjFornecedor, codigoFornecedor: it.cProd, codigoSmartCompras: codigo,
@@ -558,6 +560,64 @@ function trocarSmartComprasNfItem(nfId, idx, codigo) {
         }
     });
 }
+// ===================================================================
+// --- 2.39.0: PRODUTO TROCADO / ACEITO COMO O PEDIDO, DEPOIS DE SALVAR A NF ---
+// ===================================================================
+// Antes só dava para marcar na Entrada de NF (subindo o XML de novo). Mesmo registro de lá, gravado no item da NF:
+//   aceito  → codigoSmartCompras = item da cotação, tratamento 'aceito' (conta como o pedido; NÃO grava associação do fornecedor)
+//   trocado → sem codigoSmartCompras, tratamento 'trocado' + substituiCodigo = item pedido (a conferência registra a ocorrência)
+let nfEditorTratAberto = {}; // idx -> 'trocado' | 'aceito' (seletor aberto)
+function abrirTratamentoNfItem(idx, tipo) { nfEditorTratAberto = nfEditorTratAberto[idx] === tipo ? {} : { [idx]: tipo }; renderEditorNf(); }
+function htmlTratamentoNfItem(nf, it, idx, opcoes, ic) {
+    const nomeDe = cod => { const x = cotacoesDaNf(nf).flatMap(c => c.itens || []).find(y => String(y.codProduto) === String(cod)); return x ? `${cod} — ${nomeItemCotacao(x)}` : String(cod || ''); };
+    if (it.tratamento) {
+        const cod = it.tratamento === 'trocado' ? it.substituiCodigo : it.codigoSmartCompras;
+        return `<div class="nfe-dica" style="margin:10px 0 6px"><strong>${it.tratamento === 'trocado' ? 'Produto trocado' : 'Aceito como o item pedido, só nesta NF'}</strong>: ${escRel(nomeDe(cod))}.${it.tratamento === 'trocado' ? ' A conferência registra "Solicitamos X, porém foi faturado Y".' : ' A associação do fornecedor não é gravada.'}</div>
+            <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="desfazerTratamentoNfItem('${escRel(nf.id)}', ${idx})">Desfazer ${it.tratamento === 'trocado' ? 'produto trocado' : 'aceite'}</button></div>`;
+    }
+    if (!opcoes.length) return '';
+    const aberto = nfEditorTratAberto[idx] || '';
+    const sel = aberto ? `<div class="nfe-dica" style="margin:8px 0 4px">${aberto === 'trocado' ? 'Qual item da cotação foi pedido (e veio outro no lugar)?' : 'Qual item da cotação este produto vai valer, só nesta NF?'}</div>` +
+        htmlSeletorBusca(`nfed-trat-${idx}-${aberto}`, { placeholder: 'Buscar item da cotação por código ou nome…', opcoes, valorAtual: '', aoEscolher: valor => tratarNfItem(nf.id, idx, aberto, valor) }) : '';
+    return `<div class="nfe-dica" style="margin:12px 0 6px">Veio outro produto no lugar do pedido?</div>
+        <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="abrirTratamentoNfItem(${idx}, 'trocado')">${aberto === 'trocado' ? 'Cancelar' : 'Produto trocado'}</button>
+        <button type="button" class="central-status-toggle" onclick="abrirTratamentoNfItem(${idx}, 'aceito')">${aberto === 'aceito' ? 'Cancelar' : 'Aceitar como o item pedido'}</button></div>${sel}`;
+}
+async function tratarNfItem(nfId, idx, tipo, codigo) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
+    if (!it || !codigo || (tipo !== 'trocado' && tipo !== 'aceito')) return;
+    const donos = cotacoesDaNf(nf).filter(c => (c.itens || []).some(x => String(x.codProduto) === String(codigo)));
+    const multi = pedidosDaNf(nf).length > 1;
+    const pedidoItem = multi ? ((donos.length === 1 ? String(donos[0].pedido) : null) || it.pedidoItem || nf.pedido) : null;
+    const assocSp = tipo === 'aceito' ? listaAssociacoesSpData.find(a => a.codigoSmartCompras === codigo) : null;
+    try {
+        const novos = nf.itens.map((x, k) => {
+            if (k !== idx) return x;
+            const { tratamento, substituiCodigo, pedidoItem: _pi, ...resto } = x;
+            return tipo === 'aceito'
+                ? { ...resto, codigoSmartCompras: codigo, codigoSpData: assocSp ? assocSp.spDataCodigo : (resto.codigoSpData || ''), tratamento: 'aceito', ...(pedidoItem ? { pedidoItem } : {}) }
+                : { ...resto, codigoSmartCompras: null, tratamento: 'trocado', substituiCodigo: codigo, ...(pedidoItem ? { pedidoItem } : {}) };
+        });
+        await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
+        nfEditorTratAberto = {};
+        toast(tipo === 'trocado' ? '✓ Marcado como produto trocado.' : '✓ Aceito como o item pedido, só nesta NF.');
+    } catch (e) { console.error('Erro ao tratar item da NF:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+}
+async function desfazerTratamentoNfItem(nfId, idx) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
+    if (!it || !it.tratamento) return;
+    try {
+        const novos = nf.itens.map((x, k) => {
+            if (k !== idx) return x;
+            const { tratamento, substituiCodigo, ...resto } = x;
+            return tratamento === 'aceito' ? { ...resto, codigoSmartCompras: null, codigoSpData: '' } : resto;
+        });
+        await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
+        toast('✓ Tratamento desfeito: o item voltou a ficar sem associação.');
+    } catch (e) { console.error('Erro ao desfazer tratamento:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+}
+window.tratarNfItem = tratarNfItem; window.desfazerTratamentoNfItem = desfazerTratamentoNfItem; window.abrirTratamentoNfItem = abrirTratamentoNfItem;
+
 function definirSpDataNfItem(nfId, idx, codigo) {
     const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
     const prod = listaProdutosSpData.find(p => p.codigo === codigo);
@@ -834,4 +894,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.28.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.39.0';

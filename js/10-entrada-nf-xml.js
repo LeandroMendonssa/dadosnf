@@ -200,6 +200,7 @@ function processarXmlTexto(texto) {
     document.getElementById('xml-card-associacao').style.display = 'block';
     document.getElementById('xml-acoes-finais').style.display = 'flex';
     document.getElementById('screen-xml-editor').classList.add('xml-carregada'); // Fase 33: importador compacto
+    { const am = document.getElementById('add-nf-manual'); if (am) am.classList.remove('aberto'); } // 2.39.0: com XML carregado, o cadastro manual recolhe
     alternarAbaXml('itens'); // Fase 39: cada XML novo abre na aba Itens
     renderIdentificacaoXml(nfeIdentificacao);
 
@@ -1595,4 +1596,18 @@ function aplicarPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     renderAssociacaoCotacaoXml();
     toast(`Produto de referência: SP Data ${possibilidade.spDataCodigo}. O código do item (${item.cProd}) não foi alterado.`);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.30.0';
+// 2.39.0: "Adicionar NF" virou um cartão da Entrada de NF. Atalhos antigos (Início, Controle, Ajuda) continuam funcionando: abrem a Entrada de NF
+// já com o cadastro manual aberto.
+(function () {
+    const orig = switchToScreen;
+    switchToScreen = function (id, t) {
+        if (id === 'screen-add') {
+            id = 'screen-xml-editor'; t = 'Entrada de NF';
+            const am = document.getElementById('add-nf-manual'); if (am) am.classList.add('aberto');
+            try { if (typeof alternarAbaXml === 'function' && xmlDocAtual) alternarAbaXml('nf'); } catch (e) { /* segue */ }
+            if (am) setTimeout(() => am.scrollIntoView({ block: 'center', behavior: 'smooth' }), 400);
+        }
+        return orig.call(this, id, t);
+    };
+})();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.39.0';

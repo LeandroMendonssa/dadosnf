@@ -444,7 +444,8 @@ document.addEventListener('keydown', (event) => {
     if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
     const screen = el.closest('.app-screen');
     if (!screen) return;
-    const camposFocaveis = Array.from(screen.querySelectorAll('input.form-field, select.form-field, textarea.form-field'))
+    const escopo = el.closest('#add-nf-manual') || screen; // 2.39.0: o cadastro manual da NF vive dentro da Entrada de NF
+    const camposFocaveis = Array.from(escopo.querySelectorAll('input.form-field, select.form-field, textarea.form-field'))
         .filter(f => !f.disabled && f.offsetParent !== null);
     const idx = camposFocaveis.indexOf(el);
     if (idx === -1) return;
@@ -452,6 +453,6 @@ document.addEventListener('keydown', (event) => {
     const proximo = camposFocaveis[idx + 1];
     if (proximo) { proximo.focus(); if (typeof proximo.select === 'function' && proximo.tagName === 'INPUT') proximo.select(); }
     else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
-    else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && screen.id === 'screen-add') salvarBtn.click(); }
+    else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && escopo.id === 'add-nf-manual') salvarBtn.click(); }
 });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.28.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.39.0';

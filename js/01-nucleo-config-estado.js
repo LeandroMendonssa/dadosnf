@@ -138,7 +138,7 @@ const AUDITORIA_TEXTOS_DEFAULT = {
 let appConfig = {
     personalizacao: { 
         theme: 'light', iconTheme: 'solid', font: 'arial', animationSpeed: 2, transicaoTela: 'ios', transicaoVersao: 2, tabDuracao: 360, carregamento: 'blocos', cascata: 'sim', densidade: 'confortavel', mostrarIconesAbas: 'on',
-        menuOrder: ['screen-inicio', 'screen-add', 'screen-manage', 'screen-export', 'screen-reports', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'],
+        menuOrder: ['screen-inicio', 'screen-manage', 'screen-export', 'screen-reports', 'screen-cotacoes', 'screen-xml-editor', 'screen-anotacoes', 'screen-settings'],
         // Fase 32: destinos tirados da barra inferior (vão pra tela "Mais"). Vazio = todos na barra.
         menuHidden: []
     },
@@ -168,9 +168,6 @@ const DOM = {
 
 // --- DEFINIÇÃO DE MENUS E ÍCONES ---
 const menuDetails = {
-    'screen-add': { icon: 'fa-solid fa-plus-circle', material: 'add_circle', title: 'Adicionar', 
-        outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
-        duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/><path d="M13 11h3a1 1 0 0 1 0 2h-3v3a1 1 0 0 1-2 0v-3H8a1 1 0 0 1 0-2h3V8a1 1 0 0 1 2 0v3z"/></svg>`},
     'screen-inicio': { icon: 'fa-solid fa-house', material: 'home', title: 'Início',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h5v-6h4v6h5V10"></path></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M5 10l7-6 7 6v10h-5v-6h-4v6H5z"/><path d="M12 2.6l10 8.7-1.3 1.5L12 5.3l-8.7 7.5L2 11.3z"/></svg>` },
@@ -212,4 +209,4 @@ const closeBtnBackScreen = { 'screen-danfe-fonte': 'screen-settings', 'screen-lo
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.33.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.39.0';

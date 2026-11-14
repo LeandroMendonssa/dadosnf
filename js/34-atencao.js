@@ -108,10 +108,17 @@ function _itensDeAtencaoCalc() {
     add('baixa', 'sem-produto', 'NFs com itens sem produto da cotação', 'Associe o produto no Editor da NF ou na Entrada de NF.',
         nfsDe('sem-produto').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
     const semCnpj = listaFornecedoresSpData.filter(f => !(f.cnpjs || []).length);
-    add('baixa', 'forn-sem-cnpj', 'Fornecedores sem CNPJ no SP Data', 'Sem CNPJ, o app não acha o pedido das NFs do ERP sozinho.',
-        semCnpj.length ? [{ pedido: '', forn: '', t: `${semCnpj.length} fornecedor(es) sem CNPJ`, s: 'abrir o cadastro de Fornecedores', fn: "switchToScreen('screen-fornecedores','Fornecedores')" }] : []);
+    // 2.39.0: lista cada fornecedor (antes só dizia a quantidade); toque abre o cadastro já filtrado nele
+    add('baixa', 'forn-sem-cnpj', 'Fornecedores sem CNPJ no SP Data', 'Sem CNPJ, o app não acha o pedido das NFs do ERP sozinho. Toque para abrir o cadastro do fornecedor.',
+        semCnpj.map(f => { const nome = (typeof apelidoFornecedorDoc === 'function' && apelidoFornecedorDoc(f).nome) || f.nomeReal || ('código ' + f.codigo); return { pedido: '', forn: nome, t: nome, s: f.nomeReal && f.nomeReal !== nome ? f.nomeReal : 'código ' + f.codigo, fn: `irParaFornecedorCadastro('${escRel(String(f.codigo))}')` }; }));
     try { if (typeof agendaGruposAtencao === 'function') agendaGruposAtencao().forEach(g => add(g.nivel, g.id, g.titulo, g.dica, g.linhas)); } catch (e) { console.error('Agenda na Central:', e); }
     return grupos;
+}
+function irParaFornecedorCadastro(codigo) {
+    const f = listaFornecedoresSpData.find(x => String(x.codigo) === String(codigo)); if (!f) return;
+    switchToScreen('screen-fornecedores', 'Fornecedores');
+    const termo = (f.nomeReal || String(f.codigo)).slice(0, 60);
+    setTimeout(() => { const inp = document.querySelector('#screen-fornecedores input.form-field'); if (inp) inp.value = termo; filtrarCadastroFornecedoresSpData(termo); }, 80);
 }
 function totalAtencao() { try { return itensDeAtencao().reduce((s, g) => s + (g.nivel === 'baixa' ? 0 : g.linhas.length), 0); } catch (e) { return 0; } }
 
@@ -178,4 +185,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.38.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.39.0';
