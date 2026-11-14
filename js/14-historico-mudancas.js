@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.38.0', nome: 'Central de notificações: atualiza sozinha e leva ao produto', status: 'atual', data: '13/11/2026 às 19:10',
+        numero: '2.38.1', nome: 'NFs já resolvidas saem da decisão do ERP; telas mais leves', status: 'atual', data: '14/11/2026 às 06:40',
+        novidades: ['"NFs do ERP esperando decisão (vai ao financeiro?)" não lista mais NFs já arquivadas, enviadas ao financeiro ou diretas (ex.: DISKMED 807656). Só fica o que realmente espera decisão.', 'Central de notificações mais leve ao abrir: o desenho pesado espera a troca de tela terminar e o cálculo não é refeito 3 vezes seguidas. Objetivo: reduzir engasgos, botão de voltar sumindo e tela cinza.'],
+        implementado: ['js/36: decisao-parada só para situação "recebida". js/34: cache de 2 s em itensDeAtencao, render adiado em prepararAtencao e no switchToScreen (só se os dados mudaram).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/34-atencao.js', 'js/36-visao-nf.js'],
+        mudou: ['Arquivos alterados desde a 2.38.0: index.html, style.css, js/14, js/24, js/34 e js/36.'],
+        testar: ['iPhone: abra Controle de NFs: o aviso de atenção não deve mais contar NFs arquivadas/enviadas.', 'iPhone: navegue entre Início, Central, Controle e volte com o botão/gesto: veja se ainda há engasgo, botão de voltar sumindo ou tela cinza. Se sim, anote a sequência de telas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.38.0', nome: 'Central de notificações: atualiza sozinha e leva ao produto', status: 'concluida', data: '13/11/2026 às 19:10',
         novidades: ['Central de notificações: a tela agora se refaz ao entrar e, com ela aberta, em até 3 segundos depois que algo muda (marcar chegou, resolver ocorrência, decidir duplicidade, enviar nota, NF nova). Antes ela só se refazia em poucos casos, por isso avisos já resolvidos ficavam presos ao voltar de um pedido.', 'Ocorrências detectadas e itens que ainda não chegaram: uma linha por pedido e fornecedor (antes uma por pedido), mostrando os primeiros produtos. O toque abre o pedido já no fornecedor e no produto, com rolagem e destaque.', 'Pendências relatadas: o toque também abre o fornecedor e o produto da divergência.', 'Novo grupo "NFs recebidas em duplicidade sem decisão": a NF duplicada não entra mais na conta item a item, então ela passa a ser avisada aqui até você decidir.'],
         implementado: ['js/34: atencaoAssinatura (assinatura dos dados), re-render ao entrar na tela e a cada 3 s quando muda, linhasPorFornecedor, grupo nf-duplicada e fn das linhas via irParaDivergenciaPedido/irParaFornecedorPedido.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js'],
@@ -3275,4 +3284,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.38.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.38.1';

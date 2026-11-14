@@ -51,7 +51,7 @@ function visoesNf() {
         // pendências desta NF (as mesmas que o painel de atenção lista, agora calculadas uma vez só)
         const pendencias = [];
         const diasDaData = it.dataISO ? diasDesdeISO(it.dataISO) : null;
-        if (erp && erp.statusFluxo === 'pre_selecao' && diasDaData != null && diasDaData > 7) pendencias.push({ id: 'decisao-parada', nivel: 'media', texto: `lançada em ${erp.data} (${diasDaData} dia(s)): falta decidir relação, financeiro ou "não vai ao financeiro"` });
+        if (erp && erp.statusFluxo === 'pre_selecao' && !['arquivada', 'direta', 'enviada'].includes(it.situacao) && diasDaData != null && diasDaData > 7)  /* 2.38.1: NF já arquivada/enviada/direta não espera mais decisão */ pendencias.push({ id: 'decisao-parada', nivel: 'media', texto: `lançada em ${erp.data} (${diasDaData} dia(s)): falta decidir relação, financeiro ou "não vai ao financeiro"` });
         if (nf && nfSemPedidoPendente(nf)) pendencias.push({ id: 'sem-pedido', nivel: 'media', texto: 'sem pedido e sem marca de compra direta' });
         if (pedidoSt === 'sugerido') pendencias.push({ id: 'pedido-sugerido', nivel: 'media', texto: `pedido ${pedidoSugerido} sugerido, falta confirmar` });
         if (nf) {
@@ -74,4 +74,4 @@ function visaoNfPorId(id) { return visoesNf().find(v => v.id === id || (v.nf && 
 // Pendências de todas as NFs com um id (ex.: 'sem-pedido'), prontas para listar
 function pendenciasNf(idPendencia) { return visoesNf().filter(v => v.pendencias.some(p => p.id === idPendencia)).map(v => ({ v, p: v.pendencias.find(p => p.id === idPendencia) })); }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.28.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.38.1';

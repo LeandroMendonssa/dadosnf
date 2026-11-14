@@ -11,7 +11,15 @@ function irParaRelatorioDivergencias() { switchToScreen('screen-reports', 'Relat
 
 function diasDesdeISO(iso) { return iso ? Math.round((new Date(dataLocalISO() + 'T12:00:00') - new Date(String(iso).slice(0, 10) + 'T12:00:00')) / 86400000) : null; }
 
+// 2.38.1: o cálculo é pesado (centenas de ms no iPhone). Uma tela abrindo chamava 3 vezes seguidas: agora as chamadas próximas (até 2 s,
+// com os mesmos dados) reaproveitam o resultado. Mudou algo → a assinatura muda e refaz na hora.
+let _atnCache = null;
 function itensDeAtencao() {
+    const k = atencaoAssinatura() + '|' + dataLocalISO(), t = Date.now();
+    if (_atnCache && _atnCache.k === k && t - _atnCache.t < 2000) return _atnCache.g;
+    const g = _itensDeAtencaoCalc(); _atnCache = { k, g, t }; return g;
+}
+function _itensDeAtencaoCalc() {
     const grupos = [];
     const add = (nivel, id, titulo, dica, linhas, acaoGeral) => { if (linhas.length) grupos.push({ nivel, id, titulo, dica, linhas, acaoGeral }); };
     const hoje = dataLocalISO();
@@ -109,7 +117,9 @@ function totalAtencao() { try { return itensDeAtencao().reduce((s, g) => s + (g.
 
 const ATENCAO_NIVEIS = { alta: ['Urgente', 'err'], media: ['Importante', ''], baixa: ['Quando der', 'm'] };
 function toggleGrupoAtencao(id) { if (atencaoAbertos.has(id)) atencaoAbertos.delete(id); else atencaoAbertos.add(id); renderAtencao(); }
-function prepararAtencao() { atencaoModo = 'urgencia'; atencaoAbertos = new Set(itensDeAtencao().filter(g => g.nivel === 'alta').map(g => g.id)); renderAtencao(); }
+// 2.38.1: o desenho pesado espera a troca de tela começar (antes travava a animação); os grupos urgentes abrem na hora de desenhar
+let _atnAbrirAltas = false;
+function prepararAtencao() { atencaoModo = 'urgencia'; atencaoAbertos = new Set(); _atnAbrirAltas = true; setTimeout(renderAtencao, 60); }
 // 2.38.0: a tela não se refazia ao voltar de um pedido nem quando os dados mudavam (daí avisos "presos" depois de resolvidos).
 // Agora refaz ao entrar na tela e, enquanto ela está aberta, confere a cada 3 s uma assinatura barata dos dados (só CPU local, sem Firebase).
 let _atnSig = '';
@@ -121,13 +131,14 @@ function atencaoAssinatura() {
     return [(notasPendentes || []).length, (notasPendentes || []).filter(n => n.enviada).length, (listaCotacoes || []).length, (listaNfsProcessadas || []).length, (listaEntradasErp || []).length, (listaAnotacoes || []).length, nPend, nRel, cotN, nDup,
         mx(listaCotacoes, 'atualizadoEm'), mx(listaNfsProcessadas, 'processadoEm', 'atualizadoEm'), mx(listaEntradasErp, 'atualizadoEm', 'data'), mx(listaAnotacoes, 'atualizadoEm'), (listaFornecedoresSpData || []).length].join('|');
 }
-(function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-atencao') renderAtencao(); return r; }; })();
+(function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-atencao') setTimeout(() => { const el = document.getElementById('screen-atencao'); if (el && el.classList.contains('active') && atencaoAssinatura() !== _atnSig) renderAtencao(); }, 450); return r; }; })();
 setInterval(() => { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active') && atencaoAssinatura() !== _atnSig) renderAtencao(); }, 3000);
 function renderAtencaoSeAtiva() { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active')) renderAtencao(); }
 function renderAtencao() {
     const el = document.getElementById('atencao-conteudo'); if (!el) return;
     _atnSig = atencaoAssinatura();
     const grupos = itensDeAtencao();
+    if (_atnAbrirAltas) { _atnAbrirAltas = false; atencaoAbertos = new Set(grupos.filter(g => g.nivel === 'alta').map(g => g.id)); }
     if (!grupos.length) { el.innerHTML = '<div class="card"><div class="xml-item-meta">✓ Nada parado por aqui. Tudo em dia.</div></div>'; return; }
     const ordem = { alta: 0, media: 1, baixa: 2 };
     grupos.sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
@@ -167,4 +178,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.38.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.38.1';
