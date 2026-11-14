@@ -342,7 +342,7 @@ async function executarBaixarXmlConvertido() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = nomeArquivoXmlOriginal.replace(/\.(xml|txt)$/i, '') + '-corrigido.xml';
+    a.download = (window.nomePadraoDeXml && nomePadraoDeXml(xmlString, ' corrigido')) || (nomeArquivoXmlOriginal.replace(/\.(xml|txt)$/i, '') + '-corrigido.xml'); // 2.40.0: apelido do fornecedor + nº da NF
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -602,4 +602,4 @@ function garantirDatalistSpDataAuditoria() {
 // Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.33.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.40.0';

@@ -187,7 +187,7 @@ const AJUDA_ARTIGOS = [
       tela: [{ id: 'screen-atencao', titulo: 'Central de notificações', rotulo: 'Abrir a central' }],
       passos: [
         'Abra Mais → Central de notificações (o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
-        'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido e pedidos com prazo vencido sem nenhum sinal de entrega.',
+        'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido, NFs recebidas (do ERP ou do XML) com vencimento já passado e ainda sem envio ao financeiro, e pedidos com prazo vencido sem nenhum sinal de entrega.',
         'Importante: ocorrências detectadas pelo app e ainda sem relato em auditoria (abra o pedido e registre), NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
         'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
         'As pendências de cada NF vêm da mesma "visão única da NF" usada pelo Controle, pelo Editor e pela Auditoria Retroativa; as auditorias abertas aparecem em "Pendências relatadas" (prioridade baixa: já estão com o responsável e não entram na contagem de atenção), vindas da mesma lista de Relatórios → Divergências. Por isso os números são sempre os mesmos nas telas.',
@@ -424,6 +424,7 @@ const AJUDA_ARTIGOS = [
       tela: [{ id: 'screen-historico-mudancas', titulo: 'Histórico de Mudanças', rotulo: 'Abrir o histórico' }],
       passos: [
         'Em Ajustes → Histórico de Mudanças, a versão mais recente fica no topo e destacada.',
+        'No topo do Histórico há "Versões dos arquivos carregados": mostra a versão de cada arquivo do app e quais estão desatualizados (útil depois de publicar no GitHub). "Conferir de novo" refaz a checagem. O aviso de atualização incompleta também confere de novo sozinho alguns segundos depois e ao voltar para o app.',
         'Cada versão traz o que há de novo, o que mudou e o que testar, com atalhos quando houver.',
         'Ao abrir uma versão nova, o app mostra as novidades numa janela.'
       ],
@@ -578,4 +579,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.39.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.40.0';

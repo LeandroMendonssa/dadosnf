@@ -31,5 +31,38 @@ function arqMostrarAviso(problemas) {
         <button type="button" onclick="location.reload()">Recarregar</button><button type="button" onclick="this.parentNode.remove()">Fechar</button>`;
     document.body.appendChild(b);
 }
-window.addEventListener('load', () => { setTimeout(() => { try { const p = arqVerificar(); if (p.length) { console.warn('Arquivos desatualizados:', p); arqMostrarAviso(p); } } catch (e) { console.error('Verificação de arquivos:', e); } }, 1500); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.24.6';
+// 2.40.0: confere de novo depois (a publicação do GitHub Pages pode demorar e os arquivos chegam em momentos diferentes), ao voltar para o app e
+// quando um botão chama algo que não existe (arquivo antigo no ar). O aviso só aparece uma vez; "Fechar" não o impede de voltar numa próxima conferência.
+function arqConferirAgora() { try { const p = arqVerificar(); if (p.length) { console.warn('Arquivos desatualizados:', p); arqMostrarAviso(p); } return p; } catch (e) { console.error('Verificação de arquivos:', e); return []; } }
+window.addEventListener('load', () => { [1500, 6000, 15000].forEach(t => setTimeout(arqConferirAgora, t)); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(arqConferirAgora, 800); });
+window.addEventListener('error', e => {
+    const m = String((e && e.message) || '');
+    if (/Can't find variable|is not defined/i.test(m)) { const p = arqConferirAgora(); if (!p.length) console.warn('Função ausente (pode ser arquivo antigo):', m); }
+});
+// Lista com a versão que cada arquivo carregou (aparece no topo do Histórico de Mudanças)
+function arqRelatorio() {
+    const esperado = {};
+    (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []).forEach(f => (f.arquivos || []).forEach(a => { if (!/^js\//.test(a) && a !== 'index.html' && a !== 'style.css') return; if (!esperado[a] || arqVerNum(f.numero) > arqVerNum(esperado[a])) esperado[a] = f.numero; }));
+    const reg = window.ARQ_V || {};
+    const meta = document.querySelector('meta[name="app-versao"]');
+    const css = (getComputedStyle(document.documentElement).getPropertyValue('--css-versao') || '').replace(/['"\s]/g, '');
+    return Object.entries(esperado).map(([arq, ver]) => {
+        const atual = arq === 'index.html' ? (meta ? meta.content : '0') : arq === 'style.css' ? (css || '0') : (reg[arq] || '0');
+        return { arq, atual, ver, ok: arqVerNum(atual) >= arqVerNum(ver) };
+    }).sort((a, b) => (a.ok - b.ok) || a.arq.localeCompare(b.arq));
+}
+function arqDesenharVersoes() {
+    const tela = document.getElementById('screen-historico-mudancas'); if (!tela) return;
+    let box = document.getElementById('arq-versoes');
+    if (!box) { box = document.createElement('details'); box.id = 'arq-versoes'; box.className = 'card arq-versoes'; tela.insertBefore(box, tela.firstChild); }
+    const r = arqRelatorio(), ruins = r.filter(x => !x.ok).length;
+    box.innerHTML = `<summary>Versões dos arquivos carregados ${ruins ? `<b class="arq-ruim">(${ruins} desatualizado${ruins > 1 ? 's' : ''})</b>` : '<span class="arq-bom">(tudo em dia)</span>'}</summary>
+        <div class="arq-lista">${r.map(x => `<div class="arq-lin ${x.ok ? '' : 'arq-ruim'}"><span>${x.ok ? '✓' : '✕'} ${escRel(x.arq)}</span><span>${x.atual === '0' ? 'sem versão' : escRel(x.atual)}${x.ok ? '' : ' → precisa ' + escRel(x.ver)}</span></div>`).join('')}</div>
+        <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="arqDesenharVersoes(); arqConferirAgora()">Conferir de novo</button>`;
+}
+(function () {
+    const orig = switchToScreen;
+    switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-historico-mudancas') setTimeout(arqDesenharVersoes, 50); return r; };
+})();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.40.0';

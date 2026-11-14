@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.39.1', nome: 'Entrada de NF: Manual vira aba no topo; ajustes de espaço', status: 'atual', data: '14/11/2026 às 12:05',
+        numero: '2.40.0', nome: 'Espaçamentos, versões dos arquivos, NFs vencidas e nome do XML corrigido', status: 'atual', data: '14/11/2026 às 16:30',
+        novidades: ['Entrada de NF: espaço padrão entre cartões e blocos (status × importação, "+ Adicionar cotação" × checkbox, aviso da auditoria × total, linha "Recurso pelas cotações").', 'Histórico de Mudanças: novo bloco "Versões dos arquivos carregados" mostra a versão de cada arquivo e o que está desatualizado, com "Conferir de novo".', 'O aviso de atualização incompleta agora confere de novo 6 s e 15 s depois de abrir, ao voltar para o app e quando um botão chama uma função que não existe (arquivo antigo no ar).', 'Central de notificações: novo grupo urgente "NFs vencidas que ainda não foram enviadas ao financeiro" (NFs recebidas do ERP ou do XML com vencimento passado, sem decisão).', '"Baixar XML Corrigido" agora usa o nome "APELIDO DO FORNECEDOR + número da NF + corrigido".'],
+        implementado: ['style.css: regras com :where para espaçamento. js/43: arqConferirAgora, arqRelatorio, arqDesenharVersoes e escuta de erro. js/36: pendência vencida-sem-envio. js/34: grupo nfs-vencidas-sem-envio. js/49: nomePadraoDeXml. js/12: nome do XML corrigido.'],
+        arquivos: ['index.html', 'style.css', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/36-visao-nf.js', 'js/43-verificar-arquivos.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.39.1: index.html, style.css, js/12, js/14, js/24, js/31, js/34, js/36, js/43 e js/49.'],
+        testar: ['iPhone: Entrada de NF com um XML carregado: confira se os cartões e blocos têm espaço entre si.', 'iPhone: Ajustes → Histórico de Mudanças: abra "Versões dos arquivos carregados" e veja se mostra tudo em dia.', 'iPhone: Central de notificações: no seu diagnóstico de 13/11, as NFs 91737 e 91147 (EMBALAKLIN) devem aparecer em "NFs vencidas que ainda não foram enviadas ao financeiro".', 'iPhone: Entrada de NF → "Baixar XML Corrigido": confira o nome do arquivo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.39.1', nome: 'Entrada de NF: Manual vira aba no topo; ajustes de espaço', status: 'concluida', data: '14/11/2026 às 12:05',
         novidades: ['Entrada de NF agora tem duas abas no topo: "Por XML" e "Manual (sem XML)". O cadastro manual não fica mais no meio da NF que está sendo editada. Ao subir um XML, o app volta para "Por XML".', 'Botões "Produto trocado" e "Aceitar como o item pedido" no Editor de NF agora são botões com contorno e espaço entre eles (antes pareciam texto colado).', 'Nome de arquivo XML comprido não estoura mais o cartão de importação.'],
         implementado: ['index.html: #entrada-modo e #add-nf-manual como filho direto da tela; style.css: .modo-manual esconde o resto da tela; js/10: definirModoEntrada e redirecionamento do atalho antigo; js/20: botões action-chip.'],
         arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js'],
@@ -3302,4 +3311,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.39.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.40.0';

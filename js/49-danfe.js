@@ -400,7 +400,11 @@ function baixarXmlDaNf(nfId) {
   toast('✓ XML baixado!');
 }
 window.baixarXmlDaNf = baixarXmlDaNf;
+// 2.40.0: mesmo padrão "APELIDO + nº da NF" para o XML corrigido da Entrada de NF (recebe o texto do XML; devolve null se não conseguir ler)
+window.nomePadraoDeXml = function (texto, sufixo) {
+  try { return nomeArquivoDanfe(lerNFe(String(texto))).replace(/\.pdf$/, '') + (sufixo || '') + '.xml'; } catch (e) { return null; }
+};
 window.baixarDanfePdf = baixarDanfePdf;
 window.gerarDanfePdf = gerarDanfePdf; window.nomeArquivoDanfe = nomeArquivoDanfe;
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.39.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/49-danfe.js'] = '2.40.0';
