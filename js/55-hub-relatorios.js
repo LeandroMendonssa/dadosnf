@@ -104,7 +104,7 @@
     }
     function html(m) {
         let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${e(m.titulo)}</title>
-<style>@page WordSection1{size:21cm 29.7cm;margin:3cm 2cm 2cm 3cm}div.WordSection1{page:WordSection1}body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
+<style>@page WordSection1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.WordSection1{page:WordSection1}body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
 <p style="text-align:right;font-size:9.5pt;font-style:italic">${e(dataExtenso())}</p>
 <p style="font-size:15pt;font-weight:bold;text-align:center;margin:14pt 0 4pt">${e(m.titulo)}</p><p style="text-align:center;font-size:9.5pt;margin-bottom:14pt">Período: ${e(m.periodo)}</p>`;
         if (!m.secoes.length) h += `<p>${e(m.vazio)}</p>`;
@@ -113,7 +113,7 @@
     }
     function pdf(m) {
         const { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-        const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 85, MR = 57, MT = 85, MB = 57, LARG = W - ML - MR;
+        const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 57, MR = 57, MT = 57, MB = 57, LARG = W - ML - MR;
         let y = MT;
         const fonte = (t, s) => { doc.setFont('helvetica', s || 'normal'); doc.setFontSize(t); doc.setTextColor(17, 17, 17); };
         const gar = h => { if (y + h > H - MB) { doc.addPage(); y = MT; } };
@@ -131,7 +131,7 @@
     // ---------- telas ----------
     function renderHub() {
         const el = $('rel-hub'); if (!el) return;
-        el.innerHTML = '<div class="rel-intro">Escolha o relatório que quer emitir. Todos geram texto, Word ou PDF com margens ABNT.</div>' + Object.entries(MOD).map(([k, m]) =>
+        el.innerHTML = '<div class="rel-intro">Escolha o relatório que quer emitir. Todos geram texto, Word ou PDF com margens iguais de 2 cm.</div>' + Object.entries(MOD).map(([k, m]) =>
             `<button type="button" class="mais-item rel-hub-item" onclick="relAbrir('${k}')"><span class="icon-wrapper"><i class="fa-solid ${m.ic}"></i></span><span class="mais-item-nome">${e(m.nome)}<small class="rel-desc">${e(m.desc)}</small></span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`).join('');
     }
     function renderDetalhe() {
@@ -182,4 +182,4 @@
     const t = $('screen-reports');
     if (t) { renderHub(); let ativa = t.classList.contains('active'); new MutationObserver(() => { const a = t.classList.contains('active'); if (a && !ativa) mostrar(); ativa = a; }).observe(t, { attributes: true, attributeFilter: ['class'] }); }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.46.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.47.0';

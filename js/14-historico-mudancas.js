@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.46.0', nome: 'Refatoração, fase 5: Relatórios como central de modalidades', status: 'atual', data: '15/11/2026 às 13:00',
+        numero: '2.47.0', nome: 'Resumo de pendências: margens iguais e layout mais limpo', status: 'atual', data: '15/11/2026 às 18:30',
+        novidades: ['PDF e Word do Resumo de pendências agora têm margens iguais de 2 cm nos quatro lados (antes: 3 cm à esquerda).', 'Título em negrito, sem sublinhado, um pouco menor.', 'O aviso "Desconsiderar pendências…" passou para logo acima da assinatura, e a assinatura fica centralizada.', 'Espaçamento entre fornecedores padronizado. Os PDFs/Word dos Relatórios também usam 2 cm.'],
+        implementado: ['js/47: margens 2 cm, título sem sublinhado, aviso acima da assinatura, espaçamento padrão. js/55: margens 2 cm. style.css: prévia do Resumo sem sublinhado. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.46.0: index.html, style.css, js/14, 31, 47 e 55.'],
+        testar: ['iPhone: Resumo de pendências → Baixar PDF: confira margens iguais, título sem sublinhado, aviso acima da assinatura e assinatura centralizada.', 'iPhone: Baixar o Word do Resumo e conferir o mesmo layout.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.46.0', nome: 'Refatoração, fase 5: Relatórios como central de modalidades', status: 'concluida', data: '15/11/2026 às 13:00',
         novidades: ['Relatórios agora emite relatórios de verdade: Resumo de pendências, Divergências por fornecedor, Entregas por pedido, NFs enviadas ao financeiro e Auditorias do período.', 'Cada modalidade tem período (7 dias, 30 dias, Este mês, Personalizado), "o que incluir", prévia em papel arredondado e Copiar/Baixar no fim da página (PDF, Word e TXT com margens ABNT).', 'Removidos o cartão Próximos Vencimentos (já está no Início) e as listas que repetiam Notificações e Auditoria.', 'CORREÇÃO: o PDF do Resumo de pendências dava erro ao baixar (margem calculada errada na 2.42.0).'],
         implementado: ['js/55 (novo): hub, modelos, texto/Word/PDF. js/47: correção do cálculo de margem do PDF. index.html: tela de Relatórios (hub/detalhe; listas antigas ocultas) e script. style.css: bloco 2.46.0. js/31: Ajuda de Relatórios.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/55-hub-relatorios.js'],
@@ -3365,4 +3374,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.46.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.47.0';

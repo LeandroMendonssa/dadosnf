@@ -160,15 +160,15 @@ document.addEventListener('click', e => { const a = e.target.closest && e.target
 function htmlResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), e = escRel, logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null, s = assinaturaRelatorio();
     const linhasAss = [['✉', s.email], ['☎', s.telefone], ['◎', s.site], ['⌖', s.endereco]].filter(x => x[1]);
+    const notaHtml = b.nota ? `<p style="margin:14pt 0 16pt;font-size:9pt;font-style:italic;color:#444444">${e(b.nota)}</p>` : '';
     const assHtml = `<table align="center" style="border-collapse:collapse"><tr>${logo ? `<td style="padding-right:14pt"><img src="${logo}" width="82" height="62"></td><td width="1" style="border-left:1pt solid #bbbbbb"></td>` : ''}<td style="padding-left:${logo ? 14 : 0}pt;font-family:Arial,sans-serif">
 ${s.nome ? `<p style="margin:0;font-size:11pt;font-weight:bold;color:${RS_AZUL}">${e(s.nome)}</p>` : ''}${s.cargo ? `<p style="margin:0 0 4pt;font-size:8.5pt;color:${RS_TEAL}">${e(s.cargo)}</p>` : ''}
-${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333333"><span style="color:${RS_TEAL}">${i}</span>&nbsp; ${e(t)}</p>`).join('')}</td></tr></table>
-<p style="margin:10pt 0 0;text-align:right;font-size:8.5pt;font-style:italic;color:#444444">${e(b.nota || '')}</p>`;
+${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333333"><span style="color:${RS_TEAL}">${i}</span>&nbsp; ${e(t)}</p>`).join('')}</td></tr></table>`;
     let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Resumo de pendências</title>
-<style>@page WordSection1{size:21cm 29.7cm;margin:3cm 2cm 2cm 3cm}div.WordSection1{page:WordSection1}
+<style>@page WordSection1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.WordSection1{page:WordSection1}
 body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
 <p style="text-align:right;font-size:9.5pt;font-style:italic">${e(b.data)}</p>
-<p style="font-size:16pt;font-weight:bold;text-decoration:underline;text-align:center;margin:14pt 30pt 18pt;line-height:1.25">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
+<p style="font-size:14pt;font-weight:bold;text-align:center;margin:14pt 30pt 18pt;line-height:1.25">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
 ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
     b.pedidos.forEach(p => {
         h += `<p style="font-weight:bold;margin:12pt 0 6pt">PEDIDO ${e(p.num)}</p>`;
@@ -181,14 +181,14 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
         });
         h += '<p style="border-bottom:1pt solid #000000;margin:6pt 0 0;font-size:2pt">&nbsp;</p>';
     });
-    h += `<div style="margin-top:22pt">${assHtml}</div></div></body></html>`;
+    h += `${notaHtml}<div style="margin-top:6pt">${assHtml}</div></div></body></html>`;
     return h;
 }
 
 // ---------- PDF (jsPDF) ----------
 function gerarPdfResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 85, MR = 57, MT = 85, MB = 57, LARG = W - ML - MR, SIDE = 92, GAP = 18, XC = ML + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - MB;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 57, MR = 57, MT = 57, MB = 57, LARG = W - ML - MR, SIDE = 92, GAP = 18, XC = ML + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - MB;
     const s = assinaturaRelatorio(), logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null;
     const fill = h => { const c = rgbRelCot(h); doc.setFillColor(c[0], c[1], c[2]); }, draw = h => { const c = rgbRelCot(h); doc.setDrawColor(c[0], c[1], c[2]); }, ink = h => { const c = rgbRelCot(h); doc.setTextColor(c[0], c[1], c[2]); };
     const fonte = (tam, est) => { doc.setFont('helvetica', est || 'normal'); doc.setFontSize(tam); };
@@ -197,10 +197,10 @@ function gerarPdfResumoPendencias(texto) {
     // ---- topo (layout do relatório antigo: sem tabela, sem cores)
     if (b.data) { fonte(9.5, 'italic'); ink('#111111'); doc.text(b.data, W - MR, y + 8, { align: 'right' }); }
     y += 30;
-    const tit = quebra(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', LARG * 0.8, 16, 'bold');
-    fonte(16, 'bold'); ink('#000000'); draw('#000000'); doc.setLineWidth(1);
-    tit.forEach((l, i) => { const yy = y + 16 + i * 20, w = doc.getTextWidth(l); doc.text(l, W / 2, yy, { align: 'center' }); doc.line(W / 2 - w / 2, yy + 2.5, W / 2 + w / 2, yy + 2.5); });
-    y += tit.length * 20 + 22;
+    const tit = quebra(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', LARG * 0.85, 14, 'bold');
+    fonte(14, 'bold'); ink('#000000');
+    tit.forEach((l, i) => { doc.text(l, W / 2, y + 14 + i * 18, { align: 'center' }); });
+    y += tit.length * 18 + 22;
     b.previa.forEach(t => { const ls = quebra(t, LARG, 10.5); fonte(10.5); ink('#111111'); ls.forEach((l, i) => doc.text(l, ML, y + 10 + i * 14.5)); y += ls.length * 14.5 + 8; });
     // ---- pedidos
     const garantir = alt => { if (y + alt > LIM) { doc.addPage(); y = MT; } };
@@ -215,12 +215,12 @@ function gerarPdfResumoPendencias(texto) {
                 garantir(34); fonte(10.5, 'bold'); ink('#000000'); doc.text(t.t.toUpperCase(), ML, y + 10); y += 22; i++;
             } else if (t.k === 'nome') {
                 garantir(16); fonte(10.5); ink('#111111'); doc.text(t.t, ML, y + 10); y += 14.5; i++;
-                if (!(toks[i] && toks[i].k === 'nome')) y += 8;
+                if (!(toks[i] && toks[i].k === 'nome')) y += 10;
             } else if (t.k === 'forn') {
                 const ls = quebra(t.t, LARG, 10.5, 'bold'); garantir(ls.length * 14.5 + 18); fonte(10.5, 'bold'); ink('#000000'); ls.forEach((l, k) => doc.text(l, ML, y + 10 + k * 14.5)); y += ls.length * 14.5; i++;
             } else if (t.k === 'item') {
                 const ls = quebra(t.t, LARG, 10.5, 'italic'); garantir(ls.length * 14.5 + 4); fonte(10.5, 'italic'); ink('#111111'); ls.forEach((l, k) => doc.text(l, ML, y + 10 + k * 14.5));
-                y += ls.length * 14.5 + ((toks[i + 1] && toks[i + 1].k === 'item') ? 0 : 12); i++;
+                y += ls.length * 14.5 + ((toks[i + 1] && toks[i + 1].k === 'item') ? 0 : 10); i++;
             } else {
                 const ls = quebra(t.t, LARG, 10.5); garantir(ls.length * 14.5 + 6); fonte(10.5); ink('#111111'); ls.forEach((l, k) => doc.text(l, ML, y + 10 + k * 14.5)); y += ls.length * 14.5 + 6; i++;
             }
@@ -229,7 +229,7 @@ function gerarPdfResumoPendencias(texto) {
         y += 2; draw('#000000'); doc.setLineWidth(0.8); doc.line(ML, y, W - MR, y); y += 16;
     });
     // ---- assinatura + aviso: UMA vez, no fim do documento (última página); se não couber, vai para uma página nova
-    if (b.pedidos.length && y > H - 170) { doc.addPage(); y = 40; }
+    
     const linhasAss = [['email', s.email], ['fone', s.telefone], ['site', s.site], ['pin', s.endereco]].filter(x => x[1]);
     const ico = (tipo, x, yy) => {
         draw(RS_TEAL); doc.setLineWidth(0.8);
@@ -241,7 +241,9 @@ function gerarPdfResumoPendencias(texto) {
     fonte(7.6); let largTxt = 0; linhasAss.forEach(([, t]) => { largTxt = Math.max(largTxt, doc.getTextWidth(t) + 14); });
     fonte(11, 'bold'); largTxt = Math.max(largTxt, doc.getTextWidth(s.nome || '')); fonte(8.5); largTxt = Math.max(largTxt, doc.getTextWidth(s.cargo || ''));
     const altTxt = (s.nome ? 14 : 0) + (s.cargo ? 15 : 0) + linhasAss.length * 11.5, altBloco = Math.max(logo ? 62 : 0, altTxt);
-    const largTot = (logo ? 82 + 32 : 0) + largTxt, n = doc.getNumberOfPages();
+    const largTot = (logo ? 82 + 32 : 0) + largTxt;
+    if (b.pedidos.length && y + (b.nota ? 34 : 0) + altBloco + 14 > H - MB) { doc.addPage(); y = MT; }
+    const n = doc.getNumberOfPages();
     for (let pg = n; pg <= n; pg++) {
         doc.setPage(pg);
         const yb = H - MB, yt = yb - altBloco; let x = ML + (LARG - largTot) / 2;
@@ -250,7 +252,7 @@ function gerarPdfResumoPendencias(texto) {
         if (s.nome) { fonte(11, 'bold'); ink(RS_AZUL); doc.text(s.nome, x, yy + 10); yy += 14; }
         if (s.cargo) { fonte(8.5); ink(RS_TEAL); doc.text(s.cargo, x, yy + 7); yy += 15; }
         linhasAss.forEach(([tp, t]) => { ico(tp, x, yy); fonte(7.6); ink('#333333'); doc.text(t, x + 14, yy + 6.8); yy += 11.5; });
-        if (b.nota) { fonte(8.5, 'italic'); ink('#444444'); doc.text(b.nota, W - MR, H - 30, { align: 'right' }); }
+        if (b.nota) { fonte(9, 'italic'); ink('#444444'); doc.text(b.nota, ML, Math.min(y + 8, yt - 16)); }
     }
     return doc;
 }
@@ -309,7 +311,7 @@ function rpAtualizarPrevia() {
         });
         h += '<hr>';
     });
-    h += `<div class="rp-ass"><b>${e(s.nome || '')}</b>${s.cargo ? ' · ' + e(s.cargo) : ''}</div><div class="rp-nt">${e(b.nota || '')}</div>`;
+    h += `<div class="rp-nt">${e(b.nota || '')}</div><div class="rp-ass"><b>${e(s.nome || '')}</b>${s.cargo ? ' · ' + e(s.cargo) : ''}</div>`;
     el.innerHTML = h;
 }
 function resumoPendAlternarEdicao() {
@@ -336,4 +338,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.46.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.47.0';
