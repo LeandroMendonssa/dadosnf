@@ -12,8 +12,7 @@
         'screen-uso-firebase': 'firebase uso leituras cota limite gratis consumo requisicoes contador',
         'screen-agenda': 'agenda lembrete reuniao entrega reagente calendario aviso notificacao centervida expansao',
         'screen-atencao': 'atencao pendencia urgente vencida vencido parado alerta o que precisa',
-        'screen-auditoria-central': 'auditoria ocorrencia divergencia relatar relatada excluir restaurar unidade fator falso positivo',
-        'screen-auditoria-retro': 'auditoria retroativa erp nf itens pedido sugestao defasado associacao conferencia',
+        'screen-auditoria-central': 'auditoria ocorrencia divergencia relatar relatada excluir restaurar unidade fator falso positivo retroativa erp nf itens pedido sugestao defasado associacao conferencia',
         'screen-ajuda': 'ajuda tutorial como fazer passo a passo duvida ensinar',
         'screen-historico-mudancas': 'historico mudanca versao novidade atualizacao',
         'screen-personalizacao': 'aparencia tema personalizar visual',
@@ -97,4 +96,4 @@
     window.buscaAjustes = { procurar };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.31.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.45.0';

@@ -8,8 +8,31 @@ let audBusca = '';
 let audAbertos = new Set();
 let audLimite = 40;
 
-function prepararCentralAuditoria() { audFiltro = 'detectada'; audBusca = ''; audAbertos = new Set(); audLimite = 40; renderCentralAuditoria(); }
-function renderCentralAuditoriaSeAtiva() { const t = document.getElementById('screen-auditoria-central'); if (t && t.classList.contains('active')) renderCentralAuditoria(); }
+function prepararCentralAuditoria() { audFiltro = 'detectada'; audBusca = ''; audAbertos = new Set(); audLimite = 40; audAba = 'central'; aplicarAbaAuditoria(); renderCentralAuditoria(); }
+function renderCentralAuditoriaSeAtiva() { const t = document.getElementById('screen-auditoria-central'); if (t && t.classList.contains('active') && audAba === 'central') renderCentralAuditoria(); }
+
+// 2.45.0: Auditoria e Auditoria Retroativa numa tela só, com abas. Cada aba guarda o seu próprio estado (filtro, busca, itens abertos, rolagem) e nunca se misturam.
+let audAba = 'central', _audIniciada = false;
+const _audRolagem = { central: 0, retro: 0 };
+function aplicarAbaAuditoria() {
+    const c = document.getElementById('aud-pane-central'), r = document.getElementById('aud-pane-retro'); if (!c || !r) return;
+    c.style.display = audAba === 'central' ? '' : 'none'; r.style.display = audAba === 'retro' ? '' : 'none';
+    document.querySelectorAll('#aud-abas .xml-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.aba === audAba));
+}
+function mudarAbaAuditoria(a) {
+    if (a === audAba) return;
+    const tela = document.getElementById('screen-auditoria-central');
+    if (tela) _audRolagem[audAba] = tela.scrollTop;
+    audAba = a; aplicarAbaAuditoria();
+    if (a === 'retro') renderAuditoriaRetroativa(); else renderCentralAuditoria();
+    if (tela) tela.scrollTop = _audRolagem[a] || 0;
+}
+function prepararAuditoriaUnificada(aba) {
+    if (!_audIniciada) { _audIniciada = true; prepararCentralAuditoria(); prepararAuditoriaRetroativa(); }
+    if (aba) audAba = aba;
+    aplicarAbaAuditoria();
+    if (audAba === 'retro') renderAuditoriaRetroativa(); else renderCentralAuditoria();
+}
 
 // Todas as ocorrências (uma por item de cotação com divergência, auditoria ligada ou exclusão).
 function listarOcorrenciasAuditoria() {

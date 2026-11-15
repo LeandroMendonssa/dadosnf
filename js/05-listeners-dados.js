@@ -367,7 +367,7 @@ const DADOS_POR_TELA = {
     'screen-cotacao-editor': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-central-pedido': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-auditoria-nova': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
-    'screen-auditoria-retro': ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'produtosSpData'],
+    'screen-auditoria-central': ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'produtosSpData', 'associacoesFornecedor', 'relatorioGanhadores'],
     'screen-anotacoes': ['anotacoes'],
     'screen-anotacoes-editor': ['anotacoes'],
     'screen-import': ['fornecedoresSpData', 'entradasErp', 'nfsProcessadas', 'cotacoes', 'associacoesSpData', 'associacoesFornecedor', 'produtosSpData'],
@@ -645,4 +645,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.45.0';

@@ -174,12 +174,9 @@ const menuDetails = {
     'screen-agenda': { icon: 'fa-solid fa-calendar-days', material: 'event', title: 'Agenda de trabalho', prep: 'prepararAgenda()',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M3 10h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2z"/></svg>`},
-    'screen-auditoria-central': { icon: 'fa-solid fa-clipboard-check', material: 'checklist', title: 'Auditoria', prep: 'prepararCentralAuditoria()',
+    'screen-auditoria-central': { icon: 'fa-solid fa-clipboard-check', material: 'checklist', title: 'Auditoria', prep: 'prepararAuditoriaUnificada()',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1"></rect><path d="M9 14l2 2 4-4"></path></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><rect opacity="0.4" x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M10.5 16.5l-2-2 1.2-1.2.8.8 3-3 1.2 1.2z"/></svg>`},
-    'screen-auditoria-retro': { icon: 'fa-solid fa-clock-rotate-left', material: 'history', title: 'Auditoria Retroativa', prep: 'prepararAuditoriaRetroativa()',
-        outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>`,
-        duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><circle opacity="0.4" cx="12" cy="12" r="10"/><path d="M11 7h2v5l3 2-1 1.7-4-2.4z"/></svg>`},
     'screen-assistente': { icon: 'fa-solid fa-comments', material: 'forum', title: 'Assistente', prep: 'prepararAssistente()',
         outlineSvg: `<svg class="icon-svg-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"></path></svg>`,
         duotoneSvg: `<svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><path opacity="0.4" d="M21 12a9 9 0 1 1-17 4L3 21l5-1a9 9 0 0 0 13-8z"/></svg>`},
@@ -221,4 +218,4 @@ const closeBtnBackScreen = { 'screen-resumo-pend': 'screen-inicio', 'screen-danf
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.45.0';

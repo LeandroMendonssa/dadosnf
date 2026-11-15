@@ -131,9 +131,9 @@ const AJUDA_ARTIGOS = [
     { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.5',
       resumo: 'Ver o que foi ligado sozinho nas NFs do ERP e resolver só o que depende de você.',
       palavras: 'auditoria retroativa erp nf itens produto pedido sugerido sugestao defasado associacao reprocessar conferencia',
-      tela: [{ id: 'screen-auditoria-retro', titulo: 'Auditoria Retroativa', rotulo: 'Abrir Auditoria Retroativa' }],
+      tela: [{ id: 'screen-auditoria-central', titulo: 'Auditoria', rotulo: 'Abrir Auditoria (aba Retroativa)', aba: 'retro' }],
       passos: [
-        'Abra Auditoria Retroativa (na dock ou em Mais). O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
+        'Abra Auditoria (na dock ou em Mais) e toque na aba "Retroativa". O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
         'Você não precisa associar NF por NF: os itens se ligam ao produto pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor.',
         'Itens defasados são itens antigos que hoje já teriam produto (porque você associou o SP Data depois). O app os atualiza sozinho; o botão \"Atualizar itens defasados\" faz isso na hora.',
         'Pedido sugerido: o app achou um pedido provável, mas pede sua confirmação. Toque em "Conferir a sugestão" no cartão: ele mostra o valor total da NF × cotado, as datas do pedido, do limite e da NF e quais itens da NF estão na cotação, com um resumo (bate em tudo, conferir ou não parece). "Abrir o pedido" leva à cotação e "Confirmar" aceita aquele pedido.',
@@ -530,7 +530,7 @@ function buscarAjuda(v) { ajudaEstado.busca = v; renderAjuda(); }
 function abrirArtigoAjuda(id) { ajudaEstado.aberto = id; ajudaEstado.anim = 'frente'; renderAjuda(); const s = document.getElementById('screen-ajuda'); if (s) s.scrollTop = 0; }
 function voltarListaAjuda() { ajudaEstado.aberto = null; ajudaEstado.anim = 'volta'; renderAjuda(); }
 function htmlArtigoAjuda(a) {
-    const botoes = (a.tela || []).map(t => `<button type="button" class="manage-toolbar-btn" onclick="switchToScreen('${t.id}','${ajEsc(t.titulo)}')">${ajEsc(t.rotulo)}</button>`).join('')
+    const botoes = (a.tela || []).map(t => `<button type="button" class="manage-toolbar-btn" onclick="switchToScreen('${t.id}','${ajEsc(t.titulo)}'); prepararTelaMenu('${t.id}')${t.aba ? `; prepararAuditoriaUnificada('${t.aba}')` : ''}">${ajEsc(t.rotulo)}</button>`).join('')
         + (a.tutorial ? `<button type="button" class="manage-toolbar-btn" onclick="iniciarTutorial('${a.tutorial}')">Ver o tutorial guiado</button>` : '');
     return `<div class="card aj-artigo"><div class="aj-cat">${ajEsc(a.cat)}</div><h2 class="aj-h">${ajEsc(a.titulo)}</h2>
         <div class="aj-resumo">${ajEsc(a.resumo)}</div>
@@ -582,4 +582,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.44.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.45.0';

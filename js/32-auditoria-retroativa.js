@@ -149,17 +149,17 @@ function prepararAuditoriaRetroativa() { retroFiltro = 'todas'; retroLimite = 60
 // 2.16.2: ao VOLTAR para esta tela (por exemplo, depois de associar a NF ao pedido certo no editor), ela se redesenha sozinha.
 // Antes só era redesenhada se já estivesse aberta no momento da mudança, e por isso mostrava a sugestão antiga.
 (function observarRetroativaAtiva() {
-    const t = document.getElementById('screen-auditoria-retro'); if (!t) return;
+    const t = document.getElementById('screen-auditoria-central'); if (!t) return;   // 2.45.0: a Retroativa é uma aba da Auditoria
     let estavaAtiva = t.classList.contains('active');
     new MutationObserver(() => {
         const ativa = t.classList.contains('active');
-        if (ativa && !estavaAtiva) { try { renderAuditoriaRetroativa(); } catch (e) { console.warn('retroativa', e); } }
+        if (ativa && !estavaAtiva && typeof audAba !== 'undefined' && audAba === 'retro') { try { renderAuditoriaRetroativa(); } catch (e) { console.warn('retroativa', e); } }
         estavaAtiva = ativa;
     }).observe(t, { attributes: true, attributeFilter: ['class'] });
 })();
 function renderAuditoriaRetroSeAtiva() {
-    const t = document.getElementById('screen-auditoria-retro');
-    if (t && t.classList.contains('active')) renderAuditoriaRetroativa();
+    const t = document.getElementById('screen-auditoria-central');
+    if (t && t.classList.contains('active') && audAba === 'retro') renderAuditoriaRetroativa();
 }
 function filtrarRetro(f) { retroFiltro = f; retroLimite = 60; renderAuditoriaRetroativa(); }
 function maisRetro() { retroLimite += 60; renderAuditoriaRetroativa(); }
