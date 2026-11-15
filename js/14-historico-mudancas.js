@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.45.0', nome: 'Refatoração, fase 4: Auditoria e Auditoria Retroativa numa tela só', status: 'atual', data: '15/11/2026 às 11:30',
+        numero: '2.46.0', nome: 'Refatoração, fase 5: Relatórios como central de modalidades', status: 'atual', data: '15/11/2026 às 13:00',
+        novidades: ['Relatórios agora emite relatórios de verdade: Resumo de pendências, Divergências por fornecedor, Entregas por pedido, NFs enviadas ao financeiro e Auditorias do período.', 'Cada modalidade tem período (7 dias, 30 dias, Este mês, Personalizado), "o que incluir", prévia em papel arredondado e Copiar/Baixar no fim da página (PDF, Word e TXT com margens ABNT).', 'Removidos o cartão Próximos Vencimentos (já está no Início) e as listas que repetiam Notificações e Auditoria.', 'CORREÇÃO: o PDF do Resumo de pendências dava erro ao baixar (margem calculada errada na 2.42.0).'],
+        implementado: ['js/55 (novo): hub, modelos, texto/Word/PDF. js/47: correção do cálculo de margem do PDF. index.html: tela de Relatórios (hub/detalhe; listas antigas ocultas) e script. style.css: bloco 2.46.0. js/31: Ajuda de Relatórios.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.45.0: index.html, style.css, js/14, 24, 31, 47 e o novo js/55-hub-relatorios.js.'],
+        testar: ['iPhone: Relatórios → cada modalidade: troque o período e os itens de "o que incluir" e confira a prévia.', 'iPhone: Baixar → PDF, Word e TXT; confira as margens.', 'iPhone: Resumo de pendências → Baixar PDF (o erro foi corrigido).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.45.0', nome: 'Refatoração, fase 4: Auditoria e Auditoria Retroativa numa tela só', status: 'concluida', data: '15/11/2026 às 11:30',
         novidades: ['Auditoria e Auditoria Retroativa viraram uma tela só, com as abas "Auditoria" e "Retroativa". Cada aba guarda o seu estado (filtro, busca, itens abertos, rolagem) e as duas não se misturam.', 'A Central de notificações, a Ajuda e a busca de Ajustes levam direto à aba certa.'],
         implementado: ['index.html: #screen-auditoria-central com abas e painéis; #screen-auditoria-retro removido. js/39: audAba, mudarAbaAuditoria, prepararAuditoriaUnificada. js/32: observadores na tela unificada. js/01: menu sem "Auditoria Retroativa". js/34, js/05, js/29, js/31 ajustados.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/32-auditoria-retroativa.js', 'js/34-atencao.js', 'js/39-central-auditoria.js'],
@@ -3356,4 +3365,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.46.0';

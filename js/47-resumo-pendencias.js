@@ -188,7 +188,7 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
 // ---------- PDF (jsPDF) ----------
 function gerarPdfResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 85, MR = 57, MT = 85, MB = 57, LARG = W - MRL - MR, SIDE = 92, GAP = 18, XC = ML + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - MB;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 85, MR = 57, MT = 85, MB = 57, LARG = W - ML - MR, SIDE = 92, GAP = 18, XC = ML + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - MB;
     const s = assinaturaRelatorio(), logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null;
     const fill = h => { const c = rgbRelCot(h); doc.setFillColor(c[0], c[1], c[2]); }, draw = h => { const c = rgbRelCot(h); doc.setDrawColor(c[0], c[1], c[2]); }, ink = h => { const c = rgbRelCot(h); doc.setTextColor(c[0], c[1], c[2]); };
     const fonte = (tam, est) => { doc.setFont('helvetica', est || 'normal'); doc.setFontSize(tam); };
@@ -336,4 +336,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.46.0';

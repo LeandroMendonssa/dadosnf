@@ -217,7 +217,7 @@ const AJUDA_ARTIGOS = [
         'Para complementar com o Relatório de Fornecedores Ganhadores, use a opção de complementar dentro da própria importação por XML (o botão "Complementar com relatório" da lista foi removido porque sozinho ele não gera cotação).',
         'Para mudar a ordem da lista, toque em "Ordenar" (abaixo da busca): mais recentes, mais antigas, número do pedido crescente ou decrescente. A escolha fica guardada neste aparelho.',
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
-        'Para fixar pedidos no topo da lista: toque no ícone de selecionar (canto superior direito), marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
+        'Para fixar pedidos no topo da lista: toque no botão Selecionar (à direita de Ordenar, abaixo da busca), marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
         'Dentro do pedido, o ícone de exportar no cabeçalho do app (ao lado do ⋯) gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF. O PDF e o Word têm o mesmo visual: selos coloridos de status, divergência em vermelho, observação do SmartCompras em azul e, na entrega parcial, os itens não entregues em destaque.',
         'Notificações: em fornecedor sem CNPJ, toque no ✕ para parar de avisar (só silencia o aviso; o cadastro não muda). Veja em "Ignoradas" e toque em "Voltar a notificar" para reativar. Resumo de pendências: toque em "Resumo de pendências" na tela Início (ou em "Pendências" na barra de seleção de Cotações, que já abre com os pedidos marcados). O resumo é uma tela própria, com seta de voltar no topo e "Copiar" e "Baixar" fixos embaixo. Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência (você ainda pode incluir outros pedidos digitando o número). Marque o que entra: fornecedores que não entregaram, produtos não faturados, divergências em aberto e observação da ocorrência (as duas últimas vêm desligadas). Só entram ocorrências de auditoria ainda não relatadas; anotações de texto livre não são usadas. A prévia mostra o relatório no layout antigo; "Editar texto" permite ajustar frases antes de gerar PDF, Word, TXT ou copiar.',
         'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
@@ -309,20 +309,17 @@ const AJUDA_ARTIGOS = [
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'
       ],
       dicas: ['O cálculo da entrega usa as NFs processadas no app; a marca manual existe para quando o recebimento não passou por ele.'], tutorial: null },
-    { id: 'relatorios', cat: 'Cotações e recurso', titulo: 'Relatórios: pedidos, notas, divergências e auditorias', versao: '2.10.7',
-      resumo: 'Consultar com filtros e achar o item que você procura.',
-      palavras: 'relatorios filtros periodo fornecedor destino recurso tipo divergencia pedidos notas auditorias',
+    { id: 'relatorios', cat: 'Cotações e recurso', titulo: 'Relatórios: emitir texto, Word ou PDF', versao: '2.46.0',
+      resumo: 'Escolha uma modalidade, o período e o que incluir; copie ou baixe.',
+      palavras: 'relatorios emitir periodo divergencias fornecedor entregas pedido financeiro auditorias pendencias pdf word txt abnt',
       tela: [{ id: 'screen-reports', titulo: 'Relatórios', rotulo: 'Abrir Relatórios' }],
       passos: [
-        'Escolha a visão: Pedidos, Notas, Divergências ou Auditorias.',
-        'Abra "Filtros" para limitar por período (De/Até), fornecedor, destino (Santa Casa ou CTI), recurso e tipo de divergência.',
-        'Nas listas de auditorias use os filtros de situação (Pendentes, Resolvidas, Encerradas, Todas).',
-        'Em Divergências, cada cartão mostra pedido, fornecedor, situação, tipo, NF e os produtos envolvidos. Toque no cartão: o app abre o pedido já no fornecedor e no produto da divergência, e o ponto pisca suavemente em amarelo dentro do cartão.',
-        'Registros antigos (de antes dos produtos ligados à cotação) agora mostram o produto. Se não têm situação gravada, valem: anotação concluída = Resolvida; item marcado como resolvido na cotação = Resolvida; senão, Pendente.',
-        'A mesma divergência registrada várias vezes (mesmo pedido, tipo e produto, por exemplo uma por etapa) aparece como uma só, com "N registros", valendo o registro mais recente.',
-        'Divergência "não faturado" deixa de ficar pendente sozinha quando o item chegou: fornecedor marcado como "já chegou", NF do app ou NF do ERP associada ao pedido.',
-        'Para apagar uma divergência (por exemplo, uma antiga sem produto da cotação), toque em Excluir no cartão e confirme. Os registros repetidos dela saem juntos; o texto já gerado na anotação não muda.',
-        'Os cartões de pedido seguem o padrão do app; tocar abre o pedido.'
+        'Em Relatórios, escolha a modalidade: Resumo de pendências, Divergências por fornecedor, Entregas por pedido, NFs enviadas ao financeiro ou Auditorias do período.',
+        'Defina o período pelos botões 7 dias, 30 dias, Este mês ou Personalizado (De/Até). Entregas por pedido mostra a situação atual e não usa período.',
+        'Em "O que incluir", marque o que deve entrar (por exemplo, divergências pendentes, resolvidas ou encerradas).',
+        'A prévia mostra o relatório no papel, já com o conteúdo final. No fim da página, toque em Copiar ou em Baixar (PDF, Word ou TXT).',
+        'PDF e Word saem com as margens da ABNT: 3 cm à esquerda e no topo, 2 cm à direita e embaixo.',
+        'O Resumo de pendências também continua na tela Início.'
       ],
       dicas: [], tutorial: null },
     { id: 'anotacoes', cat: 'Auditoria', titulo: 'Anotações: acompanhar e enviar ao financeiro', versao: '2.23.1',
@@ -333,7 +330,7 @@ const AJUDA_ARTIGOS = [
         'A tela tem duas listas: Em aberto e Arquivadas.',
         'Toque no botão "+" flutuante: "Nova anotação" cria uma anotação livre; "Nova auditoria" abre o formulário de auditoria (veja o artigo seguinte).',
         'Para mudar a ordem, toque em "Ordenar": mais recentes, mais antigas ou título (A–Z / Z–A, com números em ordem crescente ou decrescente). Títulos longos quebram em quantas linhas precisar.',
-        'Com o ícone de selecionar (canto superior direito), marque as anotações: a dock de seleção aparece embaixo com o ✕ (cancelar) e o botão Exportar.',
+        'Com o botão Selecionar (à direita de Ordenar, abaixo da busca), marque as anotações: a dock de seleção aparece embaixo com o ✕ (cancelar) e o botão Exportar.',
         '"Exportar Relatório" gera o relatório das anotações.',
         'Tocar numa anotação de pedido abre a anotação. Se o pedido existe em Cotações, o ícone de documento no cartão abre a cotação.',
         'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação. Se a barra ficar alta ou baixa demais no seu aparelho, use "Altura da barra" (− e +) no menu "⋯".'
@@ -582,4 +579,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.46.0';
