@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.44.0">
+    <meta name="app-versao" content="2.45.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -337,10 +337,12 @@
                 <div id="assistente-conteudo"></div>
             </div>
             <div class="app-screen" id="screen-auditoria-central">
-                <div id="auditoria-central-conteudo"></div>
-            </div>
-            <div class="app-screen" id="screen-auditoria-retro">
-                <div id="retro-conteudo"></div>
+                <div class="xml-filtro-toggle" id="aud-abas">
+                    <button type="button" class="xml-filtro-btn active" data-aba="central" onclick="mudarAbaAuditoria('central')">Auditoria</button>
+                    <button type="button" class="xml-filtro-btn" data-aba="retro" onclick="mudarAbaAuditoria('retro')">Retroativa</button>
+                </div>
+                <div id="aud-pane-central"><div id="auditoria-central-conteudo"></div></div>
+                <div id="aud-pane-retro" style="display:none"><div id="retro-conteudo"></div></div>
             </div>
             <div class="app-screen" id="screen-historico-mudancas">
                 <div id="historico-mudancas-lista"></div>
