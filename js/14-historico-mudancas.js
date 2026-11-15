@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.48.1', nome: 'Relatórios: lista no padrão do app', status: 'atual', data: '15/11/2026 às 19:45',
+        numero: '2.48.2', nome: 'Relatórios: voltar leva à lista', status: 'atual', data: '15/11/2026 às 19:50',
+        novidades: ['Dentro de um relatório, a seta de voltar do cabeçalho (e o gesto da borda) leva à lista de relatórios; só da lista ela sai para a tela Mais.', 'Removida a faixa de botões do topo, que repetia o menu.'],
+        implementado: ['js/55: faixa de abas removida; voltarInternoTela estendida para a tela de Relatórios; ao reabrir a tela, começa na lista.'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.48.1: index.html, js/14, 31 e 55.'],
+        testar: ['iPhone: Relatórios → abra um relatório → toque na seta de voltar: deve voltar à lista.', 'iPhone: na lista, a seta leva à tela Mais.', 'iPhone: deslize da borda esquerda dentro de um relatório.', 'iPhone: saia e volte a Relatórios: deve abrir na lista.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.48.1', nome: 'Relatórios: lista no padrão do app', status: 'concluida', data: '15/11/2026 às 19:45',
         novidades: ['A lista de Relatórios agora fica em um cartão arredondado, como as outras listas, com mais espaço entre as linhas e texto menor.'],
         implementado: ['js/55: lista dentro de .mais-grupo. style.css: espaçamento e tamanho do texto dos itens.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/55-hub-relatorios.js'],
@@ -3392,4 +3401,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.48.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.48.2';

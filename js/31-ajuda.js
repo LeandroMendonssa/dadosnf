@@ -309,13 +309,13 @@ const AJUDA_ARTIGOS = [
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'
       ],
       dicas: ['O cálculo da entrega usa as NFs processadas no app; a marca manual existe para quando o recebimento não passou por ele.'], tutorial: null },
-    { id: 'relatorios', cat: 'Cotações e recurso', titulo: 'Relatórios: emitir texto, Word ou PDF', versao: '2.48.0',
+    { id: 'relatorios', cat: 'Cotações e recurso', titulo: 'Relatórios: emitir texto, Word ou PDF', versao: '2.48.2',
       resumo: 'Escolha uma modalidade, o período, o fornecedor ou produto e o que incluir; copie ou baixe.',
       palavras: 'relatorios emitir periodo divergencias fornecedor entregas pedido financeiro auditorias pendencias pdf word txt abnt',
       tela: [{ id: 'screen-reports', titulo: 'Relatórios', rotulo: 'Abrir Relatórios' }],
       passos: [
         'Em Relatórios, escolha a modalidade: Resumo de pendências, Divergências por fornecedor, Entregas por pedido, NFs enviadas ao financeiro ou Auditorias do período.',
-        'Use a faixa de botões no topo (Todos, Divergências, Entregas, NFs, Auditorias, Pendências) para trocar de relatório; "Todos" volta à lista. Defina o período por 7 dias, 30 dias, Este mês ou Personalizado (De/Até). Entregas por pedido mostra a situação atual e não usa período.',
+        'Para trocar de relatório, toque na seta de voltar do cabeçalho: ela leva à lista. Defina o período por 7 dias, 30 dias, Este mês ou Personalizado (De/Até). Entregas por pedido mostra a situação atual e não usa período.',
         'Em "Isolar", escolha um fornecedor ou digite um produto para ver só ele. Fornecedores ligados (por exemplo FUTURA e FUTURA MEDICAMENTOS) aparecem juntos, sob um único nome.',
         'Em "O que incluir", marque o que deve entrar (por exemplo, divergências pendentes, resolvidas ou encerradas).',
         'A prévia mostra o relatório no papel, já com o conteúdo final. No fim da página, toque em Copiar ou em Baixar (PDF, Word ou TXT).',
@@ -580,4 +580,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.48.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.48.2';

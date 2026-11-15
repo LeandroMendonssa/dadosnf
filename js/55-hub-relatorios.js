@@ -194,7 +194,7 @@
         const togs = (md.tog || []).length ? `<div class="rel-sec">O que incluir</div><div class="rel-togs">${md.tog.map(([t, r, p]) => `<label class="rel-tog"><input type="checkbox" ${togOn(k, t, p) ? 'checked' : ''} onchange="relTog('${k}','${t}',this.checked)"><span>${e(r)}</span></label>`).join('')}</div>` : '';
         const corpo = m.secoes.length ? m.secoes.map(s => `<div class="rel-p-sec">${e(s.t)}</div>${s.itens.map(i => `<div class="rel-p-it"><div class="rel-p-cab"><span>${e(i.cab)}</span>${i.tag ? `<span class="rel-p-tag">${e(i.tag)}</span>` : ''}</div>${i.tipo ? `<div class="rel-p-tipo">${e(i.tipo)}</div>` : ''}${i.det.map(d => `<div class="rel-p-det">${e(d).replace(/^(\s+)/, m2 => '&nbsp;'.repeat(m2.length * 2))}</div>`).join('')}</div>`).join('')}`).join('') : `<div class="rel-p-det">${e(m.vazio)}</div>`;
         const ativo = document.activeElement && document.activeElement.id === 'rel-prod';
-        el.innerHTML = `${abas}<h3 class="rel-titulo">${e(md.nome)}</h3>${per}${fil}${togs}
+        el.innerHTML = `<h3 class="rel-titulo">${e(md.nome)}</h3>${per}${fil}${togs}
             <div class="rel-sec">Prévia</div>
             <div class="rp-papel rel-papel"><div class="rel-p-tit">${e(m.titulo)}</div><div class="rel-p-per">Emitido em ${e(dataExtenso().replace(/\.$/, ''))} · Período: ${e(m.periodo)}${m.filtros ? ' · ' + e(m.filtros) : ''}</div><div class="rel-p-res">${e(m.resumo)}</div>${corpo}</div>
             <div class="rp-rodape"><button type="button" class="actions-button is-neutral" onclick="relCopiar()"><i class="fa-solid fa-copy"></i> Copiar</button><button type="button" class="actions-button is-primary" onclick="relBaixar()"><i class="fa-solid fa-download"></i> Baixar</button></div>`;
@@ -234,6 +234,9 @@
     window.relatoriosHubPdf = (k) => pdf(FAB[k]());
     window.relatoriosHubHtml = (k) => html(FAB[k]());
     const t = $('screen-reports');
-    if (t) { renderHub(); let ativa = t.classList.contains('active'); new MutationObserver(() => { const a = t.classList.contains('active'); if (a && !ativa) mostrar(); ativa = a; }).observe(t, { attributes: true, attributeFilter: ['class'] }); }
+    if (t) { renderHub(); let ativa = t.classList.contains('active'); new MutationObserver(() => { const a = t.classList.contains('active'); if (a && !ativa) { estado.aba = null; mostrar(); } ativa = a; }).observe(t, { attributes: true, attributeFilter: ['class'] }); }
+    // a seta de voltar do cabeçalho (e o gesto da borda) sobe do relatório para a lista, antes de sair da tela
+    const voltarAntes = window.voltarInternoTela;
+    window.voltarInternoTela = function () { const s = $('screen-reports'); if (s && s.classList.contains('active') && estado.aba) { window.relVoltar(); return true; } return typeof voltarAntes === 'function' ? voltarAntes() : false; };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.48.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.48.2';
