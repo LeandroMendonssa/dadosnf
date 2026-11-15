@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.47.0', nome: 'Resumo de pendências: margens iguais e layout mais limpo', status: 'atual', data: '15/11/2026 às 18:30',
+        numero: '2.48.0', nome: 'Relatórios: formato de relatório, filtros por fornecedor e produto', status: 'atual', data: '15/11/2026 às 19:30',
+        novidades: ['Cada divergência agora diz o que foi, o produto, as quantidades e a diferença, em vez de só contar ocorrências.', 'Dá para isolar um fornecedor ou um produto em qualquer relatório.', 'Fornecedores já ligados (ex.: FUTURA e FUTURA MEDICAMENTOS) aparecem juntos, sob um único nome.', 'Visual simples de relatório, em preto e branco, com resumo no topo. Removido o botão de voltar repetido: use "Todos".'],
+        implementado: ['js/55: modelos com detalhe por divergência, resolvedor de nomes por entidade ligada, filtros de fornecedor e produto, faixa de abas. style.css: bloco da prévia monocromática. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.47.0: index.html, style.css, js/14, 31 e 55.'],
+        testar: ['iPhone: Relatórios → Divergências: confira o detalhe de cada ocorrência e o resumo no topo.', 'iPhone: em "Isolar", escolha um fornecedor e depois digite um produto.', 'iPhone: confira se FUTURA e FUTURA MEDICAMENTOS aparecem como um só.', 'iPhone: troque de relatório pelas abas, sem botão de voltar duplicado.', 'iPhone: Baixar PDF e Word de um relatório.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.47.0', nome: 'Resumo de pendências: margens iguais e layout mais limpo', status: 'concluida', data: '15/11/2026 às 18:30',
         novidades: ['PDF e Word do Resumo de pendências agora têm margens iguais de 2 cm nos quatro lados (antes: 3 cm à esquerda).', 'Título em negrito, sem sublinhado, um pouco menor.', 'O aviso "Desconsiderar pendências…" passou para logo acima da assinatura, e a assinatura fica centralizada.', 'Espaçamento entre fornecedores padronizado. Os PDFs/Word dos Relatórios também usam 2 cm.'],
         implementado: ['js/47: margens 2 cm, título sem sublinhado, aviso acima da assinatura, espaçamento padrão. js/55: margens 2 cm. style.css: prévia do Resumo sem sublinhado. js/31: Ajuda.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/55-hub-relatorios.js'],
@@ -3374,4 +3383,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.47.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.48.0';
