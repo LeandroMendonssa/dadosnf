@@ -10,25 +10,7 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.45.0', nome: 'Refatoração, fase 4: Auditoria e Auditoria Retroativa numa tela só', status: 'atual', data: '15/11/2026 às 11:30',
-        novidades: ['Auditoria e Auditoria Retroativa viraram uma tela só, com as abas "Auditoria" e "Retroativa". Cada aba guarda o seu estado (filtro, busca, itens abertos, rolagem) e as duas não se misturam.', 'A Central de notificações, a Ajuda e a busca de Ajustes levam direto à aba certa.'],
-        implementado: ['index.html: #screen-auditoria-central com abas e painéis; #screen-auditoria-retro removido. js/39: audAba, mudarAbaAuditoria, prepararAuditoriaUnificada. js/32: observadores na tela unificada. js/01: menu sem "Auditoria Retroativa". js/34, js/05, js/29, js/31 ajustados.'],
-        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/32-auditoria-retroativa.js', 'js/34-atencao.js', 'js/39-central-auditoria.js'],
-        mudou: ['Arquivos alterados desde a 2.44.0: index.html, style.css (só a versão), js/01, 05, 14, 24, 29, 31, 32, 34 e 39.'],
-        testar: ['iPhone: Auditoria → aba Retroativa: filtre algo, volte para a aba Auditoria e depois para Retroativa: o filtro continua.', 'iPhone: Central de notificações → item de retroativa abre a aba Retroativa já filtrada.', 'iPhone: em Personalização > Menus, "Auditoria Retroativa" não aparece mais como item separado.'],
-        testarLinks: []
-    },
-    {
-        numero: '2.44.0', nome: 'Refatoração, fase 3: Assistente em janela sobre qualquer tela', status: 'concluida', data: '15/11/2026 às 10:30',
-        novidades: ['Ícone do Assistente fixo no canto superior direito do cabeçalho, em todas as telas.', 'Ao tocar, o Assistente abre numa janela sobre a tela atual (a conversa continua de onde parou) e fecha ao tocar fora, no ✕ ou em Esc. A tela cheia do Assistente (dock/Mais) continua existindo.'],
-        implementado: ['js/37: janela (garantirJanelaAssistente, abrirAssistenteJanela, fecharAssistenteJanela, ajuste ao teclado) e prepararAssistente(alvo). index.html: #hdr-assistente. js/54: mostra/esconde o ícone. style.css: bloco 2.44.0.'],
-        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/54-acoes-telas.js'],
-        mudou: ['Arquivos alterados desde a 2.43.0: index.html, style.css, js/14, 24, 31, 37 e 54.'],
-        testar: ['iPhone: em qualquer tela toque no ícone de balões (canto superior direito): a janela abre sobre a tela.', 'iPhone: pergunte algo, feche e abra de novo em outra tela: a conversa continua.', 'iPhone: com o teclado aberto o campo de digitar fica visível acima dele.'],
-        testarLinks: []
-    },
-    {
-        numero: '2.43.0', nome: 'Refatoração, fase 2: dock livre, Saída de NF e tela do pedido', status: 'concluida', data: '15/11/2026 às 09:30',
+        numero: '2.43.0', nome: 'Refatoração, fase 2: dock livre, Saída de NF e tela do pedido', status: 'atual', data: '15/11/2026 às 09:30',
         novidades: ['Dock livre: qualquer tela (Central de notificações, Agenda, Auditoria, Auditoria Retroativa, Assistente, Ajustes…) pode ser colocada na dock; o que não for escolhido fica em "Mais". Com mais de 5 itens a dock rola.', 'Gerenciar agora se chama "Saída de NF".', 'Exportar deixou de ser uma aba: fica dentro da Saída de NF, assim como Importar relatório (ERP). O "+" da Saída de NF abre: Adicionar NF, Exportar saída (texto) e Importar relatório (ERP).', 'Uso do Firebase saiu do "Mais" e foi para Ajustes.', 'Tela do pedido: Exportar relatório e ⋯ (marcar toda a cotação como entregue, entrega cancelada do pedido todo, voltar tudo para aguardando) ficam no cabeçalho do app; cada fornecedor tem uma faixa única Associar NF | Já chegou | Cancelada, com o estado atual destacado.'],
         implementado: ['js/01: menuDetails com as telas novas (prep), Exportar sai do menu, mapas de voltar. js/02: Mais lista só o que não está na dock; abrirTelaMenu/prepararTelaMenu; sidebar sem atalhos fixos. js/54: leque da Saída de NF e ações do cabeçalho do pedido. js/09 e js/11: faixa do fornecedor. index.html: Uso do Firebase em Ajustes e botões do cabeçalho. Renomeado Gerenciar → Saída de NF (js/17, 19, 48, 06, 31).'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/48-inicio-lote.js', 'js/54-acoes-telas.js'],
@@ -3356,4 +3338,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.43.0';

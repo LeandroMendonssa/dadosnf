@@ -6,7 +6,7 @@
 let atencaoAbertos = new Set(['alta']);
 let atencaoModo = 'urgencia'; // 'urgencia' | 'pedido' | 'fornecedor'
 function mudarModoAtencao(m) { atencaoModo = m; atencaoAbertos = new Set(); renderAtencao(); }
-function irParaRetroFiltro(f) { switchToScreen('screen-auditoria-central', 'Auditoria'); prepararAuditoriaUnificada('retro'); filtrarRetro(f); }
+function irParaRetroFiltro(f) { switchToScreen('screen-auditoria-retro', 'Auditoria Retroativa'); prepararAuditoriaRetroativa(); filtrarRetro(f); }
 function irParaRelatorioDivergencias() { switchToScreen('screen-reports', 'Relatórios'); mudarAbaRelatorios('divergencias'); }
 
 function diasDesdeISO(iso) { return iso ? Math.round((new Date(dataLocalISO() + 'T12:00:00') - new Date(String(iso).slice(0, 10) + 'T12:00:00')) / 86400000) : null; }
@@ -222,4 +222,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.43.0';
