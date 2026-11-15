@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.47.0'; }
+:root { --css-versao: '2.48.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2077,7 +2077,6 @@ body.sel-lote .fab-acoes,body.sel-lote .fab-leque,body.sel-lote .fab-veu{display
 /* ===== 2.46.0: Relatórios como central de modalidades ===== */
 .rel-intro{font-size:var(--fs-aux,13px);color:var(--text-light);margin:4px 2px 12px}
 .rel-hub-item .rel-desc{display:block;font-weight:400;font-size:12px;color:var(--text-light);margin-top:2px;white-space:normal}
-.rel-voltar{border:0;background:transparent;color:var(--accent-text,var(--accent-color));font:inherit;font-weight:600;padding:8px 2px;cursor:pointer;min-height:44px}
 .rel-titulo{margin:2px 2px 6px;font-size:18px}
 .rel-sec{margin:14px 2px 6px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-light)}
 .rel-nota{font-size:13px;color:var(--text-light);margin:0 2px}
@@ -2092,4 +2091,14 @@ body.sel-lote .fab-acoes,body.sel-lote .fab-leque,body.sel-lote .fab-veu{display
 .rel-p-tit{font-weight:700;font-size:16px;text-align:center;margin:10px 0 2px}
 .rel-p-per{text-align:center;font-size:12px;margin-bottom:12px}
 .rel-p-sec{font-weight:700;margin:12px 0 4px}
+.rel-abas{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;margin:0 -2px;-webkit-overflow-scrolling:touch}
+.rel-abas .rel-chip{flex:0 0 auto;white-space:nowrap}
+.rel-togs{display:flex;flex-direction:column}
+.rel-p-res{font-size:12px;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #111}
+.rel-p-sec{border-bottom:1px solid #111;padding-bottom:2px;text-transform:uppercase;font-size:12px;letter-spacing:.03em}
+.rel-p-it{margin:0 0 9px;overflow-wrap:anywhere}
+.rel-p-cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700}
+.rel-p-tag{font-size:10px;font-weight:700;border:1px solid #111;border-radius:3px;padding:0 4px;white-space:nowrap}
+.rel-p-tipo{font-style:italic}
+.rel-p-det{margin:1px 0 0 10px;font-size:12px;color:#222}
 .rel-p-lin{margin:0 0 3px 8px;overflow-wrap:anywhere}
