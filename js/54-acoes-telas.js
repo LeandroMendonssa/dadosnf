@@ -80,22 +80,13 @@
         return lista;
     };
 
-    // ---------- Selecionar no cabeçalho ----------
-    window.hdrSelecionar = function () {
-        const t = typeof telaAtivaId === 'function' ? telaAtivaId() : null;
-        if (t === 'screen-cotacoes') alternarSelecaoCotacoes();
-        else if (t === 'screen-anotacoes') toggleModoSelecaoAnotacoes();
-        else if (t === 'screen-controle-nfs') alternarSelecaoControle();
-        hdrSelAtualizar();
-    };
+    // ---------- Selecionar (barra de ferramentas da tela): rótulo acompanha o estado ----------
+    const IDS_SEL = ['btn-selecionar-cotacoes', 'btn-selecionar-anotacoes', 'select-mode-btn', 'controle-btn-selecionar'];
     function hdrSelAtualizar() {
-        const b = $('hdr-sel-btn'); if (!b) return;
-        const t = typeof telaAtivaId === 'function' ? telaAtivaId() : null;
-        let vis = false, ativo = false;
-        if (t === 'screen-cotacoes') { vis = true; ativo = !!selecaoCotacoesAtiva; }
-        else if (t === 'screen-anotacoes') { vis = true; ativo = !!selecaoAnotacoesAtiva; }
-        else if (t === 'screen-controle-nfs') { const c = $('controle-btn-selecionar'); vis = !!c && c.style.display !== 'none'; ativo = !!selecaoControleAtiva; }
-        b.style.display = vis ? 'flex' : 'none'; b.classList.toggle('active', ativo);
+        IDS_SEL.forEach(id => {
+            const b = $(id); if (!b) return;
+            const t = b.querySelector('.selb-t'); if (t) { const x = b.classList.contains('active') ? 'Cancelar' : 'Selecionar'; if (t.textContent !== x) t.textContent = x; }
+        });
         fabAtualizar();
     }
 
@@ -142,8 +133,8 @@
             window.dockSelecaoAtualizar = function () { const r = ds.apply(this, arguments); hdrSelAtualizar(); return r; };
             window.dockSelecaoAtualizar.__acoes = true;
         }
-        const c = $('controle-btn-selecionar'); if (c && window.MutationObserver) new MutationObserver(hdrSelAtualizar).observe(c, { attributes: true, attributeFilter: ['style'] });
+        if (window.MutationObserver) IDS_SEL.forEach(id => { const c = $(id); if (c) new MutationObserver(hdrSelAtualizar).observe(c, { attributes: true, attributeFilter: ['class'] }); });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/54-acoes-telas.js'] = '2.41.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/54-acoes-telas.js'] = '2.42.0';

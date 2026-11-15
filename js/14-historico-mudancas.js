@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.41.0', nome: 'Ações das telas: Selecionar no topo, "+" flutuante, Ordenar em folha e Resumo como tela', status: 'atual', data: '14/11/2026 às 21:30',
+        numero: '2.42.0', nome: 'Refatoração, fase 1: barra de ferramentas padrão, dock, Resumo ABNT e notificações', status: 'atual', data: '15/11/2026 às 07:30',
+        novidades: ['Anotações, Saída de NF (Gerenciar) e Cotações: busca, Ordenar e Selecionar com a mesma altura e posição; Selecionar fica à direita de Ordenar (também no Controle de NFs).', 'A bolha da dock acompanha o rótulo (Anotações, Gerenciar não vazam mais).', 'Tela cinza: o gesto de voltar não trava mais a tela anterior escurecida.', 'Gerenciar vazio sem o botão "Adicionar nota" repetido; Importar relatório com os 3 botões no mesmo espaçamento.', 'Resumo de pendências: Copiar/Baixar no fim do conteúdo, prévia com cantos arredondados, PDF e Word com margens ABNT (3 cm esquerda/topo, 2 cm direita/baixo).', 'Notificações: fornecedores duplicados (EMBALAKLIN, MINAS SUL) reunidos em "Por fornecedor"; avisos de fornecedor sem CNPJ podem ser ignorados (✕), com Desfazer e lista "Ignoradas" para voltar a notificar.', 'Relatórios: removido o cartão Próximos Vencimentos do topo (já aparece no Início).'],
+        implementado: ['index.html: toolrow/selb nas telas, cabeçalho sem botões de selecionar, Importar ERP, Relatórios. style.css: bloco 2.42.0. js/22: largura da pílula. js/28: higiene do gesto de voltar. js/34: reunir fornecedores e ignorar avisos. js/47: margens ABNT. js/54: rótulo Selecionar/Cancelar. js/05: estado vazio.'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/22-vidro-liquido.js', 'js/24-novidades-versao.js', 'js/28-transicoes-ios.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/47-resumo-pendencias.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.41.0: index.html, style.css, js/05, js/14, js/22, js/24, js/28, js/31, js/34, js/47 e js/54.'],
+        testar: ['iPhone: alterne entre Anotações, Saída de NF e Cotações: busca, Ordenar e Selecionar não devem "pular" de altura.', 'iPhone: dock: o nome de cada aba cabe dentro da bolha.', 'iPhone: navegue e use o gesto de voltar várias vezes: nenhuma tela deve ficar cinza.', 'iPhone: Resumo de pendências: Copiar/Baixar no fim da página; baixe PDF e Word e confira as margens.', 'iPhone: Notificações > Por fornecedor: EMBALAKLIN e MINAS SUL em um bloco só; ✕ em fornecedor sem CNPJ, Desfazer e "Ignoradas".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.41.0', nome: 'Ações das telas: Selecionar no topo, "+" flutuante, Ordenar em folha e Resumo como tela', status: 'concluida', data: '14/11/2026 às 21:30',
         novidades: ['Cotações, Anotações e Controle de NFs: o ícone de selecionar fica no canto superior direito (igual ao Gerenciar). O botão de atualizar do topo foi removido.', 'Botão "+" flutuante em Cotações (adicionar cotação por XML), Anotações (leque: nova anotação / nova auditoria) e Gerenciar (adicionar NF).', '"Ordenar" agora abre uma folha com opções: Cotações (recentes, antigas, número crescente/decrescente), Anotações (recentes, antigas, título A–Z/Z–A) e Gerenciar (recentes, antigas, vencimento, fornecedor, número da NF).', 'Resumo de pendências virou uma tela própria (atalho fixo no Início), com seta de voltar e Copiar/Baixar fixos embaixo.', 'Removidos: "Limpar Banco de Exceções" (Entrada de NF), "Complementar com relatório" e "Resumo de pendências" da lista de Cotações.', 'Cadastro manual de NF voltou a ter o cartão branco; títulos longos de Anotações quebram em várias linhas sem estourar o cartão.'],
         implementado: ['js/54-acoes-telas.js (novo): hdrSelecionar, folha inferior, abrirOrdenar, "+" flutuante. index.html: hdr-sel-btn, chips de ordenar, #screen-resumo-pend. js/13, js/09, js/05: ordenação. js/47: Resumo abre como tela. style.css: bloco 2.41.0.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/54-acoes-telas.js'],
@@ -3320,4 +3329,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.41.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.42.0';

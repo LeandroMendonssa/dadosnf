@@ -32,11 +32,15 @@
         const ativa = barra.querySelector('.tab-item.active');
         if (!ativa || !ativa.offsetWidth) { pilula.style.opacity = '0'; return; } // dock escondido (teclado/desktop) ou sem aba ativa
         barra.classList.toggle('dock-sem-rolagem', barra.scrollWidth <= barra.clientWidth + 1); // sem barra rolável, o arrasto de dedo escolhe a aba
-        const alvo = `${ativa.offsetLeft},${ativa.offsetTop},${ativa.offsetWidth},${ativa.offsetHeight}`;
+        // 2.42.0: a bolha acompanha o rótulo — palavra longa (Anotações, Gerenciar) não vaza mais para fora dela
+        const lab = ativa.querySelector(':scope > span:not(.icon-wrapper)');
+        const extra = lab ? Math.max(0, Math.ceil(lab.scrollWidth + 14 - ativa.offsetWidth)) : 0;
+        const esq = Math.max(0, ativa.offsetLeft - extra / 2), larg = ativa.offsetWidth + extra;
+        const alvo = `${esq},${ativa.offsetTop},${larg},${ativa.offsetHeight}`;
         const aplicar = () => {
-            pilula.style.width = ativa.offsetWidth + 'px';
+            pilula.style.width = larg + 'px';
             pilula.style.height = ativa.offsetHeight + 'px';
-            pilula.style.transform = `translate(${ativa.offsetLeft}px, ${ativa.offsetTop}px)`;
+            pilula.style.transform = `translate(${esq}px, ${ativa.offsetTop}px)`;
         };
         if (primeiraPilula) {
             pilula.style.transition = 'none'; pilula.style.opacity = '1'; aplicar();
@@ -229,3 +233,5 @@ function alterarDockOpcao(chave, valor) {
     aplicarDockPersonalizacao();
     salvarPersonalizacao();
 }
+
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/22-vidro-liquido.js'] = '2.42.0';

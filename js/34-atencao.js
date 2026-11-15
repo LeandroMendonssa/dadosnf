@@ -109,12 +109,35 @@ function _itensDeAtencaoCalc() {
         nfsDe('sem-recurso').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
     add('baixa', 'sem-produto', 'NFs com itens sem produto da cotação', 'Associe o produto no Editor da NF ou na Entrada de NF.',
         nfsDe('sem-produto').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
-    const semCnpj = listaFornecedoresSpData.filter(f => !(f.cnpjs || []).length);
+    const semCnpj = listaFornecedoresSpData.filter(f => !(f.cnpjs || []).length && !atencaoEstaIgnorada('cnpj:' + f.codigo));
     // 2.39.0: lista cada fornecedor (antes só dizia a quantidade); toque abre o cadastro já filtrado nele
     add('baixa', 'forn-sem-cnpj', 'Fornecedores sem CNPJ no SP Data', 'Sem CNPJ, o app não acha o pedido das NFs do ERP sozinho. Toque para abrir o cadastro do fornecedor.',
-        semCnpj.map(f => { const nome = (typeof apelidoFornecedorDoc === 'function' && apelidoFornecedorDoc(f).nome) || f.nomeReal || ('código ' + f.codigo); return { pedido: '', forn: nome, t: nome, s: f.nomeReal && f.nomeReal !== nome ? f.nomeReal : 'código ' + f.codigo, fn: `irParaFornecedorCadastro('${escRel(String(f.codigo))}')` }; }));
+        semCnpj.map(f => { const nome = (typeof apelidoFornecedorDoc === 'function' && apelidoFornecedorDoc(f).nome) || f.nomeReal || ('código ' + f.codigo); return { pedido: '', forn: nome, t: nome, s: f.nomeReal && f.nomeReal !== nome ? f.nomeReal : 'código ' + f.codigo, fn: `irParaFornecedorCadastro('${escRel(String(f.codigo))}')`, ign: 'cnpj:' + f.codigo }; }));
     try { if (typeof agendaGruposAtencao === 'function') agendaGruposAtencao().forEach(g => add(g.nivel, g.id, g.titulo, g.dica, g.linhas)); } catch (e) { console.error('Agenda na Central:', e); }
     return grupos;
+}
+// 2.42.0: ignorar aviso (só silencia o aviso; nunca mexe no cadastro, e sobrevive a nova importação porque a chave é o código do fornecedor)
+function atencaoIgnoradasSet() { const a = (appConfig.personalizacao || {}).atencaoIgnoradas; return new Set(Array.isArray(a) ? a : []); }
+function atencaoEstaIgnorada(chave) { return atencaoIgnoradasSet().has(chave); }
+function _atencaoGravarIgnoradas(set) { appConfig.personalizacao = appConfig.personalizacao || {}; appConfig.personalizacao.atencaoIgnoradas = [...set]; _atnCache = null; try { salvarPersonalizacao(); } catch (e) { console.error(e); } renderAtencaoSeAtiva(); if (typeof renderBannerAtencao === 'function') renderBannerAtencao(); }
+function pedirIgnorarAtencao(chave, nome) {
+    if (typeof abrirFolhaAcoes !== 'function') return ignorarAtencao(chave, nome);
+    abrirFolhaAcoes('Parar de avisar sobre "' + nome + '"?', [
+        { t: 'Parar de avisar (não altera o cadastro)', ic: 'fa-bell-slash', f: () => ignorarAtencao(chave, nome) },
+        { t: 'Cancelar', ic: 'fa-xmark', f: () => { } }
+    ]);
+}
+function ignorarAtencao(chave, nome) {
+    const set = atencaoIgnoradasSet(); set.add(chave); _atencaoGravarIgnoradas(set);
+    mostrarToastDesfazer('Aviso silenciado: ' + nome, () => restaurarAtencao(chave));
+}
+function restaurarAtencao(chave) { const set = atencaoIgnoradasSet(); set.delete(chave); _atencaoGravarIgnoradas(set); }
+function mostrarToastDesfazer(msg, desfazer) {
+    let t = document.getElementById('toast-desfazer'); if (t) t.remove();
+    t = document.createElement('div'); t.id = 'toast-desfazer'; t.className = 'toast-desfazer';
+    t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-clear,0px) + 84px);max-width:92vw;background:#222;color:#fff;border-radius:14px;padding:10px 14px;display:flex;gap:12px;align-items:center;z-index:400;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.35)';
+    const sp = document.createElement('span'); sp.textContent = msg; const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Desfazer'; b.style.cssText = 'border:0;background:transparent;color:#8ab4ff;font:inherit;font-weight:700;cursor:pointer';
+    b.onclick = () => { t.remove(); desfazer(); }; t.appendChild(sp); t.appendChild(b); document.body.appendChild(t); setTimeout(() => { if (t.parentNode) t.remove(); }, 6000);
 }
 function irParaFornecedorCadastro(codigo) {
     const f = listaFornecedoresSpData.find(x => String(x.codigo) === String(codigo)); if (!f) return;
@@ -144,6 +167,12 @@ function atencaoAssinatura() {
 setInterval(() => { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active') && atencaoAssinatura() !== _atnSig) renderAtencao(); }, 3000);
 function renderAtencaoSeAtiva() { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active')) renderAtencao(); }
 function renderAtencao() {
+    _renderAtencaoBase();
+    const el = document.getElementById('atencao-conteudo'); if (!el) return;
+    const ig = (listaFornecedoresSpData || []).filter(f => !(f.cnpjs || []).length && atencaoEstaIgnorada('cnpj:' + f.codigo));
+    if (ig.length) el.insertAdjacentHTML('beforeend', `<details class="atn-ignoradas"><summary>Ignoradas (${ig.length})</summary>${ig.map(f => { const nome = (typeof apelidoFornecedorDoc === 'function' && apelidoFornecedorDoc(f).nome) || f.nomeReal || ('código ' + f.codigo); return `<div class="atn-ign-lin"><span>${escRel(nome)}<br><small>Fornecedor sem CNPJ</small></span><button type="button" onclick="restaurarAtencao('cnpj:${escRel(String(f.codigo))}')">Voltar a notificar</button></div>`; }).join('')}</details>`);
+}
+function _renderAtencaoBase() {
     const el = document.getElementById('atencao-conteudo'); if (!el) return;
     _atnSig = atencaoAssinatura();
     const grupos = itensDeAtencao();
@@ -154,9 +183,13 @@ function renderAtencao() {
     const abas = `<div class="retro-chips">${[['urgencia', 'Por urgência'], ['pedido', 'Por pedido'], ['fornecedor', 'Por fornecedor']].map(([k, t]) => `<button type="button" class="retro-chip${atencaoModo === k ? ' on' : ''}" onclick="mudarModoAtencao('${k}')">${t}</button>`).join('')}</div>`;
     if (atencaoModo !== 'urgencia') {
         // 2.12.3: as mesmas pendências, reunidas por pedido ou por fornecedor (o que acontece com o mesmo pedido/fornecedor em vários lugares fica junto)
-        const mapa = new Map(), sem = [];
+        const mapa = new Map(), sem = [], reune = new Map();
+        // 2.42.0: "EMBALAKLIN" e "EMBALAKLIN COMERCIO DE EMBALAG" são o mesmo fornecedor: o nome mais curto (prefixo de palavra inteira) reúne os demais
+        const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toUpperCase();
+        const chavesF = [...new Set(grupos.flatMap(g => g.linhas.map(l => norm(l.forn))).filter(Boolean))].sort((a, b) => a.length - b.length);
+        const canon = new Map(); chavesF.forEach(k => { const base = chavesF.find(o => o !== k && canon.get(o) === o && k.startsWith(o + ' ')); canon.set(k, base || k); if (base) { if (!reune.has(base)) reune.set(base, new Set([base])); reune.get(base).add(k); } });
         grupos.forEach(g => g.linhas.forEach(l => {
-            const chave = atencaoModo === 'pedido' ? (l.pedido ? 'Pedido ' + l.pedido : '') : String(l.forn || '').trim().toUpperCase();
+            const chave = atencaoModo === 'pedido' ? (l.pedido ? 'Pedido ' + l.pedido : '') : (canon.get(norm(l.forn)) || '');
             if (!chave) { sem.push({ g, l }); return; }
             if (!mapa.has(chave)) mapa.set(chave, []);
             mapa.get(chave).push({ g, l });
@@ -165,8 +198,10 @@ function renderAtencao() {
         if (sem.length) blocos.push([atencaoModo === 'pedido' ? 'Sem pedido definido' : 'Sem fornecedor definido', sem]);
         el.innerHTML = abas + blocos.map(([nome, ls]) => {
             const aberto = atencaoAbertos.has(nome);
+            const ru = atencaoModo === 'fornecedor' && reune.get(nome);
             return `<div class="ctl-card atn-grupo"><div class="ctl-top" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(nome)}</b></div><span class="ctl-st">${ls.length}</span></div>
-                ${aberto ? ls.map(({ g, l }) => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(g.titulo)} · ${escRel(l.s)}</small></span><span class="atn-seta">›</span></div>`).join('') : `<div class="ctl-inf"><a class="ctl-pend-link" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})">Ver itens</a></div>`}</div>`;
+                ${ru && ru.size > 1 ? `<div class="atn-reune">Reúne ${ru.size} cadastros: ${escRel([...ru].join(' · '))}</div>` : ''}
+                ${aberto ? ls.map(({ g, l }) => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(g.titulo)} · ${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') : `<div class="ctl-inf"><a class="ctl-pend-link" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})">Ver itens</a></div>`}</div>`;
         }).join('');
         return;
     }
@@ -177,7 +212,7 @@ function renderAtencao() {
                 <div class="ctl-top" onclick="toggleGrupoAtencao('${g.id}')" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(g.titulo)}</b><small>${escRel(g.dica)}</small></div>
                     <span class="ctl-st ${cls}">${g.linhas.length}</span></div>
                 <div class="ctl-inf"><span class="ctl-st ${cls}" style="font-size:11px;padding:3px 9px">${rot}</span> <a class="ctl-pend-link" onclick="toggleGrupoAtencao('${g.id}')">${aberto ? 'Fechar' : 'Ver itens'}</a></div>
-                ${aberto ? g.linhas.slice(0, 12).map(l => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(l.s)}</small></span><span class="atn-seta">›</span></div>`).join('') + (g.linhas.length > 12 ? `<div class="xml-item-meta" style="margin-top:6px">…e mais ${g.linhas.length - 12}.</div>` : '') : ''}
+                ${aberto ? g.linhas.slice(0, 12).map(l => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') + (g.linhas.length > 12 ? `<div class="xml-item-meta" style="margin-top:6px">…e mais ${g.linhas.length - 12}.</div>` : '') : ''}
             </div>`;
         }).join('');
 }
@@ -187,4 +222,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.40.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.42.0';

@@ -165,7 +165,7 @@ ${s.nome ? `<p style="margin:0;font-size:11pt;font-weight:bold;color:${RS_AZUL}"
 ${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333333"><span style="color:${RS_TEAL}">${i}</span>&nbsp; ${e(t)}</p>`).join('')}</td></tr></table>
 <p style="margin:10pt 0 0;text-align:right;font-size:8.5pt;font-style:italic;color:#444444">${e(b.nota || '')}</p>`;
     let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Resumo de pendências</title>
-<style>@page WordSection1{size:21cm 29.7cm;margin:1.3cm 1.6cm 1.6cm 1.6cm}div.WordSection1{page:WordSection1}
+<style>@page WordSection1{size:21cm 29.7cm;margin:3cm 2cm 2cm 3cm}div.WordSection1{page:WordSection1}
 body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
 <p style="text-align:right;font-size:9.5pt;font-style:italic">${e(b.data)}</p>
 <p style="font-size:16pt;font-weight:bold;text-decoration:underline;text-align:center;margin:14pt 30pt 18pt;line-height:1.25">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
@@ -188,45 +188,45 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
 // ---------- PDF (jsPDF) ----------
 function gerarPdfResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 46, LARG = W - 2 * M, SIDE = 92, GAP = 18, XC = M + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - 44;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 85, MR = 57, MT = 85, MB = 57, LARG = W - MRL - MR, SIDE = 92, GAP = 18, XC = ML + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - MB;
     const s = assinaturaRelatorio(), logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null;
     const fill = h => { const c = rgbRelCot(h); doc.setFillColor(c[0], c[1], c[2]); }, draw = h => { const c = rgbRelCot(h); doc.setDrawColor(c[0], c[1], c[2]); }, ink = h => { const c = rgbRelCot(h); doc.setTextColor(c[0], c[1], c[2]); };
     const fonte = (tam, est) => { doc.setFont('helvetica', est || 'normal'); doc.setFontSize(tam); };
     const quebra = (t, larg, tam, est) => { fonte(tam, est); return doc.splitTextToSize(String(t), Math.max(30, larg)); };
-    let y = 36;
+    let y = MT - 8;
     // ---- topo (layout do relatório antigo: sem tabela, sem cores)
-    if (b.data) { fonte(9.5, 'italic'); ink('#111111'); doc.text(b.data, W - M, y + 8, { align: 'right' }); }
+    if (b.data) { fonte(9.5, 'italic'); ink('#111111'); doc.text(b.data, W - MR, y + 8, { align: 'right' }); }
     y += 30;
     const tit = quebra(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', LARG * 0.8, 16, 'bold');
     fonte(16, 'bold'); ink('#000000'); draw('#000000'); doc.setLineWidth(1);
     tit.forEach((l, i) => { const yy = y + 16 + i * 20, w = doc.getTextWidth(l); doc.text(l, W / 2, yy, { align: 'center' }); doc.line(W / 2 - w / 2, yy + 2.5, W / 2 + w / 2, yy + 2.5); });
     y += tit.length * 20 + 22;
-    b.previa.forEach(t => { const ls = quebra(t, LARG, 10.5); fonte(10.5); ink('#111111'); ls.forEach((l, i) => doc.text(l, M, y + 10 + i * 14.5)); y += ls.length * 14.5 + 8; });
+    b.previa.forEach(t => { const ls = quebra(t, LARG, 10.5); fonte(10.5); ink('#111111'); ls.forEach((l, i) => doc.text(l, ML, y + 10 + i * 14.5)); y += ls.length * 14.5 + 8; });
     // ---- pedidos
-    const garantir = alt => { if (y + alt > LIM) { doc.addPage(); y = 40; } };
+    const garantir = alt => { if (y + alt > LIM) { doc.addPage(); y = MT; } };
     b.pedidos.forEach(p => {
         garantir(60);
-        fonte(10.5, 'bold'); ink('#000000'); doc.text('PEDIDO ' + p.num, M, y + 10); y += 22;
+        fonte(10.5, 'bold'); ink('#000000'); doc.text('PEDIDO ' + p.num, ML, y + 10); y += 22;
         const toks = p.toks; let i = 0, primeiro = true;
         while (i < toks.length) {
             const t = toks[i];
             if (t.k === 'rotulo') {
                 if (/^N[ãa]o entregaram/i.test(t.t)) { i++; continue; }   // a lista simples de quem não entregou fica sem rótulo, como no relatório antigo
-                garantir(34); fonte(10.5, 'bold'); ink('#000000'); doc.text(t.t.toUpperCase(), M, y + 10); y += 22; i++;
+                garantir(34); fonte(10.5, 'bold'); ink('#000000'); doc.text(t.t.toUpperCase(), ML, y + 10); y += 22; i++;
             } else if (t.k === 'nome') {
-                garantir(16); fonte(10.5); ink('#111111'); doc.text(t.t, M, y + 10); y += 14.5; i++;
+                garantir(16); fonte(10.5); ink('#111111'); doc.text(t.t, ML, y + 10); y += 14.5; i++;
                 if (!(toks[i] && toks[i].k === 'nome')) y += 8;
             } else if (t.k === 'forn') {
-                const ls = quebra(t.t, LARG, 10.5, 'bold'); garantir(ls.length * 14.5 + 18); fonte(10.5, 'bold'); ink('#000000'); ls.forEach((l, k) => doc.text(l, M, y + 10 + k * 14.5)); y += ls.length * 14.5; i++;
+                const ls = quebra(t.t, LARG, 10.5, 'bold'); garantir(ls.length * 14.5 + 18); fonte(10.5, 'bold'); ink('#000000'); ls.forEach((l, k) => doc.text(l, ML, y + 10 + k * 14.5)); y += ls.length * 14.5; i++;
             } else if (t.k === 'item') {
-                const ls = quebra(t.t, LARG, 10.5, 'italic'); garantir(ls.length * 14.5 + 4); fonte(10.5, 'italic'); ink('#111111'); ls.forEach((l, k) => doc.text(l, M, y + 10 + k * 14.5));
+                const ls = quebra(t.t, LARG, 10.5, 'italic'); garantir(ls.length * 14.5 + 4); fonte(10.5, 'italic'); ink('#111111'); ls.forEach((l, k) => doc.text(l, ML, y + 10 + k * 14.5));
                 y += ls.length * 14.5 + ((toks[i + 1] && toks[i + 1].k === 'item') ? 0 : 12); i++;
             } else {
-                const ls = quebra(t.t, LARG, 10.5); garantir(ls.length * 14.5 + 6); fonte(10.5); ink('#111111'); ls.forEach((l, k) => doc.text(l, M, y + 10 + k * 14.5)); y += ls.length * 14.5 + 6; i++;
+                const ls = quebra(t.t, LARG, 10.5); garantir(ls.length * 14.5 + 6); fonte(10.5); ink('#111111'); ls.forEach((l, k) => doc.text(l, ML, y + 10 + k * 14.5)); y += ls.length * 14.5 + 6; i++;
             }
             primeiro = false;
         }
-        y += 2; draw('#000000'); doc.setLineWidth(0.8); doc.line(M, y, W - M, y); y += 16;
+        y += 2; draw('#000000'); doc.setLineWidth(0.8); doc.line(ML, y, W - MR, y); y += 16;
     });
     // ---- assinatura + aviso: UMA vez, no fim do documento (última página); se não couber, vai para uma página nova
     if (b.pedidos.length && y > H - 170) { doc.addPage(); y = 40; }
@@ -244,13 +244,13 @@ function gerarPdfResumoPendencias(texto) {
     const largTot = (logo ? 82 + 32 : 0) + largTxt, n = doc.getNumberOfPages();
     for (let pg = n; pg <= n; pg++) {
         doc.setPage(pg);
-        const yb = H - 50, yt = yb - altBloco; let x = M + (LARG - largTot) / 2;
+        const yb = H - MB, yt = yb - altBloco; let x = ML + (LARG - largTot) / 2;
         if (logo) { try { doc.addImage(logo, 'PNG', x, yt + (altBloco - 62) / 2, 82, 62); } catch (err) { /* logo inválida: segue sem */ } x += 82 + 16; draw('#bbbbbb'); doc.setLineWidth(0.8); doc.line(x, yt + 1, x, yb - 1); x += 16; }
         let yy = yt + (altBloco - altTxt) / 2;
         if (s.nome) { fonte(11, 'bold'); ink(RS_AZUL); doc.text(s.nome, x, yy + 10); yy += 14; }
         if (s.cargo) { fonte(8.5); ink(RS_TEAL); doc.text(s.cargo, x, yy + 7); yy += 15; }
         linhasAss.forEach(([tp, t]) => { ico(tp, x, yy); fonte(7.6); ink('#333333'); doc.text(t, x + 14, yy + 6.8); yy += 11.5; });
-        if (b.nota) { fonte(8.5, 'italic'); ink('#444444'); doc.text(b.nota, W - M, H - 24, { align: 'right' }); }
+        if (b.nota) { fonte(8.5, 'italic'); ink('#444444'); doc.text(b.nota, W - MR, H - 30, { align: 'right' }); }
     }
     return doc;
 }
@@ -336,4 +336,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.41.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.42.0';

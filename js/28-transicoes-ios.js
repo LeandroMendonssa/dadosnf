@@ -140,7 +140,7 @@
     };
 
     // ---------- voltar arrastando da borda esquerda ----------
-    let edge = null, sw = null;
+    let edge = null, sw = null, animando = false;
     const SEM_GESTO = ['screen-anotacoes-editor', 'screen-cotacao-editor'];
     function alvoVoltar() {
         const at = document.querySelector('.app-screen.active');
@@ -158,6 +158,15 @@
         [s.at, s.prev].forEach(el => { el.getAnimations().forEach(a => a.cancel()); el.style.transform = ''; el.style.filter = ''; el.style.boxShadow = ''; el.style.willChange = ''; });
         s.prev.classList.remove('swipe-pre');
     }
+    // 2.42.0: higiene do gesto. Se o gesto for interrompido sem pointerup/pointercancel (a borda some, a tela troca no meio),
+    // a tela anterior ficava escurecida (filtro de brilho) e o gesto travava: era a "tela cinza" em que o Voltar parecia morto.
+    function varrerSwipe() {
+        if (sw || animando) return;
+        document.querySelectorAll('.app-screen.swipe-pre').forEach(el => { el.classList.remove('swipe-pre'); el.style.transform = ''; el.style.filter = ''; });
+        document.querySelectorAll('.app-screen').forEach(el => { if (!el.classList.contains('active') && !el.classList.contains('saindo') && el.style.filter) { el.style.filter = ''; el.style.transform = ''; } else if (el.classList.contains('active') && (el.style.filter || el.style.boxShadow) && !el.classList.contains('saindo')) { el.style.filter = ''; el.style.boxShadow = ''; } });
+    }
+    function abortarSwipe() { if (!sw) return; const s = sw; sw = null; limpaSwipe(s); }
+    document.addEventListener('touchstart', () => { varrerSwipe(); }, { capture: true, passive: true });
     function criarBorda() {
         const w = document.querySelector('.screen-wrapper');
         if (!w || edge) return;
@@ -180,7 +189,7 @@
         });
         const fim = () => {
             if (!sw) return;
-            const s = sw; sw = null;
+            const s = sw; sw = null; animando = true;
             const r = Math.min(1, s.dx / s.W), ok = r > .35 || s.dx / Math.max(1, performance.now() - s.t) > .6;
             const du = RM.matches ? 1 : Math.max(180, PUSH_MS * (ok ? 1 - r : r));
             const opt = { duration: du, easing: CURVA, fill: 'forwards' };
@@ -189,14 +198,16 @@
             s.prev.animate([{ transform: pos(s.prev), filter: s.prev.style.filter }, { transform: ok ? 'none' : 'translate3d(-28%,0,0)', filter: ok ? 'brightness(1)' : 'brightness(.7)' }], opt);
             a.finished.catch(() => { }).then(() => {
                 if (ok) { window.__semAnimacaoTela = true; const b = document.getElementById('close-btn'); if (b) b.click(); setTimeout(() => { window.__semAnimacaoTela = false; }, 0); }
-                limpaSwipe(s);
+                limpaSwipe(s); animando = false;
             });
+            setTimeout(() => { animando = false; varrerSwipe(); }, du + 700);
         };
-        edge.addEventListener('pointerup', fim); edge.addEventListener('pointercancel', fim);
+        edge.addEventListener('pointerup', fim); edge.addEventListener('pointercancel', fim); edge.addEventListener('lostpointercapture', fim);
     }
     function atualizarBorda(screenId) {
         if (!edge) criarBorda();
         if (!edge) return;
+        abortarSwipe(); setTimeout(varrerSwipe, 450);
         const sub = (typeof closeBtnBackScreen !== 'undefined' && screenId in closeBtnBackScreen) || (typeof destinoViaMais !== 'undefined' && screenId === destinoViaMais);
         edge.hidden = !sub || SEM_GESTO.includes(screenId);
     }
@@ -209,4 +220,4 @@
         mostrarCarregando(screenId);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/28-transicoes-ios.js'] = '2.22.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/28-transicoes-ios.js'] = '2.42.0';

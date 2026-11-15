@@ -99,7 +99,7 @@ const AJUDA_ARTIGOS = [
         'Depois de enviado, use "Arquivar Tudo": as notas vão para o Histórico.'
       ],
       dicas: ['O recurso de cada nota no texto é o campo Recurso dela. Se uma nota sai sem recurso, aplique o recurso em Gerenciar ou edite a nota.',
-              'Próximos Vencimentos lista as notas que vencem nos próximos 7 dias.'], tutorial: 'xml-ao-texto' },
+              'Os vencimentos dos próximos 7 dias aparecem na tela Início.'], tutorial: 'xml-ao-texto' },
     { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.15.0',
       resumo: 'Ver todas as NFs e resolver o que falta tocando na pendência.',
       palavras: 'controle nfs pendencia erp xml vinculo cartao divergencia editor',
@@ -219,7 +219,7 @@ const AJUDA_ARTIGOS = [
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
         'Para fixar pedidos no topo da lista: toque no ícone de selecionar (canto superior direito), marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
         'Dentro do pedido, no topo (abaixo do resumo), "Exportar relatório" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF. O PDF e o Word têm o mesmo visual: selos coloridos de status, divergência em vermelho, observação do SmartCompras em azul e, na entrega parcial, os itens não entregues em destaque.',
-        'Resumo de pendências: toque em "Resumo de pendências" na tela Início (ou em "Pendências" na barra de seleção de Cotações, que já abre com os pedidos marcados). O resumo é uma tela própria, com seta de voltar no topo e "Copiar" e "Baixar" fixos embaixo. Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência (você ainda pode incluir outros pedidos digitando o número). Marque o que entra: fornecedores que não entregaram, produtos não faturados, divergências em aberto e observação da ocorrência (as duas últimas vêm desligadas). Só entram ocorrências de auditoria ainda não relatadas; anotações de texto livre não são usadas. A prévia mostra o relatório no layout antigo; "Editar texto" permite ajustar frases antes de gerar PDF, Word, TXT ou copiar.',
+        'Notificações: em fornecedor sem CNPJ, toque no ✕ para parar de avisar (só silencia o aviso; o cadastro não muda). Veja em "Ignoradas" e toque em "Voltar a notificar" para reativar. Resumo de pendências: toque em "Resumo de pendências" na tela Início (ou em "Pendências" na barra de seleção de Cotações, que já abre com os pedidos marcados). O resumo é uma tela própria, com seta de voltar no topo e "Copiar" e "Baixar" fixos embaixo. Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência (você ainda pode incluir outros pedidos digitando o número). Marque o que entra: fornecedores que não entregaram, produtos não faturados, divergências em aberto e observação da ocorrência (as duas últimas vêm desligadas). Só entram ocorrências de auditoria ainda não relatadas; anotações de texto livre não são usadas. A prévia mostra o relatório no layout antigo; "Editar texto" permite ajustar frases antes de gerar PDF, Word, TXT ou copiar.',
         'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
@@ -582,4 +582,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.41.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.42.0';
