@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.41.0">
+    <meta name="app-versao" content="2.42.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -146,12 +146,6 @@
                         <span class="icon-wrapper"><i class="fa-solid fa-check"></i></span>
                     </button>
                 </div>
-                <button class="header-action" id="hdr-sel-btn" onclick="hdrSelecionar()" style="display: none;" title="Selecionar vários" aria-label="Selecionar vários"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span></button>
-                <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;" title="Selecionar em lote (editar)">
-                    <span class="icon-wrapper">
-                        <i class="fa-solid fa-list-check"></i>
-                    </span>
-                </button>
             </div>
         </header>
 
@@ -169,8 +163,8 @@
                 <div id="lote-resultado"></div>
             </div>
             <div class="app-screen" id="screen-manage"> 
-                <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div class="ord-linha"><button type="button" class="ord-btn" id="ger-ord-btn" onclick="abrirOrdenar('gerenciar')"></button></div> <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
+                <div class="campo busca-padrao" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
+                <div class="toolrow"><button type="button" class="ord-btn" id="ger-ord-btn" onclick="abrirOrdenar('gerenciar')"></button><button type="button" class="selb" id="select-mode-btn" onclick="toggleSelectionModeNotas()" title="Selecionar em lote"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> <span class="selb-t">Selecionar</span></button></div> <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
             </div>
             
             
@@ -191,19 +185,6 @@
             </div>
 
             <div class="app-screen" id="screen-reports">
-                <div class="card vencimentos-card">
-                    <div class="cab">
-                        <i class="fa-solid fa-calendar-week"></i>
-                        <div>
-                            <h3 class="card-titulo card-titulo-sm">Próximos Vencimentos</h3>
-                            <p>Notas vencendo nos próximos 7 dias.</p>
-                        </div>
-                    </div>
-                </div>
-                <div id="lista-relatorios" class="nota-list">
-                     <div class="empty-state">Nenhuma nota próxima do vencimento.</div>
-                </div>
-
                 <div class="xml-filtro-toggle mt-5" >
                     <button type="button" class="xml-filtro-btn active" id="relatorios-tab-btn-pedidos" onclick="mudarAbaRelatorios('pedidos')">Pedidos</button>
                     <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-notas" onclick="mudarAbaRelatorios('notas')">Notas</button>
@@ -287,9 +268,7 @@
                     <div class="actions" style="gap: 10px;">
                         <button class="actions-button is-neutral" onclick="document.getElementById('import-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-arrow-up"></i></span> Subir Arquivo TXT</button>
                         <button class="actions-button is-neutral" onclick="colarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-paste"></i></span> Colar</button>
-                    </div>
-                    <div class="actions">
-                        <button class="actions-button is-primary" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
+                                            <button class="actions-button is-primary" onclick="processarRelatorioImportacao()"><span class="icon-wrapper"><i class="fa-solid fa-magic-wand-sparkles"></i></span> Processar Relatório</button>
                     </div>
                 </div>
                 <div id="import-preview-container"></div>
@@ -486,8 +465,8 @@
             </div>
 
             <div class="app-screen" id="screen-cotacoes">
-                <div class="campo mb-3" ><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
-                <div class="ord-linha"><button type="button" class="ord-btn" id="cotacoes-ord-btn" onclick="abrirOrdenar('cotacoes')"></button></div>
+                <div class="campo busca-padrao" ><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
+                <div class="toolrow"><button type="button" class="ord-btn" id="cotacoes-ord-btn" onclick="abrirOrdenar('cotacoes')"></button><button type="button" class="selb" id="btn-selecionar-cotacoes" onclick="alternarSelecaoCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> <span class="selb-t">Selecionar</span></button></div>
                 
                 <div class="actions-row anotacoes-bulk-bar" id="cotacoes-bulk-bar" style="display:none;">
                     <span id="cotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas cotações para selecionar</span>
@@ -810,17 +789,17 @@
             <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div>
       <div class="app-screen" id="screen-controle-nfs">
         <div id="controle-atencao-banner"></div>
-        <div class="campo mb-4"><input type="text" id="controle-busca" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarControle(this.value)"></div>
+        <div class="campo busca-padrao"><input type="text" id="controle-busca" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarControle(this.value)"></div>
+        <div class="toolrow toolrow-fim"><button type="button" id="controle-btn-selecionar" class="selb" onclick="alternarSelecaoControle()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> <span class="selb-t">Selecionar</span></button></div>
         <div class="xml-filtro-toggle" id="controle-abas">
           <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
           <button type="button" class="xml-filtro-btn" data-aba="arquivadas" onclick="alternarAbaControle('arquivadas')">Arquivadas <span class="controle-cont">0</span></button>
         </div>
-        <div class="actions-row controle-topo" style="display:none"><button type="button" id="controle-btn-selecionar" class="actions-button" onclick="alternarSelecaoControle()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button></div>
         <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><div class="ctl-selbtns"><button type="button" id="controle-sel-fin" class="action-chip" onclick="marcarSelecionadasEnviadas()" disabled>Enviada ao financeiro</button><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div></div>
         <div id="controle-lista" class="nota-list"></div>
       </div> <div class="app-screen" id="screen-anotacoes" style="">
-                <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
-                <div class="ord-linha"><button type="button" class="ord-btn" id="anot-ord-btn" onclick="abrirOrdenar('anotacoes')"></button></div>
+                <div class="campo busca-padrao" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
+                <div class="toolrow"><button type="button" class="ord-btn" id="anot-ord-btn" onclick="abrirOrdenar('anotacoes')"></button><button type="button" class="selb" id="btn-selecionar-anotacoes" onclick="toggleModoSelecaoAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> <span class="selb-t">Selecionar</span></button></div>
                 <div class="actions-row anotacoes-bulk-bar" id="anotacoes-bulk-bar" style="display:none;">
                     <span id="anotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas anotações para selecionar</span>
                     <button class="actions-button is-whatsapp" onclick="exportarAnotacoesWhatsapp()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i></span> Exportar Relatório</button>

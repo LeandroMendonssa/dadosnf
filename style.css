@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.41.0'; }
+:root { --css-versao: '2.42.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1981,8 +1981,6 @@ button.ini-lin{font:inherit;color:inherit;cursor:pointer}
 .ord-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ord-btn:active{background:var(--bg-primary)}
 .ord-btn .ord-seta{font-size:11px;opacity:.7}
-#hdr-sel-btn{color:var(--accent-text,var(--accent-color))}
-#hdr-sel-btn.active{background:var(--bg-primary)}
 /* botão "+" flutuante */
 .fab-acoes{position:fixed;right:18px;bottom:calc(var(--dock-clear,0px) + 18px);width:56px;height:56px;border:0;border-radius:50%;background:var(--accent-color);color:#fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.28);z-index:60;cursor:pointer}
 .fab-acoes.visivel{display:flex}
@@ -2032,6 +2030,27 @@ body.sel-lote .fab-acoes,body.sel-lote .fab-leque,body.sel-lote .fab-veu{display
 .resumo-tela .rp-papel{margin-top:0;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .resumo-tela .rp-extra{margin:0}
 .resumo-tela .rp-editar{margin-top:10px}
-.rp-rodape{position:sticky;bottom:0;display:flex;gap:8px;margin:18px -24px -24px;padding:10px 24px;background:var(--bg-secondary);border-top:1px solid var(--border-color);z-index:2}
+.rp-rodape{position:static;display:flex;gap:8px;margin:18px 0 0;padding:0}
 .rp-rodape .actions-button{flex:1;margin:0}
 .rp-rodape .actions-button.is-neutral{flex:none}
+
+/* ===== 2.42.0: barra de ferramentas padrão (busca 44 / ordenar+selecionar 40), pílula da dock, Resumo, ignoradas ===== */
+.busca-padrao{margin:0 0 10px !important}
+.busca-padrao .form-field{height:44px;box-sizing:border-box}
+.toolrow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;margin:0 0 12px}
+.toolrow-fim{justify-content:flex-end}
+.toolrow .ord-btn,.toolrow .selb{height:40px;box-sizing:border-box;margin:0}
+.selb{display:inline-flex;align-items:center;gap:8px;padding:0 14px;border-radius:var(--r-pill,999px);border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--accent-text,var(--accent-color));font:inherit;font-weight:600;font-size:var(--fs-aux,13px);cursor:pointer;white-space:nowrap}
+.selb:active{background:var(--bg-primary)}
+.selb.active{background:var(--accent-color);border-color:var(--accent-color);color:#fff}
+.rp-papel{border-radius:16px !important}
+.atn-ign{margin-left:auto;flex:none;border:0;background:transparent;color:var(--text-light);font-size:15px;padding:6px 8px;cursor:pointer}
+.atn-reune{font-size:11.5px;color:var(--text-light);margin:2px 0 6px}
+.atn-ignoradas{margin-top:14px}
+.atn-ignoradas summary{cursor:pointer;color:var(--text-light);font-size:13px;padding:8px 2px}
+.atn-ign-lin{display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--border-color);font-size:13px}
+.atn-ign-lin span{flex:1;overflow-wrap:anywhere}
+.atn-ign-lin button{flex:none;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--accent-text,var(--accent-color));border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
+#screen-anotacoes{gap:0}
+#screen-anotacoes #anotacoes-bulk-bar{margin-bottom:12px}
+.header .manage-counter{padding-top:3px;padding-bottom:3px;line-height:1.1}
