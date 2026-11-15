@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.45.0'; }
+:root { --css-versao: '2.46.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2073,3 +2073,23 @@ body.sel-lote .fab-acoes,body.sel-lote .fab-leque,body.sel-lote .fab-veu{display
 .ia-jan-cab b{display:flex;align-items:center;gap:8px;font-size:var(--fs-input)}
 .ia-jan-x{border:0;background:transparent;color:var(--text-light);font-size:18px;min-width:44px;min-height:44px;cursor:pointer;border-radius:12px}
 .ia-jan-corpo{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:10px 14px 12px}
+
+/* ===== 2.46.0: Relatórios como central de modalidades ===== */
+.rel-intro{font-size:var(--fs-aux,13px);color:var(--text-light);margin:4px 2px 12px}
+.rel-hub-item .rel-desc{display:block;font-weight:400;font-size:12px;color:var(--text-light);margin-top:2px;white-space:normal}
+.rel-voltar{border:0;background:transparent;color:var(--accent-text,var(--accent-color));font:inherit;font-weight:600;padding:8px 2px;cursor:pointer;min-height:44px}
+.rel-titulo{margin:2px 2px 6px;font-size:18px}
+.rel-sec{margin:14px 2px 6px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-light)}
+.rel-nota{font-size:13px;color:var(--text-light);margin:0 2px}
+.rel-chips{display:flex;gap:8px;flex-wrap:wrap}
+.rel-chip{border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-color);border-radius:999px;padding:0 14px;height:40px;font:inherit;font-size:13px;cursor:pointer}
+.rel-chip.on{background:var(--accent-color);border-color:var(--accent-color);color:#fff}
+.rel-datas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.rel-tog{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px}
+.rel-tog input{width:20px;height:20px}
+.rel-papel{padding:22px 20px;border-radius:16px !important;font-size:13px;line-height:1.5}
+.rel-p-data{text-align:right;font-style:italic;font-size:12px}
+.rel-p-tit{font-weight:700;font-size:16px;text-align:center;margin:10px 0 2px}
+.rel-p-per{text-align:center;font-size:12px;margin-bottom:12px}
+.rel-p-sec{font-weight:700;margin:12px 0 4px}
+.rel-p-lin{margin:0 0 3px 8px;overflow-wrap:anywhere}
