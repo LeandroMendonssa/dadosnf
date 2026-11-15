@@ -429,8 +429,11 @@ function iaAdicionarBolha(tipo, html) {
     const log = document.getElementById('ia-log'); if (!log) return null;
     const d = document.createElement('div'); d.className = 'ia-bolha ia-' + tipo; d.innerHTML = html; log.appendChild(d); log.scrollTop = log.scrollHeight; d.scrollIntoView({ block: 'nearest' }); return d;
 }
-function prepararAssistente() {
-    const el = document.getElementById('assistente-conteudo'); if (!el) return;
+function prepararAssistente(alvo) {
+    // 2.44.0: o Assistente também abre como janela sobre qualquer tela (alvo = 'assistente-conteudo-jan'); só um dos dois fica montado por vez (ids únicos)
+    if (!alvo) { const j = document.getElementById('assistente-conteudo-jan'); if (j && !assistenteOcupado) j.innerHTML = ''; fecharAssistenteJanela(); }
+    else { const s = document.getElementById('assistente-conteudo'); if (s) s.innerHTML = ''; }
+    const el = document.getElementById(alvo || 'assistente-conteudo'); if (!el) return;
     el.innerHTML = `<div class="ia-barra"><button type="button" class="ia-mini" onclick="iaNovaConversa()">+ Nova conversa</button></div>
         <div class="ia-log" id="ia-log"></div>
         <div class="retro-chips" id="ia-sugestoes">${IA_SUGESTOES.map(s => `<button type="button" class="retro-chip" onclick="iaUsarSugestao(this)">${escRel(s)}</button>`).join('')}</div>
@@ -488,4 +491,34 @@ async function enviarAssistente() {
     }
     fim();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/37-assistente.js'] = '2.37.0';
+// ---------- 2.44.0: Assistente em janela (ícone fixo no canto superior direito do cabeçalho, em qualquer tela) ----------
+function garantirJanelaAssistente() {
+    if (document.getElementById('ia-janela')) return;
+    const v = document.createElement('div'); v.id = 'ia-veu'; v.className = 'ia-veu'; v.onclick = fecharAssistenteJanela;
+    const j = document.createElement('div'); j.id = 'ia-janela'; j.className = 'ia-janela'; j.setAttribute('role', 'dialog'); j.setAttribute('aria-label', 'Assistente');
+    j.innerHTML = '<div class="ia-jan-cab"><b><i class="fa-solid fa-comments"></i> Assistente</b><button type="button" class="ia-jan-x" aria-label="Fechar" onclick="fecharAssistenteJanela()"><i class="fa-solid fa-xmark"></i></button></div><div id="assistente-conteudo-jan" class="ia-jan-corpo"></div>';
+    document.body.appendChild(v); document.body.appendChild(j);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharAssistenteJanela(); });
+    if (window.visualViewport) { const aj = () => ajustarJanelaAssistente(); visualViewport.addEventListener('resize', aj); visualViewport.addEventListener('scroll', aj); }
+}
+function ajustarJanelaAssistente() {
+    const j = document.getElementById('ia-janela'); if (!j || !j.classList.contains('on')) return;
+    const vv = window.visualViewport, topo = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 64) + 6;
+    const alt = (vv ? vv.height : innerHeight) - topo - 8;
+    j.style.top = ((vv ? vv.offsetTop : 0) + topo) + 'px'; j.style.height = Math.max(240, alt) + 'px';
+}
+function abrirAssistenteJanela() {
+    const at = document.querySelector('.app-screen.active');
+    if (at && at.id === 'screen-assistente') return;
+    garantirJanelaAssistente();
+    const c = document.getElementById('assistente-conteudo-jan');
+    if (!c.querySelector('#ia-log')) prepararAssistente('assistente-conteudo-jan');
+    document.getElementById('ia-veu').classList.add('on'); document.getElementById('ia-janela').classList.add('on'); ajustarJanelaAssistente();
+    setTimeout(() => { const l = document.getElementById('ia-log'); if (l) l.scrollTop = l.scrollHeight; }, 60);
+}
+function fecharAssistenteJanela() {
+    const j = document.getElementById('ia-janela'), v = document.getElementById('ia-veu');
+    if (j) j.classList.remove('on'); if (v) v.classList.remove('on');
+    const t = document.getElementById('ia-texto'); if (t && document.activeElement === t) t.blur();
+}
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/37-assistente.js'] = '2.44.0';

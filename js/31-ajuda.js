@@ -173,7 +173,7 @@ const AJUDA_ARTIGOS = [
       passos: [
         'Funciona de graça e sem instalar nada, no "modo básico": ele entende pedido, NF, fornecedor, material, divergências e pendências por palavras-chave (ex.: "situação do pedido 1726", "NF 1067970", "NFs da MINAS SUL", "lanceta").',
         'A IA (Cloudflare, grátis) já vem ligada e com o endereço fixo, sem nada para digitar. Embaixo do campo de digitar há um seletor: "IA" (perguntas em linguagem livre) ou "Modo básico" (sem IA, resposta na hora); a escolha fica lembrada neste aparelho. Se o limite grátis do dia acabar, o modo básico responde no lugar.',
-        'Abra o Assistente (dock ou Mais) e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
+        'Toque no ícone de balões, fixo no canto superior direito de qualquer tela (abre uma janela sobre a tela em que você está), ou abra o Assistente pela dock/Mais, e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
         'As respostas vêm com negrito e listas. "pedido 1731" e "NF 36435" aparecem como links: toque para abrir a Central do pedido ou a NF. Enquanto a IA responde, o botão vira "■ Parar" e mostra os segundos; no fim aparece o tempo da resposta e o botão Copiar. "+ Nova conversa" limpa a conversa.',
         'A IA também sabe média, mínimo e máximo dos preços das compras e a marca dos produtos (ela sai da descrição da cotação do SmartCompras): pergunte, por exemplo, "média de preço das últimas compras de atadura crepom 15cm" ou "cotações de norepinefrina da marca Fresenius".',
         'A conversa fica guardada neste aparelho (as últimas 40 mensagens) e volta quando você abre o Assistente de novo. "+ Nova conversa" apaga o histórico.',
@@ -582,4 +582,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.44.0';

@@ -88,6 +88,7 @@
             const t = b.querySelector('.selb-t'); if (t) { const x = b.classList.contains('active') ? 'Cancelar' : 'Selecionar'; if (t.textContent !== x) t.textContent = x; }
         });
         fabAtualizar(); pedHdrAtualizar();
+        { const hb = $('hdr-assistente'); if (hb) { const t = typeof telaAtivaId === 'function' ? telaAtivaId() : null; hb.style.display = t === 'screen-assistente' ? 'none' : 'flex'; } }
     }
 
     // ---------- Tela do pedido (P1): Exportar relatório e ⋯ no cabeçalho ----------
@@ -163,4 +164,4 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/54-acoes-telas.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/54-acoes-telas.js'] = '2.44.0';
