@@ -183,7 +183,7 @@
     // ---------- telas ----------
     function renderHub() {
         const el = $('rel-hub'); if (!el) return;
-        el.innerHTML = '<div class="rel-intro">Escolha o relatório que quer emitir. Todos podem ser copiados ou baixados em PDF, Word ou texto.</div>' + ORDEM.map(k => { const m = MOD[k]; return `<button type="button" class="mais-item rel-hub-item" onclick="relAbrir('${k}')"><span class="icon-wrapper"><i class="fa-solid ${m.ic}"></i></span><span class="mais-item-nome">${e(m.nome)}<small class="rel-desc">${e(m.desc)}</small></span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`; }).join('');
+        el.innerHTML = '<div class="rel-intro">Escolha o relatório que quer emitir. Todos podem ser copiados ou baixados em PDF, Word ou texto.</div><div class="mais-grupo">' + ORDEM.map(k => { const m = MOD[k]; return `<button type="button" class="mais-item rel-hub-item" onclick="relAbrir('${k}')"><span class="icon-wrapper"><i class="fa-solid ${m.ic}"></i></span><span class="mais-item-nome">${e(m.nome)}<small class="rel-desc">${e(m.desc)}</small></span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`; }).join('') + '</div>';
     }
     function renderDetalhe() {
         const el = $('rel-detalhe'), k = estado.aba; if (!el || !k) return;
@@ -236,4 +236,4 @@
     const t = $('screen-reports');
     if (t) { renderHub(); let ativa = t.classList.contains('active'); new MutationObserver(() => { const a = t.classList.contains('active'); if (a && !ativa) mostrar(); ativa = a; }).observe(t, { attributes: true, attributeFilter: ['class'] }); }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.48.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.48.1';

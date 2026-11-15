@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.48.0', nome: 'Relatórios: formato de relatório, filtros por fornecedor e produto', status: 'atual', data: '15/11/2026 às 19:30',
+        numero: '2.48.1', nome: 'Relatórios: lista no padrão do app', status: 'atual', data: '15/11/2026 às 19:45',
+        novidades: ['A lista de Relatórios agora fica em um cartão arredondado, como as outras listas, com mais espaço entre as linhas e texto menor.'],
+        implementado: ['js/55: lista dentro de .mais-grupo. style.css: espaçamento e tamanho do texto dos itens.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.48.0: index.html, style.css, js/14 e 55.'],
+        testar: ['iPhone: Relatórios: confira o cartão arredondado e o espaço entre as linhas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.48.0', nome: 'Relatórios: formato de relatório, filtros por fornecedor e produto', status: 'concluida', data: '15/11/2026 às 19:30',
         novidades: ['Cada divergência agora diz o que foi, o produto, as quantidades e a diferença, em vez de só contar ocorrências.', 'Dá para isolar um fornecedor ou um produto em qualquer relatório.', 'Fornecedores já ligados (ex.: FUTURA e FUTURA MEDICAMENTOS) aparecem juntos, sob um único nome.', 'Visual simples de relatório, em preto e branco, com resumo no topo. Removido o botão de voltar repetido: use "Todos".'],
         implementado: ['js/55: modelos com detalhe por divergência, resolvedor de nomes por entidade ligada, filtros de fornecedor e produto, faixa de abas. style.css: bloco da prévia monocromática. js/31: Ajuda.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/55-hub-relatorios.js'],
@@ -3383,4 +3392,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.48.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.48.1';
