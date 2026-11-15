@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.40.0'; }
+:root { --css-versao: '2.41.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1974,3 +1974,64 @@ button.ini-lin{font:inherit;color:inherit;cursor:pointer}
 .arq-lin{display:flex;justify-content:space-between;gap:10px;color:var(--text-dark)}
 .arq-lin span:first-child{overflow-wrap:anywhere}.arq-lin span:last-child{flex:none;color:var(--text-light)}
 .arq-ruim{color:var(--button-danger,#c0392b)}.arq-bom{color:var(--button-success);font-weight:500}
+
+/* ===== 2.41.0: ações das telas (Selecionar no cabeçalho, "+" flutuante, Ordenar em folha, Resumo como tela, título de anotação que quebra) ===== */
+.ord-linha{margin:0 0 12px}
+.ord-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;max-width:100%;padding:0 14px;border-radius:var(--r-pill,999px);border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--accent-text,var(--accent-color));font:inherit;font-weight:600;font-size:var(--fs-aux,13.5px);cursor:pointer}
+.ord-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ord-btn:active{background:var(--bg-primary)}
+.ord-btn .ord-seta{font-size:11px;opacity:.7}
+#hdr-sel-btn{color:var(--accent-text,var(--accent-color))}
+#hdr-sel-btn.active{background:var(--bg-primary)}
+/* botão "+" flutuante */
+.fab-acoes{position:fixed;right:18px;bottom:calc(var(--dock-clear,0px) + 18px);width:56px;height:56px;border:0;border-radius:50%;background:var(--accent-color);color:#fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.28);z-index:60;cursor:pointer}
+.fab-acoes.visivel{display:flex}
+.fab-acoes i{transition:transform .2s}
+.fab-acoes.aberto i{transform:rotate(135deg)}
+.fab-acoes:active{filter:brightness(.92)}
+body.sel-lote .fab-acoes,body.sel-lote .fab-leque,body.sel-lote .fab-veu{display:none !important}
+.fab-veu{position:fixed;inset:0;background:rgba(15,23,42,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:58}
+.fab-veu.on{opacity:1;pointer-events:auto}
+.fab-leque{position:fixed;right:18px;bottom:calc(var(--dock-clear,0px) + 86px);display:flex;flex-direction:column;align-items:flex-end;gap:12px;z-index:59;pointer-events:none}
+.fab-leque.on{pointer-events:auto}
+.fab-leque button{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 18px 0 16px;border:0;border-radius:24px;background:var(--bg-secondary);color:var(--accent-text,var(--accent-color));font:inherit;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transform:translateY(14px);transition:opacity .18s,transform .18s;cursor:pointer}
+.fab-leque.on button{opacity:1;transform:none}
+.fab-leque.on button:first-child{transition-delay:.04s}
+/* folha inferior */
+.folha-veu{position:fixed;inset:0;background:rgba(15,23,42,.38);opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}
+.folha-veu.on{opacity:1;pointer-events:auto}
+.folha-acoes{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;background:var(--bg-secondary);border-radius:var(--r-lg,20px) var(--r-lg,20px) 0 0;padding:10px 14px max(18px,env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.25);transform:translateY(105%);transition:transform .22s;z-index:91}
+.folha-acoes.on{transform:none}
+.fa-alca{width:40px;height:5px;border-radius:3px;background:var(--border-color);margin:0 auto 8px}
+.fa-tit{font-size:var(--fs-aux,13px);font-weight:700;color:var(--text-light);margin:4px 6px 6px}
+.fa-lin{display:flex;align-items:center;gap:14px;width:100%;min-height:52px;padding:10px 6px;border:0;border-top:1px solid var(--border-color);background:none;color:var(--text-dark);font:inherit;font-size:16px;font-weight:600;text-align:left;cursor:pointer}
+.fa-lin:first-of-type{border-top:0}
+.fa-lin:active{background:var(--bg-primary)}
+.fa-lin i{width:22px;text-align:center;color:var(--accent-text,var(--accent-color))}
+.fa-lin span{flex:1}
+.fa-lin.atual{color:var(--accent-text,var(--accent-color))}
+.fa-lin .fa-ok{margin-left:auto}
+/* título de anotação longo quebra em quantas linhas precisar (sem estourar o cartão nem arrastar a página para o lado) */
+.anotacao-item{min-width:0;max-width:100%}
+.anotacao-item .nota-info{display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+.anotacao-item .nota-info .badge-concluida{margin-left:6px;vertical-align:middle}
+.anotacao-item .nota-detalhes{overflow-wrap:anywhere}
+/* Resumo de pendências como tela */
+.resumo-tela{display:flex;flex-direction:column}
+.rp-intro{font-size:var(--fs-aux,13px);color:var(--text-light);margin:0 0 4px;line-height:1.45}
+.rp-sec{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-light);margin:18px 4px 6px}
+.rp-lista{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--r-lg,16px);overflow:hidden}
+.rp-lista .rp-op{padding:13px 14px;border-top:1px solid var(--border-color);align-items:center;cursor:pointer;margin:0}
+.rp-lista .rp-op:first-child{border-top:0}
+.rp-lista .rp-op span{order:1;flex:1}
+.rp-lista .rp-op i{order:2;background:var(--bg-primary);border-radius:10px;padding:2px 9px;font-weight:700}
+.rp-lista .rp-op input{order:3;appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--border-color);position:relative;margin:0;flex:none;transition:background .15s;cursor:pointer}
+.rp-lista .rp-op input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
+.rp-lista .rp-op input:checked{background:var(--accent-color)}
+.rp-lista .rp-op input:checked::after{left:21px}
+.resumo-tela .rp-papel{margin-top:0;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.resumo-tela .rp-extra{margin:0}
+.resumo-tela .rp-editar{margin-top:10px}
+.rp-rodape{position:sticky;bottom:0;display:flex;gap:8px;margin:18px -24px -24px;padding:10px 24px;background:var(--bg-secondary);border-top:1px solid var(--border-color);z-index:2}
+.rp-rodape .actions-button{flex:1;margin:0}
+.rp-rodape .actions-button.is-neutral{flex:none}

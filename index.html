@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.40.0">
+    <meta name="app-versao" content="2.41.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -138,11 +138,6 @@
             <div class="header-actions">
                 <span id="manage-counter" class="manage-counter header-counter" style="display: none;">0 notas</span>
                 <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
-                <button class="header-action" id="sync-btn" onclick="sincronizarManualmente(this)" style="display: flex;">
-                    <span class="icon-wrapper">
-                        <i class="fa-solid fa-arrow-rotate-right"></i><span class="material-icons">refresh</span>
-                    </span>
-                </button>
                 <div class="nota-capsula" id="nota-capsula" onmousedown="event.preventDefault()">
                     <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
                         <span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span>
@@ -151,6 +146,7 @@
                         <span class="icon-wrapper"><i class="fa-solid fa-check"></i></span>
                     </button>
                 </div>
+                <button class="header-action" id="hdr-sel-btn" onclick="hdrSelecionar()" style="display: none;" title="Selecionar vários" aria-label="Selecionar vários"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span></button>
                 <button class="header-action" id="select-mode-btn" onclick="toggleSelectionModeNotas()" style="display: none;" title="Selecionar em lote (editar)">
                     <span class="icon-wrapper">
                         <i class="fa-solid fa-list-check"></i>
@@ -174,7 +170,7 @@
             </div>
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo mb-4" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
+                <div class="ord-linha"><button type="button" class="ord-btn" id="ger-ord-btn" onclick="abrirOrdenar('gerenciar')"></button></div> <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
             </div>
             
             
@@ -382,7 +378,7 @@
             </div>
             <div class="app-screen" id="screen-xml-editor">
                 <div class="xml-filtro-toggle entrada-modo" id="entrada-modo"><button type="button" class="xml-filtro-btn active" data-modo="xml" onclick="definirModoEntrada('xml')">Por XML</button><button type="button" class="xml-filtro-btn" data-modo="manual" onclick="definirModoEntrada('manual')">Manual (sem XML)</button></div>
-                <div class="card card-plain" id="add-nf-manual">
+                <div class="card" id="add-nf-manual">
                     <p class="desc-tela">Cadastro manual: use quando a NF não tem XML. Com XML, volte para "Por XML".</p>
                     <div class="campo"><label for="data">Data</label><input type="text" id="data" class="form-field" placeholder="dd/mm/aaaa" inputmode="decimal" oninput="formatarDataInput(this)"></div>
                     <div class="campo"><label for="nf">NF</label><input type="text" id="nf" class="form-field" placeholder="Número da Nota Fiscal" inputmode="numeric"><div id="nf-sugestoes"></div></div>
@@ -448,7 +444,6 @@
                     <button class="actions-button is-neutral" id="xml-btn-danfe" onclick="baixarDanfePdf()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> Baixar PDF (DANFE)</button>
                 </div>
                 <div class="actions-row" style="margin:16px 0 20px;">
-                    <button class="actions-button is-neutral" onclick="limparBancoExcecoesXml()"><span class="icon-wrapper"><i class="fa-solid fa-trash"></i></span> Limpar Banco de Exceções</button>
                 </div>
             </div>
 
@@ -492,18 +487,8 @@
 
             <div class="app-screen" id="screen-cotacoes">
                 <div class="campo mb-3" ><input type="text" id="cotacoes-search" class="form-field" placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarCotacoes(this.value)"></div>
-                <div class="campo mb-3" >
-                    <select id="cotacoes-ordenacao" class="form-field" onchange="alternarOrdenacaoCotacoes(this.value)">
-                        <option value="entrada">Ordenar por: mais recentes primeiro</option>
-                        <option value="pedido">Ordenar por: número do pedido</option>
-                    </select>
-                </div>
-                <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
-                    <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
-                    <button class="actions-button is-neutral" id="btn-complementar-relatorio" onclick="alternarComplementarRelatorio()"><span class="icon-wrapper"><i class="fa-solid fa-file-circle-plus"></i></span> Complementar com relatório</button>
-                    <button class="actions-button" id="btn-selecionar-cotacoes" onclick="alternarSelecaoCotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
-                    <button class="actions-button is-neutral" onclick="abrirResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-list"></i></span> Resumo de pendências</button>
-                </div>
+                <div class="ord-linha"><button type="button" class="ord-btn" id="cotacoes-ord-btn" onclick="abrirOrdenar('cotacoes')"></button></div>
+                
                 <div class="actions-row anotacoes-bulk-bar" id="cotacoes-bulk-bar" style="display:none;">
                     <span id="cotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas cotações para selecionar</span>
                 </div>
@@ -806,6 +791,22 @@
                 <div id="equipamentos-status" class="card" style="margin:16px;">⚠ O módulo de Equipamentos não carregou. Confira se <strong>js/26-equipamentos.js</strong> e <strong>js/27-equipamentos-ponte.js</strong> estão na pasta <strong>js</strong> e se este é o <strong>index.html</strong> novo (versão 2.5.x).</div>
                 <div id="equipamentos-root"></div>
             </div>
+            <div class="app-screen" id="screen-resumo-pend"><div id="resumo-pend-modal" class="resumo-tela">
+          <p class="rp-intro">Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência. Só entram ocorrências de auditoria ainda não relatadas.</p>
+          <div class="rp-sec">O que incluir</div>
+          <div class="rp-lista">
+          <label class="rp-op"><input type="checkbox" id="rp-nao" onchange="resumoPendOpcaoMudou()"><span><b>Fornecedores que não entregaram</b><small>lista simples sob o número do pedido</small></span><i id="rp-n-nao"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-nf" onchange="resumoPendOpcaoMudou()"><span><b>Produtos não faturados</b><small>“..., quantidade 10, não foi faturado.”</small></span><i id="rp-n-nf"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-div" onchange="resumoPendOpcaoMudou()"><span><b>Divergências em aberto</b><small>quantidade, valor, troca de produto etc. das ocorrências da auditoria</small></span><i id="rp-n-div"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-obs" onchange="resumoPendOpcaoMudou()"><span><b>Observação da ocorrência</b><small>o que você escreveu na observação da auditoria (ex.: confirmar recurso)</small></span><i id="rp-n-obs"></i></label></div>
+          <div class="rp-sec">Outros pedidos (opcional)</div>
+          <input type="text" id="resumo-pend-pedidos" class="form-field rp-extra" inputmode="numeric" placeholder="Incluir também outros pedidos (opcional): 1748, 1749" oninput="gerarResumoPendencias('extras')" >
+          <div class="rp-sec">Prévia</div>
+          <div class="rp-papel" id="rp-previa"></div>
+          <button type="button" class="actions-button is-ghost rp-editar" onclick="resumoPendAlternarEdicao()"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i></span> Editar texto</button>
+          <textarea id="resumo-pend-texto" rows="14" oninput="resumoPendTextoEditado()" style="display:none;width:100%;box-sizing:border-box;margin-top:8px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
+          <div class="rp-rodape"><button type="button" class="actions-button is-primary" onclick="copiarResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button><button type="button" class="actions-button is-neutral" onclick="abrirOrdenar('resumo-baixar')"><span class="icon-wrapper"><i class="fa-solid fa-download"></i></span> Baixar</button></div>
+  </div></div>
             <div class="app-screen" id="screen-mais"> <div id="mais-lista" class="mais-lista"></div> </div>
       <div class="app-screen" id="screen-controle-nfs">
         <div id="controle-atencao-banner"></div>
@@ -814,16 +815,12 @@
           <button type="button" class="xml-filtro-btn active" data-aba="aberto" onclick="alternarAbaControle('aberto')">Em aberto <span class="controle-cont">0</span></button>
           <button type="button" class="xml-filtro-btn" data-aba="arquivadas" onclick="alternarAbaControle('arquivadas')">Arquivadas <span class="controle-cont">0</span></button>
         </div>
-        <div class="actions-row controle-topo"><button type="button" id="controle-btn-selecionar" class="actions-button" onclick="alternarSelecaoControle()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button></div>
+        <div class="actions-row controle-topo" style="display:none"><button type="button" id="controle-btn-selecionar" class="actions-button" onclick="alternarSelecaoControle()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button></div>
         <div id="controle-barra-selecao" class="controle-barra-selecao" style="display:none;"><span id="controle-sel-info">0 selecionada(s)</span><div class="ctl-selbtns"><button type="button" id="controle-sel-fin" class="action-chip" onclick="marcarSelecionadasEnviadas()" disabled>Enviada ao financeiro</button><button type="button" id="controle-sel-direta" class="action-chip" onclick="marcarSelecionadasDiretas()" disabled>Não vai ao financeiro</button></div></div>
         <div id="controle-lista" class="nota-list"></div>
       </div> <div class="app-screen" id="screen-anotacoes" style="">
                 <div class="campo mb-3" ><input type="text" id="anotacoes-search" class="form-field" placeholder="Buscar em anotações..." oninput="filtrarAnotacoes(this.value)"></div>
-                <div class="actions-row" style="margin-bottom: 16px; margin-top: 0;">
-                    <button class="actions-button is-primary" onclick="abrirNovaAnotacao()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova Anotação</button>
-                    <button class="actions-button is-neutral" onclick="abrirNovaAuditoria()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
-                    <button class="actions-button" id="btn-selecionar-anotacoes" onclick="toggleModoSelecaoAnotacoes()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Selecionar</button>
-                </div>
+                <div class="ord-linha"><button type="button" class="ord-btn" id="anot-ord-btn" onclick="abrirOrdenar('anotacoes')"></button></div>
                 <div class="actions-row anotacoes-bulk-bar" id="anotacoes-bulk-bar" style="display:none;">
                     <span id="anotacoes-selecao-contador" class="anotacoes-selecao-contador">Toque nas anotações para selecionar</span>
                     <button class="actions-button is-whatsapp" onclick="exportarAnotacoesWhatsapp()"><span class="icon-wrapper"><i class="fab fa-whatsapp"></i></span> Exportar Relatório</button>
@@ -1028,27 +1025,6 @@
           <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
       </div>
   </div>
-  <div id="resumo-pend-modal" class="modal-screen">
-      <div class="modal-content">
-          <h2>Resumo de pendências de entrega</h2>
-          <p style="font-size:12px;color:var(--text-light);margin:0 0 8px;">Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência. Só entram ocorrências de auditoria ainda não relatadas.</p>
-          <label class="rp-op"><input type="checkbox" id="rp-nao" onchange="resumoPendOpcaoMudou()"><span><b>Fornecedores que não entregaram</b><small>lista simples sob o número do pedido</small></span><i id="rp-n-nao"></i></label>
-          <label class="rp-op"><input type="checkbox" id="rp-nf" onchange="resumoPendOpcaoMudou()"><span><b>Produtos não faturados</b><small>“..., quantidade 10, não foi faturado.”</small></span><i id="rp-n-nf"></i></label>
-          <label class="rp-op"><input type="checkbox" id="rp-div" onchange="resumoPendOpcaoMudou()"><span><b>Divergências em aberto</b><small>quantidade, valor, troca de produto etc. das ocorrências da auditoria</small></span><i id="rp-n-div"></i></label>
-          <label class="rp-op"><input type="checkbox" id="rp-obs" onchange="resumoPendOpcaoMudou()"><span><b>Observação da ocorrência</b><small>o que você escreveu na observação da auditoria (ex.: confirmar recurso)</small></span><i id="rp-n-obs"></i></label>
-          <input type="text" id="resumo-pend-pedidos" class="form-field" inputmode="numeric" placeholder="Incluir também outros pedidos (opcional): 1748, 1749" oninput="gerarResumoPendencias('extras')" style="margin-top:8px">
-          <div class="rp-papel" id="rp-previa"></div>
-          <button type="button" class="actions-button is-ghost" onclick="resumoPendAlternarEdicao()" style="margin-top:8px"><span class="icon-wrapper"><i class="fa-solid fa-pen"></i></span> Editar texto</button>
-          <textarea id="resumo-pend-texto" rows="14" oninput="resumoPendTextoEditado()" style="display:none;width:100%;box-sizing:border-box;margin-top:8px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--border-color,#d0d5dd);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
-          <div class="actions-row">
-              <button type="button" class="actions-button is-primary" onclick="copiarResumoPendencias()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
-              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
-              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
-              <button type="button" class="actions-button is-neutral" onclick="baixarResumoPendencias('pdf')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> PDF</button>
-          </div>
-          <div class="confirm-actions"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Fechar</button></div>
-      </div>
-  </div>
   <div id="export-cot-modal" class="modal-screen">
       <div class="modal-content">
           <h2>Exportar relatório da cotação</h2>
@@ -1148,6 +1124,7 @@
   <script src="js/50-danfe-fontes.js"></script>
   <script src="js/52-danfe-fonte-propria.js"></script>
   <script src="js/53-nf-duplicada.js"></script>
+  <script src="js/54-acoes-telas.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 </body>
