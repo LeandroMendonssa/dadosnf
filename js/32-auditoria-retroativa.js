@@ -223,3 +223,5 @@ function confirmarSugestoesRetro() {
         onConfirm: async () => { for (const a of sug) await confirmarVinculoErpComPedido(a.e.id, a.pedido); toast(`✓ ${sug.length} vínculo(s) confirmado(s).`); }
     });
 }
+
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.45.0';

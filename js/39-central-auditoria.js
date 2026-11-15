@@ -200,3 +200,5 @@ async function exportarDivergenciasPedido(pedido) {
     if (typeof orig !== 'function') return;
     window[nome] = function () { return comMemoComparacao(() => orig.apply(this, arguments)); };
 });
+
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/39-central-auditoria.js'] = '2.45.0';
