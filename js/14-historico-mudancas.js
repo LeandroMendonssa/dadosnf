@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.40.0', nome: 'Espaçamentos, versões dos arquivos, NFs vencidas e nome do XML corrigido', status: 'atual', data: '14/11/2026 às 16:30',
+        numero: '2.41.0', nome: 'Ações das telas: Selecionar no topo, "+" flutuante, Ordenar em folha e Resumo como tela', status: 'atual', data: '14/11/2026 às 21:30',
+        novidades: ['Cotações, Anotações e Controle de NFs: o ícone de selecionar fica no canto superior direito (igual ao Gerenciar). O botão de atualizar do topo foi removido.', 'Botão "+" flutuante em Cotações (adicionar cotação por XML), Anotações (leque: nova anotação / nova auditoria) e Gerenciar (adicionar NF).', '"Ordenar" agora abre uma folha com opções: Cotações (recentes, antigas, número crescente/decrescente), Anotações (recentes, antigas, título A–Z/Z–A) e Gerenciar (recentes, antigas, vencimento, fornecedor, número da NF).', 'Resumo de pendências virou uma tela própria (atalho fixo no Início), com seta de voltar e Copiar/Baixar fixos embaixo.', 'Removidos: "Limpar Banco de Exceções" (Entrada de NF), "Complementar com relatório" e "Resumo de pendências" da lista de Cotações.', 'Cadastro manual de NF voltou a ter o cartão branco; títulos longos de Anotações quebram em várias linhas sem estourar o cartão.'],
+        implementado: ['js/54-acoes-telas.js (novo): hdrSelecionar, folha inferior, abrirOrdenar, "+" flutuante. index.html: hdr-sel-btn, chips de ordenar, #screen-resumo-pend. js/13, js/09, js/05: ordenação. js/47: Resumo abre como tela. style.css: bloco 2.41.0.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.40.0: index.html, style.css, js/01, js/05, js/08, js/09, js/13, js/14, js/24, js/31, js/47 e js/54 (novo).'],
+        testar: ['iPhone: Cotações, Anotações e Controle de NFs: toque no ícone de selecionar (canto superior direito) e marque itens.', 'iPhone: o "+" flutuante não esbarra na dock; em Anotações abre o leque.', 'iPhone: "Ordenar" nas três telas muda a ordem da lista.', 'iPhone: Início > Resumo de pendências: abre como tela, a seta volta, Copiar e Baixar ficam fixos embaixo.', 'iPhone: Entrada de NF > Manual: o formulário aparece no cartão branco.', 'iPhone: Anotação com link longo no título quebra em linhas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.40.0', nome: 'Espaçamentos, versões dos arquivos, NFs vencidas e nome do XML corrigido', status: 'concluida', data: '14/11/2026 às 16:30',
         novidades: ['Entrada de NF: espaço padrão entre cartões e blocos (status × importação, "+ Adicionar cotação" × checkbox, aviso da auditoria × total, linha "Recurso pelas cotações").', 'Histórico de Mudanças: novo bloco "Versões dos arquivos carregados" mostra a versão de cada arquivo e o que está desatualizado, com "Conferir de novo".', 'O aviso de atualização incompleta agora confere de novo 6 s e 15 s depois de abrir, ao voltar para o app e quando um botão chama uma função que não existe (arquivo antigo no ar).', 'Central de notificações: novo grupo urgente "NFs vencidas que ainda não foram enviadas ao financeiro" (NFs recebidas do ERP ou do XML com vencimento passado, sem decisão).', '"Baixar XML Corrigido" agora usa o nome "APELIDO DO FORNECEDOR + número da NF + corrigido".'],
         implementado: ['style.css: regras com :where para espaçamento. js/43: arqConferirAgora, arqRelatorio, arqDesenharVersoes e escuta de erro. js/36: pendência vencida-sem-envio. js/34: grupo nfs-vencidas-sem-envio. js/49: nomePadraoDeXml. js/12: nome do XML corrigido.'],
         arquivos: ['index.html', 'style.css', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/36-visao-nf.js', 'js/43-verificar-arquivos.js', 'js/49-danfe.js'],
@@ -3311,4 +3320,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.40.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.41.0';

@@ -64,6 +64,7 @@ const AJUDA_ARTIGOS = [
         'Para agir em várias notas, ative a seleção e marque as notas. Enquanto você seleciona, a dock principal dá lugar à dock de seleção: Todas, marcar como pendente (em espera), remover a pendência, editar em lote, arquivar e excluir. O ✕ à esquerda cancela a seleção.',
         'O número do pedido no cartão é um atalho: leva direto à Central do pedido, no cartão do fornecedor daquela nota. Notas sem XML processado mostram só a linha discreta "sem XML processado".',
         'Notas em espera não entram na Saída de Texto.',
+        'O botão "+" flutuante abre a Entrada de NF para adicionar uma nota. "Ordenar" (acima das abas) muda a ordem: mais recentes, mais antigas, vencimento mais próximo, fornecedor ou número da NF. O botão de atualizar do topo foi removido (os dados já atualizam sozinhos).',
         'Se aparecer o aviso de notas sem recurso mas com recurso já conhecido pela Entrada de NF, toque em "Aplicar em todas" (ou aplique nota a nota).'
       ],
       dicas: ['O app só aplica o recurso quando a NF tem um único recurso; com mais de um, você escolhe em Editar.'], tutorial: null },
@@ -107,7 +108,7 @@ const AJUDA_ARTIGOS = [
         'Cada NF é um cartão com iniciais do fornecedor, situação, valor, vencimento e uma faixa de pendências.',
         'Toque numa pendência (texto vermelho ou o selo "N pendências"): o app abre o lugar certo e destaca o ponto em amarelo.',
         'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Gerenciar.',
-        'O botão Selecionar (igual ao de Anotações) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
+        'O ícone de selecionar (canto superior direito, igual ao de Cotações, Anotações e Gerenciar) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).',
         'No Gerenciar, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
       ],
@@ -212,12 +213,13 @@ const AJUDA_ARTIGOS = [
       palavras: 'cotacoes smartcompras importar xml ganhadores pedido fornecedores divergencia previa',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
       passos: [
-        'Em Cotações, toque em "Adicionar cotação (XML)", escolha o XML do SmartCompras, confira a Prévia da Importação e confirme. A cotação só nasce do XML.',
-        'Para complementar com o Relatório de Fornecedores Ganhadores, toque em "Complementar com relatório": o campo abre, você cola o texto ou envia o arquivo, toca em Processar e confirma. Ele informa quantos fornecedores participaram de cada item e fecha sozinho ao terminar.',
+        'Em Cotações, toque no botão "+" flutuante (canto de baixo), escolha o XML do SmartCompras, confira a Prévia da Importação e confirme. A cotação só nasce do XML.',
+        'Para complementar com o Relatório de Fornecedores Ganhadores, use a opção de complementar dentro da própria importação por XML (o botão "Complementar com relatório" da lista foi removido porque sozinho ele não gera cotação).',
+        'Para mudar a ordem da lista, toque em "Ordenar" (abaixo da busca): mais recentes, mais antigas, número do pedido crescente ou decrescente. A escolha fica guardada neste aparelho.',
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
-        'Para fixar pedidos no topo da lista: toque em "Selecionar", marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
+        'Para fixar pedidos no topo da lista: toque no ícone de selecionar (canto superior direito), marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
         'Dentro do pedido, no topo (abaixo do resumo), "Exportar relatório" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF. O PDF e o Word têm o mesmo visual: selos coloridos de status, divergência em vermelho, observação do SmartCompras em azul e, na entrega parcial, os itens não entregues em destaque.',
-        'Resumo de pendências: toque em "Resumo de pendências" (Início ou Cotações). Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência (você ainda pode incluir outros pedidos digitando o número). Marque o que entra: fornecedores que não entregaram, produtos não faturados, divergências em aberto e observação da ocorrência (as duas últimas vêm desligadas). Só entram ocorrências de auditoria ainda não relatadas; anotações de texto livre não são usadas. A prévia mostra o relatório no layout antigo; "Editar texto" permite ajustar frases antes de gerar PDF, Word, TXT ou copiar.',
+        'Resumo de pendências: toque em "Resumo de pendências" na tela Início (ou em "Pendências" na barra de seleção de Cotações, que já abre com os pedidos marcados). O resumo é uma tela própria, com seta de voltar no topo e "Copiar" e "Baixar" fixos embaixo. Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência (você ainda pode incluir outros pedidos digitando o número). Marque o que entra: fornecedores que não entregaram, produtos não faturados, divergências em aberto e observação da ocorrência (as duas últimas vêm desligadas). Só entram ocorrências de auditoria ainda não relatadas; anotações de texto livre não são usadas. A prévia mostra o relatório no layout antigo; "Editar texto" permite ajustar frases antes de gerar PDF, Word, TXT ou copiar.',
         'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
       ],
@@ -329,8 +331,9 @@ const AJUDA_ARTIGOS = [
       tela: [{ id: 'screen-anotacoes', titulo: 'Anotações', rotulo: 'Abrir Anotações' }],
       passos: [
         'A tela tem duas listas: Em aberto e Arquivadas.',
-        '"Nova Anotação" cria uma anotação livre; "Nova Auditoria" abre o formulário de auditoria (veja o artigo seguinte).',
-        'Com "Selecionar", marque as anotações: a dock de seleção aparece embaixo com o ✕ (cancelar) e o botão Exportar.',
+        'Toque no botão "+" flutuante: "Nova anotação" cria uma anotação livre; "Nova auditoria" abre o formulário de auditoria (veja o artigo seguinte).',
+        'Para mudar a ordem, toque em "Ordenar": mais recentes, mais antigas ou título (A–Z / Z–A, com números em ordem crescente ou decrescente). Títulos longos quebram em quantas linhas precisar.',
+        'Com o ícone de selecionar (canto superior direito), marque as anotações: a dock de seleção aparece embaixo com o ✕ (cancelar) e o botão Exportar.',
         '"Exportar Relatório" gera o relatório das anotações.',
         'Tocar numa anotação de pedido abre a anotação. Se o pedido existe em Cotações, o ícone de documento no cartão abre a cotação.',
         'Ao abrir uma anotação, o editor segue o estilo das Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir). Enquanto a anotação está aberta, a barra de formatação (negrito, listas, cor, tamanho, tabela...) ocupa o lugar da dock principal: é uma cápsula fina que sobe junto com o teclado e rola para o lado. Ao voltar para a lista, a dock principal reaparece. No computador, a barra fica no topo da anotação. O título do topo acompanha o título da anotação. Se a barra ficar alta ou baixa demais no seu aparelho, use "Altura da barra" (− e +) no menu "⋯".'
@@ -378,7 +381,7 @@ const AJUDA_ARTIGOS = [
         'A associação do item da cotação com o produto SP Data pode ser feita na própria Entrada de NF, sem sair dela.',
         'Por produto, você pode ativar/desativar ou ignorar a divergência de quantidade/valor unitário.'
       ],
-      dicas: ['"Limpar Banco de Exceções" apaga os fatores de conversão lembrados; use só se quiser recomeçar.'], tutorial: null },
+      dicas: [], tutorial: null },
     { id: 'fornecedores-cadastro', cat: 'Fornecedores e produtos', titulo: 'Importar o cadastro de fornecedores (SP Data)', versao: '2.15.0',
       resumo: 'Trazer código, CNPJ, nome real e nome exibido.',
       palavras: 'fornecedores cadastro importar atualizar sp data cnpj nome real exibido selecionar multiplos xml',
@@ -579,4 +582,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.40.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.41.0';

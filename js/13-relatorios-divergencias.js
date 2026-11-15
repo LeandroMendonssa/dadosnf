@@ -345,11 +345,16 @@ function ordenarCotacoes(lista) {
     // 'entrada' já vem nessa ordem da query (orderBy atualizadoEm desc, ver
     // listener); só precisa reordenar explicitamente pro modo 'pedido'.
     let base = lista;
-    if (ordenacaoCotacoes === 'pedido') base = [...lista].sort((a, b) => {
-        const na = parseInt(a.pedido, 10), nb = parseInt(b.pedido, 10);
-        if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
-        return a.pedido.localeCompare(b.pedido);
-    });
+    // 2.41.0: ordenação por folha (Ordenar): 'entrada' (mais recentes), 'antigas', 'cresc'/'decresc' (número do pedido); 'pedido' = valor antigo (crescente).
+    if (ordenacaoCotacoes === 'antigas') base = [...lista].reverse();
+    else if (ordenacaoCotacoes === 'pedido' || ordenacaoCotacoes === 'cresc' || ordenacaoCotacoes === 'decresc') {
+        const sinal = ordenacaoCotacoes === 'decresc' ? -1 : 1;
+        base = [...lista].sort((a, b) => {
+            const na = parseInt(a.pedido, 10), nb = parseInt(b.pedido, 10);
+            if (!isNaN(na) && !isNaN(nb) && na !== nb) return sinal * (na - nb);
+            return sinal * String(a.pedido).localeCompare(String(b.pedido));
+        });
+    }
     // 2.23.0: cotações fixadas ficam no topo (a mais recentemente fixada primeiro), nos dois modos de ordenação.
     const fixadas = base.filter(c => c.fixadaEm).sort((a, b) => String(b.fixadaEm).localeCompare(String(a.fixadaEm)));
     return fixadas.length ? fixadas.concat(base.filter(c => !c.fixadaEm)) : base;
@@ -589,4 +594,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.35.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.41.0';

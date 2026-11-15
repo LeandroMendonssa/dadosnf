@@ -270,9 +270,12 @@ function abrirResumoPendencias(pedidosIniciais) {
     const campo = document.getElementById('resumo-pend-pedidos'); if (campo) campo.value = lista.join(', ');
     rpRestaurarOpcoes();
     const ed = document.getElementById('resumo-pend-texto'); if (ed) { ed.style.display = 'none'; ed.dataset.editado = ''; }
-    const m = document.getElementById('resumo-pend-modal'); if (m) m.classList.add('active');
+    // 2.41.0: o Resumo virou uma tela própria (antes era janela); o "voltar" leva de volta a quem abriu
+    const origemId = typeof telaAtivaId === 'function' ? telaAtivaId() : null;
+    if (origemId && origemId !== 'screen-resumo-pend') { closeBtnBackScreen['screen-resumo-pend'] = origemId; screenParentMap['screen-resumo-pend'] = origemId; }
+    switchToScreen('screen-resumo-pend', 'Resumo de pendências');
     gerarResumoPendencias(true);
-    setTimeout(() => { const m2 = document.getElementById('resumo-pend-modal'), a = document.getElementById('resumo-pend-texto'); if (m2 && m2.classList.contains('active') && a && a.dataset.editado !== '1') gerarResumoPendencias(true); }, 1500);
+    setTimeout(() => { const m2 = document.getElementById('screen-resumo-pend'), a = document.getElementById('resumo-pend-texto'); if (m2 && m2.classList.contains('active') && a && a.dataset.editado !== '1') gerarResumoPendencias(true); }, 1500);
 }
 function abrirResumoPendenciasSelecionadas() {
     const sel = typeof cotacoesSelecionadas !== 'undefined' ? [...cotacoesSelecionadas] : [];
@@ -333,4 +336,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.37.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.41.0';

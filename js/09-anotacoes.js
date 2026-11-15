@@ -27,6 +27,7 @@ function renderListaAnotacoes() {
         return titulo.includes(termo) || texto.includes(termo);
     });
 
+    if (typeof ordenarAnotacoesLista === 'function') ordenarAnotacoesLista(lista);   // 2.41.0: Ordenar (js/54)
     if (lista.length === 0) {
         container.innerHTML = `<div class="empty-state">${listaAnotacoes.length === 0 ? 'Nenhuma anotação ainda. Toque em "Nova Anotação" para começar.' : 'Nenhuma anotação encontrada.'}</div>`;
         return;
@@ -1201,4 +1202,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.33.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.41.0';
