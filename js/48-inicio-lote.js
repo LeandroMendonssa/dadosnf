@@ -87,7 +87,7 @@ function renderInicio() {
         <div class="ini-grid">
             ${k('r', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
             ${k('y', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
-            ${k('g', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Gerenciar')")}
+            ${k('g', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Saída de NF')")}
             ${kForn}
         </div>
         <div class="ini-tit">Atalhos</div>
@@ -96,7 +96,7 @@ function renderInicio() {
             ${at('fa-solid fa-plus-circle', 'Adicionar nota', "switchToScreen('screen-add','Adicionar')")}
             ${at('fa-solid fa-file-contract', 'Cotações', "switchToScreen('screen-cotacoes','Cotações')")}
             ${at('fa-solid fa-list-check', 'Controle de NFs', "switchToScreen('screen-controle-nfs','Controle de NFs')")}
-            ${at('fa-solid fa-tasks', 'Gerenciar', "switchToScreen('screen-manage','Gerenciar')")}
+            ${at('fa-solid fa-tasks', 'Saída de NF', "switchToScreen('screen-manage','Saída de NF')")}
             ${at('fa-solid fa-sticky-note', 'Anotações', "switchToScreen('screen-anotacoes','Anotações')")}
             ${at('fa-solid fa-barcode', 'Buscar lote', "abrirBuscaLote()")}
             ${at('fa-solid fa-file-lines', 'Resumo de pendências', 'abrirResumoPendencias()')}
@@ -195,4 +195,4 @@ function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.36.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.43.0';

@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.42.0', nome: 'Refatoração, fase 1: barra de ferramentas padrão, dock, Resumo ABNT e notificações', status: 'atual', data: '15/11/2026 às 07:30',
+        numero: '2.43.0', nome: 'Refatoração, fase 2: dock livre, Saída de NF e tela do pedido', status: 'atual', data: '15/11/2026 às 09:30',
+        novidades: ['Dock livre: qualquer tela (Central de notificações, Agenda, Auditoria, Auditoria Retroativa, Assistente, Ajustes…) pode ser colocada na dock; o que não for escolhido fica em "Mais". Com mais de 5 itens a dock rola.', 'Gerenciar agora se chama "Saída de NF".', 'Exportar deixou de ser uma aba: fica dentro da Saída de NF, assim como Importar relatório (ERP). O "+" da Saída de NF abre: Adicionar NF, Exportar saída (texto) e Importar relatório (ERP).', 'Uso do Firebase saiu do "Mais" e foi para Ajustes.', 'Tela do pedido: Exportar relatório e ⋯ (marcar toda a cotação como entregue, entrega cancelada do pedido todo, voltar tudo para aguardando) ficam no cabeçalho do app; cada fornecedor tem uma faixa única Associar NF | Já chegou | Cancelada, com o estado atual destacado.'],
+        implementado: ['js/01: menuDetails com as telas novas (prep), Exportar sai do menu, mapas de voltar. js/02: Mais lista só o que não está na dock; abrirTelaMenu/prepararTelaMenu; sidebar sem atalhos fixos. js/54: leque da Saída de NF e ações do cabeçalho do pedido. js/09 e js/11: faixa do fornecedor. index.html: Uso do Firebase em Ajustes e botões do cabeçalho. Renomeado Gerenciar → Saída de NF (js/17, 19, 48, 06, 31).'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/48-inicio-lote.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.42.0: index.html, style.css, js/01, 02, 06, 09, 11, 14, 17, 19, 24, 31, 34, 48 e 54.'],
+        testar: ['iPhone: Ajustes → Personalização → Menus: coloque Assistente/Notificações/Ajustes na dock e veja o restante em "Mais".', 'iPhone: Saída de NF → "+" → Exportar saída (texto) e Importar relatório (ERP); o voltar leva à Saída de NF.', 'iPhone: Ajustes → Uso do Firebase.', 'iPhone: abra um pedido: ícone exportar e ⋯ no cabeçalho; faixa Associar NF | Já chegou | Cancelada em cada fornecedor.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.42.0', nome: 'Refatoração, fase 1: barra de ferramentas padrão, dock, Resumo ABNT e notificações', status: 'concluida', data: '15/11/2026 às 07:30',
         novidades: ['Anotações, Saída de NF (Gerenciar) e Cotações: busca, Ordenar e Selecionar com a mesma altura e posição; Selecionar fica à direita de Ordenar (também no Controle de NFs).', 'A bolha da dock acompanha o rótulo (Anotações, Gerenciar não vazam mais).', 'Tela cinza: o gesto de voltar não trava mais a tela anterior escurecida.', 'Gerenciar vazio sem o botão "Adicionar nota" repetido; Importar relatório com os 3 botões no mesmo espaçamento.', 'Resumo de pendências: Copiar/Baixar no fim do conteúdo, prévia com cantos arredondados, PDF e Word com margens ABNT (3 cm esquerda/topo, 2 cm direita/baixo).', 'Notificações: fornecedores duplicados (EMBALAKLIN, MINAS SUL) reunidos em "Por fornecedor"; avisos de fornecedor sem CNPJ podem ser ignorados (✕), com Desfazer e lista "Ignoradas" para voltar a notificar.', 'Relatórios: removido o cartão Próximos Vencimentos do topo (já aparece no Início).'],
         implementado: ['index.html: toolrow/selb nas telas, cabeçalho sem botões de selecionar, Importar ERP, Relatórios. style.css: bloco 2.42.0. js/22: largura da pílula. js/28: higiene do gesto de voltar. js/34: reunir fornecedores e ignorar avisos. js/47: margens ABNT. js/54: rótulo Selecionar/Cancelar. js/05: estado vazio.'],
         arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/22-vidro-liquido.js', 'js/24-novidades-versao.js', 'js/28-transicoes-ios.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/47-resumo-pendencias.js', 'js/54-acoes-telas.js'],
@@ -3329,4 +3338,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.43.0';

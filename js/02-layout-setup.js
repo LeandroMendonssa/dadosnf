@@ -187,6 +187,8 @@ function aplicarPersonalizacoes() {
         if (!Array.isArray(cfgP.menuHidden)) cfgP.menuHidden = [];
         // 2.25.0: o Início entra em primeiro, visível; para a barra não ficar apertada, Exportar vai para "Mais" (volta em Personalização > Menus)
         if (Array.isArray(cfgP.menuOrder) && !cfgP.menuOrder.includes('screen-inicio')) { cfgP.menuOrder = ['screen-inicio', ...cfgP.menuOrder]; if (!cfgP.menuHidden.includes('screen-export')) cfgP.menuHidden = [...cfgP.menuHidden, 'screen-export']; }
+        // 2.43.0: Exportar deixou de ser uma tela do menu (agora fica dentro da Saída de NF)
+        cfgP.menuOrder = (cfgP.menuOrder || []).filter(id => menuDetails[id]); cfgP.menuHidden = cfgP.menuHidden.filter(id => menuDetails[id]);
         const novos = Object.keys(menuDetails).filter(id => !(cfgP.menuOrder || []).includes(id));
         if (novos.length) { cfgP.menuOrder = [...(cfgP.menuOrder || []), ...novos]; cfgP.menuHidden = [...new Set([...cfgP.menuHidden, ...novos])]; }
     }
@@ -236,27 +238,20 @@ function abaDaBarra(screenId) {
     if (pai === 'screen-mais') return 'screen-mais';
     return menuEscondidos().includes(pai) ? 'screen-mais' : pai;
 }
-function abrirDestinoPeloMais(id, title) { destinoViaMais = id; destinoRetorno = { para: 'screen-mais', titulo: 'Mais' }; switchToScreen(id, title); }
+function prepararTelaMenu(id) { const d = menuDetails[id]; if (d && d.prep) { try { new Function(d.prep)(); } catch (e) { console.error('prep', id, e); } } }
+function abrirTelaMenu(id, title) { switchToScreen(id, title); prepararTelaMenu(id); }
+function abrirDestinoPeloMais(id, title) { destinoViaMais = id; destinoRetorno = { para: 'screen-mais', titulo: 'Mais' }; switchToScreen(id, title); prepararTelaMenu(id); }
 function renderTelaMais() {
     const lista = document.getElementById('mais-lista');
     if (!lista) return;
     const linha = (onclick, iconeHTML, nome) => `<button type="button" class="mais-item" onclick="${onclick}"><span class="icon-wrapper">${iconeHTML}</span><span class="mais-item-nome">${nome}</span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`;
-    // Ferramentas: ficam sempre aqui (não são configuração)
     let nAtencao = 0; try { nAtencao = totalAtencao(); } catch (e) { }
-    const ferramentas = linha("switchToScreen('screen-import', 'Importar Relatório (ERP)')", '<i class="fa-solid fa-file-import"></i>', 'Importar Relatório (ERP)')
-        + linha("switchToScreen('screen-atencao', 'Central de notificações'); prepararAtencao()", '<i class="fa-solid fa-bell"></i>', 'Central de notificações' + (nAtencao ? ` <span class="ctl-st err" style="margin-left:6px">${nAtencao}</span>` : ''))
-        + linha("switchToScreen('screen-agenda', 'Agenda de trabalho'); prepararAgenda()", '<i class="fa-solid fa-calendar-days"></i>', 'Agenda de trabalho')
-        + linha("switchToScreen('screen-uso-firebase', 'Uso do Firebase'); prepararUsoFirebase()", '<i class="fa-solid fa-gauge-high"></i>', 'Uso do Firebase')
-        + linha("switchToScreen('screen-auditoria-central', 'Auditoria'); prepararCentralAuditoria()", '<i class="fa-solid fa-list-check"></i>', 'Auditoria')
-        + linha("switchToScreen('screen-auditoria-retro', 'Auditoria Retroativa'); prepararAuditoriaRetroativa()", '<i class="fa-solid fa-clipboard-check"></i>', 'Auditoria Retroativa')
-        + linha("switchToScreen('screen-assistente', 'Assistente'); prepararAssistente()", '<i class="fa-solid fa-comments"></i>', 'Assistente');
     const itens = menuEscondidos();
     const fora = itens.map(id => {
         const d = menuDetails[id];
-        return linha(`abrirDestinoPeloMais('${id}', '${d.title}')`, `<i class="${d.icon}"></i><span class="material-icons">${d.material}</span>${d.outlineSvg || ''}${d.duotoneSvg || ''}`, d.title);
+        return linha(`abrirDestinoPeloMais('${id}', '${d.title}')`, `<i class="${d.icon}"></i><span class="material-icons">${d.material}</span>${d.outlineSvg || ''}${d.duotoneSvg || ''}`, d.title + (id === 'screen-atencao' && nAtencao ? ` <span class="ctl-st err" style="margin-left:6px">${nAtencao}</span>` : ''));
     }).join('');
-    lista.innerHTML = `<div class="mais-secao-titulo">Ferramentas</div><div class="mais-grupo">${ferramentas}</div>` +
-        (itens.length ? `<div class="mais-secao-titulo">Atalhos</div><div class="mais-grupo">${fora}</div>` : '');
+    lista.innerHTML = itens.length ? `<div class="mais-grupo">${fora}</div>` : '<div class="card"><div class="xml-item-meta">Tudo o que existe no app está na dock. Para tirar algo da dock e deixá-lo aqui, use Ajustes → Personalização → Menus.</div></div>';
 }
 function reordenarMenusDOM(order) {
     const tabBar = document.getElementById('tab-bar');
@@ -270,39 +265,16 @@ function reordenarMenusDOM(order) {
             if (!escondidos.includes(screenId)) {
                 const tabButton = document.createElement('button'); tabButton.className = 'tab-item' + (/\s/.test(String(details.title).trim()) ? '' : ' uma-palavra'); tabButton.dataset.screen = screenId; tabButton.dataset.title = details.title;
                 tabButton.innerHTML = `${iconHTML}<span>${details.title}</span>`;
-                tabButton.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(screenId, details.title); });
+                tabButton.addEventListener('click', (e) => { e.preventDefault(); abrirTelaMenu(screenId, details.title); });
                 tabBar.appendChild(tabButton);
             }
             const sidebarLi = document.createElement('li'); const sidebarA = document.createElement('a'); sidebarA.className = 'sidebar-item'; sidebarA.dataset.screen = screenId; sidebarA.dataset.title = details.title;
             sidebarA.innerHTML = `${iconHTML}<span>${details.title}</span>`;
-            sidebarA.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(screenId, details.title); });
+            sidebarA.addEventListener('click', (e) => { e.preventDefault(); abrirTelaMenu(screenId, details.title); });
             sidebarLi.appendChild(sidebarA); sidebarNav.appendChild(sidebarLi);
         }
     });
-    // Fase 40: na tela larga a barra inferior some e o menu lateral é o único caminho — a ferramenta que vive em "Mais" precisa estar nele.
-    {
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.destino = 'screen-import'; a.dataset.title = 'Importar Relatório (ERP)';
-        a.innerHTML = '<span class="icon-wrapper"><i class="fa-solid fa-file-import"></i><span class="material-icons">upload_file</span></span><span>Importar Relatório (ERP)</span>';
-        a.addEventListener('click', (e) => { e.preventDefault(); switchToScreen('screen-import', 'Importar Relatório (ERP)'); });
-        li.appendChild(a); sidebarNav.appendChild(li);
-    }
-    // 2.12.2: na tela larga, Central de notificações e Auditoria Retroativa também ficam no menu lateral (antes de Ajustes), como no "Mais"
-    [['screen-atencao', 'Central de notificações', 'fa-bell', 'notifications', "prepararAtencao()"], ['screen-agenda', 'Agenda de trabalho', 'fa-calendar-days', 'event', "prepararAgenda()"], ['screen-auditoria-central', 'Auditoria', 'fa-list-check', 'checklist', "prepararCentralAuditoria()"], ['screen-auditoria-retro', 'Auditoria Retroativa', 'fa-clipboard-check', 'fact_check', "prepararAuditoriaRetroativa()"], ['screen-assistente', 'Assistente', 'fa-comments', 'forum', "prepararAssistente()"]].forEach(([id, titulo, fa, mat, prep]) => {
-        const li = document.createElement('li'), a = document.createElement('a');
-        a.className = 'sidebar-item'; a.dataset.screen = 'screen-mais'; a.dataset.destino = id; a.dataset.title = titulo;
-        a.innerHTML = `<span class="icon-wrapper"><i class="fa-solid ${fa}"></i><span class="material-icons">${mat}</span></span><span>${titulo}</span>`;
-        a.addEventListener('click', (e) => { e.preventDefault(); switchToScreen(id, titulo); new Function(prep)(); });
-        li.appendChild(a); sidebarNav.appendChild(li);
-    });
-    // 2.10.3: a ferramenta Importar não fica separada embaixo do Ajustes: entra logo antes dele
-    {
-        const lis = [...sidebarNav.children], imp = lis.find(l => l.querySelector('.sidebar-item[data-title="Importar Relatório (ERP)"]')), conf = lis.find(l => l.querySelector('.sidebar-item[data-screen="screen-settings"]'));
-        if (imp && conf && imp !== conf) sidebarNav.insertBefore(imp, conf);
-        ['Central de notificações', 'Auditoria Retroativa', 'Assistente'].forEach(t => { const li = lis.find(l => l.querySelector(`.sidebar-item[data-title="${t}"]`)); if (li && conf && li !== conf) sidebarNav.insertBefore(li, conf); });
-    }
-    // Botão "Mais": sempre ativo — guarda as ferramentas (Importar Relatório ERP) e os destinos tirados da barra.
+    // Botão "Mais": sempre ativo — guarda os destinos que você tirou da barra.
     {
         const mais = document.createElement('button'); mais.className = 'tab-item uma-palavra'; mais.dataset.screen = 'screen-mais'; mais.dataset.title = 'Mais';
         mais.innerHTML = `<span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i><span class="material-icons">more_horiz</span><svg class="icon-svg-outline" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><svg class="icon-svg-duotone" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span><span>Mais</span>`;
@@ -365,4 +337,4 @@ function reordenarMenusDOM(order) {
         }).observe(tela, { attributes: true, attributeFilter: ['class'] });
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.25.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.43.0';

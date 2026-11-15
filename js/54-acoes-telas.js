@@ -87,8 +87,29 @@
             const b = $(id); if (!b) return;
             const t = b.querySelector('.selb-t'); if (t) { const x = b.classList.contains('active') ? 'Cancelar' : 'Selecionar'; if (t.textContent !== x) t.textContent = x; }
         });
-        fabAtualizar();
+        fabAtualizar(); pedHdrAtualizar();
     }
+
+    // ---------- Tela do pedido (P1): Exportar relatório e ⋯ no cabeçalho ----------
+    function cotPedidoAtual() { return typeof centralPedidoAtual !== 'undefined' && centralPedidoAtual ? (listaCotacoes || []).find(c => String(c.pedido) === String(centralPedidoAtual)) : null; }
+    window.pedHdrAtualizar = function () {
+        const t = typeof telaAtivaId === 'function' ? telaAtivaId() : null;
+        const ok = t === 'screen-central-pedido' && !!cotPedidoAtual();
+        ['hdr-ped-exp', 'hdr-ped-mais'].forEach(id => { const b = $(id); if (b) b.style.display = ok ? 'flex' : 'none'; });
+    };
+    window.pedHdrExportar = function () { const c = cotPedidoAtual(); if (c) abrirExportarCotacao(String(c.pedido)); };
+    window.pedHdrMais = function () {
+        const c = cotPedidoAtual(); if (!c) return;
+        const p = String(c.pedido), cnpjs = cnpjsFornecedoresDaCotacao(c), mapa = c.chegadasPorFornecedor || {};
+        if (!cnpjs.length) { toast('Este pedido não tem fornecedores com CNPJ.'); return; }
+        const linhas = [];
+        if (cnpjs.some(x => !mapa[x])) linhas.push({ t: 'Marcar toda a cotação como entregue', ic: 'fa-solid fa-check-double', f: () => marcarTodosChegaramCotacao(p, true) });
+        if (cnpjs.every(x => mapa[x] && mapa[x].tipo === 'cancelada')) linhas.push({ t: 'Desfazer cancelamento do pedido', ic: 'fa-solid fa-rotate-left', f: () => cancelarEntregaPedidoCotacao(p, false) });
+        else if (cnpjs.some(x => !mapa[x])) linhas.push({ t: 'Entrega cancelada (pedido todo)', ic: 'fa-solid fa-ban', f: () => cancelarEntregaPedidoCotacao(p, true) });
+        if (cnpjs.some(x => mapa[x])) linhas.push({ t: 'Voltar tudo para aguardando', ic: 'fa-solid fa-hourglass-half', f: () => marcarTodosChegaramCotacao(p, false) });
+        if (!linhas.length) { toast('Nada a alterar neste pedido.'); return; }
+        abrirFolhaAcoes('Pedido ' + p, linhas);
+    };
 
     // ---------- botão "+" flutuante ----------
     function garantirFab() {
@@ -104,14 +125,19 @@
         const t = typeof telaAtivaId === 'function' ? telaAtivaId() : null;
         const tem = ['screen-cotacoes', 'screen-anotacoes', 'screen-manage'].includes(t);
         const f = $('fab-acoes'); f.classList.toggle('visivel', tem);
-        f.setAttribute('aria-label', t === 'screen-cotacoes' ? 'Adicionar cotação (XML)' : t === 'screen-manage' ? 'Adicionar NF' : 'Nova anotação ou auditoria');
+        f.setAttribute('aria-label', t === 'screen-cotacoes' ? 'Adicionar cotação (XML)' : t === 'screen-manage' ? 'Adicionar NF, exportar ou importar' : 'Nova anotação ou auditoria');
         if (!tem) fecharLeque();
     }
     function fabClique() {
         const t = typeof telaAtivaId === 'function' ? telaAtivaId() : null;
         if ($('fab-leque').classList.contains('on')) return fecharLeque();
         if (t === 'screen-cotacoes') { const i = $('cotacao-xml-file-input'); if (i) i.click(); }
-        else if (t === 'screen-manage') switchToScreen('screen-xml-editor', 'Entrada de NF');
+        else if (t === 'screen-manage') {
+            const l = $('fab-leque');
+            l.innerHTML = '<button type="button" data-a="nf"><i class="fa-solid fa-file-circle-plus"></i>Adicionar NF</button><button type="button" data-a="exp"><i class="fa-solid fa-file-export"></i>Exportar saída (texto)</button><button type="button" data-a="imp"><i class="fa-solid fa-file-import"></i>Importar relatório (ERP)</button>';
+            l.querySelectorAll('button').forEach(b => b.onclick = () => { fecharLeque(); if (b.dataset.a === 'nf') switchToScreen('screen-xml-editor', 'Entrada de NF'); else if (b.dataset.a === 'exp') switchToScreen('screen-export', 'Exportar saída'); else switchToScreen('screen-import', 'Importar relatório (ERP)'); });
+            requestAnimationFrame(() => { l.classList.add('on'); $('fab-veu').classList.add('on'); $('fab-acoes').classList.add('aberto'); });
+        }
         else if (t === 'screen-anotacoes') {
             const l = $('fab-leque');
             l.innerHTML = '<button type="button" data-a="aud"><i class="fa-solid fa-clipboard-check"></i>Nova auditoria</button><button type="button" data-a="nota"><i class="fa-solid fa-note-sticky"></i>Nova anotação</button>';
@@ -137,4 +163,4 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/54-acoes-telas.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/54-acoes-telas.js'] = '2.43.0';

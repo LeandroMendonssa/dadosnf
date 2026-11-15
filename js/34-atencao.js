@@ -123,8 +123,8 @@ function _atencaoGravarIgnoradas(set) { appConfig.personalizacao = appConfig.per
 function pedirIgnorarAtencao(chave, nome) {
     if (typeof abrirFolhaAcoes !== 'function') return ignorarAtencao(chave, nome);
     abrirFolhaAcoes('Parar de avisar sobre "' + nome + '"?', [
-        { t: 'Parar de avisar (não altera o cadastro)', ic: 'fa-bell-slash', f: () => ignorarAtencao(chave, nome) },
-        { t: 'Cancelar', ic: 'fa-xmark', f: () => { } }
+        { t: 'Parar de avisar (não altera o cadastro)', ic: 'fa-solid fa-bell-slash', f: () => ignorarAtencao(chave, nome) },
+        { t: 'Cancelar', ic: 'fa-solid fa-xmark', f: () => { } }
     ]);
 }
 function ignorarAtencao(chave, nome) {
@@ -222,4 +222,4 @@ function renderBannerAtencao() {
     const n = totalAtencao();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.43.0';

@@ -243,7 +243,7 @@ function renderCardControleNf(it) {
             botoes.push(btn('dir', 'Não vai ao financeiro', `marcarNfDireta('${chaveJs}')`));
             botoes.push(it.possivelNota ? btn('rel', 'É a mesma nota — vincular', `vincularNfANota('${chaveJs}')`) : btn('rel', 'Enviar à relação', `enviarNfParaRelacao('${chaveJs}')`));
         } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
-            botoes.push(btn('ger', 'Ver no Gerenciar NF', `verNoGerenciarNf('${chaveJs}')`));
+            botoes.push(btn('ger', 'Ver na Saída de NF', `verNoGerenciarNf('${chaveJs}')`));
         }
     } else {
         const modo = modoReabrirControle(it);
@@ -528,7 +528,7 @@ function registrarOrigemNaNotaArquivada(notaData, notaId) {
 function verNoGerenciarNf(chave) {
     const it = itemControlePorChave(chave); if (!it || !it.nota) return;
     abaGerenciar = it.nota.emEspera ? 'espera' : 'saida';
-    switchToScreen('screen-manage', 'Gerenciar NF');
+    switchToScreen('screen-manage', 'Saída de NF');
     const campo = document.getElementById('gerenciar-search');
     if (campo) campo.value = it.numeroNf || '';
     filtroGerenciarTexto = it.numeroNf || '';
@@ -538,7 +538,7 @@ function verNoGerenciarNf(chave) {
 }
 function abrirControleNfs() {
     destinoViaMais = 'screen-controle-nfs';
-    destinoRetorno = { para: 'screen-manage', titulo: 'Gerenciar NF' };
+    destinoRetorno = { para: 'screen-manage', titulo: 'Saída de NF' };
     switchToScreen('screen-controle-nfs', 'Controle de NFs');
 }
 
@@ -1004,7 +1004,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.29.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.43.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

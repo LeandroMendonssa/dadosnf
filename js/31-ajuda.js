@@ -15,12 +15,12 @@ const AJUDA_ARTIGOS = [
       passos: [
         'Início: tela que abre sozinha, com o que vence, atalhos para as telas, busca de NF/fornecedor/pedido o número de fornecedores a chegar (toque nele para ver quais fornecedores e de qual pedido; não chegaram ou com mais de 2 itens faltando, pedidos dos últimos 60 dias) e a Busca de lote (lote, produto e validade nas NFs processadas; só encontra NFs que tiveram o lote gravado).',
         'Adicionar: cadastro rápido de uma nota (data, NF, vencimento, valor, fornecedor e recurso).',
-        'Gerenciar: a relação de notas pendentes, com seleção em lote, espera, edição e arquivamento.',
-        'Exportar: monta a Saída de Texto (copiar, compartilhar, gerar PDF) e arquiva as notas enviadas.',
+        'Saída de NF: a relação de notas pendentes, com seleção em lote, espera, edição e arquivamento.',
+        'Exportar saída (texto) e Importar relatório (ERP) ficam dentro da Saída de NF: toque no "+" e escolha.',
         'Relatórios e Cotações: acompanhamento dos pedidos, fornecedores e divergências.',
         'Entrada de NF: leitura do XML, fator de conversão, cotação, SP Data e recurso por item.',
         'Anotações: auditorias e ocorrências. Ajustes: fornecedores, produtos, personalização, backup, conta e esta Ajuda.',
-        'As abas que não cabem na barra ficam em "Mais". Você escolhe a ordem em Ajustes → Personalização → Menus.'
+        'Qualquer tela pode ir para a dock (até Ajustes); o que você não colocar nela fica em "Mais". Com mais de 5 itens a dock rola. Escolha em Ajustes → Personalização → Menus.'
       ],
       dicas: ['No computador a barra não encolhe; no iPhone ela fica só com ícones e abre ao tocar.'], tutorial: null },
     { id: 'adicionar-nf', cat: 'Notas fiscais', titulo: 'Adicionar uma nota manualmente', versao: '2.10.0',
@@ -32,7 +32,7 @@ const AJUDA_ARTIGOS = [
         'Preencha Data, NF, Vencimento e Valor Total.',
         'Informe o Nome do Fornecedor (se ele tem apelido cadastrado, o app usa o apelido).',
         'Em Observações, escolha o Recurso a ser pago.',
-        'Toque em Salvar. A nota entra na relação de Gerenciar.'
+        'Toque em Salvar. A nota entra na relação da Saída de NF.'
       ],
       dicas: ['Os atalhos antigos "Adicionar nota" (Início e Controle) abrem a Entrada de NF já na aba Manual.', 'Notas que vêm do ERP ou do XML não precisam ser digitadas: use a Importação do ERP ou a Entrada de NF.'], tutorial: null },
     { id: 'entrada-xml', cat: 'Notas fiscais', titulo: 'Entrada de NF pelo XML (do XML à nota conferida)', versao: '2.18.0',
@@ -55,10 +55,10 @@ const AJUDA_ARTIGOS = [
         'O PDF e o XML baixados usam o nome "APELIDO DO FORNECEDOR + número da NF" (ex.: FUTURA 38301.pdf). "Baixar PDF (DANFE)" gera o PDF da nota no padrão da Sefaz, exatamente como o XML original (sem o fator de conversão). No iPhone, salve pela folha de compartilhamento em "Salvar em Arquivos". No computador baixa direto. Também dá para gerar o PDF no Editor de NF, aba XML (usa o XML original guardado da NF). Para usar a fonte exata (ex.: Times New Roman), abra Ajustes > Fonte do PDF da NF e carregue os arquivos .ttf; ficam só neste aparelho.'
       ],
       dicas: ['Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.'], tutorial: 'xml-ao-texto' },
-    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Gerenciar notas: espera, edição em lote e arquivamento', versao: '2.19.2',
+    { id: 'gerenciar', cat: 'Notas fiscais', titulo: 'Saída de NF: espera, edição em lote e arquivamento', versao: '2.19.2',
       resumo: 'Trabalhar com a relação de notas pendentes.',
       palavras: 'gerenciar notas pendentes espera lote editar arquivar excluir selecionar conferida divergencia',
-      tela: [{ id: 'screen-manage', titulo: 'Gerenciar', rotulo: 'Abrir Gerenciar' }],
+      tela: [{ id: 'screen-manage', titulo: 'Saída de NF', rotulo: 'Abrir Saída de NF' }],
       passos: [
         'Cada nota mostra um selo de situação: Conferida, Compra direta, Sem pedido vinculado, Pendência relatada, Divergência resolvida ou Divergência (ainda sem relato). O selo olha só os itens daquela NF. Pendência relatada e resolvida têm o mesmo peso: não pedem ação sua. Toque no selo para ir direto ao pedido.',
         'Para agir em várias notas, ative a seleção e marque as notas. Enquanto você seleciona, a dock principal dá lugar à dock de seleção: Todas, marcar como pendente (em espera), remover a pendência, editar em lote, arquivar e excluir. O ✕ à esquerda cancela a seleção.',
@@ -93,12 +93,12 @@ const AJUDA_ARTIGOS = [
       palavras: 'exportar saida texto copiar compartilhar pdf arquivar ordenar recurso contabilizacao',
       tela: [{ id: 'screen-export', titulo: 'Exportar', rotulo: 'Abrir Exportar' }],
       passos: [
-        'Abra Exportar. O texto mostra as notas "Para saída" (as em espera ficam de fora).',
+        'Na Saída de NF, toque no "+" e em "Exportar saída (texto)". O texto mostra as notas "Para saída" (as em espera ficam de fora).',
         'Use "Ordenar por Recurso" para agrupar as notas pelo recurso a ser pago.',
         'Copie, Compartilhe ou gere o PDF.',
         'Depois de enviado, use "Arquivar Tudo": as notas vão para o Histórico.'
       ],
-      dicas: ['O recurso de cada nota no texto é o campo Recurso dela. Se uma nota sai sem recurso, aplique o recurso em Gerenciar ou edite a nota.',
+      dicas: ['O recurso de cada nota no texto é o campo Recurso dela. Se uma nota sai sem recurso, aplique o recurso na Saída de NF ou edite a nota.',
               'Os vencimentos dos próximos 7 dias aparecem na tela Início.'], tutorial: 'xml-ao-texto' },
     { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.15.0',
       resumo: 'Ver todas as NFs e resolver o que falta tocando na pendência.',
@@ -107,10 +107,10 @@ const AJUDA_ARTIGOS = [
       passos: [
         'Cada NF é um cartão com iniciais do fornecedor, situação, valor, vencimento e uma faixa de pendências.',
         'Toque numa pendência (texto vermelho ou o selo "N pendências"): o app abre o lugar certo e destaca o ponto em amarelo.',
-        'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Gerenciar.',
-        'O ícone de selecionar (canto superior direito, igual ao de Cotações, Anotações e Gerenciar) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
+        'Pelos ícones do cartão você abre o Editor da NF ou vê a nota na Saída de NF.',
+        'O ícone de selecionar (canto superior direito, igual ao de Cotações, Anotações e Saída de NF) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).',
-        'No Gerenciar, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
+        'Na Saída de NF, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
     { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.19.1',
@@ -118,7 +118,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'auditoria ocorrencia divergencia relatar relatada resolvida excluir restaurar unidade fator embalagem falso positivo total nf cotacao',
       tela: [{ id: 'screen-auditoria-central', titulo: 'Auditoria', rotulo: 'Abrir Auditoria' }],
       passos: [
-        'Abra Mais → Auditoria. A lista reúne uma ocorrência por item, de todos os pedidos. Os mesmos dados aparecem na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios: aqui é onde você mexe.',
+        'Abra Auditoria (na dock ou em Mais). A lista reúne uma ocorrência por item, de todos os pedidos. Os mesmos dados aparecem na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios: aqui é onde você mexe.',
         'Os filtros são: Em aberto (o app achou e você ainda não relatou), Relatadas (já avisado ao responsável), Resolvidas e Excluídas.',
         'Salvar uma NF só cria as ocorrências em aberto. Gerar o texto da auditoria também não relata nada: a ocorrência só vira "relatada" quando você toca em "Marcar como relatada". Se marcou sem querer, use "Voltar para em aberto".',
         'Quando a quantidade e o valor mudam em proporção inversa e o total da NF fecha com o da cotação (por exemplo, cotado por unidade e faturado em pacote com 50), o app mostra UMA ocorrência de unidade e sugere o fator. Toque em "Aplicar fator" para resolver; "Desfazer fator" volta atrás.',
@@ -133,7 +133,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'auditoria retroativa erp nf itens produto pedido sugerido sugestao defasado associacao reprocessar conferencia',
       tela: [{ id: 'screen-auditoria-retro', titulo: 'Auditoria Retroativa', rotulo: 'Abrir Auditoria Retroativa' }],
       passos: [
-        'Abra Mais → Auditoria Retroativa. O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
+        'Abra Auditoria Retroativa (na dock ou em Mais). O topo resume as NFs do ERP: quantas têm pedido confirmado, sugerido ou nenhum, e quantos itens já estão ligados a um produto da cotação.',
         'Você não precisa associar NF por NF: os itens se ligam ao produto pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor.',
         'Itens defasados são itens antigos que hoje já teriam produto (porque você associou o SP Data depois). O app os atualiza sozinho; o botão \"Atualizar itens defasados\" faz isso na hora.',
         'Pedido sugerido: o app achou um pedido provável, mas pede sua confirmação. Toque em "Conferir a sugestão" no cartão: ele mostra o valor total da NF × cotado, as datas do pedido, do limite e da NF e quais itens da NF estão na cotação, com um resumo (bate em tudo, conferir ou não parece). "Abrir o pedido" leva à cotação e "Confirmar" aceita aquele pedido.',
@@ -149,7 +149,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'firebase uso leituras cota limite gratis consumo requisicoes contador',
       tela: [{ id: 'screen-uso-firebase', titulo: 'Uso do Firebase', rotulo: 'Abrir Uso do Firebase' }],
       passos: [
-        'Em Mais → Uso do Firebase aparece o total de leituras de hoje neste aparelho, a barra em relação ao limite grátis de 50 mil e quais coleções e telas mais gastaram.',
+        'Em Ajustes → Uso do Firebase aparece o total de leituras de hoje neste aparelho, a barra em relação ao limite grátis de 50 mil e quais coleções e telas mais gastaram.',
         '"Aberturas do app hoje" lista cada vez que o app foi aberto ou recarregado, com as leituras daquela abertura. Serve para achar o que está gastando.',
         'O cartão "Todos os aparelhos · hoje" soma o que cada aparelho publicou (a cada ~4 min) e lista cada um separado. Use "Renomear este aparelho" para dar nomes e "Atualizar aparelhos" para ver o mais recente.',
         '"Gerar relatório geral" monta um texto com o total, a soma por coleção e tela e o detalhe de cada aparelho, para copiar e colar na conversa.',
@@ -160,7 +160,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'agenda lembrete reuniao entrega reagente calendario aviso notificacao centervida expansao hora repetir',
       tela: [{ id: 'screen-agenda', titulo: 'Agenda de trabalho', rotulo: 'Abrir a Agenda de trabalho' }],
       passos: [
-        'Em Mais → Agenda de trabalho, use + Entrega, + Reunião ou + Lembrete. Escolha a data (ou "de/até" para janelas), a hora se quiser, se repete e se avisa na véspera e no dia.',
+        'Em Agenda de trabalho (dock ou Mais), use + Entrega, + Reunião ou + Lembrete. Escolha a data (ou "de/até" para janelas), a hora se quiser, se repete e se avisa na véspera e no dia.',
         '"Carregar calendário" cadastra o calendário de entregas 2026 (Expansão e Centervida). Quando a entrega chegar, toque em "Marcar como entregue" e informe o dia em que chegou.',
         'Entrega que passou da janela sem ser marcada aparece como atrasada, também na Central de notificações.',
         '"Avisos que você quer receber" define o que deve notificar (entregas, reuniões, lembretes, NFs vencendo, ocorrências sem relato e pedidos parados; esses dois chegam uma vez por dia e refletem a última vez que o app foi aberto).',
@@ -173,7 +173,7 @@ const AJUDA_ARTIGOS = [
       passos: [
         'Funciona de graça e sem instalar nada, no "modo básico": ele entende pedido, NF, fornecedor, material, divergências e pendências por palavras-chave (ex.: "situação do pedido 1726", "NF 1067970", "NFs da MINAS SUL", "lanceta").',
         'A IA (Cloudflare, grátis) já vem ligada e com o endereço fixo, sem nada para digitar. Embaixo do campo de digitar há um seletor: "IA" (perguntas em linguagem livre) ou "Modo básico" (sem IA, resposta na hora); a escolha fica lembrada neste aparelho. Se o limite grátis do dia acabar, o modo básico responde no lugar.',
-        'Abra Mais → Assistente e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
+        'Abra o Assistente (dock ou Mais) e escreva a pergunta, por exemplo: "quais divergências estão pendentes?", "situação do pedido 1726", "quanto temos de lanceta cotado e recebido?", "NFs da MINAS SUL sem pedido".',
         'As respostas vêm com negrito e listas. "pedido 1731" e "NF 36435" aparecem como links: toque para abrir a Central do pedido ou a NF. Enquanto a IA responde, o botão vira "■ Parar" e mostra os segundos; no fim aparece o tempo da resposta e o botão Copiar. "+ Nova conversa" limpa a conversa.',
         'A IA também sabe média, mínimo e máximo dos preços das compras e a marca dos produtos (ela sai da descrição da cotação do SmartCompras): pergunte, por exemplo, "média de preço das últimas compras de atadura crepom 15cm" ou "cotações de norepinefrina da marca Fresenius".',
         'A conversa fica guardada neste aparelho (as últimas 40 mensagens) e volta quando você abre o Assistente de novo. "+ Nova conversa" apaga o histórico.',
@@ -187,7 +187,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'central notificacoes notificação atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
       tela: [{ id: 'screen-atencao', titulo: 'Central de notificações', rotulo: 'Abrir a central' }],
       passos: [
-        'Abra Mais → Central de notificações (o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
+        'Abra Central de notificações (dock ou Mais; o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
         'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido, NFs recebidas (do ERP ou do XML) com vencimento já passado e ainda sem envio ao financeiro, e pedidos com prazo vencido sem nenhum sinal de entrega.',
         'Importante: ocorrências detectadas pelo app e ainda sem relato em auditoria (abra o pedido e registre), NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
         'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
@@ -218,7 +218,7 @@ const AJUDA_ARTIGOS = [
         'Para mudar a ordem da lista, toque em "Ordenar" (abaixo da busca): mais recentes, mais antigas, número do pedido crescente ou decrescente. A escolha fica guardada neste aparelho.',
         'A lista mostra um cartão por pedido (status, fornecedores, limite e itens). Toque num cartão para abrir o pedido.',
         'Para fixar pedidos no topo da lista: toque no ícone de selecionar (canto superior direito), marque as cotações e use "Fixar" na barra de baixo (a mesma barra de seleção de Anotações e Controle de NFs). "Soltar" desfaz. Um pino aparece ao lado do número do pedido.',
-        'Dentro do pedido, no topo (abaixo do resumo), "Exportar relatório" gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF. O PDF e o Word têm o mesmo visual: selos coloridos de status, divergência em vermelho, observação do SmartCompras em azul e, na entrega parcial, os itens não entregues em destaque.',
+        'Dentro do pedido, o ícone de exportar no cabeçalho do app (ao lado do ⋯) gera um relatório Básico (fornecedores ganhadores, recurso, quantidade de itens, valor total e status da entrega) ou Completo (inclui divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque), em TXT, Word ou PDF. O PDF e o Word têm o mesmo visual: selos coloridos de status, divergência em vermelho, observação do SmartCompras em azul e, na entrega parcial, os itens não entregues em destaque.',
         'Notificações: em fornecedor sem CNPJ, toque no ✕ para parar de avisar (só silencia o aviso; o cadastro não muda). Veja em "Ignoradas" e toque em "Voltar a notificar" para reativar. Resumo de pendências: toque em "Resumo de pendências" na tela Início (ou em "Pendências" na barra de seleção de Cotações, que já abre com os pedidos marcados). O resumo é uma tela própria, com seta de voltar no topo e "Copiar" e "Baixar" fixos embaixo. Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência (você ainda pode incluir outros pedidos digitando o número). Marque o que entra: fornecedores que não entregaram, produtos não faturados, divergências em aberto e observação da ocorrência (as duas últimas vêm desligadas). Só entram ocorrências de auditoria ainda não relatadas; anotações de texto livre não são usadas. A prévia mostra o relatório no layout antigo; "Editar texto" permite ajustar frases antes de gerar PDF, Word, TXT ou copiar.',
         'Ao importar um pedido novo, a data limite sugerida é a data do pedido + 5 dias ÚTEIS (segunda a sexta; feriados não entram na conta). Você pode mudar a data à mão.',
         'No pedido, cada fornecedor tem seu cartão: abra para ver itens, valor cotado e divergências; os botões do cartão abrem a NF ou associam uma NF.'
@@ -264,7 +264,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'importar relatorio erp relacao notas fiscais txt colar processar recurso duplicata marcadas',
       tela: [{ id: 'screen-import', titulo: 'Importar Relatório (ERP)', rotulo: 'Abrir a importação' }],
       passos: [
-        'Abra Mais → Importar Relatório (ERP).',
+        'Na Saída de NF, toque no "+" e em "Importar relatório (ERP)".',
         'Cole o texto do relatório ("Colar") ou envie o arquivo ("Subir Arquivo TXT") e toque em "Processar Relatório".',
         'Revise cada nota: fornecedor, NF, data, vencimento, valor e recurso. Notas com aviso merecem atenção; o app marca as que já existem pendentes (bloqueadas) ou já foram arquivadas.',
         'Além dos avisos do relatório, o app acrescenta verificações na hora: valor ou itens zerados, NF já processada pelo XML com valor diferente, fornecedor sem CNPJ no SP Data e item com código SP Data fora da lista. Eles só avisam; não bloqueiam.',
@@ -283,7 +283,7 @@ const AJUDA_ARTIGOS = [
         'NFs que só existem no relatório do ERP mostram um aviso de "sem XML" e o cartão "Dados desta NF": ali você edita o nome do fornecedor (vale para todas as NFs do mesmo CNPJ e o app lembra para as próximas importações), escolhe o recurso e marca "não tem pedido" (compra direta).',
         'Na aba Itens, em cada item, o bloco "Item da cotação" também permite marcar "Produto trocado" (veio outro produto no lugar do pedido) ou "Aceitar como o item pedido" (vale só nesta NF, sem gravar associação do fornecedor), sem precisar subir o XML de novo. "Desfazer" volta o item para sem associação. Na aba XML há "Baixar XML" (e o PDF).',
         'Quando a NF do ERP já está ligada a um pedido cujo recurso o app conhece pela cotação, o cartão mostra "Vem da cotação do pedido" em vez de perguntar; "Mudar só nesta NF" continua disponível.',
-        'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (uma NF tem um recurso só: se algum item teve menos de 3 cotações, é Recurso Próprio; senão C/C. O app define sozinho e leva para o Gerenciar e para Exportar; você só troca aqui se precisar) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
+        'Nas NFs com XML há também o cartão "Dados desta NF": nome do fornecedor, recurso da NF inteira (uma NF tem um recurso só: se algum item teve menos de 3 cotações, é Recurso Próprio; senão C/C. O app define sozinho e leva para a Saída de NF e para Exportar; você só troca aqui se precisar) e "Esta NF não tem cotação" (compra direta, que tira a NF do pedido).',
         'Ao marcar "Esta NF não tem cotação (compra direta)", aparece "Destino da compra direta": escolha Santa Casa ou CTI. Com o destino, os botões de recurso (C/C ou próprio) funcionam mesmo sem cotação do SmartCompras, e a NF deixa de aparecer como "sem produto da cotação".',
         'Se aparecer o aviso "Itens diferentes com o mesmo produto da cotação", dois itens da NF estão associados ao mesmo produto: corrija a associação na aba Itens.',
         'No cartão do topo, "Cotações desta NF" lista o pedido principal e os complementares. Mesmo com a NF já enviada ao Controle, "Adicionar outra cotação a esta NF" inclui mais um pedido (como a cotação adicional da Entrada de NF) e "Remover" tira um complementar.',
@@ -300,10 +300,10 @@ const AJUDA_ARTIGOS = [
         'Em Cotações, toque no cartão do pedido.',
         'Cada fornecedor tem um cartão recolhível: o cabeçalho traz o nome (apelido), CNPJ, situação da entrega e os botões. Abra para ver itens, valor cotado, divergências e produtos.',
         'Logo abaixo do CNPJ, o cartão diz se todos os itens do fornecedor tiveram 3+ cotações ou quantos ficaram abaixo (esses são pagos com Recurso Próprio). Ao abrir o cartão, a lista mostra quais itens e quantos fornecedores cotaram cada um.',
-        'Botões do cartão: Abrir NF (as notas já ligadas), Associar NF (ou "Associar outra NF"), e, conforme o caso, Marcar parcial resolvida, Marcar como já chegou, Entrega cancelada (o app para de esperar e de avisar que não chegou) ou Desfazer a marca manual/o cancelamento. No topo do pedido, "Entrega cancelada (pedido todo)" faz isso em todos os fornecedores de uma vez. Quando o fornecedor tem mais de uma ocorrência em aberto, aparece também "Gerar auditorias (N)": ele junta todas no mesmo rascunho de auditoria, já classificadas e com as quantidades preenchidas.',
+        'Botões do cartão (uma faixa só): Abrir NF (as notas já ligadas), Associar NF, Já chegou e Cancelada (o app para de esperar e de avisar que não chegou); o que está marcado fica destacado e tocar nele desfaz. Em "Marcar parcial resolvida" quando a entrega é parcial. No ⋯ do cabeçalho do pedido, "Entrega cancelada (pedido todo)" faz isso em todos os fornecedores de uma vez. Quando o fornecedor tem mais de uma ocorrência em aberto, aparece também "Gerar auditorias (N)": ele junta todas no mesmo rascunho de auditoria, já classificadas e com as quantidades preenchidas.',
         'Em Associar NF, a lista mostra as NFs da mesma entidade do fornecedor. Se ele entregou por outro CNPJ, digite o número da NF: a busca passa a valer para todos os fornecedores e indica o nome e "outro CNPJ".',
         'Ao associar uma NF do histórico, o app liga sozinho os itens à cotação (por SP Data, e também por nome, quantidade e preço próximo, mesmo sem o texto do SmartCompras colado). Só liga quando é inequívoco e nunca troca uma associação sua. Abaixo da NF associada, "Itens lançados" mostra o que foi lançado e a qual produto da cotação cada item ficou ligado. A NF aparece aí mesmo que ainda esteja esperando decisão no Controle. Itens sem nome oficial (relatório do SmartCompras não colado) mostram o nome lançado no ERP, marcado como tal.',
-        'No topo do pedido, "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez como "já chegou" (manual); o mesmo botão passa a "Desfazer marcas de entrega de todos".',
+        'No ⋯ do cabeçalho do pedido, "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez como "já chegou" (manual); "Voltar tudo para aguardando" remove as marcas e cancelamentos de todos.',
         'Cada problema de um item é uma ocorrência só, com três estados: Divergência (o app viu e você ainda não relatou), Pendência relatada (há auditoria aberta, já com o responsável) e Resolvido. O quadro "Em aberto" conta só as divergências ainda sem relato e, quando maior que zero, é tocável e leva ao item. A pendência relatada tem o peso de resolvido: não deixa o cartão vermelho.',
         'Entrega parcial: se o fornecedor faturou menos do que foi cotado e você já relatou a falta em auditoria, o fornecedor mostra "Entrega parcial — já chegou (falta relatada)" em cinza: não se espera nova entrega, então não fica aguardando e não precisa marcar nada. Sem o relato, continua como entrega parcial em amarelo.',
         'Itens do pedido sem fornecedor definido aparecem como "soltas".'
@@ -453,18 +453,18 @@ function demoItensHTML(e) {
 }
 const TIPOS_DEMO = { nao_entregue: 'Não entregue', valor_diferente: 'Valor diferente do pedido', avariado: 'Material avariado' };
 const TUTORIAIS = {
-    'xml-ao-texto': { titulo: 'Da NF em XML até a Saída de Texto', resumo: 'Entrada de NF, recurso da NF inteira, salvar, Gerenciar e Saída de Texto.', passos: [
+    'xml-ao-texto': { titulo: 'Da NF em XML até a Saída de Texto', resumo: 'Entrada de NF, recurso da NF inteira, salvar, Saída de NF e Saída de Texto.', passos: [
         { t: 'Entrada de NF: carregue o XML', d: 'Em Entrada de NF você carrega o arquivo XML da nota. Aqui usamos uma nota de exemplo; nada disso é gravado.', alvo: 'carregar',
           mock: (e, A) => `<div class="ctl-card"><div class="ctl-top"><div class="ctl-av">DE</div><div class="ctl-nm"><b>DISTRIBUIDORA EXEMPLO LTDA</b><small>NF 004512 · R$ 2.450,00</small></div></div><button type="button" class="manage-toolbar-btn${A('carregar')}">Escolher XML</button></div>` },
         { t: 'Confira os itens', d: 'Cada item mostra o fator de conversão (vem da descrição, como "C/10") e se está pronto. Itens com pendência abrem sozinhos e mostram o que falta.', alvo: 'itens',
           mock: (e, A) => `<div class="card${A('itens')}">${demoItensHTML(e)}</div>` },
         { t: 'Defina o recurso da NF inteira', d: 'Toque em um dos botões abaixo: o recurso é aplicado a todos os itens de uma vez. Também dá para trocar item por item.', alvo: 'recurso', acao: v => !!v.recurso,
           mock: (e, A) => `<div class="xml-recurso-todos${A('recurso')}"><div class="xml-recurso-todos-txt"><strong>Recurso da NF inteira</strong><span>${e.recurso ? 'Os 3 itens estão em <strong>' + e.recurso + '</strong>.' : '3 itens ainda sem recurso.'}</span></div><div class="xml-recurso-todos-bt"><button type="button" class="central-status-toggle" onclick="tutorialSet('recurso','C/C SANTA CASA')">C/C SANTA CASA</button><button type="button" class="central-status-toggle" onclick="tutorialSet('recurso','Recurso Proprio Santa Casa')">Recurso Proprio Santa Casa</button></div></div><div class="card">${demoItensHTML(e)}</div>` },
-        { t: 'Salve a NF', d: 'Salvar é a sua confirmação: o recurso dos itens é gravado na cotação e a nota passa a existir no Gerenciar.', alvo: 'salvar', acao: v => !!v.salva,
+        { t: 'Salve a NF', d: 'Salvar é a sua confirmação: o recurso dos itens é gravado na cotação e a nota passa a existir na Saída de NF.', alvo: 'salvar', acao: v => !!v.salva,
           mock: (e, A) => `<div class="card">${demoItensHTML(e)}</div><button type="button" class="manage-toolbar-btn${A('salvar')}" onclick="tutorialSet('salva',true)">${e.salva ? '✓ NF salva (demonstração)' : 'Salvar NF'}</button>` },
-        { t: 'Gerenciar: a nota conferida', d: 'A nota entra na relação com o selo de situação. Tocar no selo leva ao pedido onde uma divergência se resolve.', alvo: 'nota',
+        { t: 'Saída de NF: a nota conferida', d: 'A nota entra na relação com o selo de situação. Tocar no selo leva ao pedido onde uma divergência se resolve.', alvo: 'nota',
           mock: (e, A) => `<div class="ctl-card${A('nota')}"><div class="ctl-top"><div class="ctl-av">DE</div><div class="ctl-nm"><b>DISTRIBUIDORA EXEMPLO LTDA</b><small>NF 004512 · venc. 30/10</small></div><span class="ctl-st ok">✓ Conferida</span></div><div class="ctl-dd"><div><small>Valor</small><div class="ctl-vl">R$ 2.450,00</div></div><div><small>Recurso</small><div class="ctl-vl">${e.recurso || '—'}</div></div><div><small>Pedido</small><div class="ctl-vl">12345</div></div></div></div>` },
-        { t: 'Exportar: Saída de Texto', d: 'Em Exportar o texto das notas "Para saída" é montado, com o recurso de cada nota. Copie, compartilhe ou gere o PDF e, depois de enviar, arquive. (O texto abaixo é só ilustração; o formato real é o da tela Exportar.)', alvo: 'texto',
+        { t: 'Exportar: Saída de Texto', d: 'Em "Exportar saída (texto)" (no "+" da Saída de NF) o texto das notas "Para saída" é montado, com o recurso de cada nota. Copie, compartilhe ou gere o PDF e, depois de enviar, arquive. (O texto abaixo é só ilustração; o formato real é o da tela Exportar.)', alvo: 'texto',
           mock: (e, A) => `<div class="card${A('texto')}"><pre class="aj-pre">DISTRIBUIDORA EXEMPLO LTDA\nNF 4512 · R$ 2.450,00 · venc. 30/10\nRecurso: ${e.recurso || '—'}</pre></div>` }
     ] },
     'auditoria': { titulo: 'Registrar uma auditoria', resumo: 'Dados, divergência, gerar a mensagem e salvar como anotação.', passos: [
@@ -484,13 +484,13 @@ const TUTORIAIS = {
           mock: (e, A) => `<div class="aj-btns"><button type="button" class="manage-toolbar-btn">Copiar</button><button type="button" class="manage-toolbar-btn">Compartilhar</button><button type="button" class="manage-toolbar-btn${A('salvar')}" onclick="tutorialSet('salvaAnot',true)">${e.salvaAnot ? '✓ Salva (demonstração)' : 'Salvar como Anotação'}</button></div>` }
     ] },
     'importar-erp': { titulo: 'Importar o relatório do ERP', resumo: 'Colar, revisar, aplicar o recurso às notas marcadas e confirmar.', passos: [
-        { t: 'Cole o relatório', d: 'Em Mais → Importar Relatório (ERP), cole o texto da Relação de Notas Fiscais (ou envie o TXT) e toque em "Processar Relatório".', alvo: 'colar',
+        { t: 'Cole o relatório', d: 'Na Saída de NF, "+" → Importar relatório (ERP), cole o texto da Relação de Notas Fiscais (ou envie o TXT) e toque em "Processar Relatório".', alvo: 'colar',
           mock: (e, A) => `<div class="card${A('colar')}"><div class="aj-input aj-area">DISTRIBUIDORA EXEMPLO LTDA  4512  30/10  2.450,00\nCOMERCIAL MODELO S/A  8801  02/11  980,50\nLABORATÓRIO TESTE  311  05/11  1.120,00</div><button type="button" class="manage-toolbar-btn">Processar Relatório</button></div>` },
         { t: 'Revise as notas', d: 'Cada nota vira um bloco editável. Notas que já estão pendentes ficam bloqueadas (duplicata). Se o recurso já é conhecido pela Entrada de NF, ele vem preenchido com a indicação "Sugerido pela Entrada de NF".', alvo: 'notas',
           mock: (e, A) => `<div class="card${A('notas')}">${[['DISTRIBUIDORA EXEMPLO LTDA', '4512', 'R$ 2.450,00', 'C/C SANTA CASA', 'Sugerido pela Entrada de NF desta nota.'], ['COMERCIAL MODELO S/A', '8801', 'R$ 980,50', e.aplicado || '—', ''], ['LABORATÓRIO TESTE', '311', 'R$ 1.120,00', e.aplicado || '—', '']].map(n => `<div class="aj-item"><div><strong>${n[0]}</strong><small>NF ${n[1]} · ${n[2]}</small></div><span class="xml-item-badge neutro">Recurso: ${n[3]}</span>${n[4] ? `<small class="aj-rec">${n[4]}</small>` : ''}</div>`).join('')}</div>` },
         { t: 'Aplique o recurso às marcadas', d: 'Marque as notas, escolha o recurso e use "Aplicar Recurso às Marcadas": todas recebem o mesmo recurso de uma vez. Toque em um recurso abaixo.', alvo: 'lote', acao: v => !!v.aplicado,
           mock: (e, A) => `<div class="xml-recurso-todos${A('lote')}"><div class="xml-recurso-todos-txt"><strong>Aplicar Recurso às Marcadas</strong><span>${e.aplicado ? 'Aplicado a 2 notas marcadas: <strong>' + e.aplicado + '</strong>.' : '2 notas marcadas sem recurso.'}</span></div><div class="xml-recurso-todos-bt"><button type="button" class="central-status-toggle" onclick="tutorialSet('aplicado','C/C SANTA CASA')">C/C SANTA CASA</button><button type="button" class="central-status-toggle" onclick="tutorialSet('aplicado','Recurso Proprio Santa Casa')">Recurso Proprio Santa Casa</button></div></div>` },
-        { t: 'Confirme a importação', d: 'Use a busca e "Mostrar Apenas Novas" se precisar, desmarque o que não quer e confirme. As notas entram em Gerenciar, prontas para a Saída de Texto.', alvo: 'confirmar',
+        { t: 'Confirme a importação', d: 'Use a busca e "Mostrar Apenas Novas" se precisar, desmarque o que não quer e confirme. As notas entram na Saída de NF, prontas para a Saída de Texto.', alvo: 'confirmar',
           mock: (e, A) => `<button type="button" class="manage-toolbar-btn${A('confirmar')}">Confirmar importação (3 notas)</button>` }
     ] }
 };
@@ -582,4 +582,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.43.0';
