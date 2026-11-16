@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.51.0', nome: 'Atalhos do Início editáveis', status: 'atual', data: '16/11/2026 às 06:40',
+        numero: '2.52.0', nome: 'Exportar texto como aba do Repasse de NF e ajustes de espaçamento', status: 'atual', data: '16/11/2026 às 17:10',
+        novidades: ['No Repasse de NF, "Exportar texto" virou uma aba ao lado de "Em espera" (antes ficava no "+"). A tela Exportar saída deixou de existir; o "+" mantém Adicionar NF e Importar relatório (ERP).', 'Cards dos fornecedores nas Cotações: mais espaço embaixo dos botões e sem o "✓" repetido em "Já chegou".', 'Na versão web, o botão "Mais" da barra some e a tela Menus mostra um texto próprio para a barra lateral.'],
+        implementado: ['index.html: aba e painel de exportação dentro do #screen-manage; texto da tela Menus. js/05: alternarAbaGerenciar com modo exportar. js/54: "+" sem Exportar. js/11: rótulo Já chegou. style.css: bloco 2.52.0. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.51.0: index.html, style.css, js/05, 11, 14, 31 e 54.'],
+        testar: ['iPhone: Repasse de NF: toque na aba "Exportar texto": deve aparecer o texto, o contador e os botões (Ordenar por Recurso, Copiar, Compartilhar, Gerar PDF). Volte para "Para saída" e "Em espera".', 'iPhone: no "+" do Repasse de NF só devem aparecer Adicionar NF e Importar relatório (ERP).', 'iPhone: Cotações → pedido: espaçamento dos botões nos cards dos fornecedores.', 'Computador (web): sem o botão "Mais" na barra; Personalização → Menus mostra o texto da barra lateral.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.51.0', nome: 'Atalhos do Início editáveis', status: 'concluida', data: '16/11/2026 às 06:40',
         novidades: ['Na tela Início, o botão "Editar" ao lado de "Atalhos" deixa escolher quais atalhos aparecem e em que ordem. Qualquer tela do app pode virar atalho; "Restaurar atalhos padrão" volta ao conjunto original.', 'Removido o grupo "Atalhos" em Ajustes e a estrela em Personalização → Ordem dos Menus (criados na 2.50.0 por engano).'],
         implementado: ['js/48: catálogo de atalhos, edição (adicionar, remover, subir, descer) e gravação em Personalização. style.css: bloco 2.51.0. js/08, index.html: retirada a estrela e o grupo em Ajustes. js/56 removido. js/31: Ajuda.'],
         arquivos: ['index.html', 'style.css', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
@@ -3428,4 +3437,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.51.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.52.0';

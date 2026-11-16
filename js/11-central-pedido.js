@@ -996,7 +996,7 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     // 2.43.0 (P1): Associar NF | Já chegou | Cancelada, numa faixa só; o estado atual fica destacado e tocar nele desfaz
     if (e.manual) {
         const canc = e.origem === 'cancelada';
-        acoes.push({ i: 'fin', t: canc ? 'Já chegou' : '✓ Já chegou', on: !canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` : `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
+        acoes.push({ i: 'fin', t: 'Já chegou', on: !canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` : `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
         acoes.push({ i: 'reab', t: canc ? 'Cancelada' : 'Cancelar', on: canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` : `confirmarEntregaCanceladaFornecedor('${pedido}', '${fornecedor.cnpj}')` });
     }
     else if (e.estadoAuto === 'parcial_relatada') { /* já chegou, falta relatada: nada a marcar */ }
@@ -1871,4 +1871,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.52.0';

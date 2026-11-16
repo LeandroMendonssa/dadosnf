@@ -16,7 +16,7 @@ const AJUDA_ARTIGOS = [
         'Início: tela que abre sozinha, com o que vence, atalhos para as telas, busca de NF/fornecedor/pedido o número de fornecedores a chegar (toque nele para ver quais fornecedores e de qual pedido; não chegaram ou com mais de 2 itens faltando, pedidos dos últimos 60 dias) e a Busca de lote (lote, produto e validade nas NFs processadas; só encontra NFs que tiveram o lote gravado).',
         'Adicionar: cadastro rápido de uma nota (data, NF, vencimento, valor, fornecedor e recurso).',
         'Repasse de NF: a relação de notas pendentes, com seleção em lote, espera, edição e arquivamento.',
-        'Exportar saída (texto) e Importar relatório (ERP) ficam dentro do Repasse de NF: toque no "+" e escolha.',
+        'No Repasse de NF, a aba "Exportar texto" (ao lado de "Em espera") monta o texto das notas; Importar relatório (ERP) fica no "+".',
         'Relatórios e Cotações: acompanhamento dos pedidos, fornecedores e divergências.',
         'Entrada de NF: leitura do XML, fator de conversão, cotação, SP Data e recurso por item.',
         'Anotações: auditorias e ocorrências. Ajustes: fornecedores, produtos, personalização, backup, conta e esta Ajuda.',
@@ -93,7 +93,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'exportar saida texto copiar compartilhar pdf arquivar ordenar recurso contabilizacao',
       tela: [{ id: 'screen-export', titulo: 'Exportar', rotulo: 'Abrir Exportar' }],
       passos: [
-        'No Repasse de NF, toque no "+" e em "Exportar saída (texto)". O texto mostra as notas "Para saída" (as em espera ficam de fora).',
+        'No Repasse de NF, toque na aba "Exportar texto". O texto mostra as notas "Para saída" (as em espera ficam de fora).',
         'Use "Ordenar por Recurso" para agrupar as notas pelo recurso a ser pago.',
         'Copie, Compartilhe ou gere o PDF.',
         'Depois de enviado, use "Arquivar Tudo": as notas vão para o Histórico.'
@@ -462,7 +462,7 @@ const TUTORIAIS = {
           mock: (e, A) => `<div class="card">${demoItensHTML(e)}</div><button type="button" class="manage-toolbar-btn${A('salvar')}" onclick="tutorialSet('salva',true)">${e.salva ? '✓ NF salva (demonstração)' : 'Salvar NF'}</button>` },
         { t: 'Repasse de NF: a nota conferida', d: 'A nota entra na relação com o selo de situação. Tocar no selo leva ao pedido onde uma divergência se resolve.', alvo: 'nota',
           mock: (e, A) => `<div class="ctl-card${A('nota')}"><div class="ctl-top"><div class="ctl-av">DE</div><div class="ctl-nm"><b>DISTRIBUIDORA EXEMPLO LTDA</b><small>NF 004512 · venc. 30/10</small></div><span class="ctl-st ok">✓ Conferida</span></div><div class="ctl-dd"><div><small>Valor</small><div class="ctl-vl">R$ 2.450,00</div></div><div><small>Recurso</small><div class="ctl-vl">${e.recurso || '—'}</div></div><div><small>Pedido</small><div class="ctl-vl">12345</div></div></div></div>` },
-        { t: 'Exportar: Saída de Texto', d: 'Em "Exportar saída (texto)" (no "+" do Repasse de NF) o texto das notas "Para saída" é montado, com o recurso de cada nota. Copie, compartilhe ou gere o PDF e, depois de enviar, arquive. (O texto abaixo é só ilustração; o formato real é o da tela Exportar.)', alvo: 'texto',
+        { t: 'Exportar: Saída de Texto', d: 'Na aba "Exportar texto" do Repasse de NF o texto das notas "Para saída" é montado, com o recurso de cada nota. Copie, compartilhe ou gere o PDF e, depois de enviar, arquive. (O texto abaixo é só ilustração; o formato real é o da tela Exportar.)', alvo: 'texto',
           mock: (e, A) => `<div class="card${A('texto')}"><pre class="aj-pre">DISTRIBUIDORA EXEMPLO LTDA\nNF 4512 · R$ 2.450,00 · venc. 30/10\nRecurso: ${e.recurso || '—'}</pre></div>` }
     ] },
     'auditoria': { titulo: 'Registrar uma auditoria', resumo: 'Dados, divergência, gerar a mensagem e salvar como anotação.', passos: [
@@ -580,4 +580,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.51.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.52.0';
