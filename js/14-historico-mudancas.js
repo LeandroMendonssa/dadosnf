@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.52.0', nome: 'Exportar texto como aba do Repasse de NF e ajustes de espaçamento', status: 'atual', data: '16/11/2026 às 17:10',
+        numero: '2.52.1', nome: 'Botão Já chegou só destacado quando marcado', status: 'atual', data: '16/11/2026 às 17:20',
+        novidades: ['Nos cards dos fornecedores, o botão "Já chegou" ficava azul escuro mesmo sem estar marcado e parecia selecionado. Agora ele só fica azul quando a chegada está de fato marcada; fora isso, tem o mesmo visual dos outros botões.'],
+        implementado: ['style.css: o destaque azul só vale para o botão marcado.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados desde a 2.52.0: index.html, style.css e js/14.'],
+        testar: ['iPhone: Cotações → pedido: com o fornecedor "Aguardando", os três botões devem ter o mesmo visual claro.', 'iPhone: toque em "Já chegou": o botão deve ficar azul; toque de novo para desfazer.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.52.0', nome: 'Exportar texto como aba do Repasse de NF e ajustes de espaçamento', status: 'concluida', data: '16/11/2026 às 17:10',
         novidades: ['No Repasse de NF, "Exportar texto" virou uma aba ao lado de "Em espera" (antes ficava no "+"). A tela Exportar saída deixou de existir; o "+" mantém Adicionar NF e Importar relatório (ERP).', 'Cards dos fornecedores nas Cotações: mais espaço embaixo dos botões e sem o "✓" repetido em "Já chegou".', 'Na versão web, o botão "Mais" da barra some e a tela Menus mostra um texto próprio para a barra lateral.'],
         implementado: ['index.html: aba e painel de exportação dentro do #screen-manage; texto da tela Menus. js/05: alternarAbaGerenciar com modo exportar. js/54: "+" sem Exportar. js/11: rótulo Já chegou. style.css: bloco 2.52.0. js/31: Ajuda.'],
         arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/54-acoes-telas.js'],
@@ -3437,4 +3446,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.52.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.52.1';
