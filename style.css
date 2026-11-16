@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.48.1'; }
+:root { --css-versao: '2.50.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2056,12 +2056,13 @@ body.sel-lote .fab-acoes,body.sel-lote .fab-leque,body.sel-lote .fab-veu{display
 .header .manage-counter{padding-top:3px;padding-bottom:3px;line-height:1.1}
 
 /* ===== 2.43.0: faixa de ações do fornecedor (Associar NF | Já chegou | Cancelada) ===== */
-.central-fornecedor .cf-bar{display:flex;gap:0;border:1px solid var(--border-color);border-radius:14px;overflow:hidden;padding:0;margin:12px 16px 0;border-top:1px solid var(--border-color)}
-.central-fornecedor .cf-bar button{flex:1 1 0;min-width:0;flex-direction:row;justify-content:center;gap:6px;padding:11px 6px;border-radius:0;font-size:var(--fs-min);white-space:nowrap}
-.central-fornecedor .cf-bar button+button{border-left:1px solid var(--border-color)}
+.central-fornecedor .cf-bar{display:flex;flex-wrap:wrap;gap:8px;border:0;border-radius:0;overflow:visible;padding:0;margin:12px 16px 0;border-top:0}
+.central-fornecedor .cf-bar button{flex:1 1 28%;min-width:0;flex-direction:row;justify-content:center;gap:6px;padding:11px 4px;border-radius:12px;font-size:var(--fs-min);white-space:nowrap;background:color-mix(in srgb,var(--accent-color) 10%,transparent);color:var(--accent-text,var(--accent-color))}
 .central-fornecedor .cf-bar button svg{width:18px;height:18px}
-.central-fornecedor .cf-bar button.on{background:var(--accent-color);color:#fff}
-.central-fornecedor .cf-bar button.on svg{stroke:#fff}
+.central-fornecedor .cf-bar button.p{background:var(--accent-color);color:#fff}
+.central-fornecedor .cf-bar button.p svg{stroke:#fff}
+.central-fornecedor .cf-bar button.on:not(.p){background:var(--text-light);color:#fff}
+.central-fornecedor .cf-bar button.on:not(.p) svg{stroke:#fff}
 
 /* ===== 2.44.0: Assistente em janela ===== */
 #hdr-assistente{color:var(--accent-text,var(--accent-color))}
