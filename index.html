@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.48.2">
+    <meta name="app-versao" content="2.49.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -190,48 +190,6 @@
             <div class="app-screen" id="screen-reports">
                 <div id="rel-hub"></div>
                 <div id="rel-detalhe" style="display:none"></div>
-                <div id="rel-legado" style="display:none">
-                <div class="xml-filtro-toggle mt-5" >
-                    <button type="button" class="xml-filtro-btn active" id="relatorios-tab-btn-pedidos" onclick="mudarAbaRelatorios('pedidos')">Pedidos</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-notas" onclick="mudarAbaRelatorios('notas')">Notas</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-divergencias" onclick="mudarAbaRelatorios('divergencias')">Divergências</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-tab-btn-auditorias" onclick="mudarAbaRelatorios('auditorias')">Auditorias</button>
-                </div>
-
-                <input type="text" id="relatorios-busca" class="form-field mt-3"  placeholder="Buscar por pedido, origem ou fornecedor..." oninput="filtrarRelatorios(this.value)">
-
-                <details class="mt-3">
-                    <summary class="filtros-resumo">Filtros (período, fornecedor, destino, recurso, tipo)</summary>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
-                        <div class="campo"><label>De</label><input type="date" id="rel-f-de" class="form-field" onchange="definirFiltroRelatorio('de', this.value)"></div>
-                        <div class="campo"><label>Até</label><input type="date" id="rel-f-ate" class="form-field" onchange="definirFiltroRelatorio('ate', this.value)"></div>
-                    </div>
-                    <div class="campo"><label>Fornecedor</label><input type="text" id="rel-f-fornecedor" class="form-field" list="rel-f-fornecedores" placeholder="Digite ou escolha..." oninput="definirFiltroRelatorio('fornecedor', this.value)"><datalist id="rel-f-fornecedores"></datalist></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="campo"><label>Destino</label><select id="rel-f-destino" class="form-field" onchange="definirFiltroRelatorio('destino', this.value)"><option value="">Todos</option><option value="Santa Casa">Santa Casa</option><option value="CTI">CTI</option></select></div>
-                        <div class="campo"><label>Recurso</label><select id="rel-f-recurso" class="form-field" onchange="definirFiltroRelatorio('recurso', this.value)"><option value="">Todos</option></select></div>
-                    </div>
-                    <div class="campo"><label>Tipo de divergência</label><select id="rel-f-tipo" class="form-field" onchange="definirFiltroRelatorio('tipo', this.value)"><option value="">Todos</option></select></div>
-                </details>
-                <div id="relatorios-filtros-ativos" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-light);"></div>
-                <div id="relatorios-indicadores" class="mt-3"></div>
-
-                <div class="xml-filtro-toggle mt-3" id="relatorios-subfiltro-notas"  style="display:none">
-                    <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-notas-pendente" onclick="filtrarStatusNotasRelatorio('pendente')">Pendentes</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-arquivada" onclick="filtrarStatusNotasRelatorio('arquivada')">Arquivadas</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-notas-todas" onclick="filtrarStatusNotasRelatorio('todas')">Todas</button>
-                </div>
-
-                <div class="xml-filtro-toggle mt-3" id="relatorios-subfiltro-divergencias"  style="display:none">
-                    <button type="button" class="xml-filtro-btn active" id="relatorios-filtro-div-pendente" onclick="filtrarStatusDivergenciaRelatorio('pendente')">Pendentes</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-resolvida" onclick="filtrarStatusDivergenciaRelatorio('resolvida')">Resolvidas</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-encerrada" onclick="filtrarStatusDivergenciaRelatorio('encerrada')">Encerradas</button>
-                    <button type="button" class="xml-filtro-btn" id="relatorios-filtro-div-todas" onclick="filtrarStatusDivergenciaRelatorio('todas')">Todas</button>
-                </div>
-
-                <p id="relatorios-resumo" style="margin:12px 0 6px;font-size:12px;color:var(--text-light);"></p>
-                <div id="relatorios-conteudo-aba" class="nota-list"></div>
-                </div>
             </div>
 
             <div class="app-screen" id="screen-settings">
