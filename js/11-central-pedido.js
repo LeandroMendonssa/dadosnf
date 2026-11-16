@@ -996,14 +996,14 @@ function dadosEntregaFornecedor(pedido, fornecedor, e) {
     // 2.43.0 (P1): Associar NF | Já chegou | Cancelada, numa faixa só; o estado atual fica destacado e tocar nele desfaz
     if (e.manual) {
         const canc = e.origem === 'cancelada';
-        acoes.push({ i: 'fin', t: 'Já chegou', on: !canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` : `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
-        acoes.push({ i: 'reab', t: 'Cancelada', on: canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` : `confirmarEntregaCanceladaFornecedor('${pedido}', '${fornecedor.cnpj}')` });
+        acoes.push({ i: 'fin', t: canc ? 'Já chegou' : '✓ Já chegou', on: !canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` : `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` });
+        acoes.push({ i: 'reab', t: canc ? 'Cancelada' : 'Cancelar', on: canc, fn: canc ? `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', false)` : `confirmarEntregaCanceladaFornecedor('${pedido}', '${fornecedor.cnpj}')` });
     }
     else if (e.estadoAuto === 'parcial_relatada') { /* já chegou, falta relatada: nada a marcar */ }
     else if (e.estadoAuto === 'parcial') acoes.push({ i: 'fin', t: 'Marcar parcial resolvida', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true, 'parcial_resolvida')` });
     else if (e.estadoAuto !== 'completa') acoes.push({ i: 'fin', t: 'Já chegou', fn: `alterarChegadaFornecedorCotacao('${pedido}', '${fornecedor.cnpj}', true)` });
     // 2.22.7: entrega cancelada pelo fornecedor/compras: para de avisar que não chegou
-    if (!e.manual && e.estadoAuto !== 'completa' && e.estadoAuto !== 'parcial_relatada') acoes.push({ i: 'reab', t: 'Cancelada', fn: `confirmarEntregaCanceladaFornecedor('${pedido}', '${fornecedor.cnpj}')` });
+    if (!e.manual && e.estadoAuto !== 'completa' && e.estadoAuto !== 'parcial_relatada') acoes.push({ i: 'reab', t: 'Cancelar', fn: `confirmarEntregaCanceladaFornecedor('${pedido}', '${fornecedor.cnpj}')` });
     return {
         acoes,
         badge: `<span class="xml-item-badge ${r.classe}">${r.texto}</span>`,
@@ -1871,4 +1871,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.50.0';

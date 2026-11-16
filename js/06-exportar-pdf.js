@@ -248,7 +248,7 @@ async function sincronizarRecursoDaNfComNotas(nfId, recurso) {
         await batch.commit();
         DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
         rebuildNotasPendentesList();
-    } catch (e) { console.error('Erro ao refletir o recurso na nota:', e); toast('✕ O recurso foi salvo na NF, mas não consegui refletir na nota da Saída de NF.'); }
+    } catch (e) { console.error('Erro ao refletir o recurso na nota:', e); toast('✕ O recurso foi salvo na NF, mas não consegui refletir na nota do Repasse de NF.'); }
 }
 function atualizarAvisoRecursosGerenciar() {
     const el = document.getElementById('gerenciar-aplicar-recursos'); if (!el) return;
@@ -455,4 +455,4 @@ document.addEventListener('keydown', (event) => {
     else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
     else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && escopo.id === 'add-nf-manual') salvarBtn.click(); }
 });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.50.0';

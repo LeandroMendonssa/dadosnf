@@ -348,7 +348,7 @@ function renderCentralPedidoCompleto(pedido) {
             const nLoteAud = compForn.filter(c => c.estado === 'detectada' && c.codProduto).length;
             const acoesLista = (dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)]).concat(nLoteAud > 1 ? [{ i: 'dir', t: `Gerar auditorias (${nLoteAud})`, fn: `registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }] : [])
                 .concat(dupQtdAbertasFornecedor(pedido, f.cnpj) ? [{ i: 'dir', t: `Pedido duplicado (${dupQtdAbertasFornecedor(pedido, f.cnpj)})`, fn: `centralFornecedoresAbertos.add('${escRel(String(f.cnpj))}'); renderCentralPedidoCompleto('${escRel(String(pedido))}')` }] : []);
-            const acoesHTML = `<div class="ctl-bar cf-bar">${acoesLista.map(a => `<button type="button"${a.on ? ' class="on" aria-pressed="true"' : ''} onclick="event.stopPropagation(); ${a.fn}">${ICONES_CTRL[a.i] || ''}<span>${a.t}</span></button>`).join('')}</div>
+            const acoesHTML = `<div class="ctl-bar cf-bar">${acoesLista.map(a => `<button type="button" class="${a.on ? 'on ' : ''}${a.i === 'fin' ? 'p' : ''}"${a.on ? ' aria-pressed="true"' : ''} onclick="event.stopPropagation(); ${a.fn}">${ICONES_CTRL[a.i] || ''}<span>${a.t}</span></button>`).join('')}</div>
                 ${htmlPainelAssociarNf(pedido, f.cnpj)}`;
             const detalhesEntregaHTML = htmlDuplicidadeCentral(pedido, f.cnpj) + ((dadosEnt && dadosEnt.detalhes) || '') + htmlVinculadasNf(pedido, f.cnpj);
 
@@ -1203,4 +1203,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.50.0';

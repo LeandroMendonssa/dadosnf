@@ -187,7 +187,7 @@ function aplicarPersonalizacoes() {
         if (!Array.isArray(cfgP.menuHidden)) cfgP.menuHidden = [];
         // 2.25.0: o Início entra em primeiro, visível; para a barra não ficar apertada, Exportar vai para "Mais" (volta em Personalização > Menus)
         if (Array.isArray(cfgP.menuOrder) && !cfgP.menuOrder.includes('screen-inicio')) { cfgP.menuOrder = ['screen-inicio', ...cfgP.menuOrder]; if (!cfgP.menuHidden.includes('screen-export')) cfgP.menuHidden = [...cfgP.menuHidden, 'screen-export']; }
-        // 2.43.0: Exportar deixou de ser uma tela do menu (agora fica dentro da Saída de NF)
+        // 2.43.0: Exportar deixou de ser uma tela do menu (agora fica dentro do Repasse de NF)
         cfgP.menuOrder = (cfgP.menuOrder || []).filter(id => menuDetails[id]); cfgP.menuHidden = cfgP.menuHidden.filter(id => menuDetails[id]);
         const novos = Object.keys(menuDetails).filter(id => !(cfgP.menuOrder || []).includes(id));
         if (novos.length) { cfgP.menuOrder = [...(cfgP.menuOrder || []), ...novos]; cfgP.menuHidden = [...new Set([...cfgP.menuHidden, ...novos])]; }
@@ -337,4 +337,4 @@ function reordenarMenusDOM(order) {
         }).observe(tela, { attributes: true, attributeFilter: ['class'] });
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/02-layout-setup.js'] = '2.50.0';

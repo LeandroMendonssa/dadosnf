@@ -482,7 +482,7 @@ function abrirEntradaErpComConfirmacao(chave, callback) {
         onConfirm: async () => {
             try {
                 await entradasErpCollection.doc(chave).update({ statusFluxo: 'pre_selecao', notaVinculadaId: null });
-                toast('✓ NF desarquivada — importe o relatório de novo e marque a NF pra levá-la de volta à Saída de NF.');
+                toast('✓ NF desarquivada — importe o relatório de novo e marque a NF pra levá-la de volta ao Repasse de NF.');
                 callback();
             } catch (e) {
                 console.error('Erro ao desarquivar entrada do ERP:', e);
@@ -672,7 +672,7 @@ function renderPreviewImportacao() {
                     Alimentar Histórico do ERP (todas as ${notasImportadasPreview.length}, sem gerar nota no financeiro)
                 </button>
             </div>
-            <div class="nota-detalhes" style="margin-top:2px;">Essa opção só salva os dados no histórico/reconciliação do ERP — não cria nada na Saída de NF. Pode clicar quantas vezes quiser com o mesmo relatório, sem duplicar.</div>
+            <div class="nota-detalhes" style="margin-top:2px;">Essa opção só salva os dados no histórico/reconciliação do ERP — não cria nada no Repasse de NF. Pode clicar quantas vezes quiser com o mesmo relatório, sem duplicar.</div>
             <div class="campo" style="margin-top:12px;"><input type="text" id="import-search" class="form-field" placeholder="Buscar por NF ou fornecedor..." oninput="filtrarPreviewImportacao(this.value)"></div>
             <div class="actions" style="gap: 10px; margin-top: 8px;">
                 <button class="actions-button is-neutral" onclick="selecionarTodasImportacao(false)">Desmarcar Todas</button>
@@ -809,7 +809,7 @@ async function confirmarImportacaoLote() {
 
     showConfirmModal({
         title: 'Confirmar Importação',
-        message: `Criar ${selecionadas.length} nota(s) fiscal(is) na lista de notas pendentes (Saída de NF)? O histórico do ERP dessas notas também será salvo/atualizado junto.`,
+        message: `Criar ${selecionadas.length} nota(s) fiscal(is) na lista de notas pendentes (Repasse de NF)? O histórico do ERP dessas notas também será salvo/atualizado junto.`,
         confirmText: 'Sim, Importar',
         confirmClass: 'success',
         onConfirm: async () => {
@@ -891,4 +891,4 @@ async function confirmarImportacaoLote() {
         }
     });
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/19-erp-reconciliacao.js'] = '2.43.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/19-erp-reconciliacao.js'] = '2.50.0';

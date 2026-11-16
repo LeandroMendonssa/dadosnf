@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.49.0', nome: 'Limpeza dos Relatórios antigos e faixa de atenção só de NF', status: 'atual', data: '15/11/2026 às 22:40',
+        numero: '2.50.0', nome: 'Novos ícones, Repasse de NF, botões do fornecedor e atalhos em Ajustes', status: 'atual', data: '16/11/2026 às 00:10',
+        novidades: ['"Saída de NF" agora se chama "Repasse de NF" em todo o app.', 'Ícones novos e diferentes entre si: Cotações (documento assinado), Entrada de NF (documento entrando), Controle de NFs (pasta aberta), Repasse de NF (setas de ida e volta) e Auditoria (lupa com gráfico).', 'Cards dos fornecedores na Cotação: três botões separados (Associar NF, Já chegou em azul, Cancelar), em vez da faixa com borda.', 'Atalhos em Ajustes: em Personalização → Ordem dos Menus, a estrela de cada tela a coloca no grupo "Atalhos" no topo de Ajustes.'],
+        implementado: ['js/01: ícones e título da tela. js/48: atalhos do Início. js/09, js/11, style.css: botões do card. js/56 (novo) e js/08, index.html: atalhos em Ajustes. Renome em js/02, 06, 17, 19, 31, 48 e index.html. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js', 'js/56-atalhos-ajustes.js'],
+        mudou: ['Arquivos alterados desde a 2.49.0: index.html, style.css, js/01, 02, 06, 08, 09, 11, 14, 17, 19, 31, 48 e o novo js/56-atalhos-ajustes.js.'],
+        testar: ['iPhone: confira a dock, a tela Mais e os atalhos do Início: ícones novos e nome "Repasse de NF".', 'iPhone: Cotações → pedido: os botões dos fornecedores (Associar NF, Já chegou, Cancelar) e o toque em Já chegou/Cancelar (desfazer).', 'iPhone: Ajustes → Personalização → Ordem dos Menus: toque na estrela de uma tela e volte a Ajustes: o grupo "Atalhos" deve aparecer no topo.', 'iPhone: nas telas, procure por "Saída de NF": não deve sobrar nenhuma.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.49.0', nome: 'Limpeza dos Relatórios antigos e faixa de atenção só de NF', status: 'concluida', data: '15/11/2026 às 22:40',
         novidades: ['Removido o código antigo de Relatórios (listas Pedidos, Notas, Divergências e Auditorias que estavam escondidas). O app fica mais leve.', 'No Controle de NFs, a faixa "itens precisam de atenção" agora conta só o que é de NF (vencidas, duplicadas, sem pedido, ERP a confirmar), e não o total geral da Central.'],
         implementado: ['index.html: bloco #rel-legado removido. js/04: funções das listas antigas removidas (ficam os auxiliares usados por outras telas). js/05, js/39, js/01, js/30: referências ao código antigo removidas. js/34: totalAtencaoNf. js/31: Ajuda.'],
         arquivos: ['index.html', 'js/01-nucleo-config-estado.js', 'js/04-relatorios-base.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/39-central-auditoria.js'],
@@ -3410,4 +3419,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.49.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.50.0';
