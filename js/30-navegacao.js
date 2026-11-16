@@ -170,18 +170,6 @@ function abrirProdutoNoCartao(card, codProduto) {
     if (!prod.classList.contains('aberto')) { centralProdutosExpandidos.add(codProduto); prod.classList.add('aberto'); }
     return prod;
 }
-// Relatórios → Divergências: abre o pedido já no fornecedor e no produto da divergência (ou só no fornecedor, se não tem produto).
-function abrirDivergenciaRelatorio(i) {
-    const x = relDivCache[i]; if (!x || !x.pedido) return;
-    let cnpj = x.fornecedorCnpj || '';
-    if (!cnpj && x.fornecedor) {
-        const cot = listaCotacoes.find(c => String(c.pedido) === String(x.pedido));
-        const alvo = upAud(x.fornecedor);
-        const f = cot && (cot.fornecedores || []).find(f => upAud(nomeExibicaoFornecedor(f.razaoSocial, f.cnpj)) === alvo || upAud(f.razaoSocial || '') === alvo);
-        if (f) cnpj = f.cnpj;
-    }
-    irParaDivergenciaPedido(x.pedido, cnpj, x.codProduto);
-}
 // Toque no selo/chip/quadro de divergências do cartão do fornecedor (já dentro do pedido).
 function irParaDivergenciaCartao(cnpj) {
     centralFornecedoresAbertos.add(cnpj);
@@ -251,4 +239,4 @@ function irParaPendenciaControle(chave, tipo) {
     if (document.body) aplicar(); else document.addEventListener('DOMContentLoaded', aplicar);
     if (mq.addEventListener) mq.addEventListener('change', aplicar); else if (mq.addListener) mq.addListener(aplicar);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.35.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/30-navegacao.js'] = '2.49.0';

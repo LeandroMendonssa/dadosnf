@@ -187,7 +187,7 @@ const AJUDA_ARTIGOS = [
       palavras: 'central notificacoes notificação atencao pendencia urgente vencida vencido parado alerta painel o que precisa notas pedidos divergencias recurso',
       tela: [{ id: 'screen-atencao', titulo: 'Central de notificações', rotulo: 'Abrir a central' }],
       passos: [
-        'Abra Central de notificações (dock ou Mais; o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa vermelha no topo mostra o total e leva ao mesmo painel.',
+        'Abra Central de notificações (dock ou Mais; o número ao lado mostra quantos itens precisam de atenção). No Controle de NFs, a faixa no topo conta só os itens que são de NF (vencidas, duplicadas, sem pedido, ERP a confirmar) e leva ao mesmo painel.',
         'Os grupos vêm por urgência. Urgente: notas na relação com vencimento vencido, NFs recebidas (do ERP ou do XML) com vencimento já passado e ainda sem envio ao financeiro, e pedidos com prazo vencido sem nenhum sinal de entrega.',
         'Importante: ocorrências detectadas pelo app e ainda sem relato em auditoria (abra o pedido e registre), NFs do ERP com pedido sugerido ou itens defasados, NFs do ERP esperando decisão há mais de 7 dias e NFs com XML sem pedido.',
         'Quando der: NFs com itens sem recurso ou sem produto da cotação e fornecedores sem CNPJ no SP Data.',
@@ -580,4 +580,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.48.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.49.0';

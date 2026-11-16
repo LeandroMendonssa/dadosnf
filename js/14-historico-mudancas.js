@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.48.2', nome: 'Relatórios: voltar leva à lista', status: 'atual', data: '15/11/2026 às 19:50',
+        numero: '2.49.0', nome: 'Limpeza dos Relatórios antigos e faixa de atenção só de NF', status: 'atual', data: '15/11/2026 às 22:40',
+        novidades: ['Removido o código antigo de Relatórios (listas Pedidos, Notas, Divergências e Auditorias que estavam escondidas). O app fica mais leve.', 'No Controle de NFs, a faixa "itens precisam de atenção" agora conta só o que é de NF (vencidas, duplicadas, sem pedido, ERP a confirmar), e não o total geral da Central.'],
+        implementado: ['index.html: bloco #rel-legado removido. js/04: funções das listas antigas removidas (ficam os auxiliares usados por outras telas). js/05, js/39, js/01, js/30: referências ao código antigo removidas. js/34: totalAtencaoNf. js/31: Ajuda.'],
+        arquivos: ['index.html', 'js/01-nucleo-config-estado.js', 'js/04-relatorios-base.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/39-central-auditoria.js'],
+        mudou: ['Arquivos alterados desde a 2.48.2: index.html, js/01, 04, 05, 14, 30, 31, 34 e 39.'],
+        testar: ['iPhone: abra o app e navegue por Início, Cotações, Controle de NFs, Anotações e Relatórios: tudo deve abrir normalmente (a limpeza não deve mudar nada visível).', 'iPhone: Controle de NFs: a faixa no topo deve dizer "itens de NF precisam de atenção", com número menor que o da Central de notificações.', 'iPhone: Relatórios → gere um relatório e baixe o PDF.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.48.2', nome: 'Relatórios: voltar leva à lista', status: 'concluida', data: '15/11/2026 às 19:50',
         novidades: ['Dentro de um relatório, a seta de voltar do cabeçalho (e o gesto da borda) leva à lista de relatórios; só da lista ela sai para a tela Mais.', 'Removida a faixa de botões do topo, que repetia o menu.'],
         implementado: ['js/55: faixa de abas removida; voltarInternoTela estendida para a tela de Relatórios; ao reabrir a tela, começa na lista.'],
         arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/55-hub-relatorios.js'],
@@ -3401,4 +3410,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.48.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.49.0';

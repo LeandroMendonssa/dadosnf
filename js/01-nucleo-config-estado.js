@@ -99,10 +99,6 @@ let filtroFornecedoresTexto = '';
 let isChecklistUpdate = false;
 let isInitialLoad = true;
 
-// --- ÁREA DE RELATÓRIOS: apenas leitura/consulta sobre dados já existentes
-// (notas, cotações/pedidos, anotações/ocorrências). Não cria nenhuma coleção
-// ou estrutura nova no Firestore.
-let relatoriosAbaAtiva = 'pedidos'; // 'pedidos' | 'notas' | 'divergencias'
 let relatoriosFiltroTexto = '';
 let relatoriosFiltroStatusNotas = 'pendente'; // 'pendente' | 'arquivada' | 'todas'
 let relatoriosFiltroStatusDivergencia = 'pendente'; // 'pendente' | 'resolvida' | 'encerrada' | 'todas'
@@ -218,4 +214,4 @@ const closeBtnBackScreen = { 'screen-resumo-pend': 'screen-inicio', 'screen-danf
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.49.0';

@@ -7,7 +7,6 @@ let atencaoAbertos = new Set(['alta']);
 let atencaoModo = 'urgencia'; // 'urgencia' | 'pedido' | 'fornecedor'
 function mudarModoAtencao(m) { atencaoModo = m; atencaoAbertos = new Set(); renderAtencao(); }
 function irParaRetroFiltro(f) { switchToScreen('screen-auditoria-central', 'Auditoria'); prepararAuditoriaUnificada('retro'); filtrarRetro(f); }
-function irParaRelatorioDivergencias() { switchToScreen('screen-reports', 'Relatórios'); mudarAbaRelatorios('divergencias'); }
 
 function diasDesdeISO(iso) { return iso ? Math.round((new Date(dataLocalISO() + 'T12:00:00') - new Date(String(iso).slice(0, 10) + 'T12:00:00')) / 86400000) : null; }
 
@@ -145,6 +144,9 @@ function irParaFornecedorCadastro(codigo) {
     const termo = (f.nomeReal || String(f.codigo)).slice(0, 60);
     setTimeout(() => { const inp = document.querySelector('#screen-fornecedores input.form-field'); if (inp) inp.value = termo; filtrarCadastroFornecedoresSpData(termo); }, 80);
 }
+// 2.49.0: no Controle de NFs a faixa conta só o que é de NF (não o total geral da Central)
+const ATENCAO_IDS_NF = ['notas-vencidas', 'nfs-vencidas-sem-envio', 'nf-duplicada', 'sugestoes', 'defasados', 'pre-selecao', 'nf-sem-pedido'];
+function totalAtencaoNf() { try { return itensDeAtencao().filter(g => ATENCAO_IDS_NF.includes(g.id)).reduce((s, g) => s + g.linhas.length, 0); } catch (e) { return 0; } }
 function totalAtencao() { try { return itensDeAtencao().reduce((s, g) => s + (g.nivel === 'baixa' ? 0 : g.linhas.length), 0); } catch (e) { return 0; } }
 
 const ATENCAO_NIVEIS = { alta: ['Urgente', 'err'], media: ['Importante', ''], baixa: ['Quando der', 'm'] };
@@ -219,7 +221,7 @@ function _renderAtencaoBase() {
 // Faixa no topo do Controle de NFs: só aparece quando há algo urgente ou importante.
 function renderBannerAtencao() {
     const el = document.getElementById('controle-atencao-banner'); if (!el) return;
-    const n = totalAtencao();
-    el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm precisa' : 'ns precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
+    const n = totalAtencaoNf();
+    el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.49.0';

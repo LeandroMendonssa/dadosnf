@@ -195,10 +195,10 @@ async function exportarDivergenciasPedido(pedido) {
 // 2.19.2: as telas que comparam vários pedidos de uma vez (Cotações, Mais, Atenção, Controle, Gerenciar, Central, Auditoria) rodam dentro de
 // comMemoComparacao: cada pedido é comparado uma vez só por redesenho. Isso derrubou o tempo da troca de aba de ~3 s para menos de 0,3 s nos seus dados.
 ['renderTelaMais', 'rebuildNotasPendentesList', 'renderListaCotacoes', 'renderControleNfs', 'itensDeAtencao', 'renderBannerAtencao', 'renderAtencao',
- 'renderCentralPedidoCompleto', 'renderCentralAuditoria', 'renderAbaAtivaRelatoriosAgora', 'renderHistoricoNfsAgora'].forEach(nome => {
+ 'renderCentralPedidoCompleto', 'renderCentralAuditoria', 'renderHistoricoNfsAgora'].forEach(nome => {
     const orig = window[nome];
     if (typeof orig !== 'function') return;
     window[nome] = function () { return comMemoComparacao(() => orig.apply(this, arguments)); };
 });
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/39-central-auditoria.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/39-central-auditoria.js'] = '2.49.0';
