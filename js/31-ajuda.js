@@ -20,7 +20,7 @@ const AJUDA_ARTIGOS = [
         'Relatórios e Cotações: acompanhamento dos pedidos, fornecedores e divergências.',
         'Entrada de NF: leitura do XML, fator de conversão, cotação, SP Data e recurso por item.',
         'Anotações: auditorias e ocorrências. Ajustes: fornecedores, produtos, personalização, backup, conta e esta Ajuda.',
-        'Qualquer tela pode ir para a dock (até Ajustes); o que você não colocar nela fica em "Mais". Com mais de 5 itens a dock rola. Em Ajustes → Personalização → Ordem dos Menus, a estrela de cada tela a põe no grupo "Atalhos" no topo de Ajustes. Escolha em Ajustes → Personalização → Menus.'
+        'Qualquer tela pode ir para a dock (até Ajustes); o que você não colocar nela fica em "Mais". Com mais de 5 itens a dock rola. Os atalhos da tela Início têm o seu próprio botão Editar. Escolha em Ajustes → Personalização → Menus.'
       ],
       dicas: ['No computador a barra não encolhe; no iPhone ela fica só com ícones e abre ao tocar.'], tutorial: null },
     { id: 'adicionar-nf', cat: 'Notas fiscais', titulo: 'Adicionar uma nota manualmente', versao: '2.10.0',
@@ -580,4 +580,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.51.0';

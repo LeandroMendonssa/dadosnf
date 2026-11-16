@@ -10,12 +10,21 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.50.0', nome: 'Novos ícones, Repasse de NF, botões do fornecedor e atalhos em Ajustes', status: 'atual', data: '16/11/2026 às 00:10',
-        novidades: ['"Saída de NF" agora se chama "Repasse de NF" em todo o app.', 'Ícones novos e diferentes entre si: Cotações (documento assinado), Entrada de NF (documento entrando), Controle de NFs (pasta aberta), Repasse de NF (setas de ida e volta) e Auditoria (lupa com gráfico).', 'Cards dos fornecedores na Cotação: três botões separados (Associar NF, Já chegou em azul, Cancelar), em vez da faixa com borda.', 'Atalhos em Ajustes: em Personalização → Ordem dos Menus, a estrela de cada tela a coloca no grupo "Atalhos" no topo de Ajustes.'],
-        implementado: ['js/01: ícones e título da tela. js/48: atalhos do Início. js/09, js/11, style.css: botões do card. js/56 (novo) e js/08, index.html: atalhos em Ajustes. Renome em js/02, 06, 17, 19, 31, 48 e index.html. js/31: Ajuda.'],
-        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js', 'js/56-atalhos-ajustes.js'],
-        mudou: ['Arquivos alterados desde a 2.49.0: index.html, style.css, js/01, 02, 06, 08, 09, 11, 14, 17, 19, 31, 48 e o novo js/56-atalhos-ajustes.js.'],
-        testar: ['iPhone: confira a dock, a tela Mais e os atalhos do Início: ícones novos e nome "Repasse de NF".', 'iPhone: Cotações → pedido: os botões dos fornecedores (Associar NF, Já chegou, Cancelar) e o toque em Já chegou/Cancelar (desfazer).', 'iPhone: Ajustes → Personalização → Ordem dos Menus: toque na estrela de uma tela e volte a Ajustes: o grupo "Atalhos" deve aparecer no topo.', 'iPhone: nas telas, procure por "Saída de NF": não deve sobrar nenhuma.'],
+        numero: '2.51.0', nome: 'Atalhos do Início editáveis', status: 'atual', data: '16/11/2026 às 06:40',
+        novidades: ['Na tela Início, o botão "Editar" ao lado de "Atalhos" deixa escolher quais atalhos aparecem e em que ordem. Qualquer tela do app pode virar atalho; "Restaurar atalhos padrão" volta ao conjunto original.', 'Removido o grupo "Atalhos" em Ajustes e a estrela em Personalização → Ordem dos Menus (criados na 2.50.0 por engano).'],
+        implementado: ['js/48: catálogo de atalhos, edição (adicionar, remover, subir, descer) e gravação em Personalização. style.css: bloco 2.51.0. js/08, index.html: retirada a estrela e o grupo em Ajustes. js/56 removido. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.50.0: index.html, style.css, js/08, 14, 31 e 48. O arquivo js/56-atalhos-ajustes.js deve ser APAGADO do repositório.'],
+        testar: ['iPhone: Início → Editar (ao lado de "Atalhos"): remova um atalho, adicione outra tela, mude a ordem e toque em Concluir.', 'iPhone: toque nos atalhos para confirmar que abrem as telas certas.', 'iPhone: "Restaurar atalhos padrão" volta ao original.', 'iPhone: Ajustes e Personalização → Ordem dos Menus: não devem ter mais a estrela nem o grupo Atalhos.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.50.0', nome: 'Novos ícones, Repasse de NF, botões do fornecedor e atalhos em Ajustes', status: 'concluida', data: '16/11/2026 às 00:10',
+        novidades: ['"Saída de NF" agora se chama "Repasse de NF" em todo o app.', 'Ícones novos e diferentes entre si: Cotações (documento assinado), Entrada de NF (documento entrando), Controle de NFs (pasta aberta), Repasse de NF (setas de ida e volta) e Auditoria (lupa com gráfico).', 'Cards dos fornecedores na Cotação: três botões separados (Associar NF, Já chegou em azul, Cancelar), em vez da faixa com borda.', '(Os atalhos em Ajustes dessa versão foram retirados na 2.51.0: o pedido era sobre os atalhos da tela Início.)'],
+        implementado: ['js/01: ícones e título da tela. js/48: atalhos do Início. js/09, js/11, style.css: botões do card. Atalhos em Ajustes (retirados na 2.51.0). Renome em js/02, 06, 17, 19, 31, 48 e index.html. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.49.0: index.html, style.css, js/01, 02, 06, 08, 09, 11, 14, 17, 19, 31 e 48.'],
+        testar: ['iPhone: confira a dock, a tela Mais e os atalhos do Início: ícones novos e nome "Repasse de NF".', 'iPhone: Cotações → pedido: os botões dos fornecedores (Associar NF, Já chegou, Cancelar) e o toque em Já chegou/Cancelar (desfazer).', 'iPhone: nas telas, procure por "Saída de NF": não deve sobrar nenhuma.'],
         testarLinks: []
     },
     {
@@ -3419,4 +3428,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.51.0';

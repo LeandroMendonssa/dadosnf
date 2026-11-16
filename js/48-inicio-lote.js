@@ -63,6 +63,30 @@ function inicioDados() {
     const proximas = abertas.filter(n => dias(n) !== null).sort((a, b) => dias(a) - dias(b)).slice(0, 4);
     return { venc, hoje, aman, naRelacao: abertas.length, proximas, dias };
 }
+// 2.51.0: os atalhos do Início são editáveis (quais aparecem e em que ordem). Qualquer tela do app pode virar atalho.
+const INI_PADRAO = ['screen-xml-editor', 'add', 'screen-cotacoes', 'screen-controle-nfs', 'screen-manage', 'screen-anotacoes', 'lote', 'resumo', 'screen-agenda'];
+const INI_ROTULO = { 'screen-agenda': 'Agenda' };
+let iniEditando = false;
+function iniCatalogo() {
+    const cat = {
+        add: { ic: 'fa-solid fa-plus-circle', t: 'Adicionar nota', a: "switchToScreen('screen-add','Adicionar')" },
+        lote: { ic: 'fa-solid fa-barcode', t: 'Buscar lote', a: 'abrirBuscaLote()' },
+        resumo: { ic: 'fa-solid fa-file-lines', t: 'Resumo de pendências', a: 'abrirResumoPendencias()' }
+    };
+    Object.keys(menuDetails).forEach(id => { if (id === 'screen-inicio') return; const d = menuDetails[id]; const t = INI_ROTULO[id] || d.title; cat[id] = { ic: d.icon, t, a: `abrirTelaMenu('${id}', '${String(d.title).replace(/'/g, "\\'")}')` }; });
+    return cat;
+}
+function iniAtalhosAtuais() { const l = (appConfig.personalizacao || {}).atalhosInicio; return Array.isArray(l) ? l : INI_PADRAO; }
+function iniGravarAtalhos(lista) { appConfig.personalizacao = appConfig.personalizacao || {}; appConfig.personalizacao.atalhosInicio = lista; if (typeof salvarPersonalizacao === 'function') salvarPersonalizacao(); renderInicio(); }
+function iniEditarAtalhos(on) { iniEditando = !!on; renderInicio(); }
+function iniAlternarAtalho(id) { const l = iniAtalhosAtuais().slice(), i = l.indexOf(id); if (i >= 0) l.splice(i, 1); else l.push(id); iniGravarAtalhos(l); }
+function iniMoverAtalho(id, dir) { const l = iniAtalhosAtuais().slice(), i = l.indexOf(id), j = i + dir; if (i < 0 || j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; iniGravarAtalhos(l); }
+function iniRestaurarAtalhos() { iniGravarAtalhos(INI_PADRAO.slice()); }
+function htmlEdicaoAtalhos() {
+    const cat = iniCatalogo(), ativos = iniAtalhosAtuais().filter(id => cat[id]), fora = Object.keys(cat).filter(id => !ativos.includes(id));
+    const lin = (id, on, i) => `<div class="ini-ed-lin"><i class="${cat[id].ic}"></i><span>${escIni(cat[id].t)}</span>${on ? `<button type="button" class="ini-ed-b" aria-label="Subir" onclick="iniMoverAtalho('${id}', -1)" ${i === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button><button type="button" class="ini-ed-b" aria-label="Descer" onclick="iniMoverAtalho('${id}', 1)" ${i === ativos.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>` : ''}<button type="button" class="ini-ed-b ${on ? 'tira' : 'poe'}" aria-label="${on ? 'Remover' : 'Adicionar'}" onclick="iniAlternarAtalho('${id}')"><i class="fa-solid ${on ? 'fa-minus' : 'fa-plus'}"></i></button></div>`;
+    return `<div class="ini-card ini-ed">${ativos.map((id, i) => lin(id, true, i)).join('')}</div>` + (fora.length ? `<div class="ini-tit">Outras telas</div><div class="ini-card ini-ed">${fora.map(id => lin(id, false, 0)).join('')}</div>` : '') + `<button type="button" class="ini-ed-rest" onclick="iniRestaurarAtalhos()">Restaurar atalhos padrão</button>`;
+}
 function renderInicio() {
     const el = document.getElementById('inicio-conteudo'); if (!el) return;
     ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'associacoesFornecedor'].forEach(n => { try { assinarDados(n); } catch (e) { } });   // já subiriam em segundo plano; aqui sobem logo ao abrir (sem leitura extra)
@@ -90,18 +114,8 @@ function renderInicio() {
             ${k('g', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
             ${kForn}
         </div>
-        <div class="ini-tit">Atalhos</div>
-        <div class="ini-ats">
-            ${at('fa-solid fa-file-invoice', 'Entrada de NF', "switchToScreen('screen-xml-editor','Entrada de NF')", true)}
-            ${at('fa-solid fa-plus-circle', 'Adicionar nota', "switchToScreen('screen-add','Adicionar')")}
-            ${at('fa-solid fa-file-signature', 'Cotações', "switchToScreen('screen-cotacoes','Cotações')")}
-            ${at('fa-solid fa-folder-open', 'Controle de NFs', "switchToScreen('screen-controle-nfs','Controle de NFs')")}
-            ${at('fa-solid fa-right-left', 'Repasse de NF', "switchToScreen('screen-manage','Repasse de NF')")}
-            ${at('fa-solid fa-sticky-note', 'Anotações', "switchToScreen('screen-anotacoes','Anotações')")}
-            ${at('fa-solid fa-barcode', 'Buscar lote', "abrirBuscaLote()")}
-            ${at('fa-solid fa-file-lines', 'Resumo de pendências', 'abrirResumoPendencias()')}
-            ${at('fa-solid fa-calendar-days', 'Agenda', "switchToScreen('screen-agenda','Agenda de trabalho'); if (typeof prepararAgenda==='function') prepararAgenda()")}
-        </div>
+        <div class="ini-tit ini-tit-ed">Atalhos<button type="button" class="ini-ed-btn" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button></div>
+        ${iniEditando ? htmlEdicaoAtalhos() : `<div class="ini-ats">${iniAtalhosAtuais().map((id, i) => { const c = iniCatalogo()[id]; return c ? at(c.ic, c.t, c.a, i === 0) : ''; }).join('')}</div>`}
         <div class="ini-tit">Próximos vencimentos</div>
         <div class="ini-card">${linhasProx}</div>`;
 }
@@ -195,4 +209,4 @@ function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.51.0';
