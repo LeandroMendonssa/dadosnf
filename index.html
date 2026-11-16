@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.51.0">
+    <meta name="app-versao" content="2.52.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -167,11 +167,8 @@
             </div>
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo busca-padrao" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
-                <div class="toolrow"><button type="button" class="ord-btn" id="ger-ord-btn" onclick="abrirOrdenar('gerenciar')"></button><button type="button" class="selb" id="select-mode-btn" onclick="toggleSelectionModeNotas()" title="Selecionar em lote"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> <span class="selb-t">Selecionar</span></button></div> <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
-            </div>
-            
-            
-            <div class="app-screen" id="screen-export">
+                <div class="toolrow"><button type="button" class="ord-btn" id="ger-ord-btn" onclick="abrirOrdenar('gerenciar')"></button><button type="button" class="selb" id="select-mode-btn" onclick="toggleSelectionModeNotas()" title="Selecionar em lote"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> <span class="selb-t">Selecionar</span></button></div> <div class="xml-filtro-toggle" id="gerenciar-abas"><button type="button" class="xml-filtro-btn active" data-aba="saida" onclick="alternarAbaGerenciar('saida')">Para saída <span id="gerenciar-cont-saida">0</span></button><button type="button" class="xml-filtro-btn" data-aba="espera" onclick="alternarAbaGerenciar('espera')">Em espera <span id="gerenciar-cont-espera">0</span></button><button type="button" class="xml-filtro-btn" data-aba="exportar" onclick="alternarAbaGerenciar('exportar')">Exportar texto</button></div> <div id="gerenciar-aplicar-recursos" class="gerenciar-aviso-recursos" style="display:none;"><span id="gerenciar-aplicar-recursos-txt"></span><button type="button" class="action-chip" onclick="aplicarRecursosSugeridosTodos()">Aplicar em todas</button></div> <div id="lista-notas-pendentes" class="nota-list"></div> <div class="gerenciar-ver-todas"><button type="button" class="actions-button" onclick="abrirControleNfs()"><span class="icon-wrapper"><i class="fa-solid fa-list-check"></i></span> Ver todas as NFs (Controle)</button></div> 
+                <div id="gerenciar-pane-export">
                 <div id="export-info-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; color: var(--text-light); font-size: 14px;">
                      <span>Contabilização:</span>
                      <span style="background: var(--bg-secondary); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-dark);"><span id="total-notas-export">0</span> notas</span>
@@ -185,7 +182,10 @@
                     <button class="actions-button is-neutral" onclick="gerarPdfSaida()"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i><span class="material-icons">picture_as_pdf</span></span> Gerar PDF</button>
                     </div>
                 <div class="actions actions-destrutivas"><button class="actions-button is-danger" onclick="limpar()"><span class="icon-wrapper"><i class="fa-solid fa-archive"></i><span class="material-icons">archive</span></span> Arquivar Tudo</button></div>
+                </div>
             </div>
+            
+            
 
             <div class="app-screen" id="screen-reports">
                 <div id="rel-hub"></div>
@@ -690,7 +690,7 @@
             </div>
             <div class="app-screen" id="screen-pz-menus">
                 <div class="card">
-                    <div class="campo"> <label>Ordem dos Menus e barra inferior</label> <div class="campo-dica">Desmarque "Na barra" para mandar um destino para a tela "Mais". O botão "Mais" fica sempre na barra, com as ferramentas (ex.: Importar Relatório ERP).</div> <div id="menu-reorder-list" class="reorder-list"></div> </div>
+                    <div class="campo"> <label>Ordem dos Menus e barra inferior</label> <div class="campo-dica"><span class="dica-aparelho">Desmarque "Na barra" para mandar um destino para a tela "Mais". O botão "Mais" fica sempre na barra, com as ferramentas (ex.: Importar Relatório ERP).</span><span class="dica-web">Use as setas para mudar a ordem dos itens da barra lateral.</span></div> <div id="menu-reorder-list" class="reorder-list"></div> </div>
                 </div>
             </div>
             <div class="app-screen" id="screen-pz-assinatura">
