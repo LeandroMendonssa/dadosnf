@@ -99,7 +99,12 @@ function catalogoOnSnapshot(nome, col, cb, errCb) {
         } catch (e) {
             console.warn('Catálogo', nome, '— usando escuta normal:', e && (e.code || e.message));
             catalogoDiagSet(nome, { como: 'normal', docs: null, erro: e && (e.code || e.message) });
-            if (ativo && !escutaNormal) escutaNormal = col.onSnapshot(s => { marcar(); cb(s); }, er => { marcar(); if (errCb) errCb(er); });
+            if (ativo && !escutaNormal) escutaNormal = col.onSnapshot(s => { marcar(); cb(s); }, er => {
+                marcar();
+                // 2.55.10: sem permissão (ex.: conta nova ainda não aprovada) a lista não pode continuar mostrando os dados da conta anterior
+                if (er && er.code === 'permission-denied') { try { cb(catalogoSnapshot(new Map())); } catch (e) { } }
+                if (errCb) errCb(er);
+            });
         }
     })();
     return () => { ativo = false; delete catalogoEstado[nome]; if (escutaNormal) { const u = escutaNormal; escutaNormal = null; u(); } };
@@ -207,4 +212,4 @@ function catalogoRelatorioTexto() {
     return L.join('\n');
 }
 try { if (window.firebase && firebase.firestore) catalogoInstalarEscritas(firebase.firestore); } catch (e) { console.warn('Cache de catálogos: gravações não monitoradas:', e); }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.23.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/44-catalogo-cache.js'] = '2.55.10';

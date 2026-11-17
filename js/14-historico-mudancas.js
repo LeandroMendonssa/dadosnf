@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.9', nome: 'Compra direta sai do "Sem pedido" e Selecionar fica visível nos filtros', status: 'atual', data: '17/11/2026 às 18:40',
+        numero: '2.55.10', nome: 'Senha com pontos normais e lista sem dados da conta anterior', status: 'atual', data: '17/11/2026 às 19:00',
+        novidades: ['No campo de senha, os pontos aparecem normais (antes apareciam como barras).', 'Quando o Firebase nega o acesso (por exemplo, numa conta ainda não aprovada), a lista de fornecedores e catálogos esvazia em vez de mostrar os dados da conta anterior.'],
+        implementado: ['style.css: fonte do sistema no campo de senha. js/44: quando a permissão é negada, a lista recebe vazia e o aviso explica o motivo. index.html e js/14: versão 2.55.10.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados desde a 2.55.9: index.html, style.css, js/14 e js/44.', 'Não há mudança no Worker.'],
+        testar: ['Na tela de login, digitar a senha: os pontos devem aparecer normais.', 'Entrar com uma conta não aprovada: o aviso do Firebase aparece e a lista de fornecedores fica vazia (não mostra a conta anterior).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.9', nome: 'Compra direta sai do "Sem pedido" e Selecionar fica visível nos filtros', status: 'concluida', data: '17/11/2026 às 18:40',
         novidades: ['Na Auditoria Retroativa, uma NF marcada como compra direta ("Esta NF não tem pedido" ou "não tem cotação") sai da lista de "Sem pedido", tanto nas já marcadas quanto nas marcadas agora.', 'Novo filtro "Compra direta" para ver essas NFs.', 'Nas telas com filtro de ordenação, o botão Selecionar não é mais empurrado para fora da tela (Safari e demais navegadores).'],
         implementado: ['js/32: a análise da Retroativa considera a marca de compra direta (no ERP e na NF com XML); filtro "Compra direta"; a lista geral deixa de mostrar as NFs de compra direta. style.css: a linha de ferramentas encolhe o botão de ordenação e mantém o Selecionar. index.html e js/14: versão 2.55.9.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/32-auditoria-retroativa.js'],
@@ -3554,4 +3563,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.10';
