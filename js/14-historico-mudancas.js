@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.10', nome: 'Senha com pontos normais e lista sem dados da conta anterior', status: 'atual', data: '17/11/2026 às 19:00',
+        numero: '2.55.11', nome: 'Aviso de publicação do GitHub volta pelo webhook (só conta mestre)', status: 'atual', data: '17/11/2026 às 19:40',
+        novidades: ['A conta mestre volta a receber o aviso quando a publicação no GitHub começa e quando termina (ou se der erro).', 'Os avisos de "versão no ar" de tempos em tempos foram retirados.'],
+        implementado: ['avisos/worker-avisos.js: rota /github, que recebe o webhook do GitHub (workflow_run da publicação do Pages), confere a assinatura e avisa só as contas mestres. Retirado o aviso periódico de versão. js/14: registro desta mudança.'],
+        arquivos: ['js/14-historico-mudancas.js', 'avisos/worker-avisos.js'],
+        mudou: ['Só o Worker mudou: cole o novo avisos/worker-avisos.js no Worker (Edit code → Deploy).', 'No Worker: Settings → Variables and Secrets → adicione o segredo GITHUB_WEBHOOK_SECRET com o mesmo valor do campo Secret do webhook no GitHub.', 'O app não precisa de atualização (continua na 2.55.10).'],
+        testar: ['No GitHub: Settings → Webhooks → Recent Deliveries: a próxima entrega deve voltar com status 200 e {"enviados":N}.', 'Ao publicar, a conta mestre recebe "Publicação iniciada" e depois "Publicação concluída".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.10', nome: 'Senha com pontos normais e lista sem dados da conta anterior', status: 'concluida', data: '17/11/2026 às 19:00',
         novidades: ['No campo de senha, os pontos aparecem normais (antes apareciam como barras).', 'Quando o Firebase nega o acesso (por exemplo, numa conta ainda não aprovada), a lista de fornecedores e catálogos esvazia em vez de mostrar os dados da conta anterior.'],
         implementado: ['style.css: fonte do sistema no campo de senha. js/44: quando a permissão é negada, a lista recebe vazia e o aviso explica o motivo. index.html e js/14: versão 2.55.10.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
@@ -3563,4 +3572,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.10';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.11';
