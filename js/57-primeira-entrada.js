@@ -190,7 +190,7 @@ const ONB_TOUR = [
     { t: 'Cotações', d: 'Acompanhe cada pedido por fornecedor: o que chegou, o que falta e quem não entregou.', svg: '<path d="M6 2.5h8l5 5V21.5H6z"/><path d="M14 2.5V8h5M8.5 17c1.5-3 2.5 1 3.5-1s1.5 0 3-1"/>' },
     { t: 'Controle de NFs', d: 'Todas as notas num lugar só, com vencimentos e a situação de cada uma.', svg: '<path d="M3 7V5h6l2 2h8v3M3 7v12h15l3-9H6l-3 9"/>' },
     { t: 'Repasse de NF', d: 'Monte a relação de notas para o financeiro e exporte o texto pronto para enviar.', svg: '<path d="M4 8h15l-3-3M20 16H5l3 3"/>' },
-    { t: 'Assistente de consultas', d: 'Tire dúvidas rápidas sobre o app a qualquer hora, pelo ícone de conversa no topo. Ainda está em desenvolvimento: às vezes a resposta pode falhar.', svg: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>', tag: 'Em desenvolvimento' },
+    { t: 'Assistente de consultas', d: 'Tire dúvidas rápidas sobre o app a qualquer hora, pelo ícone de conversa no topo.', svg: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>' },
     { t: 'Auditoria', d: 'Divergências encontradas, relatadas e resolvidas, com relatórios prontos em PDF e Word.', svg: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 12.5v-2M10.5 12.5v-4M13 12.5v-3"/>' }
 ];
 const ONB_SEQ = [0, 1, 2, 3, 4, 5];
@@ -234,7 +234,7 @@ function onbRender() {
     const k = onb.k, tour = onb.modo === 'tour';
     const dots = tour ? '' : ONB_SEQ.map(i => `<i class="${i < k ? 'f' : ''}"></i>`).join('');
     let corpo = '';
-    if (k === 0) corpo = `<div class="onb-hero"><i class="fa-solid fa-clipboard-check"></i></div><h1>Bem-vindo(a) ao painel de auditoria</h1><p class="onb-l">Em menos de um minuto deixamos tudo com a sua cara: seu nome, a assinatura nos relatórios e um tour rápido pelo que o app faz.</p>`;
+    if (k === 0) corpo = `<div class="onb-hero"><i class="fa-solid fa-clipboard-check"></i></div><h1>Bem-vindo(a) ao painel de auditoria</h1><p class="onb-l">Em menos de um minuto deixamos tudo com a sua cara: seu nome, a assinatura nos relatórios e um tour rápido pelo que o app faz.</p><div class="onb-aviso"><i class="fa-solid fa-screwdriver-wrench"></i><span>O app está em desenvolvimento: novas funções e ajustes chegam com frequência. Se algo parecer estranho, avise a conta mestre.</span></div>`;
     if (k === 1) corpo = `<h2>Como podemos te chamar?</h2><p class="onb-l">Nome e sobrenome. Eles aparecem na saudação e na assinatura dos relatórios.</p>
         <div class="onb-f"><label>Nome</label><input id="onb-nome" autocomplete="given-name" autocapitalize="words" placeholder="Ex.: Maria" value="${onbEsc(onb.nome)}" oninput="onbCampo('nome',this.value)"></div>
         <div class="onb-f"><label>Sobrenome</label><input id="onb-sobre" autocomplete="family-name" autocapitalize="words" placeholder="Ex.: Souza" value="${onbEsc(onb.sobre)}" oninput="onbCampo('sobre',this.value)"></div>`;
@@ -401,4 +401,4 @@ function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais apar
 }
 
 auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); try { document.body.classList.toggle('conta-mestre', !!user && isContaAdmin(user)); } catch (e) { document.body.classList.remove('conta-mestre'); } if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.6';

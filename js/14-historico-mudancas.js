@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.5', nome: 'Popups de novidades para todos e aviso de publicação só para a conta mestre', status: 'atual', data: '17/11/2026 às 09:35',
+        numero: '2.55.6', nome: 'Onboarding em tela grande e aviso de desenvolvimento para o app', status: 'atual', data: '17/11/2026 às 09:40',
+        novidades: ['No computador, o onboarding ocupa a tela inteira, sem moldura, com o conteúdo numa coluna central.', 'O aviso de "em desenvolvimento" agora vale para o app todo: aparece na primeira tela do onboarding. Saiu o aviso específico do Assistente.'],
+        implementado: ['style.css: regras de tela grande do onboarding sem moldura e classe .onb-aviso. js/57: aviso geral na primeira tela e Assistente sem aviso próprio. js/31: resumo do Assistente sem aviso. index.html: título do botão do Assistente volta ao normal, versão 2.55.6.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.5: index.html, style.css, js/14, js/31 e js/57.', 'Não há mudança no Worker.'],
+        testar: ['Num computador (janela larga), sair e entrar de novo com uma conta sem onboarding feito: a tela deve ocupar tudo, com o texto centralizado e sem moldura.', 'No iPhone, o onboarding deve continuar igual.', 'Na primeira tela aparece o aviso "O app está em desenvolvimento".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.5', nome: 'Popups de novidades para todos e aviso de publicação só para a conta mestre', status: 'concluida', data: '17/11/2026 às 09:35',
         novidades: ['O popup de novidades volta a aparecer para todas as contas.', 'A conta mestre recebe um aviso no celular quando a nova versão já está no ar no GitHub (com os arquivos todos publicados).', 'Corrigido: na lista de Aprovações, ao abrir "Permissões", não aparece mais um pedido que já foi aprovado ou apagado.'],
         implementado: ['js/24: popup de novidades para todas as contas. js/57: lista de aprovações usa só os dados atuais. avisos/worker-avisos.js: verifica o site publicado a cada 15 min e avisa a conta mestre quando a versão nova está completa (versão do index, do CSS e da primeira entrada iguais). Versão 2.55.5 mostrada no endereço do Worker.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/57-primeira-entrada.js'],
@@ -3518,4 +3527,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.6';

@@ -49,11 +49,11 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['O bloqueio é feito pelo app. Para valer também no servidor, as regras do Firebase precisam ser ajustadas (trecho sugerido na entrega 2.53.0).'], tutorial: null },
     { id: 'ajuda-duvidas', cat: 'Primeiros passos', titulo: 'Dúvidas, Ajuda e o Assistente', versao: '2.55.0',
-      resumo: 'Onde tirar dúvidas: o botão ? e o Assistente (em desenvolvimento).',
+      resumo: 'Onde tirar dúvidas: o botão ? e o Assistente.',
       palavras: 'ajuda duvida assistente conversa ia pergunta consulta rapida desenvolvimento',
       passos: [
         'Em qualquer tela, o botão ? no topo abre a Ajuda, com um passo a passo de cada função. Use a busca para achar o assunto.',
-        'O ícone de conversa no topo abre o Assistente, para consultas rápidas sobre o app. Ele está em desenvolvimento: as respostas podem falhar ou não cobrir tudo ainda.',
+        'O ícone de conversa no topo abre o Assistente, para consultas rápidas sobre o app.',
         'Se a resposta do Assistente não resolver, use a Ajuda ou fale com a conta mestre.'
       ],
       dicas: ['O Assistente ainda não substitui a Ajuda: ele é um atalho para perguntas rápidas.'], tutorial: null },
@@ -615,4 +615,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.55.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.55.6';
