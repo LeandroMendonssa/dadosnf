@@ -74,7 +74,7 @@ function excluirAnotacaoRapida(id) {
     showConfirmModal({
         title: 'Excluir Anotação',
         message: `Deseja excluir "${nota ? (nota.titulo || 'Sem título') : 'esta anotação'}" permanentemente?`,
-        confirmText: 'Excluir',
+        confirmText: 'Excluir anotação',
         confirmClass: 'danger',
         onConfirm: async () => {
             try {
@@ -928,7 +928,7 @@ function excluirAnotacaoAtual() {
     showConfirmModal({
         title: 'Excluir Anotação',
         message: 'Deseja excluir esta anotação permanentemente?',
-        confirmText: 'Excluir',
+        confirmText: 'Excluir anotação',
         confirmClass: 'danger',
         onConfirm: async () => {
             try {
@@ -1203,4 +1203,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.54.0';

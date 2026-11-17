@@ -411,7 +411,7 @@ function enviarNfAoFinanceiro(chave) {
     showConfirmModal({
         title: 'Enviada ao financeiro?',
         message: `${titulo} vai para Arquivadas.${it.nota ? ' Só esta nota sai da relação; as outras continuam como estão.' : ' As notas da relação não são afetadas.'}`,
-        confirmText: 'Sim, já foi', confirmClass: 'success',
+        confirmText: 'Marcar como enviada', confirmClass: 'success',
         onConfirm: async () => {
             try { await arquivarItemControle(it); toast('✓ NF enviada ao financeiro — está em Arquivadas.'); }
             catch (e) { console.error('Erro ao marcar NF como enviada ao financeiro:', e); toast('✕ Erro ao arquivar a NF.'); }
@@ -423,7 +423,7 @@ function marcarSelecionadasEnviadas() {
     if (!itens.length) return;
     showConfirmModal({
         title: 'Enviada ao financeiro', message: `Marcar ${itens.length} NF(s) como enviadas ao financeiro? Elas vão para Arquivadas (dá para voltar depois). Só as NFs selecionadas saem da relação.`,
-        confirmText: 'Marcar', confirmClass: 'success',
+        confirmText: 'Marcar como enviadas', confirmClass: 'success',
         onConfirm: async () => {
             let n = 0;
             for (const it of itens) { try { await arquivarItemControle(it); n++; } catch (e) { console.error('Erro ao arquivar', it.chave, e); } }
@@ -437,7 +437,7 @@ function marcarSelecionadasDiretas() {
     if (!chaves.length) { toast('Só NFs "Recebidas" podem ir como "Não vai ao financeiro".'); return; }
     showConfirmModal({
         title: 'Não vai ao financeiro', message: `Marcar ${chaves.length} NF(s) como diretas? Elas saem de "Em aberto" e ficam em Arquivadas, com a etiqueta Direta (dá para voltar depois).`,
-        confirmText: 'Marcar', confirmClass: 'warning',
+        confirmText: 'Marcar como diretas', confirmClass: 'warning',
         onConfirm: async () => { for (const ch of chaves) await marcarNfDireta(ch); selecionadasControle.clear(); selecaoControleAtiva = false; renderControleNfs(); }
     });
 }
@@ -504,7 +504,7 @@ async function enviarNfParaRelacao(chave) {
         showConfirmModal({
             title: 'Nota Duplicada',
             message: `Já existe uma nota ${duplicata.origem === 'historico' ? 'ARQUIVADA (histórico)' : 'PENDENTE'} para "${d.fornecedor}" com a NF "${d.nf}". Enviar mesmo assim?`,
-            confirmText: 'Sim, Enviar', confirmClass: 'warning', onConfirm: executar
+            confirmText: 'Enviar mesmo assim', confirmClass: 'warning', onConfirm: executar
         });
         return;
     }
@@ -846,7 +846,7 @@ function corrigirConversaoNfItem(nfId, idx, novoFator) {
     showConfirmModal({
         title: 'Corrigir conversão',
         message: `NF ${nf.nf} — ${it.xProd}\nQuantidade: ${it.quantidade} → ${novaQtd}\nValor unitário: ${it.valorUnitario} → ${novoValor}\nFator: ${fatorAnt} → ${novoFator}\nO fator ${novoFator} será lembrado para as próximas NFs deste produto deste fornecedor.\n\nCorrige só o registro da NF salva (o XML original não é alterado).`,
-        confirmText: 'Corrigir', confirmClass: 'warning',
+        confirmText: 'Corrigir conversão', confirmClass: 'warning',
         onConfirm: async () => {
             try {
                 const novos = nf.itens.map((x, k) => k !== idx ? x : { ...x, quantidade: novaQtd, valorUnitario: novoValor, fatorAplicado: novoFator });
@@ -1004,7 +1004,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.54.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

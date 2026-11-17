@@ -288,7 +288,7 @@ function bulkExcluirNotas() {
     showConfirmModal({
         title: 'Excluir Notas Selecionadas',
         message: `Deseja excluir ${ids.length} nota(s) permanentemente? Essa ação não pode ser desfeita.`,
-        confirmText: 'Excluir',
+        confirmText: 'Excluir notas selecionadas',
         confirmClass: 'danger',
         onConfirm: async () => {
             try {
@@ -455,4 +455,4 @@ document.addEventListener('keydown', (event) => {
     else if (el.id === 'aud-obs-geral') { /* último campo da auditoria — não faz nada especial */ }
     else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && escopo.id === 'add-nf-manual') salvarBtn.click(); }
 });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.54.0';

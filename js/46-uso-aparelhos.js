@@ -68,7 +68,7 @@ async function usoApCarregar() {
 }
 function usoApRemover(id) {
     showConfirmModal({
-        title: 'Remover aparelho da lista?', message: 'Só tira este aparelho do relatório geral. Se ele ainda estiver em uso, volta a aparecer sozinho na próxima publicação.', confirmText: 'Remover', confirmClass: 'danger',
+        title: 'Remover aparelho da lista?', message: 'Só tira este aparelho do relatório geral. Se ele ainda estiver em uso, volta a aparecer sozinho na próxima publicação.', confirmText: 'Remover aparelho', confirmClass: 'danger',
         onConfirm: async () => {
             try { await firestore.collection('config').doc('usoAparelhos').update({ ['aparelhos.' + id]: firebase.firestore.FieldValue.delete() }); delete usoApCache.aparelhos[id]; renderUsoFirebase(); toast('✓ Aparelho removido da lista.'); }
             catch (e) { toast('✕ Não foi possível remover.'); }
@@ -162,4 +162,4 @@ function usoCopiarTexto(id) {
     setInterval(() => usoApPublicar(false), USO_AP_INTERVALO);
     document.addEventListener('visibilitychange', () => { if (document.hidden) { usoApUltimoPublicar = 0; usoApPublicar(true); } });
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/46-uso-aparelhos.js'] = '2.24.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/46-uso-aparelhos.js'] = '2.54.0';

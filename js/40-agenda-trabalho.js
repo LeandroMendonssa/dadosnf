@@ -163,7 +163,7 @@ async function agendaConfirmarFeita() {
 async function agendaDesfazerFeita(id, campo) { if (await agendaApagarCampo(`itens.${id}.feitas.${campo}`)) toast('✓ Voltou para pendente.'); }
 function agendaExcluir(id) {
     const it = listaAgenda[id]; if (!it) return;
-    showConfirmModal({ title: 'Excluir lembrete?', message: `"${it.titulo || AGENDA_TIPOS[it.tipo]}"${it.rep && it.rep !== 'n' ? ' e todas as repetições dele' : ''} sairá da agenda.`, confirmText: 'Excluir', confirmClass: 'danger',
+    showConfirmModal({ title: 'Excluir lembrete?', message: `"${it.titulo || AGENDA_TIPOS[it.tipo]}"${it.rep && it.rep !== 'n' ? ' e todas as repetições dele' : ''} sairá da agenda.`, confirmText: 'Excluir lembrete', confirmClass: 'danger',
         onConfirm: async () => { if (await agendaApagarCampo('itens.' + id)) toast('✓ Lembrete excluído.'); } });
 }
 
@@ -237,4 +237,4 @@ function agendaGruposAtencao() {
     if (vesp.length) g.push({ nivel: 'media', id: 'agenda-amanha', titulo: 'Amanhã na agenda', dica: 'Começa amanhã.', linhas: vesp.map(linha) });
     return g;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/40-agenda-trabalho.js'] = '2.20.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/40-agenda-trabalho.js'] = '2.54.0';

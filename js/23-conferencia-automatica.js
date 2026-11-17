@@ -81,7 +81,7 @@ function marcarNfCompraDireta(nfId) {
     showConfirmModal({
         title: 'Marcar como compra direta',
         message: `NF ${nf.nf} — ${nf.fornecedor || ''}\nEla passa a ser tratada como compra sem cotação do SmartCompras e deixa de aparecer como "sem pedido".`,
-        confirmText: 'Marcar', confirmClass: 'warning',
+        confirmText: 'Marcar compra direta', confirmClass: 'warning',
         onConfirm: async () => {
             try { await nfsProcessadasCollection.doc(nfId).update({ semCotacaoSmartCompras: true }); toast('✓ NF marcada como compra direta.'); }
             catch (e) { console.error('Erro ao marcar compra direta:', e); toast('✕ Erro ao marcar a NF.'); }
@@ -123,3 +123,4 @@ function htmlNfExistenteAdicionar() {
         <div class="aviso-nf-dica">Se for a mesma nota, envie pelo Controle de NFs ("Enviar para a relação"): os dados já estão lá. Se salvar aqui, a nota será ligada a essa NF automaticamente.</div></div>`;
 }
 if (DOM.forn) DOM.forn.addEventListener('input', () => { if (typeof atualizarSugestoesNf === 'function') atualizarSugestoesNf(); });
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/23-conferencia-automatica.js'] = '2.54.0';

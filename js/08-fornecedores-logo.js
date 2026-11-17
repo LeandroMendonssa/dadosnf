@@ -90,7 +90,7 @@ async function bulkExcluirFornecedores() {
     showConfirmModal({
         title: 'Excluir Fornecedores',
         message: `Excluir ${nomes.length} fornecedor(es) selecionado(s) da lista? Isso não afeta notas já cadastradas com esse nome.`,
-        confirmText: 'Excluir',
+        confirmText: 'Excluir fornecedores',
         confirmClass: 'danger',
         onConfirm: async () => {
             try {
@@ -218,7 +218,7 @@ function aplicarApelidoNoCampo(input) {
 }
 async function adicionarObservacao(obs,noToast=false){const o=obs.trim();if(o&&!observacoesSugeridas.includes(o)){observacoesSugeridas.push(o);await settingsDocRef.set({ observacoes: observacoesSugeridas }, { merge: true });if(!noToast)toast(`Obs "${o}" adicionada!`)}}
 function adicionarObservacaoManage(){const o=DOM.obsManageInput.value.trim();if(o){adicionarObservacao(o);DOM.obsManageInput.value=''}}
-async function deletarObservacao(o){showConfirmModal({title:"Excluir Observação",message:`Excluir "${o}"?`,onConfirm:async()=>{observacoesSugeridas=observacoesSugeridas.filter(i=>i!==o);await settingsDocRef.update({observacoes:firebase.firestore.FieldValue.arrayRemove(o)});toast(`Obs "${o}" excluída.`)}})}
+async function deletarObservacao(o){showConfirmModal({title:"Excluir Observação",confirmText:"Excluir observação",message:`Excluir "${o}"?`,onConfirm:async()=>{observacoesSugeridas=observacoesSugeridas.filter(i=>i!==o);await settingsDocRef.update({observacoes:firebase.firestore.FieldValue.arrayRemove(o)});toast(`Obs "${o}" excluída.`)}})}
 function popularObservacoesList(){DOM.obs.innerHTML='<option value="">Recurso a ser pago</option>';observacoesSugeridas.sort().forEach(o=>DOM.obs.innerHTML+=`<option value="${o}">${o}</option>`);DOM.listaObsManage.innerHTML='';observacoesSugeridas.sort().forEach(o=>DOM.listaObsManage.innerHTML+=`<li>${o} <button onclick="deletarObservacao('${o}')"><i class="fa-solid fa-times-circle"></i></button></li>`)}
 
 
@@ -382,7 +382,7 @@ function removerLogo() {
 function sincronizarManualmente(button){const syncButton=document.getElementById('sync-btn');if(syncButton.disabled)return;syncButton.disabled=true;const icon = syncButton.querySelector('.icon-wrapper i, .icon-wrapper svg'); if(icon) icon.classList.add('fa-spin'); toast("Sincronizando...");setTimeout(()=>{toast("✓ Dados atualizados.");syncButton.disabled=false;if(icon) icon.classList.remove('fa-spin'); if(icon) icon.classList.add('sync-success');setTimeout(()=>icon.classList.remove('sync-success'),800)},1250)}
 function toggleEditPanel(btn,notaId){const notaItem=btn.closest('.nota-item');const editPanel=notaItem.querySelector('.edit-panel');document.querySelectorAll('.edit-panel.show').forEach(p=>{if(p!==editPanel)p.classList.remove('show')});const isVisible=editPanel.classList.toggle('show');if(isVisible&&editPanel.innerHTML===''){reconstruirPainelFotosEdit(notaId)}}
 async function salvarEdicao(id){const notaItem=document.querySelector(`div[data-note-id="${id}"]`);const data={fornecedor:notaItem.querySelector(`.fornEdit`).value.trim().toUpperCase(),nf:notaItem.querySelector(`.nfEdit`).value.trim(),vencimento:notaItem.querySelector(`.vencEdit`).value.trim(),valor:notaItem.querySelector(`.valorEdit`).value.trim(),obs:notaItem.querySelector(`.obsEdit`).value.trim()};const notaLocal=notasPendentes.find(n=>n.id===id);if(notaLocal){const dvAnt=(typeof divergenciaNotaComFonte==='function')?(()=>{const f=fonteDaNota(notaLocal);return f?`${f.valorNum===null?'':f.valorNum.toFixed(2)}|${normDataCurta(f.venc)}`:'';})():'';if(dvAnt)data.divergenciaIgnorada=dvAnt;}if(notaLocal)Object.assign(notaLocal,data);await notasCollection.doc(id).update(data);await adicionarFornecedor(data.fornecedor,true);DOM.saida.value=buildSaidaText(notasPendentes.filter(n=>!n.emEspera));atualizarContadorExportacao();toast('✓ Nota editada!');notaItem.querySelector('.edit-panel').classList.remove('show')}
-async function deletarNota(id){showConfirmModal({title:"Confirmar Exclusão",message:"Deseja excluir esta nota permanentemente?",onConfirm:async()=>{await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")}})}
+async function deletarNota(id){const _n=[].concat(typeof notasPendentes!=="undefined"?notasPendentes:[],typeof historicoNotas!=="undefined"?historicoNotas:[]).find(x=>x&&x.id===id),_r=_n&&_n.nf?"NF "+_n.nf:"nota";showConfirmModal({title:"Excluir a "+_r+"?",confirmText:"Excluir "+_r,message:"Deseja excluir esta nota permanentemente? Essa ação não pode ser desfeita.",onConfirm:async()=>{await notasCollection.doc(id).delete();toast("🗑️ Nota excluída!")}})}
 
 // Marca/desmarca uma nota como "pendente" (em espera). Notas pendentes continuam
 // aparecendo na aba Gerenciar, mas ficam de fora do texto gerado na aba Exportar,
@@ -475,5 +475,5 @@ async function limpar(){
         }
     });
 }
-async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.51.0';
+async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",confirmText:"Limpar histórico",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.54.0';

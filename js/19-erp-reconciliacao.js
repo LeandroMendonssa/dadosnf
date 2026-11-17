@@ -810,7 +810,7 @@ async function confirmarImportacaoLote() {
     showConfirmModal({
         title: 'Confirmar Importação',
         message: `Criar ${selecionadas.length} nota(s) fiscal(is) na lista de notas pendentes (Repasse de NF)? O histórico do ERP dessas notas também será salvo/atualizado junto.`,
-        confirmText: 'Sim, Importar',
+        confirmText: 'Importar notas',
         confirmClass: 'success',
         onConfirm: async () => {
             try {
@@ -891,4 +891,4 @@ async function confirmarImportacaoLote() {
         }
     });
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/19-erp-reconciliacao.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/19-erp-reconciliacao.js'] = '2.54.0';

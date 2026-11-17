@@ -124,7 +124,7 @@ function renderListaAprovacoes(lista) {
             <p class="apv-nota">Vale para o app a partir da próxima abertura da pessoa. Conta sem perfil definido tem acesso total.</p></div>` : '';
         return `<li class="approval-item apv-li"><div class="apv-row">
             <div class="approval-item-info"><div class="approval-item-email">${ident}</div>
-            <div class="approval-item-status${aprovado ? ' aprovado' : ''}">${aprovado ? '✓ Aprovado' : 'Pendente'}${item.nome ? ' · ' + onbEsc(item.nome) : ''}${item.funcao ? ' · ' + onbEsc(item.funcao) : ''} · ${onbEsc(perfilNome)}</div></div>
+            <div class="approval-item-status${aprovado ? ' aprovado' : ''}">${aprovado ? '✓ Aprovado' : 'Pendente'}${item.nome ? ' · ' + onbEsc(item.nome) : ''}${item.funcao ? ' · ' + onbEsc(item.funcao) : ''}${String(item.funcao || '').toLowerCase() === perfilNome.toLowerCase() ? '' : ' · ' + onbEsc(perfilNome)}</div></div>
             <div class="apv-btns">${mestre ? '' : `<button class="action-chip" onclick="apvAlternarPainel('${item.id}')">${aberto ? 'Fechar' : 'Permissões'}</button>`}<button class="action-chip ${aprovado ? 'delete-chip' : 'edit-chip'}" onclick="alternarAprovacaoAcesso('${item.id}', ${!aprovado})">${aprovado ? 'Revogar' : 'Aprovar'}</button></div></div>${painel}</li>`;
     }).join('');
 }
@@ -316,7 +316,7 @@ async function onbConcluir() {
     try { await firestore.collection('acessosAutorizados').doc(u.uid).update({ nome, funcao: ass.cargo, cadastroEm: firebase.firestore.FieldValue.serverTimestamp() }); } catch (e) { /* conta antiga sem registro na lista */ }
     onbFechar();
     try { if (typeof renderInicio === 'function') renderInicio(); } catch (e) { /* início ainda não montado */ }
-    toast('✓ Tudo certo, ' + (onb && onb.nome ? onb.nome : nome.split(' ')[0] || 'bem-vindo(a)') + '!');
+    toast('✓ Tudo certo!'); // o toast já acrescenta o primeiro nome (personalizarMensagem)
 }
 
 // quando mostrar: uma vez por conta, depois que o app abriu
@@ -340,5 +340,61 @@ function onbAgendar(user) {
         if (ac && ac.style.display === 'flex') { clearInterval(t); instCarregar().then(() => onbDecidir(user)); }
     }, 500);
 }
-auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); if (user) onbAgendar(user); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.53.0';
+// ---------- espera de aprovação (Google/telefone): fica na tela, entra sozinho quando a conta mestre aprovar ----------
+let unsubEspera = null, esperaUid = null;
+function esperaHtml(estado, user) {
+    const ident = onbEsc(user.email || user.phoneNumber || user.displayName || '');
+    if (estado === 'ok') return `<div class="esp-box"><div class="esp-ring ok"><i class="fa-solid fa-check"></i></div><h2>Acesso aprovado!</h2><p>Abrindo o app…</p></div>`;
+    const podePush = typeof pushEstado !== 'undefined' && pushEstado.suporte && !pushEstado.ativo && pushEstado.permissao !== 'denied';
+    return `<div class="esp-box"><div class="esp-ring"></div><h2>Aguardando aprovação</h2><p>Seu pedido foi enviado para a conta mestre. Esta tela abre o app sozinha assim que o acesso for liberado.</p>
+        ${ident ? `<span class="esp-pill">${ident}</span>` : ''}
+        ${podePush ? `<button type="button" class="actions-button" onclick="esperaAtivarPush()"><span class="icon-wrapper"><i class="fa-solid fa-bell"></i></span> Avisar no celular quando liberar</button>` : ''}
+        <button type="button" class="actions-button is-ghost" onclick="esperaSair()">Sair</button></div>`;
+}
+function mostrarEsperaAprovacao(user) {
+    try { mostrarLoaderApp(false); } catch (e) { /* loader opcional */ }
+    let ov = document.getElementById('aprov-espera'); if (!ov) { ov = document.createElement('div'); ov.id = 'aprov-espera'; document.body.appendChild(ov); }
+    ov.style.display = 'flex'; ov.innerHTML = esperaHtml('espera', user);
+    if (unsubEspera && esperaUid === user.uid) { pushAvisarNovoPedido(user); return; }
+    if (unsubEspera) unsubEspera();
+    esperaUid = user.uid;
+    unsubEspera = firestore.collection('acessosAutorizados').doc(user.uid).onSnapshot(d => {
+        const v = d.exists ? d.data() : null;
+        if (v && v.aprovado === true) {
+            if (unsubEspera) { unsubEspera(); unsubEspera = null; }
+            ov.innerHTML = esperaHtml('ok', user);
+            setTimeout(() => location.reload(), 1300);
+        }
+    }, e => console.warn('Espera de aprovação:', e));
+    pushAvisarNovoPedido(user);
+}
+function esperaFechar() { if (unsubEspera) { unsubEspera(); unsubEspera = null; } esperaUid = null; const ov = document.getElementById('aprov-espera'); if (ov) { ov.style.display = 'none'; ov.innerHTML = ''; } }
+function esperaSair() { esperaFechar(); auth.signOut().catch(() => { }); }
+async function esperaAtivarPush() {
+    if (typeof pushAtivar !== 'function') return;
+    await pushAtivar();
+    const ov = document.getElementById('aprov-espera'), u = auth.currentUser;
+    if (ov && u && unsubEspera) ov.innerHTML = esperaHtml('espera', u);
+}
+
+// ---------- avisos por push (o envio é feito pelo Worker de avisos, versão 2.53.0 ou mais nova) ----------
+async function pushChamarWorker(caminho, corpo) {
+    const t = await auth.currentUser.getIdToken();
+    const r = await fetch(PUSH_URL + caminho, { method: 'POST', headers: { Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' }, body: JSON.stringify(corpo || {}) });
+    return r.json().catch(() => ({}));
+}
+function pushAvisarNovoPedido(user) {   // a pessoa que pediu acesso avisa o Worker, que manda push às contas mestres
+    const k = 'ped_aviso_' + user.uid;
+    try { const ult = Number(localStorage.getItem(k) || 0); if (Date.now() - ult < 12 * 3600e3) return; localStorage.setItem(k, String(Date.now())); } catch (e) { /* sem armazenamento: o Worker também evita repetir */ }
+    pushChamarWorker('/novo-pedido').catch(e => console.warn('Aviso de novo pedido:', e));
+}
+function pushAvisarAprovado(uid) {      // a conta mestre avisa o Worker, que manda push à pessoa aprovada (se ela ativou os avisos)
+    pushChamarWorker('/aprovado', { uid }).catch(e => console.warn('Aviso de aprovação:', e));
+}
+function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais aparelhos são de contas mestres
+    if (!user || !isContaAdmin(user)) return;
+    setTimeout(() => { try { firestore.collection('config').doc('push_' + user.uid).set({ email: String(user.email).toLowerCase() }, { merge: true }).catch(() => { }); } catch (e) { /* sem push */ } }, 4000);
+}
+
+auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.54.0';

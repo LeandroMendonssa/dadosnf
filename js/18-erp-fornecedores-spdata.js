@@ -656,7 +656,7 @@ function confirmarDesvincularEntidade(idDoc) {
     showConfirmModal({
         title: 'Desvincular fornecedor',
         message: `Tirar "${doc.nomeReal || idDoc}" do grupo de fornecedores vinculados? Nenhum CNPJ é apagado; ele passa a aparecer separado e deixa de usar o apelido do grupo.`,
-        confirmText: 'Desvincular', confirmClass: 'warning',
+        confirmText: 'Desvincular fornecedor', confirmClass: 'warning',
         onConfirm: () => desvincularEntidadeFornecedor(idDoc)
     });
 }
@@ -895,4 +895,4 @@ function vincularEntidadeSelecionada(chave, principalId) {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.22.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.54.0';

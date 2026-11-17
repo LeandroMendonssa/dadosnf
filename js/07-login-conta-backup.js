@@ -131,11 +131,13 @@ async function verificarAprovacaoAcesso(user) {
                 aprovado: false,
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp()
             });
+            if (typeof mostrarEsperaAprovacao === 'function') { mostrarEsperaAprovacao(user, true); return false; } // 2.54.0: fica na tela de espera e entra sozinho quando aprovado
             await auth.signOut();
             mostrarEtapaPendente('Seu acesso foi solicitado e está aguardando aprovação. Assim que for liberado, você poderá entrar normalmente.');
             return false;
         }
         if (snap.data().aprovado !== true) {
+            if (typeof mostrarEsperaAprovacao === 'function') { mostrarEsperaAprovacao(user, false); return false; }
             await auth.signOut();
             mostrarEtapaPendente('Sua conta ainda não foi aprovada. Peça para o administrador liberar seu acesso.');
             return false;
@@ -225,7 +227,7 @@ function renderListaAprovacoes(lista) {
 }
 function alternarAprovacaoAcesso(uid, novoValor) {
     firestore.collection('acessosAutorizados').doc(uid).update({ aprovado: novoValor })
-        .then(() => toast(novoValor ? '✓ Acesso aprovado!' : '✓ Acesso revogado.'))
+        .then(() => { toast(novoValor ? '✓ Acesso aprovado!' : '✓ Acesso revogado.'); if (novoValor && typeof pushAvisarAprovado === 'function') pushAvisarAprovado(uid); })
         .catch(() => toast('✕ Não foi possível atualizar.'));
 }
 
@@ -518,7 +520,7 @@ function nomeTextoSeguro(v) {
     return /^\[object object\]$/i.test(t) ? '' : t;
 }
 async function adicionarFornecedor(forn, noToast = false) {const f = nomeTextoSeguro(forn).toUpperCase();if (f && !fornecedoresSugeridos.includes(f)) {fornecedoresSugeridos.push(f);await settingsDocRef.set({ fornecedores: fornecedoresSugeridos }, { merge: true });if (!noToast) toast(`Fornecedor ${f} adicionado!`);}}
-async function deletarFornecedor(f){showConfirmModal({title:"Excluir Fornecedor",message:`Excluir "${f}"?`,onConfirm:async()=>{fornecedoresSugeridos = fornecedoresSugeridos.filter(item => item !== f);await settingsDocRef.update({fornecedores:firebase.firestore.FieldValue.arrayRemove(f)});toast(`Fornecedor ${f} excluído.`)}})}
+async function deletarFornecedor(f){showConfirmModal({title:"Excluir Fornecedor",confirmText:"Excluir fornecedor",message:`Excluir "${f}"?`,onConfirm:async()=>{fornecedoresSugeridos = fornecedoresSugeridos.filter(item => item !== f);await settingsDocRef.update({fornecedores:firebase.firestore.FieldValue.arrayRemove(f)});toast(`Fornecedor ${f} excluído.`)}})}
 function popularDatalist(){DOM.fornDatalist.innerHTML='';const nomesUnificados=[...new Set([...fornecedoresSugeridos, ...listaFornecedoresSpData.map(f=>f.nomeExibido||f.nomeReal).filter(Boolean)])];DOM.fornDatalist.innerHTML=nomesUnificados.sort().map(f=>`<option value="${String(f).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}"></option>`).join('');popularListaFornecedores()} // 2.16.2: monta o HTML uma vez só (antes era innerHTML += por nome: travava a abertura)
 
 function popularListaFornecedores(){
@@ -559,3 +561,4 @@ function popularListaFornecedores(){
     atualizarBulkBarFornecedores();
 }
 
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.54.0';

@@ -36,7 +36,7 @@ const AJUDA_ARTIGOS = [
         'A logo vem de Personalização › Logo da instituição; troque lá e ela muda na assinatura e nos relatórios.'
       ],
       dicas: ['Se sair no meio, o app guarda o que você já preencheu e retoma do mesmo passo.'], tutorial: null },
-    { id: 'permissoes-contas', cat: 'Ajustes e dados', titulo: 'Perfis e permissões de cada pessoa (conta mestre)', versao: '2.53.0',
+    { id: 'permissoes-contas', cat: 'Ajustes e dados', titulo: 'Perfis e permissões de cada pessoa (conta mestre)', versao: '2.54.0',
       resumo: 'Definir o que cada conta pode alterar no app.',
       palavras: 'permissao perfil acesso aprovar conta mestre admin somente leitura apagar arquivar cotacoes entrada nf',
       tela: [{ id: 'screen-aprovacoes', titulo: 'Aprovações de Acesso', rotulo: 'Abrir Aprovações de Acesso' }],
@@ -44,7 +44,8 @@ const AJUDA_ARTIGOS = [
         'Abra Aprovações de Acesso (só a conta mestre vê). Pedidos novos aparecem com um contador no menu e um aviso na tela.',
         'Toque em "Permissões" na pessoa e escolha um perfil: Almoxarifado, Compras, Somente leitura ou Acesso total.',
         'Ajuste cada chave se precisar: dar entrada em NF, editar cotações, arquivar e enviar ao financeiro, apagar registros e mudar ajustes compartilhados.',
-        'Quando a pessoa tenta algo que não pode, o app mostra o aviso e não grava. Conta sem perfil definido continua com acesso total.'
+        'Quando a pessoa tenta algo que não pode, o app mostra o aviso e não grava. Conta sem perfil definido continua com acesso total.',
+        'Quem pede acesso pelo Google ou telefone fica numa tela de espera e entra sozinha quando você aprovar. Se ativar os avisos ali, recebe um push de "Acesso aprovado"; e você recebe um push a cada pedido novo (precisa ter ativado as notificações em Agenda de trabalho).'
       ],
       dicas: ['O bloqueio é feito pelo app. Para valer também no servidor, as regras do Firebase precisam ser ajustadas (trecho sugerido na entrega 2.53.0).'], tutorial: null },
     { id: 'adicionar-nf', cat: 'Notas fiscais', titulo: 'Adicionar uma nota manualmente', versao: '2.10.0',
@@ -605,4 +606,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.53.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.54.0';

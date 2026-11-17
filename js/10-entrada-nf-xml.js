@@ -1546,7 +1546,7 @@ async function excluirPossibilidadeConhecidaXml(idx, possibilidadeIdx) {
     showConfirmModal({
         title: 'Excluir do histórico?',
         message: `${partes.join(' ')} A associação vigente hoje não muda e a data em que ela passou a valer é preservada.`,
-        confirmText: 'Excluir',
+        confirmText: 'Excluir do histórico',
         confirmClass: 'danger',
         onConfirm: async () => {
             try {
@@ -1612,4 +1612,4 @@ window.definirModoEntrada = definirModoEntrada;
         return orig.call(this, id, t);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.39.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.54.0';

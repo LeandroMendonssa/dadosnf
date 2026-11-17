@@ -96,7 +96,7 @@ function moverNfParaPedido(nfId, pedidoNovo) {
     showConfirmModal({
         title: 'Mover NF para outro pedido',
         message: `NF ${nf.nf} — ${nf.fornecedor || ''}\nPedido: ${nf.pedido || '(nenhum)'} → ${pedidoNovo}\n\nOs itens da NF${erp ? ' e a entrada do ERP' : ''} passam a ser comparados com a cotação do pedido ${pedidoNovo}. Auditorias já geradas para o pedido antigo não são alteradas.`,
-        confirmText: 'Mover', confirmClass: 'warning',
+        confirmText: 'Mover NF', confirmClass: 'warning',
         onConfirm: async () => {
             try {
                 const atualizacao = { pedido: String(pedidoNovo) };
@@ -131,7 +131,7 @@ function removerPedidoDaNf(nfId, pedido) {
     const atuais = pedidosDaNf(nf);
     if (atuais.length < 2) return toast('A NF precisa ficar com ao menos um pedido (use "Mover esta NF").');
     if (String(nf.pedido) === String(pedido)) return toast('Este é o pedido principal da NF. Mova a NF para outro pedido para trocá-lo.');
-    showConfirmModal({ title: 'Remover cotação da NF', message: `Tirar o pedido ${pedido} da NF ${nf.nf}? Os itens dela deixam de ser comparados com essa cotação. Auditorias já geradas não são alteradas.`, confirmText: 'Remover', confirmClass: 'warning',
+    showConfirmModal({ title: 'Remover cotação da NF', message: `Tirar o pedido ${pedido} da NF ${nf.nf}? Os itens dela deixam de ser comparados com essa cotação. Auditorias já geradas não são alteradas.`, confirmText: 'Remover cotação', confirmClass: 'warning',
         onConfirm: async () => { try { await nfsProcessadasCollection.doc(nfId).update({ pedidos: atuais.filter(p => p !== String(pedido)) }); toast('✓ Cotação removida da NF.'); } catch (err) { console.error(err); toast('✕ Erro ao remover.'); } } });
 }
 function cotacoesDaNf(nf) {
@@ -626,7 +626,7 @@ function definirSpDataNfItem(nfId, idx, codigo) {
     showConfirmModal({
         title: 'Trocar produto SP Data',
         message: `NF ${nf.nf} — ${it.xProd}\nSP Data: ${it.codigoSpData || 'nenhum'} → ${codigo} — ${prod.nome}${it.codigoSmartCompras ? '\n\nA associação do item SmartCompras ' + it.codigoSmartCompras + ' com o SP Data também será atualizada.' : ''}`,
-        confirmText: 'Trocar', confirmClass: 'warning',
+        confirmText: 'Trocar produto', confirmClass: 'warning',
         onConfirm: async () => {
             try {
                 const novos = nf.itens.map((x, k) => k !== idx ? x : { ...x, codigoSpData: codigo });
@@ -876,7 +876,7 @@ function definirCompraDiretaNf(id, marcado) {
     showConfirmModal({
         title: 'Marcar como compra direta',
         message: `NF ${nf.nf}${nf.pedido ? ' — hoje no pedido ' + nf.pedido : ''}\nEla passa a ser tratada como compra sem cotação do SmartCompras${nf.pedido ? ' e sai do pedido' : ''}. Auditorias já geradas não são alteradas.`,
-        confirmText: 'Marcar', confirmClass: 'warning',
+        confirmText: 'Marcar compra direta', confirmClass: 'warning',
         onConfirm: async () => {
             try { await nfsProcessadasCollection.doc(id).update({ semCotacaoSmartCompras: true, pedido: null, pedidos: [] }); toast('✓ NF marcada como compra direta.'); }
             catch (e) { console.error(e); toast('✕ Erro ao salvar.'); renderEditorNf(); }
@@ -894,4 +894,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.39.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.54.0';
