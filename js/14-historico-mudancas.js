@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.8', nome: 'Onboarding na tela grande: cards em grade, degradê na tela toda e botão à direita', status: 'atual', data: '17/11/2026 às 09:50',
+        numero: '2.55.9', nome: 'Compra direta sai do "Sem pedido" e Selecionar fica visível nos filtros', status: 'atual', data: '17/11/2026 às 18:40',
+        novidades: ['Na Auditoria Retroativa, uma NF marcada como compra direta ("Esta NF não tem pedido" ou "não tem cotação") sai da lista de "Sem pedido", tanto nas já marcadas quanto nas marcadas agora.', 'Novo filtro "Compra direta" para ver essas NFs.', 'Nas telas com filtro de ordenação, o botão Selecionar não é mais empurrado para fora da tela (Safari e demais navegadores).'],
+        implementado: ['js/32: a análise da Retroativa considera a marca de compra direta (no ERP e na NF com XML); filtro "Compra direta"; a lista geral deixa de mostrar as NFs de compra direta. style.css: a linha de ferramentas encolhe o botão de ordenação e mantém o Selecionar. index.html e js/14: versão 2.55.9.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/32-auditoria-retroativa.js'],
+        mudou: ['Arquivos alterados desde a 2.55.8: index.html, style.css, js/14 e js/32.', 'Não há mudança no Worker.'],
+        testar: ['Auditoria > Retroativa: marcar uma NF como compra direta; ela deve sair de "Sem pedido" e aparecer em "Compra direta".', 'Conferir uma NF já marcada antes: também deve sair de "Sem pedido".', 'No Safari, em Cotações, Repasse e Controle, trocar o filtro de ordenação: o Selecionar deve continuar visível.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.8', nome: 'Onboarding na tela grande: cards em grade, degradê na tela toda e botão à direita', status: 'concluida', data: '17/11/2026 às 09:50',
         novidades: ['No computador, os cards do tour aparecem todos juntos em grade, sem precisar arrastar.', 'O degradê de fundo ocupa a tela inteira.', 'O botão Continuar fica compacto e alinhado à direita, no computador. No celular continua igual.'],
         implementado: ['style.css: regras de tela grande do onboarding (grade do tour, fundo, rodapé estático e botão compacto). js/57 e index.html: versão 2.55.8.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
@@ -3545,4 +3554,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.9';

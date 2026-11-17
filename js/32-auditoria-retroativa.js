@@ -115,11 +115,14 @@ function candidatosPedidoErp(e) {
 function analiseRetroativaErp() {
     const defas = new Map(entradasErpComItensDefasados().map(d => [d.entrada.id, d.n]));
     const temXml = new Set(listaNfsProcessadas.map(n => n.id));
+    // 2.55.9: NF marcada como compra direta (no XML ou no ERP, "Esta NF não tem pedido") não fica como "sem pedido"
+    const marcadaDireta = new Set(listaEntradasErp.filter(e => e.semPedido).map(e => e.id));
+    try { Object.values(parearNfsEErps(listaNfsProcessadas, listaEntradasErp, (nf, erp) => { const r = nf || erp; return String(r.nf) + '_' + String(r.serie || ''); })).forEach(p => { if (p.nf && p.nf.semCotacaoSmartCompras) [p.erp, ...(p.erpExtras || [])].filter(Boolean).forEach(x => marcadaDireta.add(x.id)); }); } catch (err) { console.warn('compra direta retro', err); }
     return listaEntradasErp.map(e => {
         const itens = e.itens || [];
         const ligados = itens.filter(i => i.codigoSmartComprasRelacionado || codigoProdutoAtualDoItemErp(i)).length;
         const v = e.vinculo || {};
-        const direta = e.statusFluxo === 'historico_direto';
+        const direta = e.statusFluxo === 'historico_direto' || marcadaDireta.has(e.id);
         // 2.16.2: a NF/XML já associada a um pedido no app vale mais que a sugestão gravada no ERP (antes seguia sugerindo o pedido errado)
         const pedidoDaNf = direta ? null : (mapaPedidoErpPelaNf().get(e.id) || null);
         const pedidoSt = direta ? 'direta' : (pedidoDaNf ? 'confirmado' : (v.status || 'sem_associacao'));
@@ -135,9 +138,11 @@ function resumoRetroativo(an) {
     });
     return c;
 }
-const RETRO_FILTROS = [['todas', 'Todas'], ['sugerido', 'Pedido sugerido'], ['sem', 'Sem pedido'], ['semproduto', 'Itens sem produto'], ['defasados', 'Itens defasados']];
+const RETRO_FILTROS = [['todas', 'Todas'], ['sugerido', 'Pedido sugerido'], ['sem', 'Sem pedido'], ['direta', 'Compra direta'], ['semproduto', 'Itens sem produto'], ['defasados', 'Itens defasados']];
 function passaFiltroRetro(a) {
     if (retroRecemConfirmadas.has(a.e.id)) return true;
+    if (retroFiltro === 'direta') return a.pedidoSt === 'direta';
+    if (retroFiltro === 'todas') return a.pedidoSt !== 'direta';   // 2.55.9: compra direta sai da lista geral (fica no filtro próprio)
     if (retroFiltro === 'sugerido') return a.pedidoSt === 'sugerido';
     if (retroFiltro === 'sem') return a.pedidoSt === 'sem_associacao';
     if (retroFiltro === 'semproduto') return a.semProduto > 0;
@@ -224,4 +229,4 @@ function confirmarSugestoesRetro() {
     });
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.55.9';
