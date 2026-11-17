@@ -125,9 +125,12 @@ function pushCartaoHTML() {
         <div class="xml-item-acao">${e.ativo ? '<button type="button" class="central-status-toggle" onclick="pushTeste()">Enviar teste</button><button type="button" class="central-status-toggle" onclick="pushDesativar()">Desativar</button>' : `<button type="button" class="central-status-toggle" onclick="pushAtivar()"${e.ocupado || blocked ? ' disabled' : ''}>${e.ocupado ? 'Ativando…' : 'Ativar notificações'}</button>`}<button type="button" class="central-status-toggle" onclick="pushDiagnostico()">Diagnóstico</button></div>${pushDiagHTML()}</div>`;
 }
 // abrir pelo toque na notificação
-function pushAbrirDestino(d) { if (d === 'agenda') { switchToScreen('screen-agenda', 'Agenda de trabalho'); prepararAgenda(); } else if (d === 'aprovacoes') switchToScreen('screen-aprovacoes', 'Aprovações de Acesso'); }
+function pushAbrirDestino(d) {
+    if (d === 'agenda') { switchToScreen('screen-agenda', 'Agenda de trabalho'); prepararAgenda(); }
+    else if (d === 'aprovacoes') { try { if (isContaAdmin(auth.currentUser)) switchToScreen('screen-aprovacoes', 'Aprovações de Acesso'); } catch (e) { /* sem permissão: fica no Início */ } }
+}
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.addEventListener('message', ev => { if (ev.data && ev.data.abrir) pushAbrirDestino(ev.data.abrir); });
-    window.addEventListener('load', () => { pushRegistrarSW().then(pushAtualizarEstado); const q = new URLSearchParams(location.search).get('abrir'); if (q) setTimeout(() => pushAbrirDestino(q), 2500); });
+    window.addEventListener('load', () => { pushRegistrarSW().then(pushAtualizarEstado); const q = new URLSearchParams(location.search).get('abrir'); if (q) { try { history.replaceState(null, '', location.pathname); } catch (e) { /* segue */ } setTimeout(() => pushAbrirDestino(q), 2500); } });
 } else window.addEventListener('load', pushAtualizarEstado);
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/41-notificacoes-push.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/41-notificacoes-push.js'] = '2.55.0';

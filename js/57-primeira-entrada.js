@@ -188,6 +188,7 @@ const ONB_TOUR = [
     { t: 'Cotações', d: 'Acompanhe cada pedido por fornecedor: o que chegou, o que falta e quem não entregou.', svg: '<path d="M6 2.5h8l5 5V21.5H6z"/><path d="M14 2.5V8h5M8.5 17c1.5-3 2.5 1 3.5-1s1.5 0 3-1"/>' },
     { t: 'Controle de NFs', d: 'Todas as notas num lugar só, com vencimentos e a situação de cada uma.', svg: '<path d="M3 7V5h6l2 2h8v3M3 7v12h15l3-9H6l-3 9"/>' },
     { t: 'Repasse de NF', d: 'Monte a relação de notas para o financeiro e exporte o texto pronto para enviar.', svg: '<path d="M4 8h15l-3-3M20 16H5l3 3"/>' },
+    { t: 'Assistente de consultas', d: 'Tire dúvidas rápidas sobre o app a qualquer hora, pelo ícone de conversa no topo. Ainda está em desenvolvimento: às vezes a resposta pode falhar.', svg: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>', tag: 'Em desenvolvimento' },
     { t: 'Auditoria', d: 'Divergências encontradas, relatadas e resolvidas, com relatórios prontos em PDF e Word.', svg: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 12.5v-2M10.5 12.5v-4M13 12.5v-3"/>' }
 ];
 const ONB_SEQ = [0, 1, 2, 3, 4, 5];
@@ -255,11 +256,11 @@ function onbRender() {
         <div class="onb-f"><label>Site</label><input autocapitalize="off" value="${onbEsc(onb.site)}" oninput="onbCampo('site',this.value)"></div>
         <div class="onb-f"><label>Endereço</label><input value="${onbEsc(onb.end)}" oninput="onbCampo('end',this.value)"></div></details>
         <p class="onb-peq">Telefone, site e endereço são padrão da instituição; o ramal e o e-mail vêm da sua função. Tudo pode ser editado.</p>`;
-    if (k === 4) corpo = `<h2>O que o app faz por você</h2><p class="onb-l">Deslize para ver as cinco principais áreas.</p>
-        <div class="onb-tour" id="onb-tour" onscroll="onbTourPontos()">${ONB_TOUR.map(c => `<div class="onb-tc"><div class="onb-ic"><svg viewBox="0 0 24 24">${c.svg}</svg></div><b>${c.t}</b><p>${c.d}</p></div>`).join('')}</div>
+    if (k === 4) corpo = `<h2>O que o app faz por você</h2><p class="onb-l">Deslize para ver as principais áreas.</p>
+        <div class="onb-tour" id="onb-tour" onscroll="onbTourPontos()">${ONB_TOUR.map(c => `<div class="onb-tc"><div class="onb-ic"><svg viewBox="0 0 24 24">${c.svg}</svg></div><b>${c.t}</b>${c.tag ? '<span class="onb-tag">' + c.tag + '</span>' : ''}<p>${c.d}</p></div>`).join('')}</div>
         <div class="onb-tdots" id="onb-tdots">${ONB_TOUR.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>`;
     if (k === 5) corpo = `<h2>Pronto, ${onbEsc(onb.nome.trim() || 'você')}!</h2><p class="onb-l">Confira o resumo e abra o app.</p>${onbHtmlAssinatura()}
-        <div class="onb-nota">Seu Início já vem com os atalhos da sua função. Você muda tudo depois em Ajustes, e esta apresentação fica na Ajuda.</div>`;
+        <div class="onb-nota">Seu Início já vem com os atalhos da sua função. Dúvidas? Toque no <b>?</b> no topo de qualquer tela. Esta apresentação fica na Ajuda.</div>`;
     ov.innerHTML = `<div class="onb-app"><div class="onb-top"><button type="button" class="onb-back${k > 0 && !tour ? ' on' : ''}" onclick="onbVoltar()" aria-label="Voltar"><i class="fa-solid fa-chevron-left"></i></button><div class="onb-dots">${dots}</div><button type="button" class="onb-skip" style="visibility:${tour ? 'visible' : (k === 4 ? 'visible' : 'hidden')}" onclick="${tour ? 'onbFechar()' : 'onbIr(5)'}">${tour ? 'Fechar' : 'Pular'}</button></div>
         <div class="onb-stage"><section class="onb-step">${corpo}</section></div>
         <div class="onb-foot"><button type="button" class="onb-btn" id="onb-go" onclick="onbAvancar()"${onbBotaoOk() ? '' : ' disabled'}>${onbRotuloBotao()}</button></div></div>`;
@@ -396,5 +397,5 @@ function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais apar
     setTimeout(() => { try { firestore.collection('config').doc('push_' + user.uid).set({ email: String(user.email).toLowerCase() }, { merge: true }).catch(() => { }); } catch (e) { /* sem push */ } }, 4000);
 }
 
-auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.54.0';
+auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); try { document.body.classList.toggle('conta-mestre', !!user && isContaAdmin(user)); } catch (e) { document.body.classList.remove('conta-mestre'); } if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.0';
