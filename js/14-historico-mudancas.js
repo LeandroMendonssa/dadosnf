@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.1', nome: 'Aviso de novo pedido de acesso a cada entrada e ajuste do contador', status: 'atual', data: '17/11/2026 às 09:00',
+        numero: '2.55.2', nome: 'Tela de carregamento com o logo que respira', status: 'atual', data: '17/11/2026 às 09:10',
+        novidades: ['A tela de carregamento do app e a de espera da aprovação agora mostram o logo com um brilho suave, no lugar do círculo girando.'],
+        implementado: ['index.html: tela de carregamento (ld-logo, ld-dots). style.css: estilos da tela de carregamento. js/57: logo na tela de espera. Escolhido no protótipo de carregamento (opção 1).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.1: index.html, style.css, js/14 e js/57. O Worker não mudou.'],
+        testar: ['Feche o app e abra de novo: a tela de carregamento deve mostrar o logo respirando, sem o círculo girando.', 'Entre com uma conta aguardando aprovação: a tela de espera mostra o mesmo logo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.1', nome: 'Aviso de novo pedido de acesso a cada entrada e ajuste do contador', status: 'concluida', data: '17/11/2026 às 09:00',
         novidades: ['A conta mestre passa a receber o aviso de "Novo pedido de acesso" toda vez que a pessoa entra e fica aguardando, e não só na primeira vez.', 'O contador de pedidos de acesso agora fica ao lado do nome, e não no canto da linha.'],
         implementado: ['js/57: aviso de pedido não é mais limitado a 12 h (guarda de 1 minuto na sessão). avisos/worker-avisos.js: a mesma regra no Worker (1 minuto), e a versão mostrada no endereço do Worker agora é 2.55.1. style.css: posição do contador.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
@@ -3482,4 +3491,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.2';
