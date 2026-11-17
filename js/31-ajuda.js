@@ -23,6 +23,30 @@ const AJUDA_ARTIGOS = [
         'Qualquer tela pode ir para a dock (até Ajustes); o que você não colocar nela fica em "Mais". Com mais de 5 itens a dock rola. Os atalhos da tela Início têm o seu próprio botão Editar. Escolha em Ajustes → Personalização → Menus.'
       ],
       dicas: ['No computador a barra não encolhe; no iPhone ela fica só com ícones e abre ao tocar.'], tutorial: null },
+    { id: 'primeira-entrada', cat: 'Primeiros passos', titulo: 'Apresentação do app e assinatura dos relatórios', versao: '2.53.0',
+      resumo: 'Rever o tour e refazer o cadastro da assinatura (nome, função, ramal e e-mail).',
+      palavras: 'primeira entrada apresentacao tour onboarding assinatura funcao almoxarifado compras ramal email logo',
+      tela: [{ id: 'screen-pz-assinatura', titulo: 'Assinatura dos relatórios', rotulo: 'Abrir Assinatura dos relatórios' }],
+      acoes: [{ rotulo: 'Rever o tour do app', js: "onbAbrir('tour')" }, { rotulo: 'Refazer a primeira entrada', js: "onbAbrir('tudo')" }],
+      passos: [
+        'Na primeira entrada o app pede nome e sobrenome, a função (Almoxarifado, Compras ou outra) e mostra a prévia da assinatura com a logo da instituição.',
+        'Telefone, site e endereço são os mesmos para todos. O ramal e o e-mail vêm da função: Almoxarifado ramal 249; Compras ramal 212 e e-mail do convênio. Em "Outra função" você informa o nome, o ramal e o e-mail.',
+        'Todos os campos continuam editáveis, na própria apresentação ou depois em Ajustes › Personalização › Assinatura dos relatórios, onde o botão "Usar dados padrão" refaz telefone, site e endereço.',
+        'A conta mestre altera os dados da instituição (telefone, site, endereço, ramais e e-mails por função) na mesma tela Assinatura dos relatórios.',
+        'A logo vem de Personalização › Logo da instituição; troque lá e ela muda na assinatura e nos relatórios.'
+      ],
+      dicas: ['Se sair no meio, o app guarda o que você já preencheu e retoma do mesmo passo.'], tutorial: null },
+    { id: 'permissoes-contas', cat: 'Ajustes e dados', titulo: 'Perfis e permissões de cada pessoa (conta mestre)', versao: '2.53.0',
+      resumo: 'Definir o que cada conta pode alterar no app.',
+      palavras: 'permissao perfil acesso aprovar conta mestre admin somente leitura apagar arquivar cotacoes entrada nf',
+      tela: [{ id: 'screen-aprovacoes', titulo: 'Aprovações de Acesso', rotulo: 'Abrir Aprovações de Acesso' }],
+      passos: [
+        'Abra Aprovações de Acesso (só a conta mestre vê). Pedidos novos aparecem com um contador no menu e um aviso na tela.',
+        'Toque em "Permissões" na pessoa e escolha um perfil: Almoxarifado, Compras, Somente leitura ou Acesso total.',
+        'Ajuste cada chave se precisar: dar entrada em NF, editar cotações, arquivar e enviar ao financeiro, apagar registros e mudar ajustes compartilhados.',
+        'Quando a pessoa tenta algo que não pode, o app mostra o aviso e não grava. Conta sem perfil definido continua com acesso total.'
+      ],
+      dicas: ['O bloqueio é feito pelo app. Para valer também no servidor, as regras do Firebase precisam ser ajustadas (trecho sugerido na entrega 2.53.0).'], tutorial: null },
     { id: 'adicionar-nf', cat: 'Notas fiscais', titulo: 'Adicionar uma nota manualmente', versao: '2.10.0',
       resumo: 'Cadastrar uma NF sem XML, na aba "Manual (sem XML)" da Entrada de NF.',
       palavras: 'adicionar nota nf cadastrar manual vencimento valor fornecedor recurso salvar',
@@ -529,6 +553,7 @@ function abrirArtigoAjuda(id) { ajudaEstado.aberto = id; ajudaEstado.anim = 'fre
 function voltarListaAjuda() { ajudaEstado.aberto = null; ajudaEstado.anim = 'volta'; renderAjuda(); }
 function htmlArtigoAjuda(a) {
     const botoes = (a.tela || []).map(t => `<button type="button" class="manage-toolbar-btn" onclick="switchToScreen('${t.id}','${ajEsc(t.titulo)}'); prepararTelaMenu('${t.id}')${t.aba ? `; prepararAuditoriaUnificada('${t.aba}')` : ''}">${ajEsc(t.rotulo)}</button>`).join('')
+        + (a.acoes || []).map(x => `<button type="button" class="manage-toolbar-btn" onclick="${x.js}">${ajEsc(x.rotulo)}</button>`).join('')
         + (a.tutorial ? `<button type="button" class="manage-toolbar-btn" onclick="iniciarTutorial('${a.tutorial}')">Ver o tutorial guiado</button>` : '');
     return `<div class="card aj-artigo"><div class="aj-cat">${ajEsc(a.cat)}</div><h2 class="aj-h">${ajEsc(a.titulo)}</h2>
         <div class="aj-resumo">${ajEsc(a.resumo)}</div>
@@ -580,4 +605,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.52.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.53.0';

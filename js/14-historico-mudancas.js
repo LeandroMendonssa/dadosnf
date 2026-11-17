@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.52.1', nome: 'Botão Já chegou só destacado quando marcado', status: 'atual', data: '16/11/2026 às 17:20',
+        numero: '2.53.0', nome: 'Primeira entrada, dados padrão da instituição e permissões por pessoa', status: 'atual', data: '16/11/2026 às 22:50',
+        novidades: ['Nova apresentação na primeira entrada: nome e sobrenome, função (Almoxarifado, Compras ou outra), prévia da assinatura com a logo da instituição e um tour rápido. Quem já tinha assinatura preenchida não vê nada.', 'Telefone, site e endereço da instituição agora são padrão; o ramal e o e-mail vêm da função, e tudo continua editável. Em Assinatura dos relatórios há o botão "Usar dados padrão".', 'A conta mestre define, em Aprovações de Acesso, o perfil de cada pessoa e o que ela pode alterar (entrada de NF, cotações, arquivar/financeiro, apagar, ajustes). Pedidos novos geram aviso e contador.', 'A apresentação pode ser revista pela Ajuda.'],
+        implementado: ['js/57-primeira-entrada.js (novo): fluxo em tela cheia com rascunho salvo por passo, validação de e-mail e telefone, atalhos do Início por função (Compras), dados da instituição em config/instituicao (editáveis pela conta mestre), perfis e permissões em acessosAutorizados/{uid}, bloqueio das ações pelo app e novo painel de Aprovações. style.css: estilos. index.html: carrega o js/57. js/31: artigos da Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.52.1: index.html, style.css, js/14, 31 e o novo js/57-primeira-entrada.js.', 'Conta sem perfil definido continua com acesso total. As regras do Firebase não foram mexidas: o arquivo regras-firestore-sugeridas.txt traz o trecho para o bloqueio valer também no servidor.'],
+        testar: ['iPhone: Ajustes → Personalização → Assinatura dos relatórios → "Refazer a primeira entrada": passe pelos 6 passos, troque a função, escolha "Outra função" e veja o ramal e o e-mail mudarem na prévia; a logo da instituição deve aparecer.', 'iPhone (conta mestre): Aprovações de Acesso → "Permissões" numa conta: escolha um perfil e mexa nas chaves.', 'Com a conta de outra pessoa (perfil Somente leitura): tentar salvar uma NF deve mostrar o aviso de permissão.', 'Ajuda → "Apresentação do app": abre só o tour.'],
+        testarLinks: [{ rotulo: 'Abrir Personalização', acao: 'personalizacao' }, { rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.52.1', nome: 'Botão Já chegou só destacado quando marcado', status: 'concluida', data: '16/11/2026 às 17:20',
         novidades: ['Nos cards dos fornecedores, o botão "Já chegou" ficava azul escuro mesmo sem estar marcado e parecia selecionado. Agora ele só fica azul quando a chegada está de fato marcada; fora isso, tem o mesmo visual dos outros botões.'],
         implementado: ['style.css: o destaque azul só vale para o botão marcado.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
@@ -3446,4 +3455,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.52.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.53.0';
