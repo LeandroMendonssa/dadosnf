@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.6', nome: 'Onboarding em tela grande e aviso de desenvolvimento para o app', status: 'atual', data: '17/11/2026 às 09:40',
+        numero: '2.55.7', nome: 'Aviso de atualização volta para todas as contas', status: 'atual', data: '17/11/2026 às 09:36',
+        novidades: ['O aviso de atualização em andamento (quando os arquivos novos ainda não chegaram) volta a aparecer para todas as contas, como antes.', 'Continua só para a conta mestre o aviso no celular quando a versão nova já está no ar no GitHub.'],
+        implementado: ['js/43: retirada a restrição que deixava o aviso de atualização só para a conta mestre. index.html e style.css: versão 2.55.7.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados desde a 2.55.6: index.html, style.css, js/14 e js/43.', 'Não há mudança no Worker.'],
+        testar: ['Com uma conta comum, durante uma publicação (antes de todos os arquivos chegarem), o aviso "Atualização incompleta" deve aparecer.', 'Depois que tudo carregar, o aviso não deve mais aparecer.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.6', nome: 'Onboarding em tela grande e aviso de desenvolvimento para o app', status: 'concluida', data: '17/11/2026 às 09:40',
         novidades: ['No computador, o onboarding ocupa a tela inteira, sem moldura, com o conteúdo numa coluna central.', 'O aviso de "em desenvolvimento" agora vale para o app todo: aparece na primeira tela do onboarding. Saiu o aviso específico do Assistente.'],
         implementado: ['style.css: regras de tela grande do onboarding sem moldura e classe .onb-aviso. js/57: aviso geral na primeira tela e Assistente sem aviso próprio. js/31: resumo do Assistente sem aviso. index.html: título do botão do Assistente volta ao normal, versão 2.55.6.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js'],
@@ -3527,4 +3536,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.7';

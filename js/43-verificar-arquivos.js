@@ -20,7 +20,6 @@ function arqVerificar() {
 }
 function arqMostrarAviso(problemas) {
     if (!problemas.length || document.getElementById('aviso-arquivos')) return;
-    try { if (!isContaAdmin(auth.currentUser)) return; } catch (e) { return; }   // 2.55.0: o aviso de atualização incompleta é só para a conta mestre
     // 2.24.6: resumo geral primeiro (quantos arquivos faltam do total da última atualização); a lista fica em "Ver arquivos"
     const fases = (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []), ult = fases[0] || {};
     const total = (ult.arquivos || []).filter(a => /^js\//.test(a) || a === 'index.html' || a === 'style.css').length;
@@ -66,4 +65,4 @@ function arqDesenharVersoes() {
     const orig = switchToScreen;
     switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-historico-mudancas') setTimeout(arqDesenharVersoes, 50); return r; };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.55.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.55.7';
