@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.7', nome: 'Aviso de atualização volta para todas as contas', status: 'atual', data: '17/11/2026 às 09:36',
+        numero: '2.55.8', nome: 'Onboarding na tela grande: cards em grade, degradê na tela toda e botão à direita', status: 'atual', data: '17/11/2026 às 09:50',
+        novidades: ['No computador, os cards do tour aparecem todos juntos em grade, sem precisar arrastar.', 'O degradê de fundo ocupa a tela inteira.', 'O botão Continuar fica compacto e alinhado à direita, no computador. No celular continua igual.'],
+        implementado: ['style.css: regras de tela grande do onboarding (grade do tour, fundo, rodapé estático e botão compacto). js/57 e index.html: versão 2.55.8.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.7: index.html, style.css, js/14 e js/57.', 'Não há mudança no Worker.'],
+        testar: ['No computador, o tour deve mostrar os quatro cards em grade, sem cortes.', 'O degradê deve cobrir a tela inteira e o botão Continuar deve ficar à direita, sem ocupar a largura toda.', 'No iPhone, o onboarding deve estar igual ao de antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.7', nome: 'Aviso de atualização volta para todas as contas', status: 'concluida', data: '17/11/2026 às 09:36',
         novidades: ['O aviso de atualização em andamento (quando os arquivos novos ainda não chegaram) volta a aparecer para todas as contas, como antes.', 'Continua só para a conta mestre o aviso no celular quando a versão nova já está no ar no GitHub.'],
         implementado: ['js/43: retirada a restrição que deixava o aviso de atualização só para a conta mestre. index.html e style.css: versão 2.55.7.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
@@ -3536,4 +3545,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.8';
