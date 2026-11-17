@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.55.1'; }
+:root { --css-versao: '2.55.2'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2231,3 +2231,14 @@ body:not(.conta-mestre) .so-mestre{display:none !important}
 
 /* 2.55.1: contador de pedidos de acesso ao lado do nome (não no fim da linha) */
 .apv-badge{margin-left:8px !important;margin-right:auto !important}
+
+/* 2.55.2: tela de carregamento com o logo que respira (escolhida no protótipo, opção 1) */
+.ld-logo{position:relative;width:92px;height:92px;border-radius:28px;background:linear-gradient(140deg,var(--accent-color),color-mix(in srgb,var(--accent-color) 60%,#fff));display:flex;align-items:center;justify-content:center;color:var(--accent-contrast);font-size:38px;animation:ld-resp 1.8s ease-in-out infinite;box-shadow:0 18px 40px color-mix(in srgb,var(--accent-color) 30%,transparent)}
+.ld-halo{position:absolute;inset:0;margin:auto;width:150px;height:150px;border-radius:50%;background:var(--accent-color);opacity:.12;animation:ld-halo 1.8s ease-out infinite;pointer-events:none;z-index:-1}
+.ld-dots{display:flex;gap:7px;margin-top:6px}
+.ld-dots i{width:7px;height:7px;border-radius:50%;background:var(--accent-color);opacity:.25;animation:ld-dot 1.2s infinite}
+.ld-dots i:nth-child(2){animation-delay:.2s}.ld-dots i:nth-child(3){animation-delay:.4s}
+.ld-sm{width:76px;height:76px;border-radius:24px;font-size:30px;margin:0 auto 22px}
+@keyframes ld-resp{50%{transform:scale(1.06)}}
+@keyframes ld-halo{0%{transform:scale(.7);opacity:.2}100%{transform:scale(1.5);opacity:0}}
+@keyframes ld-dot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
