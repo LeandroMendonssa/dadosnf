@@ -31,7 +31,6 @@ function mostrarNovidadesVersao(forcar) {
     const fase = (typeof HISTORICO_FASES !== 'undefined') ? HISTORICO_FASES[0] : null;
     const modal = document.getElementById('novidades-modal');
     if (!fase || !modal) return false;
-    try { if (!isContaAdmin(auth.currentUser)) return false; } catch (e) { return false; }   // 2.55.0: o popup de versão é só para a conta mestre (o Histórico continua aberto a todos)
     if (!forcar && lerVersaoNovidadesVista() === String(fase.numero)) return false;
     const tira = t => { const s = String(t); return s.length > 220 ? s.slice(0, 217).replace(/\s+\S*$/, '') + '…' : s; };
     const itens = (fase.novidades && fase.novidades.length ? fase.novidades : (fase.implementado || []).slice(0, 3).map(tira));
@@ -74,4 +73,4 @@ function agendarNovidadesVersao() {
     setTimeout(tentar, 2000);
 }
 auth.onAuthStateChanged(user => { if (user) agendarNovidadesVersao(); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.55.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/24-novidades-versao.js'] = '2.55.5';

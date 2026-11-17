@@ -103,7 +103,9 @@ function permissoesIniciar(user) {
 
 // ---------- Aprovações de Acesso (conta mestre): perfil e permissões por pessoa ----------
 const apvCache = {}; const apvAbertos = new Set(); let apvVistos = null;
+let apvUltimaLista = [];
 function renderListaAprovacoes(lista) {
+    apvUltimaLista = lista.slice();
     const container = document.getElementById('lista-aprovacoes'); if (!container) return;
     lista.forEach(i => { apvCache[i.id] = i; });
     const pend = lista.filter(i => i.aprovado !== true);
@@ -128,7 +130,7 @@ function renderListaAprovacoes(lista) {
             <div class="apv-btns">${mestre ? '' : `<button class="action-chip" onclick="apvAlternarPainel('${item.id}')">${aberto ? 'Fechar' : 'Permissões'}</button>`}<button class="action-chip ${aprovado ? 'delete-chip' : 'edit-chip'}" onclick="alternarAprovacaoAcesso('${item.id}', ${!aprovado})">${aprovado ? 'Revogar' : 'Aprovar'}</button></div></div>${painel}</li>`;
     }).join('');
 }
-function apvAlternarPainel(id) { if (apvAbertos.has(id)) apvAbertos.delete(id); else apvAbertos.add(id); renderListaAprovacoes(Object.values(apvCache).sort((a, b) => ((b.criadoEm && b.criadoEm.seconds) || 0) - ((a.criadoEm && a.criadoEm.seconds) || 0))); }
+function apvAlternarPainel(id) { if (apvAbertos.has(id)) apvAbertos.delete(id); else apvAbertos.add(id); renderListaAprovacoes(apvUltimaLista); }
 function apvGravar(id, perfil, permissoes) {
     apvCache[id] = { ...(apvCache[id] || {}), perfil, permissoes };
     firestore.collection('acessosAutorizados').doc(id).update({ perfil, permissoes }).then(() => toast('✓ Permissões salvas.')).catch(() => toast('✕ Não foi possível salvar as permissões.'));
@@ -399,4 +401,4 @@ function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais apar
 }
 
 auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); try { document.body.classList.toggle('conta-mestre', !!user && isContaAdmin(user)); } catch (e) { document.body.classList.remove('conta-mestre'); } if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.5';

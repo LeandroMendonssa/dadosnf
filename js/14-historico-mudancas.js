@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.4', nome: 'Volta à tela de carregamento anterior', status: 'atual', data: '17/11/2026 às 09:20',
+        numero: '2.55.5', nome: 'Popups de novidades para todos e aviso de publicação só para a conta mestre', status: 'atual', data: '17/11/2026 às 09:35',
+        novidades: ['O popup de novidades volta a aparecer para todas as contas.', 'A conta mestre recebe um aviso no celular quando a nova versão já está no ar no GitHub (com os arquivos todos publicados).', 'Corrigido: na lista de Aprovações, ao abrir "Permissões", não aparece mais um pedido que já foi aprovado ou apagado.'],
+        implementado: ['js/24: popup de novidades para todas as contas. js/57: lista de aprovações usa só os dados atuais. avisos/worker-avisos.js: verifica o site publicado a cada 15 min e avisa a conta mestre quando a versão nova está completa (versão do index, do CSS e da primeira entrada iguais). Versão 2.55.5 mostrada no endereço do Worker.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.4: index.html, style.css, js/14, js/24 e js/57.', 'O Worker de avisos MUDOU: cole o novo worker-avisos.js no Worker (Edit code → Deploy).', 'O endereço do site publicado está em SITE_PUBLICADO no Worker. Se o site mudar de endereço, é só trocar lá.'],
+        testar: ['Conta comum: ao entrar, o popup de novidades deve aparecer (uma vez por versão).', 'Conta mestre: depois de publicar, o aviso "Versão 2.55.5 no ar" deve chegar em alguns minutos (depende do cache do GitHub).', 'Aprovações de Acesso: abrir "Permissões" numa conta não deve mostrar pedidos antigos.'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.55.4', nome: 'Volta à tela de carregamento anterior', status: 'concluida', data: '17/11/2026 às 09:20',
         novidades: ['A tela de carregamento e a de espera da aprovação voltaram ao visual anterior (círculo girando).'],
         implementado: ['index.html: tela de carregamento com apple-spinner (como antes). js/57: círculo girando na tela de espera. style.css: retirados os estilos dos pontos e do logo.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
@@ -3509,4 +3518,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.5';
