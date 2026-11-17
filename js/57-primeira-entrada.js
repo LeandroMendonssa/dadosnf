@@ -385,8 +385,9 @@ async function pushChamarWorker(caminho, corpo) {
     return r.json().catch(() => ({}));
 }
 function pushAvisarNovoPedido(user) {   // a pessoa que pediu acesso avisa o Worker, que manda push às contas mestres
+    // 2.55.1: cada vez que a pessoa entra e fica aguardando, vai um aviso novo (o Worker só evita repetição de 1 minuto)
     const k = 'ped_aviso_' + user.uid;
-    try { const ult = Number(localStorage.getItem(k) || 0); if (Date.now() - ult < 12 * 3600e3) return; localStorage.setItem(k, String(Date.now())); } catch (e) { /* sem armazenamento: o Worker também evita repetir */ }
+    try { const ult = Number(sessionStorage.getItem(k) || 0); if (Date.now() - ult < 60e3) return; sessionStorage.setItem(k, String(Date.now())); } catch (e) { /* sem armazenamento: o Worker também evita repetir */ }
     pushChamarWorker('/novo-pedido').catch(e => console.warn('Aviso de novo pedido:', e));
 }
 function pushAvisarAprovado(uid) {      // a conta mestre avisa o Worker, que manda push à pessoa aprovada (se ela ativou os avisos)
@@ -398,4 +399,4 @@ function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais apar
 }
 
 auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); try { document.body.classList.toggle('conta-mestre', !!user && isContaAdmin(user)); } catch (e) { document.body.classList.remove('conta-mestre'); } if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.1';

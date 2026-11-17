@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.0', nome: 'Ajustes para a conta mestre, botão de ajuda e assistente em desenvolvimento', status: 'atual', data: '17/11/2026 às 08:40',
+        numero: '2.55.1', nome: 'Aviso de novo pedido de acesso a cada entrada e ajuste do contador', status: 'atual', data: '17/11/2026 às 09:00',
+        novidades: ['A conta mestre passa a receber o aviso de "Novo pedido de acesso" toda vez que a pessoa entra e fica aguardando, e não só na primeira vez.', 'O contador de pedidos de acesso agora fica ao lado do nome, e não no canto da linha.'],
+        implementado: ['js/57: aviso de pedido não é mais limitado a 12 h (guarda de 1 minuto na sessão). avisos/worker-avisos.js: a mesma regra no Worker (1 minuto), e a versão mostrada no endereço do Worker agora é 2.55.1. style.css: posição do contador.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.0: index.html, style.css, js/14 e js/57.', 'O Worker de avisos MUDOU: cole o novo worker-avisos.js no Worker (Edit code → Deploy). Sem isso, o aviso continua limitado a uma vez a cada 12 h.'],
+        testar: ['Saia e entre de novo com uma conta que está aguardando aprovação: a conta mestre deve receber o push "Novo pedido de acesso" a cada entrada.', 'Ajustes → Aprovações de Acesso: o contador vermelho deve aparecer logo depois do nome.', 'Abra o endereço do Worker no navegador: deve mostrar "versao":"2.55.1".'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.55.0', nome: 'Ajustes para a conta mestre, botão de ajuda e assistente em desenvolvimento', status: 'concluida', data: '17/11/2026 às 08:40',
         novidades: ['Botão ? no topo de todas as telas abre a Ajuda. Dúvidas? É só tocar nele.', 'Apresentação do app agora mostra o Assistente de consultas, marcado como "Em desenvolvimento". Ele também aparece na Ajuda.', 'Uso do Firebase e os avisos de atualização incompleta agora são só da conta mestre.', 'Corrigido: a apresentação de primeira entrada no computador ficava cortada; agora aparece centralizada.', 'Corrigido: ao abrir o app, a tela de Aprovações de Acesso não abre mais sozinha. Ela só abre se você tocar na notificação de um pedido.'],
         implementado: ['index.html: botão ? (hdr-ajuda), classe so-mestre no item Uso do Firebase, versão 2.55.0. style.css: classe conta-mestre, centralização da apresentação no computador, tag "Em desenvolvimento". js/57: assistente no tour, tag, dica do ?, classe conta-mestre no body. js/43 e js/24: avisos só para conta mestre. js/41: abertura da notificação sem reabrir sozinha (limpa o endereço). js/31: artigo "Dúvidas, Ajuda e o Assistente".'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/41-notificacoes-push.js', 'js/43-verificar-arquivos.js', 'js/57-primeira-entrada.js'],
@@ -3473,4 +3482,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.1';
