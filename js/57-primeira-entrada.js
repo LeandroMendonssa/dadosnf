@@ -347,7 +347,7 @@ function esperaHtml(estado, user) {
     const ident = onbEsc(user.email || user.phoneNumber || user.displayName || '');
     if (estado === 'ok') return `<div class="esp-box"><div class="esp-ring ok"><i class="fa-solid fa-check"></i></div><h2>Acesso aprovado!</h2><p>Abrindo o app…</p></div>`;
     const podePush = typeof pushEstado !== 'undefined' && pushEstado.suporte && !pushEstado.ativo && pushEstado.permissao !== 'denied';
-    return `<div class="esp-box"><div class="ld-logo ld-sm"><i class="fa-solid fa-hourglass-half"></i><span class="ld-halo"></span></div><h2>Aguardando aprovação</h2><p>Seu pedido foi enviado para a conta mestre. Esta tela abre o app sozinha assim que o acesso for liberado.</p>
+    return `<div class="esp-box"><div class="dot-spinner"><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div><div class="dot-spinner__dot"></div></div><h2>Aguardando aprovação</h2><p>Seu pedido foi enviado para a conta mestre. Esta tela abre o app sozinha assim que o acesso for liberado.</p>
         ${ident ? `<span class="esp-pill">${ident}</span>` : ''}
         ${podePush ? `<button type="button" class="actions-button" onclick="esperaAtivarPush()"><span class="icon-wrapper"><i class="fa-solid fa-bell"></i></span> Avisar no celular quando liberar</button>` : ''}
         <button type="button" class="actions-button is-ghost" onclick="esperaSair()">Sair</button></div>`;
@@ -399,4 +399,4 @@ function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais apar
 }
 
 auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); try { document.body.classList.toggle('conta-mestre', !!user && isContaAdmin(user)); } catch (e) { document.body.classList.remove('conta-mestre'); } if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.3';

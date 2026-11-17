@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.2', nome: 'Tela de carregamento com o logo que respira', status: 'atual', data: '17/11/2026 às 09:10',
+        numero: '2.55.3', nome: 'Tela de carregamento com pontos girando', status: 'atual', data: '17/11/2026 às 09:15',
+        novidades: ['A tela de carregamento e a de espera da aprovação agora mostram pontos girando, no lugar do logo que respirava.'],
+        implementado: ['index.html: tela de carregamento com dot-spinner. style.css: estilos dos pontos (o brilho do logo foi retirado). js/57: pontos na tela de espera.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.2: index.html, style.css, js/14 e js/57. O Worker não mudou.'],
+        testar: ['Abra o app pelo computador (Chrome) e pelo iPhone: deve aparecer o anel de pontos girando, centralizado.', 'Entre com uma conta aguardando aprovação: a tela de espera mostra os mesmos pontos.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.2', nome: 'Tela de carregamento com o logo que respira', status: 'concluida', data: '17/11/2026 às 09:10',
         novidades: ['A tela de carregamento do app e a de espera da aprovação agora mostram o logo com um brilho suave, no lugar do círculo girando.'],
         implementado: ['index.html: tela de carregamento (ld-logo, ld-dots). style.css: estilos da tela de carregamento. js/57: logo na tela de espera. Escolhido no protótipo de carregamento (opção 1).'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
@@ -3491,4 +3500,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.3';
