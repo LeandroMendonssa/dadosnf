@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.55.0'; }
+:root { --css-versao: '2.55.1'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2193,7 +2193,7 @@ body.onb-aberto{overflow:hidden}
 .apv-sw::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0004;transition:.2s}
 .apv-sw.on{background:var(--accent-color)}.apv-sw.on::after{transform:translateX(18px)}
 .apv-nota{font-size:12px;color:var(--text-light);margin:6px 0 0}
-.apv-badge{background:var(--danger-solid);color:#fff;border-radius:999px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-left:auto;margin-right:8px}
+.apv-badge{background:var(--danger-solid);color:#fff;border-radius:999px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-left:8px;margin-right:auto}
 
 /* 2.54.0: espaçamento das telas Assinatura e Aprovações, tela de espera da aprovação */
 #screen-pz-assinatura .card .campo:last-child{margin-bottom:0}
@@ -2228,3 +2228,6 @@ body:not(.conta-mestre) .so-mestre{display:none !important}
   #onb-root .onb-app{height:min(820px,calc(100vh - 48px));max-height:820px;border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35);flex:none}
   #onb-root .onb-step{padding-bottom:110px}
 }
+
+/* 2.55.1: contador de pedidos de acesso ao lado do nome (não no fim da linha) */
+.apv-badge{margin-left:8px !important;margin-right:auto !important}
