@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.3', nome: 'Tela de carregamento com pontos girando', status: 'atual', data: '17/11/2026 às 09:15',
+        numero: '2.55.4', nome: 'Volta à tela de carregamento anterior', status: 'atual', data: '17/11/2026 às 09:20',
+        novidades: ['A tela de carregamento e a de espera da aprovação voltaram ao visual anterior (círculo girando).'],
+        implementado: ['index.html: tela de carregamento com apple-spinner (como antes). js/57: círculo girando na tela de espera. style.css: retirados os estilos dos pontos e do logo.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.3: index.html, style.css, js/14 e js/57. O Worker não mudou.'],
+        testar: ['Abra o app: deve voltar o círculo girando, como antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.3', nome: 'Tela de carregamento com pontos girando', status: 'concluida', data: '17/11/2026 às 09:15',
         novidades: ['A tela de carregamento e a de espera da aprovação agora mostram pontos girando, no lugar do logo que respirava.'],
         implementado: ['index.html: tela de carregamento com dot-spinner. style.css: estilos dos pontos (o brilho do logo foi retirado). js/57: pontos na tela de espera.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
@@ -3500,4 +3509,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.4';
