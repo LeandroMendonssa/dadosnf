@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.55.5'; }
+:root { --css-versao: '2.55.6'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2224,10 +2224,19 @@ body:not(.conta-mestre) .so-mestre{display:none !important}
 #hdr-ajuda{margin-right:2px}
 .onb-tag{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:var(--warning-text,#8a6d00);background:var(--warning-bg);border-radius:999px;padding:2px 9px;vertical-align:middle}
 @media (min-width:700px){
-  #onb-root{justify-content:center;align-items:center;padding:24px;background:rgba(20,22,28,.5)}
-  #onb-root .onb-app{height:min(820px,calc(100vh - 48px));max-height:820px;border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35);flex:none}
-  #onb-root .onb-step{padding-bottom:110px}
+  /* 2.55.6: tela grande ocupa a tela inteira, sem moldura; o conteúdo fica numa coluna central */
+  #onb-root{justify-content:center;align-items:stretch;padding:0;background:var(--bg-primary)}
+  #onb-root .onb-app{max-width:720px;height:100%;max-height:none;border-radius:0;box-shadow:none;flex:1 1 auto}
+  #onb-root .onb-top{padding-left:40px;padding-right:40px}
+  #onb-root .onb-step{padding-left:40px;padding-right:40px;padding-bottom:120px}
+  #onb-root .onb-foot{padding-left:40px;padding-right:40px}
+  #onb-root .onb-tour{margin-left:-40px;margin-right:-40px;padding-left:40px;padding-right:40px}
+  #onb-root .onb-tc{flex:0 0 min(82%,420px)}
 }
+
+/* 2.55.6: aviso geral de que o app está em desenvolvimento (apresentação do onboarding) */
+.onb-aviso{font-size:12.5px;line-height:1.4;color:var(--text-light);background:var(--bg-secondary);border-radius:12px;padding:10px 12px;margin:18px 0 0;display:flex;gap:10px;align-items:flex-start}
+.onb-aviso i{color:var(--accent-color);margin-top:2px}
 
 /* 2.55.1: contador de pedidos de acesso ao lado do nome (não no fim da linha) */
 .apv-badge{margin-left:8px !important;margin-right:auto !important}
