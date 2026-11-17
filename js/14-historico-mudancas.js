@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.11', nome: 'Aviso de publicação do GitHub volta pelo webhook (só conta mestre)', status: 'atual', data: '17/11/2026 às 19:40',
+        numero: '2.55.12', nome: 'Excluir contas de Aprovações, fila local quando a cota do Firebase acaba e pedido de publicação', status: 'atual', data: '17/11/2026 às 20:40',
+        novidades: ['Em Aprovações de Acesso, quem aprova pode excluir qualquer conta da lista (botão "Excluir", com confirmação). A própria conta não tem o botão. Se a pessoa entrar de novo, volta como pedido novo.', 'Quando o limite diário do Firebase acaba, o que você salva fica guardado neste aparelho e é enviado sozinho quando o limite voltar. Aparece um aviso com a quantidade de alterações guardadas.', 'Nova página na Ajuda: "Quando o limite diário do Firebase acaba".'],
+        implementado: ['js/58-fila-cota.js (novo): fila local em localStorage para gravações que falham por cota ou não respondem enquanto a cota está estourada; reenvio ao abrir o app e a cada 60 s; aviso de cota. js/57: botão Excluir para quem não é a própria conta, com confirmação. js/31: página "Quando o limite diário do Firebase acaba" e passo de Excluir. index.html (inclui js/58), style.css (aviso), js/14: versão 2.55.12.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js', 'js/58-fila-cota.js'],
+        mudou: ['Arquivos alterados desde a 2.55.10: index.html, style.css, js/14, js/31, js/57 e js/58 (novo).', 'Não há mudança no Worker.', 'Para excluir uma conta, as regras do Firestore precisam permitir apagar para a conta mestre (allow delete: if mestre()).'],
+        testar: ['Aprovações de Acesso: abra a lista; as outras contas têm Excluir, a sua não tem. Excluir uma conta de teste: ela sai da lista.', 'Teste da fila: só dá para testar de verdade quando o limite do Firebase estourar. Nesse dia: salve uma anotação e veja o aviso "Limite diário do Firebase atingido" com a quantidade. No dia seguinte, abra o app e confirme que a alteração foi enviada.'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.55.11', nome: 'Aviso de publicação do GitHub volta pelo webhook (só conta mestre)', status: 'concluida', data: '17/11/2026 às 19:40',
         novidades: ['A conta mestre volta a receber o aviso quando a publicação no GitHub começa e quando termina (ou se der erro).', 'Os avisos de "versão no ar" de tempos em tempos foram retirados.'],
         implementado: ['avisos/worker-avisos.js: rota /github, que recebe o webhook do GitHub (workflow_run da publicação do Pages), confere a assinatura e avisa só as contas mestres. Retirado o aviso periódico de versão. js/14: registro desta mudança.'],
         arquivos: ['js/14-historico-mudancas.js', 'avisos/worker-avisos.js'],
@@ -3572,4 +3581,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.11';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.12';

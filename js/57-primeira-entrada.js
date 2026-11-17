@@ -117,6 +117,7 @@ function renderListaAprovacoes(lista) {
     container.innerHTML = lista.map(item => {
         const ident = onbEsc(item.email || item.telefone || item.id), aprovado = item.aprovado === true;
         const mestre = !!item.email && ADMIN_EMAILS.includes(String(item.email).toLowerCase());
+        const souEu = !!(auth.currentUser && auth.currentUser.uid === item.id);   // 2.55.12: a própria conta não pode ser excluída
         const perms = item.permissoes || null;
         const perfilNome = mestre ? 'Conta mestre' : (item.perfil && PERM_PERFIS[item.perfil] ? PERM_PERFIS[item.perfil].nome : (perms ? 'Personalizado' : 'Acesso total'));
         const aberto = apvAbertos.has(item.id) && !mestre;
@@ -127,7 +128,7 @@ function renderListaAprovacoes(lista) {
         return `<li class="approval-item apv-li"><div class="apv-row">
             <div class="approval-item-info"><div class="approval-item-email">${ident}</div>
             <div class="approval-item-status${aprovado ? ' aprovado' : ''}">${aprovado ? '✓ Aprovado' : 'Pendente'}${item.nome ? ' · ' + onbEsc(item.nome) : ''}${item.funcao ? ' · ' + onbEsc(item.funcao) : ''}${String(item.funcao || '').toLowerCase() === perfilNome.toLowerCase() ? '' : ' · ' + onbEsc(perfilNome)}</div></div>
-            <div class="apv-btns">${mestre ? '' : `<button class="action-chip" onclick="apvAlternarPainel('${item.id}')">${aberto ? 'Fechar' : 'Permissões'}</button>`}<button class="action-chip ${aprovado ? 'delete-chip' : 'edit-chip'}" onclick="alternarAprovacaoAcesso('${item.id}', ${!aprovado})">${aprovado ? 'Revogar' : 'Aprovar'}</button></div></div>${painel}</li>`;
+            <div class="apv-btns">${mestre ? '' : `<button class="action-chip" onclick="apvAlternarPainel('${item.id}')">${aberto ? 'Fechar' : 'Permissões'}</button>`}<button class="action-chip ${aprovado ? 'delete-chip' : 'edit-chip'}" onclick="alternarAprovacaoAcesso('${item.id}', ${!aprovado})">${aprovado ? 'Revogar' : 'Aprovar'}</button>${souEu ? '' : `<button class="action-chip delete-chip" onclick="apvExcluir('${item.id}')">Excluir</button>`}</div></div>${painel}</li>`;
     }).join('');
 }
 function apvAlternarPainel(id) { if (apvAbertos.has(id)) apvAbertos.delete(id); else apvAbertos.add(id); renderListaAprovacoes(apvUltimaLista); }
@@ -136,6 +137,13 @@ function apvGravar(id, perfil, permissoes) {
     firestore.collection('acessosAutorizados').doc(id).update({ perfil, permissoes }).then(() => toast('✓ Permissões salvas.')).catch(() => toast('✕ Não foi possível salvar as permissões.'));
 }
 function apvPerfil(id, k) { apvGravar(id, k, { ...PERM_PERFIS[k].p }); }
+// 2.55.12: tira da lista uma conta de teste ou antiga. Se a pessoa entrar de novo, aparece como pedido novo.
+function apvExcluir(id) {
+    const item = apvCache[id] || {};
+    const nome = item.nome || item.email || item.telefone || 'esta conta';
+    showConfirmModal({ title: 'Excluir da lista?', message: `${nome} sai da lista de Aprovações de Acesso. Se a pessoa entrar de novo, volta como pedido novo.`, confirmText: 'Excluir', confirmClass: 'danger',
+        onConfirm: async () => { try { await firestore.collection('acessosAutorizados').doc(id).delete(); delete apvCache[id]; toast('✓ Conta excluída da lista.'); } catch (e) { console.error('Excluir acesso:', e); toast('✕ Não foi possível excluir.'); } } });
+}
 function apvPerm(id, k) {
     const atual = (apvCache[id] && apvCache[id].permissoes) || {}, novo = {};
     PERM_ACOES.forEach(([c]) => { novo[c] = atual[c] !== false; });
@@ -401,4 +409,4 @@ function pushRegistrarEmailMestre(user) {   // o Worker precisa saber quais apar
 }
 
 auth.onAuthStateChanged(user => { onbFechar(); permissoesIniciar(user); try { document.body.classList.toggle('conta-mestre', !!user && isContaAdmin(user)); } catch (e) { document.body.classList.remove('conta-mestre'); } if (!user) esperaFechar(); if (user) { onbAgendar(user); pushRegistrarEmailMestre(user); } });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/57-primeira-entrada.js'] = '2.55.12';
