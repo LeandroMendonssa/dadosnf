@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.55.7'; }
+:root { --css-versao: '2.55.8'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2224,14 +2224,18 @@ body:not(.conta-mestre) .so-mestre{display:none !important}
 #hdr-ajuda{margin-right:2px}
 .onb-tag{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:var(--warning-text,#8a6d00);background:var(--warning-bg);border-radius:999px;padding:2px 9px;vertical-align:middle}
 @media (min-width:700px){
-  /* 2.55.6: tela grande ocupa a tela inteira, sem moldura; o conteúdo fica numa coluna central */
-  #onb-root{justify-content:center;align-items:stretch;padding:0;background:var(--bg-primary)}
-  #onb-root .onb-app{max-width:720px;height:100%;max-height:none;border-radius:0;box-shadow:none;flex:1 1 auto}
+  /* 2.55.8: tela grande (mouse, sem arrastar): degradê na tela toda, conteúdo numa coluna central,
+     cards do tour lado a lado em grade e botão Continuar compacto à direita */
+  #onb-root{justify-content:center;align-items:stretch;padding:0;background:linear-gradient(180deg,color-mix(in srgb,var(--accent-color) 10%,var(--bg-primary)) 0%,var(--bg-primary) 40%)}
+  #onb-root .onb-app{max-width:720px;width:100%;height:100%;max-height:none;border-radius:0;box-shadow:none;flex:1 1 auto;background:none}
   #onb-root .onb-top{padding-left:40px;padding-right:40px}
-  #onb-root .onb-step{padding-left:40px;padding-right:40px;padding-bottom:120px}
-  #onb-root .onb-foot{padding-left:40px;padding-right:40px}
-  #onb-root .onb-tour{margin-left:-40px;margin-right:-40px;padding-left:40px;padding-right:40px}
-  #onb-root .onb-tc{flex:0 0 min(82%,420px)}
+  #onb-root .onb-step{padding-left:40px;padding-right:40px;padding-bottom:40px}
+  #onb-root .onb-foot{position:static;display:flex;justify-content:flex-end;padding:8px 40px 36px;background:none}
+  #onb-root .onb-btn{width:auto;min-width:240px;padding:15px 36px}
+  #onb-root .onb-tour{display:grid;grid-template-columns:1fr 1fr;gap:14px;overflow:visible;margin:16px 0 0;padding:0;scroll-snap-type:none}
+  #onb-root .onb-tc{flex:none}
+  #onb-root .onb-tdots{display:none}
+  #onb-root .onb-stage{flex:1 1 auto}
 }
 
 /* 2.55.6: aviso geral de que o app está em desenvolvimento (apresentação do onboarding) */
