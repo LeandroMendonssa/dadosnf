@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.8', nome: 'Janela de importação centralizada e botão de salvar sem corte', status: 'atual', data: '18/11/2026 às 17:10',
+        numero: '2.57.9', nome: 'Lotes de NFs antigas: leitura dos PDFs e busca no Buscar lote', status: 'atual', data: '18/11/2026 às 17:40',
+        novidades: ['Nova página para ler os PDFs antigos do computador (lote, nº da NF, data, CNPJ e caminho do arquivo). Produto, valor e texto da nota não são guardados.', 'Em Buscar lote, uma seção nova procura lotes de NFs antigas, com busca exata e aproximada (até 2 diferenças), e aceita vários lotes de uma vez.'],
+        implementado: ['lotes.html: leitura dos PDFs no navegador (texto ou reconhecimento de texto), conferência e gravação. Firebase só na hora de gravar.', 'js/61: análise do texto, gravação e busca da coleção lotesNF.', 'index.html: seção nova na tela Buscar lote.'],
+        arquivos: ['index.html','lotes.html','js/61-lotes-antigos.js','js/14-historico-mudancas.js','style.css'],
+        mudou: ['A busca de lote que já existia (NFs do app) não mudou.', 'É preciso liberar a coleção lotesNF nas regras do Firestore antes de gravar.'],
+        testar: ['Abra lotes.html, escolha 3 PDFs (um digitado e dois digitalizados) e confira a lista antes de gravar.', 'Grave as NFs conferidas. Depois, em Buscar lote, procure um lote delas na seção de NFs antigas.'],
+    },
+    {
+        numero: '2.57.8', nome: 'Janela de importação centralizada e botão de salvar sem corte', status: 'concluida', data: '18/11/2026 às 17:10',
         novidades: ['A janela de importação do SmartCompras abre no centro da tela do computador.', 'O botão de salvar na conferência mostra o texto inteiro.'],
         implementado: ['js/59: o favorito calcula a posição da janela a partir da janela do navegador.', 'importar.html: altura do botão de salvar ajustada.'],
         arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
@@ -3685,4 +3693,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.9';
