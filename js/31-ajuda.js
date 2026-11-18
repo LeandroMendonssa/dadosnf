@@ -45,6 +45,16 @@ const AJUDA_ARTIGOS = [
         'Quando o limite volta (no dia seguinte), o app envia essas alterações sozinho e avisa "Alterações guardadas neste aparelho foram enviadas".',
         'Enquanto o limite estiver estourado, o que ainda não está no aparelho pode não aparecer. Não feche o app antes do envio, para não perder nada.'
       ], dicas: [], tutorial: null },
+    { id: 'historico-smartcompras', cat: 'Ajustes e dados', titulo: 'Histórico de alterações do SmartCompras', versao: '2.57.0',
+      resumo: 'Trazer para o app as alterações de quantidade e prazo que o setor de compras faz no SmartCompras.',
+      palavras: 'smartcompras historico alteracoes quantidade prazo pagamento marcador favorito pedido compras',
+      tela: [],
+      passos: [
+        'No computador, abra o SmartCompras, entre no pedido e toque em "Histórico" para abrir o Histórico de Pedidos.',
+        'Toque no marcador "Enviar ao Minhas Notas" que você salvou nos favoritos. Ele abre o app já com o histórico.',
+        'Confira a lista e toque em "Salvar histórico do pedido". Salvar substitui o histórico anterior desse pedido.',
+        'Para ver o histórico salvo de um pedido, use o marcador de visualização (pedido com o endereço #smartHistVer=número).'
+      ], dicas: ['O marcador só enxerga o que está visível no Histórico de Pedidos. Abra o histórico antes de tocar nele.'], tutorial: null },
     { id: 'permissoes-contas', cat: 'Ajustes e dados', titulo: 'Perfis e permissões de cada pessoa (conta mestre)', versao: '2.54.0',
       resumo: 'Definir o que cada conta pode alterar no app.',
       palavras: 'permissao perfil acesso aprovar conta mestre admin somente leitura apagar arquivar cotacoes entrada nf',
@@ -626,4 +636,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.56.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.57.0';

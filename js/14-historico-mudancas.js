@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.56.2', nome: 'Ajuste visual do recurso fixo no celular', status: 'atual', data: '17/11/2026 às 21:15',
+        numero: '2.57.0', nome: 'Histórico de alterações do SmartCompras (versão 1)', status: 'atual', data: '17/11/2026 às 23:20',
+        novidades: ['Dá para trazer para o app as alterações de quantidade e prazo de pagamento que o setor de compras faz no SmartCompras, por pedido.', 'Um marcador (favorito) é tocado na página do Histórico de Pedidos e abre o app com o histórico pronto para conferir e salvar.'],
+        implementado: ['js/59 (novo): leitura do texto do diálogo, conferência, salvamento em historicoSmartCompras/{pedido} e visualização por #smartHistVer=pedido.', 'js/31: artigo "Histórico de alterações do SmartCompras".', 'style.css: janela de conferência (classes hs-*).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/59-historico-smartcompras.js'],
+        mudou: ['Nova coleção no Firestore: historicoSmartCompras. Precisa de regra de leitura e escrita para contas aprovadas, igual às outras coleções.', 'O marcador roda só no SmartCompras, no navegador onde você já está logado. O app nunca entra no SmartCompras nem guarda a sua senha.', 'Só o que está visível no Histórico de Pedidos é trazido. O ano não aparece na tela, então o app assume o ano atual.'],
+        testar: ['No iPhone: crie o favorito com o código do marcador, abra o Histórico de Pedidos no SmartCompras e toque no favorito. O app deve abrir mostrando a lista.', 'Confira se as alterações, datas, valores e nomes batem com a tela e toque em "Salvar histórico do pedido".', 'Depois, abra o endereço do pedido com #smartHistVer=número (ou use o favorito de visualização) e veja se o histórico salvo aparece.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.56.2', nome: 'Ajuste visual do recurso fixo no celular', status: 'concluida', data: '17/11/2026 às 21:15',
         novidades: ['No cartão do fornecedor, o rótulo "Recurso fixo" fica em cima e o seletor ocupa a largura toda. Antes, o texto ficava espremido na lateral.'],
         implementado: ['js/18: a linha do recurso fixo recebe a classe frn-recurso-fixo. style.css: regra da classe (rótulo em bloco, seletor com 100% de largura).'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/18-erp-fornecedores-spdata.js'],
@@ -3608,4 +3617,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.56.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.0';
