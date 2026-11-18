@@ -2,19 +2,77 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a84ff">
 <title>Importar histórico SmartCompras</title>
 <link rel="stylesheet" href="style.css">
 <style>
-  body { margin: 0; padding: 16px; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; background: #f2f2f7; color: #111; }
-  .imp-msg { max-width: 460px; margin: 40px auto; text-align: center; color: #555; font-size: 15px; line-height: 1.45; }
-  .imp-toast { position: fixed; left: 16px; right: 16px; bottom: 24px; background: #222; color: #fff; padding: 12px 14px; border-radius: 10px; display: none; text-align: center; z-index: 3000; font-size: 14px; }
+  /* Mesmo padrão visual do onboarding (style.css, .onb-*), com as cores do app. Funciona no claro e no escuro. */
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg-primary, #f2f2f7); color: var(--text-dark, #111); font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  .imp-app { min-height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; position: relative;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color, #0a84ff) 12%, var(--bg-primary, #f2f2f7)) 0, var(--bg-primary, #f2f2f7) 280px); }
+  .imp-top { display: flex; align-items: center; gap: 12px; padding: calc(16px + env(safe-area-inset-top)) 22px 8px; }
+  .imp-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); }
+  .imp-mark svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .imp-top b { display: block; font-size: 16px; letter-spacing: -.01em; }
+  .imp-top span { display: block; font-size: 13px; color: var(--text-light, #6e6e73); }
+  .imp-main { flex: 1; padding: 14px 22px calc(120px + env(safe-area-inset-bottom)); }
+  .imp-hero { width: 84px; height: 84px; border-radius: 26px; margin: 18px 0 18px; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 30px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); }
+  .imp-hero svg { width: 40px; height: 40px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .imp-h1 { font-size: 28px; line-height: 1.12; margin: 0 0 10px; letter-spacing: -.02em; }
+  .imp-lead { color: var(--text-light, #6e6e73); font-size: 16px; line-height: 1.45; margin: 0 0 22px; }
+  .imp-passos { display: grid; gap: 12px; }
+  .imp-passo { display: flex; gap: 14px; align-items: flex-start; background: var(--bg-secondary, #fff); border: 1px solid var(--border-color, #e5e5ea); border-radius: 20px; padding: 16px; box-shadow: var(--shadow-md, 0 6px 18px rgba(0,0,0,.06)); }
+  .imp-num { flex: 0 0 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--accent-color, #0a84ff) 14%, var(--bg-secondary, #fff)); color: var(--accent-color, #0a84ff); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .imp-passo b { display: block; font-size: 15px; margin-bottom: 3px; }
+  .imp-passo small { color: var(--text-light, #6e6e73); font-size: 13.5px; line-height: 1.4; }
+  .imp-nota { margin-top: 16px; font-size: 12.5px; color: var(--text-light, #6e6e73); background: var(--bg-secondary, #fff); border: 1px dashed var(--border-color, #d1d1d6); border-radius: 12px; padding: 10px 12px; line-height: 1.4; }
+
+  /* Conferência (conteúdo montado por js/59: h3, .hs-lista, .hs-linha, .hs-mud) */
+  #imp-stage { display: none; }
+  #imp-stage h3 { font-size: 24px; line-height: 1.15; margin: 14px 0 6px; letter-spacing: -.02em; }
+  #imp-stage .txt-aux { color: var(--text-light, #6e6e73); font-size: 13px; line-height: 1.4; margin: 8px 0 0; }
+  .hs-lista { display: grid; gap: 12px; margin-top: 16px; }
+  .hs-linha { background: var(--bg-secondary, #fff); border: 1px solid var(--border-color, #e5e5ea); border-radius: 20px; padding: 16px; box-shadow: var(--shadow-md, 0 6px 18px rgba(0,0,0,.06)); }
+  .hs-linha > div:first-child { font-size: 13.5px; color: var(--text-light, #6e6e73); line-height: 1.4; margin-bottom: 10px; }
+  .hs-linha > div:first-child b { color: var(--text-dark, #111); font-size: 15px; }
+  .hs-mud { font-size: 14.5px; line-height: 1.45; padding: 10px 12px; border-radius: 14px; background: var(--bg-primary, #f2f2f7); margin-top: 8px; }
+  .hs-mud b { font-weight: 700; color: var(--accent-color, #0a84ff); }
+  #imp-stage .hs-acoes { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg-primary, #f2f2f7) 40%); z-index: 50; }
+  #imp-stage .hs-acoes .action-chip { width: 100%; max-width: 476px; display: block; margin: 0 auto; border: 0; border-radius: 16px; padding: 17px; font: inherit; font-size: 17px; font-weight: 700; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); cursor: pointer; }
+  #imp-stage .hs-acoes .action-chip:disabled { opacity: .5; }
+  #imp-stage > .txt-aux { padding-bottom: 96px; }
+
+  .imp-toast { position: fixed; left: 16px; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); background: var(--text-dark, #111); color: var(--bg-primary, #fff); padding: 13px 16px; border-radius: 14px; display: none; text-align: center; z-index: 3000; font-size: 14.5px; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
 </style>
 </head>
 <body>
-<!-- Página neutra: não carrega o app nem o Firebase para abrir. O Firebase entra só na hora de gravar. -->
-<div class="imp-msg" id="imp-msg">Aguardando o histórico do SmartCompras. Com o Histórico de Pedidos aberto, toque no favorito <b>Histórico SmartCompras</b>.</div>
+<div class="imp-app">
+  <header class="imp-top">
+    <div class="imp-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <div><b>Histórico SmartCompras</b><span>Conferência e gravação</span></div>
+  </header>
+
+  <main class="imp-main">
+    <!-- Página neutra: não carrega o app nem o Firebase para abrir. O Firebase entra só na hora de gravar. -->
+    <section id="imp-intro">
+      <div class="imp-hero"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg></div>
+      <h1 class="imp-h1">Pronto para receber</h1>
+      <p class="imp-lead">Esta janela mostra as alterações de quantidade de um pedido antes de guardar. Nada é salvo sem a sua confirmação.</p>
+      <div class="imp-passos">
+        <div class="imp-passo"><div class="imp-num">1</div><div><b>Abra o Histórico de Pedidos</b><small>No SmartCompras, abra o pedido e o diálogo de histórico de alterações.</small></div></div>
+        <div class="imp-passo"><div class="imp-num">2</div><div><b>Toque no favorito</b><small>Com o diálogo aberto, toque em <b>Histórico SmartCompras</b> na barra de favoritos.</small></div></div>
+        <div class="imp-passo"><div class="imp-num">3</div><div><b>Confira e salve</b><small>Esta janela mostra as alterações. Toque em salvar e ela fecha sozinha.</small></div></div>
+      </div>
+      <div class="imp-nota">Se a janela não aparecer, confira se o navegador não bloqueou pop-ups para este site.</div>
+    </section>
+
+    <section id="imp-stage"></section>
+  </main>
+</div>
+
 <div class="imp-toast" id="imp-toast"></div>
 
 <script>
@@ -39,6 +97,19 @@
 <script src="js/59-historico-smartcompras.js"></script>
 
 <script>
+  // Mostra a conferência no lugar da tela de espera (em vez do janelão do app).
+  function smartHistModal(html) {
+    document.getElementById('imp-stage').innerHTML = html;
+    document.getElementById('imp-stage').style.display = 'block';
+    document.getElementById('imp-intro').style.display = 'none';
+    window.scrollTo(0, 0);
+  }
+  function smartHistFechar() {
+    document.getElementById('imp-stage').style.display = 'none';
+    document.getElementById('imp-stage').innerHTML = '';
+    document.getElementById('imp-intro').style.display = 'block';
+  }
+
   // Firebase (mesma versão e mesmo projeto do app), carregado só na hora de salvar.
   var IMP_FB_CONFIG = {
     apiKey: "AIzaSyBbJnhZuL5f9v7KYjJRa1uGY9g17JXkYlo",

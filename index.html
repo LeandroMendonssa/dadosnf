@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.57.6">
+    <meta name="app-versao" content="2.57.7">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -248,6 +248,13 @@
                     <p style="margin:0 0 12px;font-size:13px;">Arraste o botão abaixo para a barra de favoritos do Chrome ou do Edge. Não precisa copiar código.</p>
                     <a id="smart-favorito-link" href="#" draggable="true" onclick="return false;" class="actions-button is-primary" style="display:inline-block;text-decoration:none;"><span class="icon-wrapper"><i class="fa-solid fa-clock-rotate-left"></i></span> Histórico SmartCompras</a>
                     <p style="margin:12px 0 0;font-size:12px;color:var(--text-light);">Depois, abra o Histórico de Pedidos no SmartCompras e toque no favorito. Uma janela pequena abre para conferir e salvar.</p>
+                </div>
+                <div class="card">
+                    <h4 style="margin:0 0 8px;">No iPhone ou celular</h4>
+                    <p style="margin:0 0 12px;font-size:13px;">No celular não dá para arrastar. Copie o código abaixo, crie um favorito qualquer no navegador, edite o endereço e cole o código.</p>
+                    <textarea id="smart-favorito-celular" readonly rows="4" class="form-field" onclick="this.select()" style="font-size:12px;width:100%;box-sizing:border-box;"></textarea>
+                    <button class="actions-button is-primary" onclick="smartHistCopiarFavoritoCelular()" style="margin-top:10px;"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar código</button>
+                    <p style="margin:12px 0 0;font-size:12px;color:var(--text-light);">No iPhone, este favorito abre o app inteiro, como antes. Depois de confirmar aqui, o histórico é salvo normalmente.</p>
                 </div>
             </div>
 
