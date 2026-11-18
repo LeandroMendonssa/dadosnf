@@ -2280,3 +2280,12 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .inst-aviso button{border:0;background:none;color:var(--accent-text,#3b5ba9);font-weight:600;padding:10px 12px;min-height:44px;cursor:pointer;white-space:nowrap;font-size:15px}
 .cdet-part-lista .cdet-part-valores{display:block;font-size:12px;color:var(--text-muted,#666);margin-top:2px}
 
+
+/* 2.57.9: lotes de NFs antigas (Buscar lote) */
+.lote-ant-lista{display:grid;gap:10px;margin-top:10px}
+.lote-ant-linha{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:12px 14px;font-size:14px;line-height:1.4}
+.lote-ant-tipo{font-size:11.5px;font-weight:700;color:var(--accent-color);background:color-mix(in srgb,var(--accent-color) 12%,transparent);border-radius:999px;padding:2px 8px;margin-left:6px}
+.lote-ant-tipo.aprox{color:var(--warning-text,#8a6d00);background:var(--warning-bg,#fff6d6)}
+.lote-ant-arq{font-size:12px;color:var(--text-light);word-break:break-all;margin-top:4px}
+.lote-ant-tab{width:100%;border-collapse:collapse;font-size:13px}
+.lote-ant-tab th,.lote-ant-tab td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border-color);vertical-align:top}

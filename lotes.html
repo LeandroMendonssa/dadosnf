@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a84ff">
+<title>Lotes de NFs antigas</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Mesmo padrão visual da importação do SmartCompras e do onboarding. Claro e escuro pelas variáveis do app. */
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg-primary, #f2f2f7); color: var(--text-dark, #111); font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  .lt-app { min-height: 100%; max-width: 560px; margin: 0 auto; display: flex; flex-direction: column;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color, #0a84ff) 12%, var(--bg-primary, #f2f2f7)) 0, var(--bg-primary, #f2f2f7) 280px); }
+  .lt-top { display: flex; align-items: center; gap: 12px; padding: calc(16px + env(safe-area-inset-top)) 22px 8px; }
+  .lt-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); }
+  .lt-mark svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .lt-top b { display: block; font-size: 16px; }
+  .lt-top span { display: block; font-size: 13px; color: var(--text-light, #6e6e73); }
+  .lt-main { flex: 1; padding: 14px 22px 150px; }
+  .lt-h1 { font-size: 26px; line-height: 1.15; margin: 14px 0 8px; letter-spacing: -.02em; }
+  .lt-lead { color: var(--text-light, #6e6e73); font-size: 15.5px; line-height: 1.45; margin: 0 0 18px; }
+  .lt-card { background: var(--bg-secondary, #fff); border: 1px solid var(--border-color, #e5e5ea); border-radius: 20px; padding: 16px; box-shadow: var(--shadow-md, 0 6px 18px rgba(0,0,0,.06)); margin-bottom: 12px; }
+  .lt-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lt-bt { display: block; text-align: center; padding: 14px 10px; border-radius: 16px; background: color-mix(in srgb, var(--accent-color, #0a84ff) 12%, var(--bg-secondary, #fff)); color: var(--accent-color, #0a84ff); font-weight: 700; font-size: 14.5px; cursor: pointer; border: 1px solid color-mix(in srgb, var(--accent-color, #0a84ff) 25%, transparent); }
+  .lt-check { display: flex; gap: 10px; align-items: center; font-size: 14px; margin: 14px 2px 4px; color: var(--text-dark, #111); }
+  .lt-check input { width: 20px; height: 20px; accent-color: var(--accent-color, #0a84ff); }
+  .lt-resumo { font-size: 13.5px; color: var(--text-light, #6e6e73); margin: 8px 2px 0; min-height: 18px; }
+  .lt-btn { width: 100%; border: 0; border-radius: 16px; padding: 17px; font: inherit; font-size: 17px; font-weight: 700; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); cursor: pointer; }
+  .lt-btn:disabled { background: var(--bg-tertiary, #e5e5ea); color: var(--text-light, #6e6e73); box-shadow: none; cursor: default; }
+  .lt-foot { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg-primary, #f2f2f7) 40%); }
+  .lt-foot .lt-btn { max-width: 516px; margin: 0 auto; display: block; }
+  .lt-barra { height: 8px; border-radius: 8px; background: var(--bg-tertiary, #e5e5ea); overflow: hidden; margin: 10px 0 6px; }
+  .lt-barra i { display: block; height: 100%; width: 0; background: var(--accent-color, #0a84ff); transition: width .3s; }
+  .lt-prog { font-size: 14px; color: var(--text-light, #6e6e73); }
+  .lt-nf { font-size: 17px; font-weight: 700; margin: 0 0 4px; }
+  .lt-sub { font-size: 13.5px; color: var(--text-light, #6e6e73); line-height: 1.4; }
+  .lt-arq { font-size: 12px; color: var(--text-light, #6e6e73); word-break: break-all; margin-top: 4px; }
+  .lt-lotes { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+  .lt-lote { font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent-color, #0a84ff) 12%, var(--bg-secondary, #fff)); color: var(--accent-color, #0a84ff); }
+  .lt-aviso { font-size: 12.5px; color: var(--warning-text, #8a6d00); background: var(--warning-bg, #fff6d6); border-radius: 10px; padding: 8px 10px; margin-top: 8px; line-height: 1.35; }
+  .lt-erro { font-size: 12.5px; color: var(--danger-solid, #c0392b); margin-top: 8px; }
+  .lt-linha { display: flex; gap: 12px; align-items: flex-start; }
+  .lt-linha > div:first-child { flex: 1; min-width: 0; }
+  .lt-linha input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--accent-color, #0a84ff); }
+  .lt-toast { position: fixed; left: 16px; right: 16px; bottom: calc(96px + env(safe-area-inset-bottom)); background: var(--text-dark, #111); color: var(--bg-primary, #fff); padding: 13px 16px; border-radius: 14px; display: none; text-align: center; z-index: 3000; font-size: 14.5px; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="lt-app">
+  <header class="lt-top">
+    <div class="lt-mark"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13h6M9 17h4"/></svg></div>
+    <div><b>Lotes de NFs antigas</b><span>Leitura de PDFs no seu computador</span></div>
+  </header>
+
+  <main class="lt-main">
+    <!-- Página neutra: não carrega o app nem o Firebase para ler. O Firebase entra só na hora de gravar. -->
+    <section id="lt-inicio">
+      <h1 class="lt-h1">Escolha os PDFs</h1>
+      <p class="lt-lead">Os arquivos são lidos aqui, no computador. Só o lote, o número da NF, a data, o CNPJ do fornecedor e o caminho do PDF são gravados. Produto, valor e o texto da nota não são guardados.</p>
+      <div class="lt-card">
+        <div class="lt-botoes">
+          <label class="lt-bt">Escolher PDFs<input type="file" id="lt-arquivos" accept="application/pdf" multiple hidden></label>
+          <label class="lt-bt">Escolher pasta<input type="file" id="lt-pasta" webkitdirectory multiple hidden></label>
+        </div>
+        <label class="lt-check"><input type="checkbox" id="lt-pular" checked> Pular os PDFs que já foram lidos neste computador</label>
+        <div class="lt-resumo" id="lt-resumo">Nenhum arquivo escolhido.</div>
+      </div>
+      <button type="button" class="lt-btn" id="lt-ler" disabled onclick="ltIniciar()">Ler arquivos</button>
+    </section>
+
+    <section id="lt-progresso" hidden>
+      <h1 class="lt-h1">Lendo</h1>
+      <div class="lt-card">
+        <div class="lt-prog" id="lt-prog-txt">Preparando…</div>
+        <div class="lt-barra"><i id="lt-barra-fill"></i></div>
+        <button type="button" class="lt-bt" style="margin-top:8px;width:100%;" onclick="ltParar()">Parar e conferir o que já foi lido</button>
+      </div>
+    </section>
+
+    <section id="lt-resultado" hidden>
+      <h1 class="lt-h1">Conferir</h1>
+      <p class="lt-lead" id="lt-resumo-final"></p>
+      <div id="lt-lista"></div>
+    </section>
+  </main>
+
+  <footer class="lt-foot" id="lt-rodape" hidden>
+    <button type="button" class="lt-btn" id="lt-gravar" onclick="ltGravar()">Gravar</button>
+  </footer>
+</div>
+<div class="lt-toast" id="lt-toast"></div>
+
+<script>
+  window.SMART_HIST_NEUTRO = true; // não usado aqui; mantém a mesma forma das outras páginas neutras
+  function toast(t) {
+    var e = document.getElementById('lt-toast');
+    e.textContent = t; e.style.display = 'block';
+    clearTimeout(e._t); e._t = setTimeout(function () { e.style.display = 'none'; }, 3200);
+  }
+</script>
+<script src="js/61-lotes-antigos.js"></script>
+
+<script>
+  const LT_PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  const LT_PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const LT_TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js';
+  const LT_LIDOS_CHAVE = 'lotesLidosV1';
+  const LT_FB_CONFIG = {
+    apiKey: "AIzaSyBbJnhZuL5f9v7KYjJRa1uGY9g17JXkYlo",
+    authDomain: "dadosnf-38b2f.firebaseapp.com",
+    projectId: "dadosnf-38b2f",
+    storageBucket: "dadosnf-38b2f.firebasestorage.app",
+    messagingSenderId: "103044936313",
+    appId: "1:103044936313:web:e0f1ad680cd31445a1daa8"
+  };
+  const LT_FB_SCRIPTS = [
+    'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+    'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js',
+    'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js'
+  ];
+
+  let ltArquivos = [], ltResultados = [], ltParando = false, ltOcr = null, ltPdfPronto = null, ltFbPronto = null, ltTotalPdfs = 0;
+
+  function ltCarregar(src) {
+    return new Promise(function (ok, err) {
+      var s = document.createElement('script');
+      s.src = src; s.crossOrigin = 'anonymous'; s.onload = ok; s.onerror = function () { err(new Error('Não carregou ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+  function ltEnfileirar(lista) { return lista.reduce(function (p, src) { return p.then(function () { return ltCarregar(src); }); }, Promise.resolve()); }
+
+  async function ltGarantirPdf() {
+    if (!ltPdfPronto) ltPdfPronto = ltCarregar(LT_PDFJS).then(function () {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = LT_PDFJS_WORKER;
+      return window.pdfjsLib;
+    });
+    return ltPdfPronto;
+  }
+  async function ltGarantirOcr() {
+    if (!window.Tesseract) await ltCarregar(LT_TESS);
+    if (!ltOcr) ltOcr = await window.Tesseract.createWorker('por');
+    return ltOcr;
+  }
+
+  function ltRelativo(f) { return f.webkitRelativePath || f.name; }
+  function ltChaveArq(f) { return ltRelativo(f) + '|' + f.size + '|' + f.lastModified; }
+  function ltLidos() {
+    try { return new Set(JSON.parse(localStorage.getItem(LT_LIDOS_CHAVE) || '[]')); } catch (e) { return new Set(); }
+  }
+  function ltMarcarLido(k) {
+    try {
+      var s = ltLidos(); s.add(k);
+      localStorage.setItem(LT_LIDOS_CHAVE, JSON.stringify([...s].slice(-20000)));
+    } catch (e) { }
+  }
+
+  // Escolhe os PDFs (arquivos soltos ou uma pasta, como ano/mês).
+  function ltEscolher(lista) {
+    var todos = [...lista].filter(function (f) { return /\.pdf$/i.test(f.name) || f.type === 'application/pdf'; });
+    todos.sort(function (a, b) { return ltRelativo(a).localeCompare(ltRelativo(b)); });
+    ltTotalPdfs = todos.length;
+    var pular = document.getElementById('lt-pular').checked;
+    var lidos = ltLidos();
+    ltArquivos = pular ? todos.filter(function (f) { return !lidos.has(ltChaveArq(f)); }) : todos;
+    var puladas = todos.length - ltArquivos.length;
+    document.getElementById('lt-resumo').textContent = todos.length
+      ? ltArquivos.length + ' PDF(s) para ler' + (puladas ? ' (' + puladas + ' já lidos foram pulados)' : '') + '.'
+      : 'Nenhum PDF encontrado nessa escolha.';
+    document.getElementById('lt-ler').disabled = !ltArquivos.length;
+  }
+  document.getElementById('lt-arquivos').addEventListener('change', function (e) { ltEscolher(e.target.files); });
+  document.getElementById('lt-pasta').addEventListener('change', function (e) { ltEscolher(e.target.files); });
+  document.getElementById('lt-pular').addEventListener('change', function () {
+    // recalcula a lista com a última escolha, se houver
+    var ultimo = document.getElementById('lt-arquivos').files.length ? document.getElementById('lt-arquivos').files : document.getElementById('lt-pasta').files;
+    if (ultimo && ultimo.length) ltEscolher(ultimo);
+  });
+
+  // Texto do PDF: direto da camada de texto; se não houver, OCR página a página.
+  async function ltLerPdf(f) {
+    var lib = await ltGarantirPdf();
+    var pdf = await lib.getDocument({ data: await f.arrayBuffer() }).promise;
+    var paginas = Math.min(pdf.numPages, 5);
+    var texto = '';
+    for (var p = 1; p <= paginas; p++) {
+      var pg = await pdf.getPage(p);
+      var tc = await pg.getTextContent();
+      texto += tc.items.map(function (i) { return i.str; }).join(' ') + '\n';
+    }
+    if (texto.replace(/\s/g, '').length >= 80) return { texto: texto, origem: 'texto' };
+    var ocr = await ltGarantirOcr();
+    var lido = '';
+    for (var q = 1; q <= paginas; q++) {
+      var pgo = await pdf.getPage(q);
+      var vp = pgo.getViewport({ scale: 3 });
+      var canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await pgo.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      var r = await ocr.recognize(canvas);
+      lido += r.data.text + '\n';
+      canvas.width = 0; canvas.height = 0;
+    }
+    return { texto: lido, origem: 'ocr' };
+  }
+
+  function ltProgresso(i, total, nome) {
+    document.getElementById('lt-prog-txt').textContent = 'Lendo ' + (i + 1) + ' de ' + total + ' — ' + nome;
+    document.getElementById('lt-barra-fill').style.width = Math.round((i / Math.max(total, 1)) * 100) + '%';
+  }
+
+  async function ltIniciar() {
+    ltParando = false; ltResultados = [];
+    ['lt-inicio', 'lt-resultado'].forEach(function (id) { document.getElementById(id).hidden = true; });
+    document.getElementById('lt-rodape').hidden = true;
+    document.getElementById('lt-progresso').hidden = false;
+    for (var i = 0; i < ltArquivos.length; i++) {
+      if (ltParando) break;
+      var f = ltArquivos[i];
+      ltProgresso(i, ltArquivos.length, ltRelativo(f));
+      try {
+        var r = await ltLerPdf(f);
+        var nf = lotesAnalisarTexto(r.texto, ltRelativo(f));
+        ltResultados.push({ rel: ltRelativo(f), origem: r.origem, nf: nf, incluir: !!nf.nf && nf.lotes.length > 0, erro: '' });
+        ltMarcarLido(ltChaveArq(f));
+      } catch (e) {
+        console.error('Leitura do PDF', ltRelativo(f), e);
+        ltResultados.push({ rel: ltRelativo(f), origem: '', nf: { nf: '', cnpj: '', data: '', caminho: ltRelativo(f), lotes: [] }, incluir: false, erro: 'Não consegui ler este arquivo.' });
+      }
+    }
+    ltMostrarResultados();
+  }
+  function ltParar() { ltParando = true; }
+
+  function ltMostrarResultados() {
+    document.getElementById('lt-progresso').hidden = true;
+    document.getElementById('lt-resultado').hidden = false;
+    var lista = document.getElementById('lt-lista');
+    var comLote = ltResultados.filter(function (r) { return !r.erro && r.nf.nf && r.nf.lotes.length; }).length;
+    var semLote = ltResultados.filter(function (r) { return !r.erro && r.nf.nf && !r.nf.lotes.length; }).length;
+    var erros = ltResultados.filter(function (r) { return r.erro; }).length;
+    document.getElementById('lt-resumo-final').textContent = ltResultados.length + ' PDF(s) lidos: ' + comLote + ' com lote, ' + semLote + ' sem lote identificado' + (erros ? ', ' + erros + ' com erro' : '') + '.';
+    lista.innerHTML = ltResultados.map(function (r, i) {
+      if (r.erro) return '<div class="lt-card"><div class="lt-nf">' + lotesEsc(r.rel) + '</div><div class="lt-erro">' + lotesEsc(r.erro) + '</div></div>';
+      var nf = r.nf;
+      var titulo = nf.nf ? 'NF ' + lotesEsc(nf.nf) : 'Sem número da NF';
+      var forn = nf.cnpj ? lotesCnpjFormatado(nf.cnpj) : 'CNPJ não identificado';
+      var lotes = nf.lotes.length
+        ? '<div class="lt-lotes">' + nf.lotes.map(function (x) { return '<span class="lt-lote">' + lotesEsc(x.lote) + '</span>'; }).join('') + '</div>'
+        : '<div class="lt-aviso">Nenhum lote identificado. Esta NF não será gravada.</div>';
+      var aviso = r.origem === 'ocr' && nf.lotes.length ? '<div class="lt-aviso">Lido por reconhecimento de texto: confira os lotes no PDF antes de gravar.</div>' : '';
+      var marcar = nf.lotes.length && nf.nf ? '<input type="checkbox" ' + (r.incluir ? 'checked ' : '') + 'onchange="ltIncluir(' + i + ', this.checked)">' : '<span></span>';
+      return '<div class="lt-card lt-linha"><div>' +
+        '<div class="lt-nf">' + titulo + (nf.data ? ' · ' + lotesEsc(lotesDataBR(nf.data)) : '') + '</div>' +
+        '<div class="lt-sub">' + lotesEsc(forn) + '</div>' +
+        '<div class="lt-arq">' + lotesEsc(r.rel) + '</div>' +
+        lotes + aviso + '</div>' + marcar + '</div>';
+    }).join('') || '<div class="lt-card">Nada foi lido.</div>';
+    ltAtualizarBotao();
+  }
+  function ltIncluir(i, v) { ltResultados[i].incluir = v; ltAtualizarBotao(); }
+  function ltAtualizarBotao() {
+    var n = ltResultados.filter(function (r) { return r.incluir && r.nf.nf && r.nf.lotes.length; }).length;
+    document.getElementById('lt-rodape').hidden = !n;
+    document.getElementById('lt-gravar').textContent = 'Gravar ' + n + ' NF' + (n === 1 ? '' : 's');
+    document.getElementById('lt-gravar').disabled = !n;
+  }
+
+  // Firebase carregado só na hora de gravar. A sessão é a mesma do app, porque é o mesmo endereço.
+  async function ltGarantirFirebase() {
+    if (ltFbPronto) return ltFbPronto;
+    ltFbPronto = ltEnfileirar(LT_FB_SCRIPTS).then(function () {
+      if (!firebase.apps.length) firebase.initializeApp(LT_FB_CONFIG);
+      window.firestore = firebase.firestore();
+      return new Promise(function (res) {
+        var un = firebase.auth().onAuthStateChanged(function (u) { un(); res(u); });
+      });
+    }).then(function (u) {
+      if (!u) { toast('Abra o app e entre antes de gravar.'); ltFbPronto = null; return false; }
+      return true;
+    }).catch(function (e) {
+      console.error('Lotes antigos: falha ao conectar', e);
+      toast('Não consegui conectar para gravar. Confira a internet.');
+      ltFbPronto = null; return false;
+    });
+    return ltFbPronto;
+  }
+
+  async function ltGravar() {
+    var lista = ltResultados.filter(function (r) { return r.incluir && r.nf.nf && r.nf.lotes.length; }).map(function (r) { return r.nf; });
+    if (!lista.length) return;
+    var btn = document.getElementById('lt-gravar');
+    btn.disabled = true; btn.textContent = 'Conectando…';
+    var ok = await ltGarantirFirebase();
+    if (!ok) { ltAtualizarBotao(); return; }
+    try {
+      var total = await lotesGravar(lista, function (a, b) { btn.textContent = 'Gravando ' + a + ' de ' + b + '…'; });
+      toast('✓ ' + total + ' NF(s) gravada(s).');
+      btn.textContent = 'Gravado';
+      ltResultados.forEach(function (r) { r.incluir = false; });
+      setTimeout(function () { window.close(); toast('Pode fechar esta janela.'); }, 1500);
+    } catch (e) {
+      console.error('Gravação de lotes antigos', e);
+      toast('✕ Não consegui gravar. Confira o acesso e as regras do Firestore.');
+      ltAtualizarBotao();
+    }
+  }
+</script>
+</body>
+</html>
