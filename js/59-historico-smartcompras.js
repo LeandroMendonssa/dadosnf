@@ -1,4 +1,4 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.6';
 // 2.57.0: histórico de alterações do SmartCompras.
 // Um marcador (bookmarklet) é tocado na página "Histórico de Pedidos" do SmartCompras, já logado.
 // Ele manda o texto do diálogo para o app pelo endereço (#smartHist=...). O app lê, organiza e salva por pedido.
@@ -105,6 +105,8 @@ function smartHistMostrarImportacao(dados) {
 async function smartHistSalvar(pedido) {
     const entradas = window.__smartHistPendenteEntradas || [];
     if (!pedido || !entradas.length) return toast('Nada para salvar.');
+    // 2.57.6: na página de importação (popup), o Firebase só é carregado aqui, na hora de gravar.
+    if (window.SMART_HIST_NEUTRO && !(await smartHistPreparaSalvar())) return;
     try {
         await firestore.collection('historicoSmartCompras').doc(String(pedido)).set({
             pedido: String(pedido),
@@ -115,6 +117,8 @@ async function smartHistSalvar(pedido) {
         window.__smartHistPendenteEntradas = null;
         toast('✓ Histórico do pedido ' + pedido + ' salvo.');
         smartHistFechar();
+        // Na janela aberta pelo favorito, fecha sozinha depois de salvar.
+        if (window.SMART_HIST_NEUTRO) setTimeout(() => { window.close(); toast('Pode fechar esta janela.'); }, 1500);
     } catch (e) {
         console.error('Erro ao salvar histórico SmartCompras:', e);
         toast('✕ Não consegui salvar. Confira o acesso e as regras do Firestore.');
@@ -157,6 +161,27 @@ function smartHistProcessarPendentes() {
 }
 
 // Só processa depois do login, quando o Firestore já aceita a gravação.
-firebase.auth().onAuthStateChanged(u => {
-    if (u) setTimeout(smartHistProcessarPendentes, 1500);
-});
+if (!window.SMART_HIST_NEUTRO) {
+    firebase.auth().onAuthStateChanged(u => {
+        if (u) setTimeout(smartHistProcessarPendentes, 1500);
+    });
+}
+
+// 2.57.6: favorito que abre a página de importação numa janela só (nome fixo), reaproveitada a cada uso.
+// Esta função é transformada em texto e colocada no link da tela Ajustes → SmartCompras, para arrastar para a barra de favoritos.
+function smartHistBookmarklet() {
+    var T = function (d) { return d.innerText || d.textContent || ''; };
+    var els = [].slice.call(document.querySelectorAll('div')).filter(function (d) { var x = T(d); return /Histórico de Pedidos/.test(x) && /ALTERA[ÇC][ÃA]O/.test(x); });
+    if (!els.length) { alert('Abra o Histórico de Pedidos antes de tocar aqui.'); return; }
+    els.sort(function (a, b) { return T(a).length - T(b).length; });
+    var t = T(els[0]);
+    var m = (document.body.innerText || document.body.textContent || '').match(/N[º°]\s*Pedido\s*(\d+)/i);
+    var json = JSON.stringify({ pedido: m ? m[1] : '', texto: t });
+    var b = btoa(unescape(encodeURIComponent(json)));
+    var w = window.open('https://leandromendonssa.github.io/dadosnf/importar.html#smartHist=' + b, 'dadosnfImportar', 'width=560,height=720');
+    if (!w) alert('O navegador bloqueou a janela. Permita pop-ups para este site.');
+}
+(function smartHistPreparaFavorito() {
+    var a = document.getElementById('smart-favorito-link');
+    if (a) a.setAttribute('href', 'javascript:(' + smartHistBookmarklet.toString().replace(/\s*\n\s*/g, ' ') + ')();');
+})();

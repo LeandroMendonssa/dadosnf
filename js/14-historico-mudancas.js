@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.5', nome: 'Importação do histórico do SmartCompras lê o tipo de alteração no computador', status: 'atual', data: '18/11/2026 às 15:20',
+        numero: '2.57.6', nome: 'Importação do histórico do SmartCompras em janela própria, sem abrir o app inteiro', status: 'atual', data: '18/11/2026 às 15:45',
+        novidades: ['O favorito do Histórico SmartCompras abre uma janela pequena para conferir e salvar, sem carregar o app todo. A janela fecha sozinha depois de salvar.', 'Em Ajustes → Histórico SmartCompras, um botão para arrastar o favorito para a barra de favoritos, sem copiar código.'],
+        implementado: ['importar.html: página neutra, sem Firebase para abrir; o Firebase carrega só na hora de gravar.', 'js/59: favorito com janela de nome fixo, que reaproveita a mesma janela; link arrastável gerado pelo próprio código.'],
+        arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['O favorito antigo continua funcionando, mas abre o app inteiro. Para usar a janela nova, arraste o botão de Ajustes e substitua o favorito antigo.'],
+        testar: ['Arraste o botão de Ajustes → Histórico SmartCompras para a barra de favoritos. Com o Histórico de Pedidos aberto, toque no favorito: deve abrir uma janela pequena com a conferência. Salve e confira se ela fecha sozinha.'],
+    },
+    {
+        numero: '2.57.5', nome: 'Importação do histórico do SmartCompras lê o tipo de alteração no computador', status: 'concluida', data: '18/11/2026 às 15:20',
         novidades: ['O histórico de alterações do SmartCompras volta a ser reconhecido quando copiado do computador. As alterações de quantidade passam a ser guardadas nos dois casos.'],
         implementado: ['js/59: o tipo (QUANTIDADE, PREÇO etc.) é aceito numa linha própria, e a palavra ALTERAÇÃO solta é ignorada.'],
         arquivos: ['index.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
@@ -3661,4 +3669,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.6';
