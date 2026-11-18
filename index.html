@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.57.5">
+    <meta name="app-versao" content="2.57.6">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -201,6 +201,7 @@
                     <li><a data-screen="screen-observacoes" data-title="Observações"><i class="icon fa-solid fa-comment-dots" style="background-color: #50e3c2;"></i> Observações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a data-screen="screen-config-smartcompras" data-title="Histórico SmartCompras"><i class="icon fa-solid fa-clock-rotate-left" style="background-color: #5ac8fa;"></i> Histórico SmartCompras <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-ajuda" data-title="Ajuda" onclick="prepararAjuda()"><i class="icon fa-solid fa-circle-question" style="background-color: #007aff;"></i> Ajuda <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -239,6 +240,15 @@
                     </div>
                 </div>
                 <div id="import-preview-container"></div>
+            </div>
+
+            <div class="app-screen" id="screen-config-smartcompras">
+                <div class="card">
+                    <p style="margin:0 0 12px;font-size:12px;color:var(--text-light);">Histórico de alterações do SmartCompras: as alterações de quantidade são guardadas por pedido, para a busca e a conferência.</p>
+                    <p style="margin:0 0 12px;font-size:13px;">Arraste o botão abaixo para a barra de favoritos do Chrome ou do Edge. Não precisa copiar código.</p>
+                    <a id="smart-favorito-link" href="#" draggable="true" onclick="return false;" class="actions-button is-primary" style="display:inline-block;text-decoration:none;"><span class="icon-wrapper"><i class="fa-solid fa-clock-rotate-left"></i></span> Histórico SmartCompras</a>
+                    <p style="margin:12px 0 0;font-size:12px;color:var(--text-light);">Depois, abra o Histórico de Pedidos no SmartCompras e toque no favorito. Uma janela pequena abre para conferir e salvar.</p>
+                </div>
             </div>
 
             <div class="app-screen" id="screen-config-analise-cotacoes">

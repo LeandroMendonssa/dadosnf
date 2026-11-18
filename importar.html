@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Importar histórico SmartCompras</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { margin: 0; padding: 16px; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; background: #f2f2f7; color: #111; }
+  .imp-msg { max-width: 460px; margin: 40px auto; text-align: center; color: #555; font-size: 15px; line-height: 1.45; }
+  .imp-toast { position: fixed; left: 16px; right: 16px; bottom: 24px; background: #222; color: #fff; padding: 12px 14px; border-radius: 10px; display: none; text-align: center; z-index: 3000; font-size: 14px; }
+</style>
+</head>
+<body>
+<!-- Página neutra: não carrega o app nem o Firebase para abrir. O Firebase entra só na hora de gravar. -->
+<div class="imp-msg" id="imp-msg">Aguardando o histórico do SmartCompras. Com o Histórico de Pedidos aberto, toque no favorito <b>Histórico SmartCompras</b>.</div>
+<div class="imp-toast" id="imp-toast"></div>
+
+<script>
+  window.SMART_HIST_NEUTRO = true;
+  function toast(t) {
+    var e = document.getElementById('imp-toast');
+    e.textContent = t; e.style.display = 'block';
+    clearTimeout(e._t); e._t = setTimeout(function () { e.style.display = 'none'; }, 3000);
+  }
+  // Ao receber um novo endereço nesta mesma janela (o favorito reaproveita a janela), a conferência recomeça.
+  window.addEventListener('hashchange', function () {
+    var h = location.hash || '';
+    if (h.indexOf('#smartHist=') !== 0) return;
+    try {
+      var dados = JSON.parse(decodeURIComponent(escape(atob(h.slice(11)))));
+      history.replaceState(null, '', location.pathname);
+      smartHistMostrarImportacao(dados);
+    } catch (e) { toast('Não consegui ler o histórico recebido.'); }
+  });
+</script>
+
+<script src="js/59-historico-smartcompras.js"></script>
+
+<script>
+  // Firebase (mesma versão e mesmo projeto do app), carregado só na hora de salvar.
+  var IMP_FB_CONFIG = {
+    apiKey: "AIzaSyBbJnhZuL5f9v7KYjJRa1uGY9g17JXkYlo",
+    authDomain: "dadosnf-38b2f.firebaseapp.com",
+    projectId: "dadosnf-38b2f",
+    storageBucket: "dadosnf-38b2f.firebasestorage.app",
+    messagingSenderId: "103044936313",
+    appId: "1:103044936313:web:e0f1ad680cd31445a1daa8"
+  };
+  var IMP_FB_SCRIPTS = [
+    'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+    'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js',
+    'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js'
+  ];
+  var impFbPronto = null;
+
+  function impCarregarScripts(lista) {
+    return lista.reduce(function (p, src) {
+      return p.then(function () {
+        return new Promise(function (ok, err) {
+          var s = document.createElement('script');
+          s.src = src; s.crossOrigin = 'anonymous'; s.onload = ok; s.onerror = err;
+          document.head.appendChild(s);
+        });
+      });
+    }, Promise.resolve());
+  }
+
+  function impCarregarFirebase() {
+    return impCarregarScripts(IMP_FB_SCRIPTS).then(function () {
+      if (!firebase.apps.length) firebase.initializeApp(IMP_FB_CONFIG);
+      window.firestore = firebase.firestore();
+      // Espera o login ser reconhecido. A sessão é a mesma do app, porque é o mesmo endereço.
+      return new Promise(function (res) {
+        var un = firebase.auth().onAuthStateChanged(function (u) { un(); res(u); });
+      });
+    }).then(function (u) {
+      if (!u) { toast('Abra o app e entre antes de importar.'); impFbPronto = null; return false; }
+      return true;
+    }).catch(function (e) {
+      console.error('Importação SmartCompras: falha ao conectar', e);
+      toast('Não consegui conectar para gravar. Confira a internet.');
+      impFbPronto = null; return false;
+    });
+  }
+
+  // Chamada por smartHistSalvar (js/59) só quando a janela é a de importação.
+  function smartHistPreparaSalvar() {
+    if (!impFbPronto) impFbPronto = impCarregarFirebase();
+    return impFbPronto;
+  }
+
+  // Se o favorito já deixou um histórico pendente antes de a página terminar de carregar, mostra agora.
+  smartHistProcessarPendentes();
+</script>
+</body>
+</html>
