@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.56.0', nome: 'Recurso fixo por fornecedor', status: 'atual', data: '17/11/2026 às 21:10',
+        numero: '2.56.1', nome: 'Fornecedor com recurso fixo conta como compra direta na Auditoria Retroativa', status: 'atual', data: '17/11/2026 às 21:05',
+        novidades: ['NFs de fornecedor com recurso fixo deixam de aparecer como "Sem pedido" na Auditoria Retroativa: contam como compra direta.'],
+        implementado: ['js/32: analiseRetroativaErp considera compra direta a NF cujo CNPJ tem recurso fixo em recursosFixosCnpj (além das marcações que já existiam).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/32-auditoria-retroativa.js'],
+        mudou: ['Arquivos alterados desde a 2.56.0: index.html, style.css, js/14 e js/32.', 'Sem mudança no Worker nem nas regras do Firestore.', 'Se a NF já tinha pedido confirmado, ela sai do "pedido confirmado" e vai para Compra direta, porque esses fornecedores não passam pelo SmartCompras.'],
+        testar: ['Auditoria Retroativa: as NFs de um fornecedor com recurso fixo aparecem no filtro "Compra direta", não em "Sem pedido".', 'Os demais fornecedores continuam no mesmo lugar de antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.56.0', nome: 'Recurso fixo por fornecedor', status: 'concluida', data: '17/11/2026 às 21:10',
         novidades: ['Na tela de Fornecedores, cada fornecedor com CNPJ tem a opção "Recurso fixo": C/C Santa Casa, Recurso Próprio Santa Casa, C/C CTI, Recurso Próprio CTI ou nenhum (decidir pela cotação).', 'Na Entrada de NF, a NF desse fornecedor já vem com o recurso fixo. Você ainda pode trocar na NF.', 'O recurso fixo vale antes da regra das cotações, mas não muda NFs já salvas.'],
         implementado: ['js/01: variável recursosFixosCnpj (CNPJ só dígitos → recurso oficial). js/05: carrega recursosFixosCnpj de config do Firestore. js/12: recursoFixoDoFornecedorNfXml(); recursoPrevistoItemXml usa o fixo como padrão (compra direta e item com cotação, sem recurso gravado nem rascunho); definirRecursoFixoDoFornecedor grava com update. js/18: seletor "Recurso fixo" em cada CNPJ do cartão do fornecedor (strings oficiais via calcularRecursoOficial). js/31: passo no artigo Fornecedores.'],
         arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/18-erp-fornecedores-spdata.js', 'js/31-ajuda.js'],
@@ -3590,4 +3599,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.56.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.56.1';

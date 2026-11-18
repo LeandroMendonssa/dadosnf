@@ -122,7 +122,10 @@ function analiseRetroativaErp() {
         const itens = e.itens || [];
         const ligados = itens.filter(i => i.codigoSmartComprasRelacionado || codigoProdutoAtualDoItemErp(i)).length;
         const v = e.vinculo || {};
-        const direta = e.statusFluxo === 'historico_direto' || marcadaDireta.has(e.id);
+        // 2.56.1: fornecedor com recurso fixo (Fornecedores) é compra direta por definição
+        const cnpjFixo = String(e.cnpjFornecedor || '').replace(/\D/g, '');
+        const fornecedorFixo = !!(cnpjFixo && recursosFixosCnpj[cnpjFixo]);
+        const direta = e.statusFluxo === 'historico_direto' || marcadaDireta.has(e.id) || fornecedorFixo;
         // 2.16.2: a NF/XML já associada a um pedido no app vale mais que a sugestão gravada no ERP (antes seguia sugerindo o pedido errado)
         const pedidoDaNf = direta ? null : (mapaPedidoErpPelaNf().get(e.id) || null);
         const pedidoSt = direta ? 'direta' : (pedidoDaNf ? 'confirmado' : (v.status || 'sem_associacao'));
@@ -229,4 +232,4 @@ function confirmarSugestoesRetro() {
     });
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.55.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.56.1';
