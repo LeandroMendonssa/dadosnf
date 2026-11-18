@@ -1,4 +1,4 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.7';
 // 2.57.0: histórico de alterações do SmartCompras.
 // Um marcador (bookmarklet) é tocado na página "Histórico de Pedidos" do SmartCompras, já logado.
 // Ele manda o texto do diálogo para o app pelo endereço (#smartHist=...). O app lê, organiza e salva por pedido.
@@ -181,7 +181,35 @@ function smartHistBookmarklet() {
     var w = window.open('https://leandromendonssa.github.io/dadosnf/importar.html#smartHist=' + b, 'dadosnfImportar', 'width=560,height=720');
     if (!w) alert('O navegador bloqueou a janela. Permita pop-ups para este site.');
 }
+// 2.57.7: versão para iPhone (e celular em geral). Não dá para arrastar; o código é copiado e colado no endereço de um favorito.
+// Esta versão abre o app inteiro, como o favorito que já funcionava no iPhone.
+function smartHistBookmarkletCelular() {
+    var T = function (d) { return d.innerText || d.textContent || ''; };
+    var els = [].slice.call(document.querySelectorAll('div')).filter(function (d) { var x = T(d); return /Histórico de Pedidos/.test(x) && /ALTERA[ÇC][ÃA]O/.test(x); });
+    if (!els.length) { alert('Abra o Histórico de Pedidos antes de tocar aqui.'); return; }
+    els.sort(function (a, b) { return T(a).length - T(b).length; });
+    var t = T(els[0]);
+    var m = (document.body.innerText || document.body.textContent || '').match(/N[º°]\s*Pedido\s*(\d+)/i);
+    var json = JSON.stringify({ pedido: m ? m[1] : '', texto: t });
+    var b = btoa(unescape(encodeURIComponent(json)));
+    location.href = 'https://leandromendonssa.github.io/dadosnf/#smartHist=' + b;
+}
+function smartHistCodigo(fn) { return 'javascript:(' + fn.toString().replace(/\s*\n\s*/g, ' ') + ')();'; }
+function smartHistCopiarFavoritoCelular() {
+    var campo = document.getElementById('smart-favorito-celular');
+    if (!campo) return;
+    campo.focus(); campo.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(campo.value).then(function () { toast('✓ Código copiado.'); }).catch(function () { toast(ok ? '✓ Código copiado.' : 'Toque no campo, selecione tudo e copie.'); });
+    } else {
+        toast(ok ? '✓ Código copiado.' : 'Toque no campo, selecione tudo e copie.');
+    }
+}
 (function smartHistPreparaFavorito() {
     var a = document.getElementById('smart-favorito-link');
-    if (a) a.setAttribute('href', 'javascript:(' + smartHistBookmarklet.toString().replace(/\s*\n\s*/g, ' ') + ')();');
+    if (a) a.setAttribute('href', smartHistCodigo(smartHistBookmarklet));
+    var c = document.getElementById('smart-favorito-celular');
+    if (c) c.value = smartHistCodigo(smartHistBookmarkletCelular);
 })();

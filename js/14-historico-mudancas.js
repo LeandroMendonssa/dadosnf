@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.6', nome: 'Importação do histórico do SmartCompras em janela própria, sem abrir o app inteiro', status: 'atual', data: '18/11/2026 às 15:45',
+        numero: '2.57.7', nome: 'Histórico SmartCompras: versão para iPhone em Ajustes e tela de importação redesenhada', status: 'atual', data: '18/11/2026 às 16:45',
+        novidades: ['Em Ajustes → Histórico SmartCompras, há um bloco para iPhone e celular: copie o código e cole no endereço de um favorito. É a versão que já funcionava no iPhone.', 'A tela de importação ganhou o mesmo visual do onboarding: cabeçalho, passos e cartões de alteração.'],
+        implementado: ['js/59: smartHistBookmarkletCelular (versão de iPhone) e botão de copiar; o código do favorito é gerado a partir da própria função.', 'importar.html: novo visual, com a conferência no lugar da tela de espera.'],
+        arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['A versão de iPhone abre o app inteiro, como antes. A janela própria continua só para o computador.'],
+        testar: ['No iPhone, copie o código de Ajustes, cole num favorito e toque com o Histórico de Pedidos aberto: o app deve abrir com a conferência.', 'No computador, abra a importação pelo favorito e confira o novo visual.'],
+    },
+    {
+        numero: '2.57.6', nome: 'Importação do histórico do SmartCompras em janela própria, sem abrir o app inteiro', status: 'concluida', data: '18/11/2026 às 15:45',
         novidades: ['O favorito do Histórico SmartCompras abre uma janela pequena para conferir e salvar, sem carregar o app todo. A janela fecha sozinha depois de salvar.', 'Em Ajustes → Histórico SmartCompras, um botão para arrastar o favorito para a barra de favoritos, sem copiar código.'],
         implementado: ['importar.html: página neutra, sem Firebase para abrir; o Firebase carrega só na hora de gravar.', 'js/59: favorito com janela de nome fixo, que reaproveita a mesma janela; link arrastável gerado pelo próprio código.'],
         arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
@@ -3669,4 +3677,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.7';
