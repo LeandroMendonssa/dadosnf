@@ -1,4 +1,4 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.5';
 // 2.57.0: histórico de alterações do SmartCompras.
 // Um marcador (bookmarklet) é tocado na página "Histórico de Pedidos" do SmartCompras, já logado.
 // Ele manda o texto do diálogo para o app pelo endereço (#smartHist=...). O app lê, organiza e salva por pedido.
@@ -31,6 +31,9 @@ function smartHistParsear(texto) {
         if (/^\d{1,2}:\d{2}$/.test(l)) { atual.hora = l; continue; }
         const mTipo = l.match(/^(.+?)\s*ALTERA[ÇC][ÃA]O$/i);
         if (mTipo && !atual.tipo) { atual.tipo = mTipo[1].trim(); continue; }
+        // 2.57.5: no computador o tipo vem numa linha (QUANTIDADE) e a palavra ALTERAÇÃO em outra.
+        if (/^ALTERA[ÇC][ÃA]O$/i.test(l)) continue;
+        if (!atual.tipo && /^[A-ZÇÃÉÍÓÚÊÂÔ ]+$/.test(l)) { atual.tipo = l; continue; }
         if (/^por /i.test(l) && !atual.usuario) { atual.usuario = l.replace(/^por /i, ''); continue; }
         const mDe = l.match(/^De (.+?) para (.+)$/i);
         const ehPrazo = /PRAZO/i.test(atual.tipo);

@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.4', nome: 'Aviso de instalação aparece uma só vez', status: 'atual', data: '18/11/2026 às 05:50',
+        numero: '2.57.5', nome: 'Importação do histórico do SmartCompras lê o tipo de alteração no computador', status: 'atual', data: '18/11/2026 às 15:20',
+        novidades: ['O histórico de alterações do SmartCompras volta a ser reconhecido quando copiado do computador. As alterações de quantidade passam a ser guardadas nos dois casos.'],
+        implementado: ['js/59: o tipo (QUANTIDADE, PREÇO etc.) é aceito numa linha própria, e a palavra ALTERAÇÃO solta é ignorada.'],
+        arquivos: ['index.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['Nenhuma mudança na forma de usar o marcador do favorito.'],
+        testar: ['No computador, abra o Histórico de Pedidos do SmartCompras, toque no marcador e confira se a conferência mostra as alterações de quantidade.'],
+    },
+    {
+        numero: '2.57.4', nome: 'Aviso de instalação aparece uma só vez', status: 'concluida', data: '18/11/2026 às 05:50',
         novidades: ['O aviso para instalar o app aparece só uma vez em cada aparelho. Depois de fechado ou de aceitar a instalação, não volta.'],
         implementado: ['js/60: instJaMostrado substitui a regra dos 30 dias; fechar ou instalar grava a marca no navegador.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/60-instalacao-app.js'],
@@ -3653,4 +3661,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.5';
