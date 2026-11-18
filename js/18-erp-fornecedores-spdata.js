@@ -840,6 +840,12 @@ function renderListaFornecedoresUnificada() {
             const cnpjsHTML = cnpjsDoc.length
                 ? cnpjsDoc.map(c => formatarCnpjExibicao(c.cnpj)).join(' · ')
                 : '<em>Sem CNPJ cadastrado: associações por este código ficam pendentes.</em>';
+            // 2.56.0: recurso fixo deste documento (vale para as NFs desse CNPJ, sem precisar marcar à mão a cada NF)
+            const fixoAtual = cnpjsDoc.map(c => recursosFixosCnpj[String(c.cnpj || '').replace(/\D/g, '')]).find(Boolean) || '';
+            const opcoesFixo = ['', calcularRecursoOficial('Santa Casa', 'cc'), calcularRecursoOficial('Santa Casa', 'proprio'), calcularRecursoOficial('CTI', 'cc'), calcularRecursoOficial('CTI', 'proprio')]; // strings oficiais (js/13)
+            const recursoFixoHTML = cnpjsDoc.length
+                ? `<div class="frn-lin"><span>Recurso fixo <small class="txt-aux">(já vem nas NFs deste fornecedor; pode trocar na NF)</small></span><select class="form-field" onchange="definirRecursoFixoDoFornecedor('${doc.id}', this.value)">${opcoesFixo.map(v => `<option value="${v}" ${v === fixoAtual ? 'selected' : ''}>${v || 'Nenhum (decidir pela cotação)'}</option>`).join('')}</select></div>`
+                : '';
             const editando = fornecedorEditando.has(chaveDoc);
             const apelidoEf = apelidoFornecedorDoc(doc);
             const edicaoHTML = editando
@@ -859,6 +865,7 @@ function renderListaFornecedoresUnificada() {
                 <div class="frn-txt"><strong>${doc.codigo ? doc.codigo + ' · ' : (doc.origemCadastro === 'xml' ? 'Identificado por XML · ' : '')}CNPJ: </strong>${cnpjsHTML}</div>
                 ${edicaoHTML}
                 ${desvinculoHTML}
+                ${recursoFixoHTML}
             </div>`;
         }).join('');
 
@@ -895,4 +902,4 @@ function vincularEntidadeSelecionada(chave, principalId) {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.56.0';

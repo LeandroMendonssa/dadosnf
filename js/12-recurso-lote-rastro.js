@@ -70,6 +70,11 @@ function codigosSmartComprasDestaNf() {
 // Chamado ao salvar a NF (o salvamento é a confirmação do usuário): define, de
 // uma vez, o recurso dos itens desta NF que ainda não têm e que a regra acima
 // consegue determinar. Os demais ficam pra escolha manual.
+// 2.56.0: recurso fixo do fornecedor desta NF (pelo CNPJ do emitente), '' se não tiver.
+function recursoFixoDoFornecedorNfXml() {
+    const k = String((nfeInfoAtual && nfeInfoAtual.cnpjEmit) || '').replace(/\D/g, '');
+    return (k && recursosFixosCnpj[k]) || '';
+}
 // Recurso de UM item da NF em edição (antes de salvar). Nada aqui grava.
 // Null = o item ainda não tem base (sem associação).
 function recursoPrevistoItemXml(item, status) {
@@ -81,7 +86,9 @@ function recursoPrevistoItemXml(item, status) {
         if (!destino) return { chaveRec, semDestino: true };
         const rasc = recursosRascunhoXml[chaveRec] || null;
         const proprio = calcularRecursoOficial(destino, 'proprio');
-        return { chaveRec, direto: true, cc: calcularRecursoOficial(destino, 'cc'), proprio, valor: rasc || proprio, motivo: rasc ? 'definido manualmente' : 'sem cotação do SmartCompras → Recurso Próprio' };
+        const fixo = recursoFixoDoFornecedorNfXml(); // 2.56.0: fornecedor com recurso fixo vem com ele (editável)
+        const padrao = fixo || proprio;
+        return { chaveRec, direto: true, cc: calcularRecursoOficial(destino, 'cc'), proprio, valor: rasc || padrao, motivo: rasc ? 'definido manualmente' : (fixo ? 'recurso fixo do fornecedor' : 'sem cotação do SmartCompras → Recurso Próprio') };
     }
     const assocRec = (status && (status.associacao || status.associacaoRecurso)) || null; // 2.17.3: item trocado herda o recurso do item pedido
     if (!assocRec) return null;
@@ -99,17 +106,37 @@ function recursoPrevistoItemXml(item, status) {
     const esperado = det ? calcularRecursoOficial(cot.origem, det.tipo) : null;
     const detTipo = det ? det.tipo : null;
     const rasc = recursosRascunhoXml[chaveRec] || null;
-    const valor = rasc || existente || esperado;
+    const fixo = recursoFixoDoFornecedorNfXml(); // 2.56.0: sem recurso gravado, o fixo do fornecedor vale antes da regra das cotações
+    const valor = rasc || existente || fixo || esperado;
     const conforme = det ? `conforme as cotações: ${det.participantes} fornecedor(es) cotaram (C/C exige ${det.minimo} ou mais)` : 'já definido';
     let motivo = '';
     if (rasc) motivo = esperado && rasc !== esperado ? `definido manualmente (as cotações indicariam ${esperado})` : 'definido manualmente';
     else if (existente) motivo = esperado && existente !== esperado ? `já definido (as cotações indicariam ${esperado})` : conforme;
+    else if (fixo) motivo = 'recurso fixo do fornecedor';
     else if (det) motivo = conforme;
     return { chaveRec, cotacao: cot, codigo, cc: calcularRecursoOficial(cot.origem, 'cc'), proprio: calcularRecursoOficial(cot.origem, 'proprio'), valor, motivo, detTipo };
 }
 
 
 // ===================================================================
+// 2.56.0: grava (ou tira, com valor vazio) o recurso fixo de um fornecedor, pelo CNPJ dos documentos dele. Só afeta NFs novas (Entrada de NF); as já salvas mantêm o recurso que têm.
+async function definirRecursoFixoDoFornecedor(docId, valor) {
+    const doc = (typeof listaFornecedoresSpData !== 'undefined' ? listaFornecedoresSpData : []).find(d => d.id === docId);
+    const chaves = ((doc && doc.cnpjs) || []).map(c => String(c.cnpj || '').replace(/\D/g, '')).filter(Boolean);
+    if (!chaves.length) return toast('Este fornecedor não tem CNPJ cadastrado: o recurso fixo precisa de CNPJ.');
+    const anterior = { ...recursosFixosCnpj };
+    chaves.forEach(k => { if (valor) recursosFixosCnpj[k] = valor; else delete recursosFixosCnpj[k]; });
+    try {
+        await settingsDocRef.update({ recursosFixosCnpj: recursosFixosCnpj });
+        toast(valor ? `✓ Recurso fixo: ${valor}` : '✓ Recurso fixo removido.');
+        if (typeof renderListaFornecedoresUnificada === 'function') renderListaFornecedoresUnificada();
+    } catch (e) {
+        recursosFixosCnpj = anterior;
+        console.error('Erro ao salvar recurso fixo do fornecedor:', e);
+        toast('✕ Erro ao salvar o recurso fixo.');
+    }
+}
+
 // --- FASE 43: LOTE E VALIDADE ESCRITOS EM TEXTO (xProd / infAdProd) ---
 // ===================================================================
 // O SPData só lê <rastro><nLote/><qLote/><dVal/></rastro>. Muitos fornecedores escrevem lote e validade em texto livre no fim do
@@ -602,4 +629,4 @@ function garantirDatalistSpDataAuditoria() {
 // Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.40.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.56.0';

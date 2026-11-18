@@ -71,6 +71,8 @@ let selectionModeNotas = false;
 let notasSelecionadas = new Set();
 let selectionModeFornecedores = false;
 let fornecedoresIgnorados = new Set();
+// 2.56.0: recurso fixo por fornecedor, pelo CNPJ (só dígitos) → recurso oficial (ex.: 'C/C CTI'). Vale como padrão na Entrada de NF.
+let recursosFixosCnpj = {};
 // Bloqueio por CNPJ (mais confiável que nome) — usado pelo fluxo de
 // pré-seleção de NFs do ERP (Fase 5). O bloqueio antigo por nome continua
 // existindo e sendo usado onde já era usado (checklist de Adicionar Nota);
@@ -214,4 +216,4 @@ const closeBtnBackScreen = { 'screen-resumo-pend': 'screen-inicio', 'screen-danf
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.50.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.56.0';

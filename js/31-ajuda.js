@@ -278,7 +278,8 @@ const AJUDA_ARTIGOS = [
         'O cadastro fica guardado neste aparelho por até 12 horas (para gastar menos leituras do Firebase). Ao abrir Fornecedores, Importar ou a Entrada de NF ele é atualizado na hora. Se você mudou algo em outro aparelho, abra Fornecedores aqui para ver.',
         'Para juntar filiais, use "Vincular": digite parte do nome e escolha (o app sugere nomes parecidos).',
         'CNPJs com os mesmos 8 primeiros dígitos (mesma empresa) são vinculados automaticamente ao subir um XML ou importar o relatório.',
-        'Para separar um CNPJ do grupo, use "Desvincular este CNPJ".'
+        'Para separar um CNPJ do grupo, use "Desvincular este CNPJ".',
+        'Recurso fixo: em cada CNPJ do fornecedor, escolha o recurso que ele sempre tem (C/C Santa Casa, Recurso Próprio Santa Casa, C/C CTI ou Recurso Próprio CTI) ou "Nenhum". Na Entrada de NF, as NFs desse fornecedor já vêm com esse recurso; você pode trocar em cada NF. NFs já salvas não mudam.'
       ],
       dicas: [], tutorial: null },
     { id: 'backup', cat: 'Ajustes e dados', titulo: 'Backup dos dados e exportação para diagnóstico', versao: '2.10.4',
@@ -625,4 +626,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.55.12';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.56.0';

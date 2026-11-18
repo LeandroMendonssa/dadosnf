@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.55.12', nome: 'Excluir contas de Aprovações, fila local quando a cota do Firebase acaba e pedido de publicação', status: 'atual', data: '17/11/2026 às 20:40',
+        numero: '2.56.0', nome: 'Recurso fixo por fornecedor', status: 'atual', data: '17/11/2026 às 21:10',
+        novidades: ['Na tela de Fornecedores, cada fornecedor com CNPJ tem a opção "Recurso fixo": C/C Santa Casa, Recurso Próprio Santa Casa, C/C CTI, Recurso Próprio CTI ou nenhum (decidir pela cotação).', 'Na Entrada de NF, a NF desse fornecedor já vem com o recurso fixo. Você ainda pode trocar na NF.', 'O recurso fixo vale antes da regra das cotações, mas não muda NFs já salvas.'],
+        implementado: ['js/01: variável recursosFixosCnpj (CNPJ só dígitos → recurso oficial). js/05: carrega recursosFixosCnpj de config do Firestore. js/12: recursoFixoDoFornecedorNfXml(); recursoPrevistoItemXml usa o fixo como padrão (compra direta e item com cotação, sem recurso gravado nem rascunho); definirRecursoFixoDoFornecedor grava com update. js/18: seletor "Recurso fixo" em cada CNPJ do cartão do fornecedor (strings oficiais via calcularRecursoOficial). js/31: passo no artigo Fornecedores.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/18-erp-fornecedores-spdata.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.55.12: index.html, style.css, js/01, js/05, js/12, js/14, js/18 e js/31.', 'Sem mudança no Worker nem nas regras do Firestore.', 'O fornecedor precisa ter CNPJ cadastrado para receber recurso fixo. Fornecedores só com nome (sem CNPJ) não aparecem com essa opção.'],
+        testar: ['Fornecedores: abra um fornecedor com CNPJ, escolha "C/C CTI" no Recurso fixo. Confira que a escolha ficou salva ao reabrir a tela.', 'Entrada de NF: suba uma NF desse fornecedor (compra direta). O recurso deve vir preenchido com a escolha. Troque na NF e confirme que a troca é aceita.', 'Volte o recurso para "Nenhum" e confira que as próximas NFs voltam a seguir a regra normal.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.12', nome: 'Excluir contas de Aprovações, fila local quando a cota do Firebase acaba e pedido de publicação', status: 'concluida', data: '17/11/2026 às 20:40',
         novidades: ['Em Aprovações de Acesso, quem aprova pode excluir qualquer conta da lista (botão "Excluir", com confirmação). A própria conta não tem o botão. Se a pessoa entrar de novo, volta como pedido novo.', 'Quando o limite diário do Firebase acaba, o que você salva fica guardado neste aparelho e é enviado sozinho quando o limite voltar. Aparece um aviso com a quantidade de alterações guardadas.', 'Nova página na Ajuda: "Quando o limite diário do Firebase acaba".'],
         implementado: ['js/58-fila-cota.js (novo): fila local em localStorage para gravações que falham por cota ou não respondem enquanto a cota está estourada; reenvio ao abrir o app e a cada 60 s; aviso de cota. js/57: botão Excluir para quem não é a própria conta, com confirmação. js/31: página "Quando o limite diário do Firebase acaba" e passo de Excluir. index.html (inclui js/58), style.css (aviso), js/14: versão 2.55.12.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js', 'js/58-fila-cota.js'],
@@ -3581,4 +3590,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.55.12';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.56.0';

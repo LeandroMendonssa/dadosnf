@@ -108,6 +108,7 @@ function iniciarListenerConfiguracoes() {
             apelidosFornecedores = Object.fromEntries(Object.entries(data.apelidosFornecedores || {}).filter(([k, v]) => nomeTextoSeguro(k) && nomeTextoSeguro(v))); 
             fornecedoresIgnorados = new Set((Array.isArray(data.fornecedoresIgnorados) ? data.fornecedoresIgnorados : []).filter(f => typeof f === 'string' && f.trim() !== ''));
             fornecedoresIgnoradosCnpj = new Set((Array.isArray(data.fornecedoresIgnoradosCnpj) ? data.fornecedoresIgnoradosCnpj : []).filter(f => typeof f === 'string' && f.trim() !== ''));
+            recursosFixosCnpj = (data.recursosFixosCnpj && typeof data.recursosFixosCnpj === 'object' && !Array.isArray(data.recursosFixosCnpj)) ? { ...data.recursosFixosCnpj } : {}; // 2.56.0
             if (document.getElementById('lista-cadastro-fornecedores-spdata')) renderListaFornecedoresUnificada();
             
             // Lógica de merge das configurações salvas
@@ -644,4 +645,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.52.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.56.0';
