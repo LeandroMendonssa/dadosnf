@@ -844,7 +844,7 @@ function renderListaFornecedoresUnificada() {
             const fixoAtual = cnpjsDoc.map(c => recursosFixosCnpj[String(c.cnpj || '').replace(/\D/g, '')]).find(Boolean) || '';
             const opcoesFixo = ['', calcularRecursoOficial('Santa Casa', 'cc'), calcularRecursoOficial('Santa Casa', 'proprio'), calcularRecursoOficial('CTI', 'cc'), calcularRecursoOficial('CTI', 'proprio')]; // strings oficiais (js/13)
             const recursoFixoHTML = cnpjsDoc.length
-                ? `<div class="frn-lin"><span>Recurso fixo <small class="txt-aux">(já vem nas NFs deste fornecedor; pode trocar na NF)</small></span><select class="form-field" onchange="definirRecursoFixoDoFornecedor('${doc.id}', this.value)">${opcoesFixo.map(v => `<option value="${v}" ${v === fixoAtual ? 'selected' : ''}>${v || 'Nenhum (decidir pela cotação)'}</option>`).join('')}</select></div>`
+                ? `<div class="frn-lin frn-recurso-fixo"><span>Recurso fixo <small class="txt-aux">(já vem nas NFs deste fornecedor; pode trocar na NF)</small></span><select class="form-field" onchange="definirRecursoFixoDoFornecedor('${doc.id}', this.value)">${opcoesFixo.map(v => `<option value="${v}" ${v === fixoAtual ? 'selected' : ''}>${v || 'Nenhum (decidir pela cotação)'}</option>`).join('')}</select></div>`
                 : '';
             const editando = fornecedorEditando.has(chaveDoc);
             const apelidoEf = apelidoFornecedorDoc(doc);
@@ -902,4 +902,4 @@ function vincularEntidadeSelecionada(chave, principalId) {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.56.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.56.2';

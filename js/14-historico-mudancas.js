@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.56.1', nome: 'Fornecedor com recurso fixo conta como compra direta na Auditoria Retroativa', status: 'atual', data: '17/11/2026 às 21:05',
+        numero: '2.56.2', nome: 'Ajuste visual do recurso fixo no celular', status: 'atual', data: '17/11/2026 às 21:15',
+        novidades: ['No cartão do fornecedor, o rótulo "Recurso fixo" fica em cima e o seletor ocupa a largura toda. Antes, o texto ficava espremido na lateral.'],
+        implementado: ['js/18: a linha do recurso fixo recebe a classe frn-recurso-fixo. style.css: regra da classe (rótulo em bloco, seletor com 100% de largura).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/18-erp-fornecedores-spdata.js'],
+        mudou: ['Arquivos alterados desde a 2.56.1: index.html, style.css, js/14 e js/18.', 'Sem mudança de regra: só o visual.'],
+        testar: ['Fornecedores: abra um fornecedor com CNPJ. "Recurso fixo" deve ficar em cima, com o seletor embaixo ocupando a largura da tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.56.1', nome: 'Fornecedor com recurso fixo conta como compra direta na Auditoria Retroativa', status: 'concluida', data: '17/11/2026 às 21:05',
         novidades: ['NFs de fornecedor com recurso fixo deixam de aparecer como "Sem pedido" na Auditoria Retroativa: contam como compra direta.'],
         implementado: ['js/32: analiseRetroativaErp considera compra direta a NF cujo CNPJ tem recurso fixo em recursosFixosCnpj (além das marcações que já existiam).'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/32-auditoria-retroativa.js'],
@@ -3599,4 +3608,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.56.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.56.2';
