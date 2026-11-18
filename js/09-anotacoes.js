@@ -651,7 +651,7 @@ function renderLinhaProduto(it, chaveUnica, ctx) {
     const cotacaoBlocoHTML = itemGanhadores
         ? `<div class="cdet-cot"><div class="cdet-rec-linha"><span class="cdet-k">Cotaram este item</span><strong>${itemGanhadores.participantes}</strong>${itemGanhadores.participantes >= minCC ? '<span class="xml-item-badge pronto">✓ Atingiu o mínimo</span>' : `<span class="xml-item-badge pendente">Abaixo de ${minCC}</span>`}</div>
             <div class="cdet-linha"><span class="cdet-k">Vencedor</span><span>${itemGanhadores.fornecedorVencedor ? escRel(itemGanhadores.fornecedorVencedor.nome) : '<em>não identificado</em>'}</span></div>
-            ${itemGanhadores.empresas.length ? `<details class="cdet-part"><summary>Ver os ${itemGanhadores.empresas.length} participantes</summary><div class="txt-aux">${itemGanhadores.empresas.map(e => escRel(e.nome)).join(', ')}</div></details>` : ''}</div>`
+            ${itemGanhadores.empresas.length ? `<details class="cdet-part"><summary>Ver os ${itemGanhadores.empresas.length} participantes</summary><ol class="cdet-part-lista">${[...itemGanhadores.empresas].sort((a, b) => parseValorBR(String(a.valorProposta || '').replace(/R\$\s*/g, '')) - parseValorBR(String(b.valorProposta || '').replace(/R\$\s*/g, ''))).map((e, i) => `<li><b>${i + 1}º</b> ${escRel(e.nome)}<span class="cdet-part-valores">${escRel(e.valorProposta)} unit. · ${escRel(e.valorTotal)} total</span></li>`).join('')}</ol></details>` : ''}</div>`
         : '';
     const moeda = v => { const n = Number(String(v).replace(/\./g, '').replace(',', '.')); const bruto = Number(String(v).replace(',', '.')); const x = Number.isFinite(bruto) ? bruto : n; return Number.isFinite(x) ? 'R$ ' + formatValorBR(x) : 'R$ ' + v; };
     const numeros = [it.quantidade ? ['Quantidade', it.quantidade] : null, it.precoUnitario ? ['Valor unitário', moeda(it.precoUnitario)] : null, it.precoTotal ? ['Valor total', moeda(it.precoTotal)] : null].filter(Boolean);
@@ -1203,4 +1203,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.57.2';

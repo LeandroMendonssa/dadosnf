@@ -10,7 +10,25 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.0', nome: 'Histórico de alterações do SmartCompras (versão 1)', status: 'atual', data: '17/11/2026 às 23:20',
+        numero: '2.57.2', nome: 'Participantes por preço e histórico só com quantidade', status: 'atual', data: '17/11/2026 às 23:40',
+        novidades: ['Ver os participantes mostra cada fornecedor numerado do menor para o maior preço unitário, com valor unitário e total.', 'O histórico do SmartCompras guarda só alterações de quantidade. Prazo de pagamento e outras são descartadas na importação.'],
+        implementado: ['js/09: lista de participantes ordenada por valorProposta (parseValorBR), com número, unitário e total.', 'js/59: filtro na importação (só QUANTIDADE).', 'style.css: .cdet-part-valores.'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/59-historico-smartcompras.js'],
+        mudou: ['A ordem mostrada é por preço unitário, como a tela do SmartCompras. O SmartCompras não traz a hora em que cada fornecedor cotou, então a ordem de chegada não aparece.', 'Os registros do histórico já salvos com prazo de pagamento continuam no banco; a partir de agora, importações novas só guardam quantidade.', 'Ainda não aplica a alteração de quantidade na cotação do app. Isso depende de confirmar a regra.'],
+        testar: ['Abra um item com "Ver os participantes": o primeiro deve ser o menor preço unitário, com número e os dois valores.', 'Faça uma importação do histórico que tenha prazo de pagamento e confira que só as quantidades entram.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.1', nome: 'Participantes organizados e aviso para instalar o app', status: 'concluida', data: '17/11/2026 às 23:30',
+        novidades: ['A lista de participantes do item (Ver os participantes) sai em ordem alfabética, uma empresa por linha.', 'Aviso para instalar o app na tela inicial: no computador (Chrome e Edge) com botão Instalar; no iPhone, com o passo a passo do Safari. Fechar o aviso o esconde por 30 dias naquele aparelho.'],
+        implementado: ['js/09: lista de participantes em <ul> ordenada.', 'js/60 (novo): aviso de instalação (beforeinstallprompt no computador e Android; instrução no iPhone).', 'style.css: classes cdet-part-lista e inst-aviso.'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/60-instalacao-app.js'],
+        mudou: ['Sem mudança em dados nem no Firebase. O aviso só guarda, no navegador, a data em que foi fechado.', 'O botão Instalar só aparece quando o navegador permite a instalação (Chrome e Edge no computador; Chrome no Android). No Safari do computador não aparece.'],
+        testar: ['No computador (Chrome ou Edge): abra o app e espere alguns segundos. Deve aparecer o aviso "Instale o app" com o botão Instalar.', 'No iPhone (Safari): deve aparecer a instrução "Adicione à Tela de Início". Feche o aviso e confira que não volta na mesma semana.', 'Abra uma cotação com "Ver os participantes" e confira a lista em ordem, uma por linha.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.0', nome: 'Histórico de alterações do SmartCompras (versão 1)', status: 'concluida', data: '17/11/2026 às 23:20',
         novidades: ['Dá para trazer para o app as alterações de quantidade e prazo de pagamento que o setor de compras faz no SmartCompras, por pedido.', 'Um marcador (favorito) é tocado na página do Histórico de Pedidos e abre o app com o histórico pronto para conferir e salvar.'],
         implementado: ['js/59 (novo): leitura do texto do diálogo, conferência, salvamento em historicoSmartCompras/{pedido} e visualização por #smartHistVer=pedido.', 'js/31: artigo "Histórico de alterações do SmartCompras".', 'style.css: janela de conferência (classes hs-*).'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/59-historico-smartcompras.js'],
@@ -3617,4 +3635,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.2';

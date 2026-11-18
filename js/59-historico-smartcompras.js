@@ -1,4 +1,4 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.2';
 // 2.57.0: histórico de alterações do SmartCompras.
 // Um marcador (bookmarklet) é tocado na página "Histórico de Pedidos" do SmartCompras, já logado.
 // Ele manda o texto do diálogo para o app pelo endereço (#smartHist=...). O app lê, organiza e salva por pedido.
@@ -48,7 +48,8 @@ function smartHistParsear(texto) {
         pendente = pendente ? pendente + ' ' + l : l;
     }
     const hoje = new Date();
-    return blocos.filter(b => b.tipo && b.mudancas.length).map(b => {
+    // 2.57.2: só alteração de QUANTIDADE interessa à cotação. Prazo de pagamento e outras são descartadas antes de guardar.
+    return blocos.filter(b => /QUANTIDADE/i.test(b.tipo) && b.mudancas.length).map(b => {
         let ano = hoje.getFullYear();
         // Sem o ano na tela: se a data cair mais de um mês à frente de hoje, é do ano anterior (virada de dezembro).
         if (new Date(ano, b.mes - 1, b.dia) > new Date(hoje.getTime() + 31 * 86400000)) ano -= 1;
