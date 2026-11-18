@@ -1,4 +1,4 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/59-historico-smartcompras.js'] = '2.57.8';
 // 2.57.0: histórico de alterações do SmartCompras.
 // Um marcador (bookmarklet) é tocado na página "Histórico de Pedidos" do SmartCompras, já logado.
 // Ele manda o texto do diálogo para o app pelo endereço (#smartHist=...). O app lê, organiza e salva por pedido.
@@ -169,6 +169,8 @@ if (!window.SMART_HIST_NEUTRO) {
 
 // 2.57.6: favorito que abre a página de importação numa janela só (nome fixo), reaproveitada a cada uso.
 // Esta função é transformada em texto e colocada no link da tela Ajustes → SmartCompras, para arrastar para a barra de favoritos.
+// 2.57.8: dentro da função não pode haver comentário de linha (//), porque o texto é colapsado numa linha só.
+// 2.57.8: a janela abre centralizada sobre a janela do navegador (ver as variáveis x e y abaixo).
 function smartHistBookmarklet() {
     var T = function (d) { return d.innerText || d.textContent || ''; };
     var els = [].slice.call(document.querySelectorAll('div')).filter(function (d) { var x = T(d); return /Histórico de Pedidos/.test(x) && /ALTERA[ÇC][ÃA]O/.test(x); });
@@ -178,7 +180,10 @@ function smartHistBookmarklet() {
     var m = (document.body.innerText || document.body.textContent || '').match(/N[º°]\s*Pedido\s*(\d+)/i);
     var json = JSON.stringify({ pedido: m ? m[1] : '', texto: t });
     var b = btoa(unescape(encodeURIComponent(json)));
-    var w = window.open('https://leandromendonssa.github.io/dadosnf/importar.html#smartHist=' + b, 'dadosnfImportar', 'width=560,height=720');
+    var W = 560, H = 720;
+    var x = (window.screenX || 0) + Math.max(0, ((window.outerWidth || W) - W) / 2);
+    var y = (window.screenY || 0) + Math.max(0, ((window.outerHeight || H) - H) / 2);
+    var w = window.open('https://leandromendonssa.github.io/dadosnf/importar.html#smartHist=' + b, 'dadosnfImportar', 'width=' + W + ',height=' + H + ',left=' + Math.round(x) + ',top=' + Math.round(y));
     if (!w) alert('O navegador bloqueou a janela. Permita pop-ups para este site.');
 }
 // 2.57.7: versão para iPhone (e celular em geral). Não dá para arrastar; o código é copiado e colado no endereço de um favorito.
