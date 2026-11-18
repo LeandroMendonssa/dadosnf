@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.56.2'; }
+:root { --css-versao: '2.57.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2262,3 +2262,11 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .frn-lin.frn-recurso-fixo{flex-direction:column;align-items:stretch;gap:6px}
 .frn-lin.frn-recurso-fixo>span{flex:none;width:100%;display:block}
 .frn-recurso-fixo select{width:100%}
+/* 2.57.0: histórico de alterações do SmartCompras */
+.hs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9000;padding:16px}
+.hs-caixa{background:var(--surface,#fff);color:var(--text-dark,#222);border-radius:14px;max-width:560px;width:100%;max-height:86vh;overflow:auto;padding:16px 16px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.hs-caixa h3{margin:0 0 10px}
+.hs-lista{display:flex;flex-direction:column;gap:10px}
+.hs-linha{border:1px solid #ddd;border-radius:10px;padding:8px 10px;font-size:14px}
+.hs-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hs-mud{margin-top:4px;font-size:13px}
