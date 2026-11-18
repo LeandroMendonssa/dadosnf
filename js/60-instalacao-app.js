@@ -1,8 +1,8 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/60-instalacao-app.js'] = '2.57.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/60-instalacao-app.js'] = '2.57.4';
 // 2.57.1: sugestão para instalar o app na tela inicial.
 // Computador (Chrome/Edge) e Android: usa o botão do próprio navegador.
 // iPhone (Safari): não há botão, então mostra o passo a passo.
-// Quem fechar o aviso não vê de novo naquele aparelho (guardado no navegador, sem dado no Firebase).
+// Aparece uma só vez por aparelho: depois de fechar (ou instalar), não volta (guardado no navegador, sem dado no Firebase).
 
 let instEvento = null;
 const INST_CHAVE_FECHADO = 'instAvisoFechadoEm';
@@ -10,11 +10,9 @@ const INST_CHAVE_FECHADO = 'instAvisoFechadoEm';
 function instJaInstalado() {
     return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
 }
-function instFechadoRecente() {
-    try {
-        const t = Number(localStorage.getItem(INST_CHAVE_FECHADO) || 0);
-        return t && (Date.now() - t) < 30 * 86400000;
-    } catch (e) { return false; }
+// 2.57.4: o aviso aparece só uma vez por aparelho. Depois de fechado (ou de aceitar a instalação), não volta mais.
+function instJaMostrado() {
+    try { return !!localStorage.getItem(INST_CHAVE_FECHADO); } catch (e) { return false; }
 }
 function instFechar() {
     const el = document.getElementById('inst-aviso');
@@ -22,7 +20,7 @@ function instFechar() {
     try { localStorage.setItem(INST_CHAVE_FECHADO, String(Date.now())); } catch (e) { }
 }
 function instMostrar(titulo, texto, botao) {
-    if (document.getElementById('inst-aviso') || instJaInstalado() || instFechadoRecente()) return;
+    if (document.getElementById('inst-aviso') || instJaInstalado() || instJaMostrado()) return;
     // 2.57.3: não sobrepõe outras janelas (popup de novidades etc.); tenta de novo depois.
     if (document.querySelector('.modal-screen.active')) { setTimeout(() => instMostrar(titulo, texto, botao), 3000); return; }
     const el = document.createElement('div');

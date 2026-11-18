@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.3', nome: 'Busca da Ajuda sem travar e aviso de instalação fora dos popups', status: 'atual', data: '17/11/2026 às 23:45',
+        numero: '2.57.4', nome: 'Aviso de instalação aparece uma só vez', status: 'atual', data: '18/11/2026 às 05:50',
+        novidades: ['O aviso para instalar o app aparece só uma vez em cada aparelho. Depois de fechado ou de aceitar a instalação, não volta.'],
+        implementado: ['js/60: instJaMostrado substitui a regra dos 30 dias; fechar ou instalar grava a marca no navegador.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/60-instalacao-app.js'],
+        mudou: ['Se os dados do navegador forem apagados, o aviso pode voltar uma vez.', 'Quem fechou o aviso na versão anterior, com a regra dos 30 dias, não verá de novo.'],
+        testar: ['No computador ou no celular: abra o app, feche o aviso e recarregue. Ele não deve voltar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.3', nome: 'Busca da Ajuda sem travar e aviso de instalação fora dos popups', status: 'concluida', data: '17/11/2026 às 23:45',
         novidades: ['A busca da Ajuda não trava mais: o campo fica fixo e só a lista de resultados é atualizada enquanto você digita.', 'O aviso para instalar o app espera o popup de novidades fechar e tem o botão "Agora não" maior.'],
         implementado: ['js/31: renderAjuda mantém o campo de busca; ajudaMontarResultados redesenha só os resultados; busca com pausa de 120 ms.', 'js/60: aviso espera janelas abertas; botão "Agora não" com 44 px de toque.', 'style.css: alvos de toque do aviso.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/31-ajuda.js','js/60-instalacao-app.js'],
@@ -3644,4 +3653,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.4';
