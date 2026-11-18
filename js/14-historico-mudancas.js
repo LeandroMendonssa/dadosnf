@@ -10,7 +10,16 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.2', nome: 'Participantes por preço e histórico só com quantidade', status: 'atual', data: '17/11/2026 às 23:40',
+        numero: '2.57.3', nome: 'Busca da Ajuda sem travar e aviso de instalação fora dos popups', status: 'atual', data: '17/11/2026 às 23:45',
+        novidades: ['A busca da Ajuda não trava mais: o campo fica fixo e só a lista de resultados é atualizada enquanto você digita.', 'O aviso para instalar o app espera o popup de novidades fechar e tem o botão "Agora não" maior.'],
+        implementado: ['js/31: renderAjuda mantém o campo de busca; ajudaMontarResultados redesenha só os resultados; busca com pausa de 120 ms.', 'js/60: aviso espera janelas abertas; botão "Agora não" com 44 px de toque.', 'style.css: alvos de toque do aviso.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/31-ajuda.js','js/60-instalacao-app.js'],
+        mudou: ['Sem mudança de dados nem no Firebase.'],
+        testar: ['Ajuda: digite na busca várias letras seguidas; o campo deve acompanhar sem travar.', 'Abra o app pela primeira vez numa versão nova: o popup de novidades aparece primeiro; o aviso de instalação só depois que você fechar o popup.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.2', nome: 'Participantes por preço e histórico só com quantidade', status: 'concluida', data: '17/11/2026 às 23:40',
         novidades: ['Ver os participantes mostra cada fornecedor numerado do menor para o maior preço unitário, com valor unitário e total.', 'O histórico do SmartCompras guarda só alterações de quantidade. Prazo de pagamento e outras são descartadas na importação.'],
         implementado: ['js/09: lista de participantes ordenada por valorProposta (parseValorBR), com número, unitário e total.', 'js/59: filtro na importação (só QUANTIDADE).', 'style.css: .cdet-part-valores.'],
         arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/59-historico-smartcompras.js'],
@@ -3635,4 +3644,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.3';

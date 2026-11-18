@@ -563,8 +563,16 @@ function renderAjuda() {
     const el = document.getElementById('ajuda-conteudo'); if (!el) return;
     const art = ajudaEstado.aberto ? AJUDA_ARTIGOS.find(a => a.id === ajudaEstado.aberto) : null;
     const anim = ajudaEstado.anim || ''; ajudaEstado.anim = '';
-    el.className = ''; if (anim) { void el.offsetWidth; el.className = 'aj-anim-' + anim; } // transição ao entrar no artigo / voltar à lista
+    el.className = ''; if (anim) { void el.offsetWidth; el.className = 'aj-anim-' + anim; }
     if (art) { el.innerHTML = htmlArtigoAjuda(art); return; }
+    // 2.57.3: o campo de busca fica fixo; só a lista de resultados é redesenhada (antes tudo era refeito a cada letra e travava no iPhone).
+    if (!document.getElementById('aj-resultados')) {
+        el.innerHTML = `<div class="campo ajustes-busca"><input type="search" id="ajuda-busca" class="form-field" placeholder="Buscar na Ajuda..." value="${ajEsc(ajudaEstado.busca)}" oninput="buscarAjuda(this.value)" autocomplete="off" autocapitalize="off" spellcheck="false"></div><div id="aj-resultados"></div>`;
+    }
+    ajudaMontarResultados();
+}
+function ajudaMontarResultados() {
+    const out = document.getElementById('aj-resultados'); if (!out) return;
     const q = ajNorm(ajudaEstado.busca).trim();
     const lista = q ? AJUDA_ARTIGOS.filter(a => ajNorm(a.titulo + ' ' + a.resumo + ' ' + a.palavras + ' ' + a.cat + ' ' + a.passos.join(' ')).includes(q)) : AJUDA_ARTIGOS;
     const tutHTML = q ? '' : `<div class="aj-cat">Tutoriais guiados (com dados de exemplo)</div><ul class="settings-list-group">${Object.entries(TUTORIAIS).map(([id, t]) =>
@@ -574,12 +582,10 @@ function renderAjuda() {
         return `<div class="aj-cat">${ajEsc(c)}</div><ul class="settings-list-group">${itens.map(a =>
             `<li><a onclick="abrirArtigoAjuda('${a.id}')"><span class="aj-li"><strong>${ajEsc(a.titulo)}</strong><small>${ajEsc(a.resumo)}</small></span><i class="fa-solid fa-chevron-right"></i></a></li>`).join('')}</ul>`;
     }).join('');
-    el.innerHTML = `<div class="campo ajustes-busca"><input type="search" id="ajuda-busca" class="form-field" placeholder="Buscar na Ajuda..." value="${ajEsc(ajudaEstado.busca)}" oninput="buscarAjuda(this.value)" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`
-        + tutHTML + (porCat || '<div class="card aj-resumo">Nada encontrado. Tente outra palavra.</div>');
-    const inp = document.getElementById('ajuda-busca');
-    if (inp && q) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    out.innerHTML = tutHTML + (porCat || '<div class="card aj-resumo">Nada encontrado. Tente outra palavra.</div>');
 }
-function buscarAjuda(v) { ajudaEstado.busca = v; renderAjuda(); }
+let ajudaBuscaTimer = null;
+function buscarAjuda(v) { ajudaEstado.busca = v; clearTimeout(ajudaBuscaTimer); ajudaBuscaTimer = setTimeout(ajudaMontarResultados, 120); }
 function abrirArtigoAjuda(id) { ajudaEstado.aberto = id; ajudaEstado.anim = 'frente'; renderAjuda(); const s = document.getElementById('screen-ajuda'); if (s) s.scrollTop = 0; }
 function voltarListaAjuda() { ajudaEstado.aberto = null; ajudaEstado.anim = 'volta'; renderAjuda(); }
 function htmlArtigoAjuda(a) {
@@ -636,4 +642,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.57.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.57.3';

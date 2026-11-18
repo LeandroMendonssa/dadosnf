@@ -1,4 +1,4 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/60-instalacao-app.js'] = '2.57.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/60-instalacao-app.js'] = '2.57.3';
 // 2.57.1: sugestão para instalar o app na tela inicial.
 // Computador (Chrome/Edge) e Android: usa o botão do próprio navegador.
 // iPhone (Safari): não há botão, então mostra o passo a passo.
@@ -23,10 +23,12 @@ function instFechar() {
 }
 function instMostrar(titulo, texto, botao) {
     if (document.getElementById('inst-aviso') || instJaInstalado() || instFechadoRecente()) return;
+    // 2.57.3: não sobrepõe outras janelas (popup de novidades etc.); tenta de novo depois.
+    if (document.querySelector('.modal-screen.active')) { setTimeout(() => instMostrar(titulo, texto, botao), 3000); return; }
     const el = document.createElement('div');
     el.id = 'inst-aviso';
     el.className = 'inst-aviso';
-    el.innerHTML = `<div class="inst-txt"><b>${titulo}</b>${texto}</div>${botao ? `<button type="button" id="inst-botao">${botao}</button>` : ''}<button type="button" id="inst-fechar" aria-label="Fechar">✕</button>`;
+    el.innerHTML = `<div class="inst-txt"><b>${titulo}</b>${texto}</div>${botao ? `<button type="button" id="inst-botao">${botao}</button>` : ''}<button type="button" id="inst-fechar" aria-label="Fechar">Agora não</button>`;
     document.body.appendChild(el);
     document.getElementById('inst-fechar').onclick = instFechar;
     const b = document.getElementById('inst-botao');
