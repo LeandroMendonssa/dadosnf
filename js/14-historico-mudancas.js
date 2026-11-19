@@ -10,7 +10,23 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.58.4', nome: 'Campo de busca igual ao da tela inicial', status: 'atual', data: '19/11/2026 às 06:25',
+        numero: '2.58.6', nome: 'Fornecedores a chegar: produtos e dias de atraso', status: 'atual', data: '19/11/2026 às 07:55',
+        novidades: ['Na lista de fornecedores a chegar, a seta ao lado de cada fornecedor abre os produtos que ainda faltam chegar.', 'Cada fornecedor mostra os dias de atraso pela data limite do pedido, ou "vence em X dias" quando falta pouco.'],
+        implementado: ['js/48: inicioContarFornecedores guarda os produtos que faltam e a data limite do pedido; renderFornecedoresAChegar mostra a seta e a prévia; iniChipAtraso calcula o atraso.', 'style.css: estilos da seta, da prévia e do chip verde "no prazo".', 'index.html: texto da lista e número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Tocar na linha continua abrindo o pedido. Tocar na seta só mostra os produtos.'],
+        testar: ['iPhone: Início > toque em "fornecedores a chegar". Toque na seta de um fornecedor: devem aparecer só os produtos que faltam.', 'Confira se o chip de dias de atraso bate com a data limite do pedido na Central.', 'Toque na linha do fornecedor: deve abrir o pedido como antes.'],
+    },
+    {
+        numero: '2.58.5', nome: 'Busca de Ajustes igual à da tela inicial', status: 'atual', data: '19/11/2026 às 06:30',
+        novidades: ['O campo de busca de Ajustes passa a ter o mesmo visual do campo da tela inicial.', 'As abas voltam ao visual anterior.'],
+        implementado: ['style.css: campo de busca de Ajustes com o estilo do campo da tela inicial.', 'style.css: abas restauradas ao visual anterior.', 'index.html e style.css: número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o visual do campo de busca de Ajustes. As abas voltam ao padrão.'],
+        testar: ['Abra Ajustes e confira o campo de busca.', 'Abra Repasse de NF e confira que as abas voltaram ao visual de antes.'],
+    },
+    {
+        numero: '2.58.4', nome: 'Campo de busca igual ao da tela inicial', status: 'concluida', data: '19/11/2026 às 06:25',
         novidades: ['O campo de busca das telas de lista passa a ter o mesmo visual do campo da tela inicial: fundo branco, borda e cantos arredondados.'],
         implementado: ['style.css: campo de busca (.busca-padrao) com o estilo do campo da tela inicial.', 'index.html: o link do style.css recebe número de versão para não usar a cópia guardada no navegador.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
@@ -3733,4 +3749,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.6';

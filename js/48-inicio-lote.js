@@ -33,9 +33,11 @@ function inicioContarFornecedores() {
             let e; try { e = calcularEntregaFornecedorPedido(cot.pedido, f, comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === ch)); } catch (er) { return; }
             const st = statusEntregaRelCot(e);
             if (st.chave === 'cancelada' || st.chave === 'concluida') return;
-            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) { r.nao++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'nao', n: itens.length }); } return; }
+            const nomeItem = it => String(it.nomeOficial || it.descricao || it.codProduto || '');
+            const lim = String(cot.dataLimite || '');
+            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) { r.nao++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'nao', n: itens.length, lim, prod: itens.map(nomeItem) }); } return; }
             const faltam = itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).length;
-            if (faltam >= INI_MIN_ITENS_FALTANDO) { r.achegar++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'achegar', n: faltam }); }
+            if (faltam >= INI_MIN_ITENS_FALTANDO) { r.achegar++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'achegar', n: faltam, lim, prod: itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).map(nomeItem) }); }
         });
     }));
     return r;
@@ -125,12 +127,26 @@ function abrirFornecedoresAChegar() {
     m.classList.add('active');
     const corpo = document.getElementById('forn-chegar-lista');
     let pf = iniLerCache().forn;
-    if (!pf || !Array.isArray(pf.lista)) {
+    if (!pf || !Array.isArray(pf.lista) || (pf.lista.length && pf.lista[0].prod === undefined)) {
         corpo.innerHTML = '<div class="ini-vazio">Calculando…</div>';
         setTimeout(() => { try { pf = inicioContarFornecedores(); iniGravarCache({ forn: pf }); } catch (e) { pf = null; } renderFornecedoresAChegar(pf); }, 30);
         return;
     }
     renderFornecedoresAChegar(pf);
+}
+// dias de atraso pela data limite do pedido (YYYY-MM-DD); sem data, não mostra chip
+function iniChipAtraso(lim) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(lim || '')); if (!m) return '';
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const dias = Math.round((new Date(+m[1], +m[2] - 1, +m[3]) - hoje) / 86400000);
+    if (dias < 0) return `<span class="ini-chip r">${-dias} dia(s) de atraso</span>`;
+    if (dias === 0) return '<span class="ini-chip y">vence hoje</span>';
+    if (dias <= 2) return `<span class="ini-chip y">vence em ${dias} dia(s)</span>`;
+    return `<span class="ini-chip g">no prazo</span>`;
+}
+function iniToggleProdutos(btn) {
+    const box = btn.closest('.ini-forn') && btn.closest('.ini-forn').querySelector('.ini-prev'); if (!box) return;
+    const abre = box.hidden; box.hidden = !abre; btn.setAttribute('aria-expanded', String(abre));
 }
 function renderFornecedoresAChegar(pf) {
     const corpo = document.getElementById('forn-chegar-lista'), tit = document.getElementById('forn-chegar-tit'); if (!corpo) return;
@@ -142,8 +158,13 @@ function renderFornecedoresAChegar(pf) {
     corpo.innerHTML = pedidos.map(p => {
         const g = por[p]; g.itens.sort((a, b) => (a.t === b.t ? a.f.localeCompare(b.f, 'pt-BR') : a.t === 'nao' ? -1 : 1));
         return `<div class="ini-tit" style="margin-top:12px">Pedido ${escIni(p)}${g.o ? ' · ' + escIni(g.o) : ''}</div><div class="ini-card">` +
-            g.itens.map(x => `<button type="button" class="ini-lin" style="width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${x.t === 'nao' ? 'Não chegou (' + x.n + ' item(ns))' : 'Faltam ' + x.n + ' item(ns)'}</small></div><span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span></button>`).join('') + '</div>';
-    }).join('');
+            g.itens.map(x => {
+                const sit = x.t === 'nao' ? 'Não chegou (' + x.n + ' item(ns))' : 'Faltam ' + x.n + ' item(ns)';
+                const st = `<span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span>`;
+                const prev = (x.prod || []).map(nm => `<div class="ini-prev-it">${escIni(nm)}</div>`).join('') || '<div class="ini-vazio">Sem produtos pendentes.</div>';
+                return `<div class="ini-forn"><div class="ini-forn-linha"><button type="button" class="ini-forn-main" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${sit}</small></div><div class="ini-forn-chips">${st}${iniChipAtraso(x.lim)}</div></button><button type="button" class="ini-seta" aria-expanded="false" aria-label="Ver produtos que faltam" onclick="iniToggleProdutos(this)"><i class="fa-solid fa-chevron-down"></i></button></div><div class="ini-prev" hidden>${prev}</div></div>`;
+            }).join('') + '</div>';
+        }).join('');
 }
 function renderInicioSeAtivo() {
     const t = document.getElementById('screen-inicio'); if (!t || !t.classList.contains('active')) return;
@@ -227,4 +248,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.6';
