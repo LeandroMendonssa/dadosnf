@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.58.4', nome: 'Campo de busca igual ao da tela inicial', status: 'atual', data: '19/11/2026 às 06:25',
+        novidades: ['O campo de busca das telas de lista passa a ter o mesmo visual do campo da tela inicial: fundo branco, borda e cantos arredondados.'],
+        implementado: ['style.css: campo de busca (.busca-padrao) com o estilo do campo da tela inicial.', 'index.html: o link do style.css recebe número de versão para não usar a cópia guardada no navegador.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o visual do campo de busca. As abas continuam como estavam.'],
+        testar: ['Abra Repasse de NF, Cotações e Anotações e confira o campo de busca.', 'Se ainda aparecer o visual antigo, feche o app por completo e abra de novo.'],
+    },
+    {
         numero: '2.58.3', nome: 'Mais contraste na busca e nas abas', status: 'atual', data: '19/11/2026 às 06:20',
         novidades: ['A caixa de busca e as abas (Para saída, Em espera, Exportar texto) ficaram mais visíveis sobre o novo fundo.'],
         implementado: ['style.css: busca e abas com fundo e borda próprios nas telas do app.', 'index.html e style.css: número da versão.'],
@@ -3725,4 +3733,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.4';
