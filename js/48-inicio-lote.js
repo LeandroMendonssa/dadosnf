@@ -152,6 +152,16 @@ function iniChipAtraso(lim) {
     if (dias <= 2) return `<span class="ini-chip y">vence em ${dias} dia(s)</span>`;
     return `<span class="ini-chip g">no prazo</span>`;
 }
+// 2.58.9: prazo como texto da linha (sem etiqueta)
+function iniTextoAtraso(lim) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(lim || '')); if (!m) return '';
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const dias = Math.round((new Date(+m[1], +m[2] - 1, +m[3]) - hoje) / 86400000);
+    if (dias < 0) return `<b class="ini-atr r">${-dias} dia(s) de atraso</b>`;
+    if (dias === 0) return '<b class="ini-atr y">vence hoje</b>';
+    if (dias <= 2) return `<b class="ini-atr y">vence em ${dias} dia(s)</b>`;
+    return '<b class="ini-atr g">no prazo</b>';
+}
 function iniToggleProdutos(btn) {
     const box = btn.closest('.ini-forn') && btn.closest('.ini-forn').querySelector('.ini-prev'); if (!box) return;
     const abre = box.hidden; box.hidden = !abre; btn.setAttribute('aria-expanded', String(abre));
@@ -171,7 +181,7 @@ function renderFornecedoresAChegar(pf) {
                 const st = `<span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span>`;
                 const prevLinhas = (x.prod || []).map(it => `<div class="ini-tab-c">${escIni(it.n)}</div><div class="ini-tab-q">${it.q === null ? '—' : String(it.q).replace('.', ',')}${it.u ? `<small>${escIni(it.u)}</small>` : ''}</div>`).join('');
                 const prev = prevLinhas ? `<div class="ini-tab"><div class="ini-tab-h">Material</div><div class="ini-tab-h d">Quantidade</div>${prevLinhas}</div>` : '<div class="ini-vazio">Sem produtos pendentes.</div>';
-                return `<div class="ini-forn"><div class="ini-forn-linha"><button type="button" class="ini-forn-main" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${sit}</small></div><div class="ini-forn-chips">${st}${iniChipAtraso(x.lim)}</div></button><button type="button" class="ini-seta" aria-expanded="false" aria-label="Ver produtos que faltam" onclick="iniToggleProdutos(this)"><i class="fa-solid fa-chevron-down"></i></button></div><div class="ini-prev" hidden>${prev}</div></div>`;
+                return `<div class="ini-forn"><div class="ini-forn-linha"><button type="button" class="ini-forn-main" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${sit}${iniTextoAtraso(x.lim) ? ' · ' + iniTextoAtraso(x.lim) : ''}</small></div><div class="ini-forn-chips">${st}</div></button><button type="button" class="ini-seta" aria-expanded="false" aria-label="Ver produtos que faltam" onclick="iniToggleProdutos(this)"><i class="fa-solid fa-chevron-down"></i></button></div><div class="ini-prev" hidden>${prev}</div></div>`;
             }).join('') + '</div>';
         }).join('');
 }
@@ -257,4 +267,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.9';

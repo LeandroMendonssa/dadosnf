@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.58.9', nome: 'Fornecedores a chegar: uma etiqueta e botão Fechar padrão', status: 'atual', data: '19/11/2026 às 18:20',
+        novidades: ['Cada fornecedor a chegar tem uma só etiqueta de status (Não chegou ou Parcial).', 'O prazo (atraso ou vence em X dias) aparece no texto da linha, em cor.', 'O botão Fechar da lista usa o mesmo estilo dos outros botões do app.'],
+        implementado: ['js/48: prazo como texto da linha (iniTextoAtraso); só a etiqueta de status fica no lado direito.', 'style.css: cores do texto de prazo.', 'index.html: botão Fechar com o estilo padrão de botão.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Uma etiqueta por fornecedor. O prazo virou texto.', 'Botão Fechar no estilo padrão.'],
+        testar: ['Início > fornecedores a chegar: cada fornecedor deve ter uma só etiqueta e o prazo na linha de baixo, em cor.', 'Botão Fechar no fim da lista deve ter o mesmo estilo dos outros botões.'],
+    },
+    {
         numero: '2.58.8', nome: 'Ajuste de alinhamento da tabela da prévia', status: 'atual', data: '19/11/2026 às 18:10',
         novidades: ['As linhas da tabela de materiais da prévia ficam alinhadas: os fios de cada linha acompanham a linha inteira, e a quantidade fica alinhada à direita.'],
         implementado: ['style.css: células da tabela da prévia centralizadas na própria linha, sem quebrar o alinhamento dos fios.', 'index.html e js/14: número da versão.'],
@@ -3765,4 +3773,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.9';
