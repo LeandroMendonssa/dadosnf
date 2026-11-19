@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.59.0', nome: 'Tema Windows XP (opcional)', status: 'atual', data: '19/11/2026 às 20:55',
+        novidades: ['Novo tema "Windows XP" em Ajustes > Aparência. O tema padrão continua igual.', 'No celular, a barra de navegação vira um botão Iniciar, que abre a tela Mais com todas as telas.'],
+        implementado: ['style-xp.css (novo): visual do tema, ativo só com o tema XP escolhido.', 'index.html: opção Windows XP no seletor de tema, link para style-xp.css, botão Iniciar no celular.', 'style.css e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','style-xp.css','js/14-historico-mudancas.js'],
+        mudou: ['Só aparece quando o tema Windows XP estiver escolhido.', 'Primeira versão do tema: alguns detalhes de telas específicas podem precisar de ajuste.'],
+        testar: ['Ajustes > Aparência > Tema > Windows XP: confira o cabeçalho, os botões e os cartões.', 'No iPhone, confira o botão Iniciar na parte de baixo e abra algumas telas.', 'Volte para Claro e confira que nada mudou.'],
+    },
+    {
         numero: '2.58.10', nome: 'Prazo em linha própria', status: 'atual', data: '19/11/2026 às 18:25',
         novidades: ['O prazo (atraso ou vence em X dias) fica em uma linha própria, abaixo da quantidade de itens, sem quebrar no meio.'],
         implementado: ['js/48: prazo em bloco separado, sem o separador ·.', 'style.css: prazo em bloco, sem quebra de linha.', 'index.html e js/14: número da versão.'],
@@ -3781,4 +3789,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.10';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.59.0';
