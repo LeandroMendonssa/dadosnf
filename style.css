@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.58.3'; }
+:root { --css-versao: '2.58.4'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2291,7 +2291,9 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .lote-ant-tab th,.lote-ant-tab td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border-color);vertical-align:top}
 
 /* 2.58.3: busca e abas com mais contraste sobre o degradê das telas */
-.app-screen .busca-padrao .form-field{background:var(--bg-secondary);border:1px solid var(--border-color);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.app-screen .busca-padrao{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:0 14px;display:flex;align-items:center;height:44px;box-sizing:border-box}
+.app-screen .busca-padrao .form-field{background:transparent;border:0;box-shadow:none;padding:0;height:42px;flex:1;min-width:0}
+.app-screen .busca-padrao .form-field:focus{border:0;box-shadow:none}
 .app-screen .xml-filtro-toggle{background:color-mix(in srgb,var(--text-dark) 7%,var(--bg-secondary));border:1px solid var(--border-color)}
 .app-screen .xml-filtro-toggle .xml-filtro-btn{color:var(--text-dark)}
 .app-screen .xml-filtro-toggle .xml-filtro-btn.active{background:var(--bg-secondary);color:var(--text-dark);box-shadow:0 1px 3px rgba(0,0,0,.12)}
