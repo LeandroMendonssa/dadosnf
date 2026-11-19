@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.58.1', nome: 'Importar NFs antigas dentro do app, em Ajustes', status: 'atual', data: '18/11/2026 às 22:45',
+        numero: '2.58.2', nome: 'Fundo com degradê suave em todas as telas', status: 'atual', data: '19/11/2026 às 06:10',
+        novidades: ['O fundo leve com degradê da tela de boas-vindas agora aparece em todas as telas do app.', 'O degradê acompanha a área visível de cada tela, então não corta ao rolar nem em telas grandes. Cards e listas continuam com o fundo normal.'],
+        implementado: ['style.css: fundo das telas (.app-screen) com o mesmo degradê do onboarding, adaptado ao tema.', 'index.html e style.css: só o número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Todas as telas ganham um tom de cor do acento no topo, que some para o fundo normal mais abaixo.'],
+        testar: ['Abra algumas telas (Início, Cotações, Ajustes) no iPhone e no computador: o degradê deve ficar suave, sem faixa no meio.', 'Confira o modo escuro e um tema colorido (Oceano, Pôr do sol): o tom deve acompanhar o tema.'],
+    },
+    {
+        numero: '2.58.1', nome: 'Importar NFs antigas dentro do app, em Ajustes', status: 'concluida', data: '18/11/2026 às 22:45',
         novidades: ['A importação do resumo.csv fica em Ajustes → Importar NFs antigas. Abre por cima da tela e fecha de volta para Ajustes, sem outra página.', 'Mostra quantas notas vão ser gravadas, quantas precisam de conferência no PDF e quantas ficam de fora por falta de número da NF.'],
         implementado: ['index.html: item novo em Ajustes; botão de abrir a página de PDFs removido da busca de lote.', 'js/61: lotesLerCsv, janela de importação e gravação (lotesGravar) dentro do app.', 'style.css: só o número da versão.'],
         arquivos: ['index.html','style.css','js/61-lotes-antigos.js','js/14-historico-mudancas.js'],
@@ -3709,4 +3717,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.2';
