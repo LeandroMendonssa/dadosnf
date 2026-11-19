@@ -1,4 +1,5 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/61-lotes-antigos.js'] = '2.57.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/61-lotes-antigos.js'] = '2.58.0';
+// 2.58.0: uma tela só de lote (Buscar lote mostra dados atuais e modelo novo, com a origem de cada resultado).
 // 2.57.9: lotes de NFs antigas (PDF). Lê só o que serve para achar o lote: lote, nº da NF, data, CNPJ do fornecedor e o caminho do PDF.
 // Não guarda produto, valor nem texto da nota. Usado pela página lotes.html (leitura e gravação) e pela tela Buscar lote (consulta).
 // Sem Firebase no carregamento: o Firestore só é usado dentro das funções, quando chamadas.
@@ -41,24 +42,24 @@ function lotesAnalisarTexto(texto, caminho) {
     const t = String(texto || '').replace(/ /g, ' ');
     // Número da NF: "Nº. 215606", "N.000745455", "Nº 1349459"
     let nf = '';
-    const mN = t.match(/N[ºo°\.]\s*\.?\s*0*(\d{3,9})\b/i);
-    if (mN) nf = mN[1];
+    const mN = t.match(/N[ºo°\.]\s*\.?\s*(\d[\d.]{2,14})/i);
+    if (mN) nf = mN[1].replace(/\D/g, '').replace(/^0+/, '');
+    if (nf.length < 3) nf = '';
     if (!nf) { const mA = String(caminho || '').match(/(\d{4,9})/); if (mA) nf = mA[1]; }
     // CNPJ do emitente: o primeiro que não for o da própria instituição
     let cnpj = '';
-    const reCnpj = /(\d{2})\.?(\d{3})\.?(\d{3})\/?(\d{4})-?(\d{2})/g;
+    const reFmt = /(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})-(\d{2})/g;
     let mc;
-    while ((mc = reCnpj.exec(t))) {
-        const d = mc.slice(1).join('');
-        if (d !== LOTES_CNPJ_PROPRIO) { cnpj = d; break; }
-    }
+    while (!cnpj && (mc = reFmt.exec(t))) { const d = mc.slice(1).join(''); if (d !== LOTES_CNPJ_PROPRIO) cnpj = d; }
+    const reNu = /(^|\D)(\d{14})(?!\d)/g;   // sem "lookbehind": compatível com iPhone mais antigo
+    while (!cnpj && (mc = reNu.exec(t))) { if (mc[2] !== LOTES_CNPJ_PROPRIO) cnpj = mc[2]; }
     // Data de emissão: a que vem depois de "EMISSÃO"; se não achar, a primeira data do texto
     let data = '';
     const mE = t.match(/EMISS[ÃA]O[\s\S]{0,60}?(\d{2}\/\d{2}\/\d{4})/i) || t.match(/(\d{2}\/\d{2}\/\d{4})/);
     if (mE) data = lotesDataISO(mE[1]);
     // Lotes: "LT. 3110260" / "L.T 593682" / "LOTE 24A0731". Só conta o que tem número, para não pegar o cabeçalho "LOTE/VALID".
     const achados = new Map();
-    const padroes = [/\bL\.?\s?T\.?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{3,19})/gi, /\bLOTE\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{3,19})/gi];
+    const padroes = [/\bL\.?\s?T\.?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{3,19})/gi, /\bLOTE\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{3,19})/gi, /\bL:\s*([A-Z0-9][A-Z0-9\-\/]{3,19})/gi];
     padroes.forEach(re => {
         re.lastIndex = 0;
         let x;
@@ -147,36 +148,7 @@ async function lotesBuscarLote(q) {
     return achados;
 }
 
-function lotesLinhaResultado(r) {
-    const tipo = r.dif === 0 ? 'Exata' : `Aproximada (${r.dif} diferença${r.dif > 1 ? 's' : ''})`;
-    const forn = lotesNomeFornecedor(r.cnpj) || lotesCnpjFormatado(r.cnpj);
-    return `<div class="lote-ant-linha">
-        <div><b>${lotesEsc(r.lote)}</b> <span class="lote-ant-tipo${r.dif === 0 ? '' : ' aprox'}">${tipo}</span></div>
-        <div>NF ${lotesEsc(r.nf)} · ${lotesEsc(lotesDataBR(r.data))}</div>
-        <div>${lotesEsc(forn)}</div>
-        <div class="lote-ant-arq">${lotesEsc(r.caminho)}</div>
-    </div>`;
-}
-
-// Tela Buscar lote: busca de um lote.
-async function loteAntigoBuscar() {
-    const q = (document.getElementById('lote-antigo-q') || {}).value || '';
-    const out = document.getElementById('lote-antigo-resultado');
-    if (!out) return;
-    if (lotesChave(q).length < 4) { out.innerHTML = '<div class="ini-vazio">Digite pelo menos 4 caracteres do lote.</div>'; return; }
-    out.innerHTML = '<div class="ini-vazio">Buscando…</div>';
-    try {
-        const r = await lotesBuscarLote(q);
-        out.innerHTML = r.length
-            ? `<div class="lote-ant-lista">${r.slice(0, 30).map(lotesLinhaResultado).join('')}</div>${r.length > 30 ? `<div class="ini-vazio">Mostrando 30 de ${r.length}.</div>` : ''}`
-            : '<div class="ini-vazio">Nenhuma NF antiga com esse lote.</div>';
-    } catch (e) {
-        console.error('Busca de lote antigo:', e);
-        out.innerHTML = '<div class="ini-vazio">Não consegui buscar agora. Confira a internet e tente de novo.</div>';
-    }
-}
-
-// Tela Buscar lote: vários lotes de uma vez (um por linha). Só o melhor resultado de cada um.
+// Tela Buscar lote: vários lotes de uma vez (um por linha), só no modelo novo. Mostra o melhor resultado de cada um.
 async function loteAntigoBuscarVarios() {
     const txt = (document.getElementById('lote-antigo-varios') || {}).value || '';
     const out = document.getElementById('lote-antigo-resultado');

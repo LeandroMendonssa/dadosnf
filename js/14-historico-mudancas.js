@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.57.9', nome: 'Lotes de NFs antigas: leitura dos PDFs e busca no Buscar lote', status: 'atual', data: '18/11/2026 às 17:40',
+        numero: '2.58.0', nome: 'Buscar lote em uma tela só, com a origem de cada resultado', status: 'atual', data: '18/11/2026 às 21:30',
+        novidades: ['Buscar lote tem uma busca só. Cada resultado mostra se veio dos dados atuais ou do modelo novo (NF antiga, lida do PDF).', 'A página de leitura das NFs antigas aceita o resumo.csv gerado pelo programa do computador.', 'Fundo liso nas páginas de importação e de lotes, sem a faixa de degradê.'],
+        implementado: ['index.html: tela Buscar lote com um formulário, um botão Buscar e vários lotes recolhidos.', 'js/48: busca junta os dados atuais e o modelo novo (lotesNF), com a origem marcada.', 'js/61: sai a busca separada de NF antiga; fica a de vários lotes.', 'lotes.html: importação do resumo.csv; fundo sem degradê. importar.html: fundo sem degradê.', 'style.css: só o número da versão.'],
+        arquivos: ['index.html','importar.html','lotes.html','style.css','js/48-inicio-lote.js','js/61-lotes-antigos.js','js/14-historico-mudancas.js'],
+        mudou: ['Não há mais a seção separada de NF antiga em Buscar lote. Tudo fica no mesmo formulário.', 'O botão Ler PDFs de NFs antigas abre a página de leitura em outra aba.'],
+        testar: ['Em Buscar lote, procure um lote que existe nos dados atuais e outro que só existe nas NFs antigas: cada um deve mostrar a etiqueta certa.', 'Em lotes.html, importe o resumo.csv e confira a lista antes de gravar.'],
+    },
+    {
+        numero: '2.57.9', nome: 'Lotes de NFs antigas: leitura dos PDFs e busca no Buscar lote', status: 'concluida', data: '18/11/2026 às 17:40',
         novidades: ['Nova página para ler os PDFs antigos do computador (lote, nº da NF, data, CNPJ e caminho do arquivo). Produto, valor e texto da nota não são guardados.', 'Em Buscar lote, uma seção nova procura lotes de NFs antigas, com busca exata e aproximada (até 2 diferenças), e aceita vários lotes de uma vez.'],
         implementado: ['lotes.html: leitura dos PDFs no navegador (texto ou reconhecimento de texto), conferência e gravação. Firebase só na hora de gravar.', 'js/61: análise do texto, gravação e busca da coleção lotesNF.', 'index.html: seção nova na tela Buscar lote.'],
         arquivos: ['index.html','lotes.html','js/61-lotes-antigos.js','js/14-historico-mudancas.js','style.css'],
@@ -3693,4 +3701,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.57.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.0';

@@ -177,12 +177,13 @@ function abrirBuscaLote() { switchToScreen('screen-lote', 'Buscar lote'); lotePr
 function lotePreparar() { const r = document.getElementById('lote-resultado'); if (r && !r.innerHTML) r.innerHTML = '<div class="ini-vazio">Digite o lote, o produto ou a validade e toque em Buscar.</div>'; }
 function loteNorm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ''); }
 function loteValidadeBR(v) { try { return typeof dataISOParaBR === 'function' ? (dataISOParaBR(v) || v) : v; } catch (e) { return v; } }
-function loteBuscar() {
-    const ql = loteNorm(document.getElementById('lote-q').value), qp = loteNorm(document.getElementById('lote-prod').value), qv = String(document.getElementById('lote-val').value || '').trim();
+async function loteBuscar() {
+    const qLote = document.getElementById('lote-q').value;
+    const ql = loteNorm(qLote), qp = loteNorm(document.getElementById('lote-prod').value), qv = String(document.getElementById('lote-val').value || '').trim();
     const out = document.getElementById('lote-resultado');
     if (!ql && !qp && !qv) { out.innerHTML = '<div class="ini-vazio">Preencha pelo menos um campo.</div>'; return; }
     // validade digitada como mm/aaaa, dd/mm/aaaa ou aaaa-mm: compara em texto ISO
-    const vIso = (() => { const t = qv.replace(/\s/g, ''); let m = t.match(/^(\d{1,2})\/(\d{4})$/); if (m) return `${m[2]}-${m[1].padStart(2, '0')}`; m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; m = t.match(/^(\d{4})-(\d{2})/); return m ? t : t; })();
+    const vIso = (() => { const t = qv.replace(/\s/g, ''); let m = t.match(/^(\d{1,2})\/(\d{4})$/); if (m) return `${m[2]}-${m[1].padStart(2, '0')}`; m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; return t; })();
     const lista = typeof listaNfsProcessadas !== 'undefined' ? listaNfsProcessadas : [], achados = []; let semLote = 0;
     lista.forEach(nf => {
         const itens = nf.itens || []; if (!itens.some(i => i.lote)) semLote++;
@@ -196,17 +197,34 @@ function loteBuscar() {
         });
     });
     achados.sort((a, b) => String(b.nf.emissao || '').localeCompare(String(a.nf.emissao || '')));
-    const aviso = `<div class="ini-vazio">${lista.length} NF(s) processadas pesquisadas; ${semLote} sem lote gravado (NFs antigas ou sem lote no XML não aparecem).</div>`;
-    if (!achados.length) { out.innerHTML = '<div class="ini-vazio">Nada encontrado com esses dados.</div>' + aviso; return; }
-    out.innerHTML = `<div class="ini-tit">${achados.length} resultado(s)${achados.length > 100 ? ' (mostrando 100)' : ''}</div>` + achados.slice(0, 100).map(({ nf, i }) => {
+    // Modelo novo (NFs antigas): só quando se busca pelo lote, sem outros filtros
+    let antigos = [], falhaAntigos = false;
+    if (ql && !qp && !qv && typeof lotesBuscarLote === 'function' && lotesChave(qLote).length >= 4) {
+        try { antigos = await lotesBuscarLote(qLote); } catch (e) { falhaAntigos = true; console.error('Modelo novo (lotes antigos):', e); }
+    }
+    const tagAtual = '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:color-mix(in srgb, var(--accent-color, #0a84ff) 14%, transparent);color:var(--accent-color, #0a84ff);">Dados atuais</span>';
+    const tagNovo = '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--warning-bg, #fff6d6);color:var(--warning-text, #8a6d00);">Modelo novo · NF antiga</span>';
+    const aviso = `<div class="ini-vazio">${lista.length} NF(s) processadas pesquisadas; ${semLote} sem lote gravado (NFs antigas ou sem lote no XML não aparecem aqui).</div>` + (falhaAntigos ? '<div class="ini-vazio">Não consegui consultar o modelo novo agora. Confira a internet.</div>' : '');
+    const total = achados.length + antigos.length;
+    if (!total) { out.innerHTML = '<div class="ini-vazio">Nada encontrado com esses dados.</div>' + aviso; return; }
+    const htmlAtuais = achados.slice(0, 100).map(({ nf, i }) => {
         let forn = nf.fornecedor || ''; try { forn = nomeExibicaoFornecedor(nf.fornecedor, nf.cnpjFornecedor) || forn; } catch (e) { }
         const sp = i.codigoSpData ? `SP Data ${escIni(i.codigoSpData)}` : '';
-        return `<button type="button" class="ini-res" onclick="abrirEditorNf('${escIni(nf.id)}')"><b>${escIni(i.xProd || '')}</b>
+        return `<button type="button" class="ini-res" onclick="abrirEditorNf('${escIni(nf.id)}')">${tagAtual}<br><b>${escIni(i.xProd || '')}</b>
             <span>Lote <b>${escIni(i.lote || '—')}</b>${i.validade ? ' · validade ' + escIni(loteValidadeBR(i.validade)) : ''}${i.quantidade ? ' · qtd ' + escIni(i.quantidade) : ''}</span>
             <small>NF ${escIni(nf.nf || '')} · ${escIni(forn)}${nf.pedido ? ' · pedido ' + escIni(nf.pedido) : ''}${sp ? ' · ' + sp : ''}</small></button>`;
-    }).join('') + aviso;
+    }).join('');
+    const htmlNovo = antigos.slice(0, 30).map(a => {
+        const tipo = a.dif === 0 ? 'Exata' : `Aproximada (${a.dif} dif.)`;
+        return `<div class="lote-ant-linha">${tagNovo}
+            <div style="margin-top:4px;"><b>${escIni(a.lote)}</b> <span class="lote-ant-tipo${a.dif === 0 ? '' : ' aprox'}">${tipo}</span></div>
+            <div>NF ${escIni(a.nf)} · ${escIni(lotesDataBR(a.data))}</div>
+            <div>${escIni(lotesNomeFornecedor(a.cnpj) || lotesCnpjFormatado(a.cnpj))}</div>
+            <div class="lote-ant-arq">${escIni(a.caminho)}</div></div>`;
+    }).join('');
+    out.innerHTML = `<div class="ini-tit">${total} resultado(s)</div>` + htmlAtuais + (antigos.length ? `<div class="lote-ant-lista">${htmlNovo}</div>` + (antigos.length > 30 ? `<div class="ini-vazio">Mostrando 30 de ${antigos.length} do modelo novo.</div>` : '') : '') + aviso;
 }
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.51.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.0';
