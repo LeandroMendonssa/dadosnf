@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.58.8', nome: 'Ajuste de alinhamento da tabela da prévia', status: 'atual', data: '19/11/2026 às 18:10',
+        novidades: ['As linhas da tabela de materiais da prévia ficam alinhadas: os fios de cada linha acompanham a linha inteira, e a quantidade fica alinhada à direita.'],
+        implementado: ['style.css: células da tabela da prévia centralizadas na própria linha, sem quebrar o alinhamento dos fios.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o alinhamento visual da tabela da prévia.'],
+        testar: ['Início > fornecedores a chegar > seta de um fornecedor com materiais de nomes longos: os fios devem continuar alinhados de um lado a outro.'],
+    },
+    {
         numero: '2.58.7', nome: 'Fornecedores a chegar: materiais em tabela', status: 'atual', data: '19/11/2026 às 18:05',
         novidades: ['Na prévia de cada fornecedor (seta), os materiais aparecem em tabela: Material à esquerda e Quantidade à direita, com a unidade quando o item tiver.', 'A quantidade é o que ainda falta chegar do material.'],
         implementado: ['js/48: a lista guarda, para cada material, a quantidade que falta (total do pedido menos o que já entrou) e a unidade, quando houver.', 'style.css: tabela da prévia.', 'index.html e js/14: número da versão.'],
@@ -3757,4 +3765,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.8';
