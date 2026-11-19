@@ -140,7 +140,7 @@ input, select, textarea, button { font-family: inherit; transition: background-c
 .main-content { flex-grow: 1; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .screen-wrapper { flex-grow: 1; position: relative; overflow: hidden; }
 
-.app-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-primary); visibility: hidden; z-index: 1; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.app-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 10%, var(--bg-primary)) 0%, var(--bg-primary) 40%) no-repeat, var(--bg-primary); visibility: hidden; z-index: 1; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .app-screen.active { visibility: visible; z-index: 2; }
 
 /* 2.7.0: transições de tela no estilo do iPhone (protótipo "Minhas Notas · transições").
@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.58.1'; }
+:root { --css-versao: '2.58.2'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
