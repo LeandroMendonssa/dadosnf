@@ -34,10 +34,18 @@ function inicioContarFornecedores() {
             const st = statusEntregaRelCot(e);
             if (st.chave === 'cancelada' || st.chave === 'concluida') return;
             const nomeItem = it => String(it.nomeOficial || it.descricao || it.codProduto || '');
+            // 2.58.7: quantidade que ainda falta (total do pedido menos o que já entrou, quando dá para comparar) e unidade, se o item tiver
+            const itemPend = it => {
+                const q = numeroFlexivel(it.quantidade);
+                const c = (comp || []).find(x => x.codProduto === it.codProduto && normalizarCnpj(x.cnpjFornecedor) === ch);
+                const ent = c && c.quantidadeEntregue !== null && c.quantidadeEntregue !== undefined ? Number(c.quantidadeEntregue) || 0 : 0;
+                const falta = (q === null || q === undefined) ? null : Math.max(0, Math.round((q - ent) * 100) / 100);
+                return { n: nomeItem(it), q: falta, u: String(it.unidade || it.unidadeMedida || '').trim() };
+            };
             const lim = String(cot.dataLimite || '');
-            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) { r.nao++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'nao', n: itens.length, lim, prod: itens.map(nomeItem) }); } return; }
+            if (st.chave === 'pendente') { if (!/ERP/i.test(st.detalhe || '')) { r.nao++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'nao', n: itens.length, lim, prod: itens.map(itemPend) }); } return; }
             const faltam = itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).length;
-            if (faltam >= INI_MIN_ITENS_FALTANDO) { r.achegar++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'achegar', n: faltam, lim, prod: itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).map(nomeItem) }); }
+            if (faltam >= INI_MIN_ITENS_FALTANDO) { r.achegar++; r.lista.push({ p: String(cot.pedido), o: String(cot.origem || ''), f: nomeF(f), c: String(f.cnpj || ''), t: 'achegar', n: faltam, lim, prod: itens.filter(it => situacaoItemRelCot(e, it.codProduto).falta).map(itemPend) }); }
         });
     }));
     return r;
@@ -127,7 +135,7 @@ function abrirFornecedoresAChegar() {
     m.classList.add('active');
     const corpo = document.getElementById('forn-chegar-lista');
     let pf = iniLerCache().forn;
-    if (!pf || !Array.isArray(pf.lista) || (pf.lista.length && pf.lista[0].prod === undefined)) {
+    if (!pf || !Array.isArray(pf.lista) || (pf.lista.length && (!Array.isArray(pf.lista[0].prod) || (pf.lista[0].prod.length && typeof pf.lista[0].prod[0] !== 'object')))) {
         corpo.innerHTML = '<div class="ini-vazio">Calculando…</div>';
         setTimeout(() => { try { pf = inicioContarFornecedores(); iniGravarCache({ forn: pf }); } catch (e) { pf = null; } renderFornecedoresAChegar(pf); }, 30);
         return;
@@ -161,7 +169,8 @@ function renderFornecedoresAChegar(pf) {
             g.itens.map(x => {
                 const sit = x.t === 'nao' ? 'Não chegou (' + x.n + ' item(ns))' : 'Faltam ' + x.n + ' item(ns)';
                 const st = `<span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span>`;
-                const prev = (x.prod || []).map(nm => `<div class="ini-prev-it">${escIni(nm)}</div>`).join('') || '<div class="ini-vazio">Sem produtos pendentes.</div>';
+                const prevLinhas = (x.prod || []).map(it => `<div class="ini-tab-c">${escIni(it.n)}</div><div class="ini-tab-q">${it.q === null ? '—' : String(it.q).replace('.', ',')}${it.u ? `<small>${escIni(it.u)}</small>` : ''}</div>`).join('');
+                const prev = prevLinhas ? `<div class="ini-tab"><div class="ini-tab-h">Material</div><div class="ini-tab-h d">Quantidade</div>${prevLinhas}</div>` : '<div class="ini-vazio">Sem produtos pendentes.</div>';
                 return `<div class="ini-forn"><div class="ini-forn-linha"><button type="button" class="ini-forn-main" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${sit}</small></div><div class="ini-forn-chips">${st}${iniChipAtraso(x.lim)}</div></button><button type="button" class="ini-seta" aria-expanded="false" aria-label="Ver produtos que faltam" onclick="iniToggleProdutos(this)"><i class="fa-solid fa-chevron-down"></i></button></div><div class="ini-prev" hidden>${prev}</div></div>`;
             }).join('') + '</div>';
         }).join('');
@@ -248,4 +257,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.7';

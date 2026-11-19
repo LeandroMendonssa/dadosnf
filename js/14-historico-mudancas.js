@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.58.7', nome: 'Fornecedores a chegar: materiais em tabela', status: 'atual', data: '19/11/2026 às 18:05',
+        novidades: ['Na prévia de cada fornecedor (seta), os materiais aparecem em tabela: Material à esquerda e Quantidade à direita, com a unidade quando o item tiver.', 'A quantidade é o que ainda falta chegar do material.'],
+        implementado: ['js/48: a lista guarda, para cada material, a quantidade que falta (total do pedido menos o que já entrou) e a unidade, quando houver.', 'style.css: tabela da prévia.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Só a prévia da seta. Tocar na linha continua abrindo o pedido.', 'Itens sem unidade mostram só o número.'],
+        testar: ['Início > fornecedores a chegar > seta de um fornecedor: confira a tabela e se as quantidades batem com o pedido.', 'Veja um item que já teve entrega parcial: a quantidade deve ser só o que falta.'],
+    },
+    {
         numero: '2.58.6', nome: 'Fornecedores a chegar: produtos e dias de atraso', status: 'atual', data: '19/11/2026 às 07:55',
         novidades: ['Na lista de fornecedores a chegar, a seta ao lado de cada fornecedor abre os produtos que ainda faltam chegar.', 'Cada fornecedor mostra os dias de atraso pela data limite do pedido, ou "vence em X dias" quando falta pouco.'],
         implementado: ['js/48: inicioContarFornecedores guarda os produtos que faltam e a data limite do pedido; renderFornecedoresAChegar mostra a seta e a prévia; iniChipAtraso calcula o atraso.', 'style.css: estilos da seta, da prévia e do chip verde "no prazo".', 'index.html: texto da lista e número da versão.'],
@@ -3749,4 +3757,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.7';
