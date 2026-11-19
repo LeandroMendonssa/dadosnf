@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.58.5'; }
+:root { --css-versao: '2.58.6'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1933,7 +1933,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .ini-at i{font-size:20px;color:var(--accent-color)}.ini-at.forte{background:var(--accent-color);border-color:var(--accent-color);color:#fff}.ini-at.forte i{color:#fff}
 .ini-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:18px;padding:4px 14px;margin-bottom:12px}
 .ini-lin{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--border-color)}.ini-lin:first-child{border-top:0}.ini-lin small{display:block;color:var(--text-light);font-size:12px}
-.ini-chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 9px;white-space:nowrap;background:var(--bg-tertiary);color:var(--text-dark)}.ini-chip.r{background:#fde4e2;color:#c62828}.ini-chip.y{background:#fdf3d0;color:#8a6100}
+.ini-chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 9px;white-space:nowrap;background:var(--bg-tertiary);color:var(--text-dark)}.ini-chip.r{background:#fde4e2;color:#c62828}.ini-chip.y{background:#fdf3d0;color:#8a6100}.ini-chip.g{background:#e3f4e5;color:#2e7d32}
 .ini-vazio{color:var(--text-light);font-size:var(--fs-aux);padding:12px 4px}
 button.ini-lin{font:inherit;color:inherit;cursor:pointer}
 .ini-res{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:12px;margin-bottom:8px;color:var(--text-dark)}.ini-res span{font-size:13px}.ini-res small{color:var(--text-light);font-size:12px}
@@ -2297,3 +2297,18 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .app-screen .ajustes-busca{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:0 14px;display:flex;align-items:center;height:44px;box-sizing:border-box}
 .app-screen .ajustes-busca .form-field{background:transparent;border:0;box-shadow:none;padding:0;height:42px;flex:1;min-width:0}
 .app-screen .ajustes-busca .form-field:focus{border:0;box-shadow:none}
+
+/* 2.58.6: fornecedores a chegar com seta para ver os produtos que faltam */
+.ini-forn{border-top:1px solid var(--border-color)}
+.ini-forn:first-child{border-top:0}
+.ini-forn-linha{display:flex;align-items:center;gap:10px;padding:10px 0;min-width:0}
+.ini-forn-main{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:8px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.ini-forn-main>div:first-child{min-width:0;overflow-wrap:anywhere}
+.ini-forn-main small{display:block;color:var(--text-light);font-size:12px}
+.ini-forn-chips{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.ini-seta{flex:none;width:36px;height:36px;margin:0;padding:0;border-radius:50%;border:1px solid var(--border-color);background:transparent;color:var(--accent-color);display:grid;place-items:center;cursor:pointer}
+.ini-seta i{transition:transform .2s ease}
+.ini-seta[aria-expanded="true"] i{transform:rotate(180deg)}
+.ini-prev{padding:0 0 10px 0}
+.ini-prev[hidden]{display:none}
+.ini-prev-it{font-size:13px;color:var(--text-dark);padding:6px 0 6px 10px;margin:2px 0;border-left:2px solid var(--accent-color);overflow-wrap:anywhere}
