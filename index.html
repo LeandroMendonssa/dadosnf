@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.58.0">
+    <meta name="app-versao" content="2.58.1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -174,7 +174,6 @@
                     </div>
                     <div id="lote-antigo-resultado"></div>
                 </details>
-                <div class="actions" style="margin-top:14px;"><button type="button" class="actions-button" onclick="window.open('lotes.html','_blank')">Ler PDFs de NFs antigas</button></div>
             </div>
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo busca-padrao" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
@@ -212,6 +211,7 @@
                     <li><a data-screen="screen-spdata" data-title="Produtos SP Data" onclick="atualizarContagemSpData()"><i class="icon fa-solid fa-boxes-stacked" style="background-color: #34c759;"></i> Produtos SP Data <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-config-analise-cotacoes" data-title="Análise de Cotações" onclick="abrirConfigAnaliseCotacoes()"><i class="icon fa-solid fa-file-contract" style="background-color: #af52de;"></i> Análise de Cotações <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-config-smartcompras" data-title="Histórico SmartCompras"><i class="icon fa-solid fa-clock-rotate-left" style="background-color: #5ac8fa;"></i> Histórico SmartCompras <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a onclick="lotesAbrirImportacao()"><i class="icon fa-solid fa-file-import" style="background-color: #ff9500;"></i> Importar NFs antigas (lotes) <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-ajuda" data-title="Ajuda" onclick="prepararAjuda()"><i class="icon fa-solid fa-circle-question" style="background-color: #007aff;"></i> Ajuda <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-historico-mudancas" data-title="Histórico de Mudanças"><i class="icon fa-solid fa-timeline" style="background-color: #8e8e93;"></i> Histórico de Mudanças <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a data-screen="screen-personalizacao" data-title="Personalização"><i class="icon fa-solid fa-palette" style="background-color: #ff3b30;"></i> Personalização <i class="fa-solid fa-chevron-right"></i></a></li>
