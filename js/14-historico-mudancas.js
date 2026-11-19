@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.58.10', nome: 'Prazo em linha própria', status: 'atual', data: '19/11/2026 às 18:25',
+        novidades: ['O prazo (atraso ou vence em X dias) fica em uma linha própria, abaixo da quantidade de itens, sem quebrar no meio.'],
+        implementado: ['js/48: prazo em bloco separado, sem o separador ·.', 'style.css: prazo em bloco, sem quebra de linha.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Só a posição do prazo na linha do fornecedor.'],
+        testar: ['Início > fornecedores a chegar: o prazo deve aparecer em uma linha própria, inteiro, em cor.'],
+    },
+    {
         numero: '2.58.9', nome: 'Fornecedores a chegar: uma etiqueta e botão Fechar padrão', status: 'atual', data: '19/11/2026 às 18:20',
         novidades: ['Cada fornecedor a chegar tem uma só etiqueta de status (Não chegou ou Parcial).', 'O prazo (atraso ou vence em X dias) aparece no texto da linha, em cor.', 'O botão Fechar da lista usa o mesmo estilo dos outros botões do app.'],
         implementado: ['js/48: prazo como texto da linha (iniTextoAtraso); só a etiqueta de status fica no lado direito.', 'style.css: cores do texto de prazo.', 'index.html: botão Fechar com o estilo padrão de botão.', 'index.html e js/14: número da versão.'],
@@ -3773,4 +3781,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.10';
