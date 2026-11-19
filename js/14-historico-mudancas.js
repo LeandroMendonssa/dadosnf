@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.58.0', nome: 'Buscar lote em uma tela só, com a origem de cada resultado', status: 'atual', data: '18/11/2026 às 21:30',
+        numero: '2.58.1', nome: 'Importar NFs antigas dentro do app, em Ajustes', status: 'atual', data: '18/11/2026 às 22:45',
+        novidades: ['A importação do resumo.csv fica em Ajustes → Importar NFs antigas. Abre por cima da tela e fecha de volta para Ajustes, sem outra página.', 'Mostra quantas notas vão ser gravadas, quantas precisam de conferência no PDF e quantas ficam de fora por falta de número da NF.'],
+        implementado: ['index.html: item novo em Ajustes; botão de abrir a página de PDFs removido da busca de lote.', 'js/61: lotesLerCsv, janela de importação e gravação (lotesGravar) dentro do app.', 'style.css: só o número da versão.'],
+        arquivos: ['index.html','style.css','js/61-lotes-antigos.js','js/14-historico-mudancas.js'],
+        mudou: ['A página lotes.html deixa de ser usada pelo app. Os arquivos continuam no site, mas nenhum botão leva até ela.', 'Para gravar é preciso estar entrado no app.'],
+        testar: ['Em Ajustes, toque em Importar NFs antigas, escolha o resumo.csv e confira os números antes de gravar.', 'Depois de gravar, em Buscar lote, procure 5198815: deve aparecer com a etiqueta Modelo novo · NF antiga.'],
+    },
+    {
+        numero: '2.58.0', nome: 'Buscar lote em uma tela só, com a origem de cada resultado', status: 'concluida', data: '18/11/2026 às 21:30',
         novidades: ['Buscar lote tem uma busca só. Cada resultado mostra se veio dos dados atuais ou do modelo novo (NF antiga, lida do PDF).', 'A página de leitura das NFs antigas aceita o resumo.csv gerado pelo programa do computador.', 'Fundo liso nas páginas de importação e de lotes, sem a faixa de degradê.'],
         implementado: ['index.html: tela Buscar lote com um formulário, um botão Buscar e vários lotes recolhidos.', 'js/48: busca junta os dados atuais e o modelo novo (lotesNF), com a origem marcada.', 'js/61: sai a busca separada de NF antiga; fica a de vários lotes.', 'lotes.html: importação do resumo.csv; fundo sem degradê. importar.html: fundo sem degradê.', 'style.css: só o número da versão.'],
         arquivos: ['index.html','importar.html','lotes.html','style.css','js/48-inicio-lote.js','js/61-lotes-antigos.js','js/14-historico-mudancas.js'],
@@ -3701,4 +3709,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.1';

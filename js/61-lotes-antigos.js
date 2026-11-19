@@ -1,4 +1,5 @@
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/61-lotes-antigos.js'] = '2.58.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/61-lotes-antigos.js'] = '2.58.1';
+// 2.58.1: importação do resumo.csv dentro do app (Ajustes), em janela que fecha de volta para Ajustes.
 // 2.58.0: uma tela só de lote (Buscar lote mostra dados atuais e modelo novo, com a origem de cada resultado).
 // 2.57.9: lotes de NFs antigas (PDF). Lê só o que serve para achar o lote: lote, nº da NF, data, CNPJ do fornecedor e o caminho do PDF.
 // Não guarda produto, valor nem texto da nota. Usado pela página lotes.html (leitura e gravação) e pela tela Buscar lote (consulta).
@@ -170,5 +171,92 @@ async function loteAntigoBuscarVarios() {
     } catch (e) {
         console.error('Busca de vários lotes antigos:', e);
         out.innerHTML = '<div class="ini-vazio">Não consegui buscar agora. Confira a internet e tente de novo.</div>';
+    }
+}
+
+
+// ---------- 2.58.1: importação do resumo.csv dentro do app (Ajustes) ----------
+// resumo.csv: arquivo;origem;nf;cnpj;data;lotes (lotes separados por espaço). Nada é gravado sem o botão Gravar.
+function lotesLerCsv(texto) {
+    const linhas = String(texto || '').replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+    const cab = (linhas.shift() || '').toLowerCase();
+    if (cab.indexOf('arquivo') < 0 || cab.indexOf('lotes') < 0) throw new Error('Este arquivo não parece ser o resumo.csv.');
+    return linhas.map(l => {
+        const c = l.split(';');
+        const lotesTxt = c.pop(), data = c.pop(), cnpj = c.pop(), nf = c.pop(), origem = c.pop(), arquivo = c.join(';');
+        const lotes = lotesTxt.split(/\s+/).filter(Boolean).map(x => ({ lote: x, chave: lotesChave(x) })).filter(x => x.chave.length >= 4);
+        return { arquivo, origem: origem || '', nf: nf || '', cnpj: lotesDigitos(cnpj), data: lotesDataISO(data || ''), caminho: arquivo, lotes };
+    });
+}
+
+let lotesImpLista = [];
+
+function lotesAbrirImportacao() {
+    let el = document.getElementById('lotes-importar-folha');
+    if (!el) { el = document.createElement('div'); el.id = 'lotes-importar-folha'; document.body.appendChild(el); }
+    lotesImpLista = [];
+    el.innerHTML = `<div onclick="if(event.target===this)lotesFecharImportacao()" style="position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:4000;display:flex;align-items:flex-end;justify-content:center;">
+      <div style="background:var(--bg-secondary,#fff);color:var(--text-dark,#111);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:12px 20px calc(24px + env(safe-area-inset-bottom,0px));box-sizing:border-box;display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow:auto;">
+        <div style="align-self:center;width:40px;height:5px;border-radius:3px;background:var(--bg-tertiary,#d1d1d6);"></div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="font-size:20px;font-weight:700;">Importar NFs antigas</div>
+          <div style="font-size:13px;line-height:1.4;color:var(--text-light,#6e6e73);">Escolha o resumo.csv gerado pelo programa do computador. Só lote, NF, data, CNPJ e caminho do PDF são gravados.</div>
+        </div>
+        <label style="display:block;text-align:center;padding:14px;border-radius:14px;background:var(--accent-color,#3558a0);color:#fff;font-weight:600;font-size:15px;cursor:pointer;">Escolher resumo.csv<input type="file" id="lotes-imp-arq" accept=".csv,text/csv" hidden></label>
+        <div id="lotes-imp-resumo" style="font-size:14px;color:var(--text-light,#6e6e73);">Nenhum arquivo escolhido.</div>
+        <div style="display:flex;gap:10px;">
+          <button type="button" onclick="lotesFecharImportacao()" style="flex:1;padding:14px;border:0;border-radius:14px;background:var(--bg-tertiary,#e5e5ea);color:var(--text-dark,#111);font:inherit;font-weight:600;font-size:15px;cursor:pointer;">Cancelar</button>
+          <button type="button" id="lotes-imp-gravar" onclick="lotesGravarImportacao()" disabled style="flex:1.4;padding:14px;border:0;border-radius:14px;background:var(--accent-color,#3558a0);color:#fff;font:inherit;font-weight:600;font-size:15px;cursor:pointer;">Gravar</button>
+        </div>
+      </div></div>`;
+    el.querySelector('#lotes-imp-arq').addEventListener('change', lotesImportarArquivo);
+}
+
+function lotesFecharImportacao() {
+    const el = document.getElementById('lotes-importar-folha');
+    if (el) el.innerHTML = '';
+    lotesImpLista = [];
+}
+
+async function lotesImportarArquivo(e) {
+    const r = document.getElementById('lotes-imp-resumo'), btn = document.getElementById('lotes-imp-gravar');
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+        lotesImpLista = lotesLerCsv(await f.text());
+    } catch (err) {
+        lotesImpLista = [];
+        r.textContent = err.message;
+        btn.disabled = true; btn.textContent = 'Gravar';
+        return;
+    }
+    const prontas = lotesImpLista.filter(x => x.nf && x.lotes.length);
+    const ocr = prontas.filter(x => x.origem === 'ocr').length;
+    const semNf = lotesImpLista.filter(x => !x.nf).length;
+    const linha = (txt, num) => `<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;"><span>${txt}</span><b>${num}</b></div>`;
+    r.innerHTML = `<div style="background:var(--bg-primary,#f2f2f7);border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:14px;"><b>${lotesEsc(f.name)}</b> · ${lotesImpLista.length} linha(s)</div>`
+        + linha('Para gravar', prontas.length)
+        + linha('Dessas, lidas por reconhecimento de texto (conferir no PDF)', ocr)
+        + linha('Ficam de fora (sem número da NF)', semNf);
+    btn.disabled = !prontas.length;
+    btn.textContent = prontas.length ? `Gravar ${prontas.length} NF${prontas.length === 1 ? '' : 's'}` : 'Nada para gravar';
+}
+
+async function lotesGravarImportacao() {
+    const btn = document.getElementById('lotes-imp-gravar'), r = document.getElementById('lotes-imp-resumo');
+    const lista = lotesImpLista.filter(x => x.nf && x.lotes.length);
+    if (!lista.length) return;
+    if (typeof firestore === 'undefined' || !firestore) { r.textContent = 'Entre no app antes de gravar.'; return; }
+    btn.disabled = true; btn.textContent = 'Gravando…';
+    try {
+        const total = await lotesGravar(lista, (a, b) => { btn.textContent = `Gravando ${a} de ${b}…`; });
+        r.textContent = `${total} NF(s) gravada(s). Pode fechar.`;
+        btn.textContent = 'Gravado';
+        lotesImpLista = [];
+    } catch (err) {
+        console.error('Gravação do resumo.csv', err);
+        r.textContent = 'Não consegui gravar. Confira a internet e as regras do Firestore (coleção lotesNF).';
+        btn.disabled = false; btn.textContent = 'Tentar de novo';
     }
 }
