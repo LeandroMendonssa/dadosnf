@@ -1,0 +1,67 @@
+/* 2.59.0: tema "Windows XP" (opcional, em Ajustes > Aparência). Só vale quando body[data-theme="xp"].
+   Não altera o tema padrão: tudo aqui fica por cima, escopado ao tema XP. */
+body[data-theme="xp"] {
+    --bg-primary: #ECE9D8 !important; --bg-secondary: #ffffff !important; --bg-tertiary: #D4D0C8 !important;
+    --text-dark: #000000 !important; --text-light: #3c3c3c !important; --border-color: #808080 !important;
+    --accent-color: #0A246A !important; --accent-color-hover: #0A246A !important; --accent-contrast: #ffffff !important; --accent-text: #0046D5 !important;
+    --danger: #B00000 !important; --danger-bg: #FBE3E3 !important;
+    --radius: 3px !important; --r-sm: 2px !important; --r-md: 3px !important; --r-lg: 4px !important;
+    font-family: Tahoma, "Trebuchet MS", Verdana, system-ui, sans-serif;
+    color-scheme: light;
+}
+body[data-theme="xp"], body[data-theme="xp"] .app-container { background-color: #ECE9D8 !important; }
+body[data-theme="xp"] .app-screen { background: #ECE9D8 !important; }
+
+/* barra de título: cabeçalho de cada tela */
+body[data-theme="xp"] .header {
+    background: linear-gradient(180deg, #0997FF 0%, #0053EE 8%, #0050EE 40%, #0066FF 88%, #0059F0 100%) !important;
+    border-bottom: 1px solid #0831D9 !important; color: #ffffff !important; text-shadow: 1px 1px 0 #0A246A;
+}
+body[data-theme="xp"] .header *, body[data-theme="xp"] .header h1, body[data-theme="xp"] .header h2 { color: #ffffff !important; }
+body[data-theme="xp"] .header .header-action, body[data-theme="xp"] .header button {
+    background: linear-gradient(180deg, #ffffff 0%, #ECE9D8 100%) !important; border: 1px solid #003C74 !important; color: #000 !important; text-shadow: none; border-radius: 3px;
+}
+
+/* painéis e listas: moldura de janela antiga */
+body[data-theme="xp"] .card, body[data-theme="xp"] .settings-list-group, body[data-theme="xp"] .ini-card {
+    background: #ffffff !important; border: 1px solid !important; border-color: #ffffff #808080 #808080 #ffffff !important;
+    box-shadow: inset -1px -1px #D4D0C8 !important; border-radius: 0 !important;
+}
+body[data-theme="xp"] .card { padding: 14px; }
+
+/* botões: relevo do XP */
+body[data-theme="xp"] .actions-button {
+    background: #ECE9D8 !important; color: #000 !important; border: 1px solid !important; border-color: #ffffff #716F64 #716F64 #ffffff !important;
+    box-shadow: inset -1px -1px #ACA899, inset 1px 1px #F4F3EE !important; border-radius: 3px !important; font-weight: 400 !important;
+}
+body[data-theme="xp"] .actions-button.is-primary { background: #ECE9D8 !important; color: #000 !important; font-weight: 700 !important; outline: 1px solid #0A246A; outline-offset: -4px; }
+body[data-theme="xp"] .actions-button:active { box-shadow: inset 1px 1px #716F64 !important; }
+body[data-theme="xp"] .actions-button.is-danger { color: #B00000 !important; background: #ECE9D8 !important; }
+
+/* campos: caixa afundada branca */
+body[data-theme="xp"] .form-field, body[data-theme="xp"] input, body[data-theme="xp"] select, body[data-theme="xp"] textarea {
+    background: #ffffff !important; border: 1px solid #7F9DB9 !important; border-radius: 0 !important; box-shadow: inset 1px 1px #716F64 !important; color: #000 !important;
+}
+
+/* abas e filtros: abas de janela */
+body[data-theme="xp"] .xml-filtro-toggle, body[data-theme="xp"] .output-tabs { background: transparent !important; padding: 0 !important; gap: 2px !important; }
+body[data-theme="xp"] .xml-filtro-btn, body[data-theme="xp"] .output-tab {
+    background: #F4F3EE !important; border: 1px solid #919B9C !important; border-bottom: 0 !important; border-radius: 3px 3px 0 0 !important; color: #000 !important; box-shadow: none !important;
+}
+body[data-theme="xp"] .xml-filtro-btn.active, body[data-theme="xp"] .output-tab.active { background: #ffffff !important; font-weight: 700; }
+
+/* navegação inferior vira o botão Iniciar (só no celular) */
+#xp-barra { display: none; }
+@media (max-width: 899px) {
+    body[data-theme="xp"] #tab-bar { display: none !important; }
+    body[data-theme="xp"] #xp-barra {
+        display: flex; align-items: center; height: 38px; flex-shrink: 0; padding: 0 6px;
+        background: linear-gradient(180deg, #245EDC 0%, #3C81F3 6%, #245EDC 20%, #1941A5 90%, #1941A5 100%);
+    }
+}
+#xp-barra .xp-iniciar-btn {
+    height: 30px; padding: 0 16px 0 10px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 0 12px 12px 0;
+    background: linear-gradient(180deg, #3C9B3C, #2C7D2C); color: #fff; font: italic 700 15px "Trebuchet MS", Tahoma, sans-serif;
+    text-shadow: 1px 1px 0 #0A3D0A; box-shadow: inset -1px -1px 0 #1D5D1D; cursor: pointer;
+}
+#xp-barra .xp-iniciar-btn i { width: 14px; height: 14px; display: inline-block; background: linear-gradient(90deg, #F25022 50%, #7FBA00 50%); }
