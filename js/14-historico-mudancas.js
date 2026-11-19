@@ -10,7 +10,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.58.2', nome: 'Fundo com degradê suave em todas as telas', status: 'atual', data: '19/11/2026 às 06:10',
+        numero: '2.58.3', nome: 'Mais contraste na busca e nas abas', status: 'atual', data: '19/11/2026 às 06:20',
+        novidades: ['A caixa de busca e as abas (Para saída, Em espera, Exportar texto) ficaram mais visíveis sobre o novo fundo.'],
+        implementado: ['style.css: busca e abas com fundo e borda próprios nas telas do app.', 'index.html e style.css: número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o visual da busca e das abas. A lógica não mudou.'],
+        testar: ['Abra Repasse de NF e confira a busca e as abas no modo claro, no escuro e em um tema colorido.'],
+    },
+    {
+        numero: '2.58.2', nome: 'Fundo com degradê suave em todas as telas', status: 'concluida', data: '19/11/2026 às 06:10',
         novidades: ['O fundo leve com degradê da tela de boas-vindas agora aparece em todas as telas do app.', 'O degradê acompanha a área visível de cada tela, então não corta ao rolar nem em telas grandes. Cards e listas continuam com o fundo normal.'],
         implementado: ['style.css: fundo das telas (.app-screen) com o mesmo degradê do onboarding, adaptado ao tema.', 'index.html e style.css: só o número da versão.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
@@ -3717,4 +3725,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.58.3';
