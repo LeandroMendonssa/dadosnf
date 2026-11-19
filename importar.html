@@ -12,7 +12,7 @@
   html, body { height: 100%; }
   body { margin: 0; background: var(--bg-primary, #f2f2f7); color: var(--text-dark, #111); font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
   .imp-app { min-height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; position: relative;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color, #0a84ff) 12%, var(--bg-primary, #f2f2f7)) 0, var(--bg-primary, #f2f2f7) 280px); }
+    background: var(--bg-primary, #f2f2f7); }
   .imp-top { display: flex; align-items: center; gap: 12px; padding: calc(16px + env(safe-area-inset-top)) 22px 8px; }
   .imp-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); }
   .imp-mark svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
@@ -40,7 +40,7 @@
   .hs-linha > div:first-child b { color: var(--text-dark, #111); font-size: 15px; }
   .hs-mud { font-size: 14.5px; line-height: 1.45; padding: 10px 12px; border-radius: 14px; background: var(--bg-primary, #f2f2f7); margin-top: 8px; }
   .hs-mud b { font-weight: 700; color: var(--accent-color, #0a84ff); }
-  #imp-stage .hs-acoes { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg-primary, #f2f2f7) 40%); z-index: 50; }
+  #imp-stage .hs-acoes { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); background: var(--bg-primary, #f2f2f7); z-index: 50; }
   #imp-stage .hs-acoes .action-chip { width: 100%; max-width: 476px; display: block; margin: 0 auto; border: 0; border-radius: 16px; padding: 17px; font: inherit; font-size: 17px; font-weight: 700; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); cursor: pointer; }
   #imp-stage .hs-acoes .action-chip:disabled { opacity: .5; }
   /* 2.57.8: o botão de salvar não pode cortar o texto (sobrescreve a altura fixa do estilo geral do app). */

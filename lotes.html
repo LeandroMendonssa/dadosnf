@@ -12,7 +12,7 @@
   html, body { height: 100%; }
   body { margin: 0; background: var(--bg-primary, #f2f2f7); color: var(--text-dark, #111); font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
   .lt-app { min-height: 100%; max-width: 560px; margin: 0 auto; display: flex; flex-direction: column;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color, #0a84ff) 12%, var(--bg-primary, #f2f2f7)) 0, var(--bg-primary, #f2f2f7) 280px); }
+    background: var(--bg-primary, #f2f2f7); }
   .lt-top { display: flex; align-items: center; gap: 12px; padding: calc(16px + env(safe-area-inset-top)) 22px 8px; }
   .lt-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); }
   .lt-mark svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
@@ -29,7 +29,7 @@
   .lt-resumo { font-size: 13.5px; color: var(--text-light, #6e6e73); margin: 8px 2px 0; min-height: 18px; }
   .lt-btn { width: 100%; border: 0; border-radius: 16px; padding: 17px; font: inherit; font-size: 17px; font-weight: 700; background: var(--accent-color, #0a84ff); color: var(--accent-contrast, #fff); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-color, #0a84ff) 35%, transparent); cursor: pointer; }
   .lt-btn:disabled { background: var(--bg-tertiary, #e5e5ea); color: var(--text-light, #6e6e73); box-shadow: none; cursor: default; }
-  .lt-foot { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg-primary, #f2f2f7) 40%); }
+  .lt-foot { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); background: var(--bg-primary, #f2f2f7); }
   .lt-foot .lt-btn { max-width: 516px; margin: 0 auto; display: block; }
   .lt-barra { height: 8px; border-radius: 8px; background: var(--bg-tertiary, #e5e5ea); overflow: hidden; margin: 10px 0 6px; }
   .lt-barra i { display: block; height: 100%; width: 0; background: var(--accent-color, #0a84ff); transition: width .3s; }
@@ -69,6 +69,12 @@
         <div class="lt-resumo" id="lt-resumo">Nenhum arquivo escolhido.</div>
       </div>
       <button type="button" class="lt-btn" id="lt-ler" disabled onclick="ltIniciar()">Ler arquivos</button>
+
+      <div class="lt-card" style="margin-top:14px;">
+        <div class="lt-nf" style="font-size:15px;">Ou importar o resumo.csv</div>
+        <p class="lt-sub">Use o arquivo <b>resumo.csv</b> gerado pelo programa de leitura do computador. Assim não precisa ler os PDFs de novo aqui.</p>
+        <label class="lt-bt" style="display:block;margin-top:10px;">Escolher resumo.csv<input type="file" id="lt-csv" accept=".csv,text/csv" hidden></label>
+      </div>
     </section>
 
     <section id="lt-progresso" hidden>
@@ -174,6 +180,31 @@
   }
   document.getElementById('lt-arquivos').addEventListener('change', function (e) { ltEscolher(e.target.files); });
   document.getElementById('lt-pasta').addEventListener('change', function (e) { ltEscolher(e.target.files); });
+  // resumo.csv do programa de leitura: arquivo;origem;nf;cnpj;data;lotes (lotes separados por espaço)
+  function ltLerCsv(texto) {
+    var linhas = texto.replace(/^\uFEFF/, '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+    var cab = (linhas.shift() || '').toLowerCase();
+    if (cab.indexOf('arquivo') < 0 || cab.indexOf('lotes') < 0) throw new Error('Este arquivo não parece ser o resumo.csv.');
+    return linhas.map(function (l) {
+      var c = l.split(';');
+      var lotesTxt = c.pop(), data = c.pop(), cnpj = c.pop(), nf = c.pop(), origem = c.pop(), arquivo = c.join(';');
+      var lotes = lotesTxt.split(/\s+/).filter(Boolean).map(function (x) { return { lote: x, chave: lotesChave(x) }; })
+        .filter(function (x) { return x.chave.length >= 4; });
+      var nfObj = { nf: nf || '', cnpj: lotesDigitos(cnpj), data: lotesDataISO(data || ''), caminho: arquivo, lotes: lotes };
+      return { rel: arquivo, origem: origem || '', nf: nfObj, incluir: !!nfObj.nf && lotes.length > 0, erro: '' };
+    });
+  }
+  document.getElementById('lt-csv').addEventListener('change', function (e) {
+    var f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    f.text().then(function (t) {
+      ltResultados = ltLerCsv(t);
+      ['lt-inicio', 'lt-progresso'].forEach(function (id) { document.getElementById(id).hidden = true; });
+      ltMostrarResultados();
+      toast(ltResultados.length + ' linha(s) do resumo carregadas.');
+    }).catch(function (err) { toast('✕ ' + err.message); });
+  });
   document.getElementById('lt-pular').addEventListener('change', function () {
     // recalcula a lista com a última escolha, se houver
     var ultimo = document.getElementById('lt-arquivos').files.length ? document.getElementById('lt-arquivos').files : document.getElementById('lt-pasta').files;

@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.57.9">
+    <meta name="app-versao" content="2.58.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -158,21 +158,23 @@
             <div class="app-screen active" id="screen-inicio"><div id="inicio-conteudo"></div></div>
             <div class="app-screen" id="screen-lote">
                 <div class="card card-plain">
-                    <p class="desc-tela">Procura em todas as NFs processadas (Entrada de NF). O lote e a validade vêm do XML ou do texto do produto, e só aparecem em NFs que tiveram o lote gravado.</p>
+                    <p class="desc-tela">Procura o lote nos <b>dados atuais</b> (NFs processadas no app) e no <b>modelo novo</b> (lotes de NFs antigas, lidos dos PDFs). Cada resultado mostra de onde veio.</p>
                     <div class="campo"><label for="lote-q">Lote</label><input type="text" id="lote-q" class="form-field" placeholder="Ex: 24A0731" autocomplete="off" autocapitalize="characters"></div>
                     <div class="campo"><label for="lote-prod">Produto (opcional)</label><input type="text" id="lote-prod" class="form-field" placeholder="Parte do nome" autocomplete="off"></div>
                     <div class="campo"><label for="lote-val">Validade (opcional)</label><input type="text" id="lote-val" class="form-field" placeholder="mm/aaaa ou dd/mm/aaaa" inputmode="numeric" autocomplete="off"></div>
                     <div class="actions"><button type="button" class="actions-button is-primary" onclick="loteBuscar()">Buscar</button></div>
                 </div>
                 <div id="lote-resultado"></div>
-                <div class="card card-plain" style="margin-top:14px;">
-                    <p class="desc-tela">Lotes de NFs antigas, lidos dos PDFs. Mostra a NF e o caminho do PDF para você conferir. Só consulta quando você busca.</p>
-                    <div class="campo"><label for="lote-antigo-q">Lote (NF antiga)</label><input type="text" id="lote-antigo-q" class="form-field" placeholder="Ex: 3110260" autocomplete="off" autocapitalize="characters"></div>
-                    <div class="actions"><button type="button" class="actions-button is-primary" onclick="loteAntigoBuscar()">Buscar</button></div>
-                    <div class="campo"><label for="lote-antigo-varios">Vários lotes (um por linha)</label><textarea id="lote-antigo-varios" class="form-field" rows="4" autocomplete="off" autocapitalize="characters"></textarea></div>
-                    <div class="actions"><button type="button" class="actions-button" onclick="loteAntigoBuscarVarios()">Buscar todos</button></div>
-                </div>
-                <div id="lote-antigo-resultado"></div>
+                <details style="margin-top:14px;">
+                    <summary class="ini-tit" style="cursor:pointer;">Buscar vários lotes de uma vez</summary>
+                    <div class="card card-plain" style="margin-top:8px;">
+                        <p class="desc-tela">Um lote por linha. Procura só no modelo novo (NFs antigas).</p>
+                        <div class="campo"><label for="lote-antigo-varios">Lotes</label><textarea id="lote-antigo-varios" class="form-field" rows="4" autocomplete="off" autocapitalize="characters"></textarea></div>
+                        <div class="actions"><button type="button" class="actions-button is-primary" onclick="loteAntigoBuscarVarios()">Buscar</button></div>
+                    </div>
+                    <div id="lote-antigo-resultado"></div>
+                </details>
+                <div class="actions" style="margin-top:14px;"><button type="button" class="actions-button" onclick="window.open('lotes.html','_blank')">Ler PDFs de NFs antigas</button></div>
             </div>
             <div class="app-screen" id="screen-manage"> 
                 <div class="campo busca-padrao" ><input type="text" id="gerenciar-search" class="form-field" placeholder="Buscar por NF, fornecedor ou pedido..." oninput="filtrarNotasGerenciar(this.value)"></div>
