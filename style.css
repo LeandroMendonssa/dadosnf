@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.60.1'; }
+:root { --css-versao: '2.61.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -1925,6 +1925,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 #ini-busca-res{margin-bottom:10px}
 .ini-busca input{flex:1;border:0;background:transparent;padding:13px 0;font-size:16px;color:var(--text-dark);outline:none;min-width:0}.ini-busca i{color:var(--text-light)}
 .ini-tit{font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin:6px 2px 8px}
+/* leandromendonssa */
 .ini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .ini-k{text-align:left;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:12px;color:var(--text-dark)}.ini-k b{display:block;font-size:26px}.ini-k span{font-size:12px;color:var(--text-light)}
 .ini-k.r b{color:var(--button-danger)}.ini-k.y b{color:#b7791f}.ini-k.g b{color:#1f8a3b}
@@ -2320,3 +2321,12 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .ini-tab-q{font-weight:700;justify-content:flex-end;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ini-tab-q small{font-size:12px;font-weight:600;color:var(--text-light);margin-left:4px}
 .ini-tab>*:nth-last-child(-n+2){border-bottom:0}
+
+/* 2.61.0 — Início: números grandes; cor só no que pede atenção; telas vazias com ação */
+.ini-k b{font-size:34px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-bottom:6px}
+.ini-k.g b{color:inherit}
+.vazio-acao{text-align:center;padding:30px 16px 26px}
+.vazio-acao .ic{width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:color-mix(in srgb,var(--button-primary,#007aff) 12%,var(--bg-secondary));display:grid;place-items:center;color:var(--button-primary,#007aff);font-size:22px}
+.vazio-acao b{display:block;font-size:17px;color:var(--text-dark)}
+.vazio-acao p{color:var(--text-light);font-size:14px;margin:4px 0 14px;line-height:1.4}
+.aj-credito{text-align:center;color:var(--text-light);font-size:12px;opacity:.75;margin:22px 0 8px}
