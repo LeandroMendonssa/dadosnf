@@ -17,14 +17,13 @@ function inicioPrimeiroNome() {
     return iniLerCache().nome || '';
 }
 // Fornecedores que ainda não chegaram (nada entregue) + os que chegaram parcialmente com MAIS de 2 itens faltando (1 ou 2 itens faltando não conta).
-// Só considera pedidos recentes (INI_JANELA_DIAS) para pedidos antigos esquecidos não inflarem o número. Usa só dados já carregados: nenhuma leitura nova.
-const INI_JANELA_DIAS = 60, INI_MIN_ITENS_FALTANDO = 3;
+// 2.60.1: sem limite de tempo: pedido antigo que ainda tem fornecedor pendente continua na lista. Usa só dados já carregados: nenhuma leitura nova.
+const INI_MIN_ITENS_FALTANDO = 3;
 let _iniSigForn = '', _iniCalculando = false;
 function inicioContarFornecedores() {
-    const lim = Date.now() - INI_JANELA_DIAS * 86400000, r = { nao: 0, achegar: 0, lista: [] };
+    const r = { nao: 0, achegar: 0, lista: [] };
     const nomeF = f => { let n = f.nome || f.fornecedor || f.razaoSocial || ''; try { n = nomeExibicaoFornecedor(n, f.cnpj || '') || n; } catch (e) { } return String(n); };
     comMemoComparacao(() => (listaCotacoes || []).forEach(cot => {
-        const ref = Date.parse(cot.dataPedido || cot.atualizadoEm || '') || 0; if (ref && ref < lim) return;
         let comp; try { comp = compararFontesPedido(cot.pedido); } catch (e) { return; }
         const vistos = new Set();
         (cot.fornecedores || []).forEach(f => {
@@ -170,7 +169,7 @@ function renderFornecedoresAChegar(pf) {
     const corpo = document.getElementById('forn-chegar-lista'), tit = document.getElementById('forn-chegar-tit'); if (!corpo) return;
     const lista = (pf && pf.lista) || [];
     if (tit) tit.textContent = lista.length ? `${lista.length} fornecedor(es) a chegar` : 'Fornecedores a chegar';
-    if (!lista.length) { corpo.innerHTML = '<div class="ini-vazio">Nenhum fornecedor pendente nos pedidos dos últimos ' + INI_JANELA_DIAS + ' dias.</div>'; return; }
+    if (!lista.length) { corpo.innerHTML = '<div class="ini-vazio">Nenhum fornecedor pendente nos pedidos.</div>'; return; }
     const por = {}; lista.forEach(x => { (por[x.p] = por[x.p] || { o: x.o, itens: [] }).itens.push(x); });
     const pedidos = Object.keys(por).sort((a, b) => (parseInt(b, 10) || 0) - (parseInt(a, 10) || 0));
     corpo.innerHTML = pedidos.map(p => {
@@ -267,4 +266,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.58.10';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.60.1';

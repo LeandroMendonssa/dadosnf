@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.60.1', nome: 'Fornecedores a chegar sem limite de tempo', status: 'atual', data: '19/11/2026 às 22:45',
+        novidades: ['Pedidos antigos que ainda têm fornecedor para chegar continuam aparecendo em fornecedores a chegar e no Resumo de pendências. Antes, pedidos com mais de 60 dias saíam da lista.'],
+        implementado: ['js/48: removido o corte de 60 dias do cálculo de fornecedores a chegar.', 'js/47: removido o mesmo corte do Resumo de pendências, para os dois baterem.', 'index.html e style.css: número da versão.'],
+        arquivos: ['index.html','style.css','js/47-resumo-pendencias.js','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['O número de fornecedores a chegar pode aumentar, porque pedidos antigos voltam a ser contados.', 'Se algum pedido antigo já foi resolvido fora do app, marque "chegou" nele para sair da lista.'],
+        testar: ['Início > fornecedores a chegar: o pedido antigo que tinha sumido deve voltar.', 'Confira se a abertura do Início continua rápida.'],
+    },
+    {
         numero: '2.60.0', nome: 'Tema Windows XP: barra de tarefas e menu Iniciar', status: 'atual', data: '19/11/2026 às 22:30',
         novidades: ['No tema Windows XP, a barra de baixo vira uma barra de tarefas, com atalhos para os principais (Início, Repasse, Cotações, Controle e Anotações).', 'O botão Iniciar abre um menu com todas as telas, em grupos: Trabalho, Acompanhamento, Documentos e Sistema.', 'Os botões do cabeçalho ficam com contraste no tema XP.'],
         implementado: ['index.html: barra de tarefas com atalhos e menu Iniciar agrupado.', 'style-xp.css: estilos da barra, do menu e dos botões do cabeçalho; sem efeitos de vidro no tema XP.', 'style.css, index.html e js/14: número da versão.'],
@@ -3797,4 +3805,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.60.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.60.1';

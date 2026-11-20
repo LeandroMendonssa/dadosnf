@@ -63,14 +63,14 @@ function dadosResumoPendenciasPedido(pedido) {
 }
 // todos os pedidos recentes (e os extras digitados) já calculados; as caixinhas só filtram isto depois
 function dadosResumoTodos(extras) {
-    const lim = Date.now() - (typeof INI_JANELA_DIAS === 'number' ? INI_JANELA_DIAS : 60) * 86400000, out = [], ja = new Set();
+    const out = [], ja = new Set();
     const tenta = (p, forcar) => {
         if (ja.has(String(p))) return; ja.add(String(p));
         let r; try { r = dadosResumoPendenciasPedido(p); } catch (e) { console.error('Resumo de pendências', p, e); r = null; }
         out.push({ pedido: String(p), forcado: !!forcar, achou: !!r, r: r || { pedido: String(p), nao: [], forn: [] } });
     };
     comMemoComparacao(() => {
-        (listaCotacoes || []).forEach(c => { const ref = Date.parse(c.dataPedido || c.atualizadoEm || '') || 0; if (ref && ref < lim) return; tenta(c.pedido, false); });
+        (listaCotacoes || []).forEach(c => { tenta(c.pedido, false); });
         (extras || []).forEach(p => tenta(p, true));
     });
     return out.sort((a, b) => (Number(a.pedido) || 0) - (Number(b.pedido) || 0));
@@ -338,4 +338,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.47.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.60.1';
