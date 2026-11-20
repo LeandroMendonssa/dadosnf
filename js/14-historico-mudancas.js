@@ -9,9 +9,18 @@
 // coleção nova no Firestore, como pedido): cada atualização futura só
 // precisa acrescentar uma entrada neste array, com "o que mudou" + "o que
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
+// leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.62.1', nome: 'Linguagem Sem paciência em todo o app', status: 'atual', data: '20/11/2026 às 12:55',
+        numero: '2.63.0', nome: 'Temas Vidro líquido', status: 'atual', data: '20/11/2026 às 17:45',
+        novidades: ['Três temas novos em Ajustes > Aparência: Vidro líquido (claro), Vidro líquido (escuro) e Vidro leve (sem desfoque).', 'Cards, botões, campos, modais, cabeçalho e dock em vidro translúcido, com fundo em manchas de azul e verde, branco e cinza.', 'Se o aparelho estiver com "Reduzir transparência" ligado, o tema fica firme e sem desfoque.'],
+        implementado: ['style-vidro.css (novo): os três temas, ativos só quando escolhidos.', 'index.html: opções no seletor de tema e link do novo arquivo. style.css e js/14: número da versão e histórico.'],
+        arquivos: ['index.html','style.css','style-vidro.css','js/14-historico-mudancas.js'],
+        mudou: ['Os outros temas continuam como estavam.', 'O desfoque fica só nos blocos principais; listas longas usam fundo translúcido sem desfoque, para não pesar.'],
+        testar: ['Ajustes > Aparência > Tema: escolher cada um dos três e abrir Início, Repasse, Cotações e Ajustes.', 'Ver se o texto está legível nos campos de busca, botões e modais.', 'Rolar listas longas e ver se a rolagem continua fluida. Se pesar, usar o Vidro leve.', 'Voltar para o tema anterior e confirmar que tudo voltou ao normal.'],
+    },
+    {
+        numero: '2.62.1', nome: 'Linguagem Sem paciência em todo o app', status: 'concluida', data: '20/11/2026 às 12:55',
         novidades: ['Na linguagem Sem paciência, os textos de orientação de todas as telas ganham o novo tom: importação, backup, fontes, favoritos do SmartCompras, conta, logo e assinatura, entre outros.', 'As mensagens de tela vazia (sem registro, sem cotação, sem NF e parecidas) também.', 'Os avisos que ainda não tinham frase própria passam a ganhar um comentário no final (o texto original, com nomes e números, continua inteiro).'],
         implementado: ['js/62: lista de textos de orientação e de tela vazia, varredura da tela que troca só esses textos e volta ao original na linguagem Normal.', 'js/62: comentários variados no fim de avisos de sucesso, de falha e de campo faltando.', 'index.html, style.css e js/14: número da versão e histórico.'],
         arquivos: ['index.html','style.css','js/62-linguagem.js','js/14-historico-mudancas.js'],
@@ -3830,4 +3839,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.62.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.63.0';
