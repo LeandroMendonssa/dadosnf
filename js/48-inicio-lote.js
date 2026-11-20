@@ -112,9 +112,9 @@ function renderInicio() {
     const linhasProx = d.proximas.map(n => {
         let nomeF = n.fornecedor || ''; try { nomeF = nomeExibicaoFornecedor(n.fornecedor, n.cnpj || '') || nomeF; } catch (e) { }
         return `<div class="ini-lin"><div>${escIni(nomeF)} ${escIni(n.nf || '')}<small>${escIni(n.vencimento)}${n.valor ? ' · R$ ' + escIni(n.valor) : ''}</small></div>${chipDias(n)}</div>`;
-    }).join('') || '<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>Nenhuma NF aberta</b><p>A relação está vazia.</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen(\'screen-reports\',\'Relatórios\')">Ver todas as NFs</button></div>';
+    }).join('') || `<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>${LING.fixa('ini-sem-nf', {t:'Nenhuma NF aberta'}).t}</b><p>${LING.fixa('ini-sem-nf', {p:'A relação está vazia.'}).p}</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen('screen-reports','Relatórios')">Ver todas as NFs</button></div>`;
     el.innerHTML = `
-        <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}</div>
+        <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}${LING.saudacaoExtra() ? ' · ' + LING.saudacaoExtra() : ''}</div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
@@ -136,7 +136,7 @@ function abrirFornecedoresAChegar() {
     const corpo = document.getElementById('forn-chegar-lista');
     let pf = iniLerCache().forn;
     if (!pf || !Array.isArray(pf.lista) || (pf.lista.length && (!Array.isArray(pf.lista[0].prod) || (pf.lista[0].prod.length && typeof pf.lista[0].prod[0] !== 'object')))) {
-        corpo.innerHTML = '<div class="ini-vazio">Calculando…</div>';
+        corpo.innerHTML = '<div class="ini-vazio">' + LING.fixa('ini-calc', 'Calculando…') + '</div>';
         setTimeout(() => { try { pf = inicioContarFornecedores(); iniGravarCache({ forn: pf }); } catch (e) { pf = null; } renderFornecedoresAChegar(pf); }, 30);
         return;
     }
@@ -170,7 +170,7 @@ function renderFornecedoresAChegar(pf) {
     const corpo = document.getElementById('forn-chegar-lista'), tit = document.getElementById('forn-chegar-tit'); if (!corpo) return;
     const lista = (pf && pf.lista) || [];
     if (tit) tit.textContent = lista.length ? `${lista.length} fornecedor(es) a chegar` : 'Fornecedores a chegar';
-    if (!lista.length) { corpo.innerHTML = '<div class="ini-vazio">Nenhum fornecedor pendente nos pedidos.</div>'; return; }
+    if (!lista.length) { corpo.innerHTML = '<div class="ini-vazio">' + LING.fixa('ini-sem-forn', 'Nenhum fornecedor pendente nos pedidos.') + '</div>'; return; }
     const por = {}; lista.forEach(x => { (por[x.p] = por[x.p] || { o: x.o, itens: [] }).itens.push(x); });
     const pedidos = Object.keys(por).sort((a, b) => (parseInt(b, 10) || 0) - (parseInt(a, 10) || 0));
     corpo.innerHTML = pedidos.map(p => {
@@ -267,4 +267,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.61.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.62.0';

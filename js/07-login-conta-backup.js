@@ -12,6 +12,7 @@ function formatarValorBlur(event){
     if(v) event.target.value=parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
+// leandromendonssa
 function closeAllModals(){document.querySelectorAll('.modal-screen.active').forEach(modal=>modal.classList.remove('active'))}
 function personalizarMensagem(texto, ehSucesso){
     const nome = primeiroNomeUsuario();
@@ -27,7 +28,8 @@ function toast(msg){
     const texto = (ehSucesso || ehErro) ? msg.slice(1).trim() : msg;
     iconEl.className = 'toast-icon' + (ehSucesso ? ' success' : ehErro ? ' error' : '');
     iconEl.innerHTML = ehSucesso ? '<i class="fa-solid fa-circle-check"></i>' : ehErro ? '<i class="fa-solid fa-circle-exclamation"></i>' : '';
-    textEl.textContent = personalizarMensagem(texto, ehSucesso);
+    const textoLing = (typeof LING !== 'undefined') ? LING.toast(texto, ehSucesso, ehErro) : null;   // 2.62.0: só na linguagem "Sem paciência"
+    textEl.textContent = textoLing !== null ? textoLing : personalizarMensagem(texto, ehSucesso);
     t.style.display = 'flex';
     clearTimeout(window.__toastTimer);
     window.__toastTimer = setTimeout(() => t.style.display = 'none', 2000);
@@ -561,4 +563,4 @@ function popularListaFornecedores(){
     atualizarBulkBarFornecedores();
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.62.0';

@@ -11,7 +11,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.61.0', nome: 'Assinatura nos relatórios, números do Início e telas vazias', status: 'atual', data: '20/11/2026 às 10:30',
+        numero: '2.62.0', nome: 'Linguagem do aplicativo: Normal ou Sem paciência', status: 'atual', data: '20/11/2026 às 08:40',
+        novidades: ['Novo seletor em Ajustes > Aparência: "Linguagem do aplicativo", com Normal ou Sem paciência. Vale na hora e fica salvo no aparelho.', 'Sem paciência: as mensagens do dia a dia (salvou, apagou, copiou, erro ao salvar etc.) ganham tom de colega cansado da burocracia, com várias frases por situação, que se alternam.', 'A saudação do Início, as telas vazias e a orientação dos fornecedores a chegar também mudam de tom.', 'Relatórios, PDFs, Word, textos de saída e qualquer documento continuam sempre neutros, nas duas opções.'],
+        implementado: ['js/62-linguagem.js (novo): camada única com o dicionário de mensagens, a escolha salva e a rotação sem repetir a mesma frase em seguida.', 'js/07: o toast consulta a camada de linguagem; sem regra para o texto, ele sai como sempre.', 'js/05 e js/48: telas vazias, carregando e saudação usam a camada.', 'index.html: seletor nos Ajustes, dica dos fornecedores com id e carga do novo arquivo. style.css: visual do seletor.'],
+        arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/07-login-conta-backup.js','js/48-inicio-lote.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['Com a linguagem Normal nada muda no app.', 'Só mensagens genéricas foram trocadas; avisos com nomes e números continuam como eram, para não perder informação. Mais situações podem entrar nas próximas versões.', 'Os geradores de PDF, Word, relatórios e textos de saída não chamam a camada de linguagem.'],
+        testar: ['Ajustes > Aparência > Linguagem do aplicativo: alternar entre Normal e Sem paciência.', 'Fechar e abrir o app: a escolha deve continuar.', 'Em Sem paciência, salvar algo, apagar uma anotação e copiar um texto várias vezes: as frases devem variar.', 'Início e Repasse sem notas: saudação e tela vazia mudam de tom.', 'Gerar um PDF e um Word em Sem paciência: o conteúdo deve sair igual ao de sempre.'],
+    },
+    {
+        numero: '2.61.0', nome: 'Assinatura nos relatórios, números do Início e telas vazias', status: 'concluida', data: '20/11/2026 às 10:30',
         novidades: ['Os PDFs levam o autor só nas propriedades do arquivo; nada aparece na página nem na prévia. Os arquivos Word levam o autor nas propriedades. Sem rodapé visível.', 'Início: números maiores, e a cor só aparece onde pede atenção (vencidas em vermelho, vencem hoje/amanhã e fornecedores a chegar em âmbar).', 'Telas vazias agora têm ícone, uma frase e um botão (ex.: "Nada para saída agora" com "Ver todas as NFs").', 'Ajuda: "Desenvolvido por Leandro Mendonça" no final.'],
         implementado: ['js/06: função única marcaAutoriaPdf (só o autor nas propriedades do PDF) e assinatura discreta no console.', 'js/26, js/45, js/47, js/55: chamam a função antes de salvar; Word com autor nas propriedades.', 'js/48 e style.css: números do Início e telas vazias.', 'js/05: tela vazia da Saída com ação.', 'js/31: crédito na Ajuda. index.html: meta autor e número da versão.'],
         arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/06-exportar-pdf.js','js/26-equipamentos.js','js/31-ajuda.js','js/45-exportar-cotacao.js','js/47-resumo-pendencias.js','js/48-inicio-lote.js','js/55-hub-relatorios.js','js/14-historico-mudancas.js'],
@@ -3814,4 +3822,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.61.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.62.0';
