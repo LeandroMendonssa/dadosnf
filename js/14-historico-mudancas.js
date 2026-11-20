@@ -10,6 +10,14 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
+        numero: '2.60.0', nome: 'Tema Windows XP: barra de tarefas e menu Iniciar', status: 'atual', data: '19/11/2026 às 22:30',
+        novidades: ['No tema Windows XP, a barra de baixo vira uma barra de tarefas, com atalhos para os principais (Início, Repasse, Cotações, Controle e Anotações).', 'O botão Iniciar abre um menu com todas as telas, em grupos: Trabalho, Acompanhamento, Documentos e Sistema.', 'Os botões do cabeçalho ficam com contraste no tema XP.'],
+        implementado: ['index.html: barra de tarefas com atalhos e menu Iniciar agrupado.', 'style-xp.css: estilos da barra, do menu e dos botões do cabeçalho; sem efeitos de vidro no tema XP.', 'style.css, index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','style-xp.css','js/14-historico-mudancas.js'],
+        mudou: ['Só no tema Windows XP. Os outros temas continuam como estavam.'],
+        testar: ['Ajustes > Aparência > Windows XP. Toque em Iniciar e abra uma tela por grupo.', 'Toque nos atalhos da barra: cada um deve abrir a tela certa.', 'Confira os botões do cabeçalho, que devem aparecer escuros e legíveis.'],
+    },
+    {
         numero: '2.59.0', nome: 'Tema Windows XP (opcional)', status: 'atual', data: '19/11/2026 às 20:55',
         novidades: ['Novo tema "Windows XP" em Ajustes > Aparência. O tema padrão continua igual.', 'No celular, a barra de navegação vira um botão Iniciar, que abre a tela Mais com todas as telas.'],
         implementado: ['style-xp.css (novo): visual do tema, ativo só com o tema XP escolhido.', 'index.html: opção Windows XP no seletor de tema, link para style-xp.css, botão Iniciar no celular.', 'style.css e js/14: número da versão.'],
@@ -3789,4 +3797,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.59.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.60.0';
