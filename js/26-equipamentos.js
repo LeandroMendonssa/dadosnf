@@ -301,7 +301,7 @@ async function runExport(){
    doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(doc.splitTextToSize(tit,277)[0],10,14);doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(e,10,20);y=28;hdr();doc.setFontSize(8);
    R.forEach(r=>{if(y>195){doc.addPage();y=15;hdr()}let x=10;cols.forEach(([n,w],k)=>{doc.text(doc.splitTextToSize(String(r[k]||"-"),w-2)[0]||"-",x,y);x+=w});y+=5.5});
    if(eq){y+=6;if(y>180){doc.addPage();y=15}doc.setFont("helvetica","bold");doc.text("Resumo",10,y);doc.setFont("helvetica","normal");resumoRows(R).forEach(([k,v])=>{y+=5.5;if(y>195){doc.addPage();y=15}doc.text(v+"x  "+k,10,y)})}
-   ok=await salvar(nome+".pdf",doc.output("arraybuffer"))}
+   if(typeof marcaAutoriaPdf=="function")marcaAutoriaPdf(doc);ok=await salvar(nome+".pdf",doc.output("arraybuffer"))}
   else{let b=null;
    try{if(!window.XLSX)await loadJS("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");const wb=XLSX.utils.book_new(),w=XLSX.utils.aoa_to_sheet([H,...R]);w["!cols"]=cols.map(c=>({wch:c[1]*.6}));XLSX.utils.book_append_sheet(wb,w,KT[d.k].slice(0,31));if(eq)XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Equipamento","Quantidade"],...resumoRows(R)]),"Resumo");b=XLSX.write(wb,{bookType:"xlsx",type:"array"})}catch(x){}
    ok=b?await salvar(nome+".xlsx",b):await salvar(nome+".csv","\ufeff"+[H,...R].map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n"))}
@@ -412,6 +412,8 @@ EQP.setState=x=>{if(applyState(x)&&R.screen)render()};
 EQP.getState=()=>({items,setores});
 EQP.closeAll=()=>{if(R.ov){mdClose();md2Close()}};
 EQP.novoDaNF=nf=>{if(!R.screen)return;tab="eq";render();openItem(0);nf=nf||{};$("#a_nf").value=nf.num||"";$("#a_nfd").value=nf.data||"";$("#a_forn").value=nf.forn||"";$("#a_val").value=nf.valor||""};
+/* leandromendonssa */
 EQP.loadDemo=()=>{seed();seedCfg();save();if(R.screen)render()};
 
 })();
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/26-equipamentos.js'] = '2.61.0';

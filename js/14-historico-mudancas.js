@@ -3,6 +3,7 @@
 // --- CONFIGURAÇÕES → HISTÓRICO DE MUDANÇAS DO APLICATIVO ---
 // (2.3.1: campos opcionais por versão para o popup de novidades — novidades: [frases curtas] e testarLinks: [{ rotulo, acao, arg }])
 // ===================================================================
+// leandromendonssa
 // Registro funcional/documental do desenvolvimento — não é versionamento
 // técnico nem log automático de código. É estático dentro do app (sem
 // coleção nova no Firestore, como pedido): cada atualização futura só
@@ -10,7 +11,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.60.1', nome: 'Fornecedores a chegar sem limite de tempo', status: 'atual', data: '19/11/2026 às 22:45',
+        numero: '2.61.0', nome: 'Assinatura nos relatórios, números do Início e telas vazias', status: 'atual', data: '20/11/2026 às 10:30',
+        novidades: ['Todos os PDFs ganham o rodapé "Leandro Mendonça · Almoxarifado" e uma marca d\'água bem discreta com o nome. Os arquivos Word ganham o mesmo rodapé.', 'Início: números maiores, e a cor só aparece onde pede atenção (vencidas em vermelho, vencem hoje/amanhã e fornecedores a chegar em âmbar).', 'Telas vazias agora têm ícone, uma frase e um botão (ex.: "Nada para saída agora" com "Ver todas as NFs").', 'Ajuda: "Desenvolvido por Leandro Mendonça" no final.'],
+        implementado: ['js/06: função única marcaAutoriaPdf (rodapé, marca d\'água, autor do PDF) e assinatura discreta no console.', 'js/26, js/45, js/47, js/55: chamam a função antes de salvar; Word com rodapé e autor.', 'js/48 e style.css: números do Início e telas vazias.', 'js/05: tela vazia da Saída com ação.', 'js/31: crédito na Ajuda. index.html: meta autor e número da versão.'],
+        arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/06-exportar-pdf.js','js/26-equipamentos.js','js/31-ajuda.js','js/45-exportar-cotacao.js','js/47-resumo-pendencias.js','js/48-inicio-lote.js','js/55-hub-relatorios.js','js/14-historico-mudancas.js'],
+        mudou: ['O card de fornecedores a chegar não foi alterado.', 'No Word, o rodapé fica no fim do documento (não repete em cada página) e não há marca d\'água diagonal.'],
+        testar: ['Gere um PDF de cada relatório (Saída, Cotação, Resumo de pendências, Relatórios, Equipamentos): rodapé embaixo e marca d\'água quase invisível.', 'Gere um Word e confira o rodapé no fim. Veja o autor em Propriedades do arquivo.', 'Início: números grandes, cores só nos que pedem atenção.', 'Repasse sem notas: tela vazia com botão "Ver todas as NFs".', 'Ajustes > Ajuda: crédito no final da lista.'],
+    },
+    {
+        numero: '2.60.1', nome: 'Fornecedores a chegar sem limite de tempo', status: 'concluida', data: '19/11/2026 às 22:45',
         novidades: ['Pedidos antigos que ainda têm fornecedor para chegar continuam aparecendo em fornecedores a chegar e no Resumo de pendências. Antes, pedidos com mais de 60 dias saíam da lista.'],
         implementado: ['js/48: removido o corte de 60 dias do cálculo de fornecedores a chegar.', 'js/47: removido o mesmo corte do Resumo de pendências, para os dois baterem.', 'index.html e style.css: número da versão.'],
         arquivos: ['index.html','style.css','js/47-resumo-pendencias.js','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
@@ -18,7 +27,7 @@ const HISTORICO_FASES = [
         testar: ['Início > fornecedores a chegar: o pedido antigo que tinha sumido deve voltar.', 'Confira se a abertura do Início continua rápida.'],
     },
     {
-        numero: '2.60.0', nome: 'Tema Windows XP: barra de tarefas e menu Iniciar', status: 'atual', data: '19/11/2026 às 22:30',
+        numero: '2.60.0', nome: 'Tema Windows XP: barra de tarefas e menu Iniciar', status: 'concluida', data: '19/11/2026 às 22:30',
         novidades: ['No tema Windows XP, a barra de baixo vira uma barra de tarefas, com atalhos para os principais (Início, Repasse, Cotações, Controle e Anotações).', 'O botão Iniciar abre um menu com todas as telas, em grupos: Trabalho, Acompanhamento, Documentos e Sistema.', 'Os botões do cabeçalho ficam com contraste no tema XP.'],
         implementado: ['index.html: barra de tarefas com atalhos e menu Iniciar agrupado.', 'style-xp.css: estilos da barra, do menu e dos botões do cabeçalho; sem efeitos de vidro no tema XP.', 'style.css, index.html e js/14: número da versão.'],
         arquivos: ['index.html','style.css','style-xp.css','js/14-historico-mudancas.js'],
@@ -3805,4 +3814,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.60.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.61.0';

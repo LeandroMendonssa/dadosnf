@@ -482,12 +482,13 @@ function rebuildNotasPendentesList(){
     };
 
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".
+    /* leandromendonssa */
     const notasParaExibir = notasPendentes.filter(n => abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera);
     if (typeof ordenarNotasGerenciar === 'function') ordenarNotasGerenciar(notasParaExibir);   // 2.41.0: Ordenar (js/54)
     if(notasParaExibir.length===0){
         DOM.listaNotas.innerHTML = abaGerenciar === 'espera'
             ? `<div class="empty-state">Nenhuma nota em espera. As notas que você colocar em espera aparecem aqui.</div>`
-            : `<div class="empty-state">Nenhuma nota na relação para saída.</div>`;
+            : `<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>Nada para saída agora</b><p>Todas as notas já foram para a relação.</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen('screen-reports','Relatórios')">Ver todas as NFs</button></div>`;
         return;
     }
     
@@ -645,4 +646,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.56.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.61.0';

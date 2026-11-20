@@ -102,8 +102,9 @@ function renderInicio() {
     inicioAtualizarFornecedores();
     const d = inicioDados(), agora = new Date(), nome = inicioPrimeiroNome(), pf = iniLerCache().forn;
     const kForn = pf
-        ? `<button type="button" class="ini-k n" onclick="abrirFornecedoresAChegar()"><b>${pf.nao + pf.achegar}</b><span>fornecedores a chegar<br>${pf.nao} não chegaram · ${pf.achegar} com mais de 2 itens faltando</span></button>`
+        ? `<button type="button" class="ini-k ${(pf.nao + pf.achegar) > 0 ? 'y' : 'n'}" onclick="abrirFornecedoresAChegar()"><b>${pf.nao + pf.achegar}</b><span>fornecedores a chegar<br>${pf.nao} não chegaram · ${pf.achegar} com mais de 2 itens faltando</span></button>`
         : `<button type="button" class="ini-k n" onclick="abrirFornecedoresAChegar()"><b>…</b><span>fornecedores a chegar<br>calculando</span></button>`;
+    // leandromendonssa
     const dataTxt = `${DIAS_INI[agora.getDay()]}, ${String(agora.getDate()).padStart(2, '0')} de ${MESES_INI[agora.getMonth()]}`;
     const k = (cls, n, txt, acao) => `<button type="button" class="ini-k ${cls}" onclick="${acao}"><b>${n}</b><span>${txt}</span></button>`;
     const at = (ic, txt, acao, forte) => `<button type="button" class="ini-at${forte ? ' forte' : ''}" onclick="${acao}"><i class="${ic}"></i><span>${txt}</span></button>`;
@@ -111,16 +112,16 @@ function renderInicio() {
     const linhasProx = d.proximas.map(n => {
         let nomeF = n.fornecedor || ''; try { nomeF = nomeExibicaoFornecedor(n.fornecedor, n.cnpj || '') || nomeF; } catch (e) { }
         return `<div class="ini-lin"><div>${escIni(nomeF)} ${escIni(n.nf || '')}<small>${escIni(n.vencimento)}${n.valor ? ' · R$ ' + escIni(n.valor) : ''}</small></div>${chipDias(n)}</div>`;
-    }).join('') || '<div class="ini-vazio">Nenhuma NF aberta na relação.</div>';
+    }).join('') || '<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>Nenhuma NF aberta</b><p>A relação está vazia.</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen(\'screen-reports\',\'Relatórios\')">Ver todas as NFs</button></div>';
     el.innerHTML = `
         <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}</div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
         <div class="ini-grid">
-            ${k('r', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
-            ${k('y', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
-            ${k('g', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
+            ${k(d.venc > 0 ? 'r' : 'n', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
+            ${k((d.hoje + d.aman) > 0 ? 'y' : 'n', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
+            ${k('n', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
             ${kForn}
         </div>
         <div class="ini-tit ini-tit-ed">Atalhos<button type="button" class="ini-ed-btn" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button></div>
@@ -266,4 +267,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.60.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.61.0';

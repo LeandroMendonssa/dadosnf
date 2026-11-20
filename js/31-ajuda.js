@@ -570,6 +570,7 @@ function renderAjuda() {
         el.innerHTML = `<div class="campo ajustes-busca"><input type="search" id="ajuda-busca" class="form-field" placeholder="Buscar na Ajuda..." value="${ajEsc(ajudaEstado.busca)}" oninput="buscarAjuda(this.value)" autocomplete="off" autocapitalize="off" spellcheck="false"></div><div id="aj-resultados"></div>`;
     }
     ajudaMontarResultados();
+    if (!document.getElementById('aj-credito')) el.insertAdjacentHTML('beforeend', '<div id="aj-credito" class="aj-credito">Desenvolvido por Leandro Mendonça</div>');
 }
 function ajudaMontarResultados() {
     const out = document.getElementById('aj-resultados'); if (!out) return;
@@ -642,4 +643,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.57.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.61.0';

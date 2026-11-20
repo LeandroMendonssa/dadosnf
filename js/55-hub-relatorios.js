@@ -144,13 +144,14 @@
         return L.join('\n').trimEnd() + '\n';
     }
     function html(m) {
-        let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${e(m.titulo)}</title>
+        let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="author" content="Leandro Mendonça"><title>${e(m.titulo)}</title>
 <style>@page WordSection1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.WordSection1{page:WordSection1}body{font-family:Arial,sans-serif;font-size:10pt;color:#111111}p{margin:0}.s{font-weight:bold;font-size:11pt;border-bottom:1px solid #444444;margin:14pt 0 5pt;padding-bottom:2pt}.c{font-weight:bold;margin-top:6pt}.d{margin-left:12pt;color:#333333}</style></head><body><div class="WordSection1">
 <p style="font-size:16pt;font-weight:bold">${e(m.titulo)}</p><p style="font-size:9pt;color:#444444">Emitido em ${e(dataExtenso().replace(/\.$/, ''))} · Período: ${e(m.periodo)}${m.filtros ? ' · ' + e(m.filtros) : ''}</p><p style="margin:6pt 0 4pt"><b>${e(m.resumo)}</b></p>`;
         if (!m.secoes.length) h += `<p>${e(m.vazio)}</p>`;
         m.secoes.forEach(s => { h += `<p class="s">${e(s.t)}</p>`; s.itens.forEach(i => { h += `<p class="c">${e(i.cab)}${i.tag ? ' — ' + e(i.tag) : ''}</p>`; if (i.tipo) h += `<p class="d"><i>${e(i.tipo)}</i></p>`; i.det.forEach(d => { h += `<p class="d">${e(d).replace(/^(\s+)/, m2 => '&nbsp;'.repeat(m2.length))}</p>`; }); }); });
-        return h + '</div></body></html>';
+        return h + '</div>' + (typeof RODAPE_AUTORIA_DOC !== 'undefined' ? RODAPE_AUTORIA_DOC : '') + '</body></html>';
     }
+    // leandromendonssa
     function pdf(m) {
         const { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
         const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 57, MR = 57, MT = 57, MB = 57, LARG = W - ML - MR;
@@ -177,6 +178,7 @@
                 y += 7;
             });
         });
+        if (typeof marcaAutoriaPdf === 'function') marcaAutoriaPdf(doc);
         return doc;
     }
 
@@ -239,4 +241,4 @@
     const voltarAntes = window.voltarInternoTela;
     window.voltarInternoTela = function () { const s = $('screen-reports'); if (s && s.classList.contains('active') && estado.aba) { window.relVoltar(); return true; } return typeof voltarAntes === 'function' ? voltarAntes() : false; };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.48.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.61.0';

@@ -152,7 +152,7 @@ function htmlRelatorioCotacao(d, nivel) {
     const pill = (k, t) => `<span style="background:${RC_COR[k].bg};color:${RC_COR[k].fg};font-weight:bold;font-size:8pt;padding:1pt 6pt;">&nbsp;${e(t)}&nbsp;</span>`;
     const logo = (typeof logoParaImpressao === 'function') ? logoParaImpressao() : null;
     const ce = contagemEntregasRelCot(d);
-    let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Cotação ${e(d.pedido)}</title>
+    let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="author" content="Leandro Mendonça"><title>Cotação ${e(d.pedido)}</title>
 <style>@page{size:21cm 29.7cm;margin:1.4cm 1.3cm}body{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#222}table{border-collapse:collapse}td,th{vertical-align:top}
 h1{font-size:17pt;color:${RC_AZUL};margin:0}.sub{color:#5a6678;font-size:9pt;margin:2pt 0 0}.k{font-size:15pt;font-weight:bold;color:${RC_AZUL}}.kl{font-size:7.5pt;color:#6b778a;text-transform:uppercase}
 th{background:${RC_AZUL};color:#fff;font-size:8pt;text-align:left;padding:4pt 5pt;text-transform:uppercase}td.c{border-bottom:1px solid #e3e8ef;padding:4pt 5pt;font-size:9pt}.r{text-align:right;white-space:nowrap}
@@ -169,7 +169,7 @@ h2{font-size:10.5pt;color:${RC_AZUL};margin:12pt 0 4pt;text-transform:uppercase}
         h += `<tr><td class="c"><b>${e(f.nome)}</b></td><td class="c">${f.recursos.map(r => f.recursos.length > 1 ? `${e(r.rotulo)} (${r.n})` : e(r.rotulo)).join('<br>')}</td><td class="c r">${f.qtdItens}</td><td class="c r">${moedaRelCot(f.valorTotal)}</td><td class="c">${pill(f.status.chave, f.status.rotulo)}${detalheStatusRelCot(f) ? `<br><span class="s2">${e(detalheStatusRelCot(f))}</span>` : ''}</td></tr>`;
     });
     h += '</table>';
-    if (!completo) return h + '</body></html>';
+    if (!completo) return h + RODAPE_AUTORIA_DOC + '</body></html>';
     h += '<h2>Detalhe por fornecedor</h2>';
     const caixa = (cor, fundo, tag, corpo) => `<table width="100%" style="margin:4pt 0"><tr><td bgcolor="${fundo}" style="border-left:5px solid ${cor};padding:4pt 8pt;font-size:9pt"><b style="color:${cor};font-size:7.5pt">${tag}</b>&nbsp; ${corpo}</td></tr></table>`;
     if (d.obsPedido) h += caixa(RC_OBS, '#f1f7ff', 'OBSERVAÇÃO', `<b>Do pedido (SmartCompras):</b> ${e(d.obsPedido)}`);
@@ -187,10 +187,12 @@ h2{font-size:10.5pt;color:${RC_AZUL};margin:12pt 0 4pt;text-transform:uppercase}
         });
         h += '</table></td></tr></table>';
     });
-    return h + '</body></html>';
+    return h + RODAPE_AUTORIA_DOC + '</body></html>';
 }
 
 // ---------- PDF (jsPDF) — desenhado à mão para ficar igual ao Word ----------
+// leandromendonssa
+const RODAPE_AUTORIA_DOC = '<p style="font-size:8pt;color:#999999;text-align:center;margin-top:14pt">Leandro Mendonça · Almoxarifado</p>';
 function gerarPdfRelatorioCotacao(d, nivel) {
     const { jsPDF } = jspdf, completo = nivel === 'completo';
     const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
@@ -291,6 +293,7 @@ function gerarPdfRelatorioCotacao(d, nivel) {
     }
     const n = doc.getNumberOfPages();
     for (let p = 1; p <= n; p++) { doc.setPage(p); fonte(7.5); ink('#8a97a8'); doc.setDrawColor(225, 230, 238); doc.line(M, H - 24, W - M, H - 24); doc.text(`Cotação ${d.pedido} · Relatório ${completo ? 'completo' : 'básico'}`, M, H - 13); doc.text(`Página ${p} de ${n}`, W - M, H - 13, { align: 'right' }); }
+    if (typeof marcaAutoriaPdf === 'function') marcaAutoriaPdf(doc);
     return doc;
 }
 
@@ -335,4 +338,4 @@ async function exportarCotacaoRelatorio(formato) {
         if (ok) { closeAllModals(); toast('✓ Relatório gerado.'); }
     } catch (err) { console.error('Exportar cotação:', err); toast('✕ Erro ao gerar o relatório.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/45-exportar-cotacao.js'] = '2.23.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/45-exportar-cotacao.js'] = '2.61.0';

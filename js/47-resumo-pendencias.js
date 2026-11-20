@@ -164,7 +164,7 @@ function htmlResumoPendencias(texto) {
     const assHtml = `<table align="center" style="border-collapse:collapse"><tr>${logo ? `<td style="padding-right:14pt"><img src="${logo}" width="82" height="62"></td><td width="1" style="border-left:1pt solid #bbbbbb"></td>` : ''}<td style="padding-left:${logo ? 14 : 0}pt;font-family:Arial,sans-serif">
 ${s.nome ? `<p style="margin:0;font-size:11pt;font-weight:bold;color:${RS_AZUL}">${e(s.nome)}</p>` : ''}${s.cargo ? `<p style="margin:0 0 4pt;font-size:8.5pt;color:${RS_TEAL}">${e(s.cargo)}</p>` : ''}
 ${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333333"><span style="color:${RS_TEAL}">${i}</span>&nbsp; ${e(t)}</p>`).join('')}</td></tr></table>`;
-    let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Resumo de pendências</title>
+    let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="author" content="Leandro Mendonça"><title>Resumo de pendências</title>
 <style>@page WordSection1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.WordSection1{page:WordSection1}
 body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
 <p style="text-align:right;font-size:9.5pt;font-style:italic">${e(b.data)}</p>
@@ -181,11 +181,12 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
         });
         h += '<p style="border-bottom:1pt solid #000000;margin:6pt 0 0;font-size:2pt">&nbsp;</p>';
     });
-    h += `${notaHtml}<div style="margin-top:6pt">${assHtml}</div></div></body></html>`;
+    h += `${notaHtml}<div style="margin-top:6pt">${assHtml}</div></div>${typeof RODAPE_AUTORIA_DOC !== 'undefined' ? RODAPE_AUTORIA_DOC : ''}</body></html>`;
     return h;
 }
 
 // ---------- PDF (jsPDF) ----------
+/* leandromendonssa */
 function gerarPdfResumoPendencias(texto) {
     const b = blocosResumoPendencias(texto), { jsPDF } = jspdf, doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
     const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), ML = 57, MR = 57, MT = 57, MB = 57, LARG = W - ML - MR, SIDE = 92, GAP = 18, XC = ML + SIDE + GAP, WC = LARG - SIDE - GAP, LIM = H - MB;
@@ -254,6 +255,7 @@ function gerarPdfResumoPendencias(texto) {
         linhasAss.forEach(([tp, t]) => { ico(tp, x, yy); fonte(7.6); ink('#333333'); doc.text(t, x + 14, yy + 6.8); yy += 11.5; });
         if (b.nota) { fonte(9, 'italic'); ink('#444444'); doc.text(b.nota, ML, Math.min(y + 8, yt - 16)); }
     }
+    if (typeof marcaAutoriaPdf === 'function') marcaAutoriaPdf(doc);
     return doc;
 }
 
@@ -338,4 +340,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.60.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.61.0';
