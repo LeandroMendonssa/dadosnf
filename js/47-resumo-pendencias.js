@@ -181,7 +181,7 @@ ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
         });
         h += '<p style="border-bottom:1pt solid #000000;margin:6pt 0 0;font-size:2pt">&nbsp;</p>';
     });
-    h += `${notaHtml}<div style="margin-top:6pt">${assHtml}</div></div>${typeof RODAPE_AUTORIA_DOC !== 'undefined' ? RODAPE_AUTORIA_DOC : ''}</body></html>`;
+    h += `${notaHtml}<div style="margin-top:6pt">${assHtml}</div></div></body></html>`;
     return h;
 }
 

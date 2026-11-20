@@ -457,25 +457,9 @@ document.addEventListener('keydown', (event) => {
     else { const salvarBtn = document.getElementById('salvarBtn'); if (salvarBtn && escopo.id === 'add-nf-manual') salvarBtn.click(); }
 });
 
-// Autoria (2.61.0): rodapé, marca d'água discreta e propriedades em todos os PDFs gerados pelo app.
+// Autoria (2.61.0): só o autor nas propriedades do PDF. Nada é desenhado na página, nem na prévia.
 function marcaAutoriaPdf(doc) {
-    try {
-        const n = doc.internal.getNumberOfPages(), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), u = 1 / doc.internal.scaleFactor;
-        try { doc.setProperties({ author: 'Leandro Mendonça', creator: 'leandromendonssa' }); } catch (e) { }
-        const comOpac = typeof doc.GState === 'function';
-        for (let p = 1; p <= n; p++) {
-            doc.setPage(p);
-            if (comOpac) doc.setGState(new doc.GState({ opacity: 0.07 }));
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(30); doc.setTextColor(90, 90, 90);
-            const tw = doc.getTextWidth('Leandro Mendonça'), ang = 30, r = ang * Math.PI / 180;
-            doc.text('Leandro Mendonça', W / 2 - (tw / 2) * Math.cos(r), H / 2 + (tw / 2) * Math.sin(r), { angle: ang });
-            if (comOpac) doc.setGState(new doc.GState({ opacity: 0.6 }));
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(130, 130, 130);
-            doc.text('Leandro Mendonça · Almoxarifado', W / 2, H - 9 * u, { align: 'center' });
-            if (comOpac) doc.setGState(new doc.GState({ opacity: 1 }));
-            doc.setTextColor(0, 0, 0);
-        }
-    } catch (e) { }
+    try { doc.setProperties({ author: 'Leandro Mendonça', creator: 'leandromendonssa' }); } catch (e) { }
     return doc;
 }
 // Assinatura discreta no console do navegador.

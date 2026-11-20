@@ -149,7 +149,7 @@
 <p style="font-size:16pt;font-weight:bold">${e(m.titulo)}</p><p style="font-size:9pt;color:#444444">Emitido em ${e(dataExtenso().replace(/\.$/, ''))} · Período: ${e(m.periodo)}${m.filtros ? ' · ' + e(m.filtros) : ''}</p><p style="margin:6pt 0 4pt"><b>${e(m.resumo)}</b></p>`;
         if (!m.secoes.length) h += `<p>${e(m.vazio)}</p>`;
         m.secoes.forEach(s => { h += `<p class="s">${e(s.t)}</p>`; s.itens.forEach(i => { h += `<p class="c">${e(i.cab)}${i.tag ? ' — ' + e(i.tag) : ''}</p>`; if (i.tipo) h += `<p class="d"><i>${e(i.tipo)}</i></p>`; i.det.forEach(d => { h += `<p class="d">${e(d).replace(/^(\s+)/, m2 => '&nbsp;'.repeat(m2.length))}</p>`; }); }); });
-        return h + '</div>' + (typeof RODAPE_AUTORIA_DOC !== 'undefined' ? RODAPE_AUTORIA_DOC : '') + '</body></html>';
+        return h + '</div>' + '</body></html>';
     }
     // leandromendonssa
     function pdf(m) {
