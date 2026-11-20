@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-font="arial" style="--app-height: 100vh; --transition-duration: 0.35s;">
 <head>
     <meta charset="UTF-8">
-    <meta name="app-versao" content="2.59.0">
+    <meta name="app-versao" content="2.60.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -21,8 +21,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Slab:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
      
-    <link rel="stylesheet" href="style.css?v=2.59.0">
-    <link rel="stylesheet" href="style-xp.css?v=2.59.0">
+    <link rel="stylesheet" href="style.css?v=2.60.0">
+    <link rel="stylesheet" href="style-xp.css?v=2.60.0">
 </head>
 <body class="is-loading" data-theme="light" data-icon-theme="solid">
 
@@ -947,7 +947,31 @@
         </div>
 
         <nav id="tab-bar" class="tab-bar"></nav>
-        <div id="xp-barra"><button type="button" class="xp-iniciar-btn" onclick="switchToScreen('screen-mais','Mais')"><i></i>Iniciar</button></div>
+        <div id="xp-barra"><button type="button" class="xp-iniciar-btn" onclick="var m=document.getElementById('xp-iniciar');m.hidden=!m.hidden"><i></i>Iniciar</button><div class="xp-fixados"><button type="button" class="xp-fix" onclick="switchToScreen('screen-inicio','Início')"><i></i><span>Início</span></button><button type="button" class="xp-fix" onclick="switchToScreen('screen-manage','Repasse de NF')"><i></i><span>Repasse</span></button><button type="button" class="xp-fix" onclick="switchToScreen('screen-cotacoes','Cotações')"><i></i><span>Cotações</span></button><button type="button" class="xp-fix" onclick="switchToScreen('screen-controle-nfs','Controle de NFs')"><i></i><span>Controle</span></button><button type="button" class="xp-fix" onclick="switchToScreen('screen-anotacoes','Anotações')"><i></i><span>Anotações</span></button></div></div>
+        <div id="xp-iniciar" class="xp-iniciar-menu" hidden>
+            <div class="xp-iniciar-cab">Iniciar</div>
+            <div class="xp-grupo"><b>Trabalho</b>
+                <button type="button" onclick="xpIr('screen-xml-editor','Entrada de NF')">Entrada de NF</button>
+                <button type="button" onclick="xpIr('screen-cotacoes','Cotações')">Cotações</button>
+                <button type="button" onclick="xpIr('screen-controle-nfs','Controle de NFs')">Controle de NFs</button>
+                <button type="button" onclick="xpIr('screen-manage','Repasse de NF')">Repasse de NF</button>
+                <button type="button" onclick="xpIr('screen-lote','Buscar lote')">Buscar lote</button></div>
+            <div class="xp-grupo"><b>Acompanhamento</b>
+                <button type="button" onclick="xpIr('screen-inicio','Início')">Início</button>
+                <button type="button" onclick="xpIr('screen-agenda','Agenda')">Agenda de trabalho</button>
+                <button type="button" onclick="xpIr('screen-reports','Relatórios')">Relatórios</button>
+                <button type="button" onclick="xpIr('screen-auditoria-central','Auditoria')">Auditoria</button></div>
+            <div class="xp-grupo"><b>Documentos</b>
+                <button type="button" onclick="xpIr('screen-anotacoes','Anotações')">Anotações</button>
+                <button type="button" onclick="xpIr('screen-fornecedores','Fornecedores')">Fornecedores</button>
+                <button type="button" onclick="xpIr('screen-observacoes','Observações')">Observações</button></div>
+            <div class="xp-grupo"><b>Sistema</b>
+                <button type="button" onclick="xpIr('screen-settings','Ajustes')">Ajustes</button>
+                <button type="button" onclick="xpIr('screen-equipamentos','Equipamentos')">Equipamentos</button>
+                <button type="button" onclick="xpIr('screen-assistente','Assistente')">Assistente</button>
+                <button type="button" onclick="xpIr('screen-historico-mudancas','Histórico de mudanças')">Histórico de mudanças</button>
+                <button type="button" onclick="xpIr('screen-ajuda','Ajuda')">Ajuda</button></div>
+        </div>
         <div id="dock-selecao" class="dock-selecao" role="toolbar" aria-label="Ações da seleção"></div>
 
         <div id="bulk-action-bar-notas" class="bulk-action-bar">
@@ -1110,5 +1134,6 @@
   <script src="js/61-lotes-antigos.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
+<script>function xpIr(id,t){document.getElementById("xp-iniciar").hidden=true;switchToScreen(id,t);}</script>
 </body>
 </html>
