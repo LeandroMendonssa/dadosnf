@@ -11,7 +11,15 @@
 // testar". A entrada mais recente é sempre a fase atual, destacada na tela.
 const HISTORICO_FASES = [
     {
-        numero: '2.62.0', nome: 'Linguagem do aplicativo: Normal ou Sem paciência', status: 'atual', data: '20/11/2026 às 08:40',
+        numero: '2.62.1', nome: 'Linguagem Sem paciência em todo o app', status: 'atual', data: '20/11/2026 às 12:55',
+        novidades: ['Na linguagem Sem paciência, os textos de orientação de todas as telas ganham o novo tom: importação, backup, fontes, favoritos do SmartCompras, conta, logo e assinatura, entre outros.', 'As mensagens de tela vazia (sem registro, sem cotação, sem NF e parecidas) também.', 'Os avisos que ainda não tinham frase própria passam a ganhar um comentário no final (o texto original, com nomes e números, continua inteiro).'],
+        implementado: ['js/62: lista de textos de orientação e de tela vazia, varredura da tela que troca só esses textos e volta ao original na linguagem Normal.', 'js/62: comentários variados no fim de avisos de sucesso, de falha e de campo faltando.', 'index.html, style.css e js/14: número da versão e histórico.'],
+        arquivos: ['index.html','style.css','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['Com a linguagem Normal nada muda.', 'Só entram textos de ajuda e de tela vazia. Login, termos, modelos de texto com {campos}, relatórios, PDFs e Word continuam neutros.'],
+        testar: ['Ajustes > Aparência > Sem paciência e percorrer as telas: textos de ajuda e telas vazias com o novo tom.', 'Voltar para Normal: tudo volta ao texto original, sem recarregar.', 'Salvar, apagar e importar algo: o aviso mantém a informação e ganha um comentário no fim.', 'Gerar um PDF e um Word em Sem paciência: sem diferença no conteúdo.'],
+    },
+    {
+        numero: '2.62.0', nome: 'Linguagem do aplicativo: Normal ou Sem paciência', status: 'concluida', data: '20/11/2026 às 08:40',
         novidades: ['Novo seletor em Ajustes > Aparência: "Linguagem do aplicativo", com Normal ou Sem paciência. Vale na hora e fica salvo no aparelho.', 'Sem paciência: as mensagens do dia a dia (salvou, apagou, copiou, erro ao salvar etc.) ganham tom de colega cansado da burocracia, com várias frases por situação, que se alternam.', 'A saudação do Início, as telas vazias e a orientação dos fornecedores a chegar também mudam de tom.', 'Relatórios, PDFs, Word, textos de saída e qualquer documento continuam sempre neutros, nas duas opções.'],
         implementado: ['js/62-linguagem.js (novo): camada única com o dicionário de mensagens, a escolha salva e a rotação sem repetir a mesma frase em seguida.', 'js/07: o toast consulta a camada de linguagem; sem regra para o texto, ele sai como sempre.', 'js/05 e js/48: telas vazias, carregando e saudação usam a camada.', 'index.html: seletor nos Ajustes, dica dos fornecedores com id e carga do novo arquivo. style.css: visual do seletor.'],
         arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/07-login-conta-backup.js','js/48-inicio-lote.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
@@ -3822,4 +3830,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.62.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.62.1';
