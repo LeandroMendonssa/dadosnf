@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.64.0', nome: 'Modo Leandro, comentários por horário e vidro corrigido', status: 'atual', data: '20/11/2026 às 18:30',
+        numero: '2.64.1', nome: 'Cards aguentam dados extremos', status: 'atual', data: '20/11/2026 às 18:40',
+        novidades: ['Nomes, códigos e textos longos sem espaço agora quebram dentro do card do Controle e das Cotações, em vez de passar da borda.', 'Em "Prazo" e "Pedido" os valores grandes quebram de linha em vez de ficarem cortados com reticências.', 'No card de Cotações, em iPhone pequeno, a etiqueta de status desce para baixo do nome quando falta espaço.'],
+        implementado: ['style.css: regras de quebra de texto nos cards (.ctl-nm, .ctl-inf, .ctl-dd) e ajuste do card de Cotações em telas até 360px.', 'index.html e js/14: número da versão e histórico.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Com dados normais o visual dos cards continua igual.', 'Os valores de Prazo e Pedido podem ocupar duas linhas quando forem muito longos.'],
+        testar: ['Controle de NFs e Cotações: conferir se os cards continuam iguais ao de sempre.', 'Se tiver um fornecedor ou complemento com nome muito longo, ver se quebra dentro do card.', 'Repetir nos temas escuro, Windows XP e Vidro líquido.'],
+    },
+    {
+        numero: '2.64.0', nome: 'Modo Leandro, comentários por horário e vidro corrigido', status: 'concluida', data: '20/11/2026 às 18:30',
         novidades: ['A linguagem do aplicativo agora se chama Modo Normal e Modo Leandro.', 'No Modo Leandro, o Início comenta conforme o horário do seu expediente (café, almoço, reta final, sextou, noite tarde), com alguns emojis.', 'Mais avisos e textos de ajuda passam pelo Modo Leandro, inclusive avisos de campo faltando, de "nada encontrado" e de "já está feito".', 'Vidro líquido corrigido: voltou o degradê padrão, as janelas ficam firmes (o fundo não aparece mais por trás do texto) e o campo de busca não tem mais caixa dentro de caixa.', 'O Vidro leve foi removido.'],
         implementado: ['js/62: comentário por horário (seg a qui até 17h, sexta até 16h), novos grupos de avisos e textos de ajuda.', 'style-vidro.css: fundo padrão, superfícies mais firmes, janelas quase opacas, campos de busca ajustados.', 'index.html: nomes do seletor e opções de tema. style.css e js/14: versão e histórico.'],
         arquivos: ['index.html','style.css','style-vidro.css','js/62-linguagem.js','js/14-historico-mudancas.js'],
@@ -3847,4 +3855,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.64.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.64.1';
