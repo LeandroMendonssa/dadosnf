@@ -6,8 +6,8 @@
 const LING = (function () {
     const CHAVE = 'linguagemApp';
     const OPCOES = {
-        n: { nome: 'Normal', exemplo: 'Exemplo: "Não foi possível salvar. Tente novamente."' },
-        s: { nome: 'Sem paciência', exemplo: 'Exemplo: "Não salvou. O sistema resolveu fazer greve sozinho. Tenta de novo."' }
+        n: { nome: 'Modo Normal', exemplo: 'Exemplo: "Não foi possível salvar. Tente novamente."' },
+        s: { nome: 'Modo Leandro', exemplo: 'Exemplo: "Não salvou. O sistema resolveu fazer greve sozinho. Tenta de novo."' }
     };
     // Mensagens de toast por situação. "re" casa com o texto neutro (sem o ícone). Só situações genéricas: textos com
     // detalhes próprios (nomes, números) continuam neutros para não perder informação.
@@ -136,18 +136,22 @@ const LING = (function () {
         ['Preencha pelo menos um campo', 'Preenche pelo menos um campo. Eu busco bastante coisa, mas adivinhar eu não faço.'],
         ['Digite o lote, o produto ou a validade', 'Digita o lote, o produto ou a validade e toca em Buscar.'],
         ['Cole os lotes, um por linha', 'Cola os lotes, um por linha (mínimo de 4 caracteres).'],
+        ['Confira se faturaram no pedido certo', 'Confere se faturaram no pedido certo. Se a NF for de outro pedido, move no Editor da NF, que o sistema não adivinha.'],
+        ['Se a NF for de outro pedido, mova-a em', 'Se a NF for de outro pedido, move em "Mover esta NF para outro pedido".'],
+        ['Este fornecedor não ganhou nenhum item neste pedido', 'Esse fornecedor não ganhou nenhum item nesse pedido. Nem pra isso.'],
+        ['Sem cotação cadastrada para o pedido desta NF', 'Esse pedido ainda não tem cotação cadastrada. Alguém precisa fazer isso.'],
+        ['Só lê os dados do app e pode errar', 'Só lê os dados do app e pode errar, que ninguém é perfeito. Confere os números.'],
+        ['Toque no botão destacado para ver o efeito', 'Toca no botão destacado pra ver o efeito. É só demonstração, ninguém vai ser cobrado.'],
+        ['Se for a mesma nota, envie pelo Controle de NFs', 'Se for a mesma nota, envia pelo Controle de NFs ("Enviar para a relação"): os dados já estão lá. Se salvar aqui, a nota fica ligada a essa NF automaticamente.'],
+        ['Entende perguntas livres', 'Entende pergunta livre (usa o limite grátis do dia, então não abusa).'],
         ['Mostrando as 8 primeiras', 'Mostrando só as 8 primeiras. Digita mais do número da NF pra refinar.']
     ];
     const FRASES_ATIVAS = new Map();   // preenchido abaixo
-    const SAUDACAO = [
-        'Vamos ver o que a rotina aprontou hoje.', 'Mais um dia, mais uma pilha de pendência.', 'O café já foi? Então bora.',
-        'Se tiver fornecedor atrasado, já aviso que não é novidade.', 'Respira fundo, que o dia ainda nem começou direito.', 'Bora sobreviver a mais um dia de operação.'
-    ];
-    /* leandromendonssa */
-    // Comentários que fecham avisos que não têm frase própria (a informação original continua inteira).
     const SUF_OK = ['Menos uma pra conta.', 'Antes que alguém invente outra.', 'Sem drama, pra variar.', 'Anota aí: funcionou.', 'Pode comemorar baixinho.', 'Sobrevivemos a mais uma.', 'Milagre, mas aconteceu.'];
     const SUF_FALHA = ['Clássico.', 'Respira e tenta de novo.', 'Dia difícil pra todo mundo.', 'Ninguém está surpreso.', 'O sistema não ajuda, mas a gente insiste.', 'Mais uma pro caderninho.'];
     const SUF_FALTA = ['Sem isso eu não adivinho.', 'Falta pouco, juro.', 'Detalhe que a gente não pode pular.', 'Eu bem que queria ajudar, mas não leio mente.'];
+    const SUF_NADA = ['Vazio absoluto.', 'Nem sinal de vida.', 'Silêncio total por aqui.', 'Deserto completo.'];
+    const SUF_JA = ['Já tá feito, não precisa insistir.', 'Isso já foi resolvido, juro.', 'Duas vezes não adianta.'];
     const ultimo = {};
     let modo = 'n';
     try { const v = localStorage.getItem(CHAVE); if (v === 's') modo = 's'; } catch (e) { }
@@ -172,15 +176,40 @@ const LING = (function () {
             if (/^(Erro|Não (consegui|foi possível)|Falha)/.test(texto)) return base + '. ' + sorteia('suf-falha', SUF_FALHA);
             if (/^(Preencha|Selecione|Digite|Informe|Escolha|Cole)/.test(texto)) return base + '. ' + sorteia('suf-falta', SUF_FALTA);
         }
+        if (!ehSucesso && !ehErro) {
+            const t = texto.trim(), base = t.replace(/\s*✓\s*/g, ' ').replace(/[.!\s]+$/, '');
+            if (/✓/.test(t)) return base + '. ' + sorteia('suf-ok', SUF_OK);
+            if (/^(Não consegui|Não foi possível|Falha|Erro)/.test(t)) return base + '. ' + sorteia('suf-falha', SUF_FALHA);
+            if (/^(Selecione|Escolha|Informe|Digite|Cole|Preencha|Marque|Carregue|Associe|Adicione|Gere|Cadastre)/.test(t)) return base + '. ' + sorteia('suf-falta', SUF_FALTA);
+            if (/^(Nada|Nenhum|Nenhuma|Não há)\b/.test(t)) return base + '. ' + sorteia('suf-nada', SUF_NADA);
+            if (/^(Esse|Essa|Esta|Este|A NF)\b.*\bjá\b/.test(t)) return base + '. ' + sorteia('suf-ja', SUF_JA);
+        }
         return null;
     }
     function fixa(id, neutro) { if (modo !== 's') return neutro; const v = FIXAS[id]; return v === undefined ? neutro : v; }
-    // Frase curta da saudação: estável durante a mesma hora (não muda a cada redesenho do Início).
-    function saudacaoExtra() {
+    // Comentário do Início conforme o horário (expediente: seg a qui 7h-11h30 e 13h30-17h; sexta até 16h). Estável por meia hora.
+    function comentarioHora() {
         if (modo !== 's') return '';
-        const d = new Date(), semente = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + d.getHours();
-        return SAUDACAO[semente % SAUDACAO.length];
+        const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
+        const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
+        const esc = l => l[sem % l.length];
+        const hm = n => n >= 60 ? Math.floor(n / 60) + 'h' + (n % 60 ? String(n % 60).padStart(2, '0') : '') : n + ' min';
+        if (dia === 0 || dia === 6) return esc(['Fim de semana e você aqui? Respeito a dedicação. 🧐', 'Dia de descanso e o app aberto. Vai ver a pendência não deixa. 😶‍🌫️', 'Sábado ou domingo, pouco importa: a pendência não tira folga. 🫠']);
+        if (min < 5 * 60) return esc(['Madrugada. Ou você acordou cedo demais, ou nem dormiu. 🫠', 'Esse horário só existe pra quem tem pendência ou insônia. 🫥', 'A essa hora até o fornecedor atrasado tá dormindo. 😶‍🌫️']);
+        if (min < 7 * 60) return esc(['Ainda nem é expediente. O café já saiu? 🧐', 'Cedo demais pra problema. Mas ele não pergunta o horário. 😒']);
+        if (min < 9 * 60) return sexta ? esc(['Sextou! Só falta aguentar até as 16h. 😤', 'Sexta-feira: a pendência não sabe, mas a gente sabe. 🤨']) : dia === 1 ? esc(['Segunda-feira. Não tem como disfarçar. 😒', 'Começo de semana, começo de pendência. 😤']) : esc(['Expediente começou. Respira fundo. 😤', 'Mais um dia, a mesma pilha de pendência. 🙄', 'Bom dia pra quem tem fornecedor no prazo. Se existir. 🤔']);
+        if (min < 11 * 60) return esc(['Meio da manhã: a pilha de pendência continua do mesmo tamanho. 🧐', 'Ainda dá tempo de resolver algo antes do almoço. Ainda. 🤨', 'Manhã passando e o fornecedor atrasado continua firme. 😒']);
+        if (min < 11 * 60 + 30) return esc(['Quase hora do almoço. O estômago já avisou. 🤨', 'Falta pouco pro almoço. Ninguém mais resolve nada. 😶‍🌫️']);
+        if (min < 13 * 60 + 30) return esc(['Hora do almoço. Pendência não sai correndo, vai comer. 🫠', 'Almoço! Ninguém resolve nada de estômago vazio. 🤔', 'Horário sagrado. O app aguenta, você precisa comer. 😤']);
+        if (min < 15 * 60) return esc(['Pós-almoço: o sono bate, o fornecedor continua atrasado. 🙄', 'Voltou do almoço. A fila de pendência também. 🤔', 'A digestão ganha do raciocínio agora. 🫠']);
+        if (min < 15 * 60 + 45) return esc(['Hora do café das 15h. Sem ele o resto do dia não sai. 🫠', 'Café das 15h. Pausa de respeito. 🧐']);
+        if (min < fim - 30) return sexta ? `Sextou. Faltam ${hm(fim - min)} pra ir embora. 😤` : esc([`Faltam ${hm(fim - min)} pra ir embora. 😒`, `Reta final: ${hm(fim - min)} pra liberdade. 🤨`]);
+        if (min < fim) return `Falta só ${hm(fim - min)}. Melhor não abrir mais nada novo. 🤨`;
+        if (min < 19 * 60) return sexta ? esc(['Passou das 16h numa sexta e você ainda aqui? Vai curtir o fim de semana! 🤨', 'Sextou faz tempo. Fecha esse app. 😤']) : esc(['Já deu o horário. Vai embora, a pendência amanhã continua aqui. 😒', 'Fora do expediente. A pendência agradece, mas ela não paga hora extra. 🙄']);
+        if (min < 22 * 60) return esc(['Ainda aqui? O expediente acabou faz tempo. 🙄', 'Noite no app. Respeito, mas isso não é saudável. 🫥']);
+        return esc(['Tarde da noite. A NF não vai fugir, vai dormir. 🫠', 'Nesse horário o único que responde é o app. 🤡', 'Quem trabalha uma hora dessas merece pelo menos um café. 🫥']);
     }
+    const saudacaoExtra = comentarioHora;
     function aplicarFixas() {
         const el = document.getElementById('forn-dica');
         if (el) { if (!el.dataset.neutro) el.dataset.neutro = el.textContent; el.textContent = fixa('forn-dica', el.dataset.neutro); }
@@ -218,6 +247,6 @@ const LING = (function () {
     }
     document.querySelectorAll('[data-ling]').forEach(b => b.addEventListener('click', () => definir(b.dataset.ling)));
     aplicarFixas(); if (modo === 's') varrer();
-    return { toast, fixa, saudacaoExtra, definir, modo: () => modo };
+    return { toast, fixa, saudacaoExtra, comentarioHora, definir, modo: () => modo };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.62.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.64.0';

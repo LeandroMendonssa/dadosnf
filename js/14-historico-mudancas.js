@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.63.0', nome: 'Temas Vidro líquido', status: 'atual', data: '20/11/2026 às 17:45',
+        numero: '2.64.0', nome: 'Modo Leandro, comentários por horário e vidro corrigido', status: 'atual', data: '20/11/2026 às 18:30',
+        novidades: ['A linguagem do aplicativo agora se chama Modo Normal e Modo Leandro.', 'No Modo Leandro, o Início comenta conforme o horário do seu expediente (café, almoço, reta final, sextou, noite tarde), com alguns emojis.', 'Mais avisos e textos de ajuda passam pelo Modo Leandro, inclusive avisos de campo faltando, de "nada encontrado" e de "já está feito".', 'Vidro líquido corrigido: voltou o degradê padrão, as janelas ficam firmes (o fundo não aparece mais por trás do texto) e o campo de busca não tem mais caixa dentro de caixa.', 'O Vidro leve foi removido.'],
+        implementado: ['js/62: comentário por horário (seg a qui até 17h, sexta até 16h), novos grupos de avisos e textos de ajuda.', 'style-vidro.css: fundo padrão, superfícies mais firmes, janelas quase opacas, campos de busca ajustados.', 'index.html: nomes do seletor e opções de tema. style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','style-vidro.css','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['Os horários do expediente estão fixos no código (seg a qui 7h às 11h30 e 13h30 às 17h; sexta até 16h).', 'Mensagens de confirmação de exclusão e os documentos continuam neutros.'],
+        testar: ['Ajustes > Aparência > Linguagem do aplicativo: Modo Leandro e ver o comentário no Início.', 'Trocar de tela com o tema Vidro líquido e ver se algum conteúdo do fundo ainda aparece.', 'Abrir uma janela (ex.: Importar XML) no vidro: o texto deve ficar legível.', 'Buscar algo sem resultado e salvar/apagar algo: avisos com comentário.'],
+    },
+    {
+        numero: '2.63.0', nome: 'Temas Vidro líquido', status: 'concluida', data: '20/11/2026 às 17:45',
         novidades: ['Três temas novos em Ajustes > Aparência: Vidro líquido (claro), Vidro líquido (escuro) e Vidro leve (sem desfoque).', 'Cards, botões, campos, modais, cabeçalho e dock em vidro translúcido, com fundo em manchas de azul e verde, branco e cinza.', 'Se o aparelho estiver com "Reduzir transparência" ligado, o tema fica firme e sem desfoque.'],
         implementado: ['style-vidro.css (novo): os três temas, ativos só quando escolhidos.', 'index.html: opções no seletor de tema e link do novo arquivo. style.css e js/14: número da versão e histórico.'],
         arquivos: ['index.html','style.css','style-vidro.css','js/14-historico-mudancas.js'],
@@ -3839,4 +3847,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.63.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.64.0';
