@@ -462,6 +462,7 @@ function montarNfProcessadaAtual(opcoes) {
                 ...((item.cProdNovo && item.cProdNovo !== item.cProd) ? { cProdSaida: item.cProdNovo } : {}),
                 ...(direto ? { semCotacao: true, recurso: (rec && rec.valor) || null } : {}),
                 ...(trat ? { tratamento: trat.tipo, ...(trat.tipo === 'trocado' ? { substituiCodigo: trat.codigo } : {}) } : {}), // 2.17.3
+                ...((trat && trat.devolver) ? { devolucao: trat.devolucaoSalva || { qtd: parseFloat((item.qComOriginal * item.fator).toFixed(4)), status: 'aguardando' } } : {}), // 2.66.0: item será devolvido
                 ...(pedidoItem ? { pedidoItem } : {})
             };
         });
@@ -737,7 +738,7 @@ function _compararFontesPedidoCalc(pedido, opcoes) {
             if (trocados.length) {
                 // 2.17.3: no lugar deste item veio outro produto (marcado na Entrada de NF): é UMA ocorrência, "produto diferente" — não "não faturado".
                 const t0 = trocados[0];
-                divergencias.push({ tipo: 'produto_trocado', nome, produtoFaturado: t0.xProd || '', quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada: trocados.reduce((a, it) => a + (Number(it.quantidade) || 0), 0), nfs: nfsQueFaturaram });
+                divergencias.push({ tipo: 'produto_trocado', nome, produtoFaturado: t0.xProd || '', quantidadeCotada: itemCotacao.quantidade, quantidadeFaturada: trocados.reduce((a, it) => a + (Number(it.quantidade) || 0), 0), nfs: nfsQueFaturaram, ...(trocados.some(it => it.devolucao) ? { devolver: true } : {}) });
                 cobertura = 'nf_completa'; // o fornecedor entregou (outro produto): a diferença segue na ocorrência
             } else if (fornecedorJaDeuEntrada && !itensErp.length && !(cotacao.chegadasPorFornecedor || {})[normalizarCnpj(itemCotacao.cnpjFornecedor)]) {
                 divergencias.push({ tipo: 'nao_faturado', nome, quantidadeCotada: itemCotacao.quantidade });
@@ -1038,7 +1039,7 @@ function textoDivergenciaNatural(div) {
             return `${div.nome}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}: cotado ${div.quantidadeCotada} un.${div.valorCotado ? ` a R$ ${fmt(div.valorCotado)}` : ''} e faturado ${div.quantidadeFaturada}${div.valorFaturado ? ` a R$ ${fmt(div.valorFaturado)}` : ''}, mas o total é o mesmo${div.totalNf ? ` (R$ ${fmt(div.totalNf)})` : ''} — só a unidade/embalagem é diferente (fator ${fator})${div.aplicado ? '. Fator aplicado.' : '.'}`;
         }
         case 'produto_trocado':
-            return `Solicitamos ${div.nome}${div.quantidadeCotada ? ', ' + div.quantidadeCotada + ' UNID' : ''}, porém foi faturado ${div.produtoFaturado || 'outro produto'}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
+            return `Solicitamos ${div.nome}${div.quantidadeCotada ? ', ' + div.quantidadeCotada + ' UNID' : ''}, porém foi faturado ${div.produtoFaturado || 'outro produto'}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.${div.devolver ? ' O material será devolvido.' : ''}`;
         case 'valor_cotado_nf':
             return `${div.nome} foi cotado a R$ ${precoUnitarioTexto(div.valorCotado)}, porém foi faturado a R$ ${precoUnitarioTexto(div.valorFaturado)}${div.nfs && div.nfs.length ? ` (NF ${div.nfs.join(', ')})` : ''}.`;
         default:
@@ -1350,6 +1351,7 @@ async function alterarResolvidoItemComparacao(pedido, codProduto, resolver) {
 //   relatadosPorItem[cod]     = {data}   → marcou como relatada (só você decide; salvar NF/auditoria não relata)
 //   descartadosPorItem[cod]   = {data}   → excluída (falso positivo): some das listas e dá pra restaurar
 //   fatorUnidadePorItem[cod]  = {cotNf?, nfErp?} → fator de unidade confirmado
+// leandromendonssa
 async function gravarMarcaItemCotacao(pedido, campo, codProduto, valor) {
     const cot = listaCotacoes.find(c => c.pedido === pedido);
     if (!cot || !codProduto) return false;
@@ -1872,4 +1874,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.65.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.66.0';

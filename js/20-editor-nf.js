@@ -83,6 +83,7 @@ function textoPedidoProvavel(an) {
         ? `Esta NF parece não ser do pedido ${an.pedidoAtual} (só ${an.itensAtual} de ${an.total} itens estão na cotação dele). Pedidos que encaixam: ${an.candidatos.map(x => x.pedido).join(', ')}.`
         : `Esta NF parece ser do pedido ${c.pedido}: ${c.itens} de ${an.total} itens estão na cotação dele; no pedido ${an.pedidoAtual}, ao qual está vinculada, só ${an.itensAtual} de ${an.total}.`;
 }
+// leandromendonssa
 function nfComErpDoControle(nf) {
     const it = montarControleNfs().find(x => x.nf && x.nf.id === nf.id);
     return it ? it.erp : null;
@@ -410,8 +411,8 @@ function renderEditorNf() {
         });
         const linhaEdicao = `<tr id="nfed-edit-${idx}" class="nf-edit" style="display:${nfEditorAbertos.has(idx) ? '' : 'none'}"><td colspan="8">
             <div class="nfe-sec">
-                <div class="nfe-sec-tit">Item da cotação ${ic ? (it.tratamento === 'aceito' ? badge('neutro', 'aceito só nesta NF') : '') : (it.tratamento === 'trocado' ? badge('neutro', 'produto trocado') : badge('pendente', 'sem associação'))}</div>
-                <div class="nfe-atual ${ic || it.tratamento === 'trocado' ? '' : 'falta'}">${it.tratamento === 'trocado' ? 'Veio outro produto no lugar do pedido' : ic ? `${escRel(it.codigoSmartCompras)} — ${escRel(nomeIc)}<small>pedido ${escRel(ic._pedido)}</small>` : (it.codigoSmartCompras ? `SmartCompras ${escRel(it.codigoSmartCompras)} <small>não está na cotação do pedido</small>` : 'Nenhum item da cotação associado')}</div>
+                <div class="nfe-sec-tit">Item da cotação ${ic ? (it.tratamento === 'aceito' ? badge('neutro', 'aceito só nesta NF') : '') : (it.tratamento === 'trocado' ? badge(it.devolucao ? 'pendente' : 'neutro', it.devolucao ? 'será devolvido' : 'produto trocado') : badge('pendente', 'sem associação'))}</div>
+                <div class="nfe-atual ${ic || it.tratamento === 'trocado' ? '' : 'falta'}">${it.tratamento === 'trocado' ? (it.devolucao ? 'Veio outro produto no lugar do pedido — será devolvido' : 'Veio outro produto no lugar do pedido') : ic ? `${escRel(it.codigoSmartCompras)} — ${escRel(nomeIc)}<small>pedido ${escRel(ic._pedido)}</small>` : (it.codigoSmartCompras ? `SmartCompras ${escRel(it.codigoSmartCompras)} <small>não está na cotação do pedido</small>` : 'Nenhum item da cotação associado')}</div>
                 ${seletorAssoc}
                 ${htmlTratamentoNfItem(nf, it, idx, opcoesAssoc, ic)}
             </div>
@@ -572,20 +573,29 @@ function htmlTratamentoNfItem(nf, it, idx, opcoes, ic) {
     const nomeDe = cod => { const x = cotacoesDaNf(nf).flatMap(c => c.itens || []).find(y => String(y.codProduto) === String(cod)); return x ? `${cod} — ${nomeItemCotacao(x)}` : String(cod || ''); };
     if (it.tratamento) {
         const cod = it.tratamento === 'trocado' ? it.substituiCodigo : it.codigoSmartCompras;
+        if (it.devolucao) {
+            const dv = it.devolucao, qT = Number(it.quantidade) || 0, rec = dv.status === 'recolhido';
+            return `<div class="nfe-dica" style="margin:10px 0 6px"><strong>Será devolvido</strong> (no lugar de ${escRel(nomeDe(cod))}). Não é associado e não conta como recebido.${rec ? ` Recolhido em ${escRel(dataBRdeISO(dv.recolhidoEm))}${dv.nfDevolucao ? ' · NF de devolução ' + escRel(dv.nfDevolucao) : ''}.` : ' O recolhimento fica pendente no Controle de NFs.'}</div>
+            <div class="nfe-acoes" style="align-items:center"><span style="font-size:var(--fs-aux)">Quantidade a devolver</span>
+              <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="ajustarQtdDevolucaoNfItem('${escRel(nf.id)}', ${idx}, -1)">−</button><strong>${escRel(String(dv.qtd))} de ${escRel(String(qT))}</strong>
+              <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="ajustarQtdDevolucaoNfItem('${escRel(nf.id)}', ${idx}, 1)">+</button></div>
+            <div class="nfe-acoes"><button type="button" class="action-chip" style="color:var(--accent-text)" onclick="desfazerTratamentoNfItem('${escRel(nf.id)}', ${idx})">Desfazer devolução</button></div>`;
+        }
         return `<div class="nfe-dica" style="margin:10px 0 6px"><strong>${it.tratamento === 'trocado' ? 'Produto trocado' : 'Aceito como o item pedido, só nesta NF'}</strong>: ${escRel(nomeDe(cod))}.${it.tratamento === 'trocado' ? ' A conferência registra "Solicitamos X, porém foi faturado Y".' : ' A associação do fornecedor não é gravada.'}</div>
             <div class="nfe-acoes"><button type="button" class="action-chip" style="color:var(--accent-text)" onclick="desfazerTratamentoNfItem('${escRel(nf.id)}', ${idx})">Desfazer ${it.tratamento === 'trocado' ? 'produto trocado' : 'aceite'}</button></div>`;
     }
     if (!opcoes.length) return '';
     const aberto = nfEditorTratAberto[idx] || '';
-    const sel = aberto ? `<div class="nfe-dica" style="margin:8px 0 4px">${aberto === 'trocado' ? 'Qual item da cotação foi pedido (e veio outro no lugar)?' : 'Qual item da cotação este produto vai valer, só nesta NF?'}</div>` +
+    const sel = aberto ? `<div class="nfe-dica" style="margin:8px 0 4px">${(aberto === 'trocado' || aberto === 'devolver') ? 'Qual item da cotação foi pedido (e veio outro no lugar)?' : 'Qual item da cotação este produto vai valer, só nesta NF?'}</div>` +
         htmlSeletorBusca(`nfed-trat-${idx}-${aberto}`, { placeholder: 'Buscar item da cotação por código ou nome…', opcoes, valorAtual: '', aoEscolher: valor => tratarNfItem(nf.id, idx, aberto, valor) }) : '';
     return `<div class="nfe-dica" style="margin:12px 0 6px">Veio outro produto no lugar do pedido?</div>
         <div class="nfe-acoes"><button type="button" class="action-chip" style="color:var(--accent-text)" onclick="abrirTratamentoNfItem(${idx}, 'trocado')">${aberto === 'trocado' ? 'Cancelar' : 'Produto trocado'}</button>
-        <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="abrirTratamentoNfItem(${idx}, 'aceito')">${aberto === 'aceito' ? 'Cancelar' : 'Aceitar como o item pedido'}</button></div>${sel}`;
+        <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="abrirTratamentoNfItem(${idx}, 'aceito')">${aberto === 'aceito' ? 'Cancelar' : 'Aceitar como o item pedido'}</button>
+        <button type="button" class="action-chip hold-chip" onclick="abrirTratamentoNfItem(${idx}, 'devolver')">${aberto === 'devolver' ? 'Cancelar' : 'Será devolvido'}</button></div>${sel}`;
 }
 async function tratarNfItem(nfId, idx, tipo, codigo) {
     const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
-    if (!it || !codigo || (tipo !== 'trocado' && tipo !== 'aceito')) return;
+    if (!it || !codigo || (tipo !== 'trocado' && tipo !== 'aceito' && tipo !== 'devolver')) return;
     const donos = cotacoesDaNf(nf).filter(c => (c.itens || []).some(x => String(x.codProduto) === String(codigo)));
     const multi = pedidosDaNf(nf).length > 1;
     const pedidoItem = multi ? ((donos.length === 1 ? String(donos[0].pedido) : null) || it.pedidoItem || nf.pedido) : null;
@@ -593,14 +603,14 @@ async function tratarNfItem(nfId, idx, tipo, codigo) {
     try {
         const novos = nf.itens.map((x, k) => {
             if (k !== idx) return x;
-            const { tratamento, substituiCodigo, pedidoItem: _pi, ...resto } = x;
+            const { tratamento, substituiCodigo, pedidoItem: _pi, devolucao: _dv, ...resto } = x;
             return tipo === 'aceito'
                 ? { ...resto, codigoSmartCompras: codigo, codigoSpData: assocSp ? assocSp.spDataCodigo : (resto.codigoSpData || ''), tratamento: 'aceito', ...(pedidoItem ? { pedidoItem } : {}) }
-                : { ...resto, codigoSmartCompras: null, tratamento: 'trocado', substituiCodigo: codigo, ...(pedidoItem ? { pedidoItem } : {}) };
+                : { ...resto, codigoSmartCompras: null, tratamento: 'trocado', substituiCodigo: codigo, ...(tipo === 'devolver' ? { devolucao: { qtd: Number(x.quantidade) || 0, status: 'aguardando' } } : {}), ...(pedidoItem ? { pedidoItem } : {}) };
         });
         await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
         nfEditorTratAberto = {};
-        toast(tipo === 'trocado' ? '✓ Marcado como produto trocado.' : '✓ Aceito como o item pedido, só nesta NF.');
+        toast(tipo === 'devolver' ? '✓ Marcado como "será devolvido". O recolhimento fica pendente no Controle de NFs.' : tipo === 'trocado' ? '✓ Marcado como produto trocado.' : '✓ Aceito como o item pedido, só nesta NF.');
     } catch (e) { console.error('Erro ao tratar item da NF:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
 }
 async function desfazerTratamentoNfItem(nfId, idx) {
@@ -609,13 +619,24 @@ async function desfazerTratamentoNfItem(nfId, idx) {
     try {
         const novos = nf.itens.map((x, k) => {
             if (k !== idx) return x;
-            const { tratamento, substituiCodigo, ...resto } = x;
+            const { tratamento, substituiCodigo, devolucao, ...resto } = x;
             return tratamento === 'aceito' ? { ...resto, codigoSmartCompras: null, codigoSpData: '' } : resto;
         });
         await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
         toast('✓ Tratamento desfeito: o item voltou a ficar sem associação.');
     } catch (e) { console.error('Erro ao desfazer tratamento:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
 }
+async function ajustarQtdDevolucaoNfItem(nfId, idx, delta) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
+    if (!it || !it.devolucao) return;
+    const max = Number(it.quantidade) || 0, nova = Math.min(max, Math.max(1, (Number(it.devolucao.qtd) || 0) + delta));
+    if (nova === Number(it.devolucao.qtd)) return;
+    try {
+        const novos = nf.itens.map((x, k) => k === idx ? { ...x, devolucao: { ...x.devolucao, qtd: nova } } : x);
+        await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
+    } catch (e) { console.error('Erro ao ajustar devolução:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+}
+window.ajustarQtdDevolucaoNfItem = ajustarQtdDevolucaoNfItem;
 window.tratarNfItem = tratarNfItem; window.desfazerTratamentoNfItem = desfazerTratamentoNfItem; window.abrirTratamentoNfItem = abrirTratamentoNfItem;
 
 function definirSpDataNfItem(nfId, idx, codigo) {
@@ -894,4 +915,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.66.0';

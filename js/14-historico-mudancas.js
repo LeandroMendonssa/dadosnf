@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.65.0', nome: 'Avisos em estilo ilha e tempo automático', status: 'atual', data: '20/11/2026 às 19:30',
+        numero: '2.66.0', nome: 'Item da NF "será devolvido" e recolhimento no Controle de NFs', status: 'atual', data: '21/11/2026 às 07:20',
+        novidades: ['Novo botão "Será devolvido" no item da NF, ao lado de "Produto trocado" (na Entrada de NF e no Editor de NF). O item fica na nota, mas não é associado ao pedido e não conta como recebido.', 'A quantidade a devolver vem completa e pode ser diminuída no Editor de NF (devolução parcial).', 'No Controle de NFs o card da NF mostra a etiqueta laranja "Devolução · recolher ..." e o botão "Marcar como recolhido" (data e NF de devolução opcional). Depois do recolhimento a etiqueta fica verde.', 'Em Atenção aparece "Devoluções aguardando recolhimento" até o material ser recolhido.', 'A auditoria registra "Solicitamos X, porém foi faturado Y" e acrescenta que o material será devolvido.'],
+        implementado: ['js/20: botão, quantidade a devolver e desfazer no Editor de NF (grava no item: tratamento "trocado" + devolucao).', 'js/10 e js/11: mesmo botão na Entrada de NF e gravação ao salvar; a ocorrência de produto diferente ganha a frase da devolução.', 'js/17: etiqueta, botão e janela de recolhimento no card do Controle de NFs.', 'js/34: grupo em Atenção.', 'style.css, index.html e js/14: visual, versão e histórico.'],
+        arquivos: ['index.html','style.css','js/10-entrada-nf-xml.js','js/11-central-pedido.js','js/17-historico-controle-nfs.js','js/20-editor-nf.js','js/34-atencao.js','js/14-historico-mudancas.js'],
+        mudou: ['Não há abatimento de valor no pagamento: o app só sinaliza a devolução.', 'A devolução usa o mesmo mecanismo do "Produto trocado": o pedido original (ex.: FRASCO SISTEMA ABERTO) continua pendente até você resolver na auditoria.', 'Não entra no Resumo de pendências, que é o texto para o fornecedor.'],
+        testar: ['Controle de NFs > NF 38301 da Futura > Editar NF > Itens > UROFIX BOLSA: tocar em "Será devolvido" e escolher o UROFIX FRASCO SISTEMA ABERTO do pedido 1756.', 'Voltar ao Controle de NFs: ver a etiqueta laranja no card e o botão "Marcar como recolhido".', 'No Editor, diminuir a quantidade a devolver e ver a etiqueta mudar.', 'Atenção: ver "Devoluções aguardando recolhimento".', 'Abrir a conferência do pedido 1756 e ver "O material será devolvido." na ocorrência.', 'Marcar como recolhido com data e ver a etiqueta verde e o item sair de Atenção.', 'Desfazer devolução e ver tudo voltar ao normal.', 'Repetir o botão ao subir um XML na Entrada de NF e nos temas escuro, XP e Vidro.'],
+    },
+    {
+        numero: '2.65.0', nome: 'Avisos em estilo ilha e tempo automático', status: 'concluida', data: '20/11/2026 às 19:30',
         novidades: ['Ao enviar uma NF para a relação, adicionar uma NF manual ou salvar uma NF, o aviso agora aparece como uma ilha escura acima da barra inferior, com ícone e anel que mostra o tempo restante.', 'O aviso traz o número da NF, o fornecedor e o valor, e um botão "Ver" que leva direto à lista.', 'Avisos com texto grande mostram até 3 linhas e um "Ver tudo".', 'Todos os avisos do aplicativo agora ficam mais ou menos tempo na tela conforme o tamanho do texto (de 3 a 10 segundos).'],
         implementado: ['js/07: tempo automático por tamanho do texto e novo aviso "ilha" (toque fecha, segurar pausa, Ver tudo).', 'js/17, js/03 e js/11: os três avisos de NF usam o novo estilo.', 'style.css: visual da ilha (cantos de pílula, anel de tempo, respeita movimento reduzido).', 'index.html e js/14: versão e histórico.'],
         arquivos: ['index.html','style.css','js/07-login-conta-backup.js','js/17-historico-controle-nfs.js','js/03-dados-notas.js','js/11-central-pedido.js','js/14-historico-mudancas.js'],
@@ -3863,4 +3871,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.65.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.66.0';

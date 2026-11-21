@@ -215,7 +215,7 @@ function processarXmlTexto(texto) {
     tratamentoBuscaAbertaXml = {};
     // 2.17.3: NF já salva com itens "trocado"/"aceito": reaplica o tratamento (vive no item da NF, não no banco de associações)
     { const salva = listaNfsProcessadas.find(n => String(n.nf) === String(nNF) && (n.serie || '') === (nfeIdentificacao.serie || '') && mesmoCnpj(n.cnpjFornecedor, cnpjEmit));
-      if (salva) (salva.itens || []).forEach(si => { if (!si.tratamento) return; const it = itensXmlDetectados.find(x => String(x.cProd) === String(si.cProd)); if (it) it.tratamentoXml = { tipo: si.tratamento, codigo: si.tratamento === 'trocado' ? si.substituiCodigo : si.codigoSmartCompras, ...(si.pedidoItem ? { pedido: si.pedidoItem } : {}) }; }); }
+      if (salva) (salva.itens || []).forEach(si => { if (!si.tratamento) return; const it = itensXmlDetectados.find(x => String(x.cProd) === String(si.cProd)); if (it) it.tratamentoXml = { tipo: si.tratamento, codigo: si.tratamento === 'trocado' ? si.substituiCodigo : si.codigoSmartCompras, ...(si.pedidoItem ? { pedido: si.pedidoItem } : {}), ...(si.devolucao ? { devolver: true, devolucaoSalva: si.devolucao } : {}) }; }); }
 
     // 1ª prioridade: pelas associações de fornecedor já confirmadas dos
     // itens desta NF (mais forte que CNPJ, porque já foi confirmado à mão
@@ -386,6 +386,7 @@ function formatarPreviewXml(item) {
 // Cruza o CNPJ da NF com o cadastro de fornecedores do SP Data (que já
 // suporta vários CNPJs por código — nunca assume 1:1). Só informativo: não
 // bloqueia nada quando não encontra, só sinaliza pra conferência.
+// leandromendonssa
 function validarFornecedorSpData(cnpjEmit) {
     cnpjEmit = normalizarCnpj(cnpjEmit);
     const docs = listaFornecedoresSpData.filter(f => f.cnpjs.some(c => c.cnpj === cnpjEmit));
@@ -1122,10 +1123,10 @@ function definirTratamentoXml(chave, tipo, valor) {
     const codigo = sep >= 0 ? valor.slice(sep + 2) : valor;
     let pedido = sep >= 0 ? valor.slice(0, sep) : null;
     if (!pedido) { const c = cotacoesSelecionadasXml().map(p => listaCotacoes.find(x => x.pedido === p)).find(x => x && (x.itens || []).some(i => i.codProduto === codigo)); pedido = c ? c.pedido : (pedidoSelecionadoXml || null); }
-    item.tratamentoXml = { tipo, codigo, ...(pedido ? { pedido } : {}) };
+    item.tratamentoXml = tipo === 'devolver' ? { tipo: 'trocado', codigo, devolver: true, ...(pedido ? { pedido } : {}) } : { tipo, codigo, ...(pedido ? { pedido } : {}) };
     item.semCotacao = false;
     tratamentoBuscaAbertaXml = {}; associacaoFornecedorBuscaAberta.delete(chave);
-    toast(tipo === 'trocado' ? '✓ Marcado como produto trocado: a conferência vai registrar a ocorrência.' : '✓ Aceito como o item pedido só nesta NF (a associação não é gravada).');
+    toast(tipo === 'devolver' ? '✓ Marcado como "será devolvido": não é associado e fica pendente de recolhimento no Controle de NFs.' : tipo === 'trocado' ? '✓ Marcado como produto trocado: a conferência vai registrar a ocorrência.' : '✓ Aceito como o item pedido só nesta NF (a associação não é gravada).');
     renderAssociacaoCotacaoXml();
 }
 function desfazerTratamentoXml(chave) {
@@ -1332,7 +1333,7 @@ function renderAssociacaoCotacaoXml() {
             const nomePedidoX = tratX ? ((itemPedidoX && (itemPedidoX.it.nomeOficial || itemPedidoX.it.descricao)) || tratX.codigo) : '';
             if (tratX && tratX.tipo === 'trocado') {
                 // 2.17.3: veio outro produto no lugar do pedido — não associa a nenhum código; o SP Data é do produto que de fato veio
-                cotacaoSpDataHTML = `<strong>Produto trocado.</strong> O pedido era <strong>${escRel(nomePedidoX)}</strong>${itemPedidoX ? ` (pedido ${escRel(itemPedidoX.c.pedido)})` : ''}; a conferência registra "Solicitamos ${escRel(nomePedidoX)}, porém foi faturado ${escRel(item.xProd)}" como ocorrência. Nada é gravado na associação do fornecedor.${renderAssociacaoSpDataWidget({ codProduto: status.chaveDireta, nomeOficial: item.xProd }, 'nf-' + status.chave)}`;
+                cotacaoSpDataHTML = `<strong>${tratX.devolver ? 'Será devolvido.' : 'Produto trocado.'}</strong>${tratX.devolver ? ' Não conta como recebido e fica pendente de recolhimento no Controle de NFs.' : ''} O pedido era <strong>${escRel(nomePedidoX)}</strong>${itemPedidoX ? ` (pedido ${escRel(itemPedidoX.c.pedido)})` : ''}; a conferência registra "Solicitamos ${escRel(nomePedidoX)}, porém foi faturado ${escRel(item.xProd)}" como ocorrência. Nada é gravado na associação do fornecedor.${renderAssociacaoSpDataWidget({ codProduto: status.chaveDireta, nomeOficial: item.xProd }, 'nf-' + status.chave)}`;
             } else if (status.associacao) {
                 // Fornecedor da cotação correspondente: SEMPRE derivado do item já
                 // associado (cnpjFornecedor do próprio item na cotação) — nenhuma
@@ -1393,13 +1394,14 @@ function renderAssociacaoCotacaoXml() {
 
             const abertoTrat = tratamentoBuscaAbertaXml[status.chave] || null;
             const opcoesPedimos = itensParaOpcoes.map(it => { const cotItem = it._cotacao || cotacaoAtual; const fIt = (cotItem.fornecedores || []).find(f => mesmoCnpj(f.cnpj, it.cnpjFornecedor)); return { valor: multiPedido ? `${it._pedido}::${it.codProduto}` : it.codProduto, titulo: `${multiPedido ? `[Pedido ${it._pedido}] ` : ''}${it.codProduto} — ${it.nomeOficial || it.descricao || 'sem nome'}`, sub: [fIt ? nomeExibicaoFornecedor(fIt.razaoSocial, fIt.cnpj) : '', it.quantidade ? `Qtd ${it.quantidade}` : ''].filter(Boolean).join(' · ') }; });
-            const buscaTratHTML = abertoTrat ? `<div class="central-spdata-busca" onclick="event.stopPropagation()"><div class="xml-item-meta">${abertoTrat === 'trocado' ? 'Qual item da cotação era o pedido (e veio trocado)?' : 'Para qual item da cotação este produto vale (exceção só desta NF)?'}</div>
+            const buscaTratHTML = abertoTrat ? `<div class="central-spdata-busca" onclick="event.stopPropagation()"><div class="xml-item-meta">${(abertoTrat === 'trocado' || abertoTrat === 'devolver') ? 'Qual item da cotação era o pedido (e veio outro no lugar)?' : 'Para qual item da cotação este produto vale (exceção só desta NF)?'}</div>
                 ${htmlSeletorBusca('trat-' + status.chave, { placeholder: 'Buscar item da cotação por código ou nome…', opcoes: opcoesPedimos, aoEscolher: valor => definirTratamentoXml(status.chave, abertoTrat, valor) })}</div>` : '';
             const botoesTrat = tratX
-                ? `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); desfazerTratamentoXml('${status.chave}')">Desfazer ${tratX.tipo === 'trocado' ? 'produto trocado' : 'exceção'}</button>`
+                ? `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); desfazerTratamentoXml('${status.chave}')">Desfazer ${tratX.devolver ? 'devolução' : tratX.tipo === 'trocado' ? 'produto trocado' : 'exceção'}</button>`
                 : `${(bancoAssociacoesFornecedor[status.chave]) ? `<button type="button" class="central-status-toggle" onclick="event.stopPropagation(); removerAssociacaoFornecedorXml('${status.chave}')">Remover associação</button>` : ''}
                    <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); abrirTratamentoXml('${status.chave}', 'trocado')">${abertoTrat === 'trocado' ? 'Cancelar' : 'Veio produto trocado'}</button>
-                   <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); abrirTratamentoXml('${status.chave}', 'aceito')">${abertoTrat === 'aceito' ? 'Cancelar' : 'Aceito como outro produto'}</button>`;
+                   <button type="button" class="central-status-toggle" onclick="event.stopPropagation(); abrirTratamentoXml('${status.chave}', 'aceito')">${abertoTrat === 'aceito' ? 'Cancelar' : 'Aceito como outro produto'}</button>
+                   <button type="button" class="central-status-toggle" style="color:var(--warning-text)" onclick="event.stopPropagation(); abrirTratamentoXml('${status.chave}', 'devolver')">${abertoTrat === 'devolver' ? 'Cancelar' : 'Será devolvido'}</button>`;
             acaoHTML = (tratX ? '' : `<button type="button" class="central-status-toggle" onclick="toggleCorrecaoAssociacaoFornecedor('${status.chave}')">${buscaAberta ? 'Cancelar' : (status.associacao ? 'Corrigir cotação' : 'Associar à cotação')}</button>${buscaAberta ? buscaHTML : ''}`) + `<div class="xml-item-acao" style="margin-top:4px;">${botoesTrat}</div>${buscaTratHTML}`;
         }
 
@@ -1612,4 +1614,4 @@ window.definirModoEntrada = definirModoEntrada;
         return orig.call(this, id, t);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.66.0';

@@ -74,6 +74,14 @@ function _itensDeAtencaoCalc() {
             }));
     } catch (e) { console.error('Central: NF duplicada', e); }
 
+    // 2.66.0: itens marcados "será devolvido" que ainda não foram recolhidos
+    try {
+        const devs = [];
+        listaNfsProcessadas.forEach(n => devolucoesDaNf(n).filter(x => x.it.devolucao.status !== 'recolhido').forEach(x => devs.push({ n, it: x.it })));
+        add('media', 'devolucao-recolher', 'Devoluções aguardando recolhimento', 'Material que não ficou conosco. Depois de recolhido, marque no card da NF no Controle de NFs.',
+            devs.map(({ n, it }) => ({ pedido: String(n.pedido || ''), forn: n.fornecedor || '', t: `${n.fornecedorNomeEditado || n.fornecedor || ''} · NF ${n.nf}`, s: `${it.devolucao.qtd} ${nomeCurtoItemDevolucao(it)}`, fn: `switchToScreen('screen-controle-nfs','Controle de NFs')` })));
+    } catch (e) { console.error('Central: devoluções', e); }
+
     add('baixa', 'itens-nao-chegaram', 'Itens que ainda não chegaram', 'Itens da cotação que ainda não vieram em NF. Não é divergência: pode vir em outra NF. Dá para relatar na Auditoria.',
         linhasPorFornecedor(naoChegou, 'item(ns) não chegaram', true));
 
@@ -157,6 +165,7 @@ function prepararAtencao() { atencaoModo = 'urgencia'; atencaoAbertos = new Set(
 // 2.38.0: a tela não se refazia ao voltar de um pedido nem quando os dados mudavam (daí avisos "presos" depois de resolvidos).
 // Agora refaz ao entrar na tela e, enquanto ela está aberta, confere a cada 3 s uma assinatura barata dos dados (só CPU local, sem Firebase).
 let _atnSig = '';
+// leandromendonssa
 function atencaoAssinatura() {
     const mx = (l, ...ks) => (l || []).reduce((m, x) => { for (const k of ks) { const v = x && x[k]; if (v && String(v) > m) m = String(v); } return m; }, '');
     let nPend = 0, nRel = 0; (listaAnotacoes || []).forEach(a => (a.ocorrencias || []).forEach(oc => (oc.divergencias || []).forEach(d => { if ((d.status || 'pendente') === 'pendente') nPend++; if (d.relatado === false) nRel++; })));
@@ -224,4 +233,4 @@ function renderBannerAtencao() {
     const n = totalAtencaoNf();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.49.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.66.0';

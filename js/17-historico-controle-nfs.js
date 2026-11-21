@@ -222,6 +222,45 @@ function modoReabrirControle(it) {
     if (it.erp && it.erp.statusFluxo === 'arquivada') return 'erp';
     return null;
 }
+// 2.66.0 — DEVOLUÇÃO DE ITEM: item da NF marcado "será devolvido" (item.devolucao = { qtd, status: 'aguardando' | 'recolhido', recolhidoEm, nfDevolucao }).
+function devolucoesDaNf(nf) { return (nf && Array.isArray(nf.itens) ? nf.itens : []).map((it, idx) => ({ it, idx })).filter(x => x.it && x.it.devolucao); }
+function nomeCurtoItemDevolucao(it) { return String(it.xProd || it.cProd || 'item').split(' (')[0].replace(/\s+/g, ' ').trim().slice(0, 60); }
+function htmlDevolucaoCardControle(nf) {
+    return devolucoesDaNf(nf).map(({ it }) => {
+        const dv = it.devolucao, nome = escRel(nomeCurtoItemDevolucao(it));
+        return dv.status === 'recolhido'
+            ? `<div class="ctl-dev ok">✓ Devolvido${dv.recolhidoEm ? ' em ' + escRel(dataBRdeISO(dv.recolhidoEm)) : ''}${dv.nfDevolucao ? ' · NF dev. ' + escRel(dv.nfDevolucao) : ''} · ${escRel(String(dv.qtd))} ${nome}</div>`
+            : `<div class="ctl-dev">↩ Devolução · recolher ${escRel(String(dv.qtd))} ${nome}</div>`;
+    }).join('');
+}
+function devolucaoPendenteDaNf(nf) { return devolucoesDaNf(nf).find(x => x.it.devolucao.status !== 'recolhido') || null; }
+function abrirRecolhimentoDevolucao(nfId, idx) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
+    if (!it || !it.devolucao) return;
+    let m = document.getElementById('devolucao-modal');
+    if (!m) { m = document.createElement('div'); m.id = 'devolucao-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
+    const h = new Date(), hoje = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
+    m.innerHTML = `<div class="modal-content"><h2>Material recolhido?</h2>
+        <p>${escRel(String(it.devolucao.qtd))} ${escRel(nomeCurtoItemDevolucao(it))} · ${escRel(nf.fornecedorNomeEditado || nf.fornecedor || '')} · NF ${escRel(nf.nf)}</p>
+        <label class="dev-lbl">Data do recolhimento<input type="date" id="dev-data" value="${hoje}"></label>
+        <label class="dev-lbl">NF de devolução (opcional)<input type="text" id="dev-nf" inputmode="numeric" placeholder="Número da NF de devolução"></label>
+        <div class="confirm-actions" style="margin-top:18px"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Cancelar</button>
+        <button type="button" class="actions-button" onclick="confirmarRecolhimentoDevolucao('${escRel(nfId)}', ${idx})">Recolhido</button></div></div>`;
+    m.classList.add('active');
+}
+async function confirmarRecolhimentoDevolucao(nfId, idx) {
+    const nf = listaNfsProcessadas.find(n => n.id === nfId); const it = nf && nf.itens && nf.itens[idx];
+    if (!it || !it.devolucao) return;
+    const data = (document.getElementById('dev-data') || {}).value || '', nfDev = ((document.getElementById('dev-nf') || {}).value || '').trim();
+    try {
+        const novos = nf.itens.map((x, k) => k === idx ? { ...x, devolucao: { ...x.devolucao, status: 'recolhido', recolhidoEm: data, ...(nfDev ? { nfDevolucao: nfDev } : {}) } } : x);
+        await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
+        closeAllModals();
+        toastRico({ titulo: 'Devolução recolhida', detalhe: `NF ${nf.nf} · ${nomeCurtoItemDevolucao(it)}` });
+        if (typeof renderControleNfs === 'function') renderControleNfs();
+    } catch (e) { console.error('Erro ao confirmar recolhimento:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+}
+window.abrirRecolhimentoDevolucao = abrirRecolhimentoDevolucao; window.confirmarRecolhimentoDevolucao = confirmarRecolhimentoDevolucao;
 function renderCardControleNf(it) {
     const chaveJs = it.chave.replace(/'/g, "\\'");
     const aba = abaDoItemControle(it);
@@ -249,6 +288,8 @@ function renderCardControleNf(it) {
         const modo = modoReabrirControle(it);
         if (modo) botoes.push(btn('reab', 'Voltar para Em aberto', `voltarNfParaAberto('${chaveJs}')`));
     }
+    const devPend = it.nf ? devolucaoPendenteDaNf(it.nf) : null;
+    if (devPend) botoes.unshift(btn('reab', 'Marcar como recolhido', `abrirRecolhimentoDevolucao('${String(it.nf.id).replace(/'/g, "\\'")}', ${devPend.idx})`));
     if (editor) botoes.push(editor);
     const sel = selecaoControleAtiva && it.tipo === 'nf' && aba === 'aberto';
     const marcado = sel && selecionadasControle.has(it.chave);
@@ -262,6 +303,7 @@ function renderCardControleNf(it) {
         ${(aba === 'aberto' && semXmlDiscreto) ? `<div class="ctl-discreta">só no ERP · sem XML processado${it.erp ? ` <a class="ctl-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', 'xml')">abrir</a>` : ''}</div>` : ''}
         ${(aba === 'aberto' && semErpDiscreto && !semXmlDiscreto) ? `<div class="ctl-discreta">ERP ainda não importado${it.nf ? ` <a class="ctl-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', 'erp')">abrir</a>` : ''}</div>` : ''}
         ${pend.length ? `<div class="ctl-inf">${pendDet.map(x => x.tipo && !sel ? `<a class="ctl-pend-link" onclick="event.stopPropagation(); irParaPendenciaControle('${chaveJs}', '${x.tipo}')">${escRel(x.txt)}</a>` : escRel(x.txt)).join(' · ')}</div>` : ''}${notaAdv}
+        ${it.nf ? htmlDevolucaoCardControle(it.nf) : ''}
         ${botoes.length && !sel ? `<div class="ctl-bar" style="grid-template-columns:repeat(${Math.min(botoes.length, 4)},1fr)">${botoes.join('')}</div>` : ''}
     </div>`;
 }
@@ -525,6 +567,7 @@ function registrarOrigemNaNotaArquivada(notaData, notaId) {
     const e = listaEntradasErp.find(x => x.notaVinculadaId === notaId); if (e) notaData.erpChave = e.id;
     const n = listaNfsProcessadas.find(x => x.notaVinculadaId === notaId); if (n) notaData.nfChave = n.id;
 }
+// leandromendonssa
 function verNoGerenciarNf(chave) {
     const it = itemControlePorChave(chave); if (!it || !it.nota) return;
     abaGerenciar = it.nota.emEspera ? 'espera' : 'saida';
@@ -1005,7 +1048,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.65.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.66.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":
