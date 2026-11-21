@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.70.0', nome: 'Novo visual (redesign) com chave para voltar ao anterior', status: 'atual', data: '21/11/2026 às 18:20',
+        numero: '2.71.0', nome: 'Novo visual: refatoração do CSS no conceito do protótipo', status: 'atual', data: '21/11/2026 às 19:00',
+        novidades: ['O novo visual agora é um conceito próprio, em folha separada (novo-visual.css): paleta, tipografia, cabeçalho translúcido, barra lateral com marca, etiquetas de status tintadas, painéis, indicadores e filtros no padrão do protótipo.', 'Início reorganizado: cabeçalho de página com "Nova entrada de NF", indicadores, e painéis "Prioridades de hoje", "Atalhos", "Próximos vencimentos" e "Atividade recente" (linha do tempo por dia, com status, hora e "há X min"). No computador, painéis lado a lado.', 'Central de Auditoria: cabeçalho de página e indicadores (Detectadas, Relatadas, Resolvidas, Excluídas) no padrão do protótipo; registros continuam em cards.', 'Entrada de NF: cabeçalho de página e etapas "01 Identificação, 02 Conferência, 03 Revisão e salvar"; confirmação de salvamento no mesmo padrão.', 'Cards de NF e de pedido com nova hierarquia (rótulos pequenos, valores em destaque, etiquetas de status). Filtros quebram linha, sem rolagem lateral.'],
+        implementado: ['novo-visual.css (novo): todo o visual novo, só vale com a chave ligada. style.css ficou como o visual estável.', 'js/48: layout novo do Início por trás da chave (o antigo continua logo abaixo).', 'js/64: carrega/descarrega a folha, indicadores da Auditoria, etapas da Entrada.', 'index.html: link da folha. js/14: histórico.'],
+        arquivos: ['index.html','style.css','novo-visual.css','js/48-inicio-lote.js','js/64-novo-visual.js','js/14-historico-mudancas.js'],
+        mudou: ['Para voltar ao visual estável: Personalização > Aparência > "Novo visual (teste)" > Desligado. Nada do visual antigo foi apagado.', 'Nenhuma regra de negócio, campo ou dado do Firebase foi alterado.'],
+        testar: ['Início: ver os painéis, a Atividade recente e abrir uma NF.', 'Computador: barra lateral com marca, painéis lado a lado.', 'Controle de NFs, Pedidos e Auditoria: cards, filtros sem rolagem lateral e indicadores.', 'Entrada de NF: etapas e confirmação ao salvar.', 'Aparência: desligar o Novo visual e confirmar que tudo volta ao anterior; testar também no tema escuro.']
+    },
+    {
+        numero: '2.70.0', nome: 'Novo visual (redesign) com chave para voltar ao anterior', status: 'concluida', data: '21/11/2026 às 18:20',
         novidades: ['Chave "Novo visual (teste)" em Personalização > Aparência. Desligada, o app volta exatamente ao visual da 2.69.0.', 'Cards de pedido e de NF: linha compacta "N fornecedores · X entregaram · Y pendentes" com barrinha de progresso (mesma regra da tela Início, sem contagem paralela).', 'Central de Auditoria: contadores no topo (Em aberto, Relatadas, Resolvidas, Excluídas), clicáveis; registros continuam em cards.', 'Entrada de NF: etapas (Origem, Conferir/Preencher, Salvar) e confirmação de salvamento que fica na tela, com Abrir NF, Baixar PDF, Baixar XML, Editar e Nova entrada (manual: Abrir NF e Ver na relação).', 'Visual: cantos e sombras mais suaves, filtros que quebram linha (sem rolar de lado) e botões maiores; no computador o Controle de NFs usa 2 colunas.'],
         implementado: ['js/64-novo-visual.js (novo): chave, linha de fornecedores (envolve renderCardCotacao e renderCardControleNf), contadores (envolve renderCentralAuditoria), etapas e confirmação.', 'js/03 e js/11: um aviso ao novo módulo logo após salvar a NF manual / por XML. Nada muda na gravação.', 'style.css (tudo sob body.nv), index.html (chave e script), js/14.'],
         arquivos: ['index.html','style.css','js/64-novo-visual.js','js/03-dados-notas.js','js/11-central-pedido.js','js/14-historico-mudancas.js'],
@@ -3919,4 +3927,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.70.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.71.0';

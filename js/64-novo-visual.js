@@ -4,7 +4,7 @@
 // Reaproveita as funções existentes (nada de contagem ou fonte de dados paralela).
 // ===================================================================
 function novoVisualOn() { try { return localStorage.getItem('novoVisual') !== '0'; } catch (e) { return true; } }
-function nvAplicar() { document.body.classList.toggle('nv', novoVisualOn()); const s = document.getElementById('nv-select'); if (s) s.value = novoVisualOn() ? '1' : '0'; }
+function nvAplicar() { document.body.classList.toggle('nv', novoVisualOn()); const lk = document.getElementById('nv-css'); if (lk) lk.media = novoVisualOn() ? 'all' : 'not all'; const s = document.getElementById('nv-select'); if (s) s.value = novoVisualOn() ? '1' : '0'; }
 function nvDefinir(v) {
     try { localStorage.setItem('novoVisual', v === '0' ? '0' : '1'); } catch (e) { }
     nvAplicar();
@@ -63,9 +63,10 @@ function nvLinhaFornecedores(cot) {
         try {
             const el = document.getElementById('auditoria-central-conteudo'); if (!el || !novoVisualOn()) return;
             const todas = listarOcorrenciasAuditoria(), n = g => todas.filter(x => x.grupo === g).length;
-            const t = [['detectada', 'Em aberto', 'r'], ['relatada', 'Relatadas', 'b'], ['resolvida', 'Resolvidas', 'g'], ['excluida', 'Excluídas', 'm']];
-            const html = `<div class="nv-kpis">${t.map(([k, r, c]) => `<button type="button" class="nv-kpi ${c}${audFiltro === k ? ' on' : ''}" onclick="audFiltrar('${k}')"><b>${n(k)}</b><span>${r}</span></button>`).join('')}</div>`;
-            const antigo = el.querySelector('.nv-kpis'); if (antigo) antigo.remove();
+            const t = [['detectada', 'Detectadas', 'r', 'Precisam de análise'], ['relatada', 'Relatadas', 'b', 'Aguardando retorno'], ['resolvida', 'Resolvidas', 'g', 'Histórico preservado'], ['excluida', 'Excluídas', 'm', 'Não contabilizadas']];
+            const html = `<div class="nv-pagehead"><div><div class="nv-eyebrow">CONTROLE E RASTREABILIDADE</div><h1>Central de auditoria</h1><p class="nv-sub">Acompanhe cada ocorrência desde a identificação até a resolução.</p></div></div>
+                <div class="nv-kpis">${t.map(([k, r, c, cap]) => `<button type="button" class="nv-kpi ${c}${audFiltro === k ? ' on' : ''}" onclick="audFiltrar('${k}')"><span class="nv-kt">${r}<i class="nv-dot ${c}"></i></span><b>${n(k)}</b><small>${cap}</small></button>`).join('')}</div>`;
+            el.querySelectorAll('.nv-kpis,.nv-pagehead').forEach(x => x.remove());
             el.insertAdjacentHTML('afterbegin', html);
         } catch (e) { }
     };
@@ -79,8 +80,8 @@ function nvStepper() {
     if (!novoVisualOn()) { if (el) el.remove(); const c = document.getElementById('nv-salva'); if (c) c.remove(); return; }
     if (!el) { el = document.createElement('div'); el.id = 'nv-stepper'; el.className = 'nv-stepper'; tela.insertBefore(el, tela.firstChild); }
     const manual = tela.classList.contains('modo-manual');
-    const rot = [manual ? 'Origem: manual' : 'Origem: XML', manual ? 'Preencher dados' : 'Conferir', 'Salvar'];
-    el.innerHTML = rot.map((r, i) => `<div class="nv-st${nvEtapa === i + 1 ? ' on' : ''}${nvEtapa > i + 1 ? ' ok' : ''}"><i>${nvEtapa > i + 1 || nvEtapa === 4 ? '✓' : i + 1}</i><span>${r}</span></div>`).join('');
+    const rot = [manual ? 'Origem manual' : 'Identificação', manual ? 'Preencher dados' : 'Conferência dos itens', 'Revisão e salvar'];
+    el.innerHTML = `<div class="nv-pagehead"><div><div class="nv-eyebrow">PROCESSAMENTO</div><h1>Entrada de NF</h1><p class="nv-sub">${manual ? 'Cadastro manual: preencha os dados da nota e salve.' : 'Conferência contínua: identifique a nota, revise os itens e finalize.'}</p></div></div><div class="nv-steps">${rot.map((r, i) => `<div class="nv-step${nvEtapa === i + 1 ? ' current' : ''}${nvEtapa > i + 1 ? ' done' : ''}">0${i + 1} · ${r}</div>`).join('')}</div>`;
 }
 function nvEtapaAuto() { const tela = document.getElementById('screen-xml-editor'); const manual = tela && tela.classList.contains('modo-manual'); nvEtapa = manual ? 2 : (typeof xmlDocAtual !== 'undefined' && xmlDocAtual && !(xmlDocAtual.querySelector && xmlDocAtual.querySelector('parsererror')) ? 2 : 1); nvStepper(); }
 (function () {
@@ -111,4 +112,4 @@ function nvNovaEntrada(manual) {
 window.nvNfSalva = nvNfSalva; window.nvNovaEntrada = nvNovaEntrada;
 document.addEventListener('DOMContentLoaded', () => { nvAplicar(); nvStepper(); });
 nvAplicar();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/64-novo-visual.js'] = '2.70.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/64-novo-visual.js'] = '2.71.0';

@@ -111,32 +111,48 @@ function iniAbrirPrioridade(id) {
 }
 function iniPrioridadesHtml() {
     let g = []; try { g = itensDeAtencao().filter(x => x.nivel !== 'baixa').slice().sort((a, b) => (a.nivel === 'alta' ? 0 : 1) - (b.nivel === 'alta' ? 0 : 1)); } catch (e) { }
-    if (!g.length) return `<div class="ini-card"><div class="ini-lin"><div>${escIni(LING.t('✓ Nada parado por aqui. Tudo em dia.'))}</div></div></div>`;
+    const nv = novoVisualOn();
+    if (!g.length) return nv ? `<div class="nv-vazio">${escIni(LING.t('✓ Nada parado por aqui. Tudo em dia.'))}</div>` : `<div class="ini-card"><div class="ini-lin"><div>${escIni(LING.t('✓ Nada parado por aqui. Tudo em dia.'))}</div></div></div>`;
+    if (nv) return g.slice(0, 5).map(x => `<button type="button" class="nv-work" onclick="iniAbrirPrioridade('${x.id}')"><span class="nv-wt"><b>${escIni(x.titulo)}</b><small>${escIni(x.dica || '')}</small></span><span class="nv-rr"><span class="nv-tag ${x.nivel === 'alta' ? 'red' : 'amber'}">${x.nivel === 'alta' ? 'Urgente' : 'Atenção'} · ${x.linhas.length}</span><i>›</i></span></button>`).join('')
+        + (g.length > 5 ? `<button type="button" class="nv-more" onclick="iniAbrirPrioridade('')">Ver todas (${g.length}) →</button>` : '');
     return `<div class="ini-prios">${g.slice(0, 4).map(x => `<button type="button" class="ini-prio ${x.nivel === 'alta' ? 'a' : 'm'}" onclick="iniAbrirPrioridade('${x.id}')"><span class="ini-pd"></span><span class="ini-pt"><b>${escIni(x.titulo)}</b><small>${escIni(x.dica || '')}</small></span><span class="ini-chip ${x.nivel === 'alta' ? 'r' : 'y'}">${x.linhas.length}</span></button>`).join('')}
         ${g.length > 4 ? `<button type="button" class="ini-mais" onclick="iniAbrirPrioridade('')">Ver todas (${g.length})</button>` : ''}</div>`;
 }
-// leandromendonssa
 function iniAbrirNf(nf) { try { abrirNfNoHistorico('', nf); } catch (e) { switchToScreen('screen-controle-nfs', 'Controle de NFs'); } }
 function iniMaisAtividade() { iniAtivLimite += 12; renderInicio(); }
 function iniAtividadeHtml() {
+    const nv = novoVisualOn();
     const nfs = (listaNfsProcessadas || []).filter(n => n && n.processadoEm && !isNaN(new Date(n.processadoEm)));
-    if (!nfs.length) return '<div class="ini-card"><div class="ini-lin"><div>Nenhuma NF registrada ainda.</div></div></div>';
+    if (!nfs.length) return nv ? '<div class="nv-vazio">Nenhuma NF registrada ainda.</div>' : '<div class="ini-card"><div class="ini-lin"><div>Nenhuma NF registrada ainda.</div></div></div>';
     nfs.sort((a, b) => String(b.processadoEm).localeCompare(String(a.processadoEm)));
     const mapa = new Map(); try { montarControleNfs().forEach(it => { if (it.nf && it.nf.id) mapa.set(it.nf.id, it); }); } catch (e) { }
     const hojeISO = dataLocalISO(), ontemISO = new Date(Date.now() - 864e5).toLocaleDateString('en-CA');
-    const rot = { recebida: ['', 'Recebida'], na_relacao: ['m', 'Na relação'], em_espera: ['m', 'Em espera'], arquivada: ['ok', 'Enviada ao financeiro'], direta: ['m', 'Direta'] };
+    const rot = { recebida: ['', 'Recebida', 'blue'], na_relacao: ['m', 'Na relação', 'gray'], em_espera: ['m', 'Em espera', 'amber'], arquivada: ['ok', 'Enviada ao financeiro', 'green'], direta: ['m', 'Direta', 'gray'] };
+    const MESES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
     let ult = '', html = '';
     nfs.slice(0, iniAtivLimite).forEach(n => {
         const dt = new Date(n.processadoEm), dia = dt.toLocaleDateString('en-CA'), dBR = dia.split('-').reverse().join('/');
-        if (dia !== ult) { ult = dia; html += `<div class="ini-dia">${dia === hojeISO ? 'Hoje' : dia === ontemISO ? 'Ontem' : dBR}${dia === hojeISO || dia === ontemISO ? `<small> · ${dBR}</small>` : ''}</div>`; }
+        if (dia !== ult) {
+            ult = dia;
+            const pref = dia === hojeISO ? 'HOJE' : dia === ontemISO ? 'ONTEM' : '';
+            html += nv ? `<div class="nv-day">${pref ? pref + ' · ' : ''}${dt.getDate()} DE ${MESES[dt.getMonth()]}${pref ? '' : ' DE ' + dt.getFullYear()}</div>`
+                : `<div class="ini-dia">${dia === hojeISO ? 'Hoje' : dia === ontemISO ? 'Ontem' : dBR}${dia === hojeISO || dia === ontemISO ? `<small> · ${dBR}</small>` : ''}</div>`;
+        }
         let nomeF = n.fornecedor || ''; try { nomeF = nomeExibicaoFornecedor(n.fornecedor, n.cnpjFornecedor || '') || nomeF; } catch (e) { }
-        const it = mapa.get(n.id); let st = it && rot[it.situacao] ? rot[it.situacao] : ['m', 'Registrada'];
-        try { if (devolucaoPendenteDaNf(n)) st = ['', 'Devolução pendente']; } catch (e) { }
-        // de hoje em diante: data e horário; antes de hoje: só a data (o título do dia já mostra)
-        const hora = dia === hojeISO ? dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : dBR.slice(0, 5);
-        html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">NF</span><span class="ini-at2"><b>NF ${escIni(n.nf || '—')} · ${escIni(nomeF || '(sem fornecedor)')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
+        const it = mapa.get(n.id); let st = it && rot[it.situacao] ? rot[it.situacao] : ['m', 'Registrada', 'gray'];
+        try { if (devolucaoPendenteDaNf(n)) st = ['', 'Devolução pendente', 'amber']; } catch (e) { }
+        // de hoje em diante: data e horário; antes de hoje: só a data
+        const hoje = dia === hojeISO, hora = hoje ? dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : dBR.slice(0, 5);
+        if (nv) {
+            const min = Math.max(0, Math.round((Date.now() - dt.getTime()) / 60000));
+            const rel = hoje ? (min < 60 ? 'há ' + min + ' min' : 'há ' + Math.floor(min / 60) + ' h') : (dia === ontemISO ? 'ontem' : '');
+            html += `<button type="button" class="nv-act" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="nv-sym">NF</span><span class="nv-main"><b>NF ${escIni(n.nf || '—')} <span class="nv-tag ${st[2]}">${st[1]}</span></b><span class="nv-sup">${escIni(nomeF || '(sem fornecedor)')}</span><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="nv-time"><b>${hora}</b>${rel ? `<small>${rel}</small>` : ''}<i>›</i></span></button>`;
+        } else {
+            html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">NF</span><span class="ini-at2"><b>NF ${escIni(n.nf || '—')} · ${escIni(nomeF || '(sem fornecedor)')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
+        }
     });
-    return html + (nfs.length > iniAtivLimite ? `<button type="button" class="ini-mais" onclick="iniMaisAtividade()">Mostrar mais (${nfs.length - iniAtivLimite})</button>` : '');
+    const mais = nfs.length > iniAtivLimite ? `<button type="button" class="${nv ? 'nv-more' : 'ini-mais'}" onclick="iniMaisAtividade()">Mostrar mais (${nfs.length - iniAtivLimite})</button>` : '';
+    return html + mais;
 }
 function renderInicio() {
     if (!_iniRelogio) _iniRelogio = setInterval(iniAtualizarHora, 20000);
@@ -156,6 +172,29 @@ function renderInicio() {
         let nomeF = n.fornecedor || ''; try { nomeF = nomeExibicaoFornecedor(n.fornecedor, n.cnpj || '') || nomeF; } catch (e) { }
         return `<div class="ini-lin"><div>${escIni(nomeF)} ${escIni(n.nf || '')}<small>${escIni(n.vencimento)}${n.valor ? ' · R$ ' + escIni(n.valor) : ''}</small></div>${chipDias(n)}</div>`;
     }).join('') || `<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>${LING.fixa('ini-sem-nf', {t:'Nenhuma NF aberta'}).t}</b><p>${LING.fixa('ini-sem-nf', {p:'A relação está vazia.'}).p}</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen('screen-reports','Relatórios')">Ver todas as NFs</button></div>`;
+    if (novoVisualOn()) {   // 2.71.0: novo layout (cabeçalho de página, indicadores, painéis). Desligado, cai no layout anterior logo abaixo.
+        const ph = (t, p, extra) => `<div class="nv-ph"><div><h2>${t}</h2>${p ? `<p>${p}</p>` : ''}</div>${extra || ''}</div><div class="nv-div"></div>`;
+        el.innerHTML = `
+        <div class="nv-pagehead"><div><div class="nv-eyebrow">${DIAS_INI[agora.getDay()].toUpperCase()} · ROTINA OPERACIONAL</div><h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt} · <b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b><span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div></div>
+            <button type="button" class="nv-btn pri" onclick="switchToScreen('screen-xml-editor','Entrada de NF')">＋ Nova entrada de NF</button></div>
+        <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
+        <div id="ini-busca-res"></div>
+        <div class="ini-grid">
+            ${k(d.venc > 0 ? 'r' : 'n', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
+            ${k((d.hoje + d.aman) > 0 ? 'y' : 'n', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
+            ${k('n', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
+            ${kForn}
+        </div>
+        <div class="nv-layout">
+            <div class="nv-col">
+                <div class="nv-panel">${ph('Prioridades de hoje', 'Itens que pedem uma ação, não apenas acompanhamento.')}<div class="nv-body">${iniPrioridadesHtml()}</div></div>
+                <div class="nv-panel">${ph('Atalhos', '', `<button type="button" class="nv-btn small" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button>`)}<div class="nv-body">${iniEditando ? htmlEdicaoAtalhos() : `<div class="ini-ats">${iniAtalhosAtuais().map((id, i) => { const c = iniCatalogo()[id]; return c ? at(c.ic, c.t, c.a, false) : ''; }).join('')}</div>`}</div></div>
+                <div class="nv-panel">${ph('Próximos vencimentos', 'NFs da relação por data de vencimento.')}<div class="nv-body nv-flat">${linhasProx}</div></div>
+            </div>
+            <div class="nv-panel nv-recent">${ph('Atividade recente', 'Entradas de NF em ordem cronológica, da mais recente para a mais antiga.')}<div class="nv-body">${iniAtividadeHtml()}</div></div>
+        </div>`;
+        return;
+    }
     el.innerHTML = `
         <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt} · <b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b><span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
@@ -314,4 +353,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.69.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.71.0';
