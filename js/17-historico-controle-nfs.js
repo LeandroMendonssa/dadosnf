@@ -496,8 +496,8 @@ async function enviarNfParaRelacao(chave) {
         envioControleEmAndamento = true;
         try {
             await criarNotaDoControle(it, d);
-            toast(`✓ NF ${d.nf} enviada para a relação.`);
-        } catch (e) { console.error('Erro ao enviar NF para a relação:', e); toast('✕ Erro ao enviar a NF para a relação.'); }
+            toastRico({ titulo: `NF ${d.nf} enviada para a relação`, detalhe: [d.fornecedor, d.valor ? 'R$ ' + String(d.valor).replace(/^R\$\s*/, '') : ''].filter(Boolean).join(' · '), acao: 'Ver', onAcao: () => switchToScreen('screen-manage', 'Repasse de NF') });
+        } catch (e) { console.error('Erro ao enviar NF para a relação:', e); toastRico({ tipo: 'erro', titulo: 'Não enviou a NF para a relação', detalhe: 'Deu erro ao enviar. Tente de novo.' }); }
         finally { envioControleEmAndamento = false; }
     };
     if (duplicata) {
@@ -806,6 +806,7 @@ function abrirNfDaDivergencia(pedido, numeroNf) {
     if (!nf) return toast('NF não encontrada no histórico.');
     abrirEditorNf(nf.id); // 2.0.7: abre o Editor da NF
 }
+// leandromendonssa
 function numeroLimpo(v) { return parseFloat(Number(v).toFixed(4)); }
 // Propostas de correção para um item da NF salva — calculadas pelo app, o usuário só toca:
 //  - voltar à quantidade que está no XML (fator 1), quando algum fator foi aplicado;
@@ -1004,7 +1005,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.65.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

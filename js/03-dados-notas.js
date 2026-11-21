@@ -26,6 +26,7 @@ function valoresNfIguais(a, b) {
     const x = valorNfNumerico(a), y = valorNfNumerico(b);
     return x !== null && y !== null && x > 0 && Math.abs(x - y) < 0.01;
 }
+// leandromendonssa
 function verificarDuplicidade(novoForn, novaNF, novoValor) {
     if (!novaNF) return null; // Se não tem NF, não verifica
 
@@ -124,7 +125,7 @@ async function executaSalvamento(fornecedor, nf) {
         await adicionarFornecedor(fornecedor, true);
         await vincularNotaCriadaAoControle(novaNotaRef.id, nf); // Fase 38
 
-        toast("✓ Nota salva com sucesso!")
+        toastRico({ titulo: `NF ${nf} adicionada`, detalhe: [fornecedor, DOM.valor.value.trim() ? 'R$ ' + DOM.valor.value.trim().replace(/^R\$\s*/, '') : ''].filter(Boolean).join(' · '), acao: 'Ver', onAcao: () => switchToScreen('screen-manage', 'Repasse de NF') })
         
         // Limpa tudo e foca na NF para a próxima nota
         limparFormularioPrincipal(true); 
@@ -199,4 +200,4 @@ function limparFormularioPrincipal(comFoco=true){
     
     if(comFoco) setTimeout(()=>DOM.nf.focus(), 350);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/03-dados-notas.js'] = '2.21.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/03-dados-notas.js'] = '2.65.0';

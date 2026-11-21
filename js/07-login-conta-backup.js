@@ -30,9 +30,65 @@ function toast(msg){
     iconEl.innerHTML = ehSucesso ? '<i class="fa-solid fa-circle-check"></i>' : ehErro ? '<i class="fa-solid fa-circle-exclamation"></i>' : '';
     const textoLing = (typeof LING !== 'undefined') ? LING.toast(texto, ehSucesso, ehErro) : null;   // 2.62.0: só na linguagem "Sem paciência"
     textEl.textContent = textoLing !== null ? textoLing : personalizarMensagem(texto, ehSucesso);
+    const rico0 = document.getElementById('toast-rico'); if (rico0) toastRicoFechar(true);
     t.style.display = 'flex';
+    t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
     clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(() => t.style.display = 'none', 2000);
+    window.__toastTimer = setTimeout(() => t.style.display = 'none', toastDuracao(textEl.textContent));
+}
+
+// 2.65.0 — tempo automático: avisos maiores ficam mais tempo na tela (mín. 3 s, máx. 10 s).
+function toastDuracao(texto){ return Math.round(Math.min(10, Math.max(3, 2.5 + String(texto || '').length * 0.045)) * 1000); }
+
+// 2.65.0 — aviso "ilha": ícone com anel de tempo, título, detalhe e ação. Toque fecha; segurar pausa.
+let __trEstado = null;
+function toastRicoFechar(imediato){
+    const el = document.getElementById('toast-rico');
+    if (!el) return;
+    if (__trEstado) { clearTimeout(__trEstado.timer); __trEstado = null; }
+    if (imediato) { el.className = 'toast-rico'; el.style.display = 'none'; return; }
+    el.classList.remove('on'); el.classList.add('saindo');
+    setTimeout(() => { if (!__trEstado && !el.classList.contains('on')) { el.className = 'toast-rico'; el.style.display = 'none'; } }, 260);
+}
+function toastRico({ titulo, detalhe = '', acao = '', onAcao = null, tipo = 'ok' } = {}){
+    let el = document.getElementById('toast-rico');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'toast-rico'; el.className = 'toast-rico'; el.setAttribute('role', 'status');
+        document.body.appendChild(el);
+    }
+    const t = document.getElementById('toast'); if (t) { t.style.display = 'none'; clearTimeout(window.__toastTimer); }
+    if (__trEstado) clearTimeout(__trEstado.timer);
+    const erro = tipo === 'erro';
+    const total = String(titulo || '').length + String(detalhe || '').length;
+    const longo = total > 110;
+    const dur = toastDuracao((titulo || '') + (detalhe || ''));
+    const R = 15, C = 2 * Math.PI * R;
+    el.innerHTML = `<span class="tr-ic ${erro ? 'erro' : 'ok'}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="tr-trilho" cx="18" cy="18" r="${R}"/><circle class="tr-anel" cx="18" cy="18" r="${R}" stroke-dasharray="${C}" style="animation-duration:${dur}ms"/></svg><i class="fa-solid ${erro ? 'fa-exclamation' : 'fa-check'}"></i></span>`
+        + `<span class="tr-tx"><b class="tr-t"></b><span class="tr-d"></span><button type="button" class="tr-mais">Ver tudo</button></span>`
+        + (acao ? `<button type="button" class="tr-acao"></button>` : '');
+    el.querySelector('.tr-t').textContent = titulo || '';
+    const dEl = el.querySelector('.tr-d'); dEl.textContent = detalhe || ''; if (!detalhe) dEl.style.display = 'none';
+    const maisEl = el.querySelector('.tr-mais');
+    el.className = 'toast-rico' + (longo ? ' longo' : '') + (detalhe && longo ? ' recorta' : '');
+    el.style.display = 'flex';
+    void el.offsetWidth; el.classList.add('on');
+    const est = { timer: null, resta: dur, inicio: 0, pausado: false };
+    __trEstado = est;
+    const rodar = () => { est.inicio = Date.now(); est.pausado = false; el.classList.remove('pausa'); clearTimeout(est.timer); est.timer = setTimeout(() => toastRicoFechar(), est.resta); };
+    const pausar = () => { if (est.pausado) return; est.pausado = true; est.resta = Math.max(800, est.resta - (Date.now() - est.inicio)); clearTimeout(est.timer); el.classList.add('pausa'); };
+    rodar();
+    let segurou = false, segTimer = null;
+    el.onpointerdown = () => { segurou = false; segTimer = setTimeout(() => { segurou = true; pausar(); }, 350); };
+    el.onpointerup = el.onpointercancel = el.onpointerleave = () => { clearTimeout(segTimer); if (segurou && __trEstado === est) rodar(); };
+    el.onclick = (ev) => {
+        if (segurou) { segurou = false; return; }
+        if (ev.target.closest('.tr-acao')) { toastRicoFechar(); try { if (typeof onAcao === 'function') onAcao(); } catch (e) { console.error(e); } return; }
+        if (ev.target.closest('.tr-mais')) { el.classList.remove('recorta'); el.classList.add('aberto'); maisEl.style.display = 'none'; est.resta = Math.max(est.resta, 8000); pausar(); return; }
+        toastRicoFechar();
+    };
+    if (acao) el.querySelector('.tr-acao').textContent = acao;
+    if (!(longo && detalhe)) maisEl.style.display = 'none';
 }
 
 function showConfirmModal({title,message,confirmText="Confirmar",confirmClass="danger",onConfirm}){
@@ -563,4 +619,4 @@ function popularListaFornecedores(){
     atualizarBulkBarFornecedores();
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.62.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.65.0';

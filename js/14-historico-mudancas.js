@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.64.1', nome: 'Cards aguentam dados extremos', status: 'atual', data: '20/11/2026 às 18:40',
+        numero: '2.65.0', nome: 'Avisos em estilo ilha e tempo automático', status: 'atual', data: '20/11/2026 às 19:30',
+        novidades: ['Ao enviar uma NF para a relação, adicionar uma NF manual ou salvar uma NF, o aviso agora aparece como uma ilha escura acima da barra inferior, com ícone e anel que mostra o tempo restante.', 'O aviso traz o número da NF, o fornecedor e o valor, e um botão "Ver" que leva direto à lista.', 'Avisos com texto grande mostram até 3 linhas e um "Ver tudo".', 'Todos os avisos do aplicativo agora ficam mais ou menos tempo na tela conforme o tamanho do texto (de 3 a 10 segundos).'],
+        implementado: ['js/07: tempo automático por tamanho do texto e novo aviso "ilha" (toque fecha, segurar pausa, Ver tudo).', 'js/17, js/03 e js/11: os três avisos de NF usam o novo estilo.', 'style.css: visual da ilha (cantos de pílula, anel de tempo, respeita movimento reduzido).', 'index.html e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/07-login-conta-backup.js','js/17-historico-controle-nfs.js','js/03-dados-notas.js','js/11-central-pedido.js','js/14-historico-mudancas.js'],
+        mudou: ['Os demais avisos continuam com o visual de antes, só que com o tempo automático.', 'Não há opção de escolher o tempo em Ajustes: o app calcula sozinho.'],
+        testar: ['Controle de NFs: enviar uma NF para a relação e ver a ilha com o anel girando; tocar em "Ver".', 'Adicionar uma NF manual e salvar: ver o aviso e tocar em "Ver".', 'Salvar uma NF pelo XML e ver o aviso.', 'Tocar no aviso fecha; segurar o dedo pausa o anel.', 'Provocar um aviso longo (ex.: NF sem vencimento ou valor): ver as 3 linhas e o "Ver tudo".', 'Ver um aviso simples (ex.: copiar algo) e conferir se o tempo parece adequado.', 'Repetir nos temas escuro, Windows XP e Vidro líquido e no Modo Leandro.'],
+    },
+    {
+        numero: '2.64.1', nome: 'Cards aguentam dados extremos', status: 'concluida', data: '20/11/2026 às 18:40',
         novidades: ['Nomes, códigos e textos longos sem espaço agora quebram dentro do card do Controle e das Cotações, em vez de passar da borda.', 'Em "Prazo" e "Pedido" os valores grandes quebram de linha em vez de ficarem cortados com reticências.', 'No card de Cotações, em iPhone pequeno, a etiqueta de status desce para baixo do nome quando falta espaço.'],
         implementado: ['style.css: regras de quebra de texto nos cards (.ctl-nm, .ctl-inf, .ctl-dd) e ajuste do card de Cotações em telas até 360px.', 'index.html e js/14: número da versão e histórico.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
@@ -3855,4 +3863,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.64.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.65.0';

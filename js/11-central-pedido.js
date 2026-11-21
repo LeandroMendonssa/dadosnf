@@ -1084,6 +1084,7 @@ function unificarRecursosNf(lista) {
     const proprio = u.find(r => /pr[oó]pri/i.test(r));
     return [proprio || u[0]];
 }
+// leandromendonssa
 function calcularAptidaoSaidaNota(nota) {
     const normalize = (str) => str ? str.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
     if (!normalize(nota.nf)) return { status: 'sem_nf', label: 'Sem número de NF — não é possível conferir', badge: 'neutro' };
@@ -1753,7 +1754,7 @@ async function executarSalvarEntradaNF() {
     const recursosAplicados = await aplicarRecursoPorCotacaoNf();
     nfSalvaXml = true;
     renderAssociacaoCotacaoXml();
-    toast(recursosAplicados.length ? `✓ NF salva. Recurso gravado em ${recursosAplicados.length} item(ns) da cotação.` : '✓ NF salva.');
+    toastRico({ titulo: `NF ${(nfeInfoAtual && nfeInfoAtual.nNF) || ''} salva`.replace('NF  salva', 'NF salva'), detalhe: recursosAplicados.length ? `Recurso gravado em ${recursosAplicados.length} item(ns) da cotação.` : ((nfeInfoAtual && nfeInfoAtual.fornecedor) || '') });
 }
 
 // Mostra, direto na Entrada de NF (sem trocar de tela), o resultado da
@@ -1871,4 +1872,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.52.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.65.0';
