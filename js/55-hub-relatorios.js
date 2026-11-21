@@ -42,6 +42,7 @@
         base.forEach(k => { const b = base.find(o => o !== k && canon.get(o) === o && k.startsWith(o + ' ')); canon.set(k, b || k); });
         return r => canon.get(disp(r));
     }
+    // leandromendonssa
     function aplicaForn(m, nome) { const f = filtro(m).forn; return !f || nome === f; }
     function aplicaProd(m, textos) { const p = norm(filtro(m).prod).trim(); return !p || textos.some(t => norm(t).includes(p)); }
 
@@ -185,7 +186,7 @@
     // ---------- telas ----------
     function renderHub() {
         const el = $('rel-hub'); if (!el) return;
-        el.innerHTML = '<div class="rel-intro">Escolha o relatório que quer emitir. Todos podem ser copiados ou baixados em PDF, Word ou texto.</div><div class="mais-grupo">' + ORDEM.map(k => { const m = MOD[k]; return `<button type="button" class="mais-item rel-hub-item" onclick="relAbrir('${k}')"><span class="icon-wrapper"><i class="fa-solid ${m.ic}"></i></span><span class="mais-item-nome">${e(m.nome)}<small class="rel-desc">${e(m.desc)}</small></span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`; }).join('') + '</div>';
+        el.innerHTML = '<div class="rel-intro">' + e(typeof LING !== 'undefined' ? LING.t('Escolha o relatório que quer emitir. Todos podem ser copiados ou baixados em PDF, Word ou texto.') : 'Escolha o relatório que quer emitir. Todos podem ser copiados ou baixados em PDF, Word ou texto.') + '</div><div class="mais-grupo">' + ORDEM.map(k => { const m = MOD[k]; return `<button type="button" class="mais-item rel-hub-item" onclick="relAbrir('${k}')"><span class="icon-wrapper"><i class="fa-solid ${m.ic}"></i></span><span class="mais-item-nome">${e(m.nome)}<small class="rel-desc">${e(typeof LING !== 'undefined' ? LING.t(m.desc) : m.desc)}</small></span><i class="fa-solid fa-chevron-right mais-item-seta"></i></button>`; }).join('') + '</div>';
     }
     function renderDetalhe() {
         const el = $('rel-detalhe'), k = estado.aba; if (!el || !k) return;
@@ -241,4 +242,4 @@
     const voltarAntes = window.voltarInternoTela;
     window.voltarInternoTela = function () { const s = $('screen-reports'); if (s && s.classList.contains('active') && estado.aba) { window.relVoltar(); return true; } return typeof voltarAntes === 'function' ? voltarAntes() : false; };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.61.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/55-hub-relatorios.js'] = '2.67.0';

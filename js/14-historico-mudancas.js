@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.66.0', nome: 'Item da NF "será devolvido" e recolhimento no Controle de NFs', status: 'atual', data: '21/11/2026 às 07:20',
+        numero: '2.67.0', nome: 'Modo Leandro mais ranzinza e chegando nos painéis', status: 'atual', data: '21/11/2026 às 08:10',
+        novidades: ['No Modo Leandro, o painel Atenção (explicação de cada grupo e frase de abertura) e a tela de Relatórios (abertura e descrição de cada relatório) agora já falam no tom do colega ranzinza, em vez do texto neutro.', 'Frases mais fracas ou "traduzidas" foram trocadas por outras mais secas e mais do dia a dia do trabalho (fornecedor, sistema, pendência).', 'Os comentários extras dos avisos ganharam mais variedade e menos fofura.', 'O Modo Normal não muda em nada. Os emojis dos comentários de horário continuam como você pediu.'],
+        implementado: ['js/62: nova função LING.t com os textos de painéis; frases e sufixos reescritos.', 'js/34 e js/55: passam os textos por LING.t (só mudam no Modo Leandro).', 'index.html, style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/34-atencao.js','js/55-hub-relatorios.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['A Ajuda, os relatórios gerados, PDFs e Word seguem neutros.', 'Esta rodada cobre Atenção e Relatórios. Outras telas podem entrar nas próximas, conforme você apontar.'],
+        testar: ['Ajustes > Aparência > Modo Leandro: abrir Atenção e ver a explicação de cada grupo e a frase de abertura.', 'Abrir Relatórios e ver a abertura e a descrição de cada relatório.', 'Trocar para Modo Normal e conferir que os dois voltam ao texto de antes.', 'Gerar alguns avisos (copiar, salvar, excluir) e ver a variedade das frases.'],
+    },
+    {
+        numero: '2.66.0', nome: 'Item da NF "será devolvido" e recolhimento no Controle de NFs', status: 'concluida', data: '21/11/2026 às 07:20',
         novidades: ['Novo botão "Será devolvido" no item da NF, ao lado de "Produto trocado" (na Entrada de NF e no Editor de NF). O item fica na nota, mas não é associado ao pedido e não conta como recebido.', 'A quantidade a devolver vem completa e pode ser diminuída no Editor de NF (devolução parcial).', 'No Controle de NFs o card da NF mostra a etiqueta laranja "Devolução · recolher ..." e o botão "Marcar como recolhido" (data e NF de devolução opcional). Depois do recolhimento a etiqueta fica verde.', 'Em Atenção aparece "Devoluções aguardando recolhimento" até o material ser recolhido.', 'A auditoria registra "Solicitamos X, porém foi faturado Y" e acrescenta que o material será devolvido.'],
         implementado: ['js/20: botão, quantidade a devolver e desfazer no Editor de NF (grava no item: tratamento "trocado" + devolucao).', 'js/10 e js/11: mesmo botão na Entrada de NF e gravação ao salvar; a ocorrência de produto diferente ganha a frase da devolução.', 'js/17: etiqueta, botão e janela de recolhimento no card do Controle de NFs.', 'js/34: grupo em Atenção.', 'style.css, index.html e js/14: visual, versão e histórico.'],
         arquivos: ['index.html','style.css','js/10-entrada-nf-xml.js','js/11-central-pedido.js','js/17-historico-controle-nfs.js','js/20-editor-nf.js','js/34-atencao.js','js/14-historico-mudancas.js'],
@@ -3871,4 +3879,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.66.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.67.0';

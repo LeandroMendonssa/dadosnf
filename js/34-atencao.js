@@ -18,6 +18,7 @@ function itensDeAtencao() {
     if (_atnCache && _atnCache.k === k && t - _atnCache.t < 2000) return _atnCache.g;
     const g = _itensDeAtencaoCalc(); _atnCache = { k, g, t }; return g;
 }
+// leandromendonssa
 function _itensDeAtencaoCalc() {
     const grupos = [];
     const add = (nivel, id, titulo, dica, linhas, acaoGeral) => { if (linhas.length) grupos.push({ nivel, id, titulo, dica, linhas, acaoGeral }); };
@@ -188,7 +189,7 @@ function _renderAtencaoBase() {
     _atnSig = atencaoAssinatura();
     const grupos = itensDeAtencao();
     if (_atnAbrirAltas) { _atnAbrirAltas = false; atencaoAbertos = new Set(grupos.filter(g => g.nivel === 'alta').map(g => g.id)); }
-    if (!grupos.length) { el.innerHTML = '<div class="card"><div class="xml-item-meta">✓ Nada parado por aqui. Tudo em dia.</div></div>'; return; }
+    if (!grupos.length) { el.innerHTML = '<div class="card"><div class="xml-item-meta">' + escRel((typeof LING !== 'undefined') ? LING.t('✓ Nada parado por aqui. Tudo em dia.') : '✓ Nada parado por aqui. Tudo em dia.') + '</div></div>'; return; }
     const ordem = { alta: 0, media: 1, baixa: 2 };
     grupos.sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
     const abas = `<div class="retro-chips">${[['urgencia', 'Por urgência'], ['pedido', 'Por pedido'], ['fornecedor', 'Por fornecedor']].map(([k, t]) => `<button type="button" class="retro-chip${atencaoModo === k ? ' on' : ''}" onclick="mudarModoAtencao('${k}')">${t}</button>`).join('')}</div>`;
@@ -216,11 +217,11 @@ function _renderAtencaoBase() {
         }).join('');
         return;
     }
-    el.innerHTML = abas + `<div class="card"><div class="xml-item-meta">O que está parado ou envelhecendo, do mais urgente ao menos. Toque num grupo para abrir e num item para ir direto à tela que resolve.</div></div>`
+    el.innerHTML = abas + `<div class="card"><div class="xml-item-meta">${(typeof LING !== 'undefined') ? LING.t('O que está parado ou envelhecendo, do mais urgente ao menos. Toque num grupo para abrir e num item para ir direto à tela que resolve.') : 'O que está parado ou envelhecendo, do mais urgente ao menos. Toque num grupo para abrir e num item para ir direto à tela que resolve.'}</div></div>`
         + grupos.map(g => {
             const aberto = atencaoAbertos.has(g.id), [rot, cls] = ATENCAO_NIVEIS[g.nivel];
             return `<div class="ctl-card atn-grupo">
-                <div class="ctl-top" onclick="toggleGrupoAtencao('${g.id}')" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(g.titulo)}</b><small>${escRel(g.dica)}</small></div>
+                <div class="ctl-top" onclick="toggleGrupoAtencao('${g.id}')" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(g.titulo)}</b><small>${escRel((typeof LING !== 'undefined') ? LING.t(g.dica) : g.dica)}</small></div>
                     <span class="ctl-st ${cls}">${g.linhas.length}</span></div>
                 <div class="ctl-inf"><span class="ctl-st ${cls}" style="font-size:11px;padding:3px 9px">${rot}</span> <a class="ctl-pend-link" onclick="toggleGrupoAtencao('${g.id}')">${aberto ? 'Fechar' : 'Ver itens'}</a></div>
                 ${aberto ? g.linhas.slice(0, 12).map(l => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') + (g.linhas.length > 12 ? `<div class="xml-item-meta" style="margin-top:6px">…e mais ${g.linhas.length - 12}.</div>` : '') : ''}
@@ -233,4 +234,4 @@ function renderBannerAtencao() {
     const n = totalAtencaoNf();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.66.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.67.0';
