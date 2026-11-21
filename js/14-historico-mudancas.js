@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.67.1', nome: 'Modo Leandro na Ajuda e nas Notificações', status: 'atual', data: '21/11/2026 às 08:40',
+        numero: '2.67.2', nome: 'Botão Voltar nas telas que faltavam', status: 'atual', data: '21/11/2026 às 09:10',
+        novidades: ['Histórico SmartCompras e Análise de Cotações agora têm o botão Voltar no topo, como as outras telas de Ajustes.'],
+        implementado: ['js/01: as duas telas entram na lista de telas com Voltar e de tela-mãe (Ajustes).', 'index.html, style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/01-nucleo-config-estado.js','js/14-historico-mudancas.js'],
+        mudou: ['Nenhuma outra tela foi alterada. Se achar outra sem o Voltar, me diga qual.'],
+        testar: ['Ajustes > Histórico SmartCompras: ver o botão Voltar e tocar nele.', 'Ajustes > Análise de Cotações: o mesmo.', 'Conferir que a aba Ajustes continua marcada na barra de baixo nessas telas.'],
+    },
+    {
+        numero: '2.67.1', nome: 'Modo Leandro na Ajuda e nas Notificações', status: 'concluida', data: '21/11/2026 às 08:40',
         novidades: ['No Modo Leandro, os resumos, passos e dicas da Ajuda e o texto das Notificações também ganharam o tom do colega ranzinza.', 'Mais frases de orientação (conta, importações, backup, auditoria) foram ajustadas.'],
         implementado: ['js/62: lista de textos da Ajuda e das Notificações e ajuste de frases de orientação.', 'js/31 e js/41: passam os textos por LING.t (só mudam no Modo Leandro).', 'index.html, style.css e js/14: versão e histórico.'],
         arquivos: ['index.html','style.css','js/31-ajuda.js','js/41-notificacoes-push.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
@@ -3887,4 +3895,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.67.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.67.2';
