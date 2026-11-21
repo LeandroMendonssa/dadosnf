@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.68.0'; }
+:root { --css-versao: '2.69.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2414,3 +2414,22 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .lmd-big{font-size:64px;text-align:center;font-weight:800;margin:14px 0;color:var(--warning-text)}
 .lmd-final{text-align:center;font-size:56px;margin:8px 0}
 @media (prefers-reduced-motion:reduce){.lmd-sp{animation:none}.lmd-bar i,.ling-sw,.ling-sw::after{transition:none}}
+
+/* 2.69.0: Prioridades de hoje, Atividade recente (Início) e dias no Controle de NFs */
+.ini-prios{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.ini-prio{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:12px 14px;font:inherit;color:var(--text-dark);cursor:pointer;min-height:56px}
+.ini-pd{width:10px;height:10px;border-radius:50%;flex:none;background:var(--warning-text)}
+.ini-prio.a .ini-pd{background:var(--danger)}
+.ini-pt{flex:1;min-width:0}.ini-pt b{display:block;font-size:var(--fs-input);line-height:1.25}
+.ini-pt small{display:block;color:var(--text-light);font-size:var(--fs-aux);margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ini-dia,.ctl-dia{font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin:12px 2px 6px}
+.ini-dia small,.ctl-dia small{font-weight:500;text-transform:none;letter-spacing:0}
+.ctl-dia:first-child{margin-top:2px}
+.ini-ativ{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:11px 12px;margin-bottom:7px;font:inherit;color:var(--text-dark);cursor:pointer}
+.ini-ai{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--bg-tertiary);color:var(--text-dark)}
+.ini-at2{flex:1;min-width:0}.ini-at2 b{display:block;font-size:var(--fs-input);line-height:1.25;overflow-wrap:anywhere}
+.ini-at2 small{display:block;color:var(--text-light);font-size:var(--fs-aux);margin-top:2px}
+.ini-ar{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.ini-ah{font-size:var(--fs-aux);font-weight:700;color:var(--text-light)}
+.ini-ar .ctl-st{padding:4px 9px;font-size:11px}
+.ini-mais{display:block;width:100%;margin:2px 0 14px;padding:11px;border:1px solid var(--border-color);border-radius:14px;background:transparent;color:var(--text-dark);font:inherit;cursor:pointer}
