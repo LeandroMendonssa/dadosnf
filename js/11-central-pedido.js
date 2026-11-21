@@ -1756,6 +1756,7 @@ async function executarSalvarEntradaNF() {
     const recursosAplicados = await aplicarRecursoPorCotacaoNf();
     nfSalvaXml = true;
     renderAssociacaoCotacaoXml();
+    try { const _m = montarNfProcessadaAtual(); if (window.nvNfSalva && _m) nvNfSalva({ id: _m.chave, nf: (nfeInfoAtual && nfeInfoAtual.nNF) || '', fornecedor: (nfeInfoAtual && nfeInfoAtual.fornecedor) || '', valor: (nfeInfoAtual && (nfeInfoAtual.vNF || nfeInfoAtual.valorTotal)) || '' }); } catch (e) { } // 2.70.0: confirmação
     toastRico({ titulo: `NF ${(nfeInfoAtual && nfeInfoAtual.nNF) || ''} salva`.replace('NF  salva', 'NF salva'), detalhe: recursosAplicados.length ? `Recurso gravado em ${recursosAplicados.length} item(ns) da cotação.` : ((nfeInfoAtual && nfeInfoAtual.fornecedor) || '') });
 }
 
@@ -1874,4 +1875,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.66.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.70.0';

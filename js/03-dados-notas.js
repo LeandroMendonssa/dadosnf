@@ -127,6 +127,7 @@ async function executaSalvamento(fornecedor, nf) {
 
         toastRico({ titulo: `NF ${nf} adicionada`, detalhe: [fornecedor, DOM.valor.value.trim() ? 'R$ ' + DOM.valor.value.trim().replace(/^R\$\s*/, '') : ''].filter(Boolean).join(' · '), acao: 'Ver', onAcao: () => switchToScreen('screen-manage', 'Repasse de NF') })
         
+        try { if (window.nvNfSalva) nvNfSalva({ id: novaNotaRef.id, nf, fornecedor, valor: DOM.valor.value.trim(), manual: true }); } catch (e) { } // 2.70.0: confirmação
         // Limpa tudo e foca na NF para a próxima nota
         limparFormularioPrincipal(true); 
 
@@ -200,4 +201,4 @@ function limparFormularioPrincipal(comFoco=true){
     
     if(comFoco) setTimeout(()=>DOM.nf.focus(), 350);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/03-dados-notas.js'] = '2.65.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/03-dados-notas.js'] = '2.70.0';

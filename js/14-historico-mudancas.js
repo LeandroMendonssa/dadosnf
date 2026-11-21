@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.69.0', nome: 'Prioridades de hoje, Atividade recente e NFs por dia', status: 'atual', data: '21/11/2026 às 14:10',
+        numero: '2.70.0', nome: 'Novo visual (redesign) com chave para voltar ao anterior', status: 'atual', data: '21/11/2026 às 18:20',
+        novidades: ['Chave "Novo visual (teste)" em Personalização > Aparência. Desligada, o app volta exatamente ao visual da 2.69.0.', 'Cards de pedido e de NF: linha compacta "N fornecedores · X entregaram · Y pendentes" com barrinha de progresso (mesma regra da tela Início, sem contagem paralela).', 'Central de Auditoria: contadores no topo (Em aberto, Relatadas, Resolvidas, Excluídas), clicáveis; registros continuam em cards.', 'Entrada de NF: etapas (Origem, Conferir/Preencher, Salvar) e confirmação de salvamento que fica na tela, com Abrir NF, Baixar PDF, Baixar XML, Editar e Nova entrada (manual: Abrir NF e Ver na relação).', 'Visual: cantos e sombras mais suaves, filtros que quebram linha (sem rolar de lado) e botões maiores; no computador o Controle de NFs usa 2 colunas.'],
+        implementado: ['js/64-novo-visual.js (novo): chave, linha de fornecedores (envolve renderCardCotacao e renderCardControleNf), contadores (envolve renderCentralAuditoria), etapas e confirmação.', 'js/03 e js/11: um aviso ao novo módulo logo após salvar a NF manual / por XML. Nada muda na gravação.', 'style.css (tudo sob body.nv), index.html (chave e script), js/14.'],
+        arquivos: ['index.html','style.css','js/64-novo-visual.js','js/03-dados-notas.js','js/11-central-pedido.js','js/14-historico-mudancas.js'],
+        mudou: ['Nenhuma regra de negócio, campo ou dado do Firebase foi alterado.', 'Para voltar atrás: desligue a chave em Aparência (ou reponha os arquivos da 2.69.0).'],
+        testar: ['Aparência: ligar/desligar "Novo visual" e ver o app mudar nas duas direções.', 'Pedidos e Controle de NFs: ver a linha de fornecedores no card e se o número bate com "fornecedores a chegar" da Início.', 'Auditoria: tocar nos contadores e usar os filtros.', 'Entrada de NF: salvar uma NF (XML e manual) e ver o cartão verde de confirmação; testar Abrir NF, PDF, XML e Editar.', 'Filtros: conferir que nenhum rola de lado no iPhone.']
+    },
+    {
+        numero: '2.69.0', nome: 'Prioridades de hoje, Atividade recente e NFs por dia', status: 'concluida', data: '21/11/2026 às 14:10',
         novidades: ['Início: nova área "Prioridades de hoje", com as pendências mais urgentes (as mesmas da Central de notificações). Toque numa para abrir direto o grupo.', 'Início: nova área "Atividade recente", com as NFs na ordem em que entraram, da mais recente para a mais antiga, separadas por dia (Hoje, Ontem, data). Toque numa NF para abri-la no Controle de NFs.', 'Controle de NFs: dentro de cada mês, as NFs agora ficam separadas por dia, igual à Atividade recente.'],
         implementado: ['js/48: iniPrioridadesHtml() lê itensDeAtencao() (js/34); iniAtividadeHtml() lê listaNfsProcessadas e o status do Controle (montarControleNfs). Nada novo no Firestore.', 'js/17: htmlDiasControle() separa por dia dentro do mês, mantendo mês recolhível, totais e todos os botões.', 'style.css e js/14: visual, versão e histórico.'],
         arquivos: ['style.css','index.html','js/48-inicio-lote.js','js/17-historico-controle-nfs.js','js/14-historico-mudancas.js'],
@@ -3911,4 +3919,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.69.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.70.0';
