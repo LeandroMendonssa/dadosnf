@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.64.1'; }
+:root { --css-versao: '2.65.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2345,3 +2345,25 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
     .cot-card .ctl-nm { flex: 1 1 calc(100% - 56px); }
     .cot-card .ctl-st { margin-left: 52px; }
 }
+
+/* 2.65.0 — aviso "ilha" (NF enviada, NF adicionada, NF salva): escuro, embaixo, cantos de pílula, anel de tempo */
+.toast-rico{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px) scale(.96);opacity:0;display:none;align-items:center;gap:12px;box-sizing:border-box;width:max-content;min-width:min(250px,calc(100vw - 32px));max-width:min(420px,calc(100vw - 32px));padding:10px 12px 10px 10px;border-radius:999px;background:#000;color:#fff;z-index:10003;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:transform .42s cubic-bezier(.34,1.4,.64,1),opacity .22s ease;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.toast-rico.on{transform:translate(-50%,0) scale(1);opacity:1}
+.toast-rico.saindo{transform:translate(-50%,16px) scale(.97);opacity:0;transition:transform .22s ease,opacity .2s ease}
+.toast-rico.longo{border-radius:30px;align-items:flex-start;padding:12px 14px 12px 12px}
+.toast-rico .tr-ic{position:relative;flex:none;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.toast-rico .tr-ic.ok{color:#32d74b}.toast-rico .tr-ic.erro{color:#ff453a}
+.toast-rico .tr-ic svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.toast-rico .tr-ic circle{fill:none;stroke-width:2.5}
+.toast-rico .tr-trilho{stroke:rgba(255,255,255,.16)}
+.toast-rico .tr-anel{stroke:currentColor;stroke-linecap:round;animation:trAnel linear forwards}
+.toast-rico.pausa .tr-anel{animation-play-state:paused}
+@keyframes trAnel{from{stroke-dashoffset:0}to{stroke-dashoffset:94.25}}
+.toast-rico .tr-tx{display:flex;flex-direction:column;min-width:0;flex:1;gap:1px;text-align:left}
+.toast-rico .tr-t{font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.toast-rico .tr-d{font-size:13px;color:rgba(235,235,245,.6);line-height:1.3;overflow-wrap:anywhere}
+.toast-rico.recorta .tr-d{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.toast-rico .tr-mais,.toast-rico .tr-acao{border:0;background:none;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.toast-rico .tr-mais{align-self:flex-start;padding:4px 0 0;font-size:13px;font-weight:600;color:#0a84ff}
+.toast-rico .tr-acao{flex:none;align-self:center;padding:8px 10px;font-size:15px;font-weight:600;color:#0a84ff}
+@media (prefers-reduced-motion:reduce){.toast-rico,.toast-rico.on,.toast-rico.saindo{transition:opacity .2s ease;transform:translate(-50%,0)}}
