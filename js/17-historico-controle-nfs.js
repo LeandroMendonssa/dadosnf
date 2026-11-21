@@ -316,6 +316,21 @@ function alternarMesControle(chaveMes, atual) {
     if (atual) { abrir ? mesesControleFechados.delete(chaveMes) : mesesControleFechados.add(chaveMes); }
     else { abrir ? mesesControleAbertos.add(chaveMes) : mesesControleAbertos.delete(chaveMes); }
 }
+// 2.69.0: dentro de cada mês, as NFs ficam separadas por dia (Hoje, Ontem, data), da mais recente para a mais antiga — igual à Atividade recente do Início
+function rotuloDiaControle(iso) {
+    if (!iso) return 'Sem data';
+    const hoje = dataLocalISO(), ontem = new Date(Date.now() - 864e5).toLocaleDateString('en-CA'), br = iso.split('-').reverse().join('/');
+    return iso === hoje ? `Hoje <small>· ${br}</small>` : iso === ontem ? `Ontem <small>· ${br}</small>` : br;
+}
+function htmlDiasControle(itens) {
+    const dias = [];
+    itens.forEach(it => { const d = it.dataISO || ''; let g = dias.find(x => x.d === d); if (!g) { g = { d, l: [] }; dias.push(g); } g.l.push(it); });
+    dias.sort((a, b) => b.d.localeCompare(a.d));
+    return dias.map(g => {
+        g.l.sort((a, b) => String((b.nf && b.nf.processadoEm) || '').localeCompare(String((a.nf && a.nf.processadoEm) || '')));
+        return `<div class="ctl-dia">${rotuloDiaControle(g.d)}</div>` + g.l.map(renderCardControleNf).join('');
+    }).join('');
+}
 function renderControleNfs() {
     const lista = document.getElementById('controle-lista');
     if (!lista) return;
@@ -361,7 +376,7 @@ function renderControleNfs() {
         const total = itens.reduce((t, it) => t + valorNumericoItemControle(it), 0);
         return `<div class="ctl-mes${aberto ? ' aberto' : ''}" data-mes="${chaveMes}">
             <button type="button" class="ctl-mes-h" onclick="alternarMesControle('${chaveMes}', ${atual})"><b>${nome}</b><span>${itens.length} NF · R$ ${formatarValorMonetarioBR(total)}<i class="ctl-chev"></i></span></button>
-            <div class="central-colapso"><div class="central-colapso-inner">${itens.map(renderCardControleNf).join('')}</div></div></div>`;
+            <div class="central-colapso"><div class="central-colapso-inner">${htmlDiasControle(itens)}</div></div></div>`;
     }).join('');
     const acaoLegado = (abaControle === 'arquivadas' ? historicoBannerHTML() : '') + ((abaControle === 'arquivadas' && !termo && historicoNotas.length && !historicoParcial)
         ? `<div class="acao-legado"><button type="button" class="central-status-toggle is-danger" onclick="limparHistorico()">Limpar registros simples arquivados (legado) — ${historicoNotas.length}</button></div>` : '');
@@ -1048,7 +1063,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.66.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.69.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

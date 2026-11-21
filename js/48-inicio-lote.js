@@ -103,6 +103,41 @@ function iniAtualizarHora() {
     const a = new Date(); h.textContent = String(a.getHours()).padStart(2, '0') + ':' + String(a.getMinutes()).padStart(2, '0');
     const c = document.getElementById('ini-coment'); if (c) { const t = LING.saudacaoExtra(); c.textContent = t ? ' · ' + t : ''; }
 }
+// 2.69.0: "Prioridades de hoje" (mesmos grupos da Central de notificações) e "Atividade recente" (NFs na ordem em que entraram, por dia)
+let iniAtivLimite = 12;
+function iniAbrirPrioridade(id) {
+    switchToScreen('screen-atencao', 'Central de notificações'); prepararAtencao();
+    if (id) { atencaoAbertos = new Set([id]); _atnAbrirAltas = false; }
+}
+function iniPrioridadesHtml() {
+    let g = []; try { g = itensDeAtencao().filter(x => x.nivel !== 'baixa').slice().sort((a, b) => (a.nivel === 'alta' ? 0 : 1) - (b.nivel === 'alta' ? 0 : 1)); } catch (e) { }
+    if (!g.length) return `<div class="ini-card"><div class="ini-lin"><div>${escIni(LING.t('✓ Nada parado por aqui. Tudo em dia.'))}</div></div></div>`;
+    return `<div class="ini-prios">${g.slice(0, 4).map(x => `<button type="button" class="ini-prio ${x.nivel === 'alta' ? 'a' : 'm'}" onclick="iniAbrirPrioridade('${x.id}')"><span class="ini-pd"></span><span class="ini-pt"><b>${escIni(x.titulo)}</b><small>${escIni(x.dica || '')}</small></span><span class="ini-chip ${x.nivel === 'alta' ? 'r' : 'y'}">${x.linhas.length}</span></button>`).join('')}
+        ${g.length > 4 ? `<button type="button" class="ini-mais" onclick="iniAbrirPrioridade('')">Ver todas (${g.length})</button>` : ''}</div>`;
+}
+// leandromendonssa
+function iniAbrirNf(nf) { try { abrirNfNoHistorico('', nf); } catch (e) { switchToScreen('screen-controle-nfs', 'Controle de NFs'); } }
+function iniMaisAtividade() { iniAtivLimite += 12; renderInicio(); }
+function iniAtividadeHtml() {
+    const nfs = (listaNfsProcessadas || []).filter(n => n && n.processadoEm && !isNaN(new Date(n.processadoEm)));
+    if (!nfs.length) return '<div class="ini-card"><div class="ini-lin"><div>Nenhuma NF registrada ainda.</div></div></div>';
+    nfs.sort((a, b) => String(b.processadoEm).localeCompare(String(a.processadoEm)));
+    const mapa = new Map(); try { montarControleNfs().forEach(it => { if (it.nf && it.nf.id) mapa.set(it.nf.id, it); }); } catch (e) { }
+    const hojeISO = dataLocalISO(), ontemISO = new Date(Date.now() - 864e5).toLocaleDateString('en-CA');
+    const rot = { recebida: ['', 'Recebida'], na_relacao: ['m', 'Na relação'], em_espera: ['m', 'Em espera'], arquivada: ['ok', 'Enviada ao financeiro'], direta: ['m', 'Direta'] };
+    let ult = '', html = '';
+    nfs.slice(0, iniAtivLimite).forEach(n => {
+        const dt = new Date(n.processadoEm), dia = dt.toLocaleDateString('en-CA'), dBR = dia.split('-').reverse().join('/');
+        if (dia !== ult) { ult = dia; html += `<div class="ini-dia">${dia === hojeISO ? 'Hoje' : dia === ontemISO ? 'Ontem' : dBR}${dia === hojeISO || dia === ontemISO ? `<small> · ${dBR}</small>` : ''}</div>`; }
+        let nomeF = n.fornecedor || ''; try { nomeF = nomeExibicaoFornecedor(n.fornecedor, n.cnpjFornecedor || '') || nomeF; } catch (e) { }
+        const it = mapa.get(n.id); let st = it && rot[it.situacao] ? rot[it.situacao] : ['m', 'Registrada'];
+        try { if (devolucaoPendenteDaNf(n)) st = ['', 'Devolução pendente']; } catch (e) { }
+        // de hoje em diante: data e horário; antes de hoje: só a data (o título do dia já mostra)
+        const hora = dia === hojeISO ? dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : dBR.slice(0, 5);
+        html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">NF</span><span class="ini-at2"><b>NF ${escIni(n.nf || '—')} · ${escIni(nomeF || '(sem fornecedor)')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
+    });
+    return html + (nfs.length > iniAtivLimite ? `<button type="button" class="ini-mais" onclick="iniMaisAtividade()">Mostrar mais (${nfs.length - iniAtivLimite})</button>` : '');
+}
 function renderInicio() {
     if (!_iniRelogio) _iniRelogio = setInterval(iniAtualizarHora, 20000);
     const el = document.getElementById('inicio-conteudo'); if (!el) return;
@@ -132,8 +167,12 @@ function renderInicio() {
             ${k('n', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
             ${kForn}
         </div>
+        <div class="ini-tit">Prioridades de hoje</div>
+        ${iniPrioridadesHtml()}
         <div class="ini-tit ini-tit-ed">Atalhos<button type="button" class="ini-ed-btn" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button></div>
         ${iniEditando ? htmlEdicaoAtalhos() : `<div class="ini-ats">${iniAtalhosAtuais().map((id, i) => { const c = iniCatalogo()[id]; return c ? at(c.ic, c.t, c.a, i === 0) : ''; }).join('')}</div>`}
+        <div class="ini-tit">Atividade recente</div>
+        ${iniAtividadeHtml()}
         <div class="ini-tit">Próximos vencimentos</div>
         <div class="ini-card">${linhasProx}</div>`;
 }
@@ -275,4 +314,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.68.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.69.0';

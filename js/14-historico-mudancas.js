@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.68.0', nome: 'Modo Desenvolvedor, hora no Início e contagem regressiva', status: 'atual', data: '21/11/2026 às 13:30',
+        numero: '2.69.0', nome: 'Prioridades de hoje, Atividade recente e NFs por dia', status: 'atual', data: '21/11/2026 às 14:10',
+        novidades: ['Início: nova área "Prioridades de hoje", com as pendências mais urgentes (as mesmas da Central de notificações). Toque numa para abrir direto o grupo.', 'Início: nova área "Atividade recente", com as NFs na ordem em que entraram, da mais recente para a mais antiga, separadas por dia (Hoje, Ontem, data). Toque numa NF para abri-la no Controle de NFs.', 'Controle de NFs: dentro de cada mês, as NFs agora ficam separadas por dia, igual à Atividade recente.'],
+        implementado: ['js/48: iniPrioridadesHtml() lê itensDeAtencao() (js/34); iniAtividadeHtml() lê listaNfsProcessadas e o status do Controle (montarControleNfs). Nada novo no Firestore.', 'js/17: htmlDiasControle() separa por dia dentro do mês, mantendo mês recolhível, totais e todos os botões.', 'style.css e js/14: visual, versão e histórico.'],
+        arquivos: ['style.css','index.html','js/48-inicio-lote.js','js/17-historico-controle-nfs.js','js/14-historico-mudancas.js'],
+        mudou: ['Os atalhos, os contadores de "Atenção agora" e "Próximos vencimentos" continuam onde estavam.', 'Na Atividade recente, o dia de hoje mostra o horário; dias anteriores mostram só a data.', 'No Controle de NFs o dia usa a mesma data que já agrupava os meses (emissão/ERP); dentro do dia a ordem segue a hora de entrada quando existe.'],
+        testar: ['Início: ver "Prioridades de hoje" e tocar numa para abrir o grupo certo na Central de notificações.', 'Início: ver "Atividade recente" com Hoje/Ontem, tocar numa NF e conferir que abre no Controle de NFs.', 'Início: "Mostrar mais" na Atividade recente.', 'Controle de NFs: abrir o mês atual e conferir os dias separados; testar a busca e os botões dos cards.']
+    },
+    {
+        numero: '2.68.0', nome: 'Modo Desenvolvedor, hora no Início e contagem regressiva', status: 'concluida', data: '21/11/2026 às 13:30',
         novidades: ['Novo submenu "Modo Desenvolvedor" em Ajustes, com Uso do Firebase, Fonte do PDF da NF, Importar NFs antigas e Histórico SmartCompras (que saíram da lista principal).', 'Dentro dele, "Linguagem do aplicativo" com a chave "Ativar modo Leandro" e o aviso "Muda a personalidade do app. Cuidado."', 'Ligar a chave abre uma sequência de "proteção" bem zoeira (várias confirmações, termo, captcha, teste de atenção, pergunta de segurança, toques e reflexão). Depois da primeira vez, a ativação é uma tela curta.', 'A tela Início mostra a hora (hh:mm), que atualiza sozinha.', 'No Modo Leandro, de vez em quando aparece uma contagem regressiva (almoço, café das 15h, ir embora), só em dia de expediente.', 'A busca de Ajustes continua achando tudo, inclusive o que mudou de lugar.'],
         implementado: ['index.html: novas telas Modo Desenvolvedor e Linguagem do aplicativo; itens movidos; campo antigo da Personalização removido.', 'js/63-modo-dev.js (novo): chave e sequência de proteção.', 'js/62: chave no lugar dos botões, contagem regressiva aleatória por horário.', 'js/48: hora no Início. js/01: voltar das telas novas. js/29: busca.', 'style.css e js/14: visual, versão e histórico.'],
         arquivos: ['index.html','style.css','js/01-nucleo-config-estado.js','js/29-busca-ajustes.js','js/48-inicio-lote.js','js/62-linguagem.js','js/63-modo-dev.js','js/14-historico-mudancas.js'],
@@ -3903,4 +3911,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.68.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.69.0';
