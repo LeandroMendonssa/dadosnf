@@ -1,0 +1,191 @@
+/* =====================================================================
+   NOVO VISUAL (2.71.0) — conceito "operacional" do protótipo Minhas Notas.
+   Folha SEPARADA: só vale com <body class="nv"> e é desligada em
+   Personalização > Aparência > "Novo visual". style.css continua sendo o visual estável.
+   Princípios: superfícies limpas, hierarquia por cabeçalho de página + painéis + indicadores,
+   etiquetas de status tintadas, filtros que quebram linha, CARDS preservados.
+   leandromendonssa
+   ===================================================================== */
+
+/* ---------- 1. Paleta e escala (claro e escuro; os demais temas herdam o próprio tema) ---------- */
+body.nv{
+  --nv-bg:var(--bg-primary);--nv-surf:var(--bg-secondary);--nv-surf2:var(--bg-tertiary);--nv-line:var(--border-color);
+  --nv-ink:var(--text-dark);--nv-muted:var(--text-light);--nv-blue:var(--accent-text);--nv-blue2:color-mix(in srgb,var(--accent-color) 12%,transparent);
+  --nv-green:var(--success-text);--nv-greenbg:var(--success-bg);--nv-amber:var(--warning-text);--nv-amberbg:var(--warning-bg);--nv-red:var(--danger);--nv-redbg:var(--danger-bg);
+  --nv-shadow:0 2px 5px rgba(20,40,60,.03);--nv-r:14px;
+}
+body.nv[data-theme="light"]{
+  --bg-primary:#f4f6f9;--bg-secondary:#ffffff;--bg-tertiary:#eef2f6;--text-dark:#17212f;--text-light:#718096;--border-color:#e4e9f0;
+  --accent-color:#315f91;--accent-color-hover:#264c75;--accent-text:#315f91;--success-text:#18794e;--warning-text:#9a650c;
+  --r-sm:9px;--r-md:14px;--r-lg:16px;
+  --nv-blue:#315f91;--nv-blue2:#eaf1f8;--nv-green:#18794e;--nv-greenbg:#e9f6ef;--nv-amber:#9a650c;--nv-amberbg:#fff4dd;--nv-red:#b93838;--nv-redbg:#fff0ef;
+}
+body.nv[data-theme="dark"]{
+  --bg-primary:#0f151c;--bg-secondary:#171f29;--bg-tertiary:#1f2935;--text-dark:#eef2f7;--text-light:#94a3b4;--border-color:#273343;
+  --accent-color:#4a86c5;--accent-color-hover:#5b95d2;--accent-text:#8fbdf0;--success-text:#5fd392;--warning-text:#f0b64a;
+  --r-sm:9px;--r-md:14px;--r-lg:16px;
+  --nv-blue:#8fbdf0;--nv-blue2:#1c2d42;--nv-green:#5fd392;--nv-greenbg:#143424;--nv-amber:#f0b64a;--nv-amberbg:#3a2d12;--nv-red:#ff8d82;--nv-redbg:#3a1f1d;
+  --nv-shadow:0 2px 6px rgba(0,0,0,.35);
+}
+body.nv{font-size:14px;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body.nv .app-screen{background:var(--bg-primary)}
+
+/* ---------- 2. Estrutura: cabeçalho, barra lateral (computador) e barra inferior (celular) ---------- */
+body.nv .header{background:color-mix(in srgb,var(--bg-secondary) 90%,transparent);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--border-color);box-shadow:none}
+body.nv .header-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
+body.nv .tab-bar{background:color-mix(in srgb,var(--bg-secondary) 92%,transparent);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-top:1px solid var(--border-color)}
+body.nv .tab-item{font-size:10px;font-weight:600}
+body.nv .tab-item.active{color:var(--nv-blue)!important;font-weight:750}
+@media (min-width:900px){
+  body.nv .sidebar{flex:0 0 238px;width:238px;padding:22px 14px;gap:0}
+  body.nv .sidebar-header{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:750;letter-spacing:-.4px;padding:0 10px 24px}
+  body.nv .sidebar-header::before{content:"MN";width:30px;height:30px;border-radius:9px;background:var(--accent-color);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;letter-spacing:0}
+  body.nv .sidebar-item{padding:10px 11px;border-radius:9px;font-size:14px;font-weight:550;color:var(--nv-muted)}
+  body.nv .sidebar-item:hover{background:var(--nv-surf2)}
+  body.nv .sidebar-item.active{background:var(--nv-blue2);color:var(--nv-blue);font-weight:700}
+  body.nv .header-title::before{content:"Minhas Notas  /  ";font-weight:400;font-size:13px;color:var(--nv-muted)}
+  body.nv .main-content .header{min-height:64px;padding-left:30px;padding-right:30px}
+  body.nv{--header-h:64px}
+  body.nv .app-screen{padding:calc(var(--header-h) + 24px) 34px 60px}
+  body.nv .app-screen>*{max-width:1440px;margin-left:auto;margin-right:auto}
+}
+
+/* ---------- 3. Componentes compartilhados ---------- */
+/* cabeçalho de página */
+.nv-pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:0 0 18px}
+.nv-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--nv-muted);font-weight:750}
+.nv-pagehead h1,body.nv .ini-h1{font-size:26px;letter-spacing:-.8px;margin:4px 0 4px;color:var(--nv-ink);font-weight:750}
+.nv-sub,body.nv .ini-sub{color:var(--nv-muted);margin:0;font-size:13.5px}
+/* botões */
+.nv-btn,body.nv .actions-button{border:1px solid var(--nv-line);background:var(--nv-surf);color:var(--nv-ink);padding:10px 14px;border-radius:9px;font-weight:650;font-size:13.5px;min-height:42px;cursor:pointer;box-shadow:none}
+.nv-btn.pri,body.nv .actions-button.is-primary,body.nv .actions-button:not(.is-neutral):not(.is-ghost):not(.is-danger):not(.is-warning){background:var(--accent-color);border-color:var(--accent-color);color:#fff}
+.nv-btn.small{padding:6px 10px;font-size:12px;min-height:34px}
+body.nv .actions-button.is-neutral,body.nv .actions-button.is-ghost{background:var(--nv-surf);color:var(--nv-ink);border-color:var(--nv-line)}
+/* etiquetas de status */
+.nv-tag,body.nv .ctl-st,body.nv .ini-chip{font-size:10.5px;font-weight:750;padding:4px 9px;border-radius:20px;white-space:nowrap;letter-spacing:.01em}
+.nv-tag.red,body.nv .ctl-st.err,body.nv .ini-chip.r{color:var(--nv-red);background:var(--nv-redbg)}
+.nv-tag.amber,body.nv .ini-chip.y{color:var(--nv-amber);background:var(--nv-amberbg)}
+.nv-tag.green,body.nv .ctl-st.ok,body.nv .ini-chip.g{color:var(--nv-green);background:var(--nv-greenbg)}
+.nv-tag.blue,body.nv .ctl-st{color:var(--nv-blue);background:var(--nv-blue2)}
+.nv-tag.gray,body.nv .ctl-st.m{color:var(--nv-muted);background:var(--nv-surf2)}
+/* painel */
+.nv-panel{background:var(--nv-surf);border:1px solid var(--nv-line);border-radius:var(--nv-r);box-shadow:var(--nv-shadow);min-width:0;margin-bottom:14px}
+.nv-ph{padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nv-ph h2{font-size:15px;margin:0;letter-spacing:-.2px;color:var(--nv-ink);text-transform:none}
+.nv-ph p{margin:3px 0 0;color:var(--nv-muted);font-size:12px}
+.nv-div{height:1px;background:var(--nv-line)}
+.nv-body{padding:6px 18px 14px}
+.nv-vazio{color:var(--nv-muted);padding:14px 0;font-size:13px}
+.nv-more{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--nv-blue);font-weight:750;font-size:12px;padding:12px 0 2px;cursor:pointer}
+/* indicadores (KPI) */
+body.nv .ini-grid,.nv-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 18px}
+body.nv .ini-k,.nv-kpi{background:var(--nv-surf);border:1px solid var(--nv-line);border-radius:var(--nv-r);padding:14px 15px;box-shadow:var(--nv-shadow);text-align:left;color:var(--nv-ink);cursor:pointer;font:inherit;min-height:0}
+body.nv .ini-k b,.nv-kpi b{display:block;font-size:29px;letter-spacing:-1px;margin:6px 0 2px;line-height:1.1;color:var(--nv-ink)}
+body.nv .ini-k.r b{color:var(--nv-red)}body.nv .ini-k.y b{color:var(--nv-amber)}
+body.nv .ini-k span,.nv-kpi small{display:block;font-size:11px;color:var(--nv-muted);line-height:1.35}
+.nv-kt{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--nv-muted)}
+.nv-dot{width:8px;height:8px;border-radius:50%;background:#9aa8b8}.nv-dot.r{background:#d45b54}.nv-dot.g{background:#299568}.nv-dot.b{background:var(--nv-blue)}
+.nv-kpi.on{outline:2px solid var(--accent-color);outline-offset:-1px}
+/* filtros: quebram linha, nunca rolam de lado */
+body.nv .rel-abas,body.nv .retro-chips,body.nv .xml-abas,body.nv #screen-nf-editor .xml-abas,body.nv .xml-filtro-toggle,body.nv .output-tabs{display:flex;flex-wrap:wrap;gap:7px;overflow:visible;padding:0;margin:0 0 14px;background:transparent;border-radius:0}
+body.nv .retro-chip,body.nv .rel-chip,body.nv .xml-filtro-btn,body.nv .output-tabs button{border:1px solid var(--nv-line);background:var(--nv-surf);color:var(--nv-muted);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:600;min-height:38px;box-shadow:none;flex:0 0 auto}
+body.nv .retro-chip.on,body.nv .rel-chip.on,body.nv .rel-chip.active,body.nv .xml-filtro-btn.active,body.nv .output-tabs button.active{background:var(--nv-blue2);border-color:color-mix(in srgb,var(--nv-blue) 30%,var(--nv-line));color:var(--nv-blue);font-weight:750}
+/* campos */
+body.nv .form-field,body.nv input.form-field,body.nv select.form-field,body.nv textarea.form-field{border:1px solid var(--nv-line);border-radius:8px;background:var(--nv-surf);padding:11px 12px;font-size:15px}
+body.nv .form-field:focus{border-color:color-mix(in srgb,var(--nv-blue) 55%,var(--nv-line));box-shadow:0 0 0 3px var(--nv-blue2);outline:none}
+body.nv .campo label{font-size:11.5px;font-weight:700;color:var(--nv-muted);letter-spacing:.01em}
+body.nv .ini-busca{border-radius:11px;border-color:var(--nv-line)}
+/* painel genérico: .card e listas viram superfícies do conceito */
+body.nv .card,body.nv .ini-card,body.nv .nota-item,body.nv .central-fornecedor{background:var(--nv-surf);border:1px solid var(--nv-line);border-radius:var(--nv-r);box-shadow:var(--nv-shadow)}
+
+/* ---------- 4. Cards (mantidos): mesmos dados, nova hierarquia ---------- */
+body.nv .ctl-card{background:var(--nv-surf);border:1px solid var(--nv-line);border-radius:var(--nv-r);box-shadow:var(--nv-shadow);padding:14px 15px}
+body.nv .ctl-av{width:36px;height:36px;border-radius:10px;background:var(--nv-blue2);color:var(--nv-blue);font-size:12px;font-weight:800;letter-spacing:-.2px}
+body.nv .ctl-nm b{font-size:15px;font-weight:700;letter-spacing:-.2px;line-height:1.25}
+body.nv .ctl-nm small{font-size:12px;color:var(--nv-muted)}
+body.nv .ctl-dd{margin-top:12px;padding:10px 0 11px;border-top:1px solid var(--nv-line);border-bottom:0}
+body.nv .ctl-dd>div{border-left:1px solid var(--nv-line)}
+body.nv .ctl-dd span{font-size:10px;text-transform:uppercase;letter-spacing:.6px;font-weight:750;color:var(--nv-muted)}
+body.nv .ctl-dd strong{font-size:13.5px;font-weight:700}
+body.nv .ctl-vl b{font-size:20px;letter-spacing:-.5px}
+body.nv .ctl-pd{border-radius:20px;font-size:11.5px;padding:5px 10px}
+body.nv .ctl-inf{border-radius:9px;background:var(--nv-surf2);font-size:12px}
+body.nv .ctl-bar{border-top:1px solid var(--nv-line)}
+body.nv .ctl-bar button{font-size:11px;font-weight:650;min-height:46px}
+.nv-forn{margin-top:10px;padding:10px 12px;border:1px solid var(--nv-line);border-radius:10px;background:var(--nv-surf2)}
+.nv-forn-l{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--nv-muted);margin-bottom:7px}
+.nv-forn-l b{color:var(--nv-ink)}.nv-forn-l b.ok{color:var(--nv-green)}.nv-forn-l b.pd{color:var(--nv-amber)}
+.nv-segs{display:flex;gap:3px}.nv-segs i{flex:1;height:5px;border-radius:3px;background:var(--nv-line)}.nv-segs i.ok{background:var(--nv-green)}
+/* dias dentro do mês (Controle de NFs) */
+body.nv .ctl-dia{font-size:10px;font-weight:800;letter-spacing:.9px;color:var(--nv-muted);text-transform:uppercase;margin:14px 2px 7px}
+body.nv .ctl-dia small{font-weight:600;letter-spacing:.3px}
+body.nv .ctl-mes-h{border-bottom:1px solid var(--nv-line);margin:14px 0 10px;padding:6px 2px}
+body.nv .ctl-mes-h b{font-size:14.5px;letter-spacing:-.2px}
+
+/* ---------- 5. Início ---------- */
+.nv-layout{display:grid;grid-template-columns:1fr;gap:0}
+.nv-col{min-width:0}
+.nv-work{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid var(--nv-line);background:transparent;padding:13px 0;cursor:pointer;font:inherit;color:var(--nv-ink);min-height:54px}
+.nv-work:last-of-type{border-bottom:0}
+.nv-wt b{display:block;font-size:13px;font-weight:700;line-height:1.3}
+.nv-wt small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:3px;font-size:11.5px;color:var(--nv-muted)}
+.nv-rr{display:flex;align-items:center;gap:8px}.nv-rr i,.nv-time i{font-style:normal;color:var(--nv-muted);font-size:18px;line-height:1}
+.nv-day{font-size:9.5px;letter-spacing:.9px;font-weight:800;color:var(--nv-muted);padding:14px 2px 6px}
+.nv-day:first-child{padding-top:6px}
+.nv-act{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid transparent;border-bottom:1px solid var(--nv-line);background:transparent;padding:11px 2px;border-radius:9px;color:var(--nv-ink);min-width:0;font:inherit;cursor:pointer}
+.nv-act:active,.nv-act:hover{background:var(--nv-surf2)}
+.nv-sym{width:34px;height:34px;flex:none;border-radius:10px;background:var(--nv-blue2);color:var(--nv-blue);display:grid;place-items:center;font-size:10px;font-weight:850;letter-spacing:-.3px}
+.nv-main{display:grid;gap:3px;min-width:0;flex:1}
+.nv-main>b{font-size:12.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nv-sup{font-size:12px;font-weight:650;color:var(--nv-ink);opacity:.8;overflow-wrap:anywhere}
+.nv-main small,.nv-time small{font-size:10.5px;color:var(--nv-muted)}
+.nv-time{display:grid;justify-items:end;gap:2px;flex:none;min-width:44px}
+.nv-time>b{font-size:12px;font-variant-numeric:tabular-nums}
+body.nv .ini-ats{grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 4px}
+body.nv .ini-at{background:var(--nv-surf2);border:1px solid var(--nv-line);border-radius:12px;box-shadow:none;font-size:11.5px;font-weight:600;color:var(--nv-muted);min-height:72px}
+body.nv .ini-at i{color:var(--nv-blue)}
+body.nv .ini-at.forte{background:var(--nv-surf2);border-color:var(--nv-line);color:var(--nv-muted)}body.nv .ini-at.forte i{color:var(--nv-blue)}
+.nv-flat .ini-lin{border-top:1px solid var(--nv-line);padding:11px 0}.nv-flat .ini-lin:first-child{border-top:0}
+.nv-flat .vazio-acao{padding:8px 0}
+@media (min-width:1000px){
+  body.nv .ini-grid,.nv-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+  .nv-layout{grid-template-columns:minmax(0,1.5fr) minmax(300px,.95fr);gap:17px;align-items:start}
+  .nv-recent{position:sticky;top:0}
+  body.nv .ini-ats{grid-template-columns:repeat(6,1fr)}
+}
+@media (max-width:600px){
+  .nv-pagehead{flex-direction:column;gap:12px}.nv-pagehead .nv-btn{width:100%}
+  .nv-ph{padding:14px}.nv-body{padding:4px 14px 12px}
+  body.nv .ini-k b,.nv-kpi b{font-size:25px}
+}
+
+/* ---------- 6. Entrada de NF ---------- */
+.nv-steps{display:flex;gap:7px;margin:0 0 16px}
+.nv-step{flex:1;min-width:0;border-bottom:3px solid var(--nv-line);padding:0 0 9px;color:var(--nv-muted);font-size:11px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nv-step.done{border-color:var(--nv-green);color:var(--nv-green)}.nv-step.current{border-color:var(--nv-blue);color:var(--nv-blue)}
+body.nv #screen-xml-editor .card{padding:16px}
+body.nv #screen-xml-editor .desc-tela{color:var(--nv-muted);font-size:12.5px}
+.nv-salva{border:1px solid var(--nv-green);background:var(--nv-greenbg);border-radius:var(--nv-r);padding:14px;margin:0 0 16px}
+.nv-salva-h{display:flex;gap:12px;align-items:center}
+.nv-salva-ic{flex:none;width:38px;height:38px;border-radius:50%;background:var(--nv-green);color:var(--bg-secondary);display:grid;place-items:center;font-size:20px;font-weight:800}
+.nv-salva-h b{display:block;font-size:15px;color:var(--nv-ink)}.nv-salva-h small{display:block;color:var(--nv-muted);font-size:12px}
+.nv-salva-h>div{flex:1;min-width:0}
+.nv-x{flex:none;border:0;background:transparent;font-size:24px;line-height:1;color:var(--nv-muted);min-width:40px;min-height:40px;cursor:pointer}
+.nv-salva-b{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.nv-salva-b .actions-button{flex:1 1 130px;min-height:44px}
+
+/* ---------- 7. Central de Auditoria ---------- */
+body.nv .aud-card{border-radius:var(--nv-r)}
+body.nv #auditoria-central-conteudo .central-status-toggle{border-radius:9px;min-height:42px;font-weight:650}
+body.nv .aud-sug{border-radius:10px}
+
+/* ---------- 8. Computador: melhor uso da largura ---------- */
+@media (min-width:1100px){
+  body.nv #controle-lista .central-colapso-inner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+  body.nv #controle-lista .ctl-dia{grid-column:1/-1}
+  body.nv #auditoria-central-conteudo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+  body.nv #auditoria-central-conteudo>*:not(.aud-card){grid-column:1/-1}
+}
+@media (min-width:1500px){
+  body.nv #controle-lista .central-colapso-inner{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
