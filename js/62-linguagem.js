@@ -1,4 +1,4 @@
-// 62-linguagem.js — Linguagem do aplicativo (2.62.0)
+// 62-linguagem.js — Linguagem do aplicativo (2.64.0)
 // Camada única de linguagem da INTERFACE: toasts, saudação, textos de tela vazia e orientações.
 // REGRA: este arquivo só é chamado por js/07 (toast), js/05 e js/48 (telas). Relatórios, PDFs, Word, textos de saída,
 // auditorias e qualquer conteúdo oficial NÃO usam LING e nunca recebem a linguagem "Sem paciência".
@@ -16,7 +16,7 @@ const LING = (function () {
             'Não salvou. O sistema resolveu fazer greve sozinho. Tenta de novo.',
             'Deu erro ao salvar. Na hora H ele sempre arruma uma desculpa. Tenta outra vez.',
             'Salvar era o único trabalho dele e ele deu um jeito de falhar. Tenta de novo.',
-            'Não rolou salvar. Respira e tenta de novo, a culpa não é sua.',
+            'Não rolou salvar. O sistema decide sozinho quando quer colaborar.',
             'Não salvou. E o pior é que ninguém ficou surpreso.'] },
         { id: 'erro-excluir', re: /^(Erro ao excluir|Não foi possível excluir|Não foi possível remover)\.?$/, s: [
             'Não apagou. Até sumir com as coisas aqui dá trabalho.',
@@ -39,7 +39,7 @@ const LING = (function () {
         { id: 'excluida', re: /^(🗑️\s*)?(Anotação|Nota|Cotação) excluída!?\.?$/, pre: '🗑️ ', s: [
             'Já era.', 'Apagada. Menos uma pra se preocupar.', 'Sumiu. Ninguém sentirá falta.', 'Excluída, sem choro nem vela.'] },
         { id: 'copiado', re: /^(Copiado|Resposta copiada)\b/, s: [
-            'Copiou. Agora é só colar e torcer.', 'Copiado. Pode colar onde quiser.', 'Tá na área de transferência. Missão cumprida.'] },
+            'Copiou. Agora cola e reza pra não ter vindo cortado.', 'Copiado. Pode colar onde quiser.', 'Tá na área de transferência. Pelo menos isso.'] },
         { id: 'colado', re: /^Texto colado!?$/, s: [
             'Colou. Vamos ver o que vem por aí.', 'Texto colado. Agora vem a parte divertida.', 'Colado. Vamos ver no que isso dá.'] },
         { id: 'gerado', re: /^(Arquivo gerado|PDF gerado)\.?$/, s: [
@@ -51,7 +51,7 @@ const LING = (function () {
             'Essa NF não apareceu. Ou não existe, ou tá se escondendo.',
             'NF não encontrada. Já olhei até debaixo do tapete.'] },
         { id: 'tudo-certo', re: /^Tudo certo[.!]?$/, semNome: true, s: [
-            'Pronto, resolvido. Foi quase indolor.', 'Tudo certo. Pode comemorar baixinho.', 'Feito. Antes que inventem outra coisa.'] },
+            'Pronto, resolvido. Foi quase indolor.', 'Tudo certo. Antes que inventem outra coisa.', 'Feito. Sobrevivemos.'] },
         { id: 'sel-cotacao', re: /^Selecione ao menos uma cotação\.?$/, s: [
             'Sem cotação marcada não tem o que fazer. Marca uma aí.', 'Falta marcar uma cotação. Eu não adivinho.'] },
         { id: 'cole-texto', re: /^Cole o texto do relatório antes de processar\.?$/, s: [
@@ -63,8 +63,6 @@ const LING = (function () {
         { id: 'nf-no-pedido', re: /^A NF já está nesse pedido\.?$/, s: [
             'Essa NF já tá nesse pedido. Duas vezes não adianta.', 'Já tá aqui dentro. Não precisa insistir.'] }
     ];
-    // Textos fixos (não rotacionam): orientações, telas vazias, saudação. Só valem na linguagem "Sem paciência";
-    // na Normal vale o texto original que o chamador já tem.
     const FIXAS = {
         'forn-dica': 'Toca no fornecedor pra abrir o pedido. Na seta do lado ficam os produtos que ainda faltam chegar. O resumo pra enviar fica em Início > Resumo de pendências (o documento sai sério, a bronca fica só aqui).',
         'vazio-saida': { t: 'Nada pra saída por enquanto', p: 'Silêncio total. Aproveita antes que apareça alguma coisa.' },
@@ -72,9 +70,6 @@ const LING = (function () {
         'ini-sem-nf': { t: 'Nenhuma NF aberta', p: 'Relação vazia. Nem parece o almoxarifado.' },
         'ini-calc': 'Calculando… paciência, que a pressa é inimiga do perfeito.'
     };
-
-    // Textos de orientação e telas vazias (2.62.1). Chave = começo do texto original; valor = versão "Sem paciência".
-    // A troca é feita por varredura da tela (só <p>, <small>, .empty-state, .ini-vazio) e só quando o texto bate; o original fica guardado para voltar ao Normal.
     const FRASES = [
         ['Procura o lote nos dados atuais', 'Procura o lote nas NFs processadas no app e nas NFs antigas (lotes lidos dos PDFs). Cada resultado diz de onde veio, pra ninguém ter que adivinhar.'],
         ['Um lote por linha. Procura só no modelo novo', 'Um lote por linha. Procura só nas NFs antigas, aquelas que a gente jurava que nunca ia precisar rever.'],
@@ -107,7 +102,6 @@ const LING = (function () {
         ['O quadro tracejado é o espaço da logo', 'O quadro tracejado é o espaço da logo no PDF e no Word. Escolhe como a imagem entra nele.'],
         ['Os pedidos entram sozinhos', 'Os pedidos entram sozinhos: todo pedido recente com fornecedor que não entregou, ou que entregou e deixou pendência. Só entram ocorrências de auditoria que ainda não foram relatadas.'],
         ['Toque no fornecedor para abrir o pedido', 'Toca no fornecedor pra abrir o pedido. Na seta do lado ficam os produtos que ainda faltam chegar. O resumo pra enviar fica em Início > Resumo de pendências (o documento sai sério, a bronca fica só aqui).'],
-        // telas vazias (dinâmicas)
         ['Nenhuma nota próxima do vencimento', 'Nenhuma nota perto de vencer. Aproveita enquanto dura.'],
         ['Nenhuma nota em espera', 'Nenhuma nota em espera. As que você segurar aparecem aqui, até alguém lembrar delas.'],
         ['Nenhum registro encontrado', 'Nada por aqui. Ou não existe registro, ou a informação resolveu tirar férias.'],
@@ -146,10 +140,10 @@ const LING = (function () {
         ['Entende perguntas livres', 'Entende pergunta livre (usa o limite grátis do dia, então não abusa).'],
         ['Mostrando as 8 primeiras', 'Mostrando só as 8 primeiras. Digita mais do número da NF pra refinar.']
     ];
-    const FRASES_ATIVAS = new Map();   // preenchido abaixo
-    const SUF_OK = ['Menos uma pra conta.', 'Antes que alguém invente outra.', 'Sem drama, pra variar.', 'Anota aí: funcionou.', 'Pode comemorar baixinho.', 'Sobrevivemos a mais uma.', 'Milagre, mas aconteceu.'];
-    const SUF_FALHA = ['Clássico.', 'Respira e tenta de novo.', 'Dia difícil pra todo mundo.', 'Ninguém está surpreso.', 'O sistema não ajuda, mas a gente insiste.', 'Mais uma pro caderninho.'];
-    const SUF_FALTA = ['Sem isso eu não adivinho.', 'Falta pouco, juro.', 'Detalhe que a gente não pode pular.', 'Eu bem que queria ajudar, mas não leio mente.'];
+    const FRASES_ATIVAS = new Map();
+    const SUF_OK = ['Menos uma pra conta.', 'Antes que alguém invente outra.', 'Sem drama, pra variar.', 'Anota aí: funcionou.', 'Sobrevivemos a mais uma.', 'Milagre, mas aconteceu.', 'Finalmente.'];
+    const SUF_FALHA = ['Clássico.', 'Dia difícil pra todo mundo.', 'Ninguém está surpreso.', 'O sistema não ajuda, mas a gente insiste.', 'Mais uma pro caderninho.', 'Como esperado.'];
+    const SUF_FALTA = ['Sem isso eu não adivinho.', 'Detalhe que a gente não pode pular.', 'Eu bem que queria ajudar, mas não leio mente.', 'Falta o básico.'];
     const SUF_NADA = ['Vazio absoluto.', 'Nem sinal de vida.', 'Silêncio total por aqui.', 'Deserto completo.'];
     const SUF_JA = ['Já tá feito, não precisa insistir.', 'Isso já foi resolvido, juro.', 'Duas vezes não adianta.'];
     const ultimo = {};
@@ -161,7 +155,6 @@ const LING = (function () {
         let i; do { i = Math.floor(Math.random() * lista.length); } while (i === ultimo[id]);
         ultimo[id] = i; return lista[i];
     }
-    // Para o toast: devolve o texto na linguagem escolhida, ou null para manter o original.
     function toast(texto, ehSucesso, ehErro) {
         if (modo !== 's' || !texto) return null;
         for (const r of REGRAS) {
@@ -169,7 +162,6 @@ const LING = (function () {
             let t = sorteia(r.id, r.s).replace('$1', m[1] || '');
             return (r.pre || '') + t;
         }
-        // Sem regra própria: mantém o texto original (com nomes e números) e acrescenta um comentário no fim.
         if (ehSucesso) return texto.replace(/[.!\s]+$/, '') + '. ' + sorteia('suf-ok', SUF_OK);
         if (ehErro) {
             const base = texto.replace(/[.!\s]+$/, '');
@@ -187,27 +179,81 @@ const LING = (function () {
         return null;
     }
     function fixa(id, neutro) { if (modo !== 's') return neutro; const v = FIXAS[id]; return v === undefined ? neutro : v; }
-    // Comentário do Início conforme o horário (expediente: seg a qui 7h-11h30 e 13h30-17h; sexta até 16h). Estável por meia hora.
     function comentarioHora() {
         if (modo !== 's') return '';
         const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
         const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
         const esc = l => l[sem % l.length];
         const hm = n => n >= 60 ? Math.floor(n / 60) + 'h' + (n % 60 ? String(n % 60).padStart(2, '0') : '') : n + ' min';
-        if (dia === 0 || dia === 6) return esc(['Fim de semana e você aqui? Respeito a dedicação. 🧐', 'Dia de descanso e o app aberto. Vai ver a pendência não deixa. 😶‍🌫️', 'Sábado ou domingo, pouco importa: a pendência não tira folga. 🫠']);
-        if (min < 5 * 60) return esc(['Madrugada. Ou você acordou cedo demais, ou nem dormiu. 🫠', 'Esse horário só existe pra quem tem pendência ou insônia. 🫥', 'A essa hora até o fornecedor atrasado tá dormindo. 😶‍🌫️']);
-        if (min < 7 * 60) return esc(['Ainda nem é expediente. O café já saiu? 🧐', 'Cedo demais pra problema. Mas ele não pergunta o horário. 😒']);
-        if (min < 9 * 60) return sexta ? esc(['Sextou! Só falta aguentar até as 16h. 😤', 'Sexta-feira: a pendência não sabe, mas a gente sabe. 🤨']) : dia === 1 ? esc(['Segunda-feira. Não tem como disfarçar. 😒', 'Começo de semana, começo de pendência. 😤']) : esc(['Expediente começou. Respira fundo. 😤', 'Mais um dia, a mesma pilha de pendência. 🙄', 'Bom dia pra quem tem fornecedor no prazo. Se existir. 🤔']);
-        if (min < 11 * 60) return esc(['Meio da manhã: a pilha de pendência continua do mesmo tamanho. 🧐', 'Ainda dá tempo de resolver algo antes do almoço. Ainda. 🤨', 'Manhã passando e o fornecedor atrasado continua firme. 😒']);
-        if (min < 11 * 60 + 30) return esc(['Quase hora do almoço. O estômago já avisou. 🤨', 'Falta pouco pro almoço. Ninguém mais resolve nada. 😶‍🌫️']);
-        if (min < 13 * 60 + 30) return esc(['Hora do almoço. Pendência não sai correndo, vai comer. 🫠', 'Almoço! Ninguém resolve nada de estômago vazio. 🤔', 'Horário sagrado. O app aguenta, você precisa comer. 😤']);
-        if (min < 15 * 60) return esc(['Pós-almoço: o sono bate, o fornecedor continua atrasado. 🙄', 'Voltou do almoço. A fila de pendência também. 🤔', 'A digestão ganha do raciocínio agora. 🫠']);
-        if (min < 15 * 60 + 45) return esc(['Hora do café das 15h. Sem ele o resto do dia não sai. 🫠', 'Café das 15h. Pausa de respeito. 🧐']);
-        if (min < fim - 30) return sexta ? `Sextou. Faltam ${hm(fim - min)} pra ir embora. 😤` : esc([`Faltam ${hm(fim - min)} pra ir embora. 😒`, `Reta final: ${hm(fim - min)} pra liberdade. 🤨`]);
-        if (min < fim) return `Falta só ${hm(fim - min)}. Melhor não abrir mais nada novo. 🤨`;
-        if (min < 19 * 60) return sexta ? esc(['Passou das 16h numa sexta e você ainda aqui? Vai curtir o fim de semana! 🤨', 'Sextou faz tempo. Fecha esse app. 😤']) : esc(['Já deu o horário. Vai embora, a pendência amanhã continua aqui. 😒', 'Fora do expediente. A pendência agradece, mas ela não paga hora extra. 🙄']);
-        if (min < 22 * 60) return esc(['Ainda aqui? O expediente acabou faz tempo. 🙄', 'Noite no app. Respeito, mas isso não é saudável. 🫥']);
-        return esc(['Tarde da noite. A NF não vai fugir, vai dormir. 🫠', 'Nesse horário o único que responde é o app. 🤡', 'Quem trabalha uma hora dessas merece pelo menos um café. 🫥']);
+        if (dia === 0 || dia === 6) return esc([
+            'Fim de semana e o app aberto. A pendência não tira folga.',
+            'Sábado ou domingo, pouco importa: a pendência continua aqui.',
+            'Dia de descanso e você aqui. Respeito a dedicação, mas a pendência agradece.'
+        ]);
+        if (min < 5 * 60) return esc([
+            'Madrugada. A essa hora até o fornecedor atrasado tá dormindo.',
+            'Esse horário só existe pra quem tem pendência ou insônia.',
+            'Ainda de madrugada e já tem gente resolvendo NF. O sistema não dorme, mas podia.'
+        ]);
+        if (min < 7 * 60) return esc([
+            'Ainda nem é expediente. O café já saiu?',
+            'Cedo demais pra problema. Mas ele não pergunta o horário.'
+        ]);
+        if (min < 9 * 60) return sexta ? esc([
+            'Sextou. Só falta aguentar até as 16h.',
+            'Sexta-feira: a pendência não sabe, mas a gente sabe.'
+        ]) : dia === 1 ? esc([
+            'Segunda-feira. Não tem como disfarçar.',
+            'Começo de semana, começo de pendência.'
+        ]) : esc([
+            'Expediente começou. Respira fundo.',
+            'Mais um dia, a mesma pilha de pendência.',
+            'Bom dia pra quem tem fornecedor no prazo. Se existir.'
+        ]);
+        if (min < 11 * 60) return esc([
+            'Meio da manhã: a pilha de pendência continua do mesmo tamanho.',
+            'Ainda dá tempo de resolver algo antes do almoço. Ainda.',
+            'Manhã passando e o fornecedor atrasado continua firme.'
+        ]);
+        if (min < 11 * 60 + 30) return esc([
+            'Quase hora do almoço. O estômago já avisou.',
+            'Falta pouco pro almoço. Ninguém mais resolve nada.'
+        ]);
+        if (min < 13 * 60 + 30) return esc([
+            'Hora do almoço. Pendência não sai correndo, vai comer.',
+            'Almoço. Ninguém resolve nada de estômago vazio.',
+            'Horário sagrado. O app aguenta, você precisa comer.'
+        ]);
+        if (min < 15 * 60) return esc([
+            'Pós-almoço: o sono bate, o fornecedor continua atrasado.',
+            'Voltou do almoço. A fila de pendência também.',
+            'A digestão ganha do raciocínio agora.'
+        ]);
+        if (min < 15 * 60 + 45) return esc([
+            'Hora do café das 15h. Sem ele o resto do dia não sai.',
+            'Café das 15h. Pausa de respeito.'
+        ]);
+        if (min < fim - 30) return sexta ? `Sextou. Faltam ${hm(fim - min)} pra ir embora.` : esc([
+            `Faltam ${hm(fim - min)} pra ir embora.`,
+            `Reta final: ${hm(fim - min)} pra liberdade.`
+        ]);
+        if (min < fim) return `Falta só ${hm(fim - min)}. Melhor não abrir mais nada novo.`;
+        if (min < 19 * 60) return sexta ? esc([
+            'Passou das 16h numa sexta e você ainda aqui? Vai curtir o fim de semana.',
+            'Sextou faz tempo. Fecha esse app.'
+        ]) : esc([
+            'Já deu o horário. Vai embora, a pendência amanhã continua aqui.',
+            'Fora do expediente. A pendência agradece, mas ela não paga hora extra.'
+        ]);
+        if (min < 22 * 60) return esc([
+            'Ainda aqui? O expediente acabou faz tempo.',
+            'Noite no app. Respeito, mas isso não é saudável.'
+        ]);
+        return esc([
+            'Tarde da noite. A NF não vai fugir, vai dormir.',
+            'Nesse horário o único que responde é o app.',
+            'Quem trabalha uma hora dessas merece pelo menos um café.'
+        ]);
     }
     const saudacaoExtra = comentarioHora;
     function aplicarFixas() {
@@ -216,7 +262,6 @@ const LING = (function () {
         const ex = document.getElementById('ling-ex'); if (ex) ex.textContent = OPCOES[modo].exemplo;
         ['n', 's'].forEach(k => { const b = document.getElementById('ling-' + k); if (b) b.setAttribute('aria-pressed', String(modo === k)); });
     }
-    // Varredura da tela: troca os textos de orientação/vazio que batem com FRASES. Só <p>, <small>, .empty-state, .ini-vazio.
     const norm = t => (t || '').replace(/\s+/g, ' ').trim();
     let varrendo = false, obs = null;
     function varrer() {
@@ -234,7 +279,6 @@ const LING = (function () {
         varrendo = false;
         try { if (obs) obs.observe(document.body, { childList: true, subtree: true }); } catch (e) { }
     }
-    // leandromendonssa
     let agenda = 0;
     function agendar() { if (agenda) return; agenda = setTimeout(() => { agenda = 0; varrer(); }, 120); }
     try { obs = new MutationObserver(() => { if (modo === 's') agendar(); }); obs.observe(document.body, { childList: true, subtree: true }); } catch (e) { }
