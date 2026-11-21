@@ -18,6 +18,7 @@
         'screen-personalizacao': 'aparencia tema personalizar visual',
         'screen-backup': 'backup copia seguranca dados restaurar exportar',
         'screen-danfe-fonte': 'fonte pdf nf danfe times new roman ttf letra tipografia',
+        'screen-dev': 'desenvolvedor developer dev avancado firebase fonte pdf lotes smartcompras linguagem leandro',
         'screen-conta': 'conta senha email perfil usuario sair',
         'screen-aprovacoes': 'aprovacao acesso usuario criar conta admin liberar'
     };
@@ -47,13 +48,14 @@
 
     function entradas() {
         const lista = [];
-        document.querySelectorAll('#ajustes-lista li').forEach(li => {
+        document.querySelectorAll('#ajustes-lista li, #dev-lista li').forEach(li => {
             const a = li.querySelector('a[data-screen]');
             if (!a || li.style.display === 'none') return;
             const t = (a.textContent || '').replace(/\s+/g, ' ').trim();
             const ic = a.querySelector('i.icon');
             lista.push({ t, k: CHAVES[a.dataset.screen] || '', caminho: 'Ajustes', link: a, icone: ic ? ic.className.replace('icon ', '').trim() : 'fa-solid fa-gear', cor: ic ? ic.style.backgroundColor : '#8e8e93', direto: true });
         });
+        lista.push({ t: 'Linguagem do aplicativo', k: 'ativar modo leandro personalidade ranzinza sem paciencia normal', caminho: 'Ajustes › Modo Desenvolvedor', tela: 'screen-ling', tituloTela: 'Linguagem do aplicativo', alvo: 'ling-sw', icone: 'fa-solid fa-comment-dots', cor: '#ff453a' });
         return lista.concat(OPCOES);
     }
     function procurar(q) {
@@ -76,6 +78,7 @@
             setTimeout(() => bloco.classList.remove('ajuste-destaque'), 1800);
         }, 520);
     }
+    // leandromendonssa
     function iniciar() {
         const inp = document.getElementById('ajustes-busca'), res = document.getElementById('ajustes-resultados'), lista = document.getElementById('ajustes-lista');
         if (!inp || !res || !lista) return;
@@ -96,4 +99,4 @@
     window.buscaAjustes = { procurar };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.45.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/29-busca-ajustes.js'] = '2.68.0';

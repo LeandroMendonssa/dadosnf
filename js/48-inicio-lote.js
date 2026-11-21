@@ -96,7 +96,15 @@ function htmlEdicaoAtalhos() {
     const lin = (id, on, i) => `<div class="ini-ed-lin"><i class="${cat[id].ic}"></i><span>${escIni(cat[id].t)}</span>${on ? `<button type="button" class="ini-ed-b" aria-label="Subir" onclick="iniMoverAtalho('${id}', -1)" ${i === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button><button type="button" class="ini-ed-b" aria-label="Descer" onclick="iniMoverAtalho('${id}', 1)" ${i === ativos.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>` : ''}<button type="button" class="ini-ed-b ${on ? 'tira' : 'poe'}" aria-label="${on ? 'Remover' : 'Adicionar'}" onclick="iniAlternarAtalho('${id}')"><i class="fa-solid ${on ? 'fa-minus' : 'fa-plus'}"></i></button></div>`;
     return `<div class="ini-card ini-ed">${ativos.map((id, i) => lin(id, true, i)).join('')}</div>` + (fora.length ? `<div class="ini-tit">Outras telas</div><div class="ini-card ini-ed">${fora.map(id => lin(id, false, 0)).join('')}</div>` : '') + `<button type="button" class="ini-ed-rest" onclick="iniRestaurarAtalhos()">Restaurar atalhos padrão</button>`;
 }
+// 2.68.0: relógio do Início (hora:minuto) e comentário por horário atualizam sozinhos, sem redesenhar a tela.
+let _iniRelogio = 0;
+function iniAtualizarHora() {
+    const h = document.getElementById('ini-hora'); if (!h) return;
+    const a = new Date(); h.textContent = String(a.getHours()).padStart(2, '0') + ':' + String(a.getMinutes()).padStart(2, '0');
+    const c = document.getElementById('ini-coment'); if (c) { const t = LING.saudacaoExtra(); c.textContent = t ? ' · ' + t : ''; }
+}
 function renderInicio() {
+    if (!_iniRelogio) _iniRelogio = setInterval(iniAtualizarHora, 20000);
     const el = document.getElementById('inicio-conteudo'); if (!el) return;
     ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'associacoesFornecedor'].forEach(n => { try { assinarDados(n); } catch (e) { } });   // já subiriam em segundo plano; aqui sobem logo ao abrir (sem leitura extra)
     inicioAtualizarFornecedores();
@@ -114,7 +122,7 @@ function renderInicio() {
         return `<div class="ini-lin"><div>${escIni(nomeF)} ${escIni(n.nf || '')}<small>${escIni(n.vencimento)}${n.valor ? ' · R$ ' + escIni(n.valor) : ''}</small></div>${chipDias(n)}</div>`;
     }).join('') || `<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>${LING.fixa('ini-sem-nf', {t:'Nenhuma NF aberta'}).t}</b><p>${LING.fixa('ini-sem-nf', {p:'A relação está vazia.'}).p}</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen('screen-reports','Relatórios')">Ver todas as NFs</button></div>`;
     el.innerHTML = `
-        <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}${LING.saudacaoExtra() ? ' · ' + LING.saudacaoExtra() : ''}</div>
+        <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt} · <b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b><span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
@@ -267,4 +275,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.62.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.68.0';

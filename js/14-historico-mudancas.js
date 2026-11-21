@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.67.2', nome: 'Botão Voltar nas telas que faltavam', status: 'atual', data: '21/11/2026 às 09:10',
+        numero: '2.68.0', nome: 'Modo Desenvolvedor, hora no Início e contagem regressiva', status: 'atual', data: '21/11/2026 às 13:30',
+        novidades: ['Novo submenu "Modo Desenvolvedor" em Ajustes, com Uso do Firebase, Fonte do PDF da NF, Importar NFs antigas e Histórico SmartCompras (que saíram da lista principal).', 'Dentro dele, "Linguagem do aplicativo" com a chave "Ativar modo Leandro" e o aviso "Muda a personalidade do app. Cuidado."', 'Ligar a chave abre uma sequência de "proteção" bem zoeira (várias confirmações, termo, captcha, teste de atenção, pergunta de segurança, toques e reflexão). Depois da primeira vez, a ativação é uma tela curta.', 'A tela Início mostra a hora (hh:mm), que atualiza sozinha.', 'No Modo Leandro, de vez em quando aparece uma contagem regressiva (almoço, café das 15h, ir embora), só em dia de expediente.', 'A busca de Ajustes continua achando tudo, inclusive o que mudou de lugar.'],
+        implementado: ['index.html: novas telas Modo Desenvolvedor e Linguagem do aplicativo; itens movidos; campo antigo da Personalização removido.', 'js/63-modo-dev.js (novo): chave e sequência de proteção.', 'js/62: chave no lugar dos botões, contagem regressiva aleatória por horário.', 'js/48: hora no Início. js/01: voltar das telas novas. js/29: busca.', 'style.css e js/14: visual, versão e histórico.'],
+        arquivos: ['index.html','style.css','js/01-nucleo-config-estado.js','js/29-busca-ajustes.js','js/48-inicio-lote.js','js/62-linguagem.js','js/63-modo-dev.js','js/14-historico-mudancas.js'],
+        mudou: ['A escolha Modo Normal/Modo Leandro saiu de Personalização > Aparência e foi para o Modo Desenvolvedor. O Modo Leandro que já estava ligado continua ligado.', 'Na sequência, o "segurar o botão" virou "tocar 8 vezes" (segurar pode falhar na web) e a etapa de digitar texto foi cortada.'],
+        testar: ['Ajustes: ver o item Modo Desenvolvedor e conferir que as 4 telas foram pra dentro dele, cada uma com Voltar.', 'Modo Desenvolvedor > Linguagem do aplicativo > ligar a chave e passar pela sequência. Ver se os toques e o teste de atenção funcionam bem no iPhone.', 'Depois de ativar: desligar (uma pergunta) e ligar de novo (tela curta).', 'Início: ver a hora ao lado da data e, no Modo Leandro, esperar uma contagem aparecer em horário de expediente.', 'Buscar "firebase" ou "linguagem" na busca de Ajustes.', 'Repetir nos temas escuro, XP e Vidro.'],
+    },
+    {
+        numero: '2.67.2', nome: 'Botão Voltar nas telas que faltavam', status: 'concluida', data: '21/11/2026 às 09:10',
         novidades: ['Histórico SmartCompras e Análise de Cotações agora têm o botão Voltar no topo, como as outras telas de Ajustes.'],
         implementado: ['js/01: as duas telas entram na lista de telas com Voltar e de tela-mãe (Ajustes).', 'index.html, style.css e js/14: versão e histórico.'],
         arquivos: ['index.html','style.css','js/01-nucleo-config-estado.js','js/14-historico-mudancas.js'],
@@ -3895,4 +3903,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.67.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.68.0';

@@ -1,4 +1,4 @@
-// 62-linguagem.js — Linguagem do aplicativo (2.67.0)
+// 62-linguagem.js — Linguagem do aplicativo (2.68.0)
 // Camada única de linguagem da INTERFACE: toasts, saudação, textos de tela vazia e orientações.
 // REGRA: este arquivo só é chamado por js/07 (toast), js/05 e js/48 (telas). Relatórios, PDFs, Word, textos de saída,
 // auditorias e qualquer conteúdo oficial NÃO usam LING e nunca recebem a linguagem "Sem paciência".
@@ -257,7 +257,7 @@ const LING = (function () {
     }
     function fixa(id, neutro) { if (modo !== 's') return neutro; const v = FIXAS[id]; return v === undefined ? neutro : v; }
     // Comentário do Início conforme o horário (expediente: seg a qui 7h-11h30 e 13h30-17h; sexta até 16h). Estável por meia hora.
-    function comentarioHora() {
+    function comentarioBase() {
         if (modo !== 's') return '';
         const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
         const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
@@ -272,18 +272,35 @@ const LING = (function () {
         if (min < 13 * 60 + 30) return esc(['Hora do almoço. Pendência não sai correndo, vai comer. 🫠', 'Almoço! Ninguém resolve nada de estômago vazio. 🤔', 'Horário sagrado. O app aguenta, você precisa comer. 😤']);
         if (min < 15 * 60) return esc(['Pós-almoço: o sono bate, o fornecedor continua atrasado. 🙄', 'Voltou do almoço. A fila de pendência também. 🤔', 'A digestão ganha do raciocínio agora. 🫠']);
         if (min < 15 * 60 + 45) return esc(['Hora do café das 15h. Sem ele o resto do dia não sai. 🫠', 'Café das 15h. Pausa de respeito. 🧐']);
-        if (min < fim - 30) return sexta ? `Sextou. Faltam ${hm(fim - min)} pra ir embora. 😤` : esc([`Faltam ${hm(fim - min)} pra ir embora. 😒`, `Reta final: ${hm(fim - min)} pra liberdade. 🤨`]);
-        if (min < fim) return `Falta só ${hm(fim - min)}. Melhor não abrir mais nada novo. 🤨`;
+        if (min < fim - 30) return sexta ? esc(['Sextou. A tarde não acaba, mas a semana sim. 😤', 'Sexta à tarde: corpo aqui, cabeça no fim de semana. 🫠']) : esc(['Reta final do expediente. Aguenta. 😒', 'A tarde se arrasta, mas o relógio é implacável. 🤨']);
+        if (min < fim) return esc(['Quase na hora de ir. Melhor não abrir mais nada novo. 🤨', 'Falta pouco. Nenhuma pendência nova, por favor. 😤']);
         if (min < 19 * 60) return sexta ? esc(['Passou das 16h numa sexta e você ainda aqui? Vai curtir o fim de semana! 🤨', 'Sextou faz tempo. Fecha esse app. 😤']) : esc(['Já deu o horário. Vai embora, a pendência amanhã continua aqui. 😒', 'Fora do expediente. A pendência agradece, mas ela não paga hora extra. 🙄']);
         if (min < 22 * 60) return esc(['Ainda aqui? O expediente acabou faz tempo. 🙄', 'Noite no app. Respeito, mas isso não é saudável. 🫥']);
         return esc(['Tarde da noite. A NF não vai fugir, vai dormir. 🫠', 'Nesse horário o único que responde é o app. 🤡', 'Quem trabalha uma hora dessas merece pelo menos um café. 🫥']);
+    }
+    // 2.68.0 — contagem regressiva (almoço, café das 15h, ir embora): aparece só às vezes (sorteio estável por meia hora, para não piscar) e só em dia útil de expediente.
+    function comentarioHora() {
+        if (modo !== 's') return '';
+        const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
+        if (dia > 0 && dia < 6) {
+            const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
+            const alea = (salt, p) => (((sem % 9973) * 7919 + salt * 31) % 100) < p;
+            const hm = n => n >= 60 ? Math.floor(n / 60) + 'h' + (n % 60 ? String(n % 60).padStart(2, '0') : '') : n + ' min';
+            const esc = (salt, l) => l[(sem + salt) % l.length];
+            let c = null;
+            if (min >= 9 * 60 && min < 11 * 60 + 30) c = esc(1, [`Faltam ${hm(11 * 60 + 30 - min)} pro almoço. 🤨`, `Almoço em ${hm(11 * 60 + 30 - min)}. Aguenta firme. 😤`]);
+            else if (min >= 12 * 60 && min < 13 * 60 + 30) c = esc(2, [`O almoço acaba em ${hm(13 * 60 + 30 - min)}. A pendência esperou. 🫠`, `Faltam ${hm(13 * 60 + 30 - min)} pra voltar. Aproveita. 🧐`]);
+            else if (min >= 13 * 60 + 30 && min < 15 * 60) c = esc(3, [`Faltam ${hm(15 * 60 - min)} pro café das 15h. 🫠`, `Café das 15h em ${hm(15 * 60 - min)}. O corpo já sabe. 🤔`]);
+            else if (min >= fim - 150 && min < fim) c = sexta ? `Sextou. Faltam ${hm(fim - min)} pra ir embora. 😤` : esc(4, [`Faltam ${hm(fim - min)} pra ir embora. 😒`, `Contagem regressiva: ${hm(fim - min)} pra liberdade. 🤨`]);
+            if (c && alea(5, min >= fim - 30 && min < fim ? 80 : 45)) return c;
+        }
+        return comentarioBase();
     }
     const saudacaoExtra = comentarioHora;
     function aplicarFixas() {
         const el = document.getElementById('forn-dica');
         if (el) { if (!el.dataset.neutro) el.dataset.neutro = el.textContent; el.textContent = fixa('forn-dica', el.dataset.neutro); }
-        const ex = document.getElementById('ling-ex'); if (ex) ex.textContent = OPCOES[modo].exemplo;
-        ['n', 's'].forEach(k => { const b = document.getElementById('ling-' + k); if (b) b.setAttribute('aria-pressed', String(modo === k)); });
+        const sw = document.getElementById('ling-sw'); if (sw) { sw.classList.toggle('on', modo === 's'); sw.setAttribute('aria-checked', String(modo === 's')); }
     }
     // Varredura da tela: troca os textos de orientação/vazio que batem com FRASES. Só <p>, <small>, .empty-state, .ini-vazio.
     const norm = t => (t || '').replace(/\s+/g, ' ').trim();
@@ -306,6 +323,7 @@ const LING = (function () {
     }
     // leandromendonssa
     let agenda = 0;
+    // leandromendonssa
     function agendar() { if (agenda) return; agenda = setTimeout(() => { agenda = 0; varrer(); }, 120); }
     try { obs = new MutationObserver(() => { if (modo === 's') agendar(); }); obs.observe(document.body, { childList: true, subtree: true }); } catch (e) { }
     function definir(m) {
@@ -319,4 +337,4 @@ const LING = (function () {
     aplicarFixas(); if (modo === 's') varrer();
     return { toast, fixa, t, saudacaoExtra, comentarioHora, definir, modo: () => modo };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.67.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.68.0';
