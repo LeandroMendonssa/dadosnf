@@ -554,6 +554,7 @@ function ajEsc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({
 function ajNorm(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
 
 function prepararAjuda() { ajudaEstado = { aberto: null, busca: '' }; renderAjuda(); }
+// leandromendonssa
 function abrirAjuda(artigoId) {
     ajudaEstado = { aberto: artigoId || null, busca: '' };
     renderAjuda();
@@ -581,7 +582,7 @@ function ajudaMontarResultados() {
     const porCat = AJUDA_CATEGORIAS.map(c => {
         const itens = lista.filter(a => a.cat === c); if (!itens.length) return '';
         return `<div class="aj-cat">${ajEsc(c)}</div><ul class="settings-list-group">${itens.map(a =>
-            `<li><a onclick="abrirArtigoAjuda('${a.id}')"><span class="aj-li"><strong>${ajEsc(a.titulo)}</strong><small>${ajEsc(a.resumo)}</small></span><i class="fa-solid fa-chevron-right"></i></a></li>`).join('')}</ul>`;
+            `<li><a onclick="abrirArtigoAjuda('${a.id}')"><span class="aj-li"><strong>${ajEsc(a.titulo)}</strong><small>${ajEsc((typeof LING !== 'undefined' ? LING.t : x => x)(a.resumo))}</small></span><i class="fa-solid fa-chevron-right"></i></a></li>`).join('')}</ul>`;
     }).join('');
     out.innerHTML = tutHTML + (porCat || '<div class="card aj-resumo">Nada encontrado. Tente outra palavra.</div>');
 }
@@ -594,9 +595,9 @@ function htmlArtigoAjuda(a) {
         + (a.acoes || []).map(x => `<button type="button" class="manage-toolbar-btn" onclick="${x.js}">${ajEsc(x.rotulo)}</button>`).join('')
         + (a.tutorial ? `<button type="button" class="manage-toolbar-btn" onclick="iniciarTutorial('${a.tutorial}')">Ver o tutorial guiado</button>` : '');
     return `<div class="card aj-artigo"><div class="aj-cat">${ajEsc(a.cat)}</div><h2 class="aj-h">${ajEsc(a.titulo)}</h2>
-        <div class="aj-resumo">${ajEsc(a.resumo)}</div>
-        <ol class="aj-passos">${a.passos.map(p => `<li>${ajEsc(p)}</li>`).join('')}</ol>
-        ${a.dicas && a.dicas.length ? `<div class="aj-dicas">${a.dicas.map(d => `<div><strong>Dica:</strong> ${ajEsc(d)}</div>`).join('')}</div>` : ''}
+        <div class="aj-resumo">${ajEsc((typeof LING !== 'undefined' ? LING.t : x => x)(a.resumo))}</div>
+        <ol class="aj-passos">${a.passos.map(p => `<li>${ajEsc((typeof LING !== 'undefined' ? LING.t : x => x)(p))}</li>`).join('')}</ol>
+        ${a.dicas && a.dicas.length ? `<div class="aj-dicas">${a.dicas.map(d => `<div><strong>Dica:</strong> ${ajEsc((typeof LING !== 'undefined' ? LING.t : x => x)(d))}</div>`).join('')}</div>` : ''}
         ${botoes ? `<div class="aj-acoes">${botoes}</div>` : ''}
         <div class="aj-versao">Revisado na versão ${ajEsc(a.versao)}</div></div>`;
 }
@@ -643,4 +644,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.61.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.67.1';

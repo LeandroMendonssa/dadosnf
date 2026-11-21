@@ -66,11 +66,11 @@ const LING = (function () {
     // Textos fixos (não rotacionam): orientações, telas vazias, saudação. Só valem na linguagem "Sem paciência";
     // na Normal vale o texto original que o chamador já tem.
     const FIXAS = {
-        'forn-dica': 'Toca no fornecedor pra abrir o pedido. Na seta do lado ficam os produtos que ainda faltam chegar. O resumo pra enviar fica em Início > Resumo de pendências (o documento sai sério, a bronca fica só aqui).',
+        'forn-dica': 'Toca no fornecedor pra abrir o pedido. Na seta do lado estão os produtos que ainda não chegaram. O resumo pra mandar pro fornecedor fica em Início > Resumo de pendências — o documento sai limpo, a bronca fica só aqui.',
         'vazio-saida': { t: 'Nada pra saída por enquanto', p: 'Silêncio total. Aproveita antes que apareça alguma coisa.' },
         'ini-sem-forn': 'Nenhum fornecedor pendente nos pedidos. Alguém entregou no prazo? Anota a data.',
         'ini-sem-nf': { t: 'Nenhuma NF aberta', p: 'Relação vazia. Nem parece o almoxarifado.' },
-        'ini-calc': 'Calculando… paciência, que a pressa é inimiga do perfeito.'
+        'ini-calc': 'Calculando… paciência, a pressa aqui só atrapalha.'
     };
 
     // Textos de orientação e telas vazias (2.62.1). Chave = começo do texto original; valor = versão "Sem paciência".
@@ -85,43 +85,43 @@ const LING = (function () {
         ['Depois, abra o Histórico de Pedidos', 'Depois abre o Histórico de Pedidos no SmartCompras e toca no favorito. Abre uma janelinha pra conferir e salvar.'],
         ['No celular não dá para arrastar', 'No celular não dá pra arrastar. Copia o código aí embaixo, cria um favorito qualquer, edita o endereço e cola o código. É um jeitinho, mas funciona.'],
         ['No iPhone, este favorito abre o app inteiro', 'No iPhone, esse favorito abre o app inteiro, como antes. Depois de confirmar aqui, o histórico salva normalmente.'],
-        ['Cole ou envie o relatório de cadastro de fornecedores', 'Cola ou envia o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Serve pra confirmar a qual NF/cotação cada lançamento do ERP corresponde, e nunca por semelhança de nome, porque achismo já tem demais. Atualização incremental: nunca apaga fornecedor, CNPJ ou apelido já cadastrado.'],
-        ['Baixa um arquivo com todas as suas notas pendentes', 'Baixa um arquivo com todas as suas notas pendentes, histórico, anotações, fornecedores e configurações. É a sua cópia de segurança, guardada no aparelho, independente do Firebase. Melhor ter e não precisar.'],
+        ['Cole ou envie o relatório de cadastro de fornecedores', 'Cola ou envia o relatório de cadastro de fornecedores do SP Data (código, CNPJ, nome real e nome exibido). Serve pra confirmar a qual NF/cotação cada lançamento do ERP corresponde — e nunca por semelhança de nome, porque achismo já tem demais. Atualização incremental: nunca apaga o que já está cadastrado.'],
+        ['Baixa um arquivo com todas as suas notas pendentes', 'Baixa um arquivo com todas as notas pendentes, histórico, anotações, fornecedores e configurações. É a cópia de segurança no aparelho, independente do Firebase. Melhor ter e não precisar.'],
         ['Exporta TODOS os dados do app', 'Exporta TODOS os dados do app (NFs processadas, entradas do ERP, cotações, associações, fornecedores, exceções de conversão e o resto) num arquivo só, pra analisar casos reais fora do app. Só lê, não mexe em nada.'],
         ['Guarde o arquivo em um lugar seguro', 'Guarda o arquivo num lugar seguro (iCloud Drive, Google Drive, e-mail pra você mesmo). Ele não vai pra lugar nenhum: o download acontece direto no seu navegador.'],
         ['Cadastro manual: use quando a NF não tem XML', 'Cadastro manual é pra quando a NF não tem XML. Com XML, volta pra "Por XML" e poupa o trabalho.'],
-        ['Importe o XML da NF-e do fornecedor', 'Importa o XML da NF-e do fornecedor. O sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e ajuda a ligar cada item à cotação antes de seguir pro ERP. Menos digitação, menos sofrimento.'],
+        ['Importe o XML da NF-e do fornecedor', 'Importa o XML da NF-e. O sistema identifica os produtos, ajusta a conversão pra unidade de dispensação e tenta ligar cada item à cotação antes de ir pro ERP. Menos digitação, menos dor de cabeça.'],
         ['Cole o texto do relatório do SGH', 'Cola o texto do relatório do SGH com Código, Nome e Unidade. Qualquer um serve (Listagem de itens, por grupo, por subgrupo...), mas prefira um com a coluna de nome mais larga, como "Itens por subgrupo II", pra vir menos cortado.'],
         ['Complementa a cotação com a quantidade de fornecedores', 'Complementa a cotação com a quantidade de fornecedores que participaram de cada item (nunca decide recurso ou pagamento sozinho). Cola o texto ou envia o arquivo do relatório.'],
         ['Nenhuma cotação cadastrada para este pedido ainda.', 'Nenhuma cotação nesse pedido ainda. Quando alguém lembrar de cadastrar, aparece aqui.'],
         ['Salva automaticamente. Pra formatação completa', 'Salva sozinho. Pra formatação completa (cores, tabelas, negrito), usa a edição completa.'],
         ['Nenhuma anotação para este pedido ainda.', 'Nenhuma anotação nesse pedido. Raro, mas acontece.'],
-        ['Cole aqui o texto copiado do relatório de fornecedores ganhadores', 'Cola aqui o texto copiado do relatório de fornecedores ganhadores. Ele traz o nome oficial dos produtos, que o XML se recusa a trazer.'],
-        ['Usado só pra personalizar as mensagens do app', 'Serve só pra personalizar as mensagens do app. Deixa em branco se preferir.'],
-        ['Sua conta usa login por e-mail e senha', 'Sua conta usa e-mail e senha. Dá pra trocar a senha quando quiser, inclusive antes de esquecer.'],
-        ['Sua conta usa login pelo Google ou telefone', 'Sua conta entra pelo Google ou pelo telefone, então a senha é problema deles. Aqui não tem senha pra trocar.'],
+        ['Cole aqui o texto copiado do relatório de fornecedores ganhadores', 'Cola aqui o texto do relatório de fornecedores ganhadores. Ele traz o nome oficial dos produtos — o XML se recusa a trazer.'],
+        ['Usado só pra personalizar as mensagens do app', 'Serve só pra personalizar as mensagens do app. Pode deixar em branco.'],
+        ['Sua conta usa login por e-mail e senha', 'Sua conta usa e-mail e senha. Dá pra trocar a senha quando quiser — inclusive antes de esquecer.'],
+        ['Sua conta usa login pelo Google ou telefone', 'Sua conta entra pelo Google ou pelo telefone. A senha é problema deles; aqui não tem o que trocar.'],
         ['Criar conta (e-mail e senha)', 'Cria uma conta (e-mail e senha). A pessoa já entra aprovada e você continua conectado.'],
         ['Pessoas que entraram pelo Google ou telefone', 'Quem entrou pelo Google ou pelo telefone aparece aqui. Aprova pra liberar o acesso ao app.'],
         ['Tema, fonte, menus, dock', 'Tema, fonte, menus, dock e o resto dessas telas valem só pra sua conta e te acompanham em qualquer aparelho. A logo da instituição é a mesma pra todo mundo, sem exceção.'],
         ['Sai no fim de cada página do Resumo de pendências', 'Sai no fim de cada página do Resumo de pendências (PDF e Word), junto da logo da instituição. É só sua: cada usuário tem a própria assinatura. Campo vazio não aparece.'],
         ['O quadro tracejado é o espaço da logo', 'O quadro tracejado é o espaço da logo no PDF e no Word. Escolhe como a imagem entra nele.'],
         ['Os pedidos entram sozinhos', 'Os pedidos entram sozinhos: todo pedido recente com fornecedor que não entregou, ou que entregou e deixou pendência. Só entram ocorrências de auditoria que ainda não foram relatadas.'],
-        ['Toque no fornecedor para abrir o pedido', 'Toca no fornecedor pra abrir o pedido. Na seta do lado ficam os produtos que ainda faltam chegar. O resumo pra enviar fica em Início > Resumo de pendências (o documento sai sério, a bronca fica só aqui).'],
+        ['Toque no fornecedor para abrir o pedido', 'Toca no fornecedor pra abrir o pedido. Na seta do lado estão os produtos que ainda não chegaram. O resumo pra mandar pro fornecedor fica em Início > Resumo de pendências — o documento sai limpo, a bronca fica só aqui.'],
         // telas vazias (dinâmicas)
         ['Nenhuma nota próxima do vencimento', 'Nenhuma nota perto de vencer. Aproveita enquanto dura.'],
-        ['Nenhuma nota em espera', 'Nenhuma nota em espera. As que você segurar aparecem aqui, até alguém lembrar delas.'],
-        ['Nenhum registro encontrado', 'Nada por aqui. Ou não existe registro, ou a informação resolveu tirar férias.'],
+        ['Nenhuma nota em espera', 'Nenhuma nota em espera. As que forem seguradas aparecem aqui, até alguém lembrar delas.'],
+        ['Nenhum registro encontrado', 'Nada por aqui. Ou não existe, ou a informação resolveu tirar férias.'],
         ['Nenhum registro neste ano', 'Nenhum registro neste ano. O ano anda quieto.'],
         ['Nenhum registro neste mês', 'Nenhum registro neste mês. Silêncio suspeito.'],
         ['Nenhum registro no histórico ainda', 'Histórico vazio por enquanto. Processa uma NF pelo Editor XML ou importa o relatório do ERP e começa a encher.'],
         ['O histórico está vazio', 'O histórico está vazio. Ainda.'],
         ['Nenhuma NF do histórico encontrada', 'Nenhuma NF do histórico com esses dados. Confere o número ou tenta outro fornecedor.'],
         ['Nenhuma NF neste filtro', 'Nenhuma NF nesse filtro. Ou ninguém lançou, ou o filtro tá caprichado demais.'],
-        ['Nenhuma NF processada ainda pra este fornecedor', 'Nenhuma NF processada desse fornecedor nesse pedido. Pelo visto, nem pra isso ele colaborou ainda.'],
+        ['Nenhuma NF processada ainda pra este fornecedor', 'Nenhuma NF processada desse fornecedor nesse pedido. Pelo visto nem pra isso ele colaborou.'],
         ['Nenhuma cotação cadastrada ainda. Cadastre', 'Nenhuma cotação cadastrada. Cadastra a cotação correspondente pra associar os itens, ou marca "Esta NF não possui cotação do SmartCompras".'],
         ['Nenhuma cotação cadastrada ainda. Importe', 'Nenhuma cotação cadastrada. Importa o arquivo da primeira cotação pra começar.'],
         ['Nenhuma cotação encontrada', 'Nenhuma cotação encontrada. Confere a busca, que o sistema não esconde de propósito.'],
-        ['Nenhuma divergência adicionada ainda', 'Nenhuma divergência por enquanto. Duvido que dure.'],
+        ['Nenhuma divergência adicionada ainda', 'Nenhuma divergência por enquanto. Feliz coincidência.'],
         ['Nenhuma ocorrência registrada ainda', 'Nenhuma ocorrência registrada. Se fosse sempre assim...'],
         ['Nenhum fornecedor adicionado ainda', 'Nenhum fornecedor adicionado ainda. Alguém precisa começar.'],
         ['Nenhum pedido de acesso ainda', 'Nenhum pedido de acesso. Ninguém batendo na porta, por enquanto.'],
@@ -139,11 +139,11 @@ const LING = (function () {
         ['Confira se faturaram no pedido certo', 'Confere se faturaram no pedido certo. Se a NF for de outro pedido, move no Editor da NF, que o sistema não adivinha.'],
         ['Se a NF for de outro pedido, mova-a em', 'Se a NF for de outro pedido, move em "Mover esta NF para outro pedido".'],
         ['Este fornecedor não ganhou nenhum item neste pedido', 'Esse fornecedor não ganhou nenhum item nesse pedido. Nem pra isso.'],
-        ['Sem cotação cadastrada para o pedido desta NF', 'Esse pedido ainda não tem cotação cadastrada. Alguém precisa fazer isso.'],
-        ['Só lê os dados do app e pode errar', 'Só lê os dados do app e pode errar, que ninguém é perfeito. Confere os números.'],
+        ['Sem cotação cadastrada para o pedido desta NF', 'Esse pedido ainda não tem cotação cadastrada. Alguém precisa resolver isso.'],
+        ['Só lê os dados do app e pode errar', 'Só lê os dados do app e pode errar — ninguém é perfeito. Confere os números.'],
         ['Toque no botão destacado para ver o efeito', 'Toca no botão destacado pra ver o efeito. É só demonstração, ninguém vai ser cobrado.'],
         ['Se for a mesma nota, envie pelo Controle de NFs', 'Se for a mesma nota, envia pelo Controle de NFs ("Enviar para a relação"): os dados já estão lá. Se salvar aqui, a nota fica ligada a essa NF automaticamente.'],
-        ['Entende perguntas livres', 'Entende pergunta livre (usa o limite grátis do dia, então não abusa).'],
+        ['Entende perguntas livres', 'Entende pergunta livre (usa o limite grátis do dia — então não abusa).'],
         ['Mostrando as 8 primeiras', 'Mostrando só as 8 primeiras. Digita mais do número da NF pra refinar.']
     ];
     // 2.67.0 — Textos de painéis montados direto no código (Atenção, Relatórios). Chave = começo do texto neutro.
@@ -170,11 +170,48 @@ const LING = (function () {
         ['Cada divergência com produto, quantidades e valores', 'Cada divergência com produto, quantidades e valores, já agrupada por fornecedor.'],
         ['Situação de cada fornecedor em cada pedido', 'Situação de cada fornecedor em cada pedido, com o que ainda falta chegar (se chegar).'],
         ['Notas arquivadas (enviadas) no período', 'Notas que já foram pro financeiro no período, por fornecedor, com total.'],
+        ['Bloqueadas. Libere em Ajustes do iPhone', 'Bloqueadas. Libera em Ajustes do iPhone → Notificações → este app. Sem isso o app fala sozinho.'],
+        ['Desativadas. Toque em Ativar e permita', 'Desativadas. Toca em Ativar e permite quando o iPhone perguntar.'],
         ['✓ Nada parado por aqui. Tudo em dia.', '✓ Nada parado por aqui. Tudo em dia. Anota a data.']
     ];
+    // 2.67.0 — Ajuda: resumos e dicas no tom do Modo Leandro (texto exato neutro -> versão Leandro).
+    const AJ = new Map([
+        ["Para que serve cada aba da barra inferior.", "Pra que serve cada aba da barra de baixo."],
+        ["No computador a barra não encolhe; no iPhone ela fica só com ícones e abre ao tocar.", "No computador a barra não encolhe; no iPhone fica só com ícones e abre ao tocar."],
+        ["Se sair no meio, o app guarda o que você já preencheu e retoma do mesmo passo.", "Se sair no meio, o app guarda o que já foi preenchido e retoma do mesmo passo."],
+        ["O que acontece com o que você salva depois do limite.", "O que acontece com o que você salva depois que o limite diário estoura."],
+        ["Trazer para o app as alterações de quantidade e prazo que o setor de compras faz no SmartCompras.", "Trazer pro app as alterações de quantidade e prazo que o setor de compras faz no SmartCompras."],
+        ["O marcador só enxerga o que está visível no Histórico de Pedidos. Abra o histórico antes de tocar nele.", "O marcador só enxerga o que está visível no Histórico de Pedidos. Abre o histórico antes de tocar nele."],
+        ["Definir o que cada conta pode alterar no app.", "Definir o que cada conta pode (e não pode) alterar no app."],
+        ["Onde tirar dúvidas: o botão ? e o Assistente.", "Onde tirar dúvida: o botão ? e o Assistente."],
+        ["O Assistente ainda não substitui a Ajuda: ele é um atalho para perguntas rápidas.", "O Assistente ainda não substitui a Ajuda: é um atalho pra pergunta rápida."],
+        ["Cadastrar uma NF sem XML, na aba \"Manual (sem XML)\" da Entrada de NF.", "Cadastrar uma NF sem XML, pela aba Manual da Entrada de NF."],
+        ["Se um item mostra pendência, toque nela: o app leva ao ponto de resolver.", "Se um item mostra pendência, toca nela: o app leva ao ponto de resolver."],
+        ["Trabalhar com a relação de notas pendentes.", "Trabalhar a relação de notas que ainda estão pendentes."],
+        ["O app só aplica o recurso quando a NF tem um único recurso; com mais de um, você escolhe em Editar.", "O app só aplica o recurso quando a NF tem um único recurso; com mais de um, escolhe em Editar."],
+        ["Por que só algumas notas arquivadas aparecem e como carregar as demais.", "Por que só algumas notas arquivadas aparecem e como carregar o resto."],
+        ["Como o app guarda produtos, fornecedores e associações no aparelho para gastar menos leituras do Firebase.", "Como o app guarda produtos, fornecedores e associações no aparelho pra gastar menos leitura do Firebase."],
+        ["Ver o que foi ligado sozinho nas NFs do ERP e resolver só o que depende de você.", "Ver o que o app ligou sozinho nas NFs do ERP e resolver só o que ainda depende de você."],
+        ["Você não precisa associar NF por NF: os itens se ligam ao produto pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor.", "Você não precisa associar NF por NF. Os itens se ligam ao produto pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor. O que ainda depende de você aparece como sugestão ou pendência."],
+        ["O app nunca apaga uma ligação sozinho: só preenche ou corrige para um produto que existe.", "O app nunca apaga uma ligação sozinho: só preenche ou corrige pra um produto que existe."],
+        ["Mostra, neste aparelho, quantas leituras do Firebase foram gastas hoje, por coleção, por tela e por abertura do app.", "Mostra, neste aparelho, quantas leituras do Firebase foram gastas hoje — por coleção, por tela e por abertura do app."],
+        ["Cadastre entregas de reagentes, reuniões e lembretes, com aviso na véspera e no dia.", "Cadastra entregas de reagentes, reuniões e lembretes, com aviso na véspera e no dia."],
+        ["Uma IA que responde perguntas sobre os dados do app, só lendo, sem alterar nada.", "Uma IA que responde pergunta sobre os dados do app — só lê, não altera nada."],
+        ["Um painel com o que está parado ou envelhecendo, do mais urgente ao menos.", "Um painel com o que está parado ou envelhecendo, do mais urgente pro menos."],
+        ["C/C ou Recurso Próprio: onde definir e como chega à Saída de Texto.", "C/C ou Recurso Próprio: onde definir e como chega na Saída de Texto."],
+        ["Apelido único para filiais e vínculo automático por CNPJ.", "Apelido único pras filiais e vínculo automático por CNPJ."],
+        ["Duas cópias dos dados: o backup simples e a exportação completa para análise.", "Duas cópias dos dados: o backup simples e a exportação completa pra análise."],
+        ["Ver e corrigir tudo sobre uma NF em um só lugar.", "Ver e corrigir tudo de uma NF num lugar só."],
+        ["Acompanhar um pedido fornecedor a fornecedor.", "Acompanhar um pedido fornecedor por fornecedor."],
+        ["Escolha uma modalidade, o período, o fornecedor ou produto e o que incluir; copie ou baixe.", "Escolhe a modalidade, o período, o fornecedor ou produto e o que incluir; copia ou baixa."],
+        ["Controle de aparelhos ligado às NFs, com movimentações e estoque.", "Controle de aparelhos ligado às NFs, com movimentação e estoque."],
+        ["Seu nome, senha e (para o administrador) criar contas e liberar acessos.", "Seu nome, senha e (pro administrador) criar contas e liberar acessos."],
+        ["Como o app leva você ao lugar de resolver e traz de volta.", "Como o app te leva ao lugar de resolver e te traz de volta."]
+    ]);
     function t(neutro) {
         if (modo !== 's' || !neutro) return neutro;
         const x = String(neutro).replace(/\s+/g, ' ').trim();
+        if (AJ.has(x)) return AJ.get(x);
         for (const [k, v] of DICAS) if (x.startsWith(k)) return v;
         return neutro;
     }
@@ -282,4 +319,4 @@ const LING = (function () {
     aplicarFixas(); if (modo === 's') varrer();
     return { toast, fixa, t, saudacaoExtra, comentarioHora, definir, modo: () => modo };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.67.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.67.1';

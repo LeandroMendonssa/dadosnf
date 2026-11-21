@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.67.0', nome: 'Modo Leandro mais ranzinza e chegando nos painéis', status: 'atual', data: '21/11/2026 às 08:10',
+        numero: '2.67.1', nome: 'Modo Leandro na Ajuda e nas Notificações', status: 'atual', data: '21/11/2026 às 08:40',
+        novidades: ['No Modo Leandro, os resumos, passos e dicas da Ajuda e o texto das Notificações também ganharam o tom do colega ranzinza.', 'Mais frases de orientação (conta, importações, backup, auditoria) foram ajustadas.'],
+        implementado: ['js/62: lista de textos da Ajuda e das Notificações e ajuste de frases de orientação.', 'js/31 e js/41: passam os textos por LING.t (só mudam no Modo Leandro).', 'index.html, style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/31-ajuda.js','js/41-notificacoes-push.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['No Modo Normal nada muda.', 'Só entram textos que já existiam na Ajuda; artigos novos ficam neutros até serem adicionados à lista.'],
+        testar: ['Modo Leandro: abrir Ajuda e entrar em alguns artigos (Auditoria Retroativa, Backup, Conta) para ver resumo, passos e dicas.', 'Abrir as Notificações e ver o texto de cada estado.', 'Voltar ao Modo Normal e conferir que tudo volta ao original.'],
+    },
+    {
+        numero: '2.67.0', nome: 'Modo Leandro mais ranzinza e chegando nos painéis', status: 'concluida', data: '21/11/2026 às 08:10',
         novidades: ['No Modo Leandro, o painel Atenção (explicação de cada grupo e frase de abertura) e a tela de Relatórios (abertura e descrição de cada relatório) agora já falam no tom do colega ranzinza, em vez do texto neutro.', 'Frases mais fracas ou "traduzidas" foram trocadas por outras mais secas e mais do dia a dia do trabalho (fornecedor, sistema, pendência).', 'Os comentários extras dos avisos ganharam mais variedade e menos fofura.', 'O Modo Normal não muda em nada. Os emojis dos comentários de horário continuam como você pediu.'],
         implementado: ['js/62: nova função LING.t com os textos de painéis; frases e sufixos reescritos.', 'js/34 e js/55: passam os textos por LING.t (só mudam no Modo Leandro).', 'index.html, style.css e js/14: versão e histórico.'],
         arquivos: ['index.html','style.css','js/34-atencao.js','js/55-hub-relatorios.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
@@ -3879,4 +3887,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.67.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.67.1';
