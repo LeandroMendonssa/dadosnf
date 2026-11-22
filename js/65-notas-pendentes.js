@@ -39,7 +39,7 @@ function abrirPendenciaEntrega(id) {
         <p>NF ${escRel(num)}. Marque o que está faltando. Enquanto houver pendência, a NF não vai ao financeiro e o aviso de "esperando decisão" para.</p>
         ${MOTIVOS_PEND_ENTREGA.map(([k, r]) => `<label class="pend-opt"><input type="checkbox" value="${k}" ${marcados.has(k) ? 'checked' : ''}><span>${r}</span></label>`).join('')}
         <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Cancelar</button>
-        ${pe ? `<button type="button" class="actions-button is-danger" onclick="salvarPendenciaEntrega('${escRel(id)}', true)">Remover pendência</button>` : ''}
+        ${pe ? `<button type="button" class="actions-button is-danger" onclick="salvarPendenciaEntrega('${escRel(id)}', true)">Remover</button>` : ''}
         <button type="button" class="actions-button is-primary" onclick="salvarPendenciaEntrega('${escRel(id)}', false)">Salvar</button></div></div>`;
     m.classList.add('active');
 }
@@ -107,4 +107,4 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
         };
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.2';

@@ -577,9 +577,9 @@ function htmlTratamentoNfItem(nf, it, idx, opcoes, ic) {
         if (it.devolucao) {
             const dv = it.devolucao, qT = Number(it.quantidade) || 0, rec = dv.status === 'recolhido';
             return `<div class="nfe-dica" style="margin:10px 0 6px"><strong>Será devolvido</strong> (no lugar de ${escRel(nomeDe(cod))}). Não é associado e não conta como recebido.${rec ? ` Recolhido em ${escRel(dataBRdeISO(dv.recolhidoEm))}${dv.nfDevolucao ? ' · NF de devolução ' + escRel(dv.nfDevolucao) : ''}.` : ' O recolhimento fica pendente no Controle de NFs.'}</div>
-            <div class="nfe-acoes" style="align-items:center"><span style="font-size:var(--fs-aux)">Quantidade a devolver</span>
-              <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="ajustarQtdDevolucaoNfItem('${escRel(nf.id)}', ${idx}, -1)">−</button><strong>${escRel(String(dv.qtd))} de ${escRel(String(qT))}</strong>
-              <button type="button" class="action-chip" style="color:var(--accent-text)" onclick="ajustarQtdDevolucaoNfItem('${escRel(nf.id)}', ${idx}, 1)">+</button></div>
+            <div class="nfe-passo"><span class="nfe-passo-rot">Quantidade a devolver</span><span class="nfe-passo-ctl">
+              <button type="button" aria-label="Diminuir" onclick="ajustarQtdDevolucaoNfItem('${escRel(nf.id)}', ${idx}, -1)">−</button><strong>${escRel(String(dv.qtd))} de ${escRel(String(qT))}</strong>
+              <button type="button" aria-label="Aumentar" onclick="ajustarQtdDevolucaoNfItem('${escRel(nf.id)}', ${idx}, 1)">+</button></span></div>
             <div class="nfe-acoes"><button type="button" class="action-chip" style="color:var(--accent-text)" onclick="desfazerTratamentoNfItem('${escRel(nf.id)}', ${idx})">Desfazer devolução</button></div>`;
         }
         return `<div class="nfe-dica" style="margin:10px 0 6px"><strong>${it.tratamento === 'trocado' ? 'Produto trocado' : 'Aceito como o item pedido, só nesta NF'}</strong>: ${escRel(nomeDe(cod))}.${it.tratamento === 'trocado' ? ' A conferência registra "Solicitamos X, porém foi faturado Y".' : ' A associação do fornecedor não é gravada.'}</div>
@@ -919,4 +919,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.73.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.73.2';

@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.1', nome: 'Correções estruturais: avisos, voltar, Editor e Início', status: 'atual', data: '22/11/2026 às 05:20',
+        numero: '2.73.2', nome: 'Botões e espaçamentos', status: 'atual', data: '22/11/2026 às 08:10',
+        novidades: ['Devolução: o ajuste de quantidade (− e +) ficou compacto, com botões de 44 px, e não estoura mais a largura da tela.', 'Janela de pendência: Cancelar e Remover com o mesmo tamanho, Salvar em largura total, e espaço entre a lista e os botões.', 'Auditoria Retroativa: o texto de "aprender" ficou em bloco próprio acima do botão, que voltou ao tamanho padrão.'],
+        implementado: ['style.css: novas classes nfe-passo (passo de quantidade) e pend-acoes. js/20 e js/32 usam as novas classes; js/65 encurtou o rótulo "Remover".', 'Regra de trabalho: todo botão novo ou reformatado é conferido em tamanho, posição, responsividade e cor antes de entregar.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/20-editor-nf.js','js/32-auditoria-retroativa.js','js/65-notas-pendentes.js'],
+        mudou: ['Somente aparência. Nenhum dado alterado.'],
+        testar: ['Editor de NF com item "será devolvido": os botões − e + devem caber sem rolar a tela para o lado.', 'Controle de NFs > Pendente p/ financeiro: botões alinhados e do mesmo tamanho.', 'Auditoria > Retroativa: o bloco "Aprender com os pedidos confirmados" deve ler bem, em largura total.']
+    },
+    {
+        numero: '2.73.1', nome: 'Correções estruturais: avisos, voltar, Editor e Início', status: 'concluida', data: '22/11/2026 às 05:20',
         novidades: ['Editor de NF: o cartão da NF vem primeiro (dados, etiquetas e botões juntos); os avisos ficam abaixo. "Pendente p/ financeiro" virou um botão e uma etiqueta dentro do cartão, sem bloco solto no topo.', 'Janela de pendência com botões no padrão (Cancelar, Remover pendência, Salvar).', 'Início: o relógio ganhou destaque; Notas pendentes mostra só a contagem regressiva; atividades e pendências no formato FORNECEDOR NÚMERO (ex.: FUTURA 1048), com as iniciais do fornecedor no ícone.', 'Auditoria Retroativa: o botão de aprender agora explica o que será aprendido e só grava depois de confirmar.'],
         implementado: ['Regra única na Central de notificações: NF com pendência de entrega só aparece em Notas pendentes, em nenhum outro grupo.', 'Aviso "pedido sugerido" agora abre a NF (antes abria um filtro da Auditoria que podia estar vazio). Itens trocados, aceitos ou devolvidos nunca contam como "fora do pedido".', 'Marcar item (trocado/aceito/devolvido) agora confere no servidor se gravou e avisa se não gravou.', 'Atalhos para Central, Auditoria e Controle empilham o retorno: o botão Voltar aparece.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/20-editor-nf.js','js/23-conferencia-automatica.js','js/32-auditoria-retroativa.js','js/34-atencao.js','js/48-inicio-lote.js','js/65-notas-pendentes.js'],
@@ -3951,4 +3959,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.2';
