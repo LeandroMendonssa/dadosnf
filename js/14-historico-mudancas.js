@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.72.0', nome: 'Visual padrão estilo Apple, Ajustes em grupos e Operacional como tema', status: 'atual', data: '21/11/2026 às 19:40',
+        numero: '2.73.0', nome: 'Notas pendentes e nova Tela inicial', status: 'atual', data: '21/11/2026 às 23:50',
+        novidades: ['Notas pendentes: NFs paradas comigo por carta de correção, nota fiscal de devolução ou cotação. Botão "Pendente p/ financeiro" no Controle de NFs e no Editor de NF.', 'Enquanto há pendência, a NF não vai ao financeiro e o aviso "esperando decisão" para. Ela aparece na Central de notificações em grupos próprios (vencidas/vencem hoje e demais) e no cartão da Início, com o vencimento da mais urgente.', 'Início: removida "Prioridades de hoje"; Atalhos logo abaixo de "Atenção agora"; o cartão de vencidas virou "Notas pendentes"; o de "vencem hoje ou amanhã" agora soma também as vencidas na relação.', 'Atividade recente mostra só hoje e o último dia útil, com botão "Carregar mais"; Próximos vencimentos ficam abaixo.'],
+        implementado: ['js/65-notas-pendentes.js (novo): motivos, modal, gravação do campo pendenciaEntrega, bloqueio do envio ao financeiro.', 'js/36: pendência para os avisos de decisão parada e vencida sem envio; expõe venc. js/34: dois grupos novos. js/17: botão e linha no cartão. js/48: nova Início.', 'index.html, style.css, novo-visual.css: versão e estilos.'],
+        arquivos: ['index.html','style.css','novo-visual.css','js/17-historico-controle-nfs.js','js/34-atencao.js','js/36-visao-nf.js','js/48-inicio-lote.js','js/65-notas-pendentes.js','js/14-historico-mudancas.js'],
+        mudou: ['Novo campo pendenciaEntrega no documento da NF (só existe nas NFs marcadas). Nada mais foi alterado nos dados.', 'Para voltar: remover a pendência libera a NF e os avisos normais.'],
+        testar: ['Controle de NFs: abrir uma NF das notas da EMBALAKLIN ou Minas Sul e tocar em "Pendente p/ financeiro", marcar um motivo e salvar.', 'Tentar "Enviada ao financeiro" nessa NF: deve avisar que há pendência.', 'Central de notificações: a NF sai de "esperando decisão" e aparece em Notas pendentes.', 'Início: cartão Notas pendentes com o vencimento; Atalhos abaixo; Atividade recente só com hoje e último dia útil; "Carregar mais".', 'Remover a pendência e conferir que tudo volta ao normal.']
+    },
+    {
+        numero: '2.72.0', nome: 'Visual padrão estilo Apple, Ajustes em grupos e Operacional como tema', status: 'concluida', data: '21/11/2026 às 19:40',
         novidades: ['O novo visual virou um tema: Personalização > Aparência > Tema > "Operacional (claro)" ou "Operacional (escuro)". A chave separada foi removida; qualquer outro tema mostra o visual padrão.', 'Visual padrão: sem degradê no fundo (o degradê ficou só na importação de NF e no onboarding) e fundo cinza claro no padrão da Apple.', 'Faixa superior: no celular fica cinza translúcida, com botão Voltar redondo e branco; no computador fica preta, com o menu lateral branco (tema Claro).', 'Ajustes separado em grupos: Conta, Cadastros, Cotações e auditoria, Aparência e uso, Dados, Ajuda e sobre, Avançado e Sair, com cantos arredondados e divisórias como nos Ajustes da Apple.'],
         implementado: ['style.css: fundo, degradê só em #screen-import, faixa superior, grupos de lista no estilo Apple.', 'index.html: Ajustes agrupado, duas opções novas no seletor de tema.', 'js/64: o visual Operacional liga pelo tema (sem chave própria). novo-visual.css: paleta atrelada ao tema.'],
         arquivos: ['index.html','style.css','novo-visual.css','js/64-novo-visual.js','js/14-historico-mudancas.js'],
@@ -3935,4 +3943,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.72.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.0';

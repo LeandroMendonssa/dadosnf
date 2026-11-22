@@ -272,6 +272,7 @@ function renderCardControleNf(it) {
     const pendDetTodas = pendenciasDetalhadasControle(it), pendDet = pendDetTodas.filter(x => !x.info), pend = pendDet.map(x => x.txt);
     const semXmlDiscreto = pendDetTodas.some(x => x.info && !x.erpInfo), semErpDiscreto = pendDetTodas.some(x => x.erpInfo); // 2.19.1: NF sem XML = nota discreta, não pendência
     const primeiroAlvo = pendDet.find(x => x.tipo);
+    // leandromendonssa
     const btn = (icone, rotulo, fn) => `<button type="button" onclick="event.stopPropagation(); ${fn}">${ICONES_CTRL[icone]}<span>${rotulo}</span></button>`;
     const editor = it.nf ? btn('ed', 'Editar NF', `abrirEditorNf('${it.nf.id}')`)
         : it.erp ? btn('ed', 'Editar NF', `abrirEditorNf('${String(it.erp.id).replace(/'/g, "\\'")}')`) : '';
@@ -290,10 +291,11 @@ function renderCardControleNf(it) {
     }
     const devPend = it.nf ? devolucaoPendenteDaNf(it.nf) : null;
     if (devPend) botoes.unshift(btn('reab', 'Marcar como recolhido', `abrirRecolhimentoDevolucao('${String(it.nf.id).replace(/'/g, "\\'")}', ${devPend.idx})`));
+    if (aba === 'aberto' && it.tipo === 'nf' && (it.nf || it.erp)) { const pe = pendEntregaDe(it.nf, it.erp); botoes.push(btn('esp', pe ? 'Editar pendência' : 'Pendente p/ financeiro', `abrirPendenciaEntrega('${String((it.nf || it.erp).id).replace(/'/g, "\\'")}')`)); }   // 2.73.0
     if (editor) botoes.push(editor);
     const sel = selecaoControleAtiva && it.tipo === 'nf' && aba === 'aberto';
     const marcado = sel && selecionadasControle.has(it.chave);
-    const notaAdv = (it.situacao === 'direta' && it.subtipo === 'fornecedor') ? '<div class="ctl-inf">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>' : '';
+    const notaAdv = htmlPendenciaEntregaCard(it) + ((it.situacao === 'direta' && it.subtipo === 'fornecedor') ? '<div class="ctl-inf">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>' : '');
     return `<div class="ctl-card controle-item${marcado ? ' sel' : ''}${sel ? ' selecionavel' : ''}" data-controle-chave="${escRel(it.chave)}"${sel ? ` onclick="toggleSelecionadaControle('${chaveJs}')"` : ''}>
         <div class="ctl-top"><div class="ctl-av">${escRel(iniciaisControle(it.nomeFornecedor))}</div>
             <div class="ctl-nm"><b>${escRel(titulo)}</b><small>${sub}</small></div>
@@ -1063,7 +1065,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.69.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.73.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

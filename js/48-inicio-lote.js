@@ -104,7 +104,7 @@ function iniAtualizarHora() {
     const c = document.getElementById('ini-coment'); if (c) { const t = LING.saudacaoExtra(); c.textContent = t ? ' · ' + t : ''; }
 }
 // 2.69.0: "Prioridades de hoje" (mesmos grupos da Central de notificações) e "Atividade recente" (NFs na ordem em que entraram, por dia)
-let iniAtivLimite = 12;
+let iniAtivExtra = 0;   // 2.73.0: além de hoje e do último dia útil, cada toque em "Carregar mais" traz mais 12
 function iniAbrirPrioridade(id) {
     switchToScreen('screen-atencao', 'Central de notificações'); prepararAtencao();
     if (id) { atencaoAbertos = new Set([id]); _atnAbrirAltas = false; }
@@ -118,8 +118,9 @@ function iniPrioridadesHtml() {
     return `<div class="ini-prios">${g.slice(0, 4).map(x => `<button type="button" class="ini-prio ${x.nivel === 'alta' ? 'a' : 'm'}" onclick="iniAbrirPrioridade('${x.id}')"><span class="ini-pd"></span><span class="ini-pt"><b>${escIni(x.titulo)}</b><small>${escIni(x.dica || '')}</small></span><span class="ini-chip ${x.nivel === 'alta' ? 'r' : 'y'}">${x.linhas.length}</span></button>`).join('')}
         ${g.length > 4 ? `<button type="button" class="ini-mais" onclick="iniAbrirPrioridade('')">Ver todas (${g.length})</button>` : ''}</div>`;
 }
+function iniAbrirNotasParadas() { iniAbrirPrioridade('notas-paradas-venc'); try { atencaoAbertos = new Set(['notas-paradas-venc', 'notas-paradas']); } catch (e) { } }
 function iniAbrirNf(nf) { try { abrirNfNoHistorico('', nf); } catch (e) { switchToScreen('screen-controle-nfs', 'Controle de NFs'); } }
-function iniMaisAtividade() { iniAtivLimite += 12; renderInicio(); }
+function iniMaisAtividade() { iniAtivExtra += 12; renderInicio(); }
 function iniAtividadeHtml() {
     const nv = novoVisualOn();
     const nfs = (listaNfsProcessadas || []).filter(n => n && n.processadoEm && !isNaN(new Date(n.processadoEm)));
@@ -130,7 +131,12 @@ function iniAtividadeHtml() {
     const rot = { recebida: ['', 'Recebida', 'blue'], na_relacao: ['m', 'Na relação', 'gray'], em_espera: ['m', 'Em espera', 'amber'], arquivada: ['ok', 'Enviada ao financeiro', 'green'], direta: ['m', 'Direta', 'gray'] };
     const MESES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
     let ult = '', html = '';
-    nfs.slice(0, iniAtivLimite).forEach(n => {
+    // 2.73.0: só hoje e o último dia útil (sáb/dom não contam; se esse dia não teve NF, vale o dia útil anterior que teve)
+    const diaDe = n => new Date(n.processadoEm).toLocaleDateString('en-CA');
+    const ehUtil = iso => { const w = new Date(iso + 'T12:00:00').getDay(); return w !== 0 && w !== 6; };
+    const diaUtil = (nfs.map(diaDe).find(d => d < hojeISO && ehUtil(d))) || hojeISO;
+    const base = nfs.filter(n => diaDe(n) >= diaUtil).length, limite = base + iniAtivExtra;
+    nfs.slice(0, limite).forEach(n => {
         const dt = new Date(n.processadoEm), dia = dt.toLocaleDateString('en-CA'), dBR = dia.split('-').reverse().join('/');
         if (dia !== ult) {
             ult = dia;
@@ -151,7 +157,7 @@ function iniAtividadeHtml() {
             html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">NF</span><span class="ini-at2"><b>NF ${escIni(n.nf || '—')} · ${escIni(nomeF || '(sem fornecedor)')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
         }
     });
-    const mais = nfs.length > iniAtivLimite ? `<button type="button" class="${nv ? 'nv-more' : 'ini-mais'}" onclick="iniMaisAtividade()">Mostrar mais (${nfs.length - iniAtivLimite})</button>` : '';
+    const mais = nfs.length > limite ? `<button type="button" class="${nv ? 'nv-more' : 'ini-mais'}" onclick="iniMaisAtividade()">Carregar mais (${Math.min(12, nfs.length - limite)} de ${nfs.length - limite})</button>` : '';
     return html + mais;
 }
 function renderInicio() {
@@ -166,6 +172,12 @@ function renderInicio() {
     // leandromendonssa
     const dataTxt = `${DIAS_INI[agora.getDay()]}, ${String(agora.getDate()).padStart(2, '0')} de ${MESES_INI[agora.getMonth()]}`;
     const k = (cls, n, txt, acao) => `<button type="button" class="ini-k ${cls}" onclick="${acao}"><b>${n}</b><span>${txt}</span></button>`;
+    // 2.73.0: cartão "Notas pendentes" (paradas comigo por carta de correção, NF de devolução ou cotação) com o vencimento da mais urgente
+    let kPend; try {
+        const np = notasParadasComigo(), venc = np.filter(x => x.dias != null && x.dias <= 0).length, prox = np[0];
+        const quem = prox ? `${escIni(nomeExibicaoFornecedor(prox.v.nf ? prox.v.nf.fornecedor : prox.v.erp.fornecedor, '') || '')} NF ${escIni((prox.v.nf || prox.v.erp).nf)} · ${escIni(avisoVencParada(prox.dias))}` : 'nenhuma NF parada';
+        kPend = k(np.length ? (venc ? 'r' : 'y') : 'n', np.length, `notas pendentes<br>${quem}`, 'iniAbrirNotasParadas()');
+    } catch (e) { kPend = k('n', 0, 'notas pendentes', 'iniAbrirNotasParadas()'); }
     const at = (ic, txt, acao, forte) => `<button type="button" class="ini-at${forte ? ' forte' : ''}" onclick="${acao}"><i class="${ic}"></i><span>${txt}</span></button>`;
     const chipDias = n => { const x = d.dias(n); return x < 0 ? `<span class="ini-chip r">${-x} dia(s) atrás</span>` : x === 0 ? '<span class="ini-chip r">Hoje</span>' : x === 1 ? '<span class="ini-chip y">Amanhã</span>' : `<span class="ini-chip">${x} dias</span>`; };
     const linhasProx = d.proximas.map(n => {
@@ -180,18 +192,17 @@ function renderInicio() {
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
         <div class="ini-grid">
-            ${k(d.venc > 0 ? 'r' : 'n', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
-            ${k((d.hoje + d.aman) > 0 ? 'y' : 'n', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
+            ${kPend}
+            ${k((d.venc + d.hoje + d.aman) > 0 ? (d.venc + d.hoje > 0 ? 'r' : 'y') : 'n', d.venc + d.hoje + d.aman, `a vencer ou vencidas na relação<br>${d.venc} vencidas · ${d.hoje} hoje · ${d.aman} amanhã`, "switchToScreen('screen-reports','Relatórios')")}
             ${k('n', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
             ${kForn}
         </div>
-        <div class="nv-layout">
+        <div class="nv-layout nv-um">
             <div class="nv-col">
-                <div class="nv-panel">${ph('Prioridades de hoje', 'Itens que pedem uma ação, não apenas acompanhamento.')}<div class="nv-body">${iniPrioridadesHtml()}</div></div>
                 <div class="nv-panel">${ph('Atalhos', '', `<button type="button" class="nv-btn small" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button>`)}<div class="nv-body">${iniEditando ? htmlEdicaoAtalhos() : `<div class="ini-ats">${iniAtalhosAtuais().map((id, i) => { const c = iniCatalogo()[id]; return c ? at(c.ic, c.t, c.a, false) : ''; }).join('')}</div>`}</div></div>
+                <div class="nv-panel nv-recent">${ph('Atividade recente', 'NFs de hoje e do último dia útil, da mais recente para a mais antiga.')}<div class="nv-body">${iniAtividadeHtml()}</div></div>
                 <div class="nv-panel">${ph('Próximos vencimentos', 'NFs da relação por data de vencimento.')}<div class="nv-body nv-flat">${linhasProx}</div></div>
             </div>
-            <div class="nv-panel nv-recent">${ph('Atividade recente', 'Entradas de NF em ordem cronológica, da mais recente para a mais antiga.')}<div class="nv-body">${iniAtividadeHtml()}</div></div>
         </div>`;
         return;
     }
@@ -201,13 +212,11 @@ function renderInicio() {
         <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
         <div class="ini-grid">
-            ${k(d.venc > 0 ? 'r' : 'n', d.venc, 'NFs vencidas na relação', "switchToScreen('screen-reports','Relatórios')")}
-            ${k((d.hoje + d.aman) > 0 ? 'y' : 'n', d.hoje + d.aman, `vencem hoje (${d.hoje}) ou amanhã (${d.aman})`, "switchToScreen('screen-reports','Relatórios')")}
+            ${kPend}
+            ${k((d.venc + d.hoje + d.aman) > 0 ? (d.venc + d.hoje > 0 ? 'r' : 'y') : 'n', d.venc + d.hoje + d.aman, `a vencer ou vencidas na relação<br>${d.venc} vencidas · ${d.hoje} hoje · ${d.aman} amanhã`, "switchToScreen('screen-reports','Relatórios')")}
             ${k('n', d.naRelacao, 'NFs abertas na relação', "switchToScreen('screen-manage','Repasse de NF')")}
             ${kForn}
         </div>
-        <div class="ini-tit">Prioridades de hoje</div>
-        ${iniPrioridadesHtml()}
         <div class="ini-tit ini-tit-ed">Atalhos<button type="button" class="ini-ed-btn" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button></div>
         ${iniEditando ? htmlEdicaoAtalhos() : `<div class="ini-ats">${iniAtalhosAtuais().map((id, i) => { const c = iniCatalogo()[id]; return c ? at(c.ic, c.t, c.a, i === 0) : ''; }).join('')}</div>`}
         <div class="ini-tit">Atividade recente</div>
@@ -353,4 +362,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.71.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.0';

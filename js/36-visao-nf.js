@@ -48,13 +48,14 @@ function visoesNf() {
 
         const divergencias = pedido ? pendDiv.filter(d => String(d.pedido) === pedido && (!d.fornecedorCnpj || !it.cnpj || mesmoCnpj(d.fornecedorCnpj, it.cnpj))) : [];
 
+        // leandromendonssa
         // pendências desta NF (as mesmas que o painel de atenção lista, agora calculadas uma vez só)
         const pendencias = [];
         const diasDaData = it.dataISO ? diasDesdeISO(it.dataISO) : null;
-        if (erp && erp.statusFluxo === 'pre_selecao' && !['arquivada', 'direta', 'enviada'].includes(it.situacao) && diasDaData != null && diasDaData > 7)  /* 2.38.1: NF já arquivada/enviada/direta não espera mais decisão */ pendencias.push({ id: 'decisao-parada', nivel: 'media', texto: `lançada em ${erp.data} (${diasDaData} dia(s)): falta decidir relação, financeiro ou "não vai ao financeiro"` });
+        if (erp && erp.statusFluxo === 'pre_selecao' && !pendEntregaDe(nf, erp) /* 2.73.0: parada por pendência de entrega não notifica como "esperando decisão" */ && !['arquivada', 'direta', 'enviada'].includes(it.situacao) && diasDaData != null && diasDaData > 7)  /* 2.38.1: NF já arquivada/enviada/direta não espera mais decisão */ pendencias.push({ id: 'decisao-parada', nivel: 'media', texto: `lançada em ${erp.data} (${diasDaData} dia(s)): falta decidir relação, financeiro ou "não vai ao financeiro"` });
         // 2.40.0: NF recebida (ainda sem decisão/relação) cujo vencimento já passou: antes só o Controle mostrava "vencida há N dias"; a Central não avisava
         const diasVenc = it.venc ? calcularDiasParaVencimento(it.venc) : null;
-        if (it.situacao === 'recebida' && diasVenc != null && diasVenc < 0) pendencias.push({ id: 'vencida-sem-envio', nivel: 'alta', texto: `vencida há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}, ainda não enviada ao financeiro` });
+        if (it.situacao === 'recebida' && diasVenc != null && diasVenc < 0 && !pendEntregaDe(nf, erp)) pendencias.push({ id: 'vencida-sem-envio', nivel: 'alta', texto: `vencida há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}, ainda não enviada ao financeiro` });
         if (nf && nfSemPedidoPendente(nf)) pendencias.push({ id: 'sem-pedido', nivel: 'media', texto: 'sem pedido e sem marca de compra direta' });
         if (pedidoSt === 'sugerido') pendencias.push({ id: 'pedido-sugerido', nivel: 'media', texto: `pedido ${pedidoSugerido} sugerido, falta confirmar` });
         if (nf) {
@@ -65,7 +66,7 @@ function visoesNf() {
         }
         if (divergencias.length) pendencias.push({ id: 'divergencias', nivel: 'baixa', texto: `${divergencias.length} pendência(s) relatada(s) em auditoria no pedido ${pedido}` }); // 2.16.0: relatada = já com o responsável
 
-        return { chave: it.chave, numeroNf: it.numeroNf, serie: it.serie, fornecedor: it.nomeFornecedor, cnpj: it.cnpj, dataISO: it.dataISO, situacao: it.situacao,
+        return { chave: it.chave, numeroNf: it.numeroNf, serie: it.serie, venc: it.venc || null, fornecedor: it.nomeFornecedor, cnpj: it.cnpj, dataISO: it.dataISO, situacao: it.situacao,
             nf, erp, fontes: { xml: !!nf, erp: !!erp }, id: (nf && nf.id) || (erp && erp.id) || null,
             pedido, pedidos, pedidoSugerido, pedidoSt, cot, chegou: !!pedido, compraDireta,
             destino: (nf ? destinoDaNfSalva(nf) : null) || (cot && cot.origem) || null, recursos, recursoOrigem, totais, itens, divergencias, pendencias, controle: it };
@@ -77,4 +78,4 @@ function visaoNfPorId(id) { return visoesNf().find(v => v.id === id || (v.nf && 
 // Pendências de todas as NFs com um id (ex.: 'sem-pedido'), prontas para listar
 function pendenciasNf(idPendencia) { return visoesNf().filter(v => v.pendencias.some(p => p.id === idPendencia)).map(v => ({ v, p: v.pendencias.find(p => p.id === idPendencia) })); }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.40.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.73.0';
