@@ -1,0 +1,242 @@
+// 34-atencao.js — "O que precisa de atenção" (2.11.3)
+// Parte do script do app. Arquivo comum, carregado em ordem pelo index.html; compartilha funções e variáveis globais com os demais.
+// Junta num painel só o que está parado ou envelhecendo, ordenado por urgência, com um toque que leva à tela que resolve.
+// Só leitura: nenhuma regra de dados muda; tudo é calculado dos dados que o app já carrega.
+
+let atencaoAbertos = new Set(['alta']);
+let atencaoModo = 'urgencia'; // 'urgencia' | 'pedido' | 'fornecedor'
+function mudarModoAtencao(m) { atencaoModo = m; atencaoAbertos = new Set(); renderAtencao(); }
+function irParaRetroFiltro(f) { switchToScreen('screen-auditoria-central', 'Auditoria'); prepararAuditoriaUnificada('retro'); filtrarRetro(f); }
+
+function diasDesdeISO(iso) { return iso ? Math.round((new Date(dataLocalISO() + 'T12:00:00') - new Date(String(iso).slice(0, 10) + 'T12:00:00')) / 86400000) : null; }
+
+// 2.38.1: o cálculo é pesado (centenas de ms no iPhone). Uma tela abrindo chamava 3 vezes seguidas: agora as chamadas próximas (até 2 s,
+// com os mesmos dados) reaproveitam o resultado. Mudou algo → a assinatura muda e refaz na hora.
+let _atnCache = null;
+function itensDeAtencao() {
+    const k = atencaoAssinatura() + '|' + dataLocalISO(), t = Date.now();
+    if (_atnCache && _atnCache.k === k && t - _atnCache.t < 2000) return _atnCache.g;
+    const g = _itensDeAtencaoCalc(); _atnCache = { k, g, t }; return g;
+}
+// leandromendonssa
+function _itensDeAtencaoCalc() {
+    const grupos = [];
+    const add = (nivel, id, titulo, dica, linhas, acaoGeral) => { if (linhas.length) grupos.push({ nivel, id, titulo, dica, linhas, acaoGeral }); };
+    const hoje = dataLocalISO();
+
+    // ---- ALTA: nota na relação com vencimento vencido
+    const vencidas = notasPendentes.filter(n => !n.enviada && n.vencimento).map(n => ({ n, iso: converterDataBRparaISO(n.vencimento) })).filter(x => x.iso && x.iso < hoje)
+        .sort((a, b) => a.iso.localeCompare(b.iso));
+    add('alta', 'notas-vencidas', 'Notas na relação com vencimento vencido', 'Ainda não foram enviadas ao financeiro.',
+        vencidas.map(x => ({ forn: x.n.fornecedor || '', pedido: '', t: `${x.n.fornecedor || '(sem fornecedor)'} · NF ${x.n.nf || '—'}`, s: `venceu em ${x.n.vencimento} (${diasDesdeISO(x.iso)} dia(s) atrás) · R$ ${x.n.valor || '—'}`, fn: "switchToScreen('screen-manage','Gerenciar NF')" })));
+
+    // ---- ALTA: pedidos com prazo vencido e nenhum sinal de entrega
+    const nfPorPedido = new Set(), erpPorPedido = new Set();
+    listaNfsProcessadas.forEach(n => [n.pedido, ...(n.pedidos || [])].filter(Boolean).forEach(p => nfPorPedido.add(String(p))));
+    listaEntradasErp.forEach(e => { const p = pedidoDoErpConfirmado(e); if (p) erpPorPedido.add(String(p)); });
+    const semEntrega = listaCotacoes.filter(c => { const lim = (c.dataLimite || '').slice(0, 10); return lim && lim < hoje && !nfPorPedido.has(String(c.pedido)) && !erpPorPedido.has(String(c.pedido)) && !(() => { const m = c.chegadasPorFornecedor || {}, ks = Object.keys(m); if (!ks.length) return false; if (ks.some(k => m[k] && m[k].tipo !== 'cancelada')) return true; const cn = cnpjsFornecedoresDaCotacao(c); return !cn.length || cn.every(x => m[x]); })() && (c.itens || []).length; })
+        .sort((a, b) => String(a.dataLimite).localeCompare(String(b.dataLimite)));
+    add('alta', 'nfs-vencidas-sem-envio', 'NFs vencidas que ainda não foram enviadas ao financeiro', 'Estão recebidas (ERP ou XML), sem decisão. Abra a NF e decida: relação, financeiro ou "não vai ao financeiro".',
+        pendenciasNf('vencida-sem-envio').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
+    // leandromendonssa
+    // 2.73.0: Notas pendentes (paradas comigo: carta de correção, NF de devolução ou cotação), separadas das demais divergências
+    const paradas = notasParadasComigo().map(x => ({ pedido: String(x.v.pedido || x.v.pedidoSugerido || ''), forn: x.v.fornecedor, t: tituloFornNf(x.v.fornecedor, x.v.cnpj, x.v.numeroNf), s: `${rotuloMotivosPend(x.pe)} · ${avisoVencParada(x.dias)}`, dias: x.dias, fn: `abrirNfNoHistorico('', '${escRel(String((x.v.nf || x.v.erp).nf))}')` }));
+    add('alta', 'notas-paradas-venc', 'Notas pendentes vencidas ou que vencem hoje', 'Paradas comigo por carta de correção, nota de devolução ou cotação. Resolva e envie ao financeiro.', paradas.filter(x => x.dias != null && x.dias <= 0));
+    add('media', 'notas-paradas', 'Notas pendentes (paradas comigo)', 'Aguardam carta de correção, nota fiscal de devolução ou cotação antes de ir ao financeiro.', paradas.filter(x => x.dias == null || x.dias > 0));
+    add('alta', 'pedidos-sem-entrega', 'Pedidos com prazo vencido e sem sinal de entrega', 'Sem NF no app, sem NF do ERP ligada e sem marca de "já chegou".',
+        semEntrega.map(c => ({ pedido: String(c.pedido), forn: '', t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}`, s: `prazo ${dataBRdeISO(c.dataLimite)} (${diasDesdeISO(c.dataLimite)} dia(s) atrás) · ${(c.fornecedores || []).length} fornecedor(es)`, fn: `abrirCentralPedido('${escRel(c.pedido)}')` })));
+
+    // ---- MÉDIA (Importante): ocorrências detectadas e ainda SEM relato (2.17.0). Mesma contagem "em aberto" do cartão do pedido.
+    const semRelato = [], naoChegou = [];
+    listaCotacoes.forEach(c => {
+        const p = String(c.pedido); if (!nfPorPedido.has(p) && !erpPorPedido.has(p)) return; // sem NF não há o que comparar
+        let comp = []; try { comp = compararFontesPedido(c.pedido); } catch (e) { return; }
+        const abertas = comp.filter(x => x.estado === 'detectada' && !x.soNaoChegou);
+        if (abertas.length) semRelato.push({ c, abertas });
+        const nc = comp.filter(x => x.estado === 'detectada' && x.soNaoChegou); // 2.19.1: "não chegou" é um aviso à parte, discreto
+        if (nc.length) naoChegou.push({ c, nc });
+    });
+    // 2.38.0: uma linha por PEDIDO + FORNECEDOR (antes: uma por pedido), e o toque já abre o fornecedor e o primeiro produto da lista
+    const linhasPorFornecedor = (lista, sufixo, comProdutos) => lista.flatMap(({ c, abertas, nc }) => {
+        const itens = abertas || nc, porForn = new Map();
+        itens.forEach(x => { const k = normalizarCnpj(x.cnpjFornecedor) || ''; if (!porForn.has(k)) porForn.set(k, []); porForn.get(k).push(x); });
+        return [...porForn.entries()].map(([k, xs]) => {
+            const f = (c.fornecedores || []).find(y => normalizarCnpj(y.cnpj) === k), nome = f ? nomeExibicaoFornecedor(f.razaoSocial, f.cnpj) : '';
+            const nomes = [...new Set(xs.map(x => x.nome || x.codProduto).filter(Boolean))], cod = (xs.find(x => x.codProduto) || {}).codProduto || '';
+            return { pedido: String(c.pedido), forn: nome, t: `Pedido ${c.pedido}${c.origem ? ' — ' + c.origem : ''}${nome ? ' · ' + nome : ''}`,
+                s: `${xs.length} ${sufixo}` + (comProdutos && nomes.length ? ': ' + nomes.slice(0, 3).join(', ') + (nomes.length > 3 ? '…' : '') : ''),
+                fn: `irParaDivergenciaPedido('${escRel(String(c.pedido))}','${escRel(String(f ? f.cnpj : (xs[0].cnpjFornecedor || '')))}','${escRel(String(cod))}')` };
+        });
+    });
+    add('media', 'ocorrencias-sem-relato', 'Ocorrências detectadas sem relato', 'O app achou diferença entre cotação e NF e ninguém relatou ainda. Toque para abrir o fornecedor e o produto no pedido e registrar a auditoria.',
+        linhasPorFornecedor(semRelato, 'ocorrência(s) em aberto', true));
+
+    // 2.38.0: NF que veio em duplicidade e ainda sem decisão (aceito / devolução): sai da conta item a item, então precisa aparecer aqui
+    try {
+        add('media', 'nf-duplicada', 'NFs recebidas em duplicidade sem decisão', 'Todos os itens já tinham chegado em outra NF do pedido. Decida: aceito, devolução total ou parcial.',
+            listaNfsProcessadas.filter(n => !(n.duplicidade && n.duplicidade.decisao) && dupInfo(n)).map(n => {
+                const info = dupInfo(n), f = (listaCotacoes.find(c => String(c.pedido) === String(n.pedido)) || {}).fornecedores;
+                return { pedido: String(n.pedido || ''), forn: n.fornecedor || '', t: `Pedido ${n.pedido || '—'} · ${n.fornecedor || ''} · NF ${n.nf}`, s: `${info.itens.length} itens já vieram na NF ${info.orig.join(', ')}`, fn: `irParaFornecedorPedido('${escRel(String(n.pedido))}','${escRel(String(n.cnpjFornecedor || ''))}')` };
+            }));
+    } catch (e) { console.error('Central: NF duplicada', e); }
+
+    // 2.66.0: itens marcados "será devolvido" que ainda não foram recolhidos
+    try {
+        const devs = [];
+        listaNfsProcessadas.forEach(n => devolucoesDaNf(n).filter(x => x.it.devolucao.status !== 'recolhido').forEach(x => devs.push({ n, it: x.it })));
+        add('media', 'devolucao-recolher', 'Devoluções aguardando recolhimento', 'Material que não ficou conosco. Depois de recolhido, marque no card da NF no Controle de NFs.',
+            devs.map(({ n, it }) => ({ pedido: String(n.pedido || ''), forn: n.fornecedor || '', t: `${n.fornecedorNomeEditado || n.fornecedor || ''} · NF ${n.nf}`, s: `${it.devolucao.qtd} ${nomeCurtoItemDevolucao(it)}`, fn: `switchToScreen('screen-controle-nfs','Controle de NFs')` })));
+    } catch (e) { console.error('Central: devoluções', e); }
+
+    add('baixa', 'itens-nao-chegaram', 'Itens que ainda não chegaram', 'Itens da cotação que ainda não vieram em NF. Não é divergência: pode vir em outra NF. Dá para relatar na Auditoria.',
+        linhasPorFornecedor(naoChegou, 'item(ns) não chegaram', true));
+
+    // ---- MÉDIA: divergências pendentes
+    // 2.11.6: usa a MESMA lista da tela Relatórios → Divergências (divergenciasRel), com a mesma regra de status
+    // ("não faturado" de item que já chegou conta como resolvido), só que sem os filtros da tela.
+    const filtrosTela = relatoriosFiltros; relatoriosFiltros = { de: '', ate: '', fornecedor: '', fornecedorExato: false, destino: '', recurso: '', tipo: '', produto: '' };
+    let pendDiv = []; try { pendDiv = divergenciasRel().filter(x => x.status === 'pendente' && x.relatado !== false); } finally { relatoriosFiltros = filtrosTela; }
+    // 2.16.0: auditoria aberta = pendência RELATADA (já está com o responsável): pesa como resolvida, então sai da contagem de "precisa de atenção".
+    add('baixa', 'divergencias', 'Pendências relatadas', 'Já relatadas ao responsável. Mesma lista de Relatórios → Divergências. Toque para abrir o pedido.',
+        pendDiv.map(x => ({ pedido: String(x.pedido || ''), forn: x.fornecedor || '', t: `Pedido ${x.pedido || '—'}${x.fornecedor ? ' · ' + x.fornecedor : ''}${(x.produtos || [])[0] ? ' · ' + x.produtos[0] : ''}`, s: (TIPOS_DIVERGENCIA_AUDITORIA[x.tipo] || {}).label || x.tipo, fn: x.pedido ? `irParaDivergenciaPedido('${escRel(String(x.pedido))}','${escRel(String(x.fornecedorCnpj || ''))}','${escRel(String(x.codProduto || ''))}')` : `abrirCentralPedido('')` })));
+
+    // ---- MÉDIA: NFs do ERP com pedido sugerido / itens defasados
+    // 2.12.0: as pendências de cada NF vêm da visão única (mesma regra do Controle, do Editor e da Auditoria): uma NF com pedido já
+    // confirmado pelo XML não aparece mais como "pedido sugerido" só porque o lançamento do ERP ficou com a sugestão antiga.
+    const an = analiseRetroativaErp();
+    const nfsDe = id => pendenciasNf(id);
+    add('media', 'sugestoes', 'NFs do ERP com pedido sugerido para confirmar', 'A Auditoria Retroativa mostra a conferência de valor, datas e itens.',
+        nfsDe('pedido-sugerido').map(({ v }) => { const c = v.erp ? conferenciaPedidoSugerido(v.erp, v.pedidoSugerido) : null; const ver = c && c.veredito; return { pedido: String(v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: `sugerido: pedido ${v.pedidoSugerido}` + ({ bate: ' · bate em tudo', conferir: ' · conferir', nao: ' · não parece' }[ver] || ''), fn: "irParaRetroFiltro('sugerido')" }; }));
+    const def = an.filter(a => a.defasados > 0);
+    add('media', 'defasados', 'Itens do ERP defasados', 'Atualizam sozinhos; o botão na Auditoria Retroativa faz na hora.',
+        def.map(a => ({ pedido: a.pedido || '', forn: a.e.fornecedorNomeEditado || a.e.fornecedorNomeRelatorio || '', t: tituloFornNf(a.e.fornecedorNomeEditado || a.e.fornecedorNomeRelatorio || '', a.e.cnpjFornecedor, a.e.nf), s: `${a.defasados} item(ns)`, fn: "irParaRetroFiltro('defasados')" })));
+
+    // ---- MÉDIA: NFs do ERP paradas na pré-seleção e NFs com XML sem pedido (da visão única)
+    add('media', 'pre-selecao', 'NFs do ERP esperando decisão há mais de 7 dias', 'Decidir no Controle de NFs: relação, financeiro ou "não vai ao financeiro".',
+        nfsDe('decisao-parada').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
+    add('media', 'nf-sem-pedido', 'NFs com XML sem pedido', 'Vincule a um pedido ou marque como compra direta.',
+        nfsDe('sem-pedido').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
+
+    // ---- BAIXA: itens de NF sem recurso / sem produto (da visão única)
+    add('baixa', 'sem-recurso', 'NFs com itens sem recurso definido', 'Defina no Editor da NF (Dados desta NF → recurso da NF inteira).',
+        nfsDe('sem-recurso').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
+    add('baixa', 'sem-produto', 'NFs com itens sem produto da cotação', 'Associe o produto no Editor da NF ou na Entrada de NF.',
+        nfsDe('sem-produto').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
+    const semCnpj = listaFornecedoresSpData.filter(f => !(f.cnpjs || []).length && !atencaoEstaIgnorada('cnpj:' + f.codigo));
+    // 2.39.0: lista cada fornecedor (antes só dizia a quantidade); toque abre o cadastro já filtrado nele
+    add('baixa', 'forn-sem-cnpj', 'Fornecedores sem CNPJ no SP Data', 'Sem CNPJ, o app não acha o pedido das NFs do ERP sozinho. Toque para abrir o cadastro do fornecedor.',
+        semCnpj.map(f => { const nome = (typeof apelidoFornecedorDoc === 'function' && apelidoFornecedorDoc(f).nome) || f.nomeReal || ('código ' + f.codigo); return { pedido: '', forn: nome, t: nome, s: f.nomeReal && f.nomeReal !== nome ? f.nomeReal : 'código ' + f.codigo, fn: `irParaFornecedorCadastro('${escRel(String(f.codigo))}')`, ign: 'cnpj:' + f.codigo }; }));
+    try { if (typeof agendaGruposAtencao === 'function') agendaGruposAtencao().forEach(g => add(g.nivel, g.id, g.titulo, g.dica, g.linhas)); } catch (e) { console.error('Agenda na Central:', e); }
+    return grupos;
+}
+// 2.42.0: ignorar aviso (só silencia o aviso; nunca mexe no cadastro, e sobrevive a nova importação porque a chave é o código do fornecedor)
+function atencaoIgnoradasSet() { const a = (appConfig.personalizacao || {}).atencaoIgnoradas; return new Set(Array.isArray(a) ? a : []); }
+function atencaoEstaIgnorada(chave) { return atencaoIgnoradasSet().has(chave); }
+function _atencaoGravarIgnoradas(set) { appConfig.personalizacao = appConfig.personalizacao || {}; appConfig.personalizacao.atencaoIgnoradas = [...set]; _atnCache = null; try { salvarPersonalizacao(); } catch (e) { console.error(e); } renderAtencaoSeAtiva(); if (typeof renderBannerAtencao === 'function') renderBannerAtencao(); }
+function pedirIgnorarAtencao(chave, nome) {
+    if (typeof abrirFolhaAcoes !== 'function') return ignorarAtencao(chave, nome);
+    abrirFolhaAcoes('Parar de avisar sobre "' + nome + '"?', [
+        { t: 'Parar de avisar (não altera o cadastro)', ic: 'fa-solid fa-bell-slash', f: () => ignorarAtencao(chave, nome) },
+        { t: 'Cancelar', ic: 'fa-solid fa-xmark', f: () => { } }
+    ]);
+}
+function ignorarAtencao(chave, nome) {
+    const set = atencaoIgnoradasSet(); set.add(chave); _atencaoGravarIgnoradas(set);
+    mostrarToastDesfazer('Aviso silenciado: ' + nome, () => restaurarAtencao(chave));
+}
+function restaurarAtencao(chave) { const set = atencaoIgnoradasSet(); set.delete(chave); _atencaoGravarIgnoradas(set); }
+function mostrarToastDesfazer(msg, desfazer) {
+    let t = document.getElementById('toast-desfazer'); if (t) t.remove();
+    t = document.createElement('div'); t.id = 'toast-desfazer'; t.className = 'toast-desfazer';
+    t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-clear,0px) + 84px);max-width:92vw;background:#222;color:#fff;border-radius:14px;padding:10px 14px;display:flex;gap:12px;align-items:center;z-index:400;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.35)';
+    const sp = document.createElement('span'); sp.textContent = msg; const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Desfazer'; b.style.cssText = 'border:0;background:transparent;color:#8ab4ff;font:inherit;font-weight:700;cursor:pointer';
+    b.onclick = () => { t.remove(); desfazer(); }; t.appendChild(sp); t.appendChild(b); document.body.appendChild(t); setTimeout(() => { if (t.parentNode) t.remove(); }, 6000);
+}
+function irParaFornecedorCadastro(codigo) {
+    const f = listaFornecedoresSpData.find(x => String(x.codigo) === String(codigo)); if (!f) return;
+    switchToScreen('screen-fornecedores', 'Fornecedores');
+    const termo = (f.nomeReal || String(f.codigo)).slice(0, 60);
+    setTimeout(() => { const inp = document.querySelector('#screen-fornecedores input.form-field'); if (inp) inp.value = termo; filtrarCadastroFornecedoresSpData(termo); }, 80);
+}
+// 2.49.0: no Controle de NFs a faixa conta só o que é de NF (não o total geral da Central)
+const ATENCAO_IDS_NF = ['notas-vencidas', 'nfs-vencidas-sem-envio', 'nf-duplicada', 'sugestoes', 'defasados', 'pre-selecao', 'nf-sem-pedido'];
+function totalAtencaoNf() { try { return itensDeAtencao().filter(g => ATENCAO_IDS_NF.includes(g.id)).reduce((s, g) => s + g.linhas.length, 0); } catch (e) { return 0; } }
+function totalAtencao() { try { return itensDeAtencao().reduce((s, g) => s + (g.nivel === 'baixa' ? 0 : g.linhas.length), 0); } catch (e) { return 0; } }
+
+const ATENCAO_NIVEIS = { alta: ['Urgente', 'err'], media: ['Importante', ''], baixa: ['Quando der', 'm'] };
+function toggleGrupoAtencao(id) { if (atencaoAbertos.has(id)) atencaoAbertos.delete(id); else atencaoAbertos.add(id); renderAtencao(); }
+// 2.38.1: o desenho pesado espera a troca de tela começar (antes travava a animação); os grupos urgentes abrem na hora de desenhar
+let _atnAbrirAltas = false;
+function prepararAtencao() { atencaoModo = 'urgencia'; atencaoAbertos = new Set(); _atnAbrirAltas = true; setTimeout(renderAtencao, 60); }
+// 2.38.0: a tela não se refazia ao voltar de um pedido nem quando os dados mudavam (daí avisos "presos" depois de resolvidos).
+// Agora refaz ao entrar na tela e, enquanto ela está aberta, confere a cada 3 s uma assinatura barata dos dados (só CPU local, sem Firebase).
+let _atnSig = '';
+// leandromendonssa
+function atencaoAssinatura() {
+    const mx = (l, ...ks) => (l || []).reduce((m, x) => { for (const k of ks) { const v = x && x[k]; if (v && String(v) > m) m = String(v); } return m; }, '');
+    let nPend = 0, nRel = 0; (listaAnotacoes || []).forEach(a => (a.ocorrencias || []).forEach(oc => (oc.divergencias || []).forEach(d => { if ((d.status || 'pendente') === 'pendente') nPend++; if (d.relatado === false) nRel++; })));
+    const cotN = (listaCotacoes || []).reduce((n, c) => n + Object.keys(c.chegadasPorFornecedor || {}).length + Object.keys(c.relatadosPorItem || {}).length + Object.keys(c.recursosPorItem || {}).length, 0);
+    const nDup = (listaNfsProcessadas || []).reduce((n, x) => n + (x.duplicidade && x.duplicidade.decisao ? 1 : 0), 0);
+    return [(notasPendentes || []).length, (notasPendentes || []).filter(n => n.enviada).length, (listaCotacoes || []).length, (listaNfsProcessadas || []).length, (listaEntradasErp || []).length, (listaAnotacoes || []).length, nPend, nRel, cotN, nDup,
+        mx(listaCotacoes, 'atualizadoEm'), mx(listaNfsProcessadas, 'processadoEm', 'atualizadoEm'), mx(listaEntradasErp, 'atualizadoEm', 'data'), mx(listaAnotacoes, 'atualizadoEm'), (listaFornecedoresSpData || []).length].join('|');
+}
+(function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-atencao') setTimeout(() => { const el = document.getElementById('screen-atencao'); if (el && el.classList.contains('active') && atencaoAssinatura() !== _atnSig) renderAtencao(); }, 450); return r; }; })();
+setInterval(() => { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active') && atencaoAssinatura() !== _atnSig) renderAtencao(); }, 3000);
+function renderAtencaoSeAtiva() { const t = document.getElementById('screen-atencao'); if (t && t.classList.contains('active')) renderAtencao(); }
+function renderAtencao() {
+    _renderAtencaoBase();
+    const el = document.getElementById('atencao-conteudo'); if (!el) return;
+    const ig = (listaFornecedoresSpData || []).filter(f => !(f.cnpjs || []).length && atencaoEstaIgnorada('cnpj:' + f.codigo));
+    if (ig.length) el.insertAdjacentHTML('beforeend', `<details class="atn-ignoradas"><summary>Ignoradas (${ig.length})</summary>${ig.map(f => { const nome = (typeof apelidoFornecedorDoc === 'function' && apelidoFornecedorDoc(f).nome) || f.nomeReal || ('código ' + f.codigo); return `<div class="atn-ign-lin"><span>${escRel(nome)}<br><small>Fornecedor sem CNPJ</small></span><button type="button" onclick="restaurarAtencao('cnpj:${escRel(String(f.codigo))}')">Voltar a notificar</button></div>`; }).join('')}</details>`);
+}
+function _renderAtencaoBase() {
+    const el = document.getElementById('atencao-conteudo'); if (!el) return;
+    _atnSig = atencaoAssinatura();
+    const grupos = itensDeAtencao();
+    if (_atnAbrirAltas) { _atnAbrirAltas = false; atencaoAbertos = new Set(grupos.filter(g => g.nivel === 'alta').map(g => g.id)); }
+    if (!grupos.length) { el.innerHTML = '<div class="card"><div class="xml-item-meta">' + escRel((typeof LING !== 'undefined') ? LING.t('✓ Nada parado por aqui. Tudo em dia.') : '✓ Nada parado por aqui. Tudo em dia.') + '</div></div>'; return; }
+    const ordem = { alta: 0, media: 1, baixa: 2 };
+    grupos.sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
+    const abas = `<div class="retro-chips">${[['urgencia', 'Por urgência'], ['pedido', 'Por pedido'], ['fornecedor', 'Por fornecedor']].map(([k, t]) => `<button type="button" class="retro-chip${atencaoModo === k ? ' on' : ''}" onclick="mudarModoAtencao('${k}')">${t}</button>`).join('')}</div>`;
+    if (atencaoModo !== 'urgencia') {
+        // 2.12.3: as mesmas pendências, reunidas por pedido ou por fornecedor (o que acontece com o mesmo pedido/fornecedor em vários lugares fica junto)
+        const mapa = new Map(), sem = [], reune = new Map();
+        // 2.42.0: "EMBALAKLIN" e "EMBALAKLIN COMERCIO DE EMBALAG" são o mesmo fornecedor: o nome mais curto (prefixo de palavra inteira) reúne os demais
+        const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toUpperCase();
+        const chavesF = [...new Set(grupos.flatMap(g => g.linhas.map(l => norm(l.forn))).filter(Boolean))].sort((a, b) => a.length - b.length);
+        const canon = new Map(); chavesF.forEach(k => { const base = chavesF.find(o => o !== k && canon.get(o) === o && k.startsWith(o + ' ')); canon.set(k, base || k); if (base) { if (!reune.has(base)) reune.set(base, new Set([base])); reune.get(base).add(k); } });
+        grupos.forEach(g => g.linhas.forEach(l => {
+            const chave = atencaoModo === 'pedido' ? (l.pedido ? 'Pedido ' + l.pedido : '') : (canon.get(norm(l.forn)) || '');
+            if (!chave) { sem.push({ g, l }); return; }
+            if (!mapa.has(chave)) mapa.set(chave, []);
+            mapa.get(chave).push({ g, l });
+        }));
+        const blocos = [...mapa.entries()].sort((a, b) => b[1].length - a[1].length);
+        if (sem.length) blocos.push([atencaoModo === 'pedido' ? 'Sem pedido definido' : 'Sem fornecedor definido', sem]);
+        el.innerHTML = abas + blocos.map(([nome, ls]) => {
+            const aberto = atencaoAbertos.has(nome);
+            const ru = atencaoModo === 'fornecedor' && reune.get(nome);
+            return `<div class="ctl-card atn-grupo"><div class="ctl-top" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(nome)}</b></div><span class="ctl-st">${ls.length}</span></div>
+                ${ru && ru.size > 1 ? `<div class="atn-reune">Reúne ${ru.size} cadastros: ${escRel([...ru].join(' · '))}</div>` : ''}
+                ${aberto ? ls.map(({ g, l }) => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(g.titulo)} · ${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') : `<div class="ctl-inf"><a class="ctl-pend-link" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})">Ver itens</a></div>`}</div>`;
+        }).join('');
+        return;
+    }
+    el.innerHTML = abas + `<div class="card"><div class="xml-item-meta">${(typeof LING !== 'undefined') ? LING.t('O que está parado ou envelhecendo, do mais urgente ao menos. Toque num grupo para abrir e num item para ir direto à tela que resolve.') : 'O que está parado ou envelhecendo, do mais urgente ao menos. Toque num grupo para abrir e num item para ir direto à tela que resolve.'}</div></div>`
+        + grupos.map(g => {
+            const aberto = atencaoAbertos.has(g.id), [rot, cls] = ATENCAO_NIVEIS[g.nivel];
+            return `<div class="ctl-card atn-grupo">
+                <div class="ctl-top" onclick="toggleGrupoAtencao('${g.id}')" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(g.titulo)}</b><small>${escRel((typeof LING !== 'undefined') ? LING.t(g.dica) : g.dica)}</small></div>
+                    <span class="ctl-st ${cls}">${g.linhas.length}</span></div>
+                <div class="ctl-inf"><span class="ctl-st ${cls}" style="font-size:11px;padding:3px 9px">${rot}</span> <a class="ctl-pend-link" onclick="toggleGrupoAtencao('${g.id}')">${aberto ? 'Fechar' : 'Ver itens'}</a></div>
+                ${aberto ? g.linhas.slice(0, 12).map(l => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') + (g.linhas.length > 12 ? `<div class="xml-item-meta" style="margin-top:6px">…e mais ${g.linhas.length - 12}.</div>` : '') : ''}
+            </div>`;
+        }).join('');
+}
+// Faixa no topo do Controle de NFs: só aparece quando há algo urgente ou importante.
+function renderBannerAtencao() {
+    const el = document.getElementById('controle-atencao-banner'); if (!el) return;
+    const n = totalAtencaoNf();
+    el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
+}
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.0';

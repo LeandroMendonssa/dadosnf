@@ -1,0 +1,3946 @@
+// 14-historico-mudancas.js — Histórico de mudanças do aplicativo
+// Parte do script do app (v2.0.1). Arquivo comum, carregado em ordem pelo index.html; compartilha funções e variáveis globais com os demais.
+// --- CONFIGURAÇÕES → HISTÓRICO DE MUDANÇAS DO APLICATIVO ---
+// (2.3.1: campos opcionais por versão para o popup de novidades — novidades: [frases curtas] e testarLinks: [{ rotulo, acao, arg }])
+// ===================================================================
+// leandromendonssa
+// Registro funcional/documental do desenvolvimento — não é versionamento
+// técnico nem log automático de código. É estático dentro do app (sem
+// coleção nova no Firestore, como pedido): cada atualização futura só
+// precisa acrescentar uma entrada neste array, com "o que mudou" + "o que
+// testar". A entrada mais recente é sempre a fase atual, destacada na tela.
+// leandromendonssa
+const HISTORICO_FASES = [
+    {
+        numero: '2.73.0', nome: 'Notas pendentes e nova Tela inicial', status: 'atual', data: '21/11/2026 às 23:50',
+        novidades: ['Notas pendentes: NFs paradas comigo por carta de correção, nota fiscal de devolução ou cotação. Botão "Pendente p/ financeiro" no Controle de NFs e no Editor de NF.', 'Enquanto há pendência, a NF não vai ao financeiro e o aviso "esperando decisão" para. Ela aparece na Central de notificações em grupos próprios (vencidas/vencem hoje e demais) e no cartão da Início, com o vencimento da mais urgente.', 'Início: removida "Prioridades de hoje"; Atalhos logo abaixo de "Atenção agora"; o cartão de vencidas virou "Notas pendentes"; o de "vencem hoje ou amanhã" agora soma também as vencidas na relação.', 'Atividade recente mostra só hoje e o último dia útil, com botão "Carregar mais"; Próximos vencimentos ficam abaixo.', 'O cartão Notas pendentes abre uma tela de resumo (como fornecedores a chegar); tocar na NF leva ao Controle de NFs.', 'Corrigido: item marcado "será devolvido" não conta mais como item sem recurso (aviso da Futura Urofix); NF parada por cotação não notifica como "sem pedido"; bloco do Editor de NF não duplica mais e ficou no padrão.'],
+        implementado: ['js/65-notas-pendentes.js (novo): motivos, modal, gravação do campo pendenciaEntrega, bloqueio do envio ao financeiro.', 'js/10: devolvido não pede recurso. js/36: pendência para os avisos de decisão parada e vencida sem envio; expõe venc. js/34: dois grupos novos. js/17: botão e linha no cartão. js/48: nova Início.', 'index.html, style.css, novo-visual.css: versão e estilos.'],
+        arquivos: ['index.html','style.css','novo-visual.css','js/10-entrada-nf-xml.js','js/17-historico-controle-nfs.js','js/34-atencao.js','js/36-visao-nf.js','js/48-inicio-lote.js','js/65-notas-pendentes.js','js/14-historico-mudancas.js'],
+        mudou: ['Novo campo pendenciaEntrega no documento da NF (só existe nas NFs marcadas). Nada mais foi alterado nos dados.', 'Para voltar: remover a pendência libera a NF e os avisos normais.'],
+        testar: ['Controle de NFs: abrir uma NF das notas da EMBALAKLIN ou Minas Sul e tocar em "Pendente p/ financeiro", marcar um motivo e salvar.', 'Tentar "Enviada ao financeiro" nessa NF: deve avisar que há pendência.', 'Central de notificações: a NF sai de "esperando decisão" e aparece em Notas pendentes.', 'Início: cartão Notas pendentes com o vencimento; Atalhos abaixo; Atividade recente só com hoje e último dia útil; "Carregar mais".', 'Remover a pendência e conferir que tudo volta ao normal.']
+    },
+    {
+        numero: '2.72.0', nome: 'Visual padrão estilo Apple, Ajustes em grupos e Operacional como tema', status: 'concluida', data: '21/11/2026 às 19:40',
+        novidades: ['O novo visual virou um tema: Personalização > Aparência > Tema > "Operacional (claro)" ou "Operacional (escuro)". A chave separada foi removida; qualquer outro tema mostra o visual padrão.', 'Visual padrão: sem degradê no fundo (o degradê ficou só na importação de NF e no onboarding) e fundo cinza claro no padrão da Apple.', 'Faixa superior: no celular fica cinza translúcida, com botão Voltar redondo e branco; no computador fica preta, com o menu lateral branco (tema Claro).', 'Ajustes separado em grupos: Conta, Cadastros, Cotações e auditoria, Aparência e uso, Dados, Ajuda e sobre, Avançado e Sair, com cantos arredondados e divisórias como nos Ajustes da Apple.'],
+        implementado: ['style.css: fundo, degradê só em #screen-import, faixa superior, grupos de lista no estilo Apple.', 'index.html: Ajustes agrupado, duas opções novas no seletor de tema.', 'js/64: o visual Operacional liga pelo tema (sem chave própria). novo-visual.css: paleta atrelada ao tema.'],
+        arquivos: ['index.html','style.css','novo-visual.css','js/64-novo-visual.js','js/14-historico-mudancas.js'],
+        mudou: ['Quem estava com o Novo visual ligado volta ao visual padrão; para usar de novo, escolha o tema Operacional.', 'Nenhuma regra de negócio ou dado foi alterado. A busca em Ajustes continua achando todos os itens.'],
+        testar: ['Ajustes: ver os grupos, a busca e abrir cada item.', 'Celular: faixa superior cinza e botão Voltar redondo nas telas internas.', 'Computador: faixa preta com menu branco.', 'Importação de NF: degradê mantido. Telas comuns: fundo liso.', 'Aparência: escolher Operacional (claro/escuro) e voltar ao Claro.']
+    },
+    {
+        numero: '2.71.0', nome: 'Novo visual: refatoração do CSS no conceito do protótipo', status: 'concluida', data: '21/11/2026 às 19:00',
+        novidades: ['O novo visual agora é um conceito próprio, em folha separada (novo-visual.css): paleta, tipografia, cabeçalho translúcido, barra lateral com marca, etiquetas de status tintadas, painéis, indicadores e filtros no padrão do protótipo.', 'Início reorganizado: cabeçalho de página com "Nova entrada de NF", indicadores, e painéis "Prioridades de hoje", "Atalhos", "Próximos vencimentos" e "Atividade recente" (linha do tempo por dia, com status, hora e "há X min"). No computador, painéis lado a lado.', 'Central de Auditoria: cabeçalho de página e indicadores (Detectadas, Relatadas, Resolvidas, Excluídas) no padrão do protótipo; registros continuam em cards.', 'Entrada de NF: cabeçalho de página e etapas "01 Identificação, 02 Conferência, 03 Revisão e salvar"; confirmação de salvamento no mesmo padrão.', 'Cards de NF e de pedido com nova hierarquia (rótulos pequenos, valores em destaque, etiquetas de status). Filtros quebram linha, sem rolagem lateral.'],
+        implementado: ['novo-visual.css (novo): todo o visual novo, só vale com a chave ligada. style.css ficou como o visual estável.', 'js/48: layout novo do Início por trás da chave (o antigo continua logo abaixo).', 'js/64: carrega/descarrega a folha, indicadores da Auditoria, etapas da Entrada.', 'index.html: link da folha. js/14: histórico.'],
+        arquivos: ['index.html','style.css','novo-visual.css','js/48-inicio-lote.js','js/64-novo-visual.js','js/14-historico-mudancas.js'],
+        mudou: ['Para voltar ao visual estável: Personalização > Aparência > "Novo visual (teste)" > Desligado. Nada do visual antigo foi apagado.', 'Nenhuma regra de negócio, campo ou dado do Firebase foi alterado.'],
+        testar: ['Início: ver os painéis, a Atividade recente e abrir uma NF.', 'Computador: barra lateral com marca, painéis lado a lado.', 'Controle de NFs, Pedidos e Auditoria: cards, filtros sem rolagem lateral e indicadores.', 'Entrada de NF: etapas e confirmação ao salvar.', 'Aparência: desligar o Novo visual e confirmar que tudo volta ao anterior; testar também no tema escuro.']
+    },
+    {
+        numero: '2.70.0', nome: 'Novo visual (redesign) com chave para voltar ao anterior', status: 'concluida', data: '21/11/2026 às 18:20',
+        novidades: ['Chave "Novo visual (teste)" em Personalização > Aparência. Desligada, o app volta exatamente ao visual da 2.69.0.', 'Cards de pedido e de NF: linha compacta "N fornecedores · X entregaram · Y pendentes" com barrinha de progresso (mesma regra da tela Início, sem contagem paralela).', 'Central de Auditoria: contadores no topo (Em aberto, Relatadas, Resolvidas, Excluídas), clicáveis; registros continuam em cards.', 'Entrada de NF: etapas (Origem, Conferir/Preencher, Salvar) e confirmação de salvamento que fica na tela, com Abrir NF, Baixar PDF, Baixar XML, Editar e Nova entrada (manual: Abrir NF e Ver na relação).', 'Visual: cantos e sombras mais suaves, filtros que quebram linha (sem rolar de lado) e botões maiores; no computador o Controle de NFs usa 2 colunas.'],
+        implementado: ['js/64-novo-visual.js (novo): chave, linha de fornecedores (envolve renderCardCotacao e renderCardControleNf), contadores (envolve renderCentralAuditoria), etapas e confirmação.', 'js/03 e js/11: um aviso ao novo módulo logo após salvar a NF manual / por XML. Nada muda na gravação.', 'style.css (tudo sob body.nv), index.html (chave e script), js/14.'],
+        arquivos: ['index.html','style.css','js/64-novo-visual.js','js/03-dados-notas.js','js/11-central-pedido.js','js/14-historico-mudancas.js'],
+        mudou: ['Nenhuma regra de negócio, campo ou dado do Firebase foi alterado.', 'Para voltar atrás: desligue a chave em Aparência (ou reponha os arquivos da 2.69.0).'],
+        testar: ['Aparência: ligar/desligar "Novo visual" e ver o app mudar nas duas direções.', 'Pedidos e Controle de NFs: ver a linha de fornecedores no card e se o número bate com "fornecedores a chegar" da Início.', 'Auditoria: tocar nos contadores e usar os filtros.', 'Entrada de NF: salvar uma NF (XML e manual) e ver o cartão verde de confirmação; testar Abrir NF, PDF, XML e Editar.', 'Filtros: conferir que nenhum rola de lado no iPhone.']
+    },
+    {
+        numero: '2.69.0', nome: 'Prioridades de hoje, Atividade recente e NFs por dia', status: 'concluida', data: '21/11/2026 às 14:10',
+        novidades: ['Início: nova área "Prioridades de hoje", com as pendências mais urgentes (as mesmas da Central de notificações). Toque numa para abrir direto o grupo.', 'Início: nova área "Atividade recente", com as NFs na ordem em que entraram, da mais recente para a mais antiga, separadas por dia (Hoje, Ontem, data). Toque numa NF para abri-la no Controle de NFs.', 'Controle de NFs: dentro de cada mês, as NFs agora ficam separadas por dia, igual à Atividade recente.'],
+        implementado: ['js/48: iniPrioridadesHtml() lê itensDeAtencao() (js/34); iniAtividadeHtml() lê listaNfsProcessadas e o status do Controle (montarControleNfs). Nada novo no Firestore.', 'js/17: htmlDiasControle() separa por dia dentro do mês, mantendo mês recolhível, totais e todos os botões.', 'style.css e js/14: visual, versão e histórico.'],
+        arquivos: ['style.css','index.html','js/48-inicio-lote.js','js/17-historico-controle-nfs.js','js/14-historico-mudancas.js'],
+        mudou: ['Os atalhos, os contadores de "Atenção agora" e "Próximos vencimentos" continuam onde estavam.', 'Na Atividade recente, o dia de hoje mostra o horário; dias anteriores mostram só a data.', 'No Controle de NFs o dia usa a mesma data que já agrupava os meses (emissão/ERP); dentro do dia a ordem segue a hora de entrada quando existe.'],
+        testar: ['Início: ver "Prioridades de hoje" e tocar numa para abrir o grupo certo na Central de notificações.', 'Início: ver "Atividade recente" com Hoje/Ontem, tocar numa NF e conferir que abre no Controle de NFs.', 'Início: "Mostrar mais" na Atividade recente.', 'Controle de NFs: abrir o mês atual e conferir os dias separados; testar a busca e os botões dos cards.']
+    },
+    {
+        numero: '2.68.0', nome: 'Modo Desenvolvedor, hora no Início e contagem regressiva', status: 'concluida', data: '21/11/2026 às 13:30',
+        novidades: ['Novo submenu "Modo Desenvolvedor" em Ajustes, com Uso do Firebase, Fonte do PDF da NF, Importar NFs antigas e Histórico SmartCompras (que saíram da lista principal).', 'Dentro dele, "Linguagem do aplicativo" com a chave "Ativar modo Leandro" e o aviso "Muda a personalidade do app. Cuidado."', 'Ligar a chave abre uma sequência de "proteção" bem zoeira (várias confirmações, termo, captcha, teste de atenção, pergunta de segurança, toques e reflexão). Depois da primeira vez, a ativação é uma tela curta.', 'A tela Início mostra a hora (hh:mm), que atualiza sozinha.', 'No Modo Leandro, de vez em quando aparece uma contagem regressiva (almoço, café das 15h, ir embora), só em dia de expediente.', 'A busca de Ajustes continua achando tudo, inclusive o que mudou de lugar.'],
+        implementado: ['index.html: novas telas Modo Desenvolvedor e Linguagem do aplicativo; itens movidos; campo antigo da Personalização removido.', 'js/63-modo-dev.js (novo): chave e sequência de proteção.', 'js/62: chave no lugar dos botões, contagem regressiva aleatória por horário.', 'js/48: hora no Início. js/01: voltar das telas novas. js/29: busca.', 'style.css e js/14: visual, versão e histórico.'],
+        arquivos: ['index.html','style.css','js/01-nucleo-config-estado.js','js/29-busca-ajustes.js','js/48-inicio-lote.js','js/62-linguagem.js','js/63-modo-dev.js','js/14-historico-mudancas.js'],
+        mudou: ['A escolha Modo Normal/Modo Leandro saiu de Personalização > Aparência e foi para o Modo Desenvolvedor. O Modo Leandro que já estava ligado continua ligado.', 'Na sequência, o "segurar o botão" virou "tocar 8 vezes" (segurar pode falhar na web) e a etapa de digitar texto foi cortada.'],
+        testar: ['Ajustes: ver o item Modo Desenvolvedor e conferir que as 4 telas foram pra dentro dele, cada uma com Voltar.', 'Modo Desenvolvedor > Linguagem do aplicativo > ligar a chave e passar pela sequência. Ver se os toques e o teste de atenção funcionam bem no iPhone.', 'Depois de ativar: desligar (uma pergunta) e ligar de novo (tela curta).', 'Início: ver a hora ao lado da data e, no Modo Leandro, esperar uma contagem aparecer em horário de expediente.', 'Buscar "firebase" ou "linguagem" na busca de Ajustes.', 'Repetir nos temas escuro, XP e Vidro.'],
+    },
+    {
+        numero: '2.67.2', nome: 'Botão Voltar nas telas que faltavam', status: 'concluida', data: '21/11/2026 às 09:10',
+        novidades: ['Histórico SmartCompras e Análise de Cotações agora têm o botão Voltar no topo, como as outras telas de Ajustes.'],
+        implementado: ['js/01: as duas telas entram na lista de telas com Voltar e de tela-mãe (Ajustes).', 'index.html, style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/01-nucleo-config-estado.js','js/14-historico-mudancas.js'],
+        mudou: ['Nenhuma outra tela foi alterada. Se achar outra sem o Voltar, me diga qual.'],
+        testar: ['Ajustes > Histórico SmartCompras: ver o botão Voltar e tocar nele.', 'Ajustes > Análise de Cotações: o mesmo.', 'Conferir que a aba Ajustes continua marcada na barra de baixo nessas telas.'],
+    },
+    {
+        numero: '2.67.1', nome: 'Modo Leandro na Ajuda e nas Notificações', status: 'concluida', data: '21/11/2026 às 08:40',
+        novidades: ['No Modo Leandro, os resumos, passos e dicas da Ajuda e o texto das Notificações também ganharam o tom do colega ranzinza.', 'Mais frases de orientação (conta, importações, backup, auditoria) foram ajustadas.'],
+        implementado: ['js/62: lista de textos da Ajuda e das Notificações e ajuste de frases de orientação.', 'js/31 e js/41: passam os textos por LING.t (só mudam no Modo Leandro).', 'index.html, style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/31-ajuda.js','js/41-notificacoes-push.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['No Modo Normal nada muda.', 'Só entram textos que já existiam na Ajuda; artigos novos ficam neutros até serem adicionados à lista.'],
+        testar: ['Modo Leandro: abrir Ajuda e entrar em alguns artigos (Auditoria Retroativa, Backup, Conta) para ver resumo, passos e dicas.', 'Abrir as Notificações e ver o texto de cada estado.', 'Voltar ao Modo Normal e conferir que tudo volta ao original.'],
+    },
+    {
+        numero: '2.67.0', nome: 'Modo Leandro mais ranzinza e chegando nos painéis', status: 'concluida', data: '21/11/2026 às 08:10',
+        novidades: ['No Modo Leandro, o painel Atenção (explicação de cada grupo e frase de abertura) e a tela de Relatórios (abertura e descrição de cada relatório) agora já falam no tom do colega ranzinza, em vez do texto neutro.', 'Frases mais fracas ou "traduzidas" foram trocadas por outras mais secas e mais do dia a dia do trabalho (fornecedor, sistema, pendência).', 'Os comentários extras dos avisos ganharam mais variedade e menos fofura.', 'O Modo Normal não muda em nada. Os emojis dos comentários de horário continuam como você pediu.'],
+        implementado: ['js/62: nova função LING.t com os textos de painéis; frases e sufixos reescritos.', 'js/34 e js/55: passam os textos por LING.t (só mudam no Modo Leandro).', 'index.html, style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/34-atencao.js','js/55-hub-relatorios.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['A Ajuda, os relatórios gerados, PDFs e Word seguem neutros.', 'Esta rodada cobre Atenção e Relatórios. Outras telas podem entrar nas próximas, conforme você apontar.'],
+        testar: ['Ajustes > Aparência > Modo Leandro: abrir Atenção e ver a explicação de cada grupo e a frase de abertura.', 'Abrir Relatórios e ver a abertura e a descrição de cada relatório.', 'Trocar para Modo Normal e conferir que os dois voltam ao texto de antes.', 'Gerar alguns avisos (copiar, salvar, excluir) e ver a variedade das frases.'],
+    },
+    {
+        numero: '2.66.0', nome: 'Item da NF "será devolvido" e recolhimento no Controle de NFs', status: 'concluida', data: '21/11/2026 às 07:20',
+        novidades: ['Novo botão "Será devolvido" no item da NF, ao lado de "Produto trocado" (na Entrada de NF e no Editor de NF). O item fica na nota, mas não é associado ao pedido e não conta como recebido.', 'A quantidade a devolver vem completa e pode ser diminuída no Editor de NF (devolução parcial).', 'No Controle de NFs o card da NF mostra a etiqueta laranja "Devolução · recolher ..." e o botão "Marcar como recolhido" (data e NF de devolução opcional). Depois do recolhimento a etiqueta fica verde.', 'Em Atenção aparece "Devoluções aguardando recolhimento" até o material ser recolhido.', 'A auditoria registra "Solicitamos X, porém foi faturado Y" e acrescenta que o material será devolvido.'],
+        implementado: ['js/20: botão, quantidade a devolver e desfazer no Editor de NF (grava no item: tratamento "trocado" + devolucao).', 'js/10 e js/11: mesmo botão na Entrada de NF e gravação ao salvar; a ocorrência de produto diferente ganha a frase da devolução.', 'js/17: etiqueta, botão e janela de recolhimento no card do Controle de NFs.', 'js/34: grupo em Atenção.', 'style.css, index.html e js/14: visual, versão e histórico.'],
+        arquivos: ['index.html','style.css','js/10-entrada-nf-xml.js','js/11-central-pedido.js','js/17-historico-controle-nfs.js','js/20-editor-nf.js','js/34-atencao.js','js/14-historico-mudancas.js'],
+        mudou: ['Não há abatimento de valor no pagamento: o app só sinaliza a devolução.', 'A devolução usa o mesmo mecanismo do "Produto trocado": o pedido original (ex.: FRASCO SISTEMA ABERTO) continua pendente até você resolver na auditoria.', 'Não entra no Resumo de pendências, que é o texto para o fornecedor.'],
+        testar: ['Controle de NFs > NF 38301 da Futura > Editar NF > Itens > UROFIX BOLSA: tocar em "Será devolvido" e escolher o UROFIX FRASCO SISTEMA ABERTO do pedido 1756.', 'Voltar ao Controle de NFs: ver a etiqueta laranja no card e o botão "Marcar como recolhido".', 'No Editor, diminuir a quantidade a devolver e ver a etiqueta mudar.', 'Atenção: ver "Devoluções aguardando recolhimento".', 'Abrir a conferência do pedido 1756 e ver "O material será devolvido." na ocorrência.', 'Marcar como recolhido com data e ver a etiqueta verde e o item sair de Atenção.', 'Desfazer devolução e ver tudo voltar ao normal.', 'Repetir o botão ao subir um XML na Entrada de NF e nos temas escuro, XP e Vidro.'],
+    },
+    {
+        numero: '2.65.0', nome: 'Avisos em estilo ilha e tempo automático', status: 'concluida', data: '20/11/2026 às 19:30',
+        novidades: ['Ao enviar uma NF para a relação, adicionar uma NF manual ou salvar uma NF, o aviso agora aparece como uma ilha escura acima da barra inferior, com ícone e anel que mostra o tempo restante.', 'O aviso traz o número da NF, o fornecedor e o valor, e um botão "Ver" que leva direto à lista.', 'Avisos com texto grande mostram até 3 linhas e um "Ver tudo".', 'Todos os avisos do aplicativo agora ficam mais ou menos tempo na tela conforme o tamanho do texto (de 3 a 10 segundos).'],
+        implementado: ['js/07: tempo automático por tamanho do texto e novo aviso "ilha" (toque fecha, segurar pausa, Ver tudo).', 'js/17, js/03 e js/11: os três avisos de NF usam o novo estilo.', 'style.css: visual da ilha (cantos de pílula, anel de tempo, respeita movimento reduzido).', 'index.html e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','js/07-login-conta-backup.js','js/17-historico-controle-nfs.js','js/03-dados-notas.js','js/11-central-pedido.js','js/14-historico-mudancas.js'],
+        mudou: ['Os demais avisos continuam com o visual de antes, só que com o tempo automático.', 'Não há opção de escolher o tempo em Ajustes: o app calcula sozinho.'],
+        testar: ['Controle de NFs: enviar uma NF para a relação e ver a ilha com o anel girando; tocar em "Ver".', 'Adicionar uma NF manual e salvar: ver o aviso e tocar em "Ver".', 'Salvar uma NF pelo XML e ver o aviso.', 'Tocar no aviso fecha; segurar o dedo pausa o anel.', 'Provocar um aviso longo (ex.: NF sem vencimento ou valor): ver as 3 linhas e o "Ver tudo".', 'Ver um aviso simples (ex.: copiar algo) e conferir se o tempo parece adequado.', 'Repetir nos temas escuro, Windows XP e Vidro líquido e no Modo Leandro.'],
+    },
+    {
+        numero: '2.64.1', nome: 'Cards aguentam dados extremos', status: 'concluida', data: '20/11/2026 às 18:40',
+        novidades: ['Nomes, códigos e textos longos sem espaço agora quebram dentro do card do Controle e das Cotações, em vez de passar da borda.', 'Em "Prazo" e "Pedido" os valores grandes quebram de linha em vez de ficarem cortados com reticências.', 'No card de Cotações, em iPhone pequeno, a etiqueta de status desce para baixo do nome quando falta espaço.'],
+        implementado: ['style.css: regras de quebra de texto nos cards (.ctl-nm, .ctl-inf, .ctl-dd) e ajuste do card de Cotações em telas até 360px.', 'index.html e js/14: número da versão e histórico.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Com dados normais o visual dos cards continua igual.', 'Os valores de Prazo e Pedido podem ocupar duas linhas quando forem muito longos.'],
+        testar: ['Controle de NFs e Cotações: conferir se os cards continuam iguais ao de sempre.', 'Se tiver um fornecedor ou complemento com nome muito longo, ver se quebra dentro do card.', 'Repetir nos temas escuro, Windows XP e Vidro líquido.'],
+    },
+    {
+        numero: '2.64.0', nome: 'Modo Leandro, comentários por horário e vidro corrigido', status: 'concluida', data: '20/11/2026 às 18:30',
+        novidades: ['A linguagem do aplicativo agora se chama Modo Normal e Modo Leandro.', 'No Modo Leandro, o Início comenta conforme o horário do seu expediente (café, almoço, reta final, sextou, noite tarde), com alguns emojis.', 'Mais avisos e textos de ajuda passam pelo Modo Leandro, inclusive avisos de campo faltando, de "nada encontrado" e de "já está feito".', 'Vidro líquido corrigido: voltou o degradê padrão, as janelas ficam firmes (o fundo não aparece mais por trás do texto) e o campo de busca não tem mais caixa dentro de caixa.', 'O Vidro leve foi removido.'],
+        implementado: ['js/62: comentário por horário (seg a qui até 17h, sexta até 16h), novos grupos de avisos e textos de ajuda.', 'style-vidro.css: fundo padrão, superfícies mais firmes, janelas quase opacas, campos de busca ajustados.', 'index.html: nomes do seletor e opções de tema. style.css e js/14: versão e histórico.'],
+        arquivos: ['index.html','style.css','style-vidro.css','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['Os horários do expediente estão fixos no código (seg a qui 7h às 11h30 e 13h30 às 17h; sexta até 16h).', 'Mensagens de confirmação de exclusão e os documentos continuam neutros.'],
+        testar: ['Ajustes > Aparência > Linguagem do aplicativo: Modo Leandro e ver o comentário no Início.', 'Trocar de tela com o tema Vidro líquido e ver se algum conteúdo do fundo ainda aparece.', 'Abrir uma janela (ex.: Importar XML) no vidro: o texto deve ficar legível.', 'Buscar algo sem resultado e salvar/apagar algo: avisos com comentário.'],
+    },
+    {
+        numero: '2.63.0', nome: 'Temas Vidro líquido', status: 'concluida', data: '20/11/2026 às 17:45',
+        novidades: ['Três temas novos em Ajustes > Aparência: Vidro líquido (claro), Vidro líquido (escuro) e Vidro leve (sem desfoque).', 'Cards, botões, campos, modais, cabeçalho e dock em vidro translúcido, com fundo em manchas de azul e verde, branco e cinza.', 'Se o aparelho estiver com "Reduzir transparência" ligado, o tema fica firme e sem desfoque.'],
+        implementado: ['style-vidro.css (novo): os três temas, ativos só quando escolhidos.', 'index.html: opções no seletor de tema e link do novo arquivo. style.css e js/14: número da versão e histórico.'],
+        arquivos: ['index.html','style.css','style-vidro.css','js/14-historico-mudancas.js'],
+        mudou: ['Os outros temas continuam como estavam.', 'O desfoque fica só nos blocos principais; listas longas usam fundo translúcido sem desfoque, para não pesar.'],
+        testar: ['Ajustes > Aparência > Tema: escolher cada um dos três e abrir Início, Repasse, Cotações e Ajustes.', 'Ver se o texto está legível nos campos de busca, botões e modais.', 'Rolar listas longas e ver se a rolagem continua fluida. Se pesar, usar o Vidro leve.', 'Voltar para o tema anterior e confirmar que tudo voltou ao normal.'],
+    },
+    {
+        numero: '2.62.1', nome: 'Linguagem Sem paciência em todo o app', status: 'concluida', data: '20/11/2026 às 12:55',
+        novidades: ['Na linguagem Sem paciência, os textos de orientação de todas as telas ganham o novo tom: importação, backup, fontes, favoritos do SmartCompras, conta, logo e assinatura, entre outros.', 'As mensagens de tela vazia (sem registro, sem cotação, sem NF e parecidas) também.', 'Os avisos que ainda não tinham frase própria passam a ganhar um comentário no final (o texto original, com nomes e números, continua inteiro).'],
+        implementado: ['js/62: lista de textos de orientação e de tela vazia, varredura da tela que troca só esses textos e volta ao original na linguagem Normal.', 'js/62: comentários variados no fim de avisos de sucesso, de falha e de campo faltando.', 'index.html, style.css e js/14: número da versão e histórico.'],
+        arquivos: ['index.html','style.css','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['Com a linguagem Normal nada muda.', 'Só entram textos de ajuda e de tela vazia. Login, termos, modelos de texto com {campos}, relatórios, PDFs e Word continuam neutros.'],
+        testar: ['Ajustes > Aparência > Sem paciência e percorrer as telas: textos de ajuda e telas vazias com o novo tom.', 'Voltar para Normal: tudo volta ao texto original, sem recarregar.', 'Salvar, apagar e importar algo: o aviso mantém a informação e ganha um comentário no fim.', 'Gerar um PDF e um Word em Sem paciência: sem diferença no conteúdo.'],
+    },
+    {
+        numero: '2.62.0', nome: 'Linguagem do aplicativo: Normal ou Sem paciência', status: 'concluida', data: '20/11/2026 às 08:40',
+        novidades: ['Novo seletor em Ajustes > Aparência: "Linguagem do aplicativo", com Normal ou Sem paciência. Vale na hora e fica salvo no aparelho.', 'Sem paciência: as mensagens do dia a dia (salvou, apagou, copiou, erro ao salvar etc.) ganham tom de colega cansado da burocracia, com várias frases por situação, que se alternam.', 'A saudação do Início, as telas vazias e a orientação dos fornecedores a chegar também mudam de tom.', 'Relatórios, PDFs, Word, textos de saída e qualquer documento continuam sempre neutros, nas duas opções.'],
+        implementado: ['js/62-linguagem.js (novo): camada única com o dicionário de mensagens, a escolha salva e a rotação sem repetir a mesma frase em seguida.', 'js/07: o toast consulta a camada de linguagem; sem regra para o texto, ele sai como sempre.', 'js/05 e js/48: telas vazias, carregando e saudação usam a camada.', 'index.html: seletor nos Ajustes, dica dos fornecedores com id e carga do novo arquivo. style.css: visual do seletor.'],
+        arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/07-login-conta-backup.js','js/48-inicio-lote.js','js/62-linguagem.js','js/14-historico-mudancas.js'],
+        mudou: ['Com a linguagem Normal nada muda no app.', 'Só mensagens genéricas foram trocadas; avisos com nomes e números continuam como eram, para não perder informação. Mais situações podem entrar nas próximas versões.', 'Os geradores de PDF, Word, relatórios e textos de saída não chamam a camada de linguagem.'],
+        testar: ['Ajustes > Aparência > Linguagem do aplicativo: alternar entre Normal e Sem paciência.', 'Fechar e abrir o app: a escolha deve continuar.', 'Em Sem paciência, salvar algo, apagar uma anotação e copiar um texto várias vezes: as frases devem variar.', 'Início e Repasse sem notas: saudação e tela vazia mudam de tom.', 'Gerar um PDF e um Word em Sem paciência: o conteúdo deve sair igual ao de sempre.'],
+    },
+    {
+        numero: '2.61.0', nome: 'Assinatura nos relatórios, números do Início e telas vazias', status: 'concluida', data: '20/11/2026 às 10:30',
+        novidades: ['Os PDFs levam o autor só nas propriedades do arquivo; nada aparece na página nem na prévia. Os arquivos Word levam o autor nas propriedades. Sem rodapé visível.', 'Início: números maiores, e a cor só aparece onde pede atenção (vencidas em vermelho, vencem hoje/amanhã e fornecedores a chegar em âmbar).', 'Telas vazias agora têm ícone, uma frase e um botão (ex.: "Nada para saída agora" com "Ver todas as NFs").', 'Ajuda: "Desenvolvido por Leandro Mendonça" no final.'],
+        implementado: ['js/06: função única marcaAutoriaPdf (só o autor nas propriedades do PDF) e assinatura discreta no console.', 'js/26, js/45, js/47, js/55: chamam a função antes de salvar; Word com autor nas propriedades.', 'js/48 e style.css: números do Início e telas vazias.', 'js/05: tela vazia da Saída com ação.', 'js/31: crédito na Ajuda. index.html: meta autor e número da versão.'],
+        arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/06-exportar-pdf.js','js/26-equipamentos.js','js/31-ajuda.js','js/45-exportar-cotacao.js','js/47-resumo-pendencias.js','js/48-inicio-lote.js','js/55-hub-relatorios.js','js/14-historico-mudancas.js'],
+        mudou: ['O card de fornecedores a chegar não foi alterado.', 'Nada da assinatura aparece na página: o rodapé e a marca d\'água visível foram retirados.'],
+        testar: ['Gere um PDF de cada relatório (Saída, Cotação, Resumo de pendências, Relatórios, Equipamentos): nada novo deve aparecer na página. Veja o autor em Propriedades do arquivo.', 'Gere um Word e veja o autor em Propriedades.', 'Início: números grandes, cores só nos que pedem atenção.', 'Repasse sem notas: tela vazia com botão "Ver todas as NFs".', 'Ajustes > Ajuda: crédito no final da lista.'],
+    },
+    {
+        numero: '2.60.1', nome: 'Fornecedores a chegar sem limite de tempo', status: 'concluida', data: '19/11/2026 às 22:45',
+        novidades: ['Pedidos antigos que ainda têm fornecedor para chegar continuam aparecendo em fornecedores a chegar e no Resumo de pendências. Antes, pedidos com mais de 60 dias saíam da lista.'],
+        implementado: ['js/48: removido o corte de 60 dias do cálculo de fornecedores a chegar.', 'js/47: removido o mesmo corte do Resumo de pendências, para os dois baterem.', 'index.html e style.css: número da versão.'],
+        arquivos: ['index.html','style.css','js/47-resumo-pendencias.js','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['O número de fornecedores a chegar pode aumentar, porque pedidos antigos voltam a ser contados.', 'Se algum pedido antigo já foi resolvido fora do app, marque "chegou" nele para sair da lista.'],
+        testar: ['Início > fornecedores a chegar: o pedido antigo que tinha sumido deve voltar.', 'Confira se a abertura do Início continua rápida.'],
+    },
+    {
+        numero: '2.60.0', nome: 'Tema Windows XP: barra de tarefas e menu Iniciar', status: 'concluida', data: '19/11/2026 às 22:30',
+        novidades: ['No tema Windows XP, a barra de baixo vira uma barra de tarefas, com atalhos para os principais (Início, Repasse, Cotações, Controle e Anotações).', 'O botão Iniciar abre um menu com todas as telas, em grupos: Trabalho, Acompanhamento, Documentos e Sistema.', 'Os botões do cabeçalho ficam com contraste no tema XP.'],
+        implementado: ['index.html: barra de tarefas com atalhos e menu Iniciar agrupado.', 'style-xp.css: estilos da barra, do menu e dos botões do cabeçalho; sem efeitos de vidro no tema XP.', 'style.css, index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','style-xp.css','js/14-historico-mudancas.js'],
+        mudou: ['Só no tema Windows XP. Os outros temas continuam como estavam.'],
+        testar: ['Ajustes > Aparência > Windows XP. Toque em Iniciar e abra uma tela por grupo.', 'Toque nos atalhos da barra: cada um deve abrir a tela certa.', 'Confira os botões do cabeçalho, que devem aparecer escuros e legíveis.'],
+    },
+    {
+        numero: '2.59.0', nome: 'Tema Windows XP (opcional)', status: 'atual', data: '19/11/2026 às 20:55',
+        novidades: ['Novo tema "Windows XP" em Ajustes > Aparência. O tema padrão continua igual.', 'No celular, a barra de navegação vira um botão Iniciar, que abre a tela Mais com todas as telas.'],
+        implementado: ['style-xp.css (novo): visual do tema, ativo só com o tema XP escolhido.', 'index.html: opção Windows XP no seletor de tema, link para style-xp.css, botão Iniciar no celular.', 'style.css e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','style-xp.css','js/14-historico-mudancas.js'],
+        mudou: ['Só aparece quando o tema Windows XP estiver escolhido.', 'Primeira versão do tema: alguns detalhes de telas específicas podem precisar de ajuste.'],
+        testar: ['Ajustes > Aparência > Tema > Windows XP: confira o cabeçalho, os botões e os cartões.', 'No iPhone, confira o botão Iniciar na parte de baixo e abra algumas telas.', 'Volte para Claro e confira que nada mudou.'],
+    },
+    {
+        numero: '2.58.10', nome: 'Prazo em linha própria', status: 'atual', data: '19/11/2026 às 18:25',
+        novidades: ['O prazo (atraso ou vence em X dias) fica em uma linha própria, abaixo da quantidade de itens, sem quebrar no meio.'],
+        implementado: ['js/48: prazo em bloco separado, sem o separador ·.', 'style.css: prazo em bloco, sem quebra de linha.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Só a posição do prazo na linha do fornecedor.'],
+        testar: ['Início > fornecedores a chegar: o prazo deve aparecer em uma linha própria, inteiro, em cor.'],
+    },
+    {
+        numero: '2.58.9', nome: 'Fornecedores a chegar: uma etiqueta e botão Fechar padrão', status: 'atual', data: '19/11/2026 às 18:20',
+        novidades: ['Cada fornecedor a chegar tem uma só etiqueta de status (Não chegou ou Parcial).', 'O prazo (atraso ou vence em X dias) aparece no texto da linha, em cor.', 'O botão Fechar da lista usa o mesmo estilo dos outros botões do app.'],
+        implementado: ['js/48: prazo como texto da linha (iniTextoAtraso); só a etiqueta de status fica no lado direito.', 'style.css: cores do texto de prazo.', 'index.html: botão Fechar com o estilo padrão de botão.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Uma etiqueta por fornecedor. O prazo virou texto.', 'Botão Fechar no estilo padrão.'],
+        testar: ['Início > fornecedores a chegar: cada fornecedor deve ter uma só etiqueta e o prazo na linha de baixo, em cor.', 'Botão Fechar no fim da lista deve ter o mesmo estilo dos outros botões.'],
+    },
+    {
+        numero: '2.58.8', nome: 'Ajuste de alinhamento da tabela da prévia', status: 'atual', data: '19/11/2026 às 18:10',
+        novidades: ['As linhas da tabela de materiais da prévia ficam alinhadas: os fios de cada linha acompanham a linha inteira, e a quantidade fica alinhada à direita.'],
+        implementado: ['style.css: células da tabela da prévia centralizadas na própria linha, sem quebrar o alinhamento dos fios.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o alinhamento visual da tabela da prévia.'],
+        testar: ['Início > fornecedores a chegar > seta de um fornecedor com materiais de nomes longos: os fios devem continuar alinhados de um lado a outro.'],
+    },
+    {
+        numero: '2.58.7', nome: 'Fornecedores a chegar: materiais em tabela', status: 'atual', data: '19/11/2026 às 18:05',
+        novidades: ['Na prévia de cada fornecedor (seta), os materiais aparecem em tabela: Material à esquerda e Quantidade à direita, com a unidade quando o item tiver.', 'A quantidade é o que ainda falta chegar do material.'],
+        implementado: ['js/48: a lista guarda, para cada material, a quantidade que falta (total do pedido menos o que já entrou) e a unidade, quando houver.', 'style.css: tabela da prévia.', 'index.html e js/14: número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Só a prévia da seta. Tocar na linha continua abrindo o pedido.', 'Itens sem unidade mostram só o número.'],
+        testar: ['Início > fornecedores a chegar > seta de um fornecedor: confira a tabela e se as quantidades batem com o pedido.', 'Veja um item que já teve entrega parcial: a quantidade deve ser só o que falta.'],
+    },
+    {
+        numero: '2.58.6', nome: 'Fornecedores a chegar: produtos e dias de atraso', status: 'atual', data: '19/11/2026 às 07:55',
+        novidades: ['Na lista de fornecedores a chegar, a seta ao lado de cada fornecedor abre os produtos que ainda faltam chegar.', 'Cada fornecedor mostra os dias de atraso pela data limite do pedido, ou "vence em X dias" quando falta pouco.'],
+        implementado: ['js/48: inicioContarFornecedores guarda os produtos que faltam e a data limite do pedido; renderFornecedoresAChegar mostra a seta e a prévia; iniChipAtraso calcula o atraso.', 'style.css: estilos da seta, da prévia e do chip verde "no prazo".', 'index.html: texto da lista e número da versão.'],
+        arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
+        mudou: ['Tocar na linha continua abrindo o pedido. Tocar na seta só mostra os produtos.'],
+        testar: ['iPhone: Início > toque em "fornecedores a chegar". Toque na seta de um fornecedor: devem aparecer só os produtos que faltam.', 'Confira se o chip de dias de atraso bate com a data limite do pedido na Central.', 'Toque na linha do fornecedor: deve abrir o pedido como antes.'],
+    },
+    {
+        numero: '2.58.5', nome: 'Busca de Ajustes igual à da tela inicial', status: 'atual', data: '19/11/2026 às 06:30',
+        novidades: ['O campo de busca de Ajustes passa a ter o mesmo visual do campo da tela inicial.', 'As abas voltam ao visual anterior.'],
+        implementado: ['style.css: campo de busca de Ajustes com o estilo do campo da tela inicial.', 'style.css: abas restauradas ao visual anterior.', 'index.html e style.css: número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o visual do campo de busca de Ajustes. As abas voltam ao padrão.'],
+        testar: ['Abra Ajustes e confira o campo de busca.', 'Abra Repasse de NF e confira que as abas voltaram ao visual de antes.'],
+    },
+    {
+        numero: '2.58.4', nome: 'Campo de busca igual ao da tela inicial', status: 'concluida', data: '19/11/2026 às 06:25',
+        novidades: ['O campo de busca das telas de lista passa a ter o mesmo visual do campo da tela inicial: fundo branco, borda e cantos arredondados.'],
+        implementado: ['style.css: campo de busca (.busca-padrao) com o estilo do campo da tela inicial.', 'index.html: o link do style.css recebe número de versão para não usar a cópia guardada no navegador.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o visual do campo de busca. As abas continuam como estavam.'],
+        testar: ['Abra Repasse de NF, Cotações e Anotações e confira o campo de busca.', 'Se ainda aparecer o visual antigo, feche o app por completo e abra de novo.'],
+    },
+    {
+        numero: '2.58.3', nome: 'Mais contraste na busca e nas abas', status: 'atual', data: '19/11/2026 às 06:20',
+        novidades: ['A caixa de busca e as abas (Para saída, Em espera, Exportar texto) ficaram mais visíveis sobre o novo fundo.'],
+        implementado: ['style.css: busca e abas com fundo e borda próprios nas telas do app.', 'index.html e style.css: número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Só o visual da busca e das abas. A lógica não mudou.'],
+        testar: ['Abra Repasse de NF e confira a busca e as abas no modo claro, no escuro e em um tema colorido.'],
+    },
+    {
+        numero: '2.58.2', nome: 'Fundo com degradê suave em todas as telas', status: 'concluida', data: '19/11/2026 às 06:10',
+        novidades: ['O fundo leve com degradê da tela de boas-vindas agora aparece em todas as telas do app.', 'O degradê acompanha a área visível de cada tela, então não corta ao rolar nem em telas grandes. Cards e listas continuam com o fundo normal.'],
+        implementado: ['style.css: fundo das telas (.app-screen) com o mesmo degradê do onboarding, adaptado ao tema.', 'index.html e style.css: só o número da versão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
+        mudou: ['Todas as telas ganham um tom de cor do acento no topo, que some para o fundo normal mais abaixo.'],
+        testar: ['Abra algumas telas (Início, Cotações, Ajustes) no iPhone e no computador: o degradê deve ficar suave, sem faixa no meio.', 'Confira o modo escuro e um tema colorido (Oceano, Pôr do sol): o tom deve acompanhar o tema.'],
+    },
+    {
+        numero: '2.58.1', nome: 'Importar NFs antigas dentro do app, em Ajustes', status: 'concluida', data: '18/11/2026 às 22:45',
+        novidades: ['A importação do resumo.csv fica em Ajustes → Importar NFs antigas. Abre por cima da tela e fecha de volta para Ajustes, sem outra página.', 'Mostra quantas notas vão ser gravadas, quantas precisam de conferência no PDF e quantas ficam de fora por falta de número da NF.'],
+        implementado: ['index.html: item novo em Ajustes; botão de abrir a página de PDFs removido da busca de lote.', 'js/61: lotesLerCsv, janela de importação e gravação (lotesGravar) dentro do app.', 'style.css: só o número da versão.'],
+        arquivos: ['index.html','style.css','js/61-lotes-antigos.js','js/14-historico-mudancas.js'],
+        mudou: ['A página lotes.html deixa de ser usada pelo app. Os arquivos continuam no site, mas nenhum botão leva até ela.', 'Para gravar é preciso estar entrado no app.'],
+        testar: ['Em Ajustes, toque em Importar NFs antigas, escolha o resumo.csv e confira os números antes de gravar.', 'Depois de gravar, em Buscar lote, procure 5198815: deve aparecer com a etiqueta Modelo novo · NF antiga.'],
+    },
+    {
+        numero: '2.58.0', nome: 'Buscar lote em uma tela só, com a origem de cada resultado', status: 'concluida', data: '18/11/2026 às 21:30',
+        novidades: ['Buscar lote tem uma busca só. Cada resultado mostra se veio dos dados atuais ou do modelo novo (NF antiga, lida do PDF).', 'A página de leitura das NFs antigas aceita o resumo.csv gerado pelo programa do computador.', 'Fundo liso nas páginas de importação e de lotes, sem a faixa de degradê.'],
+        implementado: ['index.html: tela Buscar lote com um formulário, um botão Buscar e vários lotes recolhidos.', 'js/48: busca junta os dados atuais e o modelo novo (lotesNF), com a origem marcada.', 'js/61: sai a busca separada de NF antiga; fica a de vários lotes.', 'lotes.html: importação do resumo.csv; fundo sem degradê. importar.html: fundo sem degradê.', 'style.css: só o número da versão.'],
+        arquivos: ['index.html','importar.html','lotes.html','style.css','js/48-inicio-lote.js','js/61-lotes-antigos.js','js/14-historico-mudancas.js'],
+        mudou: ['Não há mais a seção separada de NF antiga em Buscar lote. Tudo fica no mesmo formulário.', 'O botão Ler PDFs de NFs antigas abre a página de leitura em outra aba.'],
+        testar: ['Em Buscar lote, procure um lote que existe nos dados atuais e outro que só existe nas NFs antigas: cada um deve mostrar a etiqueta certa.', 'Em lotes.html, importe o resumo.csv e confira a lista antes de gravar.'],
+    },
+    {
+        numero: '2.57.9', nome: 'Lotes de NFs antigas: leitura dos PDFs e busca no Buscar lote', status: 'concluida', data: '18/11/2026 às 17:40',
+        novidades: ['Nova página para ler os PDFs antigos do computador (lote, nº da NF, data, CNPJ e caminho do arquivo). Produto, valor e texto da nota não são guardados.', 'Em Buscar lote, uma seção nova procura lotes de NFs antigas, com busca exata e aproximada (até 2 diferenças), e aceita vários lotes de uma vez.'],
+        implementado: ['lotes.html: leitura dos PDFs no navegador (texto ou reconhecimento de texto), conferência e gravação. Firebase só na hora de gravar.', 'js/61: análise do texto, gravação e busca da coleção lotesNF.', 'index.html: seção nova na tela Buscar lote.'],
+        arquivos: ['index.html','lotes.html','js/61-lotes-antigos.js','js/14-historico-mudancas.js','style.css'],
+        mudou: ['A busca de lote que já existia (NFs do app) não mudou.', 'É preciso liberar a coleção lotesNF nas regras do Firestore antes de gravar.'],
+        testar: ['Abra lotes.html, escolha 3 PDFs (um digitado e dois digitalizados) e confira a lista antes de gravar.', 'Grave as NFs conferidas. Depois, em Buscar lote, procure um lote delas na seção de NFs antigas.'],
+    },
+    {
+        numero: '2.57.8', nome: 'Janela de importação centralizada e botão de salvar sem corte', status: 'concluida', data: '18/11/2026 às 17:10',
+        novidades: ['A janela de importação do SmartCompras abre no centro da tela do computador.', 'O botão de salvar na conferência mostra o texto inteiro.'],
+        implementado: ['js/59: o favorito calcula a posição da janela a partir da janela do navegador.', 'importar.html: altura do botão de salvar ajustada.'],
+        arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['A posição vale para janelas novas. Se a janela já estiver aberta, ela continua onde está.', 'Para a nova posição, arraste o botão de Ajustes de novo e substitua o favorito antigo do computador.'],
+        testar: ['Arraste o botão novo de Ajustes, abra o Histórico de Pedidos e toque no favorito: a janela deve abrir no centro.', 'Na conferência, o botão Salvar deve mostrar o texto inteiro.'],
+    },
+    {
+        numero: '2.57.7', nome: 'Histórico SmartCompras: versão para iPhone em Ajustes e tela de importação redesenhada', status: 'concluida', data: '18/11/2026 às 16:45',
+        novidades: ['Em Ajustes → Histórico SmartCompras, há um bloco para iPhone e celular: copie o código e cole no endereço de um favorito. É a versão que já funcionava no iPhone.', 'A tela de importação ganhou o mesmo visual do onboarding: cabeçalho, passos e cartões de alteração.'],
+        implementado: ['js/59: smartHistBookmarkletCelular (versão de iPhone) e botão de copiar; o código do favorito é gerado a partir da própria função.', 'importar.html: novo visual, com a conferência no lugar da tela de espera.'],
+        arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['A versão de iPhone abre o app inteiro, como antes. A janela própria continua só para o computador.'],
+        testar: ['No iPhone, copie o código de Ajustes, cole num favorito e toque com o Histórico de Pedidos aberto: o app deve abrir com a conferência.', 'No computador, abra a importação pelo favorito e confira o novo visual.'],
+    },
+    {
+        numero: '2.57.6', nome: 'Importação do histórico do SmartCompras em janela própria, sem abrir o app inteiro', status: 'concluida', data: '18/11/2026 às 15:45',
+        novidades: ['O favorito do Histórico SmartCompras abre uma janela pequena para conferir e salvar, sem carregar o app todo. A janela fecha sozinha depois de salvar.', 'Em Ajustes → Histórico SmartCompras, um botão para arrastar o favorito para a barra de favoritos, sem copiar código.'],
+        implementado: ['importar.html: página neutra, sem Firebase para abrir; o Firebase carrega só na hora de gravar.', 'js/59: favorito com janela de nome fixo, que reaproveita a mesma janela; link arrastável gerado pelo próprio código.'],
+        arquivos: ['index.html','importar.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['O favorito antigo continua funcionando, mas abre o app inteiro. Para usar a janela nova, arraste o botão de Ajustes e substitua o favorito antigo.'],
+        testar: ['Arraste o botão de Ajustes → Histórico SmartCompras para a barra de favoritos. Com o Histórico de Pedidos aberto, toque no favorito: deve abrir uma janela pequena com a conferência. Salve e confira se ela fecha sozinha.'],
+    },
+    {
+        numero: '2.57.5', nome: 'Importação do histórico do SmartCompras lê o tipo de alteração no computador', status: 'concluida', data: '18/11/2026 às 15:20',
+        novidades: ['O histórico de alterações do SmartCompras volta a ser reconhecido quando copiado do computador. As alterações de quantidade passam a ser guardadas nos dois casos.'],
+        implementado: ['js/59: o tipo (QUANTIDADE, PREÇO etc.) é aceito numa linha própria, e a palavra ALTERAÇÃO solta é ignorada.'],
+        arquivos: ['index.html','js/14-historico-mudancas.js','js/59-historico-smartcompras.js'],
+        mudou: ['Nenhuma mudança na forma de usar o marcador do favorito.'],
+        testar: ['No computador, abra o Histórico de Pedidos do SmartCompras, toque no marcador e confira se a conferência mostra as alterações de quantidade.'],
+    },
+    {
+        numero: '2.57.4', nome: 'Aviso de instalação aparece uma só vez', status: 'concluida', data: '18/11/2026 às 05:50',
+        novidades: ['O aviso para instalar o app aparece só uma vez em cada aparelho. Depois de fechado ou de aceitar a instalação, não volta.'],
+        implementado: ['js/60: instJaMostrado substitui a regra dos 30 dias; fechar ou instalar grava a marca no navegador.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/60-instalacao-app.js'],
+        mudou: ['Se os dados do navegador forem apagados, o aviso pode voltar uma vez.', 'Quem fechou o aviso na versão anterior, com a regra dos 30 dias, não verá de novo.'],
+        testar: ['No computador ou no celular: abra o app, feche o aviso e recarregue. Ele não deve voltar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.3', nome: 'Busca da Ajuda sem travar e aviso de instalação fora dos popups', status: 'concluida', data: '17/11/2026 às 23:45',
+        novidades: ['A busca da Ajuda não trava mais: o campo fica fixo e só a lista de resultados é atualizada enquanto você digita.', 'O aviso para instalar o app espera o popup de novidades fechar e tem o botão "Agora não" maior.'],
+        implementado: ['js/31: renderAjuda mantém o campo de busca; ajudaMontarResultados redesenha só os resultados; busca com pausa de 120 ms.', 'js/60: aviso espera janelas abertas; botão "Agora não" com 44 px de toque.', 'style.css: alvos de toque do aviso.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/31-ajuda.js','js/60-instalacao-app.js'],
+        mudou: ['Sem mudança de dados nem no Firebase.'],
+        testar: ['Ajuda: digite na busca várias letras seguidas; o campo deve acompanhar sem travar.', 'Abra o app pela primeira vez numa versão nova: o popup de novidades aparece primeiro; o aviso de instalação só depois que você fechar o popup.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.2', nome: 'Participantes por preço e histórico só com quantidade', status: 'concluida', data: '17/11/2026 às 23:40',
+        novidades: ['Ver os participantes mostra cada fornecedor numerado do menor para o maior preço unitário, com valor unitário e total.', 'O histórico do SmartCompras guarda só alterações de quantidade. Prazo de pagamento e outras são descartadas na importação.'],
+        implementado: ['js/09: lista de participantes ordenada por valorProposta (parseValorBR), com número, unitário e total.', 'js/59: filtro na importação (só QUANTIDADE).', 'style.css: .cdet-part-valores.'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/59-historico-smartcompras.js'],
+        mudou: ['A ordem mostrada é por preço unitário, como a tela do SmartCompras. O SmartCompras não traz a hora em que cada fornecedor cotou, então a ordem de chegada não aparece.', 'Os registros do histórico já salvos com prazo de pagamento continuam no banco; a partir de agora, importações novas só guardam quantidade.', 'Ainda não aplica a alteração de quantidade na cotação do app. Isso depende de confirmar a regra.'],
+        testar: ['Abra um item com "Ver os participantes": o primeiro deve ser o menor preço unitário, com número e os dois valores.', 'Faça uma importação do histórico que tenha prazo de pagamento e confira que só as quantidades entram.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.1', nome: 'Participantes organizados e aviso para instalar o app', status: 'concluida', data: '17/11/2026 às 23:30',
+        novidades: ['A lista de participantes do item (Ver os participantes) sai em ordem alfabética, uma empresa por linha.', 'Aviso para instalar o app na tela inicial: no computador (Chrome e Edge) com botão Instalar; no iPhone, com o passo a passo do Safari. Fechar o aviso o esconde por 30 dias naquele aparelho.'],
+        implementado: ['js/09: lista de participantes em <ul> ordenada.', 'js/60 (novo): aviso de instalação (beforeinstallprompt no computador e Android; instrução no iPhone).', 'style.css: classes cdet-part-lista e inst-aviso.'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/60-instalacao-app.js'],
+        mudou: ['Sem mudança em dados nem no Firebase. O aviso só guarda, no navegador, a data em que foi fechado.', 'O botão Instalar só aparece quando o navegador permite a instalação (Chrome e Edge no computador; Chrome no Android). No Safari do computador não aparece.'],
+        testar: ['No computador (Chrome ou Edge): abra o app e espere alguns segundos. Deve aparecer o aviso "Instale o app" com o botão Instalar.', 'No iPhone (Safari): deve aparecer a instrução "Adicione à Tela de Início". Feche o aviso e confira que não volta na mesma semana.', 'Abra uma cotação com "Ver os participantes" e confira a lista em ordem, uma por linha.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.57.0', nome: 'Histórico de alterações do SmartCompras (versão 1)', status: 'concluida', data: '17/11/2026 às 23:20',
+        novidades: ['Dá para trazer para o app as alterações de quantidade e prazo de pagamento que o setor de compras faz no SmartCompras, por pedido.', 'Um marcador (favorito) é tocado na página do Histórico de Pedidos e abre o app com o histórico pronto para conferir e salvar.'],
+        implementado: ['js/59 (novo): leitura do texto do diálogo, conferência, salvamento em historicoSmartCompras/{pedido} e visualização por #smartHistVer=pedido.', 'js/31: artigo "Histórico de alterações do SmartCompras".', 'style.css: janela de conferência (classes hs-*).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/59-historico-smartcompras.js'],
+        mudou: ['Nova coleção no Firestore: historicoSmartCompras. Precisa de regra de leitura e escrita para contas aprovadas, igual às outras coleções.', 'O marcador roda só no SmartCompras, no navegador onde você já está logado. O app nunca entra no SmartCompras nem guarda a sua senha.', 'Só o que está visível no Histórico de Pedidos é trazido. O ano não aparece na tela, então o app assume o ano atual.'],
+        testar: ['No iPhone: crie o favorito com o código do marcador, abra o Histórico de Pedidos no SmartCompras e toque no favorito. O app deve abrir mostrando a lista.', 'Confira se as alterações, datas, valores e nomes batem com a tela e toque em "Salvar histórico do pedido".', 'Depois, abra o endereço do pedido com #smartHistVer=número (ou use o favorito de visualização) e veja se o histórico salvo aparece.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.56.2', nome: 'Ajuste visual do recurso fixo no celular', status: 'concluida', data: '17/11/2026 às 21:15',
+        novidades: ['No cartão do fornecedor, o rótulo "Recurso fixo" fica em cima e o seletor ocupa a largura toda. Antes, o texto ficava espremido na lateral.'],
+        implementado: ['js/18: a linha do recurso fixo recebe a classe frn-recurso-fixo. style.css: regra da classe (rótulo em bloco, seletor com 100% de largura).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/18-erp-fornecedores-spdata.js'],
+        mudou: ['Arquivos alterados desde a 2.56.1: index.html, style.css, js/14 e js/18.', 'Sem mudança de regra: só o visual.'],
+        testar: ['Fornecedores: abra um fornecedor com CNPJ. "Recurso fixo" deve ficar em cima, com o seletor embaixo ocupando a largura da tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.56.1', nome: 'Fornecedor com recurso fixo conta como compra direta na Auditoria Retroativa', status: 'concluida', data: '17/11/2026 às 21:05',
+        novidades: ['NFs de fornecedor com recurso fixo deixam de aparecer como "Sem pedido" na Auditoria Retroativa: contam como compra direta.'],
+        implementado: ['js/32: analiseRetroativaErp considera compra direta a NF cujo CNPJ tem recurso fixo em recursosFixosCnpj (além das marcações que já existiam).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/32-auditoria-retroativa.js'],
+        mudou: ['Arquivos alterados desde a 2.56.0: index.html, style.css, js/14 e js/32.', 'Sem mudança no Worker nem nas regras do Firestore.', 'Se a NF já tinha pedido confirmado, ela sai do "pedido confirmado" e vai para Compra direta, porque esses fornecedores não passam pelo SmartCompras.'],
+        testar: ['Auditoria Retroativa: as NFs de um fornecedor com recurso fixo aparecem no filtro "Compra direta", não em "Sem pedido".', 'Os demais fornecedores continuam no mesmo lugar de antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.56.0', nome: 'Recurso fixo por fornecedor', status: 'concluida', data: '17/11/2026 às 21:10',
+        novidades: ['Na tela de Fornecedores, cada fornecedor com CNPJ tem a opção "Recurso fixo": C/C Santa Casa, Recurso Próprio Santa Casa, C/C CTI, Recurso Próprio CTI ou nenhum (decidir pela cotação).', 'Na Entrada de NF, a NF desse fornecedor já vem com o recurso fixo. Você ainda pode trocar na NF.', 'O recurso fixo vale antes da regra das cotações, mas não muda NFs já salvas.'],
+        implementado: ['js/01: variável recursosFixosCnpj (CNPJ só dígitos → recurso oficial). js/05: carrega recursosFixosCnpj de config do Firestore. js/12: recursoFixoDoFornecedorNfXml(); recursoPrevistoItemXml usa o fixo como padrão (compra direta e item com cotação, sem recurso gravado nem rascunho); definirRecursoFixoDoFornecedor grava com update. js/18: seletor "Recurso fixo" em cada CNPJ do cartão do fornecedor (strings oficiais via calcularRecursoOficial). js/31: passo no artigo Fornecedores.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/18-erp-fornecedores-spdata.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.55.12: index.html, style.css, js/01, js/05, js/12, js/14, js/18 e js/31.', 'Sem mudança no Worker nem nas regras do Firestore.', 'O fornecedor precisa ter CNPJ cadastrado para receber recurso fixo. Fornecedores só com nome (sem CNPJ) não aparecem com essa opção.'],
+        testar: ['Fornecedores: abra um fornecedor com CNPJ, escolha "C/C CTI" no Recurso fixo. Confira que a escolha ficou salva ao reabrir a tela.', 'Entrada de NF: suba uma NF desse fornecedor (compra direta). O recurso deve vir preenchido com a escolha. Troque na NF e confirme que a troca é aceita.', 'Volte o recurso para "Nenhum" e confira que as próximas NFs voltam a seguir a regra normal.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.12', nome: 'Excluir contas de Aprovações, fila local quando a cota do Firebase acaba e pedido de publicação', status: 'concluida', data: '17/11/2026 às 20:40',
+        novidades: ['Em Aprovações de Acesso, quem aprova pode excluir qualquer conta da lista (botão "Excluir", com confirmação). A própria conta não tem o botão. Se a pessoa entrar de novo, volta como pedido novo.', 'Quando o limite diário do Firebase acaba, o que você salva fica guardado neste aparelho e é enviado sozinho quando o limite voltar. Aparece um aviso com a quantidade de alterações guardadas.', 'Nova página na Ajuda: "Quando o limite diário do Firebase acaba".'],
+        implementado: ['js/58-fila-cota.js (novo): fila local em localStorage para gravações que falham por cota ou não respondem enquanto a cota está estourada; reenvio ao abrir o app e a cada 60 s; aviso de cota. js/57: botão Excluir para quem não é a própria conta, com confirmação. js/31: página "Quando o limite diário do Firebase acaba" e passo de Excluir. index.html (inclui js/58), style.css (aviso), js/14: versão 2.55.12.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js', 'js/58-fila-cota.js'],
+        mudou: ['Arquivos alterados desde a 2.55.10: index.html, style.css, js/14, js/31, js/57 e js/58 (novo).', 'Não há mudança no Worker.', 'Para excluir uma conta, as regras do Firestore precisam permitir apagar para a conta mestre (allow delete: if mestre()).'],
+        testar: ['Aprovações de Acesso: abra a lista; as outras contas têm Excluir, a sua não tem. Excluir uma conta de teste: ela sai da lista.', 'Teste da fila: só dá para testar de verdade quando o limite do Firebase estourar. Nesse dia: salve uma anotação e veja o aviso "Limite diário do Firebase atingido" com a quantidade. No dia seguinte, abra o app e confirme que a alteração foi enviada.'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.55.11', nome: 'Aviso de publicação do GitHub volta pelo webhook (só conta mestre)', status: 'concluida', data: '17/11/2026 às 19:40',
+        novidades: ['A conta mestre volta a receber o aviso quando a publicação no GitHub começa e quando termina (ou se der erro).', 'Os avisos de "versão no ar" de tempos em tempos foram retirados.'],
+        implementado: ['avisos/worker-avisos.js: rota /github, que recebe o webhook do GitHub (workflow_run da publicação do Pages), confere a assinatura e avisa só as contas mestres. Retirado o aviso periódico de versão. js/14: registro desta mudança.'],
+        arquivos: ['js/14-historico-mudancas.js', 'avisos/worker-avisos.js'],
+        mudou: ['Só o Worker mudou: cole o novo avisos/worker-avisos.js no Worker (Edit code → Deploy).', 'No Worker: Settings → Variables and Secrets → adicione o segredo GITHUB_WEBHOOK_SECRET com o mesmo valor do campo Secret do webhook no GitHub.', 'O app não precisa de atualização (continua na 2.55.10).'],
+        testar: ['No GitHub: Settings → Webhooks → Recent Deliveries: a próxima entrega deve voltar com status 200 e {"enviados":N}.', 'Ao publicar, a conta mestre recebe "Publicação iniciada" e depois "Publicação concluída".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.10', nome: 'Senha com pontos normais e lista sem dados da conta anterior', status: 'concluida', data: '17/11/2026 às 19:00',
+        novidades: ['No campo de senha, os pontos aparecem normais (antes apareciam como barras).', 'Quando o Firebase nega o acesso (por exemplo, numa conta ainda não aprovada), a lista de fornecedores e catálogos esvazia em vez de mostrar os dados da conta anterior.'],
+        implementado: ['style.css: fonte do sistema no campo de senha. js/44: quando a permissão é negada, a lista recebe vazia e o aviso explica o motivo. index.html e js/14: versão 2.55.10.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados desde a 2.55.9: index.html, style.css, js/14 e js/44.', 'Não há mudança no Worker.'],
+        testar: ['Na tela de login, digitar a senha: os pontos devem aparecer normais.', 'Entrar com uma conta não aprovada: o aviso do Firebase aparece e a lista de fornecedores fica vazia (não mostra a conta anterior).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.9', nome: 'Compra direta sai do "Sem pedido" e Selecionar fica visível nos filtros', status: 'concluida', data: '17/11/2026 às 18:40',
+        novidades: ['Na Auditoria Retroativa, uma NF marcada como compra direta ("Esta NF não tem pedido" ou "não tem cotação") sai da lista de "Sem pedido", tanto nas já marcadas quanto nas marcadas agora.', 'Novo filtro "Compra direta" para ver essas NFs.', 'Nas telas com filtro de ordenação, o botão Selecionar não é mais empurrado para fora da tela (Safari e demais navegadores).'],
+        implementado: ['js/32: a análise da Retroativa considera a marca de compra direta (no ERP e na NF com XML); filtro "Compra direta"; a lista geral deixa de mostrar as NFs de compra direta. style.css: a linha de ferramentas encolhe o botão de ordenação e mantém o Selecionar. index.html e js/14: versão 2.55.9.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/32-auditoria-retroativa.js'],
+        mudou: ['Arquivos alterados desde a 2.55.8: index.html, style.css, js/14 e js/32.', 'Não há mudança no Worker.'],
+        testar: ['Auditoria > Retroativa: marcar uma NF como compra direta; ela deve sair de "Sem pedido" e aparecer em "Compra direta".', 'Conferir uma NF já marcada antes: também deve sair de "Sem pedido".', 'No Safari, em Cotações, Repasse e Controle, trocar o filtro de ordenação: o Selecionar deve continuar visível.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.8', nome: 'Onboarding na tela grande: cards em grade, degradê na tela toda e botão à direita', status: 'concluida', data: '17/11/2026 às 09:50',
+        novidades: ['No computador, os cards do tour aparecem todos juntos em grade, sem precisar arrastar.', 'O degradê de fundo ocupa a tela inteira.', 'O botão Continuar fica compacto e alinhado à direita, no computador. No celular continua igual.'],
+        implementado: ['style.css: regras de tela grande do onboarding (grade do tour, fundo, rodapé estático e botão compacto). js/57 e index.html: versão 2.55.8.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.7: index.html, style.css, js/14 e js/57.', 'Não há mudança no Worker.'],
+        testar: ['No computador, o tour deve mostrar os quatro cards em grade, sem cortes.', 'O degradê deve cobrir a tela inteira e o botão Continuar deve ficar à direita, sem ocupar a largura toda.', 'No iPhone, o onboarding deve estar igual ao de antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.7', nome: 'Aviso de atualização volta para todas as contas', status: 'concluida', data: '17/11/2026 às 09:36',
+        novidades: ['O aviso de atualização em andamento (quando os arquivos novos ainda não chegaram) volta a aparecer para todas as contas, como antes.', 'Continua só para a conta mestre o aviso no celular quando a versão nova já está no ar no GitHub.'],
+        implementado: ['js/43: retirada a restrição que deixava o aviso de atualização só para a conta mestre. index.html e style.css: versão 2.55.7.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados desde a 2.55.6: index.html, style.css, js/14 e js/43.', 'Não há mudança no Worker.'],
+        testar: ['Com uma conta comum, durante uma publicação (antes de todos os arquivos chegarem), o aviso "Atualização incompleta" deve aparecer.', 'Depois que tudo carregar, o aviso não deve mais aparecer.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.6', nome: 'Onboarding em tela grande e aviso de desenvolvimento para o app', status: 'concluida', data: '17/11/2026 às 09:40',
+        novidades: ['No computador, o onboarding ocupa a tela inteira, sem moldura, com o conteúdo numa coluna central.', 'O aviso de "em desenvolvimento" agora vale para o app todo: aparece na primeira tela do onboarding. Saiu o aviso específico do Assistente.'],
+        implementado: ['style.css: regras de tela grande do onboarding sem moldura e classe .onb-aviso. js/57: aviso geral na primeira tela e Assistente sem aviso próprio. js/31: resumo do Assistente sem aviso. index.html: título do botão do Assistente volta ao normal, versão 2.55.6.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.5: index.html, style.css, js/14, js/31 e js/57.', 'Não há mudança no Worker.'],
+        testar: ['Num computador (janela larga), sair e entrar de novo com uma conta sem onboarding feito: a tela deve ocupar tudo, com o texto centralizado e sem moldura.', 'No iPhone, o onboarding deve continuar igual.', 'Na primeira tela aparece o aviso "O app está em desenvolvimento".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.5', nome: 'Popups de novidades para todos e aviso de publicação só para a conta mestre', status: 'concluida', data: '17/11/2026 às 09:35',
+        novidades: ['O popup de novidades volta a aparecer para todas as contas.', 'A conta mestre recebe um aviso no celular quando a nova versão já está no ar no GitHub (com os arquivos todos publicados).', 'Corrigido: na lista de Aprovações, ao abrir "Permissões", não aparece mais um pedido que já foi aprovado ou apagado.'],
+        implementado: ['js/24: popup de novidades para todas as contas. js/57: lista de aprovações usa só os dados atuais. avisos/worker-avisos.js: verifica o site publicado a cada 15 min e avisa a conta mestre quando a versão nova está completa (versão do index, do CSS e da primeira entrada iguais). Versão 2.55.5 mostrada no endereço do Worker.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.4: index.html, style.css, js/14, js/24 e js/57.', 'O Worker de avisos MUDOU: cole o novo worker-avisos.js no Worker (Edit code → Deploy).', 'O endereço do site publicado está em SITE_PUBLICADO no Worker. Se o site mudar de endereço, é só trocar lá.'],
+        testar: ['Conta comum: ao entrar, o popup de novidades deve aparecer (uma vez por versão).', 'Conta mestre: depois de publicar, o aviso "Versão 2.55.5 no ar" deve chegar em alguns minutos (depende do cache do GitHub).', 'Aprovações de Acesso: abrir "Permissões" numa conta não deve mostrar pedidos antigos.'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.55.4', nome: 'Volta à tela de carregamento anterior', status: 'concluida', data: '17/11/2026 às 09:20',
+        novidades: ['A tela de carregamento e a de espera da aprovação voltaram ao visual anterior (círculo girando).'],
+        implementado: ['index.html: tela de carregamento com apple-spinner (como antes). js/57: círculo girando na tela de espera. style.css: retirados os estilos dos pontos e do logo.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.3: index.html, style.css, js/14 e js/57. O Worker não mudou.'],
+        testar: ['Abra o app: deve voltar o círculo girando, como antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.3', nome: 'Tela de carregamento com pontos girando', status: 'concluida', data: '17/11/2026 às 09:15',
+        novidades: ['A tela de carregamento e a de espera da aprovação agora mostram pontos girando, no lugar do logo que respirava.'],
+        implementado: ['index.html: tela de carregamento com dot-spinner. style.css: estilos dos pontos (o brilho do logo foi retirado). js/57: pontos na tela de espera.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.2: index.html, style.css, js/14 e js/57. O Worker não mudou.'],
+        testar: ['Abra o app pelo computador (Chrome) e pelo iPhone: deve aparecer o anel de pontos girando, centralizado.', 'Entre com uma conta aguardando aprovação: a tela de espera mostra os mesmos pontos.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.2', nome: 'Tela de carregamento com o logo que respira', status: 'concluida', data: '17/11/2026 às 09:10',
+        novidades: ['A tela de carregamento do app e a de espera da aprovação agora mostram o logo com um brilho suave, no lugar do círculo girando.'],
+        implementado: ['index.html: tela de carregamento (ld-logo, ld-dots). style.css: estilos da tela de carregamento. js/57: logo na tela de espera. Escolhido no protótipo de carregamento (opção 1).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.1: index.html, style.css, js/14 e js/57. O Worker não mudou.'],
+        testar: ['Feche o app e abra de novo: a tela de carregamento deve mostrar o logo respirando, sem o círculo girando.', 'Entre com uma conta aguardando aprovação: a tela de espera mostra o mesmo logo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.55.1', nome: 'Aviso de novo pedido de acesso a cada entrada e ajuste do contador', status: 'concluida', data: '17/11/2026 às 09:00',
+        novidades: ['A conta mestre passa a receber o aviso de "Novo pedido de acesso" toda vez que a pessoa entra e fica aguardando, e não só na primeira vez.', 'O contador de pedidos de acesso agora fica ao lado do nome, e não no canto da linha.'],
+        implementado: ['js/57: aviso de pedido não é mais limitado a 12 h (guarda de 1 minuto na sessão). avisos/worker-avisos.js: a mesma regra no Worker (1 minuto), e a versão mostrada no endereço do Worker agora é 2.55.1. style.css: posição do contador.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.55.0: index.html, style.css, js/14 e js/57.', 'O Worker de avisos MUDOU: cole o novo worker-avisos.js no Worker (Edit code → Deploy). Sem isso, o aviso continua limitado a uma vez a cada 12 h.'],
+        testar: ['Saia e entre de novo com uma conta que está aguardando aprovação: a conta mestre deve receber o push "Novo pedido de acesso" a cada entrada.', 'Ajustes → Aprovações de Acesso: o contador vermelho deve aparecer logo depois do nome.', 'Abra o endereço do Worker no navegador: deve mostrar "versao":"2.55.1".'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.55.0', nome: 'Ajustes para a conta mestre, botão de ajuda e assistente em desenvolvimento', status: 'concluida', data: '17/11/2026 às 08:40',
+        novidades: ['Botão ? no topo de todas as telas abre a Ajuda. Dúvidas? É só tocar nele.', 'Apresentação do app agora mostra o Assistente de consultas, marcado como "Em desenvolvimento". Ele também aparece na Ajuda.', 'Uso do Firebase e os avisos de atualização incompleta agora são só da conta mestre.', 'Corrigido: a apresentação de primeira entrada no computador ficava cortada; agora aparece centralizada.', 'Corrigido: ao abrir o app, a tela de Aprovações de Acesso não abre mais sozinha. Ela só abre se você tocar na notificação de um pedido.'],
+        implementado: ['index.html: botão ? (hdr-ajuda), classe so-mestre no item Uso do Firebase, versão 2.55.0. style.css: classe conta-mestre, centralização da apresentação no computador, tag "Em desenvolvimento". js/57: assistente no tour, tag, dica do ?, classe conta-mestre no body. js/43 e js/24: avisos só para conta mestre. js/41: abertura da notificação sem reabrir sozinha (limpa o endereço). js/31: artigo "Dúvidas, Ajuda e o Assistente".'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/41-notificacoes-push.js', 'js/43-verificar-arquivos.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.54.0: index.html, style.css, js/14, 24, 31, 41, 43 e 57.', 'O Worker de avisos não mudou nesta versão.', 'Limitação: restringir Uso do Firebase e os avisos é por tela (a conta comum não vê). O contador de leituras é local e as regras do Firebase não foram alteradas, então isso não reduz leituras.'],
+        testar: ['Computador: entre com a conta mestre e abra a apresentação (Ajustes → Assinatura dos relatórios → Refazer a primeira entrada): deve aparecer centralizada, sem corte.', 'iPhone: abra o app e confira que não aparece a tela de Aprovações de Acesso ao entrar.', 'Toque no ? no topo de uma tela: deve abrir a Ajuda.', 'Conta comum (não mestre): Uso do Firebase não aparece no menu; não aparece aviso de atualização incompleta.'],
+        testarLinks: [{ rotulo: 'Abrir a Ajuda', acao: 'ajuda' }]
+    },
+    {
+        numero: '2.54.0', nome: 'Tela de espera da aprovação, avisos por push e botões padronizados', status: 'concluida', data: '17/11/2026 às 07:10',
+        novidades: ['Quem pede acesso (Google ou telefone) agora fica numa tela de espera com carregamento e entra no app sozinha assim que a conta mestre aprova. Ali dá para ativar o aviso no celular.', 'A conta mestre recebe uma notificação por push quando chega um pedido de acesso novo, e a pessoa recebe "Acesso aprovado" quando você libera (se ativou os avisos). Toque na notificação abre Aprovações de Acesso.', 'Corrigido: o aviso "Tudo certo" repetia o nome ("Leandro, Leandro").', 'Corrigido o espaçamento da tela Assinatura dos relatórios (botões em largura cheia, cartões alinhados) e da lista de Aprovações.', 'Botões: destrutivos suaves nas listas (fundo vermelho claro) e vermelho sólido só na confirmação; botão sem destaque agora tem o estilo de texto; confirmações com rótulo da ação ("Excluir NF 45821", "Marcar como enviada", "Importar notas"…).'],
+        implementado: ['js/57: tela de espera (mostrarEsperaAprovacao), chamadas ao Worker (/novo-pedido e /aprovado), correção do toast da primeira entrada. js/07: não desconecta mais quem aguarda aprovação; avisa o Worker ao aprovar. js/41: notificação abre Aprovações. style.css: espera, espaçamento, botões. Rótulos de confirmação em js/06, 08, 09, 10, 17, 18, 19, 20, 23, 40 e 46. Worker de avisos (avisos/worker-avisos.js): novas rotas.'],
+        arquivos: ['index.html', 'style.css', 'js/06-exportar-pdf.js', 'js/07-login-conta-backup.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/18-erp-fornecedores-spdata.js', 'js/19-erp-reconciliacao.js', 'js/20-editor-nf.js', 'js/23-conferencia-automatica.js', 'js/31-ajuda.js', 'js/40-agenda-trabalho.js', 'js/41-notificacoes-push.js', 'js/46-uso-aparelhos.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.53.0: index.html, style.css, js/06, 07, 08, 09, 10, 14, 17, 18, 19, 20, 23, 31, 40, 41, 46 e 57.', 'Fora do app: avisos/worker-avisos.js e COMO-INSTALAR-OS-AVISOS.md. Para o push funcionar, cole o novo código no Worker do Cloudflare (Edit code → Deploy). Sem isso o app funciona igual, só não manda os avisos.'],
+        testar: ['iPhone (conta mestre): ative as notificações em Agenda de trabalho e abra o app uma vez (o app grava o e-mail da conta mestre para o Worker).', 'Peça a alguém (ou use outra conta Google) para entrar: deve aparecer a tela de espera; a conta mestre deve receber o push "Novo pedido de acesso".', 'Aprove a pessoa em Aprovações de Acesso: a tela de espera dela abre o app sozinha.', 'Assinatura dos relatórios: veja se os botões e cartões ficaram alinhados. Refaça a primeira entrada: o aviso final deve ter o nome uma vez só.', 'Excluir uma NF: o botão vermelho deve dizer "Excluir NF <número>".'],
+        testarLinks: [{ rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.53.0', nome: 'Primeira entrada, dados padrão da instituição e permissões por pessoa', status: 'concluida', data: '16/11/2026 às 22:50',
+        novidades: ['Nova apresentação na primeira entrada: nome e sobrenome, função (Almoxarifado, Compras ou outra), prévia da assinatura com a logo da instituição e um tour rápido. Quem já tinha assinatura preenchida não vê nada.', 'Telefone, site e endereço da instituição agora são padrão; o ramal e o e-mail vêm da função, e tudo continua editável. Em Assinatura dos relatórios há o botão "Usar dados padrão".', 'A conta mestre define, em Aprovações de Acesso, o perfil de cada pessoa e o que ela pode alterar (entrada de NF, cotações, arquivar/financeiro, apagar, ajustes). Pedidos novos geram aviso e contador.', 'A apresentação pode ser revista pela Ajuda.'],
+        implementado: ['js/57-primeira-entrada.js (novo): fluxo em tela cheia com rascunho salvo por passo, validação de e-mail e telefone, atalhos do Início por função (Compras), dados da instituição em config/instituicao (editáveis pela conta mestre), perfis e permissões em acessosAutorizados/{uid}, bloqueio das ações pelo app e novo painel de Aprovações. style.css: estilos. index.html: carrega o js/57. js/31: artigos da Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/57-primeira-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.52.1: index.html, style.css, js/14, 31 e o novo js/57-primeira-entrada.js.', 'Conta sem perfil definido continua com acesso total. As regras do Firebase não foram mexidas: o arquivo regras-firestore-sugeridas.txt traz o trecho para o bloqueio valer também no servidor.'],
+        testar: ['iPhone: Ajustes → Personalização → Assinatura dos relatórios → "Refazer a primeira entrada": passe pelos 6 passos, troque a função, escolha "Outra função" e veja o ramal e o e-mail mudarem na prévia; a logo da instituição deve aparecer.', 'iPhone (conta mestre): Aprovações de Acesso → "Permissões" numa conta: escolha um perfil e mexa nas chaves.', 'Com a conta de outra pessoa (perfil Somente leitura): tentar salvar uma NF deve mostrar o aviso de permissão.', 'Ajuda → "Apresentação do app": abre só o tour.'],
+        testarLinks: [{ rotulo: 'Abrir Personalização', acao: 'personalizacao' }, { rotulo: 'Abrir Aprovações de Acesso', acao: 'aprovacoes' }]
+    },
+    {
+        numero: '2.52.1', nome: 'Botão Já chegou só destacado quando marcado', status: 'concluida', data: '16/11/2026 às 17:20',
+        novidades: ['Nos cards dos fornecedores, o botão "Já chegou" ficava azul escuro mesmo sem estar marcado e parecia selecionado. Agora ele só fica azul quando a chegada está de fato marcada; fora isso, tem o mesmo visual dos outros botões.'],
+        implementado: ['style.css: o destaque azul só vale para o botão marcado.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados desde a 2.52.0: index.html, style.css e js/14.'],
+        testar: ['iPhone: Cotações → pedido: com o fornecedor "Aguardando", os três botões devem ter o mesmo visual claro.', 'iPhone: toque em "Já chegou": o botão deve ficar azul; toque de novo para desfazer.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.52.0', nome: 'Exportar texto como aba do Repasse de NF e ajustes de espaçamento', status: 'concluida', data: '16/11/2026 às 17:10',
+        novidades: ['No Repasse de NF, "Exportar texto" virou uma aba ao lado de "Em espera" (antes ficava no "+"). A tela Exportar saída deixou de existir; o "+" mantém Adicionar NF e Importar relatório (ERP).', 'Cards dos fornecedores nas Cotações: mais espaço embaixo dos botões e sem o "✓" repetido em "Já chegou".', 'Na versão web, o botão "Mais" da barra some e a tela Menus mostra um texto próprio para a barra lateral.'],
+        implementado: ['index.html: aba e painel de exportação dentro do #screen-manage; texto da tela Menus. js/05: alternarAbaGerenciar com modo exportar. js/54: "+" sem Exportar. js/11: rótulo Já chegou. style.css: bloco 2.52.0. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.51.0: index.html, style.css, js/05, 11, 14, 31 e 54.'],
+        testar: ['iPhone: Repasse de NF: toque na aba "Exportar texto": deve aparecer o texto, o contador e os botões (Ordenar por Recurso, Copiar, Compartilhar, Gerar PDF). Volte para "Para saída" e "Em espera".', 'iPhone: no "+" do Repasse de NF só devem aparecer Adicionar NF e Importar relatório (ERP).', 'iPhone: Cotações → pedido: espaçamento dos botões nos cards dos fornecedores.', 'Computador (web): sem o botão "Mais" na barra; Personalização → Menus mostra o texto da barra lateral.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.51.0', nome: 'Atalhos do Início editáveis', status: 'concluida', data: '16/11/2026 às 06:40',
+        novidades: ['Na tela Início, o botão "Editar" ao lado de "Atalhos" deixa escolher quais atalhos aparecem e em que ordem. Qualquer tela do app pode virar atalho; "Restaurar atalhos padrão" volta ao conjunto original.', 'Removido o grupo "Atalhos" em Ajustes e a estrela em Personalização → Ordem dos Menus (criados na 2.50.0 por engano).'],
+        implementado: ['js/48: catálogo de atalhos, edição (adicionar, remover, subir, descer) e gravação em Personalização. style.css: bloco 2.51.0. js/08, index.html: retirada a estrela e o grupo em Ajustes. js/56 removido. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.50.0: index.html, style.css, js/08, 14, 31 e 48. O arquivo js/56-atalhos-ajustes.js deve ser APAGADO do repositório.'],
+        testar: ['iPhone: Início → Editar (ao lado de "Atalhos"): remova um atalho, adicione outra tela, mude a ordem e toque em Concluir.', 'iPhone: toque nos atalhos para confirmar que abrem as telas certas.', 'iPhone: "Restaurar atalhos padrão" volta ao original.', 'iPhone: Ajustes e Personalização → Ordem dos Menus: não devem ter mais a estrela nem o grupo Atalhos.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.50.0', nome: 'Novos ícones, Repasse de NF, botões do fornecedor e atalhos em Ajustes', status: 'concluida', data: '16/11/2026 às 00:10',
+        novidades: ['"Saída de NF" agora se chama "Repasse de NF" em todo o app.', 'Ícones novos e diferentes entre si: Cotações (documento assinado), Entrada de NF (documento entrando), Controle de NFs (pasta aberta), Repasse de NF (setas de ida e volta) e Auditoria (lupa com gráfico).', 'Cards dos fornecedores na Cotação: três botões separados (Associar NF, Já chegou em azul, Cancelar), em vez da faixa com borda.', '(Os atalhos em Ajustes dessa versão foram retirados na 2.51.0: o pedido era sobre os atalhos da tela Início.)'],
+        implementado: ['js/01: ícones e título da tela. js/48: atalhos do Início. js/09, js/11, style.css: botões do card. Atalhos em Ajustes (retirados na 2.51.0). Renome em js/02, 06, 17, 19, 31, 48 e index.html. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.49.0: index.html, style.css, js/01, 02, 06, 08, 09, 11, 14, 17, 19, 31 e 48.'],
+        testar: ['iPhone: confira a dock, a tela Mais e os atalhos do Início: ícones novos e nome "Repasse de NF".', 'iPhone: Cotações → pedido: os botões dos fornecedores (Associar NF, Já chegou, Cancelar) e o toque em Já chegou/Cancelar (desfazer).', 'iPhone: nas telas, procure por "Saída de NF": não deve sobrar nenhuma.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.49.0', nome: 'Limpeza dos Relatórios antigos e faixa de atenção só de NF', status: 'concluida', data: '15/11/2026 às 22:40',
+        novidades: ['Removido o código antigo de Relatórios (listas Pedidos, Notas, Divergências e Auditorias que estavam escondidas). O app fica mais leve.', 'No Controle de NFs, a faixa "itens precisam de atenção" agora conta só o que é de NF (vencidas, duplicadas, sem pedido, ERP a confirmar), e não o total geral da Central.'],
+        implementado: ['index.html: bloco #rel-legado removido. js/04: funções das listas antigas removidas (ficam os auxiliares usados por outras telas). js/05, js/39, js/01, js/30: referências ao código antigo removidas. js/34: totalAtencaoNf. js/31: Ajuda.'],
+        arquivos: ['index.html', 'js/01-nucleo-config-estado.js', 'js/04-relatorios-base.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/39-central-auditoria.js'],
+        mudou: ['Arquivos alterados desde a 2.48.2: index.html, js/01, 04, 05, 14, 30, 31, 34 e 39.'],
+        testar: ['iPhone: abra o app e navegue por Início, Cotações, Controle de NFs, Anotações e Relatórios: tudo deve abrir normalmente (a limpeza não deve mudar nada visível).', 'iPhone: Controle de NFs: a faixa no topo deve dizer "itens de NF precisam de atenção", com número menor que o da Central de notificações.', 'iPhone: Relatórios → gere um relatório e baixe o PDF.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.48.2', nome: 'Relatórios: voltar leva à lista', status: 'concluida', data: '15/11/2026 às 19:50',
+        novidades: ['Dentro de um relatório, a seta de voltar do cabeçalho (e o gesto da borda) leva à lista de relatórios; só da lista ela sai para a tela Mais.', 'Removida a faixa de botões do topo, que repetia o menu.'],
+        implementado: ['js/55: faixa de abas removida; voltarInternoTela estendida para a tela de Relatórios; ao reabrir a tela, começa na lista.'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.48.1: index.html, js/14, 31 e 55.'],
+        testar: ['iPhone: Relatórios → abra um relatório → toque na seta de voltar: deve voltar à lista.', 'iPhone: na lista, a seta leva à tela Mais.', 'iPhone: deslize da borda esquerda dentro de um relatório.', 'iPhone: saia e volte a Relatórios: deve abrir na lista.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.48.1', nome: 'Relatórios: lista no padrão do app', status: 'concluida', data: '15/11/2026 às 19:45',
+        novidades: ['A lista de Relatórios agora fica em um cartão arredondado, como as outras listas, com mais espaço entre as linhas e texto menor.'],
+        implementado: ['js/55: lista dentro de .mais-grupo. style.css: espaçamento e tamanho do texto dos itens.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.48.0: index.html, style.css, js/14 e 55.'],
+        testar: ['iPhone: Relatórios: confira o cartão arredondado e o espaço entre as linhas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.48.0', nome: 'Relatórios: formato de relatório, filtros por fornecedor e produto', status: 'concluida', data: '15/11/2026 às 19:30',
+        novidades: ['Cada divergência agora diz o que foi, o produto, as quantidades e a diferença, em vez de só contar ocorrências.', 'Dá para isolar um fornecedor ou um produto em qualquer relatório.', 'Fornecedores já ligados (ex.: FUTURA e FUTURA MEDICAMENTOS) aparecem juntos, sob um único nome.', 'Visual simples de relatório, em preto e branco, com resumo no topo. Removido o botão de voltar repetido: use "Todos".'],
+        implementado: ['js/55: modelos com detalhe por divergência, resolvedor de nomes por entidade ligada, filtros de fornecedor e produto, faixa de abas. style.css: bloco da prévia monocromática. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.47.0: index.html, style.css, js/14, 31 e 55.'],
+        testar: ['iPhone: Relatórios → Divergências: confira o detalhe de cada ocorrência e o resumo no topo.', 'iPhone: em "Isolar", escolha um fornecedor e depois digite um produto.', 'iPhone: confira se FUTURA e FUTURA MEDICAMENTOS aparecem como um só.', 'iPhone: troque de relatório pelas abas, sem botão de voltar duplicado.', 'iPhone: Baixar PDF e Word de um relatório.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.47.0', nome: 'Resumo de pendências: margens iguais e layout mais limpo', status: 'concluida', data: '15/11/2026 às 18:30',
+        novidades: ['PDF e Word do Resumo de pendências agora têm margens iguais de 2 cm nos quatro lados (antes: 3 cm à esquerda).', 'Título em negrito, sem sublinhado, um pouco menor.', 'O aviso "Desconsiderar pendências…" passou para logo acima da assinatura, e a assinatura fica centralizada.', 'Espaçamento entre fornecedores padronizado. Os PDFs/Word dos Relatórios também usam 2 cm.'],
+        implementado: ['js/47: margens 2 cm, título sem sublinhado, aviso acima da assinatura, espaçamento padrão. js/55: margens 2 cm. style.css: prévia do Resumo sem sublinhado. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.46.0: index.html, style.css, js/14, 31, 47 e 55.'],
+        testar: ['iPhone: Resumo de pendências → Baixar PDF: confira margens iguais, título sem sublinhado, aviso acima da assinatura e assinatura centralizada.', 'iPhone: Baixar o Word do Resumo e conferir o mesmo layout.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.46.0', nome: 'Refatoração, fase 5: Relatórios como central de modalidades', status: 'concluida', data: '15/11/2026 às 13:00',
+        novidades: ['Relatórios agora emite relatórios de verdade: Resumo de pendências, Divergências por fornecedor, Entregas por pedido, NFs enviadas ao financeiro e Auditorias do período.', 'Cada modalidade tem período (7 dias, 30 dias, Este mês, Personalizado), "o que incluir", prévia em papel arredondado e Copiar/Baixar no fim da página (PDF, Word e TXT com margens ABNT).', 'Removidos o cartão Próximos Vencimentos (já está no Início) e as listas que repetiam Notificações e Auditoria.', 'CORREÇÃO: o PDF do Resumo de pendências dava erro ao baixar (margem calculada errada na 2.42.0).'],
+        implementado: ['js/55 (novo): hub, modelos, texto/Word/PDF. js/47: correção do cálculo de margem do PDF. index.html: tela de Relatórios (hub/detalhe; listas antigas ocultas) e script. style.css: bloco 2.46.0. js/31: Ajuda de Relatórios.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/55-hub-relatorios.js'],
+        mudou: ['Arquivos alterados desde a 2.45.0: index.html, style.css, js/14, 24, 31, 47 e o novo js/55-hub-relatorios.js.'],
+        testar: ['iPhone: Relatórios → cada modalidade: troque o período e os itens de "o que incluir" e confira a prévia.', 'iPhone: Baixar → PDF, Word e TXT; confira as margens.', 'iPhone: Resumo de pendências → Baixar PDF (o erro foi corrigido).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.45.0', nome: 'Refatoração, fase 4: Auditoria e Auditoria Retroativa numa tela só', status: 'concluida', data: '15/11/2026 às 11:30',
+        novidades: ['Auditoria e Auditoria Retroativa viraram uma tela só, com as abas "Auditoria" e "Retroativa". Cada aba guarda o seu estado (filtro, busca, itens abertos, rolagem) e as duas não se misturam.', 'A Central de notificações, a Ajuda e a busca de Ajustes levam direto à aba certa.'],
+        implementado: ['index.html: #screen-auditoria-central com abas e painéis; #screen-auditoria-retro removido. js/39: audAba, mudarAbaAuditoria, prepararAuditoriaUnificada. js/32: observadores na tela unificada. js/01: menu sem "Auditoria Retroativa". js/34, js/05, js/29, js/31 ajustados.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/32-auditoria-retroativa.js', 'js/34-atencao.js', 'js/39-central-auditoria.js'],
+        mudou: ['Arquivos alterados desde a 2.44.0: index.html, style.css (só a versão), js/01, 05, 14, 24, 29, 31, 32, 34 e 39.'],
+        testar: ['iPhone: Auditoria → aba Retroativa: filtre algo, volte para a aba Auditoria e depois para Retroativa: o filtro continua.', 'iPhone: Central de notificações → item de retroativa abre a aba Retroativa já filtrada.', 'iPhone: em Personalização > Menus, "Auditoria Retroativa" não aparece mais como item separado.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.44.0', nome: 'Refatoração, fase 3: Assistente em janela sobre qualquer tela', status: 'concluida', data: '15/11/2026 às 10:30',
+        novidades: ['Ícone do Assistente fixo no canto superior direito do cabeçalho, em todas as telas.', 'Ao tocar, o Assistente abre numa janela sobre a tela atual (a conversa continua de onde parou) e fecha ao tocar fora, no ✕ ou em Esc. A tela cheia do Assistente (dock/Mais) continua existindo.'],
+        implementado: ['js/37: janela (garantirJanelaAssistente, abrirAssistenteJanela, fecharAssistenteJanela, ajuste ao teclado) e prepararAssistente(alvo). index.html: #hdr-assistente. js/54: mostra/esconde o ícone. style.css: bloco 2.44.0.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.43.0: index.html, style.css, js/14, 24, 31, 37 e 54.'],
+        testar: ['iPhone: em qualquer tela toque no ícone de balões (canto superior direito): a janela abre sobre a tela.', 'iPhone: pergunte algo, feche e abra de novo em outra tela: a conversa continua.', 'iPhone: com o teclado aberto o campo de digitar fica visível acima dele.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.43.0', nome: 'Refatoração, fase 2: dock livre, Saída de NF e tela do pedido', status: 'concluida', data: '15/11/2026 às 09:30',
+        novidades: ['Dock livre: qualquer tela (Central de notificações, Agenda, Auditoria, Auditoria Retroativa, Assistente, Ajustes…) pode ser colocada na dock; o que não for escolhido fica em "Mais". Com mais de 5 itens a dock rola.', 'Gerenciar agora se chama "Saída de NF".', 'Exportar deixou de ser uma aba: fica dentro da Saída de NF, assim como Importar relatório (ERP). O "+" da Saída de NF abre: Adicionar NF, Exportar saída (texto) e Importar relatório (ERP).', 'Uso do Firebase saiu do "Mais" e foi para Ajustes.', 'Tela do pedido: Exportar relatório e ⋯ (marcar toda a cotação como entregue, entrega cancelada do pedido todo, voltar tudo para aguardando) ficam no cabeçalho do app; cada fornecedor tem uma faixa única Associar NF | Já chegou | Cancelada, com o estado atual destacado.'],
+        implementado: ['js/01: menuDetails com as telas novas (prep), Exportar sai do menu, mapas de voltar. js/02: Mais lista só o que não está na dock; abrirTelaMenu/prepararTelaMenu; sidebar sem atalhos fixos. js/54: leque da Saída de NF e ações do cabeçalho do pedido. js/09 e js/11: faixa do fornecedor. index.html: Uso do Firebase em Ajustes e botões do cabeçalho. Renomeado Gerenciar → Saída de NF (js/17, 19, 48, 06, 31).'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/48-inicio-lote.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.42.0: index.html, style.css, js/01, 02, 06, 09, 11, 14, 17, 19, 24, 31, 34, 48 e 54.'],
+        testar: ['iPhone: Ajustes → Personalização → Menus: coloque Assistente/Notificações/Ajustes na dock e veja o restante em "Mais".', 'iPhone: Saída de NF → "+" → Exportar saída (texto) e Importar relatório (ERP); o voltar leva à Saída de NF.', 'iPhone: Ajustes → Uso do Firebase.', 'iPhone: abra um pedido: ícone exportar e ⋯ no cabeçalho; faixa Associar NF | Já chegou | Cancelada em cada fornecedor.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.42.0', nome: 'Refatoração, fase 1: barra de ferramentas padrão, dock, Resumo ABNT e notificações', status: 'concluida', data: '15/11/2026 às 07:30',
+        novidades: ['Anotações, Saída de NF (Gerenciar) e Cotações: busca, Ordenar e Selecionar com a mesma altura e posição; Selecionar fica à direita de Ordenar (também no Controle de NFs).', 'A bolha da dock acompanha o rótulo (Anotações, Gerenciar não vazam mais).', 'Tela cinza: o gesto de voltar não trava mais a tela anterior escurecida.', 'Gerenciar vazio sem o botão "Adicionar nota" repetido; Importar relatório com os 3 botões no mesmo espaçamento.', 'Resumo de pendências: Copiar/Baixar no fim do conteúdo, prévia com cantos arredondados, PDF e Word com margens ABNT (3 cm esquerda/topo, 2 cm direita/baixo).', 'Notificações: fornecedores duplicados (EMBALAKLIN, MINAS SUL) reunidos em "Por fornecedor"; avisos de fornecedor sem CNPJ podem ser ignorados (✕), com Desfazer e lista "Ignoradas" para voltar a notificar.', 'Relatórios: removido o cartão Próximos Vencimentos do topo (já aparece no Início).'],
+        implementado: ['index.html: toolrow/selb nas telas, cabeçalho sem botões de selecionar, Importar ERP, Relatórios. style.css: bloco 2.42.0. js/22: largura da pílula. js/28: higiene do gesto de voltar. js/34: reunir fornecedores e ignorar avisos. js/47: margens ABNT. js/54: rótulo Selecionar/Cancelar. js/05: estado vazio.'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/22-vidro-liquido.js', 'js/24-novidades-versao.js', 'js/28-transicoes-ios.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/47-resumo-pendencias.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.41.0: index.html, style.css, js/05, js/14, js/22, js/24, js/28, js/31, js/34, js/47 e js/54.'],
+        testar: ['iPhone: alterne entre Anotações, Saída de NF e Cotações: busca, Ordenar e Selecionar não devem "pular" de altura.', 'iPhone: dock: o nome de cada aba cabe dentro da bolha.', 'iPhone: navegue e use o gesto de voltar várias vezes: nenhuma tela deve ficar cinza.', 'iPhone: Resumo de pendências: Copiar/Baixar no fim da página; baixe PDF e Word e confira as margens.', 'iPhone: Notificações > Por fornecedor: EMBALAKLIN e MINAS SUL em um bloco só; ✕ em fornecedor sem CNPJ, Desfazer e "Ignoradas".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.41.0', nome: 'Ações das telas: Selecionar no topo, "+" flutuante, Ordenar em folha e Resumo como tela', status: 'concluida', data: '14/11/2026 às 21:30',
+        novidades: ['Cotações, Anotações e Controle de NFs: o ícone de selecionar fica no canto superior direito (igual ao Gerenciar). O botão de atualizar do topo foi removido.', 'Botão "+" flutuante em Cotações (adicionar cotação por XML), Anotações (leque: nova anotação / nova auditoria) e Gerenciar (adicionar NF).', '"Ordenar" agora abre uma folha com opções: Cotações (recentes, antigas, número crescente/decrescente), Anotações (recentes, antigas, título A–Z/Z–A) e Gerenciar (recentes, antigas, vencimento, fornecedor, número da NF).', 'Resumo de pendências virou uma tela própria (atalho fixo no Início), com seta de voltar e Copiar/Baixar fixos embaixo.', 'Removidos: "Limpar Banco de Exceções" (Entrada de NF), "Complementar com relatório" e "Resumo de pendências" da lista de Cotações.', 'Cadastro manual de NF voltou a ter o cartão branco; títulos longos de Anotações quebram em várias linhas sem estourar o cartão.'],
+        implementado: ['js/54-acoes-telas.js (novo): hdrSelecionar, folha inferior, abrirOrdenar, "+" flutuante. index.html: hdr-sel-btn, chips de ordenar, #screen-resumo-pend. js/13, js/09, js/05: ordenação. js/47: Resumo abre como tela. style.css: bloco 2.41.0.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'js/54-acoes-telas.js'],
+        mudou: ['Arquivos alterados desde a 2.40.0: index.html, style.css, js/01, js/05, js/08, js/09, js/13, js/14, js/24, js/31, js/47 e js/54 (novo).'],
+        testar: ['iPhone: Cotações, Anotações e Controle de NFs: toque no ícone de selecionar (canto superior direito) e marque itens.', 'iPhone: o "+" flutuante não esbarra na dock; em Anotações abre o leque.', 'iPhone: "Ordenar" nas três telas muda a ordem da lista.', 'iPhone: Início > Resumo de pendências: abre como tela, a seta volta, Copiar e Baixar ficam fixos embaixo.', 'iPhone: Entrada de NF > Manual: o formulário aparece no cartão branco.', 'iPhone: Anotação com link longo no título quebra em linhas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.40.0', nome: 'Espaçamentos, versões dos arquivos, NFs vencidas e nome do XML corrigido', status: 'concluida', data: '14/11/2026 às 16:30',
+        novidades: ['Entrada de NF: espaço padrão entre cartões e blocos (status × importação, "+ Adicionar cotação" × checkbox, aviso da auditoria × total, linha "Recurso pelas cotações").', 'Histórico de Mudanças: novo bloco "Versões dos arquivos carregados" mostra a versão de cada arquivo e o que está desatualizado, com "Conferir de novo".', 'O aviso de atualização incompleta agora confere de novo 6 s e 15 s depois de abrir, ao voltar para o app e quando um botão chama uma função que não existe (arquivo antigo no ar).', 'Central de notificações: novo grupo urgente "NFs vencidas que ainda não foram enviadas ao financeiro" (NFs recebidas do ERP ou do XML com vencimento passado, sem decisão).', '"Baixar XML Corrigido" agora usa o nome "APELIDO DO FORNECEDOR + número da NF + corrigido".'],
+        implementado: ['style.css: regras com :where para espaçamento. js/43: arqConferirAgora, arqRelatorio, arqDesenharVersoes e escuta de erro. js/36: pendência vencida-sem-envio. js/34: grupo nfs-vencidas-sem-envio. js/49: nomePadraoDeXml. js/12: nome do XML corrigido.'],
+        arquivos: ['index.html', 'style.css', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/36-visao-nf.js', 'js/43-verificar-arquivos.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.39.1: index.html, style.css, js/12, js/14, js/24, js/31, js/34, js/36, js/43 e js/49.'],
+        testar: ['iPhone: Entrada de NF com um XML carregado: confira se os cartões e blocos têm espaço entre si.', 'iPhone: Ajustes → Histórico de Mudanças: abra "Versões dos arquivos carregados" e veja se mostra tudo em dia.', 'iPhone: Central de notificações: no seu diagnóstico de 13/11, as NFs 91737 e 91147 (EMBALAKLIN) devem aparecer em "NFs vencidas que ainda não foram enviadas ao financeiro".', 'iPhone: Entrada de NF → "Baixar XML Corrigido": confira o nome do arquivo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.39.1', nome: 'Entrada de NF: Manual vira aba no topo; ajustes de espaço', status: 'concluida', data: '14/11/2026 às 12:05',
+        novidades: ['Entrada de NF agora tem duas abas no topo: "Por XML" e "Manual (sem XML)". O cadastro manual não fica mais no meio da NF que está sendo editada. Ao subir um XML, o app volta para "Por XML".', 'Botões "Produto trocado" e "Aceitar como o item pedido" no Editor de NF agora são botões com contorno e espaço entre eles (antes pareciam texto colado).', 'Nome de arquivo XML comprido não estoura mais o cartão de importação.'],
+        implementado: ['index.html: #entrada-modo e #add-nf-manual como filho direto da tela; style.css: .modo-manual esconde o resto da tela; js/10: definirModoEntrada e redirecionamento do atalho antigo; js/20: botões action-chip.'],
+        arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.39.0: index.html, style.css, js/10, js/14, js/20, js/24 e js/31.'],
+        testar: ['iPhone: Entrada de NF: alterne "Por XML" e "Manual (sem XML)"; suba um XML estando em Manual e veja voltar para "Por XML".', 'iPhone: Início > "Adicionar nota" abre a aba Manual; salve uma NF manual.', 'iPhone: Editor de NF > item sem associação: confira o espaço dos botões "Produto trocado" e "Aceitar como o item pedido".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.39.0', nome: 'Editor de NF resolve produto trocado; Adicionar NF unida à Entrada de NF', status: 'concluida', data: '14/11/2026 às 11:40',
+        novidades: ['Editor de NF (aba Itens): o item agora pode ser marcado como "Produto trocado" ou "Aceitar como o item pedido" depois de salvar, sem subir o XML de novo. "Desfazer" volta o item a ficar sem associação.', 'Editor de NF: botão "Baixar XML" (o XML original guardado da NF).', 'PDFs e XMLs de NF baixados agora se chamam "APELIDO DO FORNECEDOR + número da NF" (ex.: FUTURA 38301.pdf).', 'Central de notificações: "Fornecedores sem CNPJ" agora lista cada fornecedor; tocar abre o cadastro já filtrado nele.', 'A aba Adicionar foi unida à Entrada de NF: vira o cartão "Adicionar NF manualmente", aberto enquanto não há XML e recolhido ao carregar um XML. Atalhos antigos abrem a Entrada de NF com o cartão aberto.'],
+        implementado: ['js/20: htmlTratamentoNfItem, tratarNfItem, desfazerTratamentoNfItem (mesmos campos da Entrada de NF: tratamento, substituiCodigo, pedidoItem); associar de verdade limpa o tratamento. js/49: nomeArquivoDanfe e baixarXmlDaNf. js/34: irParaFornecedorCadastro. index/js/01/05/06/10: cartão add-nf-manual, tela screen-add removida do menu (com migração) e redirecionada.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.38.1: index.html, style.css, js/01, js/05, js/06, js/10, js/14, js/20, js/24, js/31, js/34 e js/49.'],
+        testar: ['iPhone: Editor de NF > Itens > item sem associação: toque em "Produto trocado" ou "Aceitar como o item pedido", escolha o item da cotação e veja o aviso sumir/mudar; teste "Desfazer".', 'iPhone: Editor de NF > "Baixar XML" e "Baixar PDF": confira o nome do arquivo.', 'iPhone: Entrada de NF: o cartão "Adicionar NF manualmente" aparece aberto; suba um XML e veja recolher; salve uma NF manual para conferir.', 'iPhone: Central de notificações > Fornecedores sem CNPJ: toque num nome e veja o cadastro filtrado.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.38.1', nome: 'NFs já resolvidas saem da decisão do ERP; telas mais leves', status: 'concluida', data: '14/11/2026 às 06:40',
+        novidades: ['"NFs do ERP esperando decisão (vai ao financeiro?)" não lista mais NFs já arquivadas, enviadas ao financeiro ou diretas (ex.: DISKMED 807656). Só fica o que realmente espera decisão.', 'Central de notificações mais leve ao abrir: o desenho pesado espera a troca de tela terminar e o cálculo não é refeito 3 vezes seguidas. Objetivo: reduzir engasgos, botão de voltar sumindo e tela cinza.'],
+        implementado: ['js/36: decisao-parada só para situação "recebida". js/34: cache de 2 s em itensDeAtencao, render adiado em prepararAtencao e no switchToScreen (só se os dados mudaram).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/34-atencao.js', 'js/36-visao-nf.js'],
+        mudou: ['Arquivos alterados desde a 2.38.0: index.html, style.css, js/14, js/24, js/34 e js/36.'],
+        testar: ['iPhone: abra Controle de NFs: o aviso de atenção não deve mais contar NFs arquivadas/enviadas.', 'iPhone: navegue entre Início, Central, Controle e volte com o botão/gesto: veja se ainda há engasgo, botão de voltar sumindo ou tela cinza. Se sim, anote a sequência de telas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.38.0', nome: 'Central de notificações: atualiza sozinha e leva ao produto', status: 'concluida', data: '13/11/2026 às 19:10',
+        novidades: ['Central de notificações: a tela agora se refaz ao entrar e, com ela aberta, em até 3 segundos depois que algo muda (marcar chegou, resolver ocorrência, decidir duplicidade, enviar nota, NF nova). Antes ela só se refazia em poucos casos, por isso avisos já resolvidos ficavam presos ao voltar de um pedido.', 'Ocorrências detectadas e itens que ainda não chegaram: uma linha por pedido e fornecedor (antes uma por pedido), mostrando os primeiros produtos. O toque abre o pedido já no fornecedor e no produto, com rolagem e destaque.', 'Pendências relatadas: o toque também abre o fornecedor e o produto da divergência.', 'Novo grupo "NFs recebidas em duplicidade sem decisão": a NF duplicada não entra mais na conta item a item, então ela passa a ser avisada aqui até você decidir.'],
+        implementado: ['js/34: atencaoAssinatura (assinatura dos dados), re-render ao entrar na tela e a cada 3 s quando muda, linhasPorFornecedor, grupo nf-duplicada e fn das linhas via irParaDivergenciaPedido/irParaFornecedorPedido.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/34-atencao.js'],
+        mudou: ['Arquivos alterados desde a 2.37.1: index.html, style.css, js/14, js/24, js/31 e js/34.'],
+        testar: ['iPhone: abra a Central de notificações, toque numa ocorrência de produto: deve abrir o pedido no fornecedor e no produto.', 'Resolva algo (ex.: marque chegou ou relate uma ocorrência), volte à Central: o aviso deve ter saído. Se algum aviso ficar preso, anote qual grupo é e me diga (ou exporte o diagnóstico).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.37.1', nome: 'Resumo de pendências: prévia completa e assinatura só no fim', status: 'concluida', data: '13/11/2026 às 18:30',
+        novidades: ['A prévia do resumo agora aparece inteira (a tela rola), e não mais numa janelinha pequena.', 'A assinatura e a frase "Desconsiderar pendências já resolvidas ou sinalizadas." saem uma única vez, no final do documento (PDF e Word), e não em todas as páginas. Se não couber na última página, vão para uma página nova.'],
+        implementado: ['js/47: assinatura e aviso desenhados só na última página do PDF (o espaço reservado no rodapé das outras páginas foi liberado); no Word a assinatura passou do rodapé repetido para o fim do corpo. style.css: prévia sem altura máxima.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados desde a 2.37.0: index.html, style.css, js/14, js/24, js/31 e js/47.'],
+        testar: ['iPhone: abra o Resumo de pendências e role: a prévia deve aparecer inteira.', 'Gere o PDF com vários pedidos (2 páginas ou mais): assinatura e aviso só na última página. Confira também o Word.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.37.0', nome: 'Resumo de pendências: pedidos automáticos, caixinhas, prévia e layout antigo', status: 'concluida', data: '13/11/2026 às 18:10',
+        novidades: ['Os pedidos entram sozinhos no resumo: todo pedido recente (mesma janela de 60 dias do Início) com fornecedor que não entregou ou que entregou e deixou pendência. Dá para incluir outros pedidos digitando o número (opcional).', 'Caixinhas do que entra: fornecedores que não entregaram e produtos não faturados (ligadas), divergências em aberto e observação da ocorrência (desligadas). A última escolha fica guardada neste aparelho.', 'Só entram ocorrências de auditoria ainda não relatadas (o rastro da auditoria: fornecedor, NF, divergência e observação). Anotações de texto livre não são usadas.', 'Prévia na tela e PDF/Word no layout do relatório antigo: sem tabelas, título centralizado e sublinhado, lista simples de quem não entregou sob o pedido, fornecedor com NF em negrito, itens em itálico, linha entre pedidos, assinatura e a frase final. "Editar texto" continua.'],
+        implementado: ['js/47: dadosResumoPendenciasPedido devolve linhas com tipo (nf/div/obs) lidas das ocorrências; dadosResumoTodos/filtrarResumoPedido/contagemResumo; textoResumoPendencias aceita as opções; PDF (gerarPdfResumoPendencias) e Word (htmlResumoPendencias) refeitos no layout antigo; prévia e caixinhas. index.html: modal do resumo. style.css: estilos da prévia. js/37: assistente ajustado.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados desde a 2.36.0: index.html, style.css, js/14, js/24, js/31, js/37 e js/47.'],
+        testar: ['iPhone: Início > Resumo de pendências: confira se aparecem todos os pedidos que têm fornecedor a chegar (compare com a lista de "fornecedores a chegar").', 'Marque Divergências e Observação da ocorrência e veja a prévia mudar; desmarque e volte.', 'Gere PDF e Word e compare com o PDF antigo (layout, linhas entre pedidos, assinatura). O PDF não foi conferido visualmente fora do app: me diga se algo estiver desalinhado.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.36.0', nome: 'Início atualiza na hora, busca de produtos no Início e ERP da NF duplicada', status: 'concluida', data: '13/11/2026 às 17:30',
+        novidades: ['Início: o número de "fornecedores a chegar" agora atualiza sozinho em poucos segundos quando você marca "chegou", registra uma NF ou decide uma duplicidade. Não usa leitura nova do Firebase: só confere, no próprio aparelho, os dados que já chegam em tempo real.', 'Início: a busca agora também procura PRODUTOS nas cotações (além de NF, fornecedor e pedido). Tocar no produto abre o pedido no fornecedor e no produto. A busca continua na tela de Cotações.', 'Início: a tela não se refaz mais enquanto você digita na busca, e some a segunda borda cinza ao tocar nela.', 'NF duplicada: a entrada do ERP dessa mesma NF também sai da conta do pedido, para não "dobrar" o recebido e manter os avisos item a item.'],
+        implementado: ['js/48: assinatura ampliada (datas de alteração, chegadas, decisões de duplicidade), conferência a cada 3 s só com a tela Início aberta, inicioBuscarProdutos/inicioEnviarBusca (reaproveita itensCorrespondentesCotacao e renderCardResultadoItem), renderInicioSeAtivo não desenha com a busca em foco. style.css: foco da busca sem borda dupla. js/11: entradas do ERP de NF duplicada excluídas em _compararFontesPedidoCalc.'],
+        arquivos: ['index.html', 'style.css', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.35.0: index.html, style.css, js/11, js/14, js/24, js/31 e js/48.'],
+        testar: ['iPhone: marque "chegou" em um fornecedor e volte ao Início: o número deve mudar em até uns 3 segundos. Registre/atualize uma NF e confira também.', 'Início: digite um produto na busca (ex.: dipirona): devem aparecer os pedidos/fornecedores; toque em um e confira o posicionamento. Verifique que o teclado não some sozinho e que não há borda dupla.', 'Pedido 1744 (SUPERMED): se os avisos item a item da NF 924664 continuarem, me envie um diagnóstico novo exportado com a tela aberta.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.35.0', nome: 'Pesquisa por produto leva ao fornecedor e ao produto no pedido', status: 'concluida', data: '13/11/2026 às 07:30',
+        novidades: ['Em Cotações, ao pesquisar um produto e tocar no resultado, o app abre o pedido, expande o cartão do fornecedor daquele item e rola até o produto (antes só abria o pedido, no topo).'],
+        implementado: ['js/30: irParaProdutoPedido (abre o pedido, expande o fornecedor, abre e destaca o produto; se o produto não for achado, destaca o fornecedor). js/13: o resultado da pesquisa por produto chama essa função.'],
+        arquivos: ['index.html', 'style.css', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/30-navegacao.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.34.0: index.html, style.css, js/13, js/14, js/24, js/30 e js/31.'],
+        testar: ['iPhone: em Cotações, pesquise um produto e toque em um resultado: deve abrir o pedido com o fornecedor expandido e o produto na tela. Teste também um pedido com vários fornecedores.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.34.0', nome: 'Fornecedores a chegar: toque leva ao cartão do fornecedor', status: 'concluida', data: '13/11/2026 às 07:00',
+        novidades: ['Na lista de Início > fornecedores a chegar, tocar em um fornecedor agora abre o pedido na Central, expande o cartão desse fornecedor e rola até ele (antes só abria o pedido).'],
+        implementado: ['js/30: irParaFornecedorPedido (abre o pedido, expande e destaca o cartão). js/48: a lista passa a guardar o CNPJ do fornecedor e o toque chama a nova função. Se o número em cache for antigo (sem CNPJ), só abre o pedido, como antes.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.33.0: index.html, style.css, js/14, js/24, js/30, js/31 e js/48.'],
+        testar: ['iPhone: Início > toque em "fornecedores a chegar" > toque em um fornecedor: deve abrir o pedido com o cartão dele aberto e na tela. Se o cartão não abrir, feche e reabra a lista uma vez (o cálculo antigo em cache não tem o fornecedor).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.33.0', nome: 'NF duplicada tratada como uma ocorrência só (NF inteira)', status: 'concluida', data: '13/11/2026 às 06:30',
+        novidades: ['Uma NF é considerada duplicada quando TODOS os seus itens já chegaram em outra NF do mesmo pedido e do mesmo fornecedor, com número de NF diferente. Mesmo número de NF continua sendo atualização e nunca avisa. Se vier algum item novo (que ainda não chegou), NÃO é duplicidade: fica como divergência por item.', 'Entrada de NF: quadro vermelho "Possível NF duplicada" com o botão Decidir: Aceito (ficamos com o material), Não aceito com devolução total, Não aceito com devolução parcial (você marca os itens) ou Não é duplicidade. Dá para salvar a NF sem decidir.', 'Central do pedido: aparece UM grupo "NF X recebida em duplicidade" (Pedido duplicado / Duplicidade resolvida) com os itens recolhidos, Resolver e Gerar auditoria (1). A NF duplicada deixa de somar no recebido, então somem as dezenas de divergências "quantidade acima" item a item.', 'Auditoria: novo tipo "NF em duplicidade" com texto pronto: a NF veio em duplicidade pelo pedido, aceito ou não aceito, devolução total/parcial.'],
+        implementado: ['js/53 (novo): dupAnalisar/dupInfo (detecção por NF inteira, compara só com NFs salvas antes), decisão salva em duplicidade na NF, quadro da Entrada, grupo da Central e dupGerarAuditoria. js/11: NF duplicada fora da soma do pedido e decisão preservada ao salvar. js/09: grupo no cartão do fornecedor e ação Pedido duplicado. js/12 e js/01: tipo e modelo nf_duplicada. js/33: removida a detecção antiga por itens.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js', 'js/53-nf-duplicada.js'],
+        mudou: ['Arquivos alterados desde a 2.32.0: index.html, style.css, js/01, js/09, js/11, js/12, js/14, js/24, js/31, js/33 e o novo js/53.'],
+        testar: ['iPhone: abra a Central do pedido 1744 (Santa Casa), fornecedor SUPERMED: deve aparecer o grupo da NF 924664 como Pedido duplicado e sumir a lista de "quantidade acima". Toque em Resolver e escolha uma opção.', 'Toque em Gerar auditoria (1): confira o texto com o desfecho escolhido.', 'Carregue de novo o XML de uma NF já salva (mesmo número): não deve aparecer o quadro vermelho.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.32.0', nome: 'Início: fornecedores a chegar mostra quais e de qual pedido', status: 'concluida', data: '12/11/2026 às 21:20',
+        novidades: ['Na tela Início, tocar em "fornecedores a chegar" agora abre a lista: cada pedido com os fornecedores que ainda não chegaram ou estão parciais. Tocar num fornecedor abre o pedido.', 'O resumo de pendências para enviar continua no atalho "Resumo de pendências" do Início (o toque no número não abre mais o gerador).'],
+        implementado: ['js/48: inicioContarFornecedores devolve também a lista (pedido, destino, fornecedor, situação), guardada junto com a contagem; abrirFornecedoresAChegar e renderFornecedoresAChegar. index.html: janela forn-chegar-modal. style.css: botão da linha. Mesma conta do número: lista e total sempre batem. Sem leitura nova no Firebase.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.31.0: index.html, style.css, js/14, js/24, js/31 e js/48.'],
+        testar: ['iPhone: na tela Início, toque em "fornecedores a chegar": deve abrir a lista com o mesmo total do número, agrupada por pedido.', 'Toque em um fornecedor da lista: deve abrir a Central do pedido correspondente.', 'O atalho "Resumo de pendências" continua abrindo o gerador de resumo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.31.0', nome: 'Fonte própria no PDF da NF (DANFE)', status: 'concluida', data: '12/11/2026 às 05:00',
+        novidades: ['Ajustes > Fonte do PDF da NF: você carrega os arquivos .ttf da sua fonte (Times New Roman: times.ttf, timesbd.ttf e timesi.ttf) e o PDF da NF passa a usar essa fonte exata. Os arquivos ficam só neste aparelho (nunca no Firebase nem no GitHub). Sem carregar nada, nada muda: continua a fonte padrão do app.', 'Cada aparelho guarda a sua cópia (iPhone e computador separados). "Voltar à fonte padrão" apaga a cópia.'],
+        implementado: ['js/52 (novo): leitura do .ttf (larguras, medidas, licença de incorporação), armazenamento em IndexedDB e a tela. js/49: usa a fonte própria quando existe (Normal e Negrito obrigatórios). js/01 e js/29: a nova tela em Ajustes e na busca. O PDF embute a fonte inteira (fica maior que o PDF com a fonte padrão).'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/49-danfe.js', 'js/52-danfe-fonte-propria.js'],
+        mudou: ['Arquivos alterados desde a 2.30.0: index.html, style.css, js/01, js/14, js/24, js/29, js/31, js/49 e o novo js/52.'],
+        testar: ['iPhone: Ajustes > Fonte do PDF da NF. Antes de carregar nada, baixe um PDF da NF: deve sair igual ao de antes.', 'Coloque times.ttf, timesbd.ttf e timesi.ttf no app Arquivos, carregue os três e baixe o PDF de novo: confira se as letras são as da Times New Roman e se nada mudou de lugar.', 'Toque em "Voltar à fonte padrão" e baixe de novo: deve voltar ao padrão.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.30.0', nome: 'Aviso de possível NF duplicada pelos itens', status: 'concluida', data: '11/11/2026 às 21:00',
+        novidades: ['Entrada de NF: se a NF carregada tem número diferente de uma já salva do mesmo fornecedor mas traz os mesmos itens com as mesmas quantidades, aparece um quadro vermelho "Possível duplicidade" no topo. O mesmo acontece quando o pedido já recebeu por completo o item em outra NF.', 'Abrir de novo uma NF com o mesmo número é atualização e não gera esse aviso. É só aviso: nunca bloqueia o salvar.'],
+        implementado: ['js/33: duplicidadeNfPorItensXml e htmlDuplicidadeNfXml (compara por código SmartCompras, ou pelo código do fornecedor quando não há associação; só NFs já salvas do mesmo CNPJ ou entidade). js/10: quadro no topo da Entrada de NF. style.css: estilo .dup-nf-alerta. Não considera ainda recebimentos que só existem na Auditoria retroativa ou no ERP.'],
+        arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js'],
+        mudou: ['Arquivos alterados desde a 2.29.0: index.html, style.css, js/10, js/14, js/24, js/31 e js/33.'],
+        testar: ['No iPhone, carregue o XML de uma NF que já foi salva (mesmo número): não deve aparecer o quadro vermelho.', 'Se tiver um XML com número diferente e os mesmos itens de uma NF já salva do mesmo fornecedor, o quadro vermelho deve aparecer no topo, citando a NF anterior.', 'Uma NF comum, de itens novos, não deve mostrar o quadro.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.29.0', nome: 'Gerenciar avisa quando o valor ou o vencimento da nota ficou diferente da NF', status: 'concluida', data: '11/11/2026 às 07:00',
+        novidades: ['A nota do Gerenciar é uma cópia feita na hora do envio. Se a NF ou o ERP ligado mudar depois (ERP reimportado, XML corrigido), o cartão agora mostra "A ERP mudou: valor … → …" com o botão "Usar da ERP" (ou "Usar da XML"). Nada é trocado sozinho: dado financeiro só muda quando você toca.', 'Se você editou a nota de propósito, o aviso não volta até a NF/ERP mudar de novo.'],
+        implementado: ['js/17: fonteDaNota, divergenciaNotaComFonte e usarDadosDaNf (compara valor e vencimento da nota com o ERP, ou com o XML se não houver ERP). js/05: aviso no cartão do Gerenciar. js/08: salvarEdicao grava divergenciaIgnorada com a assinatura da fonte. Sem leitura nova no Firebase.'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.28.0: index.html, style.css, js/05, js/08, js/14, js/17, js/24 e js/31.'],
+        testar: ['Gerenciar: no iPhone, abra uma nota ligada a um ERP e confira que nenhum aviso aparece quando valor e vencimento batem.', 'Se alguma nota aparecer com "A ERP mudou", confira os valores e toque "Usar da ERP": o cartão e a Saída de Texto devem refletir o novo valor.', 'Edite o valor de uma nota de propósito: o aviso não deve reaparecer.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.28.0', nome: 'Um recurso só por NF, automático, e nome do fornecedor para todas as NFs', status: 'concluida', data: '10/11/2026 às 19:00',
+        novidades: ['Cada NF tem um recurso só. Se algum item dela teve menos de 3 cotações, a NF inteira é Recurso Próprio; se todos tiveram 3 ou mais, é C/C. O app decide sozinho, sem perguntar, e as telas deixam de mostrar "C/C e Recurso Próprio" na mesma nota.', 'O recurso da NF vai sozinho para a nota do Gerenciar e para a Saída de Texto (Exportar). O botão "Aplicar recurso" só reaparece se a gravação automática falhar. Ao trocar o recurso no Editor de NF, a mudança aparece em Exportar na hora.', 'Editor de NF: o nome do fornecedor agora vale para todas as NFs do mesmo CNPJ (NFs com XML, NFs só do ERP e notas do Gerenciar), não só para a NF aberta.', 'Histórico de mudanças e aviso de novidades mostram a data e a hora da atualização (a partir desta versão).'],
+        implementado: ['js/11: unificarRecursosNf (Recurso Próprio vence); a conferência da nota lê o recurso esperado pela cotação quando o item não tem recurso gravado. js/36 e js/20: mesma regra no Editor e nas visões. js/12: ao salvar a NF na Entrada, todos os itens vão para Recurso Próprio se algum for, e o quadro "Recurso da NF inteira" explica isso. js/06: autoAplicarRecursosSugeridos (só nota sem recurso) e sincronizarRecursoDaNfComNotas (troca feita no Editor sobrescreve a nota daquela NF). js/20: aplicarNomeFornecedorPorCnpj. js/14 e js/24: campo "data" nas entradas do histórico.', 'Não alterado: o Controle de NFs continua contando "vencida" como pendência (o "1 pendência" das NFs só do ERP é a nota vencida, não a falta de XML).'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/11-central-pedido.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/36-visao-nf.js'],
+        mudou: ['Arquivos alterados desde a 2.27.1: index.html, style.css, js/05, js/06, js/11, js/12, js/14, js/20, js/24, js/31 e js/36.'],
+        testar: ['Abra a NF Omnielmaster 32642 (pedido 1749) no Editor: em "Dados desta NF" deve aparecer um recurso só (Recurso Próprio CTI), sem "recursos diferentes".', 'Gerenciar: o cartão da Supermed 923251 deve mostrar um recurso só na linha cinza; confira que nenhum botão "Aplicar recurso" aparece.', 'No Editor de NF, troque o recurso da NF (C/C ↔ Recurso Próprio) e vá direto a Exportar: a Saída de Texto já deve sair com o recurso novo, sem passar pelo Gerenciar.', 'Editor de NF da HDL: mude o nome do fornecedor e salve; confira no Controle de NFs e no Gerenciar que as outras NFs da HDL mudaram também.', 'Mais → Histórico de mudanças: esta versão mostra "Atualizada em" com data e hora.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.27.1', nome: 'PDF da NF (DANFE) também no Editor de NF', status: 'concluida',
+        novidades: ['Editor de NF, aba XML: novo cartão "PDF da NF (DANFE)" com o botão "Baixar PDF (DANFE)". Ele gera o PDF a partir do XML original que ficou guardado junto da NF, como o fornecedor emitiu, sem conversão de unidade. Vale para qualquer NF já processada, sem precisar subir o XML de novo.', 'Se a NF não tem o XML original guardado (NF antiga ou arquivo acima de 500 KB), o cartão avisa e o botão não aparece.'],
+        implementado: ['js/20: cartão na aba XML do editor. js/49: baixarDanfePdfDaNf(nfId) lê xmlDados.xmlOriginal e reutiliza o mesmo gerador da Entrada de NF. Nada é gravado no Firebase.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.27.0: index.html, style.css, js/14, js/20, js/31 e js/49.'],
+        testar: ['Abra uma NF já processada (Controle de NFs ou pela central do pedido), vá na aba XML do editor e toque em "Baixar PDF (DANFE)".', 'Confira que o PDF bate com o da Entrada de NF e que o cartão fica bem encaixado, sem sobrepor o botão ao texto, no iPhone.', 'Abra uma NF antiga (sem XML guardado), se tiver: deve aparecer só o aviso, sem botão.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.27.0', nome: 'PDF do DANFE com fonte embutida e download no computador', status: 'concluida',
+        novidades: ['A fonte do PDF (Liberation Serif, equivalente ao Times) agora vai embutida no arquivo. Antes o PDF dependia da fonte de cada leitor, o que dava aparência diferente e levemente desfocada em alguns aparelhos; agora o texto sai nítido e igual em qualquer lugar.', 'No computador, "Baixar PDF (DANFE)" baixa o arquivo direto pelo navegador, sem abrir a janela de compartilhar do Windows. No iPhone/iPad/Android continua a folha de compartilhamento (Salvar em Arquivos), que é o caminho que funciona bem.'],
+        implementado: ['js/50-danfe-fontes.js (novo): subconjunto da fonte em Regular, Negrito e Itálico (licença SIL OFL). js/49: PdfOut embute a fonte como TrueType WinAnsi (volta para Times padrão se o arquivo de fontes faltar) e só usa o compartilhamento em aparelho móvel. O PDF fica em torno de 120 KB.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/49-danfe.js', 'js/50-danfe-fontes.js'],
+        mudou: ['Arquivos alterados desde a 2.26.1: index.html, style.css, js/14, js/49 e js/50 (novo).'],
+        testar: ['Computador: toque em "Baixar PDF (DANFE)"; o arquivo deve baixar direto (barra de downloads do navegador), sem a janela Compartilhar.', 'Abra o PDF e compare com o do site: fonte, nitidez e dar zoom (o texto não deve ficar borrado).', 'iPhone: continua abrindo a folha de compartilhamento; salve em Arquivos e abra o PDF.', 'Abra o PDF e use a busca/seleção de texto para conferir que o texto continua selecionável.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.26.1', nome: 'Lote e validade no PDF da NF (DANFE)', status: 'concluida',
+        novidades: ['O PDF (DANFE) agora mostra lote, quantidade do lote, fabricação e validade de cada item quando o XML traz o grupo <rastro> (o caso de NFs de medicamentos): uma linha "Lote: X Qtde: N Fab: dd/mm/aaaa Val: dd/mm/aaaa" abaixo da descrição, como no DANFE oficial. Antes só saía o que estava escrito no texto adicional do produto.', 'Os valores saem como vieram no XML, sem conversão.'],
+        implementado: ['js/49: lerNFe lê os <rastro> de cada item e desenharDanfe acrescenta as linhas à descrição (espaço fixo entre rótulo e valor para não quebrar no meio).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.26.0: index.html, style.css, js/14 e js/49.'],
+        testar: ['iPhone: carregue o XML da Disk Med Pádua (NF 818.036), toque em "Baixar PDF (DANFE)" e confira que cada item tem a linha de lote, quantidade, fabricação e validade iguais às do XML.', 'Uma NF sem <rastro> (lote só no texto) deve continuar saindo como antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.26.0', nome: 'PDF da NF (DANFE) direto do XML', status: 'concluida',
+        novidades: ['Entrada de NF: novo botão "Baixar PDF (DANFE)" ao lado de "Baixar XML Corrigido". Ele monta o DANFE em A4 no padrão da Sefaz (canhoto, emitente, chave com código de barras, destinatário, entrega, fatura, impostos, transportador, itens e dados adicionais), em várias páginas quando a nota tem muitos itens.', 'O PDF sai exatamente como o XML original: quantidades, unidades e valores como o fornecedor emitiu, sem o fator de conversão. A conversão do app continua normal e só vale para o XML corrigido e para a conferência.', 'Nomes longos de empresa e campos de texto agora reduzem a fonte ou quebram em duas linhas dentro da caixa, e o campo "Inscrição estadual do subst. tribut." fica em branco quando a NF não traz o dado (sem zeros).'],
+        implementado: ['js/49-danfe.js (novo): leitor do XML da NF-e, escritor de PDF próprio (fonte Times padrão), código de barras Code 128 da chave, paginação dos itens, ajuste de texto nas caixas; usa xmlTextoAtual (texto original). index.html: botão e script. Não grava nada no Firebase.', 'Não inclui logo do emitente, marca d\'água, NF de serviço (ISSQN), contingência nem marca de cancelada.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/49-danfe.js'],
+        mudou: ['Arquivos alterados desde a 2.25.4: index.html, style.css, js/14, js/31 e js/49 (novo).'],
+        testar: ['iPhone: carregue um XML em Entrada de NF, toque em "Baixar PDF (DANFE)" e salve/abra o PDF pela folha de compartilhamento (Salvar em Arquivos).', 'Compare com o PDF original do fornecedor: nome, chave, itens, quantidades e totais iguais; sem texto passando da caixa e sem zeros no campo de IE do substituto.', 'Carregue uma NF com fator de conversão diferente de 1 e confirme que o PDF mostra a quantidade e a unidade originais do XML, enquanto a tela segue convertida.', 'Teste uma NF com muitos itens (mais de 12): o PDF deve ter mais de uma página, com o cabeçalho repetido.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.4', nome: 'XML salvo como .txt no iPhone', status: 'concluida',
+        novidades: ['O seletor de arquivo da NF-e (Entrada de NF por XML) e o da cotação do SmartCompras agora aceitam arquivos .txt, além de .xml. O iPhone costuma salvar o XML baixado como .txt e o seletor deixava esses arquivos apagados.', 'O app lê pelo conteúdo, não pela extensão: arquivos com BOM ou linhas em branco antes do "<?xml" também funcionam.', 'Ao baixar a NF corrigida, o nome sai "...-corrigido.xml" mesmo que o original fosse .txt.'],
+        implementado: ['index.html: accept=".xml,.txt,text/xml,application/xml,text/plain" nos dois seletores de XML; js/10: remove BOM/espaços iniciais antes de ler e mensagem de erro mais clara; js/14: mesmo tratamento no XML do SmartCompras; js/12: nome do arquivo corrigido.'],
+        arquivos: ['index.html', 'style.css', 'js/10-entrada-nf-xml.js', 'js/12-recurso-lote-rastro.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.25.3: index.html, style.css, js/10, js/12, js/14 e js/31.'],
+        testar: ['iPhone: baixe um XML de NF-e (que o iPhone salve como .txt), vá em Entrada de NF por XML, toque para escolher o arquivo e confirme que o .txt aparece selecionável e a NF é lida.', 'iPhone: faça o mesmo na importação de cotação do SmartCompras (Cotações > Importar XML).', 'iPhone: escolha um arquivo .txt qualquer que não seja XML e confirme a mensagem "não é um XML válido".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.3', nome: 'Divergência de valor com diferença unitária e total', status: 'concluida',
+        novidades: ['Auditoria, tipo "Valor diferente do pedido": os campos agora são "Valor unitário cotado" e "Valor unitário faturado", e logo abaixo o app calcula na hora a diferença por unidade e a diferença no total (a mais ou a menos), com a quantidade informada.', 'O texto gerado (Mensagem e E-mail) passa a trazer: "cotado a X, faturado a Y (diferença de R$ A a mais por unidade e de R$ B a mais no total)". Se a quantidade não estiver preenchida, sai só a diferença unitária.', 'Ocorrências já registradas desse tipo também mostram a diferença, porque o texto é refeito a partir dos campos.'],
+        implementado: ['js/16: numeroDeTextoBR, moedaAud, diferencaValoresAud e campos calculados no modelo ({diferencaUnitaria}, {diferencaTotal}, {sentidoDiferenca}, {totalCotado}, {totalFaturado}); modelo antigo sem edição migra sozinho para o novo; lista de campos do modelo atualizada.', 'js/01: novo modelo padrão de valor_diferente. js/12: rótulos. js/13: prévia da diferença no formulário, atualizada ao sair do campo. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/12-recurso-lote-rastro.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/16-spdata-textos.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados desde a 2.25.2: index.html, style.css, js/01, js/12, js/13, js/14, js/16 e js/31.', 'Se você já editou o modelo de "Valor diferente do pedido" em Configurar Textos Padrão, o seu texto é mantido; para incluir a diferença, use "restaurar este modelo" ou acrescente [[ (diferença de {diferencaUnitaria} {sentidoDiferenca} por unidade e de {diferencaTotal} no total) ]].'],
+        testar: ['iPhone: Auditoria > nova divergência > "Valor diferente do pedido": informe produto, quantidade 10, valor unitário cotado 4,00 e faturado 4,80 e toque fora do campo: deve aparecer "Diferença: R$ 0,80 a mais por unidade · R$ 8,00 a mais no total".', 'iPhone: gere a auditoria e confira a frase na Mensagem e no E-mail.', 'iPhone: troque para faturado menor que o cotado e confira "a menos"; deixe a quantidade vazia e confira que só a diferença unitária aparece.', 'iPhone: abra uma divergência de valor vinda da Central do pedido e confira que a diferença aparece.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.2', nome: 'Alterar status da auditoria dentro do item', status: 'concluida',
+        novidades: ['Central do pedido: quando o item tem "Pendência relatada na auditoria", o bloco da auditoria (com o botão "Alterar status") agora aparece dentro do próprio item, logo abaixo da comparação, em vez de ficar lá no fim do fornecedor ou da tela.'],
+        implementado: ['js/09: a divergência da auditoria vai para o item que a comparação Cotação × NF × ERP já ligou a ela (antes só o nome do produto decidia e, quando não batia, ela caía em "Outras divergências"). Auditoria sem CNPJ ligada a um item também aparece no item e sai de "Outras ocorrências".'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados desde a 2.25.1: index.html, style.css, js/09 e js/14.'],
+        testar: ['iPhone: pedido 1749, item EQUIPO 02 VIAS C/ CLAMP (divergência com pendência relatada): abra o item e confira que, abaixo da comparação, aparece "Divergências (auditoria)" com o botão "Alterar status".', 'iPhone: toque em Alterar status, escolha Resolvida e confirme: o selo do item deve mudar para resolvido.', 'iPhone: confira que a mesma auditoria não aparece repetida no fim da tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.1', nome: 'Início mais rápido e fornecedores a chegar', status: 'concluida',
+        novidades: ['O Início abre já com o seu nome e com o último número de fornecedores (guardados neste aparelho) e atualiza sozinho em seguida.', 'O bloco de pendências agora mostra um número só: fornecedores que ainda não chegaram + fornecedores que chegaram com MAIS de 2 itens faltando. Quem só deixou de faturar 1 ou 2 itens não entra.', 'Toque no bloco para abrir o Resumo de pendências.'],
+        implementado: ['js/48: cache do nome e da contagem por usuário (iniCacheV1), inicioContarFornecedores (usa calcularEntregaFornecedorPedido, statusEntregaRelCot e situacaoItemRelCot; pedidos dos últimos 60 dias), recálculo só quando os dados mudam e fora do desenho da tela; cotações, NFs, ERP e associações sobem ao abrir o Início (já subiam em segundo plano: sem leitura extra).'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.25.0: index.html, style.css, js/14, js/31 e js/48.'],
+        testar: ['iPhone: feche e abra o app: o nome e o bloco de fornecedores devem aparecer logo (na primeira vez depois da atualização o bloco mostra "calculando" por um instante).', 'iPhone: confira o número do bloco com o Resumo de pendências de um pedido recente: "não chegaram" deve bater com NÃO ENTREGARAM.', 'iPhone: fornecedor com só 1 ou 2 itens faltando não deve ser contado.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.25.0', nome: 'Tela inicial e busca de lote', status: 'concluida',
+        novidades: ['Nova tela inicial (Início), que passa a abrir sozinha: saudação, busca de NF/fornecedor/pedido, contadores (vencidas, hoje/amanhã, abertas na relação), atalhos e próximos vencimentos.', 'Busca de lote (atalho no Início): procura por lote, produto e validade nas NFs processadas e mostra a NF, o fornecedor (apelido) e o pedido; toque no resultado para abrir a NF.', 'O Início fica em primeiro na barra de baixo. Para a barra não apertar, Exportar passou para "Mais" (dá para trazer de volta em Personalização > Menus).'],
+        implementado: ['js/48-inicio-lote.js novo: painel usa só dados já carregados na abertura (sem leituras novas); a busca de lote carrega as NFs processadas só quando você a abre.', 'index.html: telas Início e Buscar lote, Início ativo na abertura. js/01: menu Início e tela de lote. js/02: migração do menu. js/05: carga das NFs para a busca de lote e redesenho do Início. style.css: estilos.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/02-layout-setup.js', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/48-inicio-lote.js'],
+        mudou: ['Arquivos alterados desde a 2.24.6: index.html, style.css, js/01, js/02, js/05, js/14, js/31 e novo js/48-inicio-lote.js.'],
+        testar: ['iPhone: abra o app: deve abrir no Início, com a saudação e os contadores; a barra de baixo tem Início em primeiro.', 'iPhone: toque em cada atalho e confira que abre a tela certa e que o voltar funciona.', 'iPhone: digite um fornecedor na busca do Início e confira a lista no Controle de NFs.', 'iPhone: Início > Buscar lote: digite um lote de uma NF recente (veja no editor da NF) e confira o resultado; toque nele para abrir a NF.', 'iPhone: Exportar agora está em Mais; confira em Personalização > Menus se quiser trazer de volta.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.6', nome: 'Vão no card do produto, linhas do relatório de uso e aviso de atualização geral', status: 'concluida',
+        novidades: ['Card do produto na central do pedido: some a linha pontilhada duplicada com o vão entre o bloco "Cotação e recurso" e o "SP Data".', 'Uso do Firebase: as barras de cada linha não passam mais da largura da tela (apareciam linhas infinitas em aparelhos cuja soma de leituras era menor que a da cópia local).', 'Aviso de atualização incompleta agora mostra o total ("Faltam 2 de 8 arquivos da versão X"), com a lista em "Ver arquivos" e botão Recarregar.'],
+        implementado: ['style.css: .cdet .central-spdata-linha sem borda superior; estilo do "Ver arquivos". js/00: largura da barra limitada a 100%. js/43: resumo geral e botão Recarregar.'],
+        arquivos: ['index.html', 'style.css', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados desde a 2.24.5: index.html, style.css, js/00, js/14 e js/43.'],
+        testar: ['iPhone: pedido 1749, abra o item TOUCA DESCARTÁVEL SANFONADA: entre "Recurso" e "SP Data" deve haver só uma linha pontilhada.', 'iPhone: Mais > Uso do Firebase, role até os aparelhos: não deve haver linhas azuis atravessando a tela.', 'Subindo arquivos pela metade (de propósito ou por falha), o aviso deve dizer quantos faltam do total.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.5', nome: 'Botão Copiar nos relatórios de uso do Firebase', status: 'concluida',
+        novidades: ['Uso do Firebase: o relatório geral agora aparece logo abaixo do botão "Gerar relatório geral" e tem o botão "Copiar relatório". O relatório simples também ganhou "Copiar".', 'O texto do relatório geral não some mais se a tela for redesenhada enquanto você está lendo.'],
+        implementado: ['js/46: área do relatório geral com botão Copiar (área de transferência, com plano B de selecionar o texto) e texto guardado em memória. js/00: botão Copiar no relatório simples.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/46-uso-aparelhos.js'],
+        mudou: ['Arquivos alterados desde a 2.24.4: index.html, js/00, js/14 e js/46.'],
+        testar: ['iPhone: Mais > Uso do Firebase > Gerar relatório geral: o texto aparece logo abaixo; toque em Copiar relatório e cole em uma conversa.', 'iPhone: no relatório simples, Gerar relatório e depois Copiar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.4', nome: 'Travamentos, apelido no resumo, ERP não importado e centavos do ERP', status: 'concluida',
+        novidades: ['Resumo de pendências agora usa o apelido (nome de exibição) em Não entregaram e em Pendências.', 'Tela Assinatura dos relatórios salva ao sair de cada campo (antes salvava a cada tecla e travava o app).', 'Editor da NF só se redesenha quando algo da NF muda de verdade (antes redesenhava a cada atualização de qualquer dado, causando as travadas).', 'Controle de NFs: NF com XML e sem relatório ERP importado deixa de contar como "1 pendência": aparece só uma nota discreta "ERP ainda não importado".', 'Divergência de valor total NF × ERP ignora diferença de centavos causada pelo arredondamento do unitário do ERP em produtos com quantidade grande (gotas, doses).', 'Entrada de NF: o fator aceita fração (1/100) ou decimal (0,01) para dividir a quantidade (cotado por caixa, NF por unidade).'],
+        implementado: ['js/47: nome via nomeExibicaoFornecedor. index.html: campos da assinatura com onchange.', 'js/20: assinatura dos dados do editor antes de redesenhar. js/17: pendência de ERP vira informativa. js/11: tolerância quantidade × 0,00005 no valor total. js/10: fator fracionário.'],
+        arquivos: ['index.html', 'js/10-entrada-nf-xml.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados desde a 2.24.3: index.html, js/10, js/11, js/14, js/17, js/20, js/31 e js/47.'],
+        testar: ['iPhone: abra a NF INTENSIVEMED 428615 no Controle de NFs: não deve mais mostrar "1 pendência", só "ERP ainda não importado".', 'iPhone: abra o editor de uma NF, role e mexa nas abas; confira se parou de travar e veja o relatório de uso (Travadas da tela).', 'iPhone: Personalização > Assinatura dos relatórios: preencha, saia do campo e confira se não trava e se aparece no PDF do resumo.', 'iPhone: gere o resumo do 1749 e confira os apelidos (SOMA, DISKMED, FUTURA...).', 'iPhone: pedido 1749, clonazepam/haloperidol: a divergência de centavos (12,75 × 12,70) não deve mais aparecer.', 'Na Entrada de NF, digite 1/100 no fator de um item e veja o preview dividir a quantidade.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.3', nome: 'Resumo de pendências no layout aprovado, com assinatura e texto editável', status: 'concluida',
+        novidades: ['Resumo de pendências redesenhado (layout B2): data no topo, título grande, uma faixa por pedido com o número em destaque, "Não entregaram:" (só fornecedores sem nenhuma entrega) e "Pendências:" (fornecedores que entregaram mas não faturaram produtos ainda não relatados). Sem cartões; só negrito para destacar.', 'Assinatura no rodapé de todas as páginas (logo da instituição, seu nome, cargo, e-mail, telefone, site e endereço) e aviso "Desconsiderar pendências já resolvidas ou sinalizadas.".', 'Você pode digitar/editar o texto gerado: PDF, Word e TXT saem exatamente com o que está no campo.', 'Novo em Personalização: Assinatura dos relatórios (cada usuário tem a sua).'],
+        implementado: ['js/47: novo texto, parser de blocos, PDF (jsPDF) e Word no layout B2, assinatura em todas as páginas; linhas manuais em texto corrido dentro do pedido.', 'index.html: tela Assinatura dos relatórios, campo de texto editável. js/01 e js/29: navegação e busca da nova tela.'],
+        arquivos: ['index.html', 'js/01-nucleo-config-estado.js', 'js/14-historico-mudancas.js', 'js/29-busca-ajustes.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados: index.html, js/01, js/14, js/29, js/31 e js/47.'],
+        testar: ['No iPhone: Configurações > Personalização > Assinatura dos relatórios: preencha cargo, e-mail, telefone, site e endereço.', 'Cotações > Resumo de pendências: 1748, 1749, 1750. Confira apelidos, Não entregaram e Pendências.', 'Digite uma observação no texto e toque em PDF, Word e TXT: ela deve sair nos três. A assinatura fica no fim de cada página.', 'Fornecedor só com NF no ERP não aparece em Não entregaram; só aparece em Pendências se houver auditoria de produto não faturado ainda não relatada.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.2', nome: 'Resumo de pendências em PDF e Word com o visual do relatório da cotação', status: 'concluida',
+        novidades: ['O Resumo de pendências agora exporta em PDF e Word no mesmo estilo do relatório da cotação: cabeçalho com logo, faixa do pedido (origem e limite), totais (fornecedores, sem pendência, com pendência, itens não faturados), fornecedores sem pendência em selos verdes e cartão vermelho para cada fornecedor com produtos não faturados.', 'O texto para copiar e o TXT continuam iguais.'],
+        implementado: ['js/47: dadosResumoPendenciasLista, htmlResumoPendencias (Word) e gerarPdfResumoPendencias (jsPDF desenhado à mão, reaproveitando cores e selos do js/45). Botão PDF no modal (index.html).'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/31 e js/47.'],
+        testar: ['Cotações > Resumo de pendências, digite 1748, 1749, 1750 e toque em PDF: confira o visual e se o iPhone oferece compartilhar/abrir o arquivo.', 'Gere também em Word e compare com o PDF.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.1', nome: 'Resumo de pendências no formato pedido e apelido do fornecedor', status: 'concluida',
+        novidades: ['O Resumo de pendências agora sai no seu formato: data, fornecedores sem pendência (pelo apelido) e, em PENDÊNCIAS, somente os produtos que o fornecedor não faturou e que ainda não foram relatados. Saíram o "nenhum item recebido" e o aviso de cotações mínimas.', 'Apelido do fornecedor: quando o CNPJ (ex.: filial) não tem apelido próprio, o app usa o apelido de outro CNPJ da mesma entidade. O resultado da auditoria também mostra o apelido.'],
+        implementado: ['js/47: dadosResumoPendenciasPedido usa só itens em aberto "não faturado" (estado detectada); cabeçalho DATA; refaz o texto quando o cadastro de fornecedores carrega.', 'js/14: _nomeExibicaoFornecedorCalc procura apelido na mesma entidade. js/09: chip do fornecedor na auditoria usa nomeExibicaoFornecedor.'],
+        arquivos: ['js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/47-resumo-pendencias.js', 'index.html'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/14, js/31 e js/47.'],
+        testar: ['Cotações > Resumo de pendências com 1748, 1749, 1750: compare com o formato que você descreveu. O SOMA deve sair como "SOMA".', 'Marque um item não faturado como relatado e gere de novo: ele deve sumir do resumo.', 'Se algum fornecedor ainda sair com o nome completo, me diga qual (é o apelido que falta no cadastro de Fornecedores).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.24.0', nome: 'Resumo de pendências de entrega por pedido, etiqueta de entrega parcial e voltar da auditoria', status: 'concluida',
+        novidades: ['Novo "Resumo de pendências" em Cotações: informe vários pedidos e receba o texto pronto (fornecedores sem pendência + PENDÊNCIAS por fornecedor com NF, itens não faturados, divergências e recurso a confirmar). Copia ou baixa em TXT/Word. Também sai pelo Assistente ("entregas pendentes dos pedidos 1748, 1749").', 'Fornecedor que recebeu parte dos itens agora mostra "Entrega parcial" no cartão (antes aparecia "Aguardando").', 'Ao gerar auditoria a partir da cotação, o botão voltar retorna à cotação, com os fornecedores que estavam abertos, e não mais às Anotações.'],
+        implementado: ['js/47 (novo): dadosResumoPendenciasPedido/textoResumoPendencias reaproveitam dadosRelatorioCotacao e resumoCotacoesDoFornecedor; modal em index.html; botão em Cotações e ação "Pendências" na barra de seleção (js/38).', 'js/37: ferramenta resumo_pendencias_entrega e regra do modo básico.', 'js/09: selo do cartão do fornecedor "Entrega parcial" quando estado parcial.', 'js/30: registrarDivergenciaDaComparacao e registrarTodasDivergenciasDoFornecedor entram na pilha de retorno.'],
+        arquivos: ['index.html', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/30-navegacao.js', 'js/31-ajuda.js', 'js/37-assistente.js', 'js/38-dock-selecao.js', 'js/47-resumo-pendencias.js'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/14, js/30, js/31, js/37, js/38 e js/47 (novo).'],
+        testar: ['Cotações > Resumo de pendências: digite 1748, 1749, 1750 e compare o texto com o que você espera (fornecedores sem pendência, PENDÊNCIAS, NF, itens não faturados, recurso). Copie, baixe em TXT e em Word.', 'Cotações > Selecionar, marque pedidos e toque em "Pendências" na barra de baixo.', 'Assistente: "entregas pendentes dos pedidos 1748, 1749, 1750".', 'Abra um pedido, expanda um fornecedor, toque em gerar auditoria de uma ocorrência e depois em voltar: deve voltar ao pedido com o fornecedor aberto.', 'Fornecedor com alguns itens entregues e um faltando: o selo deve ser "Entrega parcial".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.23.4', nome: 'Cópia dos catálogos vale 14 dias (fim do download diário)', status: 'concluida',
+        novidades: ['A cópia dos cadastros neste aparelho agora vale 14 dias em vez de 24 horas. Antes, cada aparelho baixava os cadastros inteiros uma vez por dia (de 1 a 5 mil leituras). Agora só baixa de novo se alguém alterar o cadastro (a versão no servidor muda) ou passarem 14 dias.'],
+        implementado: ['js/44: CATALOGO_TTL_MS de 24 h para 14 dias; a conferência do token de versão (config/catalogosVersao) continua em toda abertura.'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/14 e js/44.'],
+        testar: ['Depois de atualizar, abra o app uma vez (pode gastar leituras: a cópia antiga é refeita). Nos dias seguintes, abra o app pela manhã e veja em Mais > Uso do Firebase: os catálogos devem aparecer como "copia" e o total de leituras da abertura deve ficar baixo (centenas, não milhares).', 'Altere algo num cadastro (ex.: vincule um produto) e confira no outro aparelho que a mudança aparece após reabrir.'],
+        testarLinks: [{ rotulo: 'Abrir Uso do Firebase', acao: 'uso-firebase' }]
+    },
+    {
+        numero: '2.23.3', nome: 'Uso do Firebase de todos os aparelhos: relatório geral e individual', status: 'concluida',
+        novidades: ['Mais > Uso do Firebase ganhou o cartão "Todos os aparelhos · hoje": soma das leituras de todos os aparelhos que abriram o app, comparada ao limite de 50 mil.', 'Cada aparelho aparece separado (nome, versão, leituras, cópia local, aberturas e coleções que mais gastaram). Você pode renomear este aparelho e remover da lista os que não usa mais.', 'Novo botão "Gerar relatório geral": texto para copiar com o total, a soma por coleção e por tela e o detalhe de cada aparelho (aberturas, catálogos, travadas).'],
+        implementado: ['js/46 (novo): cada aparelho publica um resumo do próprio dia em config/usoAparelhos (campo aparelhos.<id>, merge), no máximo a cada 4 min e só se mudou, e ao sair do app; leitura de todos = 1 leitura; relatório geral em texto.', 'js/00: cartão dos aparelhos na tela de uso. index.html: script js/46.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/24-novidades-versao.js', 'js/31-ajuda.js', 'js/46-uso-aparelhos.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14, js/24, js/31 e js/46 (novo).'],
+        testar: ['Abra o app no iPhone e no computador, espere ~1 minuto e abra Mais > Uso do Firebase em um deles: os dois aparelhos devem aparecer (toque em "Atualizar aparelhos" se faltar um).', 'Toque em "Renomear este aparelho", dê um nome (ex.: iPhone Alessandro) e confira que aparece na lista.', 'Toque em "Gerar relatório geral" e confira o texto com o total e cada aparelho.', 'Se aparecer erro vermelho de leitura/publicação, me avise: as regras do Firebase precisam liberar config/usoAparelhos.'],
+        testarLinks: [{ rotulo: 'Abrir Uso do Firebase', acao: 'uso-firebase' }]
+    },
+    {
+        numero: '2.23.2', nome: 'Relatório da cotação com visual padronizado (Word e PDF) e distinção de divergência e observação', status: 'concluida',
+        novidades: ['O PDF do relatório da cotação agora tem o mesmo visual do Word: cabeçalho com a logo, quadros de totais, tabelas, cartões por fornecedor e selos coloridos de status (Concluída, Parcial, Pendente, Cancelada).', 'Divergência e observação ficam bem distintas: DIVERGÊNCIA em vermelho (com o status Em aberto, Relatada ou Resolvida) e OBSERVAÇÃO em azul (a observação do pedido e o comentário do SmartCompras em cada item).', 'Na entrega parcial, os itens não entregues aparecem num quadro vermelho e com a linha rosada. O Word tem o mesmo layout e o TXT usa as mesmas marcações.', 'O PDF numera as páginas e repete o cabeçalho das tabelas quando a lista passa de uma página.'],
+        implementado: ['js/45: htmlRelatorioCotacao (tabelas, para o Word) e gerarPdfRelatorioCotacao (jsPDF desenhado à mão: quadros, selos, tabelas com quebra de página, rodapé com página x de y); dados com obsPedido; textoRelatorioCotacao com [DIVERGÊNCIA]/[OBSERVAÇÃO].'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/45-exportar-cotacao.js'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/31 e js/45.'],
+        testar: ['Abra um pedido, toque em "Exportar relatório" e gere Básico e Completo em PDF, Word e TXT. Compare o PDF com o protótipo aprovado.', 'Num pedido com entrega parcial, confira o quadro vermelho de itens não entregues e as linhas rosadas.', 'Confira se a logo aparece no cabeçalho do PDF e do Word, sem deformar. Se a logo não aparecer no Word, me avise.', 'Se o pedido tiver observação em "Dados do pedido", ela aparece no relatório completo como OBSERVAÇÃO.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.23.1', nome: 'Anotações abrem a nota, ajuste da logo e botão do relatório no topo do pedido', status: 'concluida',
+        novidades: ['Anotações: tocar numa anotação de um pedido (ex.: 1744) agora abre a anotação, não mais a cotação. Quando a nota é de um pedido que existe em Cotações, o cartão ganhou um botão pequeno para abrir a cotação.', 'Configurações > Logo da Instituição: novo painel "Como a logo sai na impressão", com prévia do quadro e controles de enquadramento (manter a proporção, preencher ou esticar), tamanho e posição. Por padrão a logo agora mantém a proporção, o que corrige a deformação nos PDFs.', 'O botão "Exportar relatório" saiu da aba Anotações e foi para o topo do pedido, junto dos outros botões do resumo.'],
+        implementado: ['js/09: clique da lista de anotações sempre chama abrirAnotacao; botão "abrir cotação" (abrirCentralPedido) no cartão; botão de exportar nas ações do resumo do pedido.', 'js/08: logoAjuste (modo, zoom, x, y) guardado com a logo (compartilhado), prepararLogoImpressao/logoParaImpressao e painel de prévia; js/06 e js/45 usam a logo já enquadrada; js/02: refaz a prévia quando o ajuste muda.'],
+        arquivos: ['index.html', 'js/02-layout-setup.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/45-exportar-cotacao.js'],
+        mudou: ['Arquivos alterados: index.html, js/02, js/06, js/08, js/09, js/14, js/31 e js/45.'],
+        testar: ['Anotações: toque numa anotação de pedido (ex.: 1744): deve abrir a nota. O ícone de documento no cartão abre a cotação.', 'Configurações > Logo da Instituição: com a logo enviada, mude o enquadramento, o tamanho e a posição e veja a prévia; depois gere um PDF (Exportar > PDF) e confira que a logo não está deformada.', 'Abra um pedido: o botão "Exportar relatório" está no topo, abaixo do resumo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.23.0', nome: 'Fixar cotação no topo, relatório da cotação, prazo em dias úteis e ajuste das Anotações', status: 'concluida',
+        novidades: ['Cotações: botão "Selecionar" (mesma seleção em lote e mesma Dock de Anotações) com "Fixar" e "Soltar". Cotações fixadas ficam no topo, com um pino, e a fixação vale nos seus aparelhos.', 'Dentro da cotação (aba Anotações): "Exportar relatório da cotação", Básico ou Completo, em TXT, Word ou PDF. O completo traz divergências por fornecedor, especificação dos itens e, na entrega parcial, os itens não entregues em destaque.', 'A data limite sugerida ao importar um pedido agora conta 5 dias ÚTEIS (segunda a sexta), não corridos.', 'Anotações: o app deixou de refazer a leitura do texto a cada movimento do dedo (isso podia segurar o app em nota grande). Além disso, o relatório de uso passou a registrar a última nota aberta, para investigarmos se o travamento voltar.'],
+        implementado: ['js/13: seleção em lote de cotações, fixadaEm no documento da cotação (merge), ordenarCotacoes com fixadas primeiro; js/38: contexto "cotacoes" na Dock de seleção.', 'js/45 (novo): dadosRelatorioCotacao, textoRelatorioCotacao, htmlRelatorioCotacao (.doc) e gerarPdfRelatorioCotacao (jsPDF); janela de exportação no index.html.', 'js/14: somarDiasUteisISO; js/15: data limite = pedido + 5 dias úteis.', 'js/09: selectionchange com atraso (150 ms) e medição da nota ao abrir; js/44: bloco "ÚLTIMA ANOTAÇÃO ABERTA" no relatório de uso.'],
+        arquivos: ['index.html', 'style.css', 'js/09-anotacoes.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/15-ganhadores-cotacoes.js', 'js/31-ajuda.js', 'js/38-dock-selecao.js', 'js/44-catalogo-cache.js', 'js/45-exportar-cotacao.js'],
+        mudou: ['Arquivo novo: js/45-exportar-cotacao.js. Alterados: index.html, style.css, js/09, js/13, js/14, js/15, js/31, js/38 e js/44.'],
+        testar: ['Cotações > Selecionar: marque 2 pedidos, toque em "Fixar" na Dock: eles sobem para o topo com o pino. Selecione de novo e toque em "Soltar".', 'Abra um pedido > aba Anotações > "Exportar relatório da cotação": gere Básico e Completo em TXT, Word e PDF e abra cada arquivo (no iPhone, a folha de compartilhar permite salvar em Arquivos).', 'Num pedido com entrega parcial, confira no Completo os itens não entregues em destaque (vermelho no Word/PDF).', 'Importe um pedido novo e confira que a data limite caiu 5 dias úteis depois da data do pedido.', 'Anotações: abra várias notas (inclusive uma grande) e volte pelo botão do topo. Se travar de novo, anote a hora e me mande o relatório de uso (Configurações > Uso do Firebase).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.7', nome: 'Entrega cancelada: parar de avisar que não chegou', status: 'concluida',
+        novidades: ['Novo botão "Entrega cancelada" em cada fornecedor do pedido: o app deixa de esperar aquela entrega e para de avisar que não chegou.', 'No topo do pedido, o botão "Entrega cancelada (pedido todo)" marca todos os fornecedores sem marca de uma vez.', 'Dá para desfazer (um a um ou o pedido todo). O pedido deixa de aparecer em "sem sinal de entrega" e no aviso de pedido parado.'],
+        implementado: ['Marca chegadasPorFornecedor[cnpj] = { data, tipo:\'cancelada\' }; calcularEntregaFornecedorPedido devolve estado \'cancelada\' (js/11).', 'Selo e texto próprios (rotuloEntregaFornecedor), botões no cartão e no cabeçalho, confirmação antes de salvar.', 'resumoEntregaCotacao/chips e cartão da lista mostram "cancelada" sem contar como entregue nem pendente (js/13); js/34: pedido sem entrega ignora cancelados (só some se todos os fornecedores têm marca).'],
+        arquivos: ['index.html', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/13-relatorios-divergencias.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/34-atencao.js'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/11, js/13, js/14, js/31 e js/34.'],
+        testar: ['Abra um pedido atrasado, toque em "Entrega cancelada" num fornecedor e confirme: o selo vira "Entrega cancelada" e some o "não chegou" daquele fornecedor.', 'Toque em "Desfazer cancelamento": volta ao estado anterior.', 'No topo do pedido, "Entrega cancelada (pedido todo)": todos os fornecedores ficam cancelados; o pedido sai de Atenção > sem sinal de entrega.', 'Pedido com um fornecedor cancelado e outro sem entrega, com prazo vencido: continua avisando só do outro.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.6', nome: 'Auditoria: erro ao salvar sem quantidade, quantidade automática e botão para gerar todas', status: 'concluida',
+        novidades: ['Corrigido o erro ao salvar uma auditoria de valor diferente sem quantidade (o Firestore recusava o campo vazio). Agora o app grava normalmente.', 'A quantidade da auditoria é preenchida sozinha a partir do item (quantidade faturada na NF, ou a cotada), em vez de ficar em branco.', 'Voltou o botão "Gerar auditorias (N)" no cartão do fornecedor: junta todas as ocorrências em aberto dele no mesmo rascunho.', 'A auditoria de valor diferente não acrescenta mais a linha "Recurso <produto>: C/C ..." nas observações.', 'Preços unitários pequenos agora aparecem com até 4 casas nas verificações e nas auditorias (cotado 0,0863 × faturado 0,0932, em vez dos dois como 0,09).', 'O relatório de uso deixou de registrar como travada o tempo em que o app ficou em segundo plano.'],
+        implementado: ['js/16: novaOcorrencia sem campos undefined (cópia JSON).', 'js/11: camposMaterialDivergencia com quantidade vinda do item; sem linha de recurso para valor_diferente.', 'js/09: botão registrarTodasDivergenciasDoFornecedor no cartão do fornecedor (2 ou mais ocorrências em aberto).', 'js/44: medição de travadas ignora segundo plano.', 'js/18: formatPrecoUnitarioBR e precoUnitarioTexto; js/33 e js/11 usam nas mensagens de valor.', 'js/31: Ajuda do cartão do fornecedor.'],
+        arquivos: ['index.html', 'js/09-anotacoes.js', 'js/11-central-pedido.js', 'js/14-historico-mudancas.js', 'js/16-spdata-textos.js', 'js/18-erp-fornecedores-spdata.js', 'js/31-ajuda.js', 'js/33-verificacoes-entrada.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/09, js/11, js/14, js/16, js/18, js/31, js/33 e js/44.'],
+        testar: ['Em Cotações, abra um pedido com divergência de valor e toque em "Gerar auditoria": a quantidade deve vir preenchida e salvar sem erro.', 'Num fornecedor com 2 ou mais ocorrências em aberto, deve aparecer "Gerar auditorias (N)" entre os botões do cartão; toque e confira o rascunho.', 'Confira que as observações de valor diferente não trazem "Recurso ...".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.5', nome: 'Correção: item da NF ligado ao pedido errado quando o produto está em dois pedidos', status: 'concluida',
+        novidades: ['Quando o mesmo produto está em mais de um pedido, o app agora escolhe o pedido citado na NF ("SMART 1744" nas informações adicionais) e, depois, o pedido que tem o CNPJ do emitente. Antes pegava o primeiro pedido da lista que tivesse o produto, o que gerava mensagens contraditórias (500 × 1000, preço de outro fornecedor).'],
+        implementado: ['js/10: pedidoCitadoNf e escolha da cotação por item (pedido citado → CNPJ do emitente → primeira da lista).', 'js/31: Ajuda de Entrada de NF.'],
+        arquivos: ['index.html', 'js/10-entrada-nf-xml.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados: index.html, js/10, js/14 e js/31.'],
+        testar: ['Carregue de novo o XML da NF 1800899 (C.B.S.): a agulha deve ir para o pedido 1744 (1000 un., cotada a R$ 0,0863 pela C.B.S.) e os itens devem ficar todos no pedido 1744.', 'Confira que NFs sem "SMART nnnn" nas informações continuam sendo associadas como antes.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.4', nome: 'Correção: cotações demoravam ~5 s com o cache dos catálogos; relatório copiável estável', status: 'concluida',
+        novidades: ['Corrigida a demora de cerca de 5 segundos ao abrir Cotações e uma cotação: o indicador de carregamento esperava um sinal que o cache dos catálogos não enviava e só saía por tempo limite.', 'O campo de texto do relatório não fecha mais sozinho (a tela de uso não se redesenha enquanto o relatório está aberto), e a barra inferior volta ao normal.'],
+        implementado: ['js/28: window.__primeiroSnapMarcar expõe o marcador de primeira resposta.', 'js/44: catalogoOnSnapshot marca a primeira resposta (cópia, servidor e escuta normal).', 'js/00: a atualização automática da tela de uso pausa com o relatório aberto.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/28-transicoes-ios.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14, js/28 e js/44.'],
+        testar: ['Com o cache ligado, abra Cotações e uma cotação: o carregamento deve sumir em menos de 1 segundo.', 'Em Mais → Uso do Firebase, gere o relatório e toque no texto: ele deve continuar aberto e a barra inferior não deve sumir.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.3', nome: 'Relatório de uso em texto copiável', status: 'concluida',
+        novidades: ['Em Mais → Uso do Firebase há o botão "Gerar relatório", que mostra um texto simples (toque para selecionar tudo e copiar) com leituras, telas, aberturas, cache dos catálogos com tempos e travadas da tela.'],
+        implementado: ['js/44: catalogoRelatorioTexto, medição de travadas (travadas), contadores de entregas e tempo de leitura por catálogo.', 'js/00: cartão "Relatório para copiar" com campo de texto.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14 e js/44.'],
+        testar: ['Use o app por alguns minutos (Cotações, abrir uma cotação, voltar).', 'Abra Mais → Uso do Firebase, role até "Relatório para copiar", toque em "Gerar relatório", toque no texto, copie tudo e cole na conversa.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.2', nome: 'Cache dos catálogos: exibe a cópia na hora, mede o tempo e permite desligar', status: 'concluida',
+        novidades: ['Os cadastros agora aparecem na hora a partir da cópia local; a conferência da versão no Firebase acontece depois, sem segurar a tela.', 'No cartão "Cache dos catálogos" (Mais → Uso do Firebase) aparece o tempo de cada cadastro e um botão para desligar o cache como teste, voltando ao comportamento da versão 2.21.3.'],
+        implementado: ['js/44: catalogoOnSnapshot entrega o cache antes de consultar a versão; medição de tempo (catalogoDiag.ms/msCb); chave localStorage catalogoCacheOff e botão catalogoAlternar.'],
+        arquivos: ['index.html', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/14 e js/44.'],
+        testar: ['Abra as Cotações e uma cotação; compare a demora.', 'Em Mais → Uso do Firebase → Cache dos catálogos, toque em "Desligar cache dos catálogos (teste)", feche e abra o app e repita; compare a demora e me conte qual ficou mais rápido.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.1', nome: 'Cache dos catálogos: proteção contra falha e diagnóstico', status: 'concluida',
+        novidades: ['Se o app não conseguir gravar a versão do cache no Firebase, ele volta a carregar os cadastros do jeito de antes (sem ficar baixando tudo a cada abertura).', 'Em Mais → Uso do Firebase há um novo cartão "Cache dos catálogos" mostrando, para cada cadastro, se veio da cópia local, do servidor ou da escuta normal, e o motivo de qualquer falha.'],
+        implementado: ['js/44: criação da versão antes do download; falha => escuta normal; versão que não grava invalida a cópia local; catalogoDiag/catalogoDiagHTML.', 'js/00: cartão de diagnóstico na tela de uso.'],
+        arquivos: ['index.html', 'js/00-uso-firebase.js', 'js/14-historico-mudancas.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/00, js/14 e js/44.'],
+        testar: ['Abra o app, use uma cotação, volte, e confira em Mais → Uso do Firebase o cartão "Cache dos catálogos".', 'Feche e abra de novo: os cadastros devem aparecer como "cópia local" e a cotação abrir sem demora.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.22.0', nome: 'Cache dos catálogos no aparelho (menos leituras do Firebase)', status: 'concluida',
+        novidades: ['Produtos, fornecedores, associações e exceções de XML agora ficam guardados no aparelho. Ao abrir o app, ele confere uma única versão no Firebase: se nada mudou, usa a cópia local e quase não gasta leituras; se mudou, baixa de novo uma vez.', 'Ao editar um produto, fornecedor ou associação, o app atualiza só aquele item e avisa os outros aparelhos pela versão. Nada muda no uso: as telas mostram os mesmos dados de sempre.'],
+        implementado: ['js/44-catalogo-cache.js (novo): cache em IndexedDB, documento config/catalogosVersao, catalogoOnSnapshot e interceptação das gravações nas 5 coleções; em qualquer falha volta para a escuta normal do Firestore.', 'js/05: os 5 listeners de catálogo usam catalogoOnSnapshot.'],
+        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/44-catalogo-cache.js'],
+        mudou: ['Arquivos alterados: index.html, js/05, js/14, js/31 e js/44 (novo).'],
+        testar: ['1ª abertura depois de atualizar: o Uso do Firebase mostra a leitura dos catálogos (uma vez só, como antes).', 'Feche e abra o app de novo: em Mais → Uso do Firebase, produtosSpData, fornecedoresSpData, associacoesSpData, associacoesFornecedor e xmlExcecoes devem ficar com 0 ou quase 0 leituras do servidor.', 'Edite um fornecedor ou um produto, confira que aparece atualizado na hora e que continua certo depois de fechar e abrir.', 'Se tiver outro aparelho: edite num e abra no outro; a alteração deve aparecer na abertura seguinte.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.21.3', nome: 'Anotações antigas voltam a aparecer na lista', status: 'concluida',
+        novidades: ['A lista de anotações agora traz todas as anotações, inclusive as criadas antes do campo de data de atualização existir. Antes, algumas sumiam da lista e só voltavam ao abrir o pedido vinculado.'],
+        implementado: ['js/05: listener de anotacoesTexto sem orderBy; ordenação feita no app (atualizadoEm, depois criadoEm).'],
+        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados: index.html, js/05 e js/14.'],
+        testar: ['Abra Anotações: as anotações antigas devem aparecer sem precisar abrir o pedido vinculado.', 'Confira que a ordem continua da mais recente para a mais antiga.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.21.2', nome: 'Ajuste do aviso de notas arquivadas (espaçamento)', status: 'concluida',
+        novidades: ['O aviso de notas arquivadas e o indicador de carregamento agora têm o mesmo espaçamento do bloco "Limpar registros" e não grudam no botão de cima.'],
+        implementado: ['js/05: historicoBannerHTML dentro de .acao-legado.'],
+        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados: index.html, js/05 e js/14.'],
+        testar: ['Abra a aba Arquivadas e confira que o aviso tem espaço acima, igual ao bloco "Limpar registros".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.21.1', nome: 'Correção: histórico de NFs parava o Firestore; indicador de carregamento', status: 'concluida',
+        novidades: [
+            'Correção de um erro interno do Firestore que aparecia depois de tocar em "Carregar todas as arquivadas" e deixava de gravar dados. Cada lista do histórico agora é desligada uma só vez.',
+            'Ao carregar as notas arquivadas, aparece um indicador "Carregando as notas arquivadas…" em vez de a tela ficar parada.',
+            'O botão "Carregar todas as arquivadas" ficou alinhado no mesmo padrão dos demais botões da tela.'
+        ],
+        implementado: ['js/05: historicoEscuta com dono único (historicoDesligar chamado uma vez por escuta), historicoAssinar sem desligar a escuta nova, banner com indicador e botão no padrão xml-item-acao.'],
+        arquivos: ['index.html', 'js/05-listeners-dados.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Arquivos alterados: index.html, js/05 e js/14.'],
+        testar: ['Feche o app por completo (pelo seletor de apps) e abra de novo, para descartar o estado com erro.', 'Na aba Arquivadas, veja o aviso dos últimos 2 meses e toque em "Carregar todas as arquivadas": deve aparecer o indicador e depois a lista completa.', 'Grave algo qualquer (ex.: uma anotação) depois de carregar: não deve aparecer "INTERNAL ASSERTION FAILED" no console.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.21.0', nome: 'Histórico de NFs arquivadas: só os últimos 2 meses na abertura', status: 'concluida',
+        novidades: [
+            'As notas arquivadas mais antigas que 2 meses deixam de ser carregadas ao abrir o app. Elas continuam no servidor e voltam quando você toca em "Carregar todas as arquivadas" ou abre um relatório de arquivadas.',
+            'Ao importar um relatório do ERP ou enviar uma NF para a relação, o app busca no servidor as NFs de mesmo número, então uma NF antiga já arquivada não é reimportada.',
+            'Na primeira abertura depois desta versão, o app grava a data de arquivamento nas notas antigas (uma vez só, nas sessões de carga completa). Depois disso a abertura fica mais leve.'
+        ],
+        implementado: ['js/05: histórico em duas faixas (where arquivadoEmIso >= 2 meses), migração única com flag config/historicoMigracao, historicoPrepararNfs, historicoCarregarTudo, banner. js/06, js/08, js/17: arquivamentos gravam arquivadoEmIso. js/03, js/17, js/19: busca sob demanda antes de conferir NF repetida. js/04: filtro arquivada/todas carrega o histórico completo. js/31: artigo novo.'],
+        arquivos: ['index.html', 'js/03-dados-notas.js', 'js/04-relatorios-base.js', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'js/17-historico-controle-nfs.js', 'js/19-erp-reconciliacao.js', 'js/31-ajuda.js'],
+        mudou: ['Arquivos alterados: index.html, js/03, js/04, js/05, js/06, js/08, js/14, js/17, js/19 e js/31.'],
+        testar: ['Abra o app. Se aparecer a faixa "Mostrando as notas arquivadas dos últimos 2 meses", está na carga parcial.', 'Na Controle de NFs, aba Arquivadas: toque em "Carregar todas as arquivadas". A lista deve crescer e o aviso sumir.', 'Importe um relatório do ERP que tenha uma NF antiga já arquivada: ela deve aparecer como já existente, não como nova.', 'Abra um relatório com filtro "arquivada": as notas antigas devem aparecer.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.9', nome: 'Avisos de ocorrências e pedidos parados no iPhone + diagnóstico das notificações', status: 'concluida',
+        novidades: [
+            'Ocorrências em aberto sem relato e pedidos parados sem entrega agora também chegam como notificação no iPhone, uma vez por dia, a partir das 08:00. O app anota os números no Firebase depois de carregar os dados; o Worker lê essa anotação. Os números refletem a última vez que o app foi aberto.',
+            'Novo botão "Diagnóstico" no cartão de notificações da Agenda: mostra passo a passo o que funciona (ícone da Tela de Início, permissão, sw.js, inscrição, cadastro no Firebase, Worker, última rodada) e onde parou.'
+        ],
+        implementado: ['js/41: publicarResumoAvisos (config/avisosResumo, ~45 s após abrir, só se mudou ou passaram 6 h) e pushDiagnostico/pushDiagHTML. Worker: passo 2b do resumo diário e gravação de config/pushStatus a cada rodada. js/40 e js/31: textos sem "em breve".'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/31-ajuda.js', 'js/40-agenda-trabalho.js', 'js/41-notificacoes-push.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/14, js/31, js/40, js/41, js/43 e worker.js (colar de novo no Cloudflare e implantar).'],
+        testar: ['Cole o novo worker.js no Cloudflare (Editar código → Implantar).', 'Na Agenda, toque em Diagnóstico: cada linha deve vir com ✓; o Worker deve aparecer como "versão 2.20.9".', 'Depois de uma rodada do Worker (até 15 min), o Diagnóstico mostra "Última rodada há N min".', 'Mantenha ocorrências e pedidos parados marcados; no dia seguinte, depois das 08:00, deve chegar a notificação "Pendências na auditoria".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.8', nome: 'Aviso quando falta subir algum arquivo da atualização', status: 'concluida',
+        novidades: [
+            'O app agora confere se todos os arquivos da última atualização chegaram. Cada atualização do Histórico lista os arquivos que mudaram; cada arquivo carrega com a própria versão. Se algum ficou antigo, ou nem carregou, aparece um aviso no topo: "Atualização incompleta", com o nome do arquivo, a versão que ele tem e a que precisa.',
+            'Vale para as atualizações a partir desta (2.20.8). O aviso só aparece se o index.html e o js/43 desta versão estiverem no lugar.',
+            'Os testes mostraram que, pelo ícone da Tela de Início, abrir o app três vezes seguidas custou zero leituras do servidor: a cópia local funciona no uso real.'
+        ],
+        implementado: ['js/43-verificar-arquivos.js (novo); campo "arquivos" nas entradas do histórico; carimbo ARQ_V no fim de cada js alterado; meta app-versao no index.html e --css-versao no style.css; estilo #aviso-arquivos.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js', 'js/43-verificar-arquivos.js'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/14 e js/43 (novo).'],
+        testar: ['Depois de subir os 4 arquivos e recarregar, nenhum aviso deve aparecer.', 'Teste o aviso: suba tudo menos o style.css (ou deixe o js/14 antigo) e recarregue; deve aparecer "Atualização incompleta" citando o arquivo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.7', nome: 'Uso do Firebase separa servidor e cópia local', status: 'concluida',
+        novidades: ['Os prints mostraram a cópia local "ativa" nos dois visualizadores, mas várias aberturas ainda gastando cerca de 1.900 leituras. Para descobrir se os dados vêm do servidor (cobrados) ou da cópia no aparelho (grátis), a tela Uso do Firebase agora mostra os dois totais, as consultas únicas (get) e, em cada abertura, as leituras cobradas e as vindas da cópia.'],
+        implementado: ['js/00: separa snapshots do servidor e do cache (metadata.fromCache) e conta get() à parte.'],
+        mudou: ['Arquivos alterados: js/00 e js/14.'],
+        testar: ['Abra o app, vá em Mais → Uso do Firebase, feche e abra de novo duas ou três vezes e me mande o print do cartão do dia e de "Aberturas do app hoje".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.6', nome: 'Uso do Firebase mostra se a cópia local está ativa', status: 'concluida',
+        novidades: ['Em Mais → Uso do Firebase, o cartão do dia agora diz se a cópia dos dados está ativa neste aparelho. Os prints mostraram que no visualizador "localhost" do editor cada abertura gastava de 1.900 a 2.500 leituras, enquanto no visualizador próprio a segunda abertura gastou zero.'],
+        implementado: ['window.cacheLocalFirestore em js/01 (ativo ou indisponível com o código do erro) exibido em js/00.'],
+        mudou: ['Arquivos alterados: js/00, js/01 e js/14.'],
+        testar: ['Abra Mais → Uso do Firebase no visualizador localhost e no visualizador próprio e veja o que aparece em "Cópia dos dados neste aparelho". Se aparecer "indisponível", mande o texto entre parênteses.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.5', nome: 'Contador de leituras do Firebase', status: 'concluida',
+        novidades: [
+            'Nova tela Mais → Uso do Firebase: mostra quantas leituras do Firebase este aparelho gastou hoje, por coleção, por tela e por abertura do app, com a barra em relação ao limite grátis de 50 mil por dia.',
+            'Serve para descobrir de onde vieram as 69 mil leituras de ontem. Use o app normalmente por um dia, nos aparelhos que costuma usar, e me diga o que aparece.'
+        ],
+        implementado: ['js/00-uso-firebase.js (novo): intercepta onSnapshot/get do Firestore e soma só o que veio do servidor; guarda em localStorage (usoFbV1), sem gravar nada no Firebase. Tela screen-uso-firebase.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/14, js/29, js/31; novo: js/00-uso-firebase.js.'],
+        testar: ['Abra o app, use por alguns minutos e vá em Mais → Uso do Firebase: os números devem subir conforme você troca de tela.', 'Feche e abra o app: deve aparecer uma nova linha em "Aberturas do app hoje".', 'Compare o total do dia com Firestore → Uso no console do Firebase (a soma dos seus aparelhos deve ficar próxima).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.4', nome: 'Menos leituras no Firebase: cópia dos dados no aparelho', status: 'concluida',
+        novidades: [
+            'Hoje o Firebase registrou 69 mil leituras (o plano gratuito vai até 50 mil por dia, zerando às 06:00 de Brasília). O app não guardava cópia dos dados no aparelho: cada vez que o iPhone fechava e abria o app, lia tudo de novo.',
+            'Agora o app guarda uma cópia local. Reabrindo em até cerca de 30 minutos, só é cobrado o que mudou. Passando disso, o Firebase relê tudo, então a economia é grande para aberturas seguidas, mas não elimina o gasto.',
+            'O cadastro de fornecedores continua com a cópia de 12 horas da versão 2.19.4.'
+        ],
+        implementado: ['firestore.enablePersistence({ synchronizeTabs: true }) em js/01, com falha silenciosa quando o navegador não permite.'],
+        mudou: ['Arquivos alterados: js/01 e js/14.'],
+        testar: ['Use o app normalmente e confira, no console do Firebase (Firestore → Uso), se as leituras do dia sobem bem mais devagar que hoje.', 'Mude algo em um aparelho e veja se aparece no outro (continua em tempo real).', 'Em modo anônimo do navegador o app deve abrir igual, só sem a economia.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.20.3', nome: 'Endereço do serviço de avisos corrigido', status: 'concluida',
+        novidades: ['O botão "Enviar teste" das notificações apontava para o endereço errado do Worker e falhava com "Não consegui falar com o serviço de avisos". Agora usa o endereço da sua conta.'],
+        implementado: ['PUSH_URL em js/41 corrigida para avisos-auditoria.leandromendoncadesign.workers.dev.'],
+        mudou: ['Arquivos alterados: js/14 e js/41.'],
+        testar: ['Agenda de trabalho → Enviar teste: a notificação deve chegar em alguns segundos.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.20.2', nome: 'Acabamento da Agenda de trabalho', status: 'concluida',
+        novidades: [
+            'Agenda de trabalho: cartões com o mesmo padrão das outras telas (espaçamento, bordas), títulos e textos empilhados em vez de lado a lado, e caixas de seleção alinhadas com o texto na escolha de avisos.'
+        ],
+        implementado: ['Cartões da Agenda passam a usar .ctl-card; regras #agenda-conteudo em style.css para textos em bloco, formulário e caixas de seleção.'],
+        mudou: ['Arquivos alterados: style.css, js/14, js/40 e js/41.'],
+        testar: ['Mais → Agenda de trabalho → Mudar (avisos): caixas alinhadas à esquerda, texto ao lado. Abra + Reunião e confira espaçamentos e botões.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.20.1', nome: 'Notificações no iPhone (etapa 2)', status: 'concluida',
+        novidades: [
+            'Na Agenda de trabalho há o cartão "Notificações neste aparelho": Ativar, Enviar teste e Desativar. As notificações chegam mesmo com o app fechado (no iPhone, o app precisa estar na Tela de Início).',
+            'Um Worker na Cloudflare confere a agenda a cada 15 minutos e avisa na véspera e no dia, na hora que você escolheu em cada lembrete (sem hora: 08:00), e no último dia da janela das entregas. Também avisa, uma vez por dia às 08:00, as NFs da relação que vencem hoje ou amanhã.',
+            'Tocar na notificação abre o app na Agenda. A escolha de avisos da etapa 1 é respeitada; ocorrências em aberto e pedidos parados ainda não são enviados ao iPhone.'
+        ],
+        implementado: ['sw.js (service worker), js/41-notificacoes-push.js, avisos/worker-avisos.js (Worker com cron, envio Web Push com VAPID e leitura do Firestore por conta de serviço), passo a passo em avisos/COMO-INSTALAR-OS-AVISOS.md. Aparelhos ficam em config/push_<uid>, sem coleção nova.'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/31, js/40; novos: sw.js, js/41-notificacoes-push.js e a pasta avisos.'],
+        testar: ['Depois de instalar o Worker (passo a passo): no iPhone, abra o app pelo ícone da Tela de Início, Agenda → Ativar notificações → Enviar teste.', 'Crie um lembrete para daqui a uns 20 minutos, com a hora certa e "Avisar no dia", e feche o app: a notificação deve chegar.', 'Toque na notificação: o app abre na Agenda.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.20.0', nome: 'Agenda de trabalho e escolha de avisos (etapa 1)', status: 'concluida',
+        novidades: [
+            'Nova tela Mais → Agenda de trabalho: entregas, reuniões e lembretes num lugar só, como num app de agenda. Cada lembrete tem data (ou janela "de/até"), hora opcional escolhida por você, repetição (semanal, a cada 4 semanas, mensal, anual) e avisos na véspera e no dia.',
+            'Entregas de reagentes: o botão "Carregar calendário" cadastra de uma vez o calendário 2026 (Expansão em janelas, Centervida em dias fixos). Ao chegar, "Marcar como entregue" pede o dia em que realmente chegou; se a janela passar sem marcar, aparece como atrasada.',
+            'A Central de notificações passa a mostrar o que está na agenda hoje, amanhã e as entregas atrasadas.',
+            'O app pergunta quais avisos você quer receber (entregas, reuniões, lembretes, NFs vencendo, ocorrências em aberto, pedidos parados). A escolha fica na sua conta e será usada nas notificações do iPhone (etapa 2).'
+        ],
+        implementado: ['js/40-agenda-trabalho.js (novo), tela screen-agenda, documento config/agendaTrabalho (sem coleção nova, não precisa mudar as regras do Firestore), avisos em config/prefs_<uid>.avisos.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/05, js/14, js/24, js/29, js/31, js/34 e js/40 (novo).'],
+        testar: ['Mais → Agenda de trabalho: responda a pergunta de avisos, toque em "Carregar calendário" e confira se a próxima Centervida (06/11) e a janela da Expansão (13/11 a 20/11) aparecem.', 'Crie uma reunião com hora, edite, marque como concluída e exclua.', 'Abra a Agenda em outro aparelho e veja se os lembretes aparecem. As notificações no iPhone vêm na etapa 2.'],
+        testarLinks: [{ rotulo: 'Abrir a Agenda de trabalho', acao: 'agenda' }]
+    },
+    {
+        numero: '2.19.5', nome: 'Aviso quando o Firebase nega acesso ou atinge o limite', status: 'concluida',
+        novidades: [
+            'Com as regras novas do Firestore, uma conta não aprovada (ou uma regra errada) fazia o app ficar vazio sem explicar nada: o erro só ia para o console do navegador. Agora aparece um aviso no topo, com botão Fechar: "O Firebase negou o acesso aos dados" (peça ao administrador para aprovar em Aprovações de Acesso, ou ajuste as regras).',
+            'O mesmo aviso cobre o limite diário do plano gratuito ("Limite diário do Firebase atingido": volta amanhã) e a sessão expirada. Aparece no máximo uma vez por minuto para cada tipo, e também quando uma gravação é recusada.'
+        ],
+        implementado: ['erroFirebase(msg, error) e TEXTOS_ERRO_FIREBASE em js/05, usados por todos os listeners do Firestore e por um ouvinte de unhandledrejection; estilo #aviso-firebase em style.css.'],
+        mudou: ['Arquivos alterados: style.css, js/05, js/14 e js/31.'],
+        testar: ['Em condições normais nada muda. Para ver o aviso: entre com uma conta Google ou telefone ainda não aprovada (o app já a bloqueia antes), ou peça para eu simular. Se aparecer em uso normal, é sinal de regra do Firestore a ajustar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.4', nome: 'Cadastro de fornecedores guardado no aparelho', status: 'concluida',
+        novidades: [
+            'Firebase gratuito: o cadastro de fornecedores (cerca de 1.170 documentos, que quase não muda) ficava sendo lido inteiro a cada abertura. Agora uma cópia fica guardada neste aparelho por até 12 horas e o app só lê o Firebase de novo quando a cópia vence ou quando você abre uma tela que altera o cadastro (Fornecedores, Importar, Entrada e Editor de NF). Nessas telas ele volta a ser "ao vivo". Somado à 2.19.3, uma abertura comum caiu de cerca de 6.200 para cerca de 2.300 leituras.',
+            'Como o cadastro vem da cópia, os nomes e apelidos dos fornecedores também aparecem mais cedo na abertura.'
+        ],
+        implementado: ['FORN_CACHE_CHAVE, lerCacheFornecedores e salvarCacheFornecedores (js/05); fornecedoresSpData saiu de DADOS_ESSENCIAIS e entrou em DADOS_POR_TELA de screen-fornecedores, screen-import, screen-xml-editor e screen-nf-editor. A cópia é por usuário e se atualiza sempre que o Firebase responde.'],
+        mudou: ['Arquivos alterados: js/05, js/14 e js/31.'],
+        testar: ['Edite um apelido em Fornecedores, volte a outra tela e confira que o novo nome aparece; feche e abra o app e confira de novo.', 'Dê entrada num XML de um fornecedor novo: ele deve aparecer no cadastro.', 'Se alterar o cadastro em outro aparelho, abra Fornecedores neste para atualizar na hora (ou espere até 12 h).', 'No Firebase Console (Firestore → Uso), compare as leituras por dia.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.3', nome: 'Menos leituras do Firebase e conversa do Assistente guardada', status: 'concluida',
+        novidades: [
+            'Firebase gratuito (limite de 50 mil leituras por dia): o app lia cerca de 6.200 documentos a cada abertura. Os produtos do SP Data (cerca de 2.700 documentos, quase metade) deixaram de subir sozinhos em segundo plano: agora sobem só quando você abre uma tela que os usa (Central do pedido, Cotações, Entrada/Editor de NF, SP Data, Nova Auditoria, Auditoria Retroativa e Backup). Uma abertura comum do app caiu para cerca de 3.500 leituras, então cabem quase o dobro de aberturas por dia.',
+            'Assistente: a conversa fica guardada neste aparelho (não usa o Firebase) e volta quando você abre o Assistente de novo, mesmo depois de fechar o app. Guarda as últimas 40 mensagens. "Nova conversa" apaga. A IA continua recebendo só as últimas 3 perguntas.'
+        ],
+        implementado: ['produtosSpData fora de DADOS_SEGUNDO_PLANO e em DADOS_POR_TELA["screen-auditoria-retro"]; o listener refaz a Central do pedido e a associação do XML quando os produtos chegam (js/05). iaSalvarHistorico, iaRestaurarHistorico e IA_HIST_CHAVE (js/37).'],
+        mudou: ['Arquivos alterados: js/05, js/14, js/31 e js/37.'],
+        testar: ['Abra o app e vá direto à Central de um pedido: o nome SP Data dos produtos deve aparecer (pode levar um instante a mais na primeira vez).', 'Abra Cotações, uma NF no Editor da NF e a Nova Auditoria: a lista de produtos do SP Data deve estar completa.', 'Faça uma pergunta ao Assistente, feche e abra o app, abra o Assistente: a conversa deve estar lá. "Nova conversa" deve limpar.', 'No Firebase Console (Firestore → Uso), compare as leituras por dia nos próximos dias.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.2', nome: 'Menos engasgos, cotações por fornecedor e cartão do Gerenciar', status: 'concluida',
+        novidades: [
+            'Cotações por fornecedor: cada fornecedor ganhador, na Central do pedido, mostra logo abaixo do CNPJ se todos os itens dele tiveram 3+ cotações ("✓ Todos os 19 itens têm 3+ cotações") ou quantos ficaram abaixo ("⚠ 2 de 3 itens com menos de 3 cotações · Recurso Próprio"). Aberto o cartão, a lista traz os itens abaixo do mínimo e quantos cotaram cada um. O mínimo é o de Configurações → Análise de cotações (3 se vazio).',
+            'Assistente: nova consulta "cotações por fornecedor". Pergunte, por exemplo, "do pedido 1744, algum item do fornecedor X ficou abaixo de 3 cotações?" (vale na IA e no modo básico).',
+            'Engasgos: a troca de abas, a volta das Cotações e a dock ficaram bem mais rápidas. A checagem de fornecedor que entrou na 2.19.1 e várias contas repetidas (nome de fornecedor, grupo do fornecedor, palavras do produto, comparação do pedido) agora são feitas uma vez só por tela. Nos seus dados, abrir Cotações caiu de cerca de 3 s para menos de 0,3 s no teste.',
+            'Dock e cabeçalho: deixaram de medir a tela inteira a cada mudança em qualquer cartão (era isso que travava a dock e o "voltar" depois de expandir). Só medem quando a tela ativa muda.',
+            'Gerenciar NF: o cartão era desenhado antes de as NFs processadas chegarem e não era redesenhado; por isso "Pedido" ficava em branco e todas diziam "Ainda não passou pela Entrada Segura". Agora ele se atualiza quando os dados chegam. O número do pedido leva direto ao pedido, já aberto no fornecedor da nota.',
+            'Gerenciar NF: tirei o selo "Na relação" (a tela inteira já é a relação; só "Em espera" aparece) e a NF sem XML virou a linha discreta "sem XML processado", sem botão.',
+            'Espaçamentos: Auditoria (cartões e filtros em linhas que quebram, busca com texto mais curto) e Entrada de NF (botões "Ver outros itens desse fornecedor" e "Mostrar itens de outros fornecedores" não ficam mais colados).'
+        ],
+        implementado: ['comMemoComparacao/compararFontesPedido (js/11) e envoltório das telas em js/39; índices e memória em nomeExibicaoFornecedor/docsDaMesmaEntidadeSpData (js/14), cnpjsDaMesmaEntidadeFornecedor (js/10) e tokensNomeProduto (js/11); resumoCotacoesDoFornecedor e htmlResumoCotacoesFornecedor (js/12) usados em js/09; cotacoes_por_fornecedor em js/37; atualizarGerenciarComDados e DADOS_POR_TELA["screen-manage"] em js/05; observador de tela ativa em js/22.'],
+        mudou: ['Arquivos alterados: style.css, js/05, js/09, js/10, js/11, js/12, js/14, js/22, js/31, js/37 e js/39.'],
+        testar: ['Abra Cotações, Mais e as abas da dock em sequência: a troca deve ser imediata e a dock não deve crescer sem rótulos nem exigir vários toques.', 'Em Cotações, expanda alguns pedidos e volte: sem travar.', 'Pedido 1744: cada fornecedor mostra a faixa de cotações (RIOCLARENSE: todos os 19 itens com 3+). Procure um fornecedor com itens abaixo (ex.: FARMATER) e abra o cartão para ver a lista.', 'Gerenciar NF: o número do pedido aparece em todas as NFs com pedido, e tocar nele abre a Central do pedido no cartão daquele fornecedor; sem selo "Na relação"; NF sem XML mostra só o texto discreto.', 'Assistente: pergunte "Do pedido 1744 qual fornecedor não alcançou 3 cotações?".', 'Entrada de NF, item sem associação: confira o espaço entre os dois botões de baixo do seletor. Auditoria: confira o espaço entre os cartões e se os filtros quebram em linhas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.1', nome: 'Não chegou, relato manual e ajustes da Auditoria', status: 'concluida',
+        novidades: [
+            '"Não chegou": item da cotação que ainda não veio em NF deixa de ser contado como divergência. Ganhou selo próprio (azul), contagem à parte, filtro "Não chegou" na Auditoria e aviso discreto ("Quando der") na Central de notificações. Continua detectável e relatável igual a uma divergência. No cartão do fornecedor aparece "20 de 37 itens chegaram" e o tile Itens mostra 20/37.',
+            'Relatar de verdade: no formulário "Alterar status" da divergência, escolher "Pendência relatada" agora é o ato de relatar (antes o histórico registrava "Reaberta — Por WhatsApp"). Auditoria nova aparece como "Gerada, ainda não relatada" até você marcar. O histórico ganhou os rótulos "Relatada" e "Gerada".',
+            'Dipirona e outras: uma auditoria sem CNPJ (nome do fornecedor digitado diferente da cotação) estava sendo ligada a item de OUTRO fornecedor só porque o nome do produto era parecido, e o item aparecia como "Pendência relatada" sem auditoria sua. Agora, sem CNPJ, o fornecedor da auditoria precisa combinar com o do item.',
+            'Exportar divergências do pedido: botão "Exportar divergências do pedido" na Central do pedido (e na Auditoria, ao buscar o número do pedido) gera um texto só com as divergências em aberto de todos os fornecedores, agrupado por fornecedor e NF, e compartilha/copia. Depois pergunta se marca todas como relatadas.',
+            'Gerenciar NF: botão "Editar NF" no cartão da nota, que abre o Editor da NF (trocar o pedido, itens) sem sair pelo Controle.',
+            'NF sem XML: deixou de aparecer como pendência vermelha no Controle de NFs; agora é uma linha discreta "só no ERP · sem XML processado" (com atalho para abrir).',
+            'Removida a lista "Itens lançados" da Central do pedido, que repetia o que cada item já mostra com "Confere".'
+        ],
+        implementado: ['soNaoChegou em compararFontesPedido e seloEstadoOcorrencia(estado, qtd, soNaoChegou) (js/11); filtro e lote por grupo em js/39; relatado/gerada em confirmarAlteracaoStatusCentral (js/09); filtro de fornecedor em divergenciasAuditoriaDoItem; textoDivergenciasPedido/exportarDivergenciasPedido (js/39); idEditorNfDaNota (js/11) usado em js/05; info:true em pendenciasDetalhadasControle (js/17).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/05, js/09, js/11, js/14, js/17, js/20, js/31, js/34 e js/39.'],
+        testar: ['Pedido 1744: o cartão da Supermed deve mostrar "N de M itens chegaram" e os itens faltantes com selo azul "Não chegou", fora da contagem de divergências.', 'Dipirona (DIPHA, cód. 221): não deve mais aparecer como "Pendência relatada".', 'Lidocaína: em "Alterar status", escolher "Pendência relatada" e conferir que o histórico mostra "Relatada", não "Reaberta".', 'Central do pedido → "Exportar divergências do pedido": compartilhar e responder à pergunta de marcar como relatadas.', 'Gerenciar NF: tocar em "Editar NF" no cartão de uma nota.', 'Controle de NFs: NF só do ERP deve mostrar a linha discreta, sem o selo vermelho de pendência.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.19.0', nome: 'Central de auditoria', status: 'concluida',
+        novidades: [
+            'Nova tela Auditoria (Mais → Auditoria, e no menu lateral): uma lista única de ocorrências, uma por item, de todos os pedidos, com os filtros Em aberto, Relatadas, Resolvidas e Excluídas. Os mesmos dados continuam aparecendo na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios; é aqui que você mexe.',
+            'Salvar não é relatar: gerar o texto da auditoria e salvar a NF só criam a ocorrência em aberto (amarela). Ela só vira "relatada" quando você toca em "Marcar como relatada" (e dá para voltar com "Voltar para em aberto"). Auditorias antigas continuam valendo como relatadas, sem reescrever nada.',
+            'Editar e excluir: cada ocorrência pode ser excluída (falso positivo) e restaurada depois no filtro Excluídas; sai das listas e dos avisos. Também dá para informar à mão o fator de unidade.',
+            'Unidade/embalagem: quando quantidade e valor mudam em proporção inversa e o total fecha (como o campo operatório c/50 cotado por unidade e faturado em pacote, ou a fita de glicemia no ERP), o app mostra UMA ocorrência "só a unidade é diferente" e sugere o fator, em vez de duas divergências. "Aplicar fator" resolve, e vale para as próximas NFs do produto; "Desfazer fator" volta.',
+            'Relatar em lote: com várias ocorrências em aberto do mesmo fornecedor e pedido, um botão relata todas de uma vez.',
+            'Entrada de NF mais enxuta: o card "NF-e carregada", que repetia fornecedor, NF e valor do resumo fixo do topo, só aparece quando há informações adicionais. O resultado mostra o total da NF contra o total cotado só dos itens que vieram (diferença de preço, com a unidade já convertida), as ocorrências em aberto com ação direta (aplicar fator, gerar auditoria) e o atalho "Revisar na Auditoria".',
+            'Botões de sugestão de associação na Entrada de NF: agora quebram de linha com espaço entre si, em vez de ficarem colados.'
+        ],
+        implementado: ['js/39-central-auditoria.js (tela); estadoOcorrenciaItem com relatado manual e unidade aplicada; compararFontesPedido com fatorUnidadePorItem, relatadosPorItem, descartadosPorItem e a ocorrência unidade_diferente; totalNfContraCotacao e htmlTotalNfContraCotacao (js/11); relatado:false nas auditorias novas (js/16), lido em js/04 e js/34; style.css (.aud-*, .nf-total-card, .xml-item-acao).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/04, js/10, js/11, js/14, js/16, js/17, js/29, js/31, js/34 e o novo js/39-central-auditoria.js.'],
+        testar: ['Mais → Auditoria: ver as ocorrências em aberto, tocar em "Abrir" na fita de glicemia e em "Aplicar fator 50": a ocorrência deve passar para Resolvidas. "Desfazer fator" volta.', 'Campo operatório c/50 (NF 922344): deve aparecer uma ocorrência só, de unidade, em vez de quantidade e valor separados.', 'Marcar uma ocorrência como relatada, ver a contagem da Central de notificações cair; "Voltar para em aberto" devolve.', 'Excluir uma ocorrência e restaurá-la no filtro Excluídas.', 'Salvar uma NF com divergência: as ocorrências devem ficar em aberto (amarelo), não relatadas.', 'Entrada de NF: conferir o total da NF × cotação e o espaçamento dos botões "Usar:" de sugestão.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.18.2', nome: 'Padronização visual (CSS)', status: 'concluida',
+        novidades: [
+            'Raios dos cantos: os valores soltos (8, 10, 12, 14, 16, 18, 20, 99, 980 e 999 px) passaram a usar a escala do app: pequeno, médio, grande e pílula. Cartões, campos e botões de todas as telas, inclusive as novas (cartão de item, cartão de divergência, tratamento do item da NF), ficam com o mesmo arredondamento.',
+            'Tamanhos de letra: os meios-tamanhos (9,5, 10,5, 11,5, 12,5 e 13,5 px) foram encaixados na escala (mínimo, auxiliar, corpo, campo) e ganharam degraus nomeados para 11, 14, 18 e 20 px. Mudança visual mínima, mas agora o texto segue uma régua só.',
+            'Cores de status: texto verde, amarelo e vermelho passaram a usar as cores próprias de texto do tema (mais legíveis, inclusive no tema escuro). Foram eliminados vermelhos, laranjas e brancos soltos; o branco sobre fundo preenchido virou a cor "sobre sólido".',
+            'Selos: todos os selos arredondados (estado da ocorrência, status do Controle de NFs, retroativa) têm o mesmo formato de pílula e as mesmas cores de estado; peso 800 foi unificado em 700.',
+            'Nenhuma função nem regra mudou: só o style.css.'
+        ],
+        implementado: ['style.css: novos tokens --fs-xs, --fs-md, --fs-lg, --fs-xl e --on-solid; substituição dos valores soltos por var(--r-*), var(--fs-*) e cores semânticas; remoção de regras de selo duplicadas e sobrescritas.'],
+        mudou: ['Arquivos alterados: style.css e js/14.'],
+        testar: ['Passar pelas telas principais (Cotações, Entrada de NF, Central do pedido, Controle de NFs, Ajustes) nos temas claro e escuro e ver se algum cartão, botão ou selo ficou com canto, letra ou cor estranha.', 'Conferir se os selos de estado (em aberto, relatada, resolvida) continuam legíveis no tema escuro.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.18.1', nome: 'Varredura de erros de lógica', status: 'concluida',
+        novidades: [
+            'Data errada à noite: várias telas pegavam a data do relógio em UTC, que no Brasil vira o dia seguinte depois das 21h. Afetava a data padrão da Nova Auditoria, o histórico de mudança de status da divergência, a data do pedido ao cadastrar cotação, a data do histórico da auditoria ao salvar, o limite "vencida" de Cotações e os nomes dos arquivos de backup e diagnóstico. Tudo passou a usar a data local.',
+            'CNPJ com e sem máscara: as cotações e parte do ERP guardam o CNPJ com pontos e traço, enquanto o SP Data e as NFs guardam só os 14 números. Em 5 lugares do Controle de NFs e do Editor a busca do fornecedor comparava os dois sem normalizar e não achava o cadastro (aparecia o nome cru do ERP no lugar do apelido, e "Enviar para a relação" pedia dados que o app já tinha). Agora a busca ignora a máscara.',
+            'Editor da NF: a lista "Divergências desta NF" mostrava tudo em amarelo e dizia "nenhuma divergência" mesmo com pendência relatada. Agora cada item mostra o seu estado (em aberto, relatada ou resolvida), igual às outras telas.',
+            'Ajustes (modelos de texto da auditoria): o campo registrava um novo "salvar ao sair" a cada vez que a tela abria; agora registra uma vez só.',
+            'Nada mais encontrado na varredura: nenhuma função chamada que não exista, nenhum botão apontando para função inexistente, nenhum elemento duplicado, nenhum "NaN" ou "undefined" nos textos das telas e nenhuma contagem de entrega que não feche, em todos os pedidos e NFs dos dados de teste.'
+        ],
+        implementado: ['docFornecedorSpDataPorCnpj (js/10), mapa por CNPJ normalizado e refeito só quando o SP Data muda; dataLocalISO no lugar de toISOString().slice(0,10).'],
+        mudou: ['Arquivos alterados: js/07, js/09, js/10, js/11, js/12, js/13, js/14, js/15, js/16, js/17 e js/20.'],
+        testar: ['Depois das 21h: abrir Nova Auditoria e ver se a data padrão é a de hoje (não a de amanhã).', 'Controle de NFs: NF que só existe no ERP deve mostrar o apelido do fornecedor, não o nome cru do relatório.', 'Editor de uma NF com pendência relatada: a lista de divergências deve mostrar o selo "Pendência relatada" e não o texto de "nenhuma divergência".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.18.0', nome: 'Produto trocado, divergência legível e busca da web', status: 'concluida',
+        novidades: [
+            'Web: o campo de pesquisa de Cotações (e o espaço de cima das demais telas) tinha ficado sob o cabeçalho depois da 2.16.2; corrigido.',
+            'Divergências (Outras divergências do fornecedor e Outras ocorrências): cada uma é um cartão só, com o tipo, fornecedor, NF e pedido, o texto, a linha do tempo (data e o que foi registrado) e "Alterar status" dentro da mesma moldura. "Pendente" passou a se chamar "Pendência relatada" e o histórico diz "Relatada na auditoria".',
+            'Nova Auditoria: "Produto Pedido" lista os itens da cotação do pedido (os do fornecedor primeiro; os de outros fornecedores com o nome dele), mesmo que o item já esteja associado a uma NF. O campo abre mostrando a lista inteira, sem ficar filtrado pelo texto já preenchido.',
+            'Nova Auditoria: "Produto Faturado" abre o cadastro inteiro do SP Data, sem filtro e sem sugestão, para o produto que veio no lugar (que pode nunca ter sido cotado).',
+            'Entrada de NF: cada item ganhou "Remover associação" (tira a associação errada do fornecedor), "Veio produto trocado" e "Aceito como outro produto".',
+            '"Veio produto trocado": o item da NF não é associado a código nenhum; a conferência registra a ocorrência "Solicitamos X, porém foi faturado Y" (já pronta para gerar auditoria) e o item pedido não vira "não faturado". O SP Data é o do produto que de fato veio.',
+            '"Aceito como outro produto" (ex.: dipirona 10 mL aceita no lugar da de 20 mL): vale como o item pedido só para esta NF e cotação, sem divergência de produto e sem gravar a associação, para não conflitar se a de 20 mL vier depois.'
+        ],
+        implementado: ['associacaoEfetivaXml, tratamentoXml (js/10); tratamento/substituiCodigo no item da NF salva e ocorrência "produto_trocado" em compararFontesPedido (js/11); renderBlocoDivergencia em cartão (js/09); listas livres da auditoria (js/12, js/13).'],
+        mudou: ['Arquivos alterados: style.css, js/09, js/10, js/11, js/12, js/13, js/14, js/31, js/33 e js/36.'],
+        testar: ['Web: abrir Cotações e ver o campo de pesquisa.', 'Pedido com divergências: ver os cartões (tipo, NF, pedido, linha do tempo) em "Outras divergências deste fornecedor" e em "Outras ocorrências".', 'Nova Auditoria, tipo "Produto diferente do pedido": Produto Pedido mostra os itens da cotação; Produto Faturado mostra o SP Data inteiro.', 'Pedido 1744, NF 123470 (protetor ocular): na Entrada de NF, "Remover associação" e depois "Veio produto trocado" apontando para o PROTETOR OCULAR P; salvar e conferir a ocorrência "Solicitamos … porém foi faturado …".', 'NF 78771 (dipirona 10 mL): "Aceito como outro produto" apontando para a de 20 mL; conferir que não aparece divergência e que a associação do fornecedor não mudou.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.17.1', nome: 'Card do item mais claro (cotação e recurso)', status: 'concluida',
+        novidades: [
+            'O card do item na Central do pedido foi reorganizado em blocos: Produto (nome, código, marca, embalagem), Quantidade e valores (em três campos) e Cotação e recurso.',
+            'O recurso agora vem da cotação: com fornecedores suficientes aparece "Recurso: C/C … · Pela cotação" (fica gravado quando a NF for salva) e, depois da NF, "✓ Confirmado na NF". Acabou a mensagem "ainda não confirmado" ao lado de "7 fornecedores cotaram".',
+            'Quando poucos fornecedores cotaram, o card diz quantos foram e que o recurso deve ser escolhido na entrada da NF.',
+            'Nenhuma informação saiu: vencedor, participantes (agora recolhidos em "Ver os N participantes"), descrição original e SP Data continuam no card.'
+        ],
+        implementado: ['renderLinhaProduto (js/09) com blocos "cdet" e estilos no fim do style.css; usa recursoEsperadoPelaCotacao (js/12), só leitura.'],
+        mudou: ['Arquivos alterados: js/09, js/14, js/31 e style.css.'],
+        testar: ['Abrir o pedido 1744, expandir "PROTETOR OCULAR M" e ver o recurso previsto pela cotação em vez de "ainda não confirmado".', 'Abrir um item de pedido já com NF salva e ver "✓ Confirmado na NF".', 'Item cotado por menos de 3 fornecedores: ver o aviso para escolher o recurso na NF.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.17.0', nome: 'Ocorrências sem relato, auditoria em bloco único e cotações da NF', status: 'concluida',
+        novidades: [
+            'Central de notificações: toda ocorrência detectada e ainda sem relato aparece no grupo "Importante" ("Ocorrências detectadas sem relato"), por pedido, levando direto ao pedido.',
+            'Central do pedido: quando um fornecedor tem mais de uma ocorrência sem relato, o botão "Gerar uma auditoria com as N ocorrências" junta todas num rascunho só (cada tipo vira um cartão, com os produtos dentro).',
+            'Anotação da auditoria: se o mesmo fornecedor e a mesma NF já estão na anotação do pedido, as novas ocorrências entram sem repetir o cabeçalho (fornecedor — NF — pedido) e sem a linha separadora. Outro fornecedor ou outra NF continua com cabeçalho próprio.',
+            'Editor da NF: mesmo depois de enviada ao Controle, a NF aceita mais de uma cotação. O cartão "Cotações desta NF" mostra o principal e os complementares, com "Adicionar outra cotação a esta NF" e "Remover".',
+            'Entrada de NF: na lista de itens da cotação, saem os itens que outro item da NF já associou e ficam só os do fornecedor; "Ver outros itens desse fornecedor" mostra todos de novo (mesmo produto em dois códigos, marcas ou validades).',
+            'Sugestão "Parecidos pelo nome" mais tolerante: não depende da ordem das palavras e vale também quando o nome da cotação é mais curto que o do XML.'
+        ],
+        implementado: ['Grupo "ocorrencias-sem-relato" em itensDeAtencao (js/34); registrarTodasDivergenciasDoFornecedor (js/11); pedidosDaNf/adicionarPedidoNaNf/removerPedidoDaNf (js/20); alternarJaAssociadosXml (js/10); parecencaNomes (js/21).'],
+        mudou: ['Arquivos alterados: js/10, js/11, js/14, js/16, js/20, js/21, js/31 e js/34.'],
+        testar: ['Central de notificações: conferir o grupo "Ocorrências detectadas sem relato" em Importante e se ele abre o pedido certo.', 'Pedido com duas ou mais faltas do mesmo fornecedor sem relato: usar "Gerar uma auditoria com as N ocorrências" e salvar; depois gerar outra para o mesmo fornecedor/NF e ver na anotação que o cabeçalho não se repete.', 'Editor da NF de uma NF já no Controle: adicionar uma segunda cotação, ver os itens dela na associação e remover.', 'Entrada de NF: associar um item e ver que ele some da lista dos demais; "Ver outros itens desse fornecedor" traz de volta.', 'Itens cujo nome vem em outra ordem no XML: ver se agora aparecem em "Parecidos pelo nome".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.16.2', nome: 'Acertos de abertura, associação, recurso e visual da web', status: 'concluida',
+        novidades: [
+            'A tela deixa de ficar travada depois do carregamento: a lista de fornecedores era montada item por item e agora é montada de uma vez.',
+            'Pedido com quantidade convertida (ex.: cotado em unidades, NF em caixas) mostra a quantidade já convertida, sem "(3/300)" enganoso.',
+            'No computador, só o item do menu lateral que você abriu fica destacado (antes os itens de "Mais" acendiam juntos).',
+            'Auditoria Retroativa: depois de associar a NF ao pedido correto, a sugestão antiga não volta mais; a lista se atualiza ao voltar para a tela.',
+            'Recurso da NF: quando nada foi gravado, o seletor mostra o recurso que as cotações indicam ("Vem da cotação"), em vez de "não definido".',
+            'Visual da web: área de conteúdo mais larga, cartões de Cotações e Anotações em duas colunas em telas grandes, menu lateral com marcador no item ativo e grupo separado para as ferramentas de "Mais".'
+        ],
+        implementado: ['popularDatalist (js/07) com uma única atribuição de innerHTML; recursoEsperadoPelaCotacao (js/12), só leitura; data-destino no menu lateral (js/02); bloco de estilo para computador no fim do style.css.'],
+        mudou: ['Arquivos alterados: style.css, js/02, js/07, js/11, js/12, js/14, js/20, js/32 e js/36.'],
+        testar: ['Abrir o app e ver se, ao sair da tela de carregamento, os botões respondem na hora.', 'Pedido 1744: deve aparecer "(150/300)" em vez de "(3/300)".', 'Na web, abrir Importar, Central de notificações, Auditoria Retroativa e Assistente: só o aberto fica azul.', 'Auditoria Retroativa: NF 1793358 associada ao pedido 1731 não volta a sugerir o 1726.', 'NF INTENSIVEMED 427148: confirmar o pedido e ver o recurso "Vem da cotação" no segundo bloco.', 'Na web, ver Cotações e Anotações em duas colunas e o novo menu lateral.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.16.1', nome: 'Entrega parcial que já chegou', status: 'concluida',
+        novidades: [
+            'Quando o fornecedor faturou menos do que foi cotado e essa falta já foi relatada em auditoria, o item deixa de ficar "aguardando": não se espera nova entrega, porque o que não foi faturado não vem depois.',
+            'O fornecedor passa a mostrar "◐ Entrega parcial — já chegou (falta relatada)", em cinza (mesmo peso de resolvido), e o cartão do pedido mostra "◐ N parcial (já chegou)". O cartão do fornecedor fica verde com "Chegou (parcial)".',
+            'Quando todos os fornecedores do pedido chegaram, completos ou parciais com a falta relatada, o pedido aparece como "Concluído".',
+            'Na linha do fornecedor, em vez de "Faltam: ...", aparece "Chegou parcial e a falta já foi relatada em auditoria (não se espera nova entrega): ...". O botão "Marcar parcial como resolvida" some, porque não há mais o que marcar.',
+            'Antes de relatar, nada muda: a falta ainda sem auditoria continua como entrega parcial em amarelo.'
+        ],
+        implementado: ['Novo estado de entrega "parcial_relatada" em calcularEntregaFornecedorPedido (js/11), lido pelo cartão do fornecedor (js/09) e pelo resumo do pedido (js/13).'],
+        mudou: ['Arquivos alterados: js/09, js/11, js/13, js/14 e js/31.'],
+        testar: ['Pedido 1744: o fornecedor da hidrocortisona deve mostrar "Entrega parcial — já chegou (falta relatada)" em vez de aguardando/parcial em amarelo, sem o botão "Marcar parcial como resolvida".', 'Em Cotações, o cartão do 1744 deve mostrar "◐ 1 parcial (já chegou)".', 'Num pedido com falta ainda NÃO relatada, o fornecedor continua "Entrega parcial" em amarelo, com o botão de marcar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.16.0', nome: 'Divergência única: detectada, pendência relatada e resolvida', status: 'concluida',
+        novidades: [
+            'Uma divergência é uma ocorrência só, por item, com três estados: Divergência (o app viu a diferença e ninguém relatou ainda), Pendência relatada (existe auditoria aberta) e Resolvido. Antes, a comparação e a auditoria do mesmo problema eram contadas como duas coisas, e por isso o cartão do fornecedor mostrava 2 quando por fora aparecia 1.',
+            'Pendência relatada tem o peso de resolvido: não acende o cartão do fornecedor em vermelho, não conta como "em aberto", não aparece no total de "itens que precisam de atenção" e o selo da NF fica neutro. Só a divergência ainda sem relato pede ação sua.',
+            'Cartão do fornecedor: o quadro agora é "Em aberto" (só as divergências sem relato) e a faixa mostra "N divergência(s) em aberto · N pendência(s) relatada(s)". Cada item tem uma etiqueta só.',
+            'Selo de aptidão da NF: passa a olhar só os itens da própria NF (antes, qualquer auditoria pendente do pedido marcava todas as NFs). Novo selo "Pendência relatada".',
+            'A auditoria gerada a partir da comparação agora grava o código do item da cotação, para a ligação não depender do nome do produto. As auditorias antigas continuam como estavam e seguem ligadas pelo nome.',
+            'Central de notificações: as auditorias abertas passaram para "Pendências relatadas" (prioridade baixa, fora da contagem de atenção). Na NF em edição, "Gerar auditoria" só aparece para divergência ainda sem relato.'
+        ],
+        implementado: ['Função estadoOcorrenciaItem em js/11 (estado derivado da evidência calculada + auditoria ligada) lida por cartão, linha do item, selo da NF, resumo do pedido, Central de notificações, visão da NF e Assistente.'],
+        mudou: ['Arquivos alterados: js/05, js/09, js/11, js/13, js/14, js/30, js/31, js/34, js/36 e js/37. Nenhum dado salvo foi reescrito.'],
+        testar: ['Abrir o pedido 1744: o cartão do fornecedor deve mostrar "Em aberto 0" e a faixa "1 pendência relatada", e o item uma etiqueta só ("Pendência relatada").', 'Abrir um pedido com divergência ainda sem auditoria: o cartão fica vermelho, "Em aberto 1", etiqueta "Divergência" e botão Gerar auditoria. Gerar e salvar a auditoria: o item passa a "Pendência relatada" e o cartão deixa de ficar vermelho.', 'Alterar o status da auditoria para Resolvida: o item mostra "Resolvido" em verde.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.15.1', nome: 'Correção do cartão de importação e verificado reto', status: 'concluida',
+        novidades: [
+            'Produtos SP Data (e Fornecedores): o cartão recolhido de importação não é mais espremido quando a lista de produtos é grande; a linha aparece inteira e abre normalmente.',
+            'O sinal de verificado (✓) agora é reto, de traço uniforme e pontas retas, em todo o app (selos, avisos, seleção de NFs, Ajuda): ele vem de uma fonte própria que só troca esse símbolo e acompanha o tamanho e a cor do texto.'
+        ],
+        implementado: ['Fonte "Check Reto" embutida no style.css (menos de 1 KB), usada antes das fontes escolhidas em Aparência.'],
+        mudou: ['Arquivos alterados: style.css e js/14.'],
+        testar: ['Abrir Produtos SP Data e conferir a linha "Importar relatório do SGH" inteira; tocar e ver abrir.', 'Ver o ✓ nos selos (ex.: "✓ 1 completa" em Cotações), na seleção de NFs do Controle e nos avisos: todos com o traço reto.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.15.0', nome: 'Dock de seleção em lote e refinos de tela', status: 'concluida',
+        novidades: [
+            'Seleção em lote com Dock própria: ao tocar em Selecionar em Gerenciar, Anotações ou Controle de NFs, a dock principal dá lugar a uma cápsula com o ✕ (cancelar), o contador, "Todas" e as ações da seleção. Ela sobe com mola e some quando a seleção termina. As barras antigas saíram.',
+            'Produtos SP Data e Fornecedores: a área de colar o relatório ficou recolhida em uma linha ("Importar relatório do SGH" / "Importar/Atualizar Cadastro") e só abre ao tocar, sem o campo de texto aberto na tela.',
+            'Gerenciar: "Ver todas as NFs" virou um botão de ação centralizado (o mesmo tamanho e estilo dos demais), no lugar do cartão azul solto; "Adicionar nota" (lista vazia) também usa o botão padrão.',
+            'Botões padronizados: os botões de ação de todas as telas têm a mesma altura (44 px) e a mesma largura mínima, centralizados, e as pílulas pequenas usam sempre a cor de destaque.',
+            'Central do pedido: a linha "Outras ocorrências" ganhou respiro embaixo e o texto e a seta ficam centralizados na altura.'
+        ],
+        implementado: ['Novo arquivo js/38-dock-selecao.js: cada tela só avisa seu estado de seleção; as ações chamam as mesmas funções de antes (nada mudou nas regras de pendente, arquivar, excluir, exportar e financeiro).', 'A dock de seleção só aparece na tela que está em seleção; trocar de tela a esconde.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/05, js/06, js/09, js/17, js/14 e js/31. Novo arquivo: js/38-dock-selecao.js (vai na pasta js).'],
+        testar: ['Gerenciar: tocar no ícone de seleção, marcar notas e ver a dock com Todas e as ações (pendente, remover pendência, editar, arquivar, excluir); tocar no ✕ e ver a dock principal voltar.', 'Anotações e Controle de NFs: tocar em Selecionar e conferir a dock (Exportar; Financeiro e Direta).', 'Com a seleção ativa, trocar de tela pela barra: a dock de seleção só deve aparecer na tela que está selecionando.', 'Produtos SP Data e Fornecedores: ver a linha de importação recolhida, abrir, colar e processar.', 'Gerenciar (vazio ou com notas): ver o botão "Ver todas as NFs (Controle)" centralizado. Central do pedido: ver a linha "Outras ocorrências".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.3', nome: 'Anotações: altura da barra regulável e menus completos', status: 'concluida',
+        novidades: [
+            'Anotações: no menu "⋯" há agora "Altura da barra" com os botões − e +. Eles sobem ou descem a barra de ferramentas de 4 em 4 px, funcionam com o teclado aberto e o valor fica lembrado neste aparelho.',
+            'Os menus da barra (cor, tamanho, espaçamento e tabela) agora aparecem inteiros acima dela; antes o Safari os cortava fora da área da barra.'
+        ],
+        implementado: ['Valor padrão no iPhone: 16 px acima da barrinha de setas e ✓ do sistema.', 'Os botões do cabeçalho e o menu "⋯" não tiram mais o foco do texto, então o teclado continua aberto ao regular.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/02, js/09, js/14 e js/31.'],
+        testar: ['No iPhone: abrir uma anotação, tocar no texto, abrir "⋯" e usar − ou + em "Altura da barra" vendo a barra se mexer; anotar o valor que ficou bom.', 'Abrir os menus de cor, tamanho e tabela e conferir que aparecem inteiros acima da barra.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.2', nome: 'Anotações: nova barra de ferramentas, fina e animada', status: 'concluida',
+        novidades: [
+            'Anotações: enquanto a anotação está aberta, a barra de ferramentas ocupa o lugar da dock principal (que volta ao fechar a anotação). É uma cápsula fina de vidro, com os mesmos ícones do app.',
+            'Com o teclado, a barra sobe com uma animação de mola e para logo acima dele (acima também da barrinha de setas e ✓ do iPhone, que o sistema desenha por cima da página e não pode ser removida).',
+            'No cabeçalho, "⋯" e "✓" agora ficam numa cápsula de vidro, como nas Notas da Apple.',
+            'No computador: o menu lateral continua, e a barra de ferramentas fica no topo da anotação, abaixo do cabeçalho (os menus de cor, tamanho etc. abrem para baixo).'
+        ],
+        implementado: ['Posição da barra calculada pelo tamanho real da área visível (corrige a barra que ficava no meio da tela), com folga de 16px sobre a barrinha do iPhone.', 'Entrada animada ao abrir a anotação (nasce de baixo e sobe).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/02, js/09, js/14 e js/31.'],
+        testar: ['No iPhone: abrir uma anotação, tocar no texto e ver a barra subir e parar logo acima do teclado, sem ficar atrás da barrinha de setas.', 'Fechar o teclado e ver a barra descer para o lugar da dock; voltar à lista e ver a dock principal de volta.', 'Abrir os menus de cor, tamanho e tabela e conferir que abrem logo acima da barra.', 'No computador: ver a barra no topo da anotação com o menu lateral.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.1', nome: 'Correções visuais: botão do chat e Central de notificações', status: 'concluida',
+        novidades: [
+            'Assistente: o botão de enviar virou um botão redondo com seta (e quadrado para parar), centralizado, sem texto deslocado.',
+            'Central de notificações: o primeiro bloco (explicação) não fica mais colado no bloco de baixo; todos os blocos têm espaço entre si.'
+        ],
+        implementado: ['Protótipo de Anotações (proto-notas.html) para escolher o novo desenho antes de mexer na tela real: dock trocada, ferramentas compactas ou completas, botões do topo em cápsula ou ícones simples.'],
+        mudou: ['Arquivos alterados: js/14, js/37 e style.css. Novo arquivo de teste (fora do app): proto-notas.html.'],
+        testar: ['No Assistente: ver o botão de enviar redondo, e o botão virar quadrado enquanto a IA responde.', 'Na Central de notificações: ver o espaço entre o primeiro bloco e os demais.', 'Abrir /proto-notas.html no mesmo endereço do app e testar as variantes com o teclado do iPhone.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.14.0', nome: 'Anotações no estilo Apple Notas e Assistente com endereço fixo', status: 'concluida',
+        novidades: [
+            'Anotações redesenhadas como as Notas da Apple: no topo, "✓" conclui (salva e volta) e "⋯" abre as ações (copiar tudo, colar, limpar texto, excluir); os botões grandes do rodapé saíram.',
+            'A barra de formatação virou uma cápsula de vidro embaixo, logo acima do teclado (no celular só aparece com o teclado aberto; no computador fica sempre visível). Ela rola para o lado e os menus de cor, tamanho, espaçamento e tabela abrem logo acima dela. Antes ela ficava fixa no meio da tela ao rolar.',
+            'O título do topo (parte branca) agora acompanha o título da anotação enquanto você digita e ao salvar.',
+            'Assistente: o endereço da IA agora é fixo no app (não dá mais para trocar manualmente) e a escolha IA / Modo básico fica num seletor embaixo do campo de digitar, lembrada neste aparelho.'
+        ],
+        implementado: ['A altura do teclado passou a ser guardada para posicionar a barra de formatação (estimativa maior quando o navegador não informa).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/02, js/09, js/14, js/31 e js/37. Fora do app: assistente/COMO-INSTALAR-O-ASSISTENTE.md.'],
+        testar: ['No celular: abrir uma anotação, tocar no texto e ver a cápsula de formatação logo acima do teclado; testar negrito, lista, cor, tamanho e tabela (os menus abrem acima da cápsula).', 'Tocar em ⋯ e testar Copiar tudo, Colar e Limpar texto; tocar em ✓ para concluir e voltar à lista.', 'Digitar um título e ver o título branco do topo mudar; salvar e conferir.', 'Rolar a anotação e ver que nada fica fixo no meio da tela.', 'No Assistente, trocar entre IA e Modo básico no seletor embaixo.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.4', nome: 'Assistente: chat mais completo, marca e médias', status: 'concluida',
+        novidades: [
+            'Respostas com negrito, listas numeradas e links: "pedido 1731" abre a Central do pedido e "NF 36435" abre a NF (se houver mais de uma NF com o número, abre a mais recente e avisa).',
+            'Controles do chat: botão "■ Parar" enquanto a IA responde, contador de segundos, tempo total da resposta, botão Copiar em cada resposta e "+ Nova conversa".',
+            'Marca dos produtos: as cotações passam a levar a descrição do SmartCompras (onde fica a marca) e dá para filtrar por marca; a IA extrai a marca dali.',
+            'Médias, mínimo, máximo e último preço das compras já vêm calculados pelo app (a IA não faz mais as contas, o que evita erro).',
+            'Perguntas que precisam de várias consultas não terminam mais em "consultas demais": a IA é chamada a responder com o que já achou. Sugestões de "você quis dizer" ficaram mais rigorosas (ex.: "ritalina" não sugere mais "vitamina").'
+        ],
+        implementado: ['Datas na resposta da IA em dd/mm/aaaa.', 'Até 6 rodadas de consulta por pergunta.', 'Tela do Assistente refeita no padrão de chat: barra no topo, conversa rolando no meio e campo de digitar fixo no rodapé, logo acima do teclado (antes o teclado empurrava tudo e o campo sumia). Botões Copiar e Nova conversa no estilo dos botões do app, sem quebra de texto.'],
+        mudou: ['Arquivos alterados: js/14, js/31, js/37 e style.css.'],
+        testar: ['Perguntar "média de preço das últimas compras de atadura crepom 15cm" e conferir com as NFs.', 'Perguntar uma marca (ex.: cotações de norepinefrina da marca Fresenius).', 'Tocar nos links de pedido e NF da resposta; usar Parar, Copiar e Nova conversa.', 'No celular: tocar no campo de digitar e ver se ele fica logo acima do teclado, com a conversa visível; fechar o teclado e ver se tudo volta ao lugar, sem sobrepor a barra de abas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.3', nome: 'Assistente: IA mais rápida, datas e erros claros', status: 'concluida',
+        novidades: [
+            'Se a IA demorar demais (mais de 40 segundos) ou a conexão com o Worker falhar, o Assistente avisa o motivo e responde pelo modo básico, em vez de ficar travado ou mostrar só "Load failed".',
+            'Perguntas como "qual a última vez que chegou (material)?" agora funcionam: o app entende a pergunta, busca o material nas NFs e no ERP, ordena da mais recente para a mais antiga e mostra a data de cada NF. A IA também passa a saber a data de hoje.',
+            'Medidas e números agora contam na busca: "jelco 21" só acha 21 (não confunde com 20G ou 210). Se o item exato não existe, o Assistente diz que não existe e lista os parecidos (ex.: 14G, 18G, 20G, 22G, 24G).',
+            'A IA deixou de ser limitada aos dados do app: responde qualquer assunto e usa as consultas do app quando a pergunta envolve NFs, pedidos, materiais ou fornecedores. Só os números do app vêm obrigatoriamente das consultas (para não inventar). Se uma busca não acha, ela mesma tenta de novo com outras palavras.',
+            'A busca tolera erro de 1 letra ("crepon" acha "crepom") e, se o item exato não existe (ex.: atadura 17cm), diz isso e lista os parecidos. Falha de rede ao falar com a IA agora é repetida uma vez automaticamente.',
+            'Quando a pergunta tem uma palavra que não existe no cadastro (ex.: "gentilina"), o app sugere as parecidas que existem ("Você quis dizer: fentanila?") em vez de a IA inventar um nome. A IA foi orientada a não confundir fornecedor com marca (o app não tem campo de marca).',
+            'O Worker voltou a usar por padrão o modelo maior (70B), que entende e segue instruções bem melhor; o app espera até 60 segundos. Se ficar lento ou gastar muito do limite grátis, basta criar a variável MODEL com o modelo menor.'
+        ],
+        implementado: ['O Worker não exige mais lista de e-mails: qualquer usuário que entra no app pode usar, e quem é barrado no app não consegue.', 'O Worker também trata respostas da IA em formatos diferentes e mostra o que recebeu quando vem vazia.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/37. Fora do app: assistente/worker-assistente.js.'],
+        testar: ['Perguntar algo no Assistente com a IA ligada e ver se responde em poucos segundos.', 'Se aparecer aviso de IA indisponível, mandar o texto do aviso.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.2', nome: 'Assistente com IA 100% Cloudflare (grátis)', status: 'concluida',
+        novidades: [
+            'A IA opcional do Assistente passou a rodar inteiramente na Cloudflare (Workers AI, plano gratuito): não precisa mais de chave da Anthropic nem de cartão. O guia COMO-INSTALAR-O-ASSISTENTE.md foi reescrito para isso.',
+            'Funciona com qualquer modelo de texto: o app já faz as consultas que reconhece pela pergunta e entrega os resultados à IA, que só redige a resposta (na maioria das vezes uma chamada só); quando precisa de mais dados, ela pede consultas em formato JSON e o app executa.',
+            'Se a IA falhar (limite grátis do dia acabou, rede, etc.), o Assistente responde sozinho pelo modo básico, avisando o motivo.'
+        ],
+        implementado: ['O Worker confere o login do app (só quem está logado e, se configurado, só os e-mails permitidos) e decide modelo e tamanho da resposta.', 'O limite grátis da Cloudflare (10.000 neurons por dia) nunca gera cobrança: passando dele, a IA apenas recusa até o dia seguinte.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/37. Fora do app: assistente/worker-assistente.js e assistente/COMO-INSTALAR-O-ASSISTENTE.md (reescritos).'],
+        testar: ['Seguir o guia, salvar o endereço em Mais → Assistente → Ligar a IA e perguntar algo em linguagem livre (ex.: "o que está pendente hoje e por quê?").', 'Conferir a resposta com as telas.', 'Se a IA recusar por limite, ver que o modo básico responde.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.1', nome: 'Assistente em modo básico: grátis, sem IA e sem instalação', status: 'concluida',
+        novidades: [
+            'O Assistente agora funciona logo de cara, de graça, sem chave nem instalação: o "modo básico" entende a pergunta por palavras-chave (número do pedido, número da NF, fornecedor, material, "divergências", "pendente", "sem pedido", "esperando decisão") e responde na hora com as mesmas consultas da versão com IA.',
+            'Exemplos: "situação do pedido 1726", "NF 1067970", "divergências do pedido 1726", "NFs da MINAS SUL", "fornecedor SUPERMED", "quanto de lanceta temos?", "o que está pendente hoje?".',
+            'A IA ficou opcional: em Mais → Assistente → "Ligar a IA (opcional)" você cola o endereço do intermediário quando e se quiser perguntas em linguagem livre.',
+            'Correção: "NFs sem pedido" passa a incluir as NFs só do ERP (antes só as com XML).'
+        ],
+        implementado: ['O modo básico não usa internet nem conta: tudo é calculado no próprio app com os dados que ele já carregou.', 'Quando não entende a pergunta, mostra exemplos do que sabe responder.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/37.'],
+        testar: ['Mais → Assistente: tocar nas sugestões e fazer perguntas como as dos exemplos.', 'Conferir 2 ou 3 respostas com as telas (Central do pedido, Relatórios → Divergências, Controle de NFs).', 'Perguntar algo fora do que ele entende e ver as dicas.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.13.0', nome: 'Assistente: IA para consultar os dados do app', status: 'concluida',
+        novidades: [
+            'Nova tela Mais → Assistente: você pergunta em linguagem natural (divergências pendentes, situação de um pedido, quantidade cotada e recebida de um material, NFs de um fornecedor...) e a IA responde em cima dos dados do app.',
+            'A IA só lê: ela usa consultas prontas (as mesmas regras da visão única da NF, das divergências e da comparação do pedido), mostra "Consultas feitas" sob cada resposta, nunca calcula nem decide sozinha e não grava nada.',
+            'A chave da IA fica num intermediário gratuito (Cloudflare Worker), nunca dentro do app; o intermediário só atende quem está logado e pode ser limitado aos seus e-mails. Passo a passo no arquivo COMO-INSTALAR-O-ASSISTENTE.md.'
+        ],
+        implementado: ['Só vão para a IA os resultados das consultas que a pergunta pede (no máximo 25 linhas por consulta), nunca o banco inteiro.', 'O app funciona normalmente sem o Assistente: a tela só pede o endereço do intermediário na primeira vez.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/02, js/14, js/31; novo js/37-assistente.js. Arquivos fora do app: assistente/worker-assistente.js e assistente/COMO-INSTALAR-O-ASSISTENTE.md.'],
+        testar: ['Seguir o passo a passo, abrir Mais → Assistente e salvar o endereço.', 'Perguntar: "Quais divergências estão pendentes?" e conferir com Relatórios → Divergências.', 'Perguntar sobre um material (ex.: lanceta) e conferir quantidades e fornecedores.', 'Perguntar a situação de um pedido e conferir com a Central do pedido.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.4', nome: 'Nomes dos itens pelo ERP e NF associada sempre visível na Central do pedido', status: 'concluida',
+        novidades: [
+            'Central do pedido: item da cotação sem "nome oficial" (relatório do SmartCompras não colado) agora mostra o nome que o ERP lançou para ele, marcado como "nome lançado no ERP; o oficial vem do relatório do SmartCompras". O nome vem do produto SP Data associado ou do item do ERP que casa com ele por nome, quantidade e preço, nas NFs que você já ligou ao pedido. Só leitura: nada é gravado e nunca passa por oficial.',
+            'Correção: NF do ERP associada ao pedido mas ainda "esperando decisão" não aparecia na Central do pedido (o botão seguia como "Associar NF" e não mostrava os itens lançados). Agora toda NF ligada ao pedido aparece, em qualquer situação.'
+        ],
+        implementado: ['Itens ambíguos (por exemplo, dois sensores iguais com o mesmo preço) continuam sem nome: o app não chuta.', 'Na NF 4694 / pedido 1697, 2 dos 6 itens ganham nome; os outros dependem do relatório do SmartCompras ou de a NF trazer o item.'],
+        mudou: ['Arquivos alterados: js/09, js/11, js/14 e js/35.'],
+        testar: ['Pedido 1697 → BIO INFINITY: ver os nomes do ERP nos itens ligados e a NF 4694 listada com "Itens lançados".'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.3', nome: 'Central de notificações por pedido ou por fornecedor', status: 'concluida',
+        novidades: ['A Central de notificações ganhou três formas de ver: Por urgência (como era), Por pedido e Por fornecedor. Nas duas novas, tudo o que está pendente do mesmo pedido ou do mesmo fornecedor (divergência, NF sem pedido, sugestão, sem recurso...) fica junto num cartão só, do que tem mais pendências para o que tem menos.'],
+        implementado: ['Só muda a apresentação: as pendências são as mesmas da visão única da NF.'],
+        mudou: ['Arquivos alterados: js/14, js/31 e js/34.'],
+        testar: ['Mais → Central de notificações: tocar em "Por pedido" e "Por fornecedor", abrir alguns cartões e tocar num item.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.2', nome: 'Compra direta com destino e Central de notificações em "Mais"', status: 'concluida',
+        novidades: [
+            'Fornecedor sem cotação do SmartCompras (como a MINAS SUL): ao marcar "Esta NF não tem cotação (compra direta)" no Editor da NF, aparece "Destino da compra direta" (Santa Casa ou CTI). Com o destino, os botões de recurso C/C e próprio funcionam, e a NF deixa de aparecer como "sem produto da cotação".',
+            '"O que precisa de atenção" virou "Central de notificações" e saiu de Ajustes: agora fica na tela Mais (em Ferramentas, com o número de itens ao lado) e, no computador, no menu lateral antes de Ajustes.',
+            'A Auditoria Retroativa também saiu de Ajustes e foi para Mais → Ferramentas (e menu lateral no computador).'
+        ],
+        implementado: ['Compra direta marcada no Editor passa a valer para o recurso dos itens (antes só valia a marca feita na Entrada de NF).'],
+        mudou: ['Arquivos alterados: index.html, js/01, js/02, js/14, js/20, js/31, js/34 e js/36.'],
+        testar: ['Editor da NF da MINAS SUL 33669: marcar compra direta, escolher o destino e tocar em C/C; conferir que a NF sai de "sem produto da cotação".', 'Tela Mais: ver Central de notificações (com o número) e Auditoria Retroativa em Ferramentas; abrir cada uma e voltar.', 'Ajustes: confirmar que as duas entradas não estão mais lá.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.12.0', nome: 'Visão única da NF e aprendizado das associações sem o texto do SmartCompras', status: 'concluida',
+        novidades: [
+            'Nova "visão única da NF": uma só rotina junta o XML, o lançamento do ERP e a cotação e responde, para qualquer tela, qual é o pedido, o recurso, o destino, os totais (com frete), os itens, se chegou e quais pendências a NF tem. Os dados continuam onde estavam; as telas é que deixam de refazer a conta cada uma do seu jeito.',
+            'O painel "O que precisa de atenção" passou a ler as pendências das NFs dessa visão. Consequência: uma NF cujo XML já tem pedido não aparece mais como "pedido sugerido" só porque o lançamento do ERP ficou com a sugestão antiga (de 8 para 5 no último diagnóstico).',
+            'Aprendizado mais esperto: ao confirmar ou associar um pedido a uma NF do ERP, o app liga os itens à cotação também por nome + quantidade + preço próximo (até 15%), sem depender do texto do SmartCompras colado nem de preço idêntico. Só liga quando o par é inequívoco dos dois lados; na dúvida deixa para você.',
+            'Central do pedido: abaixo de cada NF associada, "Itens lançados" mostra o nome, a quantidade e o valor lançados e a que produto da cotação cada item ficou ligado.',
+            'Editor da NF do ERP: quando o recurso já é conhecido pela cotação do pedido, ele aparece como "Vem da cotação do pedido" em vez de ser perguntado; "Mudar só nesta NF" continua disponível.'
+        ],
+        implementado: ['Conferido contra as suas associações já existentes: dos pares que o app formaria por nome + quantidade + preço, 329 de 330 conferidos coincidem com o que você já tinha associado (o outro é um soro 100 mL, e o app nunca troca associação sua); 17 seriam novos.', 'Exemplo real: na NF 4694 (BIO INFINITY) o app liga o cabo de ECG e a extensão de PNI ao pedido 1697 e deixa os dois sensores de oximetria, que são ambíguos, para você.'],
+        mudou: ['Arquivos alterados: index.html, js/11, js/14, js/20, js/31, js/34 e js/35; novo js/36-visao-nf.js.'],
+        testar: ['Central do pedido 1697 (BIO INFINITY) → Associar NF 4694: ver a mensagem de associações preenchidas e abrir "Itens lançados".', 'Editor de uma NF do ERP com pedido ligado: o recurso deve aparecer como "Vem da cotação do pedido".', 'Ajustes → O que precisa de atenção: conferir se os números e os itens fazem sentido com o Controle de NFs.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.6', nome: 'Divergências do painel de atenção iguais às do relatório', status: 'concluida',
+        novidades: [
+            'Correção: "O que precisa de atenção" contava divergências com uma regra própria e mostrava como pendente o "não faturado" que já chegou (e que você já tinha resolvido). Agora usa a mesma lista e a mesma regra de Relatórios → Divergências, então os números e os itens são sempre os mesmos.',
+            'Tocar numa divergência do painel abre o pedido na Central do pedido (antes abria o relatório sem mostrar o item).'
+        ],
+        implementado: ['No último diagnóstico, painel e relatório passaram a mostrar a mesma quantidade (2).'],
+        mudou: ['Arquivos alterados: js/14 e js/34.'],
+        testar: ['Ajustes → O que precisa de atenção: conferir se "Divergências pendentes" bate com Relatórios → Divergências (pedido 1726 não deve mais aparecer se já chegou).'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.5', nome: 'Frete certo na comparação, botão que confirma de verdade e aprendizado pelo pedido', status: 'concluida',
+        novidades: [
+            'Correção: o aviso "valor do XML diferente do ERP" comparava com o "Total da nota" do ERP, que não inclui o frete (como o XML inclui), e dava divergência falsa. Agora compara com o total real do ERP (soma das parcelas, já com o frete). Se sobrar diferença, o aviso ainda tenta explicá-la pelo frete, seguro, outras despesas, IPI ou desconto do XML (e lembra que o SP Data não aceita IPI).',
+            'Auditoria Retroativa: ao confirmar um pedido, o cartão fica no lugar com "✓ Confirmado: pedido N" e o botão some (antes o botão continuava lá e dava dúvida).',
+            'Novo aprendizado: quando o pedido está confirmado e os itens da NF batem com a cotação (mesma quantidade e valor unitário, casamento único nos dois sentidos e pelo menos 90% do valor), o app associa sozinho o código do fornecedor → produto da cotação e o produto → SP Data. Roda ao confirmar um pedido e, em lote, pelo botão "Aprender N associações dos pedidos confirmados".'
+        ],
+        implementado: ['Só preenche o que está faltando: nunca troca associação que você já confirmou (divergências são contadas e deixadas como estão).', 'No último diagnóstico o aprendizado acharia 6 associações SP Data novas em 4 NFs e deixaria 8 casos divergentes como estão.'],
+        mudou: ['Arquivos alterados: index.html, js/14, js/19, js/31, js/32, js/33 e o novo js/35-aprendizado-pedido.js.'],
+        testar: ['Entrada de NF com o XML da DCB (109756): o aviso de valor não deve mais aparecer.', 'Auditoria Retroativa → Pedido sugerido: confirmar uma NF e ver o cartão marcado e o botão sumir.', 'Auditoria Retroativa: tocar em "Aprender N associações" (se aparecer), ler o resumo e confirmar; depois conferir uma associação SP Data nova.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.4', nome: 'Aviso de valor do XML × ERP com detalhe, atalho e explicação pelo frete', status: 'concluida',
+        novidades: [
+            'Entrada de NF: o aviso "valor da NF no XML é diferente do lançado no ERP" agora diz de quanto é a diferença (e se o XML está acima ou abaixo), identifica o lançamento do ERP (NF, série, data de lançamento, vencimento e situação) e usa o detalhe do próprio XML (frete, seguro, outras despesas, IPI, ICMS ST e desconto) para explicar a diferença: quando o frete é a causa, o aviso diz isso e passa a ser só informativo, sem alarme.',
+            'O aviso ganhou o botão "Abrir lançamento do ERP", que leva direto ao lançamento daquela NF.'
+        ],
+        implementado: ['Os avisos da entrada agora aceitam um botão de atalho; por enquanto só este aviso usa.'],
+        mudou: ['Arquivos alterados: js/10, js/14, js/31 e js/33.'],
+        testar: ['Carregar em Entrada de NF um XML cuja NF já esteja lançada no ERP com valor diferente (por exemplo, o da DCB 109756: o frete de R$ 276,39 explica a diferença), ler o aviso e tocar em "Abrir lançamento do ERP".', 'Voltar e conferir se o XML carregado continua na tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.3', nome: 'Conferência das sugestões de pedido e painel "O que precisa de atenção"', status: 'concluida',
+        novidades: [
+            'Auditoria Retroativa: cada NF com pedido sugerido ganhou "Conferir a sugestão", que mostra na hora o valor total da NF × cotado (com a %), as datas (pedido, limite e NF, em dias) e quantos itens da NF estão na cotação do fornecedor, item por item. O resultado vem resumido: bate em tudo, conferir ou não parece.',
+            'Há botões para abrir o pedido sugerido e para confirmar cada candidato; quando há mais de um pedido possível, cada um aparece com a própria conferência.',
+            'O botão em lote agora confirma só as sugestões que batem em tudo (valor até 5%, data coerente e pelo menos 60% dos itens). As outras ficam para você conferir.',
+            'Novo painel em Ajustes → O que precisa de atenção, com o que está parado, do mais urgente ao menos: notas vencidas na relação, pedidos com prazo vencido sem entrega, divergências pendentes, sugestões de pedido, NFs do ERP esperando decisão, NFs sem pedido, itens sem recurso ou sem produto e fornecedores sem CNPJ. Cada item leva direto à tela que resolve.',
+            'No Controle de NFs aparece uma faixa no topo com o total de itens que precisam de atenção.'
+        ],
+        implementado: ['A conferência só lê dados já salvos: nada é confirmado ou alterado sem o seu toque.', 'No último diagnóstico, das 17 sugestões, 9 batem em tudo, 2 pedem conferência, 3 não parecem certas e 3 têm mais de um candidato.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/14, js/17, js/29, js/31, js/32 e o novo js/34-atencao.js.'],
+        testar: [
+            'Ajustes → Auditoria Retroativa → filtro "Pedido sugerido": abrir "Conferir a sugestão" em alguns cartões e comparar com o que você veria na cotação.',
+            'Tocar em "Abrir o pedido" e voltar; confirmar uma sugestão que bate.',
+            'Tocar em "Confirmar as N que batem em tudo".',
+            'Ajustes → O que precisa de atenção: abrir os grupos e tocar em itens.',
+            'Controle de NFs: ver a faixa no topo e tocar nela.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.2', nome: 'Verificações da entrada item a item: valor, quantidade e ERP', status: 'concluida',
+        novidades: [
+            'Entrada de NF (XML): o quadro "Verificações da entrada" agora confere cada item contra a cotação — valor unitário diferente do cotado (com a diferença em %), quantidade acima da cotada e entrega parcial (somando as NFs do mesmo pedido já processadas).',
+            'Quando a NF já está lançada no ERP, o quadro compara a quantidade de cada produto no XML com a lançada no ERP (o caso da lanceta: 1100 no XML × 1000 no ERP aparece na hora).',
+            'Produto da NF ligado a um item que não está no pedido escolhido também é avisado.'
+        ],
+        implementado: ['As contas são as mesmas da conferência do pedido (valor direto ou convertido pelo fator; quantidade direta ou convertida), só que antes de salvar: o aviso de agora é a divergência que apareceria depois.', 'Produtos marcados para ignorar divergência de unidade ficam de fora. Entrega parcial aparece só como informação.', 'Nos dados do último diagnóstico, os avisos de valor coincidem com as divergências de valor que o app já gera (5 e 5).'],
+        mudou: ['Arquivos alterados: js/14, js/31, js/33.'],
+        testar: [
+            'Entrada de NF: carregar o XML da NF 1067970 e ver o aviso da lanceta (XML × ERP).',
+            'Carregar uma NF com valor diferente da cotação (por exemplo a 1779878) e ver o aviso de valor com a %.',
+            'Carregar uma NF com quantidade acima da cotada (por exemplo a 1787824) e conferir o aviso.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.1', nome: 'Verificações na entrada: o app avisa na hora o que não fecha', status: 'concluida',
+        novidades: [
+            'Entrada de NF (XML): um quadro "Verificações da entrada" avisa quando itens diferentes estão ligados ao mesmo produto da cotação, quando o valor do XML difere do lançado no ERP para a mesma NF, quando o fornecedor não participa do pedido escolhido, quando o vencimento é anterior à emissão e quando falta o número ou o valor da NF.',
+            'Importação do relatório do ERP: cada nota da prévia ganha avisos quando o valor ou os itens estão zerados, quando a mesma NF já foi processada pelo XML com valor diferente, quando o fornecedor não tem CNPJ no SP Data (o pedido não será achado sozinho) e quando há item com código SP Data fora da lista de produtos.',
+            'Os avisos nunca bloqueiam nem alteram nada: só mostram o que pede conferência.'
+        ],
+        implementado: ['Vencimento anterior ao lançamento no ERP não gera aviso: nota lançada com atraso é normal.', 'No último diagnóstico, os avisos de XML apontam 6 casos reais (2 de produto repetido, incluindo a NF 813145, e 4 de valor diferente do ERP).'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/10, js/14, js/19, js/31 e o novo js/33-verificacoes-entrada.js.'],
+        testar: [
+            'Entrada de NF: carregar o XML de uma NF e ver o quadro "Verificações da entrada" (quando houver algo a avisar).',
+            'Importar Relatório (ERP): colar um relatório e ver os avisos nas notas da prévia.',
+            'Conferir que nada fica bloqueado: os avisos só informam.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.11.0', nome: 'Auditoria Retroativa das NFs do ERP e itens do ERP sempre atualizados', status: 'concluida',
+        novidades: [
+            'Nova tela em Ajustes → Auditoria Retroativa: mostra, por NF do ERP, o pedido (confirmado, sugerido ou sem pedido, com o motivo) e quais itens estão ligados a um produto da cotação.',
+            'Itens do ERP defasados (que ganharam produto depois de uma associação SP Data nova) passam a ser atualizados sozinhos, sem precisar reimportar.',
+            'Botões para atualizar os itens defasados e para confirmar de uma vez as sugestões de pedido.',
+            'Filtros: pedido sugerido, sem pedido, itens sem produto e itens defasados.'
+        ],
+        implementado: ['A atualização automática só preenche ou corrige para um produto existente; nunca apaga um código, e não roda enquanto os dados ainda estão carregando.', 'Nenhuma regra de associação, vínculo ou divergência mudou. A tela só lê os dados já salvos.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/01, js/05, js/14, js/17, js/29, js/31 e o novo js/32-auditoria-retroativa.js.'],
+        testar: [
+            'Ajustes → Auditoria Retroativa: ver o resumo e os cartões; testar os filtros e "Ver itens".',
+            'Tocar em "Atualizar itens defasados" (deve haver 13 no último diagnóstico).',
+            'Confirmar uma sugestão de pedido pelo cartão e, se quiser, as demais em lote.',
+            'Pelo Ajustes, buscar "retroativa" e conferir que a tela aparece.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.8', nome: 'Dados da NF também com XML, toda a cotação como entregue e aviso de produto repetido', status: 'concluida',
+        novidades: [
+            'Editor da NF (com XML): novo cartão "Dados desta NF" com nome do fornecedor, recurso da NF inteira e a opção "Esta NF não tem cotação (compra direta)".',
+            'Pedido: botão "Marcar toda a cotação como entregue" marca todos os fornecedores de uma vez; depois vira "Desfazer marcas de entrega de todos".',
+            'Editor da NF: aviso quando itens diferentes da mesma NF estão associados ao mesmo produto da cotação (a quantidade é somada e gera divergência falsa, como a LANCETA 28G da NF 1067970).',
+            'Corrigido o espaçamento da caixa de seleção "não tem pedido" no Editor da NF.'
+        ],
+        implementado: ['Marcar compra direta tira o pedido da NF (com confirmação). Desmarcar só remove a marca.', 'O recurso da NF inteira grava na cotação (itens com cotação) e na própria NF (itens diretos), usando a origem do pedido.'],
+        mudou: ['Arquivos alterados: style.css, js/09, js/11, js/14, js/17, js/20, js/31.'],
+        testar: [
+            'Editor da NF com XML: editar nome, escolher o recurso e marcar/desmarcar compra direta.',
+            'Editor da NF da NF 1067970: ver o aviso do código repetido (lanceta + nifedipino).',
+            'Pedido: tocar em "Marcar toda a cotação como entregue" e depois em desfazer.',
+            'Editor da NF só do ERP: conferir o espaçamento da caixa "não tem pedido".'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.7', nome: 'Fornecedor ERP reconhecido certo, Editor da NF só-ERP, divergência que sai da pendência e exclusão', status: 'concluida',
+        novidades: [
+            'Fornecedor do ERP: uma palavra genérica (como "artefatos") no meio do nome não identifica mais um fornecedor conhecido. "ACRILZANO ARTEFATOS DE ACRILIC" deixa de virar "artefatos".',
+            'Editor da NF (NF só do ERP): novo cartão "Dados desta NF" para editar o nome do fornecedor (fica lembrado nas próximas importações), definir o recurso e marcar "não tem pedido".',
+            'Relatórios: divergência "não faturado" sai da pendência quando o item chegou (marcado como já chegou, NF do app ou NF do ERP associada ao pedido).',
+            'Associar NF no pedido: ao digitar o número, a busca vale para todos os fornecedores (entrega por outro CNPJ).',
+            'Relatórios: botão Excluir em cada divergência, inclusive as antigas sem produto da cotação.'
+        ],
+        implementado: ['Campos novos na entrada do ERP: nome editado, recurso e "sem pedido". O Controle de NFs usa esses dados e o envio à relação aproveita o recurso.', 'Excluir remove também os registros repetidos da mesma divergência; o texto já gerado na anotação não muda.'],
+        mudou: ['Arquivos alterados: js/04, js/08, js/11, js/14, js/17, js/20, js/31.'],
+        testar: [
+            'Reimportar (ou conferir) a NF da ACRILZANO: o nome não deve virar "artefatos".',
+            'Controle de NFs → Editar NF de uma NF só do ERP: editar o nome, escolher o recurso, marcar "não tem pedido".',
+            'Relatórios → Divergências: a "sonda gastrostomia 20FR" não deve mais aparecer pendente.',
+            'Pedido → Associar NF: digitar o número de uma NF de outro CNPJ e associar.',
+            'Relatórios → Divergências: excluir a pendência do Tidimar (?).'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.6', nome: 'Ajuda com transição e gesto, Cotações enxuta e botão Selecionar padronizado', status: 'concluida',
+        novidades: [
+            'Ajuda: abrir um artigo e voltar para a lista agora têm transição (no computador, a dissolução curta do modo web), e o gesto de arrastar da borda esquerda volta do artigo para a lista.',
+            'Tutorial guiado: o botão Sair virou um botão compacto no canto, dentro do layout.',
+            'Cotações: sobraram dois botões, "Adicionar cotação (XML)" e "Complementar com relatório". O campo do relatório de fornecedores ganhadores fica escondido e abre pelo botão. Saiu "Nova Cotação", que não fazia sentido sem o XML.',
+            'Pedido sem cotação: o botão agora é "Adicionar cotação (XML)".',
+            'Controle de NFs: o botão Selecionar passou para o mesmo padrão do de Anotações (botão com ícone).'
+        ],
+        implementado: ['O cadastro manual de cotação continua no código, mas sem botão na tela.', 'O botão Selecionar não troca mais o texto para "Concluir": como em Anotações, só muda o estado.'],
+        mudou: ['Arquivos alterados: index.html, style.css, js/14, js/15, js/17, js/31.'],
+        testar: [
+            'Ajuda: abrir um artigo, ver a transição, voltar pelo botão e pelo gesto da borda esquerda.',
+            'Iniciar um tutorial e conferir o botão Sair.',
+            'Cotações: conferir os dois botões; abrir e fechar "Complementar com relatório"; adicionar uma cotação pelo XML.',
+            'Controle de NFs: conferir o botão Selecionar e o modo de seleção.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.5', nome: 'Relatórios: divergência leva ao produto, registros antigos e destaque suave', status: 'concluida',
+        novidades: [
+            'Relatórios → Divergências: tocar no cartão abre o pedido já no fornecedor e no produto da divergência (antes abria a cotação inteira).',
+            'Destaque mais suave: em vez do brilho amarelo em volta, um tom de amarelo dentro do cartão que dissolve de volta ao normal.',
+            'Registros antigos de auditoria agora mostram o produto. Antes eles eram lidos num formato que o relatório não entendia: três divergências diferentes do pedido 1698 (Fentanest, Agulha e Seringa) apareciam idênticas, sem produto.',
+            'Divergência antiga sem situação gravada deixou de ficar "Pendente" para sempre: anotação concluída = Resolvida; item marcado como resolvido na cotação = Resolvida.',
+            'A mesma divergência registrada mais de uma vez (mesmo pedido, tipo e produto, como antes, uma por etapa) aparece como uma só, com "N registros", valendo a mais recente.'
+        ],
+        implementado: [
+            'Divergências de tipos que não existem mais (ex.: quantidade física divergente) passam a mostrar produto e quantidades gravadas.',
+            'Os dados guardados não foram alterados: a correção é só na leitura.'
+        ],
+        mudou: ['Arquivos alterados: style.css, js/04, js/09, js/11, js/14, js/30, js/31.'],
+        testar: [
+            'Relatórios → Divergências: conferir o pedido 1698 (três cartões distintos, agora Resolvida) e tocar num cartão para ir ao fornecedor/produto.',
+            'Ver o destaque suave dentro do cartão.',
+            'Procurar se sobrou alguma pendência antiga que não deveria estar pendente e me avisar.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.4', nome: 'Ajuda: artigo de Backup completo', status: 'concluida',
+        novidades: ['O artigo de Backup da Ajuda agora explica os dois botões: o backup simples (cópia de segurança) e a exportação completa para diagnóstico, e o motivo de ela existir.'],
+        implementado: ['Corrigido o texto anterior, que falava em restaurar: o app só gera os arquivos, não restaura.'],
+        mudou: ['Só texto de ajuda. Arquivos alterados: js/14 e js/31.'],
+        testar: ['Ajustes → Ajuda → Backup dos dados: ler o artigo e conferir se bate com a tela.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.3', nome: 'Voltar da Ajuda, menu do computador e Auditoria personalizável', status: 'concluida',
+        novidades: [
+            'Ajuda: removido o segundo botão "Todos os artigos". O botão Voltar do topo sobe um nível por vez: do artigo para a lista da Ajuda e, na lista, para Ajustes.',
+            'Computador: não existe mais a divisão "Na barra / Em Mais". Todas as abas ficam juntas no menu, na ordem escolhida (a tela de organizar abas esconde essa opção no computador), e Importar Relatório (ERP) fica antes do Ajustes.',
+            'Auditoria sem nomes próprios: o Destinatário do E-mail começa em branco (a saudação sai sem nome) e há um "Destinatário padrão" opcional em Configurar Textos Padrão.',
+            'Auditoria: cada tipo de divergência tem agora um modelo de frase editável em Configurar Textos Padrão. {campo} entra com o valor digitado e [[ trecho ]] só aparece se os campos dentro dele estiverem preenchidos. "Restaurar este modelo" volta ao padrão de um tipo.',
+            'Auditoria: o produto fica ligado ao item da cotação por um vínculo próprio. Renomear o texto não perde o vínculo; aparece "Ligado ao item… com o nome real", "usar este nome" e "desligar". Produto sem ligação ganha um seletor para ligar a um item da cotação.',
+            'Nome real do produto: agora vem do SP Data, depois do nome oficial do SmartCompras, depois do nome na NF processada (xProd) e só então da observação do SmartCompras.'
+        ],
+        implementado: [
+            'O vínculo é salvo junto da auditoria e passa a ser usado para ligar a divergência ao item certo no pedido (antes só pelo nome).',
+            'Os textos gerados continuam iguais aos de antes enquanto você não editar os modelos.'
+        ],
+        mudou: [
+            'Arquivos alterados: index.html, style.css, js/01, js/02, js/06, js/09, js/11, js/12, js/13, js/14, js/16, js/28, js/30, js/31.'
+        ],
+        testar: [
+            'Ajuda: abrir um artigo e tocar no Voltar do topo (vai para a lista) e de novo (vai para Ajustes).',
+            'Computador: conferir o menu lateral com todas as abas juntas e Ajustes–Personalização–Ordem dos menus sem "Na barra/Em Mais".',
+            'Nova Auditoria: conferir o Destinatário em branco; gerar o e-mail com e sem nome.',
+            'Configurar Textos Padrão: editar o modelo de um tipo, gerar a auditoria e ver a frase nova; testar "restaurar este modelo".',
+            'Escolher um produto da cotação, renomear o texto e conferir que continua "Ligado ao item"; testar um produto sem ligação.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.2', nome: 'Ajuda: mais dois tutoriais guiados', status: 'concluida',
+        novidades: [
+            'Dois tutoriais novos com dados de exemplo: "Registrar uma auditoria" (dados, tipo de divergência, material, gerar e salvar como anotação) e "Importar o relatório do ERP" (colar, revisar, aplicar recurso às marcadas e confirmar).',
+            'A lista da Ajuda agora mostra todos os tutoriais no topo; os artigos de Nova Auditoria e Importar relatório do ERP têm botão para o tutorial.'
+        ],
+        implementado: ['Como antes, nada do tutorial é gravado: é uma janela de demonstração.'],
+        mudou: ['Só conteúdo de ajuda; o funcionamento do app não mudou.', 'Arquivos alterados: style.css, js/14 e js/31.'],
+        testar: ['Ajustes → Ajuda: rodar os três tutoriais até o fim, tocando nos botões destacados.', 'Conferir se os passos batem com o app real e me dizer o que ajustar.'],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.1', nome: 'Ajuda do app (etapa 2): todas as funções', status: 'concluida',
+        novidades: [
+            'A Ajuda agora cobre o app inteiro, com 25 artigos: além dos anteriores, Importar relatório do ERP, Editor da NF, Pedido (Central do Pedido), Relatórios, Anotações, Nova Auditoria, Equipamentos, Produtos SP Data, cadastro de Fornecedores, Análise de Cotações, Observações, Conta e acesso, Histórico de mudanças e Toques/Voltar ao ponto exato.',
+            'Nova categoria Equipamentos.'
+        ],
+        implementado: [
+            'Cada artigo novo traz passos, dicas, botão para abrir a tela e o selo "Revisado na versão 2.10.1".',
+            'Continua valendo a regra: mudou um procedimento, a Ajuda é atualizada na mesma entrega.'
+        ],
+        mudou: [
+            'Só conteúdo de ajuda; o funcionamento do app não mudou.',
+            'Arquivos alterados: js/14 e js/31.'
+        ],
+        testar: [
+            'Ajustes → Ajuda: ler os artigos novos (Equipamentos, Importar relatório do ERP, Nova Auditoria) e dizer o que não bate com o seu uso.',
+            'Testar a busca com palavras como "recurso", "extravio" e "senha".'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.10.0', nome: 'Ajuda do app (etapa 1): artigos e tutorial guiado', status: 'concluida',
+        novidades: [
+            'Novo item Ajuda em Ajustes, com busca e artigos "como fazer" por categoria. Primeira etapa: abas do app, Adicionar, Entrada de NF (XML), Gerenciar, Saída de Texto, Controle de NFs, Recurso, Cotações, Fornecedores, Backup e Personalização/modo web.',
+            'Tutorial guiado "Da NF em XML até a Saída de Texto": percorre o caminho completo com dados de exemplo; você toca nos botões para ver o efeito. Nada é gravado.',
+            'Cada artigo mostra "Revisado na versão X" e tem botão para abrir a tela correspondente.'
+        ],
+        implementado: [
+            'Regra de manutenção: toda entrega que mudar um procedimento atualiza o artigo da Ajuda (e a versão de revisão) e registra aqui.',
+            'As próximas etapas completam os artigos das demais funções (Equipamentos, Anotações/Auditoria, Importação do ERP, Relatórios etc.).'
+        ],
+        mudou: [
+            'Só acréscimo; nada do que existia mudou.',
+            'Arquivos alterados: index.html, style.css, js/01, js/14, js/29 e js/31 (novo).'
+        ],
+        testar: [
+            'Ajustes → Ajuda: conferir a lista, a busca e abrir alguns artigos (botão "Abrir" e Voltar).',
+            'Iniciar o tutorial guiado, tocar nos botões de recurso e de salvar e ir até o fim.',
+            'Conferir se os textos batem com o jeito que você usa o app e me dizer o que ajustar.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.10', nome: 'Modo web com movimento no estilo macOS', status: 'concluida',
+        novidades: [
+            'No computador (mouse + tela larga) o app entra em "modo web" sozinho: a dock deixa de encolher, as telas não deslizam mais como no iPhone e a cascata dos itens some.',
+            'Movimento estilo macOS: a tela nova só dissolve (com um recuo mínimo de 6 px), em cerca de 180 ms, sem mola; a tela antiga sai na hora por baixo. Janelas (modais) dissolvem com um leve zoom de 0,97 para 1 em ~160 ms.',
+            'Reação ao mouse: cartões, itens, botões e abas mudam de cor/sombra em ~120 ms ao passar o ponteiro.'
+        ],
+        implementado: [
+            'No iPhone/iPad nada muda: continua o movimento atual.',
+            'Para testar no celular como se fosse computador, abra o endereço com ?plataforma=web (e ?plataforma=aparelho para voltar).',
+            'Respeita "Reduzir movimento" do sistema e a opção "sem animação" de Personalização.'
+        ],
+        mudou: [
+            'Só movimento e visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/14, js/22, js/28, js/30.'
+        ],
+        testar: [
+            'No computador: trocar de aba e abrir/voltar telas internas e ver a dissolução curta; abrir uma janela (modal); passar o mouse nos cartões.',
+            'No iPhone: conferir que continua igual (dock encolhe, telas deslizam).',
+            'Opcional: no iPhone, abrir com ?plataforma=web para ver o modo web.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.9', nome: 'Recurso da NF inteira e ligação com a Saída de Texto', status: 'concluida',
+        novidades: [
+            'Entrada de NF: novo quadro "Recurso da NF inteira" acima dos itens, com um botão para C/C e outro para Recurso Próprio. Um toque aplica o recurso a todos os itens que têm base (cotação com Origem ou destino definido); o quadro também diz como estão os itens (todos iguais, diferentes ou sem recurso).',
+            'Saída de Texto: corrigida a ligação que às vezes não reconhecia o recurso. A importação do ERP e o Controle de NFs comparavam o número da NF como texto literal (000123 ≠ 123) e ignoravam o CNPJ; agora comparam normalizado e priorizam o fornecedor certo.'
+        ],
+        implementado: [
+            'Se o item da NF já salva está em outro recurso, o botão da NF inteira também grava na hora (cotação ou NF direta), igual ao botão individual.',
+            'Itens sem base (sem Origem na cotação ou sem destino) não são tocados e o aviso informa quantos ficaram de fora.',
+            'Continua sem adivinhar: se a NF tem mais de um recurso, ou duas NFs com o mesmo número discordam, o campo Recurso fica em branco para decisão manual.'
+        ],
+        mudou: [
+            'Antes só dava para definir o recurso item por item.',
+            'Arquivos alterados: style.css, js/10, js/12, js/14, js/16, js/17.'
+        ],
+        testar: [
+            'Entrada de NF: carregar um XML com vários itens associados, usar "Recurso da NF inteira" e conferir que todos os itens mudam; salvar a NF.',
+            'Importar o relatório ERP de uma NF com zeros à esquerda e conferir se o Recurso já vem preenchido.',
+            'Gerenciar NF / Saída de Texto: conferir que a nota sai com o recurso.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.8', nome: 'Cartões da lista de Cotações no padrão novo', status: 'concluida',
+        novidades: [
+            'Lista de Cotações: cada pedido agora é um cartão no padrão do app — iniciais da origem, número do pedido, origem, status (Aguardando, Em andamento, Completo ou N divergências), três quadros (Fornecedores, Limite, Itens) e uma faixa com o resumo da entrega. O limite vencido aparece em vermelho.',
+            'Resultado da busca por produto: o item encontrado também usa o cartão (produto, pedido, origem, quantidade, valor unitário, código e fornecedor).'
+        ],
+        implementado: [
+            'Sem botões, como combinado: tocar no cartão abre o pedido.'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/13, js/14.'
+        ],
+        testar: [
+            'Cotações: conferir os cartões da lista (status, quadros, faixa) e tocar em um para abrir o pedido.',
+            'Buscar por um produto e conferir o cartão do resultado.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.7', nome: 'Voltar ao ponto exato e toques que levam direto ao alvo', status: 'concluida',
+        novidades: [
+            'Voltar ao ponto exato: quando você sai de uma tela por um link dentro do app (Editor da NF → Pedido, Pedido → NF, Controle → Editor etc.), o Voltar (botão e gesto) leva de volta para exatamente onde você estava: a mesma NF aberta, o mesmo pedido, as mesmas seções abertas e a mesma posição da tela. Pode encadear vários saltos e voltar um por um. Trocar de aba pela barra zera esse caminho.',
+            'Destaque do alvo, como o "achar na página" da Apple: ao chegar por um toque, a tela rola até o ponto certo e ele pisca em amarelo por alguns segundos.',
+            'Toques que levam direto ao lugar de resolver: no Controle de NFs, o selo "N pendências" e cada pendência do texto abaixo (sem vínculo com o ERP → Editor da NF na aba Financeiro; sem XML processado → Editor da NF; em espera / já existe na relação → Gerenciar NF); no Gerenciar NF, o selo de aptidão (Conferida, Divergência...) e o número do pedido abrem o pedido no fornecedor e no item com divergência; no pedido, o selo "Com pendência" e o quadro Divergências do fornecedor abrem o item com divergência.'
+        ],
+        implementado: [
+            'Itens tocáveis ganham uma seta (›) ou sublinhado pontilhado para você saber que levam a algum lugar.',
+            '"Ver no Gerenciar NF" também destaca a nota encontrada.'
+        ],
+        mudou: [
+            'Antes o Voltar ia sempre para a tela-pai fixa (por exemplo, do Pedido para a lista de Cotações), mesmo vindo do Editor de uma NF.',
+            'Arquivos alterados: index.html, style.css, js/01, 05, 06, 08, 09, 14, 17, 20, 28 e o novo js/30-navegacao.js.'
+        ],
+        testar: [
+            'Abra uma NF no Editor, toque em "Abrir pedido", depois em Voltar: deve voltar para a mesma NF (e Voltar de novo leva ao Controle).',
+            'No Controle de NFs, toque no selo vermelho de pendências e no texto da pendência: deve abrir o Editor da NF no ponto certo, com destaque amarelo.',
+            'No Gerenciar NF, toque no selo de aptidão e no número do pedido; no pedido, toque em "Com pendência" ou em Divergências.',
+            'Troque de aba pela barra e confira que o Voltar volta a ser o de sempre.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.6', nome: 'Desvincular fornecedor, vínculo automático na importação e ajustes de layout', status: 'concluida',
+        novidades: [
+            'Fornecedores: botão "Desvincular este CNPJ" nos fornecedores com mais de um CNPJ vinculado. Tira só aquele cadastro do grupo, com confirmação; nenhum CNPJ é apagado.',
+            'Importação do relatório oficial de fornecedores: cadastro NOVO com a mesma raiz de CNPJ (8 primeiros dígitos) de outro já cadastrado é vinculado automaticamente, e o aviso da importação informa quantos vínculos foram feitos. Cadastros já existentes não são mexidos.',
+            'Gerenciar NF: o selo de aptidão ficou curto (por exemplo "✓ Conferida") em vez de um texto de até 3 linhas em letras minúsculas; o texto completo continua ao manter o toque no selo.'
+        ],
+        implementado: [
+            'Revisão de layout das telas alteradas (Controle de NFs, Gerenciar NF, pedido em Cotações, Fornecedores e Histórico de mudanças) em tela larga e estreita (390 e 320 px), em tema claro e escuro: sem rolagem lateral nem texto cortado.',
+            'Removida a tela antiga "Histórico" (já sem uso desde o 2.9.0); as funções que o Controle de NFs ainda usa foram mantidas.'
+        ],
+        mudou: [
+            'Só visual e de vínculo de fornecedores; NFs e notas não mudaram.',
+            'Arquivos alterados: index.html, style.css, js/05, js/14, js/18.'
+        ],
+        testar: [
+            'Fornecedores: abrir um fornecedor com mais de um CNPJ vinculado, tocar em "Desvincular este CNPJ" e confirmar; conferir que ele passa a aparecer separado.',
+            'Gerenciar NF: conferir o selo curto no cartão.',
+            'Importação de fornecedores: se houver cadastro novo com a mesma raiz de CNPJ de um existente, conferir o aviso de vínculo automático.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.5', nome: 'Vincular fornecedores com busca e sugestões, e vínculo automático por XML', status: 'concluida',
+        novidades: [
+            'Fornecedores > Vincular: no lugar da lista com todos os fornecedores, agora há um campo de busca por nome (qualquer parte) ou CNPJ. Ao tocar no campo aparecem só sugestões: fornecedores com o mesmo CNPJ base (matriz/filial) e com nome parecido.',
+            'Ao escolher um fornecedor, o app pede confirmação antes de vincular. O mesmo vale para vincular um cadastro simples (sem CNPJ) a um fornecedor cadastrado.',
+            'Entrada de NF por XML: quando o CNPJ do emitente é novo e já existe um fornecedor cadastrado com a mesma raiz de CNPJ (8 primeiros dígitos, ou seja, a mesma empresa), o novo CNPJ é vinculado automaticamente a ele e passa a usar o mesmo apelido.'
+        ],
+        implementado: [
+            'A parecença de nome ignora palavras comuns (LTDA, ME, COMERCIAL, DISTRIBUIDORA etc.) para sugerir pelo nome de verdade.',
+            'O vínculo automático só acontece pela raiz do CNPJ, que é um dado certo; nome parecido só gera sugestão, nunca vínculo automático.'
+        ],
+        mudou: [
+            'Antes: lista única com todos os fornecedores e nenhum vínculo automático.',
+            'Arquivos alterados: js/14, js/18.'
+        ],
+        testar: [
+            'Fornecedores: abrir um fornecedor, tocar em Vincular e conferir as sugestões; digitar parte do nome ou do CNPJ e escolher um resultado (confirmar).',
+            'Subir um XML de uma filial nova (mesma raiz de CNPJ de um fornecedor já cadastrado) e conferir o aviso de vínculo automático e o apelido herdado.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.4', nome: 'O apelido do fornecedor vale para todos os CNPJs associados', status: 'concluida',
+        novidades: [
+            'Quando você cria um apelido (nome de exibição) para um CNPJ, ele passa a valer em todo o app para todos os CNPJs associados a ele como o mesmo fornecedor (matriz, filial, CD), inclusive os associados depois.',
+            'Em Fornecedores, o campo "Nome no app" dos CNPJs que herdam o apelido mostra "(do grupo)".'
+        ],
+        implementado: [
+            'Regra de prioridade: apelido editado à mão neste CNPJ, depois apelido editado à mão em outro CNPJ do grupo, depois o nome de exibição do relatório deste CNPJ, depois o de outro CNPJ do grupo. Sem apelido em nenhum, usa a razão social.',
+            'Nada foi gravado nem alterado nos cadastros: a regra só muda como o nome é exibido, então vale também para o que já estava associado.'
+        ],
+        mudou: [
+            'Antes o apelido só valia para o CNPJ em que foi criado; os associados apareciam com a razão social.',
+            'Arquivos alterados: js/14, js/18.'
+        ],
+        testar: [
+            'Em Fornecedores, escolha um fornecedor com mais de um CNPJ associado e crie ou edite o apelido em um deles; confira que o outro mostra o mesmo nome (do grupo) e que o título das NFs e das cotações também usa o apelido.',
+            'Associe um CNPJ novo, sem apelido, a um fornecedor que já tem apelido e confira que ele passa a usar o mesmo apelido.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.3', nome: 'Cartão do fornecedor em Cotações: fechado só com cabeçalho e ações', status: 'concluida',
+        novidades: [
+            'Cotações por fornecedor: fechado, o cartão mostra só o cabeçalho (iniciais, nome, CNPJ, status) e a barra de ações com ícone (Abrir NF, Associar NF, Marcar como já chegou / parcial resolvida / Desfazer marca manual), todas lado a lado quando cabem.',
+            'A faixa de entrega e os três quadros Itens / Valor cotado / Divergências passaram para o topo da parte que expande, acima da lista de itens.',
+            'A informação de entrega deixou de aparecer duas vezes: ficou só o status do cabeçalho e a faixa (como foi calculado).'
+        ],
+        implementado: [
+            '"Associar outra NF do histórico" virou "Associar outra NF" (ou "Associar NF" quando ainda não há nenhuma).',
+            'O painel de busca de NF para associar continua abrindo logo abaixo da barra de ações.'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/09, js/11, js/14.'
+        ],
+        testar: [
+            'Cotações > abrir um pedido: conferir o cartão fechado (cabeçalho + ações) e tocar nele para ver faixa, quadros e itens.',
+            'Testar Abrir NF, Associar NF (abre a busca), Marcar como já chegou / parcial resolvida e Desfazer marca manual.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.2', nome: 'Linha duplicada nas cotações e cartões de Fornecedores mais enxutos', status: 'concluida',
+        novidades: [
+            'Cotações por fornecedor: removida a linha duplicada que aparecia entre Itens/Valor cotado/Divergências e a área de ações.',
+            'Fornecedores: cada fornecedor agora é um cartão compacto (iniciais, nome, CNPJ principal e, se houver, "+N" CNPJs e a marca "Bloqueado"). Ao tocar, abre com a animação de sempre e mostra Bloquear do financeiro, Nome no app (Editar), CNPJs e Vincular.'
+        ],
+        implementado: [
+            'Todos os cartões de Fornecedores começam recolhidos; o cartão em edição permanece aberto.',
+            'Cadastros simples (sem CNPJ) usam o mesmo cartão, com a marca "Sem CNPJ".'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/14, js/18.'
+        ],
+        testar: [
+            'Cotações > abrir um pedido: conferir que existe uma única linha entre os dados do fornecedor e as ações.',
+            'Fornecedores: conferir a lista, abrir um cartão, testar Editar nome, Bloquear/Desbloquear e Vincular; testar a busca.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.1', nome: 'Gerenciar NF e Cotações por fornecedor no novo padrão de cartão', status: 'concluida',
+        novidades: [
+            'Gerenciar NF: cada nota agora usa o mesmo cartão do Controle de NFs — iniciais do fornecedor, título "APELIDO 1234", status (Na relação / Em espera), vencimento, prazo, pedido, valor e aptidão para a saída — com as ações Editar, Em espera (ou Retomar), Arquivar e Excluir com nome completo.',
+            'Cotações por fornecedor (Central do Pedido): o mesmo cartão, com iniciais, nome, CNPJ, status, itens, valor cotado e divergências; o aviso de pendência aparece em uma faixa e as ações continuam logo abaixo.'
+        ],
+        implementado: [
+            'O recolher e expandir dos itens do fornecedor continua com a animação que já existia.',
+            'O painel de edição do Gerenciar NF, a seleção em lote, a busca e o "Aplicar recurso sugerido" continuam funcionando como antes.'
+        ],
+        mudou: [
+            'Só visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/05, js/09, js/14, js/17.'
+        ],
+        testar: [
+            'Gerenciar NF: conferir o cartão novo e testar Editar (abre o painel), Em espera/Retomar, Arquivar e Excluir; testar também a seleção em lote.',
+            'Cotações > abrir um pedido: conferir o cartão de cada fornecedor e tocar nele para recolher/expandir os itens.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.9.0', nome: 'Controle de NFs unido ao Histórico, com cartão novo e "Enviada ao financeiro" por NF', status: 'concluida',
+        novidades: [
+            'O Histórico de NFs foi unido ao Controle de NFs: uma tela só, com Em aberto e Arquivadas, separadas por mês. Só o mês atual abre sozinho; os outros ficam recolhidos e abrem com a animação de sempre.',
+            'A aba "Diretas" saiu. As NFs diretas ficam em Arquivadas com a etiqueta "Direta".',
+            'Novo botão em cada NF: "Enviada ao financeiro". Arquiva só aquela NF, sem passar pela relação; se ela estiver na relação, só ela sai, e as demais continuam sendo editadas.',
+            'Cartão novo da NF (iniciais do fornecedor, status, datas, valor, pendências e ações com nome completo): Enviada ao financeiro, Não vai ao financeiro, Enviar à relação e Editar NF.',
+            'Na seleção em massa os botões agora têm nome completo: "Enviada ao financeiro" e "Não vai ao financeiro".'
+        ],
+        implementado: [
+            'Arquivadas mostra o botão "Voltar para Em aberto" quando a NF pode voltar (marcada pelo Controle, marcada como direta, ou arquivada pelo ERP, com confirmação).',
+            'A busca do Controle acha pelo "APELIDO 1234", nome, número, pedido ou CNPJ e abre todos os meses.',
+            'O item "Histórico" saiu do menu e da Personalização; qualquer link antigo para ele abre o Controle de NFs já buscando a NF. O botão do Editor virou "Ver no Controle de NFs".',
+            'O botão "Limpar registros simples arquivados (legado)" fica no fim de Arquivadas.'
+        ],
+        mudou: [
+            'Dados: duas marcas novas e opcionais — "arquivadoPeloControle" na entrada do ERP e "enviadoFinanceiro" na NF só-XML. Nada existente é alterado.',
+            'Arquivos alterados: index.html, style.css, js/01, js/05, js/14, js/17, js/20.'
+        ],
+        testar: [
+            'Controle de NFs: só o mês atual aberto; tocar nos outros meses abre e fecha com animação.',
+            'Em uma NF Recebida, tocar em "Enviada ao financeiro" e confirmar: ela vai para Arquivadas. Depois "Voltar para Em aberto".',
+            'Em uma NF que está na relação: "Enviada ao financeiro" tira só ela da relação (confira no Gerenciar NF que as outras continuam).',
+            'Selecionar: marcar várias NFs e conferir os botões "Enviada ao financeiro" e "Não vai ao financeiro".',
+            'Conferir que "Histórico" sumiu do menu e que "Ver no Controle de NFs" no Editor abre a NF certa.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.8.0', nome: 'Título "APELIDO 1234" e Editor da NF mais organizado', status: 'concluida',
+        novidades: [
+            'Padrão novo em todo o app: NFs aparecem como "APELIDO + NÚMERO DA NF" (ex.: BMG 30922); sem apelido, usa o nome completo do fornecedor.',
+            'Editor da NF: o título da tela e o cabeçalho trazem o fornecedor, com a hierarquia fornecedor+NF em destaque, série e CNPJ logo abaixo e o nome completo só quando difere do apelido.'
+        ],
+        implementado: [
+            'Nova função tituloFornNf (js/14) usada no Editor da NF, no Controle de NFs, no Histórico e na Conferência automática.',
+            'Quadro cinza (Emissão, 1º vencimento, Pedido) com rótulo e valor centralizados.',
+            'Espaçamento de 12 px entre os blocos do Editor; botões do cabeçalho em grade com largura igual.',
+            'Abas (Itens, Financeiro, Fiscal…) em uma única linha, rolando na horizontal quando não cabem.'
+        ],
+        mudou: [
+            'Textos e visual; dados e regras não mudaram.',
+            'Arquivos alterados: style.css, js/14, js/17, js/20, js/23.'
+        ],
+        testar: [
+            'Abrir uma NF no Editor: título da tela "FORNECEDOR 1234", cabeçalho com hierarquia, quadro cinza centralizado, blocos espaçados e abas em uma linha.',
+            'Conferir o Controle de NFs e o Histórico: cada NF aparece como "APELIDO 1234".'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.7.4', nome: 'Dock: abas de largura fixa (corrige toque e animação ao recolher)', status: 'concluida',
+        novidades: [
+            'Corrigido: ao recolher a Dock, as abas não se recentralizam mais, o toque no canto abre a aba certa e o seletor não "pula" para outra aba.'
+        ],
+        implementado: [
+            'Todas as abas têm a mesma largura (60 px) com a Dock aberta ou recolhida, então nada é remedido durante a animação; só o ícone encolhe e o nome some.',
+            'Nomes de uma palavra só (como "Equipamentos") usam letra um pouco menor para caber inteiros; nomes com mais palavras quebram a linha entre as palavras.',
+            'Substitui a mudança de largura da 2.7.3, que causava o salto.'
+        ],
+        mudou: [
+            'Somente visual da Dock; dados e regras não mudaram.',
+            'Arquivos alterados: style.css e js/14-historico-mudancas.js.'
+        ],
+        testar: [
+            'Abrir "Equipamentos" (última aba), rolar a tela para a Dock recolher e conferir: sem salto, seletor no lugar e ícones sem recentralizar.',
+            'Tocar nas abas do canto com a Dock recolhida e expandida: deve abrir a aba tocada.',
+            'Conferir se "Equipamentos" aparece inteiro com a Dock aberta.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.7.3', nome: 'Dock recolhida com espaçamento uniforme', status: 'concluida',
+        novidades: [
+            'Com a Dock recolhida, todas as abas (inclusive "Equipamentos") ficam com a mesma largura e mais juntas entre si.'
+        ],
+        implementado: [
+            'A largura maior dos nomes de uma palavra só vale apenas com a Dock aberta (nomes visíveis); recolhida, cada aba usa 50 px e o vão entre elas some.'
+        ],
+        mudou: [
+            'Somente visual da Dock; dados e regras não mudaram.',
+            'Arquivos alterados: style.css e js/14-historico-mudancas.js.'
+        ],
+        testar: [
+            'Rolar uma tela para a Dock recolher: conferir que todas as abas ficam alinhadas, com o mesmo vão, e "Equipamentos" não sobra mais largo.',
+            'Voltar a Dock ao normal (subir a tela) e conferir que o nome inteiro de "Equipamentos" continua aparecendo.'
+        ],
+        testarLinks: []
+    },
+    {
+        numero: '2.7.2', nome: 'Opção para desligar a cascata, "Entrar e voltar" nas abas e nomes inteiros na Dock', status: 'concluida',
+        novidades: [
+            'Nova opção "Cascata dos itens" em Personalização > Animações e Transições. Continua ligada por padrão; é só desligar se achar cansativo.',
+            'Novo efeito de troca de aba "Entrar e voltar": o mesmo deslizar do iPhone dos submenus, com a duração que você escolhe. Para uma aba mais à direita empurra para a esquerda; para uma aba mais à esquerda, faz o movimento de voltar.',
+            'Dock: nomes de uma palavra só (como "Equipamentos") aumentam a pílula para caber inteiros; nomes com mais de uma palavra (como "Controle de NFs") quebram a linha entre as palavras, nunca no meio de uma palavra.'
+        ],
+        implementado: [
+            'A cascata respeita a opção nova e continua desligada quando o aparelho está com "Reduzir Movimento".',
+            'A busca de Ajustes também encontra "Cascata dos itens".',
+            'Dock: cada aba de uma palavra ganha largura automática (mínimo de 64 px) e o texto não quebra; as demais mantêm 64 px com quebra só entre palavras.'
+        ],
+        mudou: [
+            'Transições, Personalização e Dock; dados e regras não mudaram.',
+            'Arquivos alterados: index.html, style.css, js/01-nucleo-config-estado.js, js/02-layout-setup.js, js/14-historico-mudancas.js, js/28-transicoes-ios.js e js/29-busca-ajustes.js.'
+        ],
+        testar: [
+            'Personalização > Animações e Transições: desligar e ligar a "Cascata dos itens" e abrir algumas telas.',
+            'Escolher o efeito "Entrar e voltar" e trocar de aba indo para a direita e para a esquerda.',
+            'Dock: conferir "Equipamentos" inteiro e nomes com duas palavras quebrando entre as palavras. Se a barra ficar larga demais, ela rola na horizontal como antes.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.7.1', nome: 'Fim da tela fantasma nas transições, efeitos de aba de volta e busca em Ajustes', status: 'concluida',
+        novidades: [
+            'Corrigido o "fantasma" durante as transições: a caixa azul "Tela A" da pré-visualização aparecia por cima de outras telas. Ela agora só existe dentro da própria tela.',
+            'Entrar e voltar de submenus é só o deslizar do iPhone, sem nenhum esmaecer. Os efeitos Esmaecer, Deslizar, Subir e Zoom voltaram, mas valem apenas para a troca de aba (junto com Padrão e Instantâneo), e a duração continua escolhida por você.',
+            'Na troca de aba, a tela antiga fica inteira por baixo, sem esmaecer junto, para não misturar duas telas.',
+            'A cascata dos itens agora pega também os itens de dentro das listas e cartões, só os que aparecem na primeira tela.',
+            'Nova busca no topo de Ajustes: procura nas telas de Ajustes e em todas as opções da Personalização (tema, fonte, dock, animações, carregamento, logo etc.), ignora acentos e abre a opção já destacada.'
+        ],
+        implementado: [
+            'Pré-visualização: agora há dois botões, "Trocar de aba" (usa o efeito escolhido) e "Entrar e voltar" (deslizar do iPhone).',
+            'A velocidade das animações em "Off" desliga todas as animações de tela.',
+            'Busca: aceita várias palavras (todas precisam aparecer), mostra o caminho de cada resultado e abre o primeiro com Enter.'
+        ],
+        mudou: [
+            'Transição entre telas e Ajustes; dados e regras não mudaram.',
+            'Arquivo novo: js/29-busca-ajustes.js (precisa ficar na pasta js; o index.html já o carrega).',
+            'Arquivos alterados: index.html, style.css, js/02-layout-setup.js, js/14-historico-mudancas.js, js/28-transicoes-ios.js.'
+        ],
+        testar: [
+            'Trocar de aba pela Dock com cada efeito (Personalização > Animações e Transições): não deve aparecer outra tela misturada.',
+            'Entrar e voltar de submenus: só o deslizar do iPhone, sem esmaecer.',
+            'Ajustes > buscar "tema", "dock", "senha", "carregamento": tocar num resultado deve abrir a tela e destacar a opção.',
+            'Abrir telas como Ajustes e Controle de NFs e ver se a cascata aparece nos primeiros itens.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.7.0', nome: 'Transições do protótipo, carregamento em blocos, Dock sem engasgo e Arial', status: 'concluida',
+        novidades: [
+            'Entrar numa tela interna agora empurra a tela de baixo com recuo de 28% e escurecimento, com duração fixa, como no iPhone. Voltar faz o inverso, e dá para voltar arrastando da borda esquerda da tela.',
+            'A troca de aba desliza com leve zoom, e você escolhe a duração (120 a 700 ms) em Personalização > Animações e Transições.',
+            'Os primeiros itens de cada tela entram em cascata sutil.',
+            'Carregamento na primeira vez que abre uma tela: blocos cinza com onda de brilho no formato da tela, ou só o texto "Carregando…". A escolha e o botão de teste ficam em Animações e Transições.',
+            'Fonte padrão passou a ser Arial (as demais continuam disponíveis).',
+            'Dock: sem o engasgo ao arrastar até a ponta e soltar, ou ao tocar no primeiro e no último ícone.'
+        ],
+        implementado: [
+            'Transições: movimento do iOS (curva de mola) para entrar/voltar; escurecimento da tela de baixo; sombra na tela que desliza. Os estilos Deslizar, Subir, Zoom e Esmaecer foram retirados; ficam "iPhone (padrão)" e "Instantâneo". Com "Reduzir Movimento" no aparelho, vira uma dissolução curta.',
+            'Voltar pela borda: arrastar a partir de 22 px da borda esquerda acompanha o dedo e conclui ao passar de um terço da tela ou com um arrasto rápido; soltar antes cancela. Não vale nas telas de edição de anotação e de cotação.',
+            'Carregamento: só aparece quando a tela ainda está esperando a primeira resposta do Firebase e some assim que ela chega (no mínimo 0,35 s e no máximo 6 s). Quando os dados já estão na memória, a tela abre direto.',
+            'Dock: a pílula é posicionada separadamente da rolagem; a rolagem até a aba ativa só acontece uma vez por troca de aba e nunca durante o dedo, a inércia ou o elástico da ponta; ao encostar na dock rolável, a animação espera 110 ms para saber se é toque ou arrasto; barra e pílula passam a usar a GPU no encolher/expandir.',
+            'Fonte: nova opção "Arial (padrão)" para quem não tinha escolhido outra. Quem já escolheu uma fonte mantém a sua.'
+        ],
+        mudou: [
+            'Transição entre telas, carregamento, Dock e fonte padrão; dados e regras não mudaram.',
+            'Arquivo novo: js/28-transicoes-ios.js (precisa ficar na pasta js; o index.html já o carrega).',
+            'Arquivos alterados: index.html, style.css, js/01-nucleo-config-estado.js, js/02-layout-setup.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js e js/22-vidro-liquido.js.'
+        ],
+        testar: [
+            'Entrar e sair de submenus (Ajustes > Personalização > qualquer item): empurra com recuo e escurece. Teste também arrastar da borda esquerda, soltando antes da metade e depois da metade.',
+            'Trocar de aba pela Dock e mudar a duração em Animações e Transições para sentir a diferença.',
+            'Testar Carregamento (blocos e texto) e abrir uma tela pela primeira vez, como Controle de NFs, para ver o carregamento real.',
+            'Dock: arrastar até a ponta e soltar; tocar no primeiro e no último ícone; rolar a tela para recolher e voltar a expandir.',
+            'Se a borda esquerda atrapalhar o gesto de voltar do próprio navegador do iPhone, me avise.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.6.0', nome: 'Personalização em submenus, transições estilo iPhone e padronização visual', status: 'concluida',
+        novidades: [
+            'A Personalização virou um menu com 5 submenus: Aparência, Animações e Transições, Dock e Navegação, Menus e Barra Inferior e Logo da Instituição.',
+            'Novo efeito padrão de troca de tela, igual ao do iPhone: a tela nova empurra a antiga com paralaxe e a curva de mola do iOS, sem fade em cima do movimento. Voltar faz o movimento inverso.',
+            'O seletor de velocidade das animações agora tem o mesmo estilo do seletor de espessura do vidro.',
+            'O organizador de menus foi refeito: uma linha por destino, com interruptor "Na barra / Em Mais" e setas alinhados.',
+            'Equipamentos: sumiram as linhas coladas nas listas (Equipamentos e Setores).'
+        ],
+        implementado: [
+            'Transições: trocar de aba só esmaece a tela nova, rápido, por cima da antiga; entrar e voltar de telas internas usa o empurrar do iOS. Os estilos Deslizar, Subir (folha) e Zoom também ficaram sem o fade lento. Com "Reduzir Movimento" ligado no aparelho, vira uma dissolução curta, como no iOS.',
+            'Quem tinha a escolha antiga passa a usar o estilo iPhone; é só escolher outro em Animações e Transições para trocar.',
+            'Espaçamento padrão entre blocos (cartões e listas) em qualquer tela, para telas novas não nascerem coladas. A varredura nas 32 telas não achou mais nenhum separador colado.',
+            'A pré-visualização da transição não interfere mais no resto do app (ela mantinha uma tela "ativa" falsa).',
+            'Textos longos dos seletores da dock foram encurtados, com a explicação em uma dica logo abaixo.',
+            'Botões do módulo de Equipamentos não quebram mais o texto em duas linhas.'
+        ],
+        mudou: [
+            'Visual e navegação da Personalização, transição entre telas e espaçamento geral; dados e regras não mudaram.',
+            'Arquivos alterados: index.html, style.css, js/01-nucleo-config-estado.js, js/02-layout-setup.js, js/06-exportar-pdf.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js e js/26-equipamentos.js.'
+        ],
+        testar: [
+            'Ajustes > Personalização: abrir cada submenu e voltar pela seta; o título e a volta devem fazer sentido.',
+            'Navegar entre telas (entrar em Ajustes, voltar, trocar de aba): o movimento deve ser o do iPhone, sem fade lento. Teste também Animações e Transições > Testar Agora com cada estilo.',
+            'Menus e Barra Inferior: ligar/desligar "Na barra" e mexer nas setas; as linhas devem ficar alinhadas.',
+            'Equipamentos: conferir as abas Equipamentos e Setores sem linhas coladas.',
+            'Se ainda sentir lentidão ao trocar tema/fonte, me diga em qual opção exatamente.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' },
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.3', nome: 'Equipamentos: estoque principal passa a se chamar Almoxarifado', status: 'concluida',
+        novidades: [
+            'O estoque principal do módulo de Equipamentos agora se chama "Almoxarifado" (antes "Estoque TI").',
+            'Todo equipamento cadastrado, inclusive o que vem de uma NF, entra direto no Almoxarifado; só vai para outro setor se você escolher em "Local atual".'
+        ],
+        implementado: [
+            'Nome do estoque principal trocado no módulo (cadastro, movimentações, devoluções, relatórios e lista de setores).',
+            'Migração automática ao carregar: itens, histórico e lista de setores que tinham "Estoque TI" passam a mostrar "Almoxarifado". Os dados no Firebase são atualizados na próxima gravação.',
+            'O Almoxarifado continua fixo: não pode ser renomeado nem excluído, porque o módulo depende dele como estoque principal. O código/CDC dele pode ser editado.'
+        ],
+        mudou: [
+            'Só o módulo de Equipamentos mudou.',
+            'Arquivos alterados: js/14-historico-mudancas.js e js/26-equipamentos.js.'
+        ],
+        testar: [
+            'Abrir Equipamentos > Setores: o primeiro deve ser "Almoxarifado", e os aparelhos que estavam no estoque devem aparecer nele.',
+            'Cadastrar um equipamento (ou usar "Cadastrar equipamento desta NF"): o "Local atual" deve vir como Almoxarifado.',
+            'Abrir o histórico de um aparelho antigo: onde constava "Estoque TI" deve constar "Almoxarifado".'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.2', nome: 'Equipamentos: leitor de código de barras reforçado', status: 'concluida',
+        novidades: [
+            'O leitor de código de barras foi refeito para ler melhor em etiquetas: câmera em alta resolução, mais formatos de código, leitura de código invertido e quadro de mira na tela.',
+            'Novo botão "Tirar foto do código": se a câmera ao vivo não ler, a foto tirada pela câmera do aparelho (com foco automático) é lida em seguida.',
+            'Lanterna (quando o aparelho permite), dicas na tela se demorar a ler e vibração ao ler.'
+        ],
+        implementado: [
+            'Leitura ao vivo: pede vídeo em até 1920×1080 (antes ficava na resolução padrão, baixa para código de barras de etiqueta), lê a imagem inteira e um recorte central (mais pixels por barra) em quadros alternados e também tenta o código invertido. Formatos: Code 128, Code 39, Code 93, EAN-13, EAN-8, UPC-A, UPC-E, ITF, Codabar, QR, Data Matrix, PDF417 e Aztec, com modo "tentar mais".',
+            'iPhone/iPad usam sempre a biblioteca ZXing (o leitor nativo do navegador não existe no Safari); Android/Chrome usa o leitor nativo quando disponível e cai para o ZXing se falhar.',
+            'Foto do código: lê a foto inteira, o recorte central e a imagem girada 90°, normal e invertida.',
+            'Se a biblioteca não baixar de um endereço, tenta outro; se a câmera for bloqueada ou não existir, a janela explica o que fazer e o campo de digitar continua funcionando. A câmera é liberada ao fechar a janela.'
+        ],
+        mudou: [
+            'Só o leitor de código de barras mudou; o resto do módulo de Equipamentos segue igual.',
+            'Arquivos alterados: js/14-historico-mudancas.js e js/26-equipamentos.js.'
+        ],
+        testar: [
+            'No cadastro ou na movimentação, tocar no ícone do código de barras e apontar a câmera para a etiqueta (boa luz, afastar ou aproximar até ficar nítido). Deve ler e preencher o campo.',
+            'Se não ler, usar "Tirar foto do código" com a etiqueta bem enquadrada.',
+            'Se mesmo assim não ler, me diga o aparelho (iPhone ou Android) e o tipo de código da etiqueta (barras ou QR) e, se possível, mande uma foto da etiqueta.'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.1', nome: 'Equipamentos: avisos na própria tela e abertura mais segura', status: 'concluida',
+        novidades: [
+            'A tela Equipamentos agora mostra, no topo, uma faixa explicando qualquer problema (módulo não carregado, Firebase sem permissão ou erro de conexão), em vez de ficar em branco.'
+        ],
+        implementado: [
+            'Faixa de status dentro da tela Equipamentos: se os arquivos do módulo não carregaram, ela avisa quais conferir; se o Firebase negar a leitura ou a gravação, avisa que é preciso liberar as coleções "equipamentos" e "equipamentosConfig" nas regras; qualquer outro erro mostra o código.',
+            'A tela passa a montar sozinha quando fica ativa (não depende mais só do gancho no switchToScreen) e um erro ao montar vira aviso na tela.'
+        ],
+        mudou: [
+            'Nada muda no uso normal; só aparecem avisos mais claros quando algo está errado.',
+            'Arquivos alterados: index.html, js/14-historico-mudancas.js e js/27-equipamentos-ponte.js.'
+        ],
+        testar: [
+            'Abrir Mais, Equipamentos: a faixa de aviso do topo deve sumir sozinha quando tudo carrega bem.',
+            'Se a faixa continuar aparecendo, me diga o texto exato que ela mostra.'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.5.0', nome: 'Gestão de Equipamentos', status: 'concluida',
+        novidades: [
+            'Nova tela Equipamentos: cadastro de aparelhos (patrimônio, série, marca, modelo e NF), movimentação (troca, entrega nova, extravio, transferência, manutenção e baixa), setores/CDC e rastro de cada aparelho.',
+            'Leitura de código de barras pela câmera e exportação em planilha, PDF e TXT, com filtros por tipo, período e "só novidades".',
+            'Ligação com o Controle de NFs: o número da NF no equipamento abre a nota, e no Editor da NF há o botão "Cadastrar equipamento desta NF".',
+            'A tela aparece em Mais; se quiser na barra inferior, use Personalização, "Na barra".'
+        ],
+        implementado: [
+            'Módulo Equipamentos (js/26) isolado do restante do app: a interface tem o próprio visual e usa as cores do tema atual (claro, escuro e os demais).',
+            'Persistência no Firebase: coleção "equipamentos" (um documento por aparelho) e "equipamentosConfig/setores". Só grava o que mudou e nunca grava antes de carregar com sucesso, para uma falha de leitura não apagar os setores.',
+            'NFs: a lista de notas sugerida no cadastro junta as NFs com XML e as que vieram só do ERP (sem duplicar). Abrir uma NF leva ao Editor da NF; o Editor ganhou o botão "Cadastrar equipamento desta NF", que abre o cadastro já com número, data, fornecedor e valor.',
+            'Backup: o backup completo passa a incluir os equipamentos e os setores (se o Firebase ainda não liberar a leitura, o backup sai como antes, sem eles).',
+            'O termo de responsabilidade e o de extravio/perda são assinados no papel: o app deixou de gerar o popup de termo ao registrar a movimentação. A movimentação continua registrada e identificada como entrega, troca ou extravio.'
+        ],
+        mudou: [
+            'Nova entrada "Equipamentos" no menu (começa em "Mais"). Quem já personalizou a barra continua com a barra como está.',
+            'É preciso liberar nas regras do Firestore as coleções "equipamentos" e "equipamentosConfig" para quem usa o app; sem isso aparece o aviso "O Firebase não liberou as coleções de equipamentos".',
+            'Arquivos alterados: index.html, js/01-nucleo-config-estado.js, js/05-listeners-dados.js, js/07-login-conta-backup.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js, js/20-editor-nf.js, js/24-novidades-versao.js e os arquivos novos js/26-equipamentos.js e js/27-equipamentos-ponte.js.'
+        ],
+        testar: [
+            'Abrir Mais, Equipamentos (ou puxar para a barra em Personalização). A tela deve abrir nos temas claro e escuro, e as janelas aparecem por cima da dock.',
+            'Cadastrar um equipamento (pode deixar campos em branco; patrimônio ou série repetidos devem ser barrados). Recarregar o app e conferir que continua lá.',
+            'Digitar o número de uma NF no cadastro: devem aparecer notas reais (com XML e só ERP). Tocar no número da NF no equipamento e usar "Abrir no Controle de NFs".',
+            'Abrir uma NF no Editor da NF e usar "Cadastrar equipamento desta NF".',
+            'Fazer uma troca, uma entrega nova e um extravio: não deve abrir popup de termo; o rastro do aparelho deve registrar o evento.',
+            'Exportar a relação de um setor (planilha, PDF e TXT) e as entregas e trocas.',
+            'Testar a câmera do código de barras no iPhone (precisa de HTTPS; se negar a permissão, o campo de digitar continua funcionando).',
+            'Se aparecer o aviso do Firebase, me diga: é preciso liberar as coleções nas regras de segurança.'
+        ],
+        testarLinks: [
+            { rotulo: 'Equipamentos', acao: 'equipamentos' }
+        ]
+    },
+    {
+        numero: '2.4.1', nome: 'Dock que só expande quando você vai trocar de aba e cartões com respiro', status: 'concluida',
+        novidades: [
+            'A dock agora fica recolhida (só os ícones) na maior parte do tempo e expande, com os nomes, quando você vai trocar de aba: ao tocar nela, ao trocar de tela ou ao rolar a página para cima com vontade. Sem interação, ela recolhe sozinha depois de alguns segundos; ao digitar num campo ela recolhe na hora.',
+            'Os cartões de Personalização e de Aprovações de Acesso não ficam mais colados uns nos outros.'
+        ],
+        implementado: [
+            'Dock: abre completa ao entrar no app e recolhe sozinha depois de cerca de 3 segundos sem mexer. Expande ao tocar na dock, ao trocar de tela e ao rolar para cima mais de uns 60 px seguidos; rolar para baixo ou digitar num campo de texto recolhe. Rolar um pouquinho para cima não expande. Campos de marcar, seletores e a barra de espessura da própria dock não contam como digitação.',
+            'A opção da Personalização foi renomeada para "Recolher a dock quando não estou trocando de aba" (padrão: sim). Com "Não", a dock fica sempre expandida, como antes. Continua respeitando "Reduzir Movimento" do aparelho.',
+            'Espaçamento de 14 px entre os cartões das telas Personalização e Aprovações de Acesso.'
+        ],
+        mudou: [
+            'Antes a dock só recolhia ao rolar para baixo e voltava ao rolar para cima; agora o padrão é recolhida, e ela expande por intenção (toque, troca de tela, rolagem para cima com vontade) e recolhe sozinha.',
+            'Arquivos alterados: index.html, style.css, js/14-historico-mudancas.js e js/22-vidro-liquido.js.'
+        ],
+        testar: [
+            'Abrir o app e não mexer: a dock deve começar completa e recolher sozinha em cerca de 3 segundos.',
+            'Tocar na dock ou trocar de aba: ela expande com os nomes e recolhe de novo sem interação.',
+            'Numa lista longa: rolar para baixo recolhe; rolar para cima com vontade expande; um pequeno vaivém não deve expandir.',
+            'Tocar num campo de texto para digitar: a dock recolhe na hora.',
+            'Em Personalização: "Recolher a dock quando não estou trocando de aba" = Não deixa a dock sempre expandida. Conferir o espaço entre os cartões e em Aprovações de Acesso.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' },
+            { rotulo: 'Aprovações de Acesso', acao: 'aprovacoes' }
+        ]
+    },
+    {
+        numero: '2.4.0', nome: 'Personalização por usuário e criação de contas dentro do app', status: 'concluida',
+        novidades: [
+            'A personalização agora é individual: tema, fonte, ícones, menus, dock e as demais opções valem só para a sua conta e acompanham você em qualquer aparelho. A logo da instituição continua sendo a mesma para todos.',
+            'Quem tem acesso especial cria contas de e-mail e senha direto em Aprovações de Acesso, sem abrir o Firebase. A pessoa já entra aprovada e você continua conectado.'
+        ],
+        implementado: [
+            'Personalização por usuário: as opções de aparência são gravadas em config/prefs_{id da conta}. O que já estava salvo antes vira o padrão de quem ainda não personalizou, então ninguém perde o visual atual. A logo (usada nos PDFs e nos futuros relatórios de equipamentos) continua no documento compartilhado.',
+            'Se as regras do Firebase não liberarem o documento pessoal, o app avisa uma vez e volta a gravar para todos, como era antes, sem perder nenhuma opção.',
+            'Ao sair da conta, a aparência da conta anterior não é herdada pela próxima que entrar.',
+            'Criar conta: em Aprovações de Acesso há um bloco com e-mail, nome opcional e senha temporária (com botão "Gerar senha"). A conta é criada numa instância separada do Firebase para você não ser desconectado, e fica registrada na lista de acessos como aprovada.',
+            'Revogar acesso agora vale também para contas de e-mail e senha criadas no app (antes só valia para Google e telefone). Contas antigas, que não estão na lista, continuam entrando normalmente, e as contas com acesso especial nunca são bloqueadas.'
+        ],
+        mudou: [
+            'Quem já personalizou o visual continua vendo o mesmo; a partir de agora cada mudança fica só na própria conta.',
+            'A conta nova entra com a senha temporária e pode trocá-la em Conta, Alterar Senha.',
+            'Arquivos alterados: index.html, js/05-listeners-dados.js, js/07-login-conta-backup.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js, js/24-novidades-versao.js e o arquivo novo js/25-contas-admin.js.'
+        ],
+        testar: [
+            'Em Personalização: mudar o tema e a fonte e recarregar o app; as escolhas devem continuar. Se aparecer o aviso "o Firebase não liberou a personalização individual", me avise (é preciso liberar a coleção config nas regras).',
+            'Entrar com a conta de teste: ela deve começar com o visual padrão e, ao mudar o tema lá, a sua conta principal não pode mudar (e vice-versa).',
+            'Em Aprovações de Acesso: criar uma conta de verdade (use "Gerar senha"), entrar com ela em outra janela ou aparelho e conferir que você continua conectado na conta principal.',
+            'Revogar essa conta nova em Aprovações de Acesso e tentar entrar de novo: deve avisar que o acesso foi revogado. Depois, aprovar de novo.',
+            'Conferir que a logo da instituição é a mesma nas duas contas.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' },
+            { rotulo: 'Aprovações de Acesso', acao: 'aprovacoes' }
+        ]
+    },
+    {
+        numero: '2.3.4', nome: 'Troca de tema, fonte e opções sem engasgo (de verdade)', status: 'concluida',
+        novidades: [
+            'Trocar tema, fonte, estilo de ícones, densidade e as opções da dock agora é bem mais leve: o app não trava mais no momento da troca.'
+        ],
+        implementado: [
+            'Causa real do engasgo: cerca de 360 elementos do app têm animação de cor. Ao trocar o tema (ou outra opção de aparência), todos começavam a animar ao mesmo tempo e o navegador refazia o cálculo de estilo a cada quadro durante a animação. Em teste isso custava cerca de 4 vezes mais do que o necessário.',
+            'Agora, no instante da troca, as animações de transição são suspensas por uma fração de segundo e voltam logo depois. A troca fica direta (sem o esmaecer lento de cores) e as animações normais do app, da dock e das telas continuam como antes.',
+            'A correção vale para qualquer mudança de aparência: tema, ícones, fonte, densidade, ícones das abas, transição de telas e todas as opções da dock. Não afeta o carregamento inicial.'
+        ],
+        mudou: [
+            'Ao trocar de tema, as cores passam para o novo tema na hora, sem o esmaecimento suave de antes. As outras animações do app não mudaram.',
+            'Arquivos alterados: style.css, js/02-layout-setup.js e js/14-historico-mudancas.js.'
+        ],
+        testar: [
+            'Em Personalização: trocar o tema várias vezes (claro, escuro, Oceano…). A troca deve ser imediata. Esse é o teste principal.',
+            'Trocar a fonte, o estilo de ícones, a densidade e o movimento da dock: nenhuma deve travar. Se alguma ainda travar, me diga qual.',
+            'Navegar entre as abas e abrir menus: as animações normais devem continuar iguais.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.3.3', nome: 'Nomes da dock sem sobreposição e Personalização sem engasgos', status: 'concluida',
+        novidades: [
+            'Os nomes das abas da dock (Entrada de NF, Controle de NFs) agora quebram em duas linhas dentro da própria aba e não invadem mais a vizinha.',
+            'Personalização mais leve: trocar fonte, tema, movimento ou qualquer opção da dock não deve mais engasgar.'
+        ],
+        implementado: [
+            'Dock: rótulos longos passam a ocupar até 2 linhas dentro da largura da aba (cortam com reticências só se passarem disso). A fonte dos rótulos da dock ficou em 10 px.',
+            'Personalização, causa do engasgo: cada toque numa opção gravava a personalização inteira (inclusive a logo, em texto grande) e, quando a gravação voltava do servidor, o app refazia tudo: listas de fornecedores, apelidos e observações, o menu lateral, a barra inferior e a tela "Mais". Isso acontecia duas vezes por toque (eco local e confirmação do servidor).',
+            'Agora só vai para o banco o campo que mudou; quando a única novidade é a própria personalização, o app só reaplica a aparência e não refaz listas nem menus (menus e logo só são refeitos se de fato mudarem); atributos e variáveis do documento só são trocados se o valor mudou; e a espessura e a velocidade da dock ficam guardadas na própria barra, não no documento inteiro, o que também deixa o controle de espessura mais fluido.'
+        ],
+        mudou: [
+            'Se outro aparelho mudar a ordem dos menus, ela continua sendo aplicada aqui na hora.',
+            'Arquivos alterados: style.css, js/02-layout-setup.js, js/05-listeners-dados.js, js/08-fornecedores-logo.js, js/14-historico-mudancas.js e js/22-vidro-liquido.js.'
+        ],
+        testar: [
+            'Na dock, conferir se "Entrada de NF" e "Controle de NFs" aparecem em duas linhas, sem encostar nas abas vizinhas, no tema claro e no escuro.',
+            'Em Personalização: trocar fonte, tema, movimento da dock, velocidade e arrastar a espessura. A troca deve ser imediata, sem travar. Se ainda travar, me diga qual opção.',
+            'Conferir que a logo da instituição, a ordem dos menus e "Na barra" continuam funcionando (mudar, recarregar e ver se ficou salvo).'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização', acao: 'personalizacao' }
+        ]
+    },
+    {
+        numero: '2.3.2', nome: 'Dock de vidro líquido: troca de aba suave, mais contraste e opções na Personalização', status: 'concluida',
+        novidades: [
+            'A dock (barra inferior) ganhou o vidro líquido: desfoque, brilho fino nas bordas e rótulos com bem mais contraste, no tema claro e no escuro.',
+            'A troca de aba agora desliza de forma suave (sem mola e sem esticar) e já começa quando o dedo encosta. Dá para arrastar o dedo pela dock.',
+            'A dock encolhe ao rolar para baixo e volta ao tamanho normal ao subir ou ao tocar nela.',
+            'Em Configurações > Personalização, na seção "Dock", dá para ajustar estilo, espessura do vidro, velocidade, encolher ao rolar e o comportamento com "Reduzir Movimento".'
+        ],
+        implementado: [
+            'Vidro "regular" da Apple na dock: fundo desfocado, luminosidade ajustada (clareia no tema claro, escurece no escuro) e um véu da cor do tema para segurar o contraste. Rótulos em cor forte do tema; a aba ativa mistura a cor de destaque com a cor do texto. Pílula de seleção lisa, neutra e fina.',
+            'Troca de aba: a pílula desliza com curva suave (início e fim macios, sem ultrapassar o destino), em 0,5 s por padrão. Ela começa a mover quando o dedo encosta e acompanha se você arrastar pela dock; ao soltar, a aba sob o dedo fica ativa.',
+            'Dock compacta ao rolar para baixo: a dock encolhe e os rótulos somem; volta ao subir, ao trocar de tela ou ao tocar. Não encolhe com ícones desligados nem com a opção desativada.',
+            '"Reduzir Movimento" do aparelho: antes, a pílula trocava de lugar sem nenhuma animação quando o ajuste estava ligado. Agora ela troca com fusão suave (some e reaparece), e a dock não encolhe. A opção "Sempre animar" ignora o ajuste.',
+            'Personalização > Dock: estilo (vidro líquido ou clássico da 2.2.0), espessura do vidro (0 a 100%), velocidade (rápida, normal, lenta), encolher ao rolar e movimento reduzido. Tudo vem ligado por padrão e é guardado junto das demais opções de personalização.'
+        ],
+        mudou: [
+            'Se o seu iPhone está com "Reduzir Movimento" ligado (Ajustes > Acessibilidade > Movimento), a troca de aba é uma fusão e a dock não encolhe. Para ver o deslize, escolha "Sempre animar" na Personalização ou desligue o ajuste no iPhone.',
+            'O estilo Clássico mantém a dock da 2.2.0 como estava (a única mudança que vale para ele é a troca com fusão quando o movimento reduzido está ligado).',
+            'Arquivos alterados: index.html, style.css, js/02-layout-setup.js, js/14-historico-mudancas.js, js/22-vidro-liquido.js e js/24-novidades-versao.js.'
+        ],
+        testar: [
+            'Tocar nas abas da dock e ver se a pílula desliza de forma suave. Arrastar o dedo pela dock.',
+            'Rolar uma tela longa para baixo (dock encolhe) e para cima (volta). Conferir no tema claro e no escuro se os rótulos ficam fáceis de ler sobre conteúdo colorido.',
+            'Em Personalização > Dock: mudar a espessura, a velocidade, desligar o encolher e trocar para Clássico, vendo o efeito na hora.',
+            'Ler a frase de diagnóstico em "Se o aparelho estiver com Reduzir Movimento": ela diz se o ajuste está ligado no seu iPhone.'
+        ],
+        testarLinks: [
+            { rotulo: 'Personalização (Dock)', acao: 'personalizacao' },
+            { rotulo: 'Pedido 1726 (tela longa para rolar)', acao: 'pedido', arg: '1726' }
+        ]
+    },
+    {
+        numero: '2.3.1', nome: 'Editor da NF para NF que veio só do ERP e popup de novidades a cada versão', status: 'concluida',
+        novidades: [
+            'NFs que vieram só do relatório do ERP (sem XML) agora abrem no Editor da NF: pelo botão "Abrir editor da NF" no Controle de NFs e pelo "Abrir NF" do bloco amarelo de itens fora do pedido.',
+            'Dá para trocar o pedido dessas NFs. O app sugere o pedido pelos itens que o fornecedor ganhou ("Mover para o pedido X", sempre com confirmação) e há uma busca para escolher outro pedido.',
+            'Este aviso: a cada versão nova o app mostra as melhorias e atalhos para as telas a testar. Aparece uma vez por versão em cada aparelho.'
+        ],
+        implementado: [
+            'Editor da NF para NF só do ERP: mostra fornecedor, valor, emissão, 1º vencimento, pedido e os itens lançados, cada um conferido com a cotação do pedido (não está na cotação, ganho por outra empresa ou ganho por este fornecedor, reconhecendo empresas do mesmo grupo).',
+            'Troca de pedido para NF só do ERP: o aviso "Pedido possivelmente errado" (quando menos da metade dos itens está na cotação do pedido gravado e outro pedido tem pelo menos 75%) e a sugestão para NF sem pedido (pelo menos metade dos itens ganhos pelo fornecedor) usam os códigos dos itens do ERP. A confirmação grava o vínculo do ERP com o pedido escolhido e preenche as associações de SP Data que ficarem certas, como já acontecia.',
+            'Controle de NFs: o botão "Abrir editor da NF" passa a aparecer também nas NFs só do ERP. No bloco "itens fora do pedido" da Central do pedido, o "Abrir NF" passa a aparecer também para itens que vêm só do ERP.',
+            'Popup de novidades: ao abrir o app numa versão que você ainda não viu naquele aparelho, aparece uma janela com as melhorias e botões que levam direto às telas a testar. Botões "Entendi" e "Ver histórico completo". O conteúdo vem da entrada mais recente deste histórico (campos novidades e testarLinks).'
+        ],
+        mudou: [
+            'Caso real: a NF 387951 da SOMA MG estava vinculada ao pedido 1726 (22/09) apesar de ser de 10/09 e de seus três itens terem sido ganhos pela SOMA MG no pedido 1713. O vínculo antigo foi gravado pela regra de antes da 2.0.8 (primeiro pedido com qualquer item em comum) e nunca foi reavaliado por não haver XML. Agora o Editor da NF dessa entrada oferece "Mover para o pedido 1713".',
+            'Valores, vencimento e associação item a item continuam disponíveis só para NF com XML processado: para essas NFs só do ERP, processe o XML na Entrada de NF.',
+            'Nada é alterado sozinho: o vínculo com o pedido só muda quando você confirma.',
+            'Arquivos novos: js/24-novidades-versao.js. Arquivos alterados: index.html, style.css, js/14-historico-mudancas.js, js/17-historico-controle-nfs.js, js/20-editor-nf.js e js/23-conferencia-automatica.js.'
+        ],
+        testar: [
+            'Ao recarregar o app com os arquivos novos, deve aparecer o popup "Versão 2.3.1". Toque em "Entendi" e recarregue: ele não deve voltar.',
+            'Controle de NFs: procurar a NF 387951 (SOMA MG), tocar em "Abrir editor da NF" e conferir o aviso de pedido possivelmente errado com o botão "Mover para o pedido 1713". Conferir os itens e, se concordar, confirmar a mudança; depois abrir o pedido 1726 e ver que o aviso dessa NF saiu.',
+            'Repetir a conferência com as outras NFs apontadas na 2.3.0 (BMG 30484 no 1653, SUTURMEDIC 20646 no 1698, DUO MED 1536 no 1700) e me dizer o que era real.'
+        ],
+        testarLinks: [
+            { rotulo: 'Abrir a NF 387951 (SOMA MG)', acao: 'nf-erp', arg: '387951_1' },
+            { rotulo: 'Controle de NFs', acao: 'controle-nfs' },
+            { rotulo: 'Pedido 1726', acao: 'pedido', arg: '1726' },
+            { rotulo: 'Pedido 1713', acao: 'pedido', arg: '1713' }
+        ]
+    },
+    {
+        numero: '2.3.0', nome: 'Conferência automática: NF repetida no Adicionar, NF sem pedido e itens fora do pedido', status: 'concluida',
+        implementado: [
+            'Adicionar: ao digitar o número da NF, o app avisa na hora se ela já existe (XML processado ou só no relatório do ERP), mostrando o fornecedor e o pedido, com botão para abrir a NF. Zeros à esquerda não escondem a NF. Se você já digitou o fornecedor e ele for outro, o aviso some (o número pode se repetir entre fornecedores). O aviso aparece junto das sugestões do histórico que já existiam.',
+            'NF sem pedido: o Editor da NF e o card do Histórico passam a apontar "NF sem pedido". O app sugere o pedido pelos nomes dos itens do XML, só entre os itens que o fornecedor ganhou em cada cotação (medido nas 56 NFs que já têm pedido: nenhuma sugestão errada) e oferece "Vincular ao pedido X". Há também "Marcar como compra direta" para o que não tem cotação. NFs já marcadas como compra direta não são apontadas.',
+            'Itens fora do pedido: na Central do pedido aparece um bloco no topo, e o Editor da NF mostra um cartão, quando um item faturado ou lançado não está na cotação do pedido, ou foi ganho por outra empresa. Vale para NFs com XML e para entradas do ERP sem XML.',
+            'Reconhece empresas do mesmo grupo: mesma raiz de CNPJ, CNPJs do mesmo fornecedor no SP Data, ou a mesma primeira palavra do nome (SOMA SP e SOMA MG). Nos seus dados isso eliminou 13 alarmes falsos de itens da SOMA SP que a SOMA MG ganhou.'
+        ],
+        mudou: [
+            'Nos seus dados de 10/10 o bloco "itens fora do pedido" aponta 10 itens: NF 30484 da BMG no pedido 1653 (4 itens), NF 20646 da SUTURMEDIC no 1698 (2), NF 1536 da DUO MED no 1700 (1) e NF 387951 da SOMA MG no 1726 (3). Em geral indicam NF ligada ao pedido errado; abra a NF (ou, para as só do ERP, o Controle de NFs) e confira. A NF 33669 (MINAS SUL) está sem pedido e sem compra direta; nenhuma cotação combina com ela, então provavelmente é compra direta.',
+            'Os avisos só informam: nada é alterado sozinho. Mover pedido, vincular e marcar compra direta pedem confirmação.',
+            'Fica de fora: gerar auditoria direto a partir de um item fora do pedido (hoje o caminho é abrir a NF e conferir o pedido).',
+            'Arquivos novos: js/23-conferencia-automatica.js. Arquivos alterados: index.html, style.css, js/03-dados-notas.js, js/09-anotacoes.js, js/14-historico-mudancas.js, js/17-historico-controle-nfs.js e js/20-editor-nf.js.'
+        ],
+        testar: ['Em Adicionar, digitar 30921 no campo NF: deve aparecer o aviso "Esta NF já existe no app" com o botão Abrir NF. Abrir o pedido 1726 em Cotações e ver o bloco amarelo no topo. Abrir a NF 33669 no Editor da NF e conferir o alerta "NF sem pedido".']
+    },
+    {
+        numero: '2.2.1', nome: 'Ícone do app, instalação na tela de início e textos mais claros', status: 'concluida',
+        implementado: [
+            'Ícone novo do app, desenhado nas orientações da Apple: um conceito só (a nota fiscal com o selo de conferido), figura centralizada, fundo em gradiente azul sem transparência, camadas sobrepostas e nenhum texto. Fica legível até no tamanho pequeno. Está na pasta icones/, nos tamanhos 180 (iPhone), 192 e 512 px.',
+            'Instalação na tela de início: o app ganhou o manifesto (manifest.webmanifest) e os metadados de cor e barra de status. Ao adicionar à tela de início no Safari, abre em tela cheia, sem a barra do navegador, com o ícone e o nome "Minhas Notas".',
+            'Textos: as mensagens "Arquivo carregado! Clique em ..." viraram "Arquivo carregado. Use o botão ...", que serve para toque e para mouse. Estados vazios passaram a dizer o próximo passo: Gerenciar (nenhuma nota na relação), Controle de NFs (nada em aberto, nenhuma NF arquivada) e Cotações, com botão de atalho onde cabe.'
+        ],
+        mudou: [
+            'O ícone da tela de início do iPhone é guardado em cache: para ver o novo, remova o app da tela de início e adicione de novo pelo Safari.',
+            'Os ícones da interface continuam em um estilo só (Font Awesome sólido); o estilo dos ícones do dock segue sendo uma opção em Personalização.',
+            'Não mexi no tamanho de texto que acompanha o ajuste do iPhone (Dynamic Type): o app usa tamanhos fixos em px em quase todas as telas, e a troca é grande e arriscada para o ganho. Fica como possibilidade futura.',
+            'Arquivos novos: manifest.webmanifest e a pasta icones/. Arquivos alterados: index.html, js/05-listeners-dados.js, js/13-relatorios-divergencias.js, js/14-historico-mudancas.js, js/15-ganhadores-cotacoes.js, js/17-historico-controle-nfs.js, js/18-erp-fornecedores-spdata.js e js/19-erp-reconciliacao.js.'
+        ],
+        testar: ['Colocar a pasta icones/ e o manifest.webmanifest junto do index.html. No Safari do iPhone: Compartilhar > Adicionar à Tela de Início e abrir pelo ícone novo. Conferir os estados vazios em Gerenciar (aba Relação) e em Controle de NFs (aba Em aberto, com as listas vazias).']
+    },
+    {
+        numero: '2.2.0', nome: 'Linguagem Apple: Liquid Glass no dock e no cabeçalho, movimento com mola e tipografia do sistema', status: 'concluida',
+        implementado: [
+            'Dock em vidro líquido (telas estreitas): vira uma cápsula flutuante, com desfoque, borda de luz e sombra, e o conteúdo das telas rola por baixo dela. Uma pílula translúcida desliza até a aba ativa com movimento de mola, e o dock rola sozinho para manter a aba ativa à vista. No computador continua o menu lateral.',
+            'Cabeçalho em vidro: o conteúdo rola por baixo do título e, quando isso acontece, aparece uma linha fina de separação. As telas passam a começar logo abaixo do cabeçalho e terminam acima do dock, sem nada escondido.',
+            'Seguindo as diretrizes da Apple, o vidro fica só na camada de navegação (dock, cabeçalho e confirmações). Os cards e listas continuam opacos, para a leitura não depender do que passa por trás.',
+            'Alertas e confirmações usam vidro mais opaco, para manter a leitura; o toque nos botões ganhou resposta curta de mola.',
+            'Fonte do sistema primeiro: no iPhone e no Mac o app passa a usar a SF Pro, a fonte da Apple (Inter continua como reserva em outros aparelhos). Rótulos que estavam em 10 px subiram para 11 px, o mínimo recomendado.',
+            'Acessibilidade: com "Reduzir transparência" ou "Aumentar contraste" ligados no aparelho, o vidro vira cor sólida e as bordas ficam mais fortes; com "Reduzir movimento", as animações de mola são desligadas. Sem suporte a desfoque o app também usa cor sólida.'
+        ],
+        mudou: [
+            'O dock e o cabeçalho deixam de ocupar espaço próprio: o conteúdo passa por baixo deles. Se alguma tela tiver algo escondido atrás do cabeçalho ou do dock, me diga qual.',
+            'Fica para as próximas versões: ícone do app e instalação na tela de início, ícones em um único estilo, padronização dos textos (por exemplo "Toque" em vez de "Clique") e tamanho de texto que acompanha o ajuste do iPhone.',
+            'Arquivos alterados: index.html, style.css, js/14-historico-mudancas.js e o novo js/22-vidro-liquido.js.'
+        ],
+        testar: ['No iPhone, abrir o app e rolar uma lista: o conteúdo deve passar por baixo do título e do dock. Trocar de aba e ver a pílula deslizar. Conferir o tema escuro e, em Ajustes > Acessibilidade, "Reduzir transparência" e "Reduzir movimento".']
+    },
+    {
+        numero: '2.1.4', nome: 'Card do fornecedor no padrão do Gerenciar NF', status: 'concluida',
+        implementado: [
+            'Card do fornecedor na Central do pedido refeito no estilo do card do Gerenciar NF: fundo branco para se destacar do fundo da tela, cantos arredondados e sombra leve, e seções separadas por divisórias (identificação, entrega e ações, detalhes).',
+            'Barra colorida da lateral agora cobre a altura inteira do card, inclusive quando ele está expandido: verde (entregue e sem divergência em aberto), vermelha (divergência ou auditoria em aberto) ou amarela (em andamento). Antes ela cobria só o cabeçalho.',
+            'Cabeçalho organizado em linhas: nome do fornecedor, CNPJ e resumo (itens e divergências em aberto), com a seta de expandir à direita. A palavra "entrega completa" saiu do resumo do topo porque o selo de entrega já aparece logo abaixo.',
+            'Botões ("Desfazer marca manual"/"Marcar como já chegou", "Abrir NF" e "Associar NF do histórico") passaram a usar os mesmos chips do Gerenciar NF, alinhados à esquerda com espaçamento igual. O espaçamento aleatório vinha de uma regra antiga do botão que o empurrava para a borda.',
+            'Correção de tamanho de fonte no iPhone: nomes de fornecedor que quebravam em duas linhas apareciam maiores que os outros, porque o Safari aumentava o texto sozinho. Foi desligado esse ajuste automático.'
+        ],
+        mudou: [
+            'Só aparência: nenhuma regra de entrega, divergência ou associação mudou.',
+            'Arquivos alterados: style.css, js/09-anotacoes.js, js/11-central-pedido.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Cotações > pedido 1726: conferir os cards dos fornecedores (fundo branco, barra colorida inteira, botões alinhados) e expandir a SUPERMED para ver detalhes e itens. Conferir também no tema escuro, se usar.']
+    },
+    {
+        numero: '2.1.3', nome: 'Seletor só com os itens do fornecedor, sugestão pelo nome do XML e card do fornecedor com ações à vista', status: 'concluida',
+        implementado: [
+            'Editor da NF: o seletor do item da cotação agora lista só os itens que aquele fornecedor ganhou (antes, quando o CNPJ da NF não batia, caía na cotação inteira). Para achar o fornecedor vale o CNPJ cadastrado, os CNPJs do mesmo fornecedor no SP Data e a raiz do CNPJ (matriz e filiais). O botão "Mostrar itens de outros fornecedores" amplia a lista quando precisar. O mesmo critério de raiz do CNPJ passou a valer na Entrada de NF.',
+            'Sugestão pelo nome do item do XML, como já existe para o SP Data: ao abrir a lista (Editor da NF e Entrada de NF) as sugestões vêm no topo. Primeiro a regra estrita que o app já usava; se ela não achar nada, uma regra por parecença (números pesam mais, aceita abreviações como CIL = CILIND), só dentro dos itens do fornecedor, no máximo 3 e identificados como "Parecidos pelo nome — confira". No Editor, quando só há sugestão estrita e o item ainda não tem associação, aparecem botões "Usar: ...".',
+            'Medido no seu histórico real (398 itens já associados): a regra estrita sugeriu em 167 itens e acertou 99%; com a parecença o app sugere em 287 itens e o item certo estava entre as sugestões em 99% deles (71% de todos os itens, contra 49% antes). Marca contra princípio ativo (ex.: CINETOL, FENTANEST) continua sem sugestão, porque o nome do XML não traz o princípio.',
+            'Card do fornecedor na Central do pedido: o selo de entrega e os botões ("Marcar como já chegou" / "Desfazer marca manual", "Abrir NF" e "Associar NF do histórico") ficaram fora da parte que expande, sempre visíveis, no mesmo modelo do Gerenciar NF. Dentro do card, ao expandir, ficam os detalhes da entrega, os itens (cada um recolhido) e as divergências. O painel de busca da NF abre logo abaixo dos botões.',
+            'O seletor ganhou grupos na lista ("Sugestões pelo nome do item", "Todos os itens", "Outras opções"), com a compra direta sempre no fim.'
+        ],
+        mudou: [
+            'Para NFs cuja empresa não ganhou nenhum item no pedido (ex.: SOMA SP quando quem ganhou foi a SOMA MG) a lista fica sem itens e mostra o aviso com o botão para ver os de outros fornecedores.',
+            'As sugestões nunca são escolhidas sozinhas: sempre dependem do seu toque.',
+            'Arquivos alterados: style.css, js/09-anotacoes.js, js/10-entrada-nf-xml.js, js/11-central-pedido.js, js/14-historico-mudancas.js, js/20-editor-nf.js e js/21-seletor-busca.js.'
+        ],
+        testar: ['Controle de NFs > NF da BIOLINE (pedido 1733) > Abrir editor da NF > tocar em um item > seletor do item da cotação: deve listar só os 10 itens da BIOLINE, com sugestões no topo. Cotações > pedido 1733: conferir o card do fornecedor com os botões visíveis e os itens/divergências ao expandir. Entrada de NF: abrir a lista de associação e ver as sugestões no topo.']
+    },
+    {
+        numero: '2.1.2', nome: 'Seletor único com busca e Editor da NF reorganizado', status: 'concluida',
+        implementado: [
+            'Novo seletor único para o app todo: um campo só. Ao tocar nele abre a lista completa logo abaixo e, a cada letra digitada, a lista filtra na hora (sem precisar apertar Enter e sem o segundo campo/caixa nativa do celular). Ignora acentos, aceita várias palavras e mostra o item atual destacado. O Enter escolhe o melhor resultado digitado, nunca a opção especial.',
+            'Entrada de NF: a associação do item com a cotação passou a usar o seletor único (a lista nativa foi retirada). A opção "Sem cotação do SmartCompras (compra direta)" continua lá, destacada e no fim da lista quando você digita.',
+            'Editor da NF: associação com a cotação, produto SP Data e "mover para outro pedido" usam o mesmo seletor, sem os botões soltos "Buscar", "Associar" e "Mover". Escolher já abre a confirmação.',
+            'Editor da NF, cabeçalho: número e série, fornecedor e CNPJ, valor total em destaque, quadro com emissão, 1º vencimento e pedido, selos de situação e botões de ação, cada coisa em seu bloco.',
+            'Editor da NF, área que expande: três seções com título (Item da cotação, Produto SP Data, Fator de conversão), cada uma mostrando o valor atual numa caixa e o campo logo abaixo, com campos e botões no padrão visual do app. O item aberto continua aberto depois de uma edição, e a tela não é redesenhada enquanto você digita.',
+            'As listas de SP Data da Central do pedido ganharam a mesma aparência do seletor.'
+        ],
+        mudou: [
+            'Correção de um erro da 2.0.7: a busca de SP Data do Editor da NF chamava uma função que não devolve lista (ela só filtra a tela de SP Data), então a busca não funcionava. Agora usa a mesma busca da Central.',
+            'Ficou de fora desta versão: os seletores de fornecedor da tela de importação do ERP (vincular fornecedor) e o seletor de cotação adicional, que continuam como estavam.',
+            'Arquivos alterados: index.html, style.css, js/10-entrada-nf-xml.js, js/11-central-pedido.js, js/14-historico-mudancas.js, js/20-editor-nf.js e o novo js/21-seletor-busca.js.'
+        ],
+        testar: ['Entrada de NF: abrir um item, tocar em "Corrigir" a associação e digitar parte do nome ou código: a lista deve filtrar na hora. Editor da NF (pelo Controle de NFs): conferir o cabeçalho e, ao tocar em um item, as 3 seções; trocar o SP Data digitando o nome, e o pedido pelo campo "Mover esta NF para outro pedido".']
+    },
+    {
+        numero: '2.1.1', nome: 'Aba Itens do Editor da NF no formato de DANFE', status: 'concluida',
+        implementado: [
+            'A aba Itens virou uma tabela como a da nota fiscal: código, descrição (com lote, validade e fabricação), NCM, CFOP, unidade, quantidade, valor unitário e valor total, com os valores do XML. Abaixo da tabela aparece o total dos produtos do XML.',
+            'Cada item abre ao tocar na linha: associação com a cotação, SP Data, fator de conversão e a conferência com o ERP ficam ali, sem poluir a tabela.',
+            'Quando o fator é diferente de 1, a linha mostra a quantidade que entra no estoque.'
+        ],
+        mudou: [
+            'Os controles não mudaram de função: associar, buscar SP Data e aplicar fator continuam gravando do mesmo jeito.',
+            'Em NFs antigas, sem XML completo, a tabela usa os valores salvos (já convertidos pelo fator) e não mostra NCM, CFOP nem o total do XML.',
+            'Arquivos alterados: js/20-editor-nf.js, style.css e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir uma NF do Controle de NFs e conferir a aba Itens: colunas, valores, lote e validade. Tocar em um item para abrir a associação e o fator, e tocar de novo para recolher.']
+    },
+    {
+        numero: '2.1.0', nome: 'Editor da NF completo: todos os dados do XML, em abas, e acesso a partir do Controle de NFs', status: 'concluida',
+        implementado: [
+            'Ao salvar uma NF, o app passa a guardar o XML completo junto dela: cabeçalho (chave, natureza, modelo, tipo, datas), emitente e destinatário com endereço, totais e tributos, transportadora, duplicatas e pagamentos, impostos de cada item (ICMS, IPI, PIS, COFINS), NCM, CFOP, CEST, EAN, unidade e quantidades do XML, lote e validade, e o texto original do XML.',
+            'O Editor da NF ganhou o mesmo padrão de abas da Entrada de NF: Itens (divergências da NF, associação com a cotação, SP Data, fator, lote e validade, dados fiscais de cada item), Financeiro (duplicatas, pagamento, totais e a situação na relação/ERP), Fiscal (tributos da nota e por item), Emitente/Dest. (endereços), Transporte e XML (chave, informações complementares e o XML original para ler).',
+            'O card de cada NF no Controle de NFs ganhou o botão "Abrir editor da NF", então o editor fica acessível a partir do Controle sem passar pela cotação ou pelo Histórico.'
+        ],
+        mudou: [
+            'NFs processadas antes desta versão não têm o XML completo guardado: o editor mostra um aviso nas abas que dependem dele, e para completar basta reprocessar o XML na Entrada de NF. Itens, pedido, fator, associações e divergências já funcionam nessas NFs.',
+            'O XML original é guardado dentro da NF (até cerca de 500 KB; acima disso fica sem o texto e os demais dados são guardados).',
+            'Arquivos alterados: js/10-entrada-nf-xml.js, js/11-central-pedido.js, js/14-historico-mudancas.js, js/17-historico-controle-nfs.js e js/20-editor-nf.js.'
+        ],
+        testar: ['Processar um XML novo na Entrada de NF e salvar. No Controle de NFs, abrir o card dessa NF e tocar em "Abrir editor da NF": conferir as abas Financeiro (vencimento e parcelas), Fiscal (impostos), Emitente/Dest., Transporte e XML. Em NF antiga, conferir o aviso e que Itens continua funcionando. Confirmar que lote e validade aparecem em cada item.']
+    },
+    {
+        numero: '2.0.9', nome: 'Resolvido em um lugar só: a auditoria manda e o cabeçalho do fornecedor mostra o estado por cor', status: 'concluida',
+        implementado: [
+            'Antes havia dois núcleos: o "Marcar como resolvido" do item (comparação) e o status da auditoria (Anotações). Agora, quando uma auditoria do pedido cobre o item, o status dela decide: resolvida ou encerrada = item resolvido; pendente = item aberto. Não é preciso marcar de novo.',
+            'A auditoria é ligada ao item pelo nome do produto (mesmos três primeiros termos, ex.: "NIMESULIDA 100MG" ↔ "NIMESULIDA 100MG COMP") e pelo fornecedor, quando a auditoria tem CNPJ. As de "não foi faturado" (sem CNPJ) são ligadas só pelo nome, dentro do mesmo pedido.',
+            'Nos itens com auditoria ligada, some o botão "Marcar como resolvido" e aparece "✓ Tratado na auditoria" ou "Em aberto na auditoria", com o status de cada uma. Itens sem auditoria continuam com o botão manual, como antes.',
+            'Cabeçalho do fornecedor na Central do pedido: borda verde (entregue e sem divergência em aberto), vermelha (divergência em aberto ou auditoria pendente) ou amarela (entrega em andamento). A legenda está em negrito e colorida: "✓ entrega completa", "N com divergência em aberto", "N auditoria(s) pendente(s)".',
+            'O contador "com divergência" conta só o que ainda está em aberto; os resolvidos saem da contagem.'
+        ],
+        mudou: [
+            'Um item que tinha "Marcar como resolvido" manual e que também tem auditoria ligada passa a seguir a auditoria. Se a auditoria estiver pendente, o item aparece aberto mesmo que tenha sido marcado à mão antes: resolva a auditoria (Alterar status) e o item fecha sozinho.',
+            'Arquivos alterados: js/09-anotacoes.js, js/11-central-pedido.js, js/14-historico-mudancas.js e style.css.'
+        ],
+        testar: ['Pedido 1713: a NIMESULIDA deve aparecer resolvida sem clicar em nada, e o fornecedor NIMESULIDA/CMP sem a legenda "com divergência em aberto". Pedido 1726: a SONDA NASOG (auditoria pendente) segue aberta até você alterar o status na auditoria; conferir as cores dos cards de fornecedor.']
+    },
+    {
+        numero: '2.0.8', nome: 'Causa das divergências fantasma: NF do ERP vinculada ao pedido errado', status: 'concluida',
+        implementado: [
+            'Causa encontrada: ao importar o relatório do ERP, para uma NF que já tinha XML no app o pedido era escolhido como "a primeira cotação (a mais recente) que tivesse qualquer item em comum" — e não o pedido gravado na própria NF. Era comum cair no pedido errado (nos dados reais, 9 NFs: ex. a NF 390653 da SOMA SP estava no pedido 1726 e a entrada do ERP foi vinculada ao 1731), e daí vinham as divergências "fantasma" de quantidade e valor. Agora o pedido vem da NF; sem NF, vale a cotação que cobre MAIS itens associados.',
+            'Comparações, entregas por fornecedor e "Associar NF do histórico" passam a usar o pedido da NF para as entradas do ERP que têm XML no app (pedido efetivo), mesmo que o vínculo gravado esteja antigo.',
+            'Correção automática dos dados: uma vez por sessão, os vínculos do ERP cujo pedido difere do pedido da NF/XML são regravados com o pedido da NF (o pedido anterior fica guardado em pedidoAnterior). Aparece um aviso com a quantidade corrigida.',
+            'Pedido possivelmente errado: se uma NF foi gravada num pedido onde menos da metade dos itens está na cotação e outro pedido tem pelo menos 75% dos itens, o app avisa no Editor da NF, no card do Histórico e no bloco do fornecedor da Central do pedido, com o botão "Mover para o pedido X" (um toque). Se mais de um pedido encaixar igualmente, mostra as opções.',
+            'No Editor da NF há também "Trocar pedido" (lista de pedidos) para mover a NF para qualquer pedido. Mover grava a NF e o vínculo da entrada do ERP, e as comparações passam a usar o pedido novo.'
+        ],
+        mudou: [
+            'Mover uma NF de pedido não altera auditorias que já foram geradas para o pedido antigo, nem associações de SP Data que o preenchimento automático (Fase 8) possa ter criado a partir do pedido errado: se alguma associação parecer estranha, corrija no Editor da NF.',
+            'Divergências NF×ERP que continuam aparecendo nos seus dados (ex.: papel SMS NF 947054, 400 na NF contra 300 no ERP; metaraminol NF 35925, 50 contra 48) são diferenças reais entre NF e lançamento, e merecem conferência.',
+            'Arquivos alterados: js/11-central-pedido.js, js/17-historico-controle-nfs.js, js/19-erp-reconciliacao.js, js/20-editor-nf.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir o app e esperar uns segundos: deve aparecer o aviso "9 vínculo(s) do ERP alinhado(s) ao pedido da NF" (só na primeira vez). Conferir o pedido 1731 (a NF 390653 não deve mais aparecer lá) e o pedido 1726 (NF 390653 no lugar certo). No Editor de qualquer NF, ver o seletor "Trocar pedido".']
+    },
+    {
+        numero: '2.0.7', nome: 'Editor da NF, link único da NF na cotação e fim das NFs repetidas no Histórico', status: 'concluida',
+        implementado: [
+            'Editor da NF (tela nova): cabeçalho com fornecedor, CNPJ, número/série, emissão, valor, vencimento, pedido e situação (XML, ERP e nota), mais os dados de pagamento/ERP e as divergências SÓ daquela NF (antes aparecia a auditoria do pedido inteiro). Cada item mostra o fator, a quantidade convertida, o valor unitário e a conferência com o ERP.',
+            'No Editor, cada item permite trocar a associação com a cotação (só itens do fornecedor da NF), trocar o produto SP Data (busca por nome ou código) e aplicar qualquer fator de conversão. Tudo é gravado na própria NF salva e na memória de associações (fornecedor e SP Data), então Histórico, Controle, Cotações e Central do pedido mostram o mesmo dado, com a NF recebida, na relação ou arquivada.',
+            'Cotação / Central do pedido: o botão "Abrir NF" agora aparece uma vez só, no topo do bloco de cada fornecedor (sempre visível, sem abrir item), e abre o Editor da NF. Saiu a repetição do botão em cada item. O "voltar" do Editor leva de volta à tela de onde você veio.',
+            'Histórico de NFs: o registro simples arquivado da mesma NF deixou de aparecer como segunda linha; entra dentro do card da NF ("Nota de pagamento arquivada em..."). Casa pela ligação gravada (nfChave/erpChave) ou, sem ela, pelo número da NF com o fornecedor confirmando; a mesma nota arquivada duas vezes também entra na mesma NF. O card tem o botão "Abrir editor da NF".',
+            'Controle de NFs: o mesmo agrupamento vale para NFs arquivadas, não só para as recebidas.'
+        ],
+        mudou: [
+            'Com os seus dados reais (exportação de 10/10): 110 registros repetidos do Histórico viraram parte da NF correspondente, a divergência "lançado 70" da ENOXAPARINA 80MG (NF 156906) não existe mais (eram 30 da NF + 40 de outra NF, da SOMA SP, no mesmo pedido) e o pedido 1731 ficou sem divergências indevidas.',
+            'O campo "Fator" e os botões de correção que estavam no card do Histórico (2.0.6) foram para o Editor da NF.',
+            'Linhas que continuam separadas de propósito: notas arquivadas com valor diferente do da NF (ex.: uma nota que juntou duas NFs) e notas arquivadas de fornecedores diferentes com o mesmo número.',
+            'Arquivos alterados: index.html, js/01-nucleo-config-estado.js, js/05-listeners-dados.js, js/11-central-pedido.js, js/17-historico-controle-nfs.js, js/14-historico-mudancas.js e o novo js/20-editor-nf.js.'
+        ],
+        testar: ['Em Cotações > pedido 1735 > BMG: tocar em "Abrir NF 30921" e conferir o cabeçalho, as divergências só dessa NF e os itens. No Editor, testar "Aplicar fator", "Associar" e a busca de SP Data (cada uma pede confirmação). Depois, no Histórico, buscar 31335: deve aparecer uma linha só.']
+    },
+    {
+        numero: '2.0.6', nome: 'Exportar dados para diagnóstico, link da NF em toda cotação e fator de conversão livre', status: 'concluida',
+        implementado: [
+            'Backup dos Dados: novo botão "Exportar dados para diagnóstico (JSON)". Gera um único arquivo com TODAS as coleções do app (notas, histórico, anotações, exceções de conversão, cotações, produtos e associações do SP Data, associações de fornecedor, entradas do ERP, fornecedores, NFs processadas e fornecedores ganhadores) mais as configurações, com contagem por coleção. Só lê os dados; não altera nada.',
+            'Central do pedido: todo item que tem NF por XML agora mostra "Abrir NF nnnnn", não só os itens com divergência. Cada fornecedor também ganha, no topo do bloco, a lista das NFs por XML do pedido.',
+            'Histórico de NFs (card da NF): em cada item há o campo "Fator" com o botão "Aplicar fator", para colocar qualquer fator de conversão (ex.: 1, 10, 0,5) sem precisar subir o XML de novo. O app mostra o antes e depois da quantidade e do valor unitário e pede confirmação; o total da NF não muda.',
+            'O fator aplicado fica lembrado para as próximas NFs do mesmo produto e fornecedor (mesma memória usada pela Entrada de NF).'
+        ],
+        mudou: [
+            'A memória do fator usa o código do produto do fornecedor; se o XML tinha código de barras real, a Entrada de NF pode usar outra chave e não aproveitar a memória (a NF salva é corrigida normalmente).',
+            'Arquivos alterados: index.html, js/07-login-conta-backup.js, js/11-central-pedido.js, js/17-historico-controle-nfs.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Em Backup dos Dados, tocar em "Exportar dados para diagnóstico" e conferir que o arquivo é baixado e que o resumo mostra as contagens. Abrir uma cotação com NF por XML (sem divergência) e ver o "Abrir NF". No Histórico, em um item de NF, aplicar um fator e conferir quantidade e valor.']
+    },
+    {
+        numero: '2.0.5', nome: 'Fim das divergências fantasmas do ERP e da NF duplicada: o número da NF manda', status: 'concluida',
+        implementado: [
+            'Divergência fantasma "faturado × lançado no ERP": a comparação somava as entradas do ERP de TODAS as NFs do pedido e comparava com a NF do app (ex.: NF de 30 un. contra 70 lançadas, sendo 40 de outra NF do mesmo pedido). Agora, quando o item tem NF no app, só conta o ERP da mesma NF (mesmo número), e a mesma NF importada duas vezes no ERP vale uma vez só. Se o ERP da própria NF tiver mesmo uma quantidade diferente, a divergência continua aparecendo.',
+            'Uma regra única para juntar NF de XML, NF do relatório do ERP e nota digitada em "Adicionar": mesmo número (sem zeros à esquerda, série ignorada) é a mesma NF. O fornecedor só confirma: nota e NF de fornecedores diferentes com o mesmo número só ficam separadas se o CNPJ, o nome e o valor divergirem (nome cortado pelo ERP, apelido e razão social contam como o mesmo fornecedor).',
+            'Controle de NFs: a nota digitada em "Adicionar" (pendente ou já arquivada) passa a se juntar sozinha à NF "Recebida" de mesmo número, em vez de aparecer em duas linhas. ERP importado duas vezes com séries diferentes vira uma linha só.',
+            'Histórico de NFs: passa a usar o mesmo pareamento do Controle, então XML e ERP da mesma NF não aparecem mais separados na busca pelo número.'
+        ],
+        mudou: [
+            'Nada é apagado ou alterado no banco: as linhas repetidas são só agrupadas na tela (os registros extras continuam guardados). A ligação nota ↔ NF feita pela tela vale enquanto a nota estiver pendente ou arquivada com o mesmo número.',
+            'Arquivos alterados: js/11-central-pedido.js, js/17-historico-controle-nfs.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir a cotação da MEDICAMENTAL (NF 156906): o alerta de "lançado no ERP: 70" deve sumir. No Controle de NFs e no Histórico, buscar uma NF que antes aparecia repetida (XML, ERP e nota digitada) e ver se agora é uma linha só.']
+    },
+    {
+        numero: '2.0.4', nome: 'Da divergência da cotação direto até a NF, com correção da conversão em um toque', status: 'concluida',
+        implementado: [
+            'Nas divergências da cotação (Central do pedido, comparação por item) aparece um botão "Abrir NF nnnnn" para cada NF citada. Ele abre o Histórico de NFs direto naquela NF, já com os itens à mostra.',
+            'No card da NF, cada item mostra de onde veio a quantidade ("XML: 34 × fator 100") e, quando o app enxerga um erro de conversão, oferece a correção pronta: "Voltar à quantidade do XML" e/ou "Igualar à cotação". Basta tocar e confirmar; não precisa digitar nada.',
+            'A correção ajusta quantidade, valor unitário (o total da NF não muda) e fator do item na NF salva. Se o mesmo fator errado estiver memorizado para aquele produto e fornecedor (e vale para as próximas NFs), ele é corrigido junto.',
+            'Corrigida a quantidade, a divergência some sozinha da cotação, sem precisar marcar "Marcar como resolvido" para algo que na verdade não foi lançado errado.'
+        ],
+        mudou: [
+            'A correção altera só o registro da NF salva no app; o XML original não é modificado. Itens sem fator aplicado (fator 1) só ganham a opção "Igualar à cotação" se existir um fator redondo que faça as quantidades baterem; senão a diferença é real e fica como divergência.',
+            'Arquivos alterados: js/11-central-pedido.js, js/17-historico-controle-nfs.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir uma cotação com divergência de quantidade (como a da água para injeção), tocar em "Abrir NF" e conferir se o Histórico abre na NF certa. No item, tocar na correção, confirmar e voltar à cotação para ver a divergência sumir.']
+    },
+    {
+        numero: '2.0.3', nome: 'Lote e validade do texto entram no XML sozinhos (sem confirmar nem digitar)', status: 'concluida',
+        implementado: [
+            'O app lê lote e validade escritos no nome do produto (ou no infAdProd) e já coloca o <rastro> (nLote, qLote, dVal) no XML corrigido, sem pedir confirmação. O qLote acompanha a quantidade de saída, já convertida pelo fator.',
+            'Novos formatos entendidos, incluindo o da BMG ("Lote * Data Venc..: N1154 * 30/06/2031"): rótulo de lote e de validade juntos antes dos valores; "LOTE: x DT VAL: dd/mm/aaaa"; "LT:"; "VENCIMENTO"; "Lote Nº"; validade só com mês e ano (vale o último dia do mês) e ano com 2 dígitos.',
+            'Validade impossível (ano fora de 2000–2099, data que não existe ou anterior à emissão) não entra no XML; o item mostra só um aviso, sem campo para preencher.',
+            'Cada item mostra "✓ Lote entra no XML" com lote e validade, e um "Remover" (e "Aplicar" para voltar atrás) para o raro caso de não querer aquele lote. O checklist traz uma linha informativa com a contagem.'
+        ],
+        mudou: [
+            'Saíram os botões e campos "Confirmar", "Confirmar todos", "Editar", "Ignorar" e "Informar lote e validade". Lote e validade que não estão no texto continuam sendo lançados por você direto no SPData.',
+            'Itens que já têm <rastro> no XML do fornecedor continuam como estavam ("Lote no XML").',
+            'Arquivos alterados: js/10-entrada-nf-xml.js, js/12-recurso-lote-rastro.js e js/14-historico-mudancas.js.'
+        ],
+        testar: ['Abrir o XML da BMG (NF 30921) na Entrada de NF: os 2 itens devem aparecer com "✓ Lote entra no XML" (N1154 · 30/06/2031 e 15C24 · 01/02/2029). Salvar/baixar o XML corrigido e importar no SPData para ver o lote e a validade. Repetir com o XML da CBS (a cânula com ano 3000 deve ficar só com aviso).']
+    },
+    {
+        numero: '2.0.2', nome: 'Banco de dados sob demanda: o app abre só com o essencial', status: 'concluida',
+        implementado: [
+            'Na abertura o app agora assina só 4 leituras do banco: configurações, notas pendentes, histórico e cadastro de fornecedores (as que a primeira tela e o Adicionar usam). Antes eram 13.',
+            'As outras 9 (cotações, NFs processadas, entradas do ERP, associações de SP Data e de fornecedor, produtos SP Data, fornecedores ganhadores, anotações e exceções de XML) sobem quando você abre a tela que as usa (Controle de NFs, Histórico, Entrada de NF, Cotações, Central do pedido, SP Data, Anotações, Importação, Backup, Relatórios).',
+            'O que nenhuma tela pediu ainda sobe sozinho em segundo plano, uma leitura a cada 0,35 s, começando 1,5 s depois da abertura. Assim nada fica sem carregar e a abertura não trava de uma vez.',
+            'Cada coleção é assinada uma única vez (sem duplicar), e ao sair da conta tudo é encerrado e recomeça no próximo login. A tela de carregamento já era imediata (está no próprio HTML), então esse ponto do plano não precisou de mudança.'
+        ],
+        mudou: [
+            'Ao abrir uma tela pela primeira vez logo depois de abrir o app, os dados dela podem levar um instante (menos de 1 s) para aparecer; a tela se atualiza sozinha quando chegam. Nenhuma regra de negócio mudou.',
+            'Arquivos alterados: js/05-listeners-dados.js (assinaturas), js/08-fornecedores-logo.js (aviso da tela aberta, na função switchToScreen) e js/14-historico-mudancas.js (este registro).'
+        ],
+        testar: ['Abrir o app (a abertura deve ficar mais leve) e logo em seguida ir direto a Controle de NFs, Histórico, Cotações, SP Data, Anotações e Entrada de NF, vendo se a lista aparece completa. Fazer sair da conta e entrar de novo e repetir uma tela. Se alguma tela ficar vazia ou incompleta, me diga qual.']
+    },
+    {
+        numero: '2.0.1', nome: 'Versão 2.0: script dividido em arquivos + histórico com a versão 1.0 recolhida', status: 'concluida',
+        implementado: [
+            'O script.js (12 mil linhas) foi dividido em 19 arquivos na pasta js/, por assunto: núcleo e configuração, layout, dados, relatórios, listeners, PDF, login/conta/backup, fornecedores, anotações, entrada de NF/XML, central do pedido, lote/rastro, divergências, histórico de mudanças, ganhadores/cotações, SP Data, histórico e controle de NFs, ERP e reconciliação.',
+            'O código foi apenas movido, sem reescrever nenhuma regra: os arquivos são carregados pelo index.html na mesma ordem em que o código já rodava, e juntos dão exatamente o script antigo. Funções e variáveis continuam globais, então os botões e telas funcionam como antes.',
+            'Histórico de mudanças: as fases da versão 1.0 (até a 44.1) ficam recolhidas num card; a versão 2.0 e as seguintes (2.0.1, 2.0.2 … 2.1.0) aparecem em destaque no topo.'
+        ],
+        mudou: [
+            'O index.html passou a carregar os 19 arquivos de js/ no lugar do script.js, e o style.css ganhou o estilo do card recolhível. O script.js antigo não é mais usado e pode ser apagado depois de testar (mantenha uma cópia de backup).',
+            'Mensagens de erro no console agora indicam o arquivo de js/ em vez de script.js.'
+        ],
+        testar: ['Abrir o app e passar pelas telas principais (Adicionar, Gerenciar, Controle de NFs, Entrada de NF, Cotações, Relatórios, SP Data, Anotações, Configurações > Histórico de mudanças) vendo se tudo abre e funciona como antes. Em Configurações > Histórico de mudanças, tocar no card "Versão 1.0" para abrir e recolher. Se alguma tela ficar vazia ou der erro, me mande o erro do console.']
+    },
+    {
+        numero: '44.1', nome: 'Menos travadas: abertura do app e envio de NF para a relação', status: 'concluida',
+        implementado: [
+            'Na abertura, cada uma das ~13 leituras do banco redesenhava Relatórios, Histórico de NFs e Controle de NFs mesmo fora da tela. Agora vários redesenhos seguidos viram um só, o que deve encurtar a trava de ~3 segundos na abertura.',
+            'O mesmo vale ao enviar uma NF para a relação: as 3 ou 4 atualizações do banco seguidas redesenham o Controle uma vez só.'
+        ],
+        mudou: ['Telas de Relatórios, Histórico de NFs e Controle passam a atualizar até ~0,15 s depois do dado chegar (imperceptível). Nenhuma regra ou dado mudou.'],
+        testar: ['Abrir o app e ver se a trava de abertura diminuiu; enviar uma NF para a relação e ver se a trava sumiu ou ficou menor.']
+    },
+    {
+        numero: 44, nome: 'Controle de NFs: "Enviar para a relação" cria a nota direto + correção do fornecedor [object Object]', status: 'concluida',
+        implementado: [
+            '"Enviar para a relação" agora cria a nota direto na lista pendente, já com fornecedor, NF, valor, vencimento e recurso sugerido pela cotação, e liga a NF/ERP à nota. Não abre mais o formulário Adicionar para você preencher de novo.',
+            'Se a nota já existir (mesmo fornecedor + NF, pendente ou arquivada), pede confirmação antes de criar. Só abre o formulário quando falta fornecedor, valor ou vencimento que o app não tem, e avisa qual falta.',
+            'O vencimento das duplicatas do XML (cobr/dup/dVenc) passa a ser gravado na NF salva; o Controle usa o 1º vencimento. Valor e vencimento ganharam mais origens de reserva: nota ligada, ERP, parcelas do ERP e XML.',
+            'Nome de fornecedor sempre vira texto; o valor inválido "[object Object]" é recusado ao gravar fornecedor/apelido e ao ler o cadastro, e o que já estava gravado no banco é removido uma vez ao carregar o app.'
+        ],
+        mudou: [
+            'NFs processadas antes desta versão não têm o vencimento do XML guardado: para elas (se não vieram do ERP) o formulário ainda abre pedindo o vencimento. Abrir e salvar a NF de novo na Entrada de NF resolve.',
+            'Notas que já foram criadas com o nome "[OBJECT OBJECT]" continuam com ele: edite o fornecedor delas em Gerenciar NF (a nota guarda uma cópia do nome).'
+        ],
+        testar: ['Controle de NFs > Em aberto: tocar em "Enviar para a relação" numa NF com XML e conferir fornecedor, valor, vencimento e recurso na nota criada em Gerenciar NF. Repetir numa NF só com ERP e numa NF antiga sem vencimento (deve abrir o formulário avisando o que falta).']
+    },
+    {
+        numero: '21.1', nome: 'Correção: teclado do celular não move mais a barra de navegação', status: 'concluida',
+        implementado: [
+            'Ao tocar num campo de texto no celular, a barra de navegação some na hora e a altura do app fica congelada enquanto o teclado está aberto. Antes, em alguns navegadores o app encolhia junto com o teclado: a barra subia pro topo e sobrava uma tela vazia.',
+            'Ao sair do campo, a barra volta e a altura é recalculada; o app também volta ao topo da página caso o navegador tenha rolado a tela.'
+        ],
+        mudou: ['Só o comportamento com teclado aberto no celular (telas de toque). No computador nada muda.'],
+        testar: ['No iPhone: tocar num campo de texto (Adicionar, busca do Gerenciar, Entrada de NF) — a barra não deve subir nem aparecer sobre o teclado; ao fechar o teclado ela volta ao lugar. Testar também num campo perto do rodapé da tela.']
+    },
+    {
+        numero: 43, nome: 'Lote e validade escritos no texto do produto viram <rastro> (com confirmação)', status: 'concluida',
+        implementado: [
+            'Entrada de NF: o app procura "LOTE: … DT VAL: dd/mm/aaaa" (também "VAL", "VALIDADE", "VENCIMENTO") no nome do produto e no infAdProd do item, quando o item ainda não tem <rastro> no XML. Cada item mostra "Lote e validade no texto" com Confirmar / Editar / Ignorar; no checklist há "Confirmar todos". Nada entra no XML sem a sua confirmação.',
+            'Ao salvar ou baixar o XML corrigido, os itens confirmados ganham o <rastro> (nLote, qLote e dVal em AAAA-MM-DD) na posição certa do leiaute da NF-e. O qLote usa a quantidade de saída (já convertida pelo fator). Itens que já têm <rastro> no XML aparecem como "Lote no XML" e não são alterados. O lote e a validade confirmados também ficam gravados nos itens da NF salva.',
+            'Validade impossível nunca é aceita sozinha: ano fora de 2000–2099 (ex.: 30/01/3000), data que não existe ou anterior à emissão da NF mostram "Conferir lote e validade" com campos para informar a data certa, ou Ignorar. Também dá para informar lote e validade à mão em qualquer item.'
+        ],
+        mudou: [
+            'Nenhuma regra de fator, associação, cProd, GTIN ou saída de texto mudou. O infCpl (texto geral da NF) não é usado, porque não dá para saber a qual item o lote pertence.'
+        ],
+        testar: [
+            'Carregar uma NF do fornecedor que escreve lote e validade no nome do produto (como a CBS), tocar em "Confirmar todos", baixar o XML corrigido e importar no SPData. Itens com validade estranha pedem a data certa antes.'
+        ]
+    },
+    {
+        numero: 42, nome: 'Divergência de valor entre a NF (XML) e o lançamento no ERP', status: 'concluida',
+        implementado: [
+            'Novo tipo de divergência "valor NF × ERP": quando um item tem NF processada e também está lançado no ERP, o app compara o valor unitário e o valor total da linha. NF e ERP estão na mesma unidade (a de dispensação), então a comparação é direta, sem falso alarme por conversão. Qualquer diferença vira divergência, com a frase pronta para a auditoria ("… valor unitário R$ X na NF × R$ Y no ERP; valor total …").',
+            'Desconto e IPI não são compensados: seguindo a regra do hospital (no SPData eles são somados num item da NF), qualquer diferença de valor é divergência. O valor total só é comparado quando as quantidades da NF e do ERP batem — se a quantidade já difere, esse aviso ("quantidade NF × ERP") já explica a diferença de total e não se avisa duas vezes.'
+        ],
+        mudou: [
+            'Tolerância: meio centavo no valor unitário e o maior entre R$ 0,02 e 0,05% no total, só para arredondamento. A divergência segue as mesmas regras das outras: aparece no item da Central, conta na aptidão da nota, pode ser marcada como Resolvido e gerar auditoria. Itens só no ERP (sem NF) não são comparados, porque a cotação não guarda a unidade.'
+        ],
+        testar: [
+            'Numa NF processada e lançada no ERP com valor diferente, abrir a cotação (aba Produtos): o item deve mostrar a divergência de valor NF × ERP.'
+        ]
+    },
+    {
+        numero: '30.1', nome: 'Excluir do histórico não apaga mais a data da associação vigente', status: 'concluida',
+        implementado: [
+            'Correção do "Excluir do histórico" (painel "Associações conhecidas" da Entrada de NF): agora o app apaga só o que torna a possibilidade antiga. Se o SmartCompras daquela linha já não é o vigente deste código de fornecedor, remove só as entradas desse SmartCompras do histórico do código. Se o SmartCompras é o vigente e só o SP Data daquele par foi corrigido depois, remove só essa entrada antiga do SP Data no histórico do produto SmartCompras (o aviso do modal diz que isso vale para todos os fornecedores que usam o produto).',
+            'Antes, excluir uma linha antiga apagava junto a entrada que registra desde quando a associação atual vale, e a busca "Código de fornecedor já associado a este produto" passava a mostrar "data aproximada" e deixava de apontar a sugestão principal. Além disso, a linha excluída continuava aparecendo. Agora a linha some e a data de vigência é preservada.'
+        ],
+        mudou: [
+            'A associação vigente nunca é apagada nem alterada. A gravação usa atualização só do campo de histórico (não regrava o documento inteiro).'
+        ],
+        testar: [
+            'Num item com "Associações conhecidas" que tenha uma linha antiga: Ver histórico › Excluir do histórico. A linha deve sumir e o código de fornecedor vigente continuar aparecendo com "vigente desde …" (sem "data aproximada").'
+        ]
+    },
+    {
+        numero: 41, nome: 'Cruzamento de NFs: menos duplicatas entre ERP, XML e notas', status: 'concluida',
+        implementado: [
+            'Checagem de duplicidade mais firme (importação do ERP e Adicionar): além de "mesma NF + mesmo nome", agora vale "mesma NF + um nome é o começo do outro" (o relatório do ERP corta o nome do fornecedor em cerca de 30 caracteres, ex.: "GREYCE SILVA DE BARROS E CIA L" × "...LTDA") e, na importação, "mesmo número de NF (sem zeros à esquerda) + mesmo valor". A prévia e o status gravado da entrada do ERP passam a usar a mesma regra.',
+            'Controle de NFs: a mesma NF vinda do XML e do relatório ERP agora é unida num só registro mesmo quando o número vem com zeros à esquerda, a série está em branco de um lado ou o CNPJ do cadastro não foi resolvido — desde que haja um único candidato e uma evidência a mais (mesmo valor ou mesmo CNPJ).',
+            'Controle de NFs: uma NF "Recebida" que parece já existir como nota (mesmo número e mesmo valor, na relação ou arquivada) ganha o aviso "Parece já existir como nota…" e o botão "É a mesma nota — vincular" no lugar de "Enviar para a relação". Há também "Vincular todas" no topo, com confirmação. Nada é vinculado sem a sua ação e nada é apagado.'
+        ],
+        mudou: [
+            'O vínculo ERP × XML (vincularEntradaErpComNf), as associações de SP Data e a Saída de Texto não mudaram. A união por número + valor vale só para exibir e vincular no Controle.'
+        ],
+        testar: [
+            'Importar o relatório ERP: NFs que já estão como nota (inclusive com o nome do fornecedor cortado) devem vir marcadas como duplicadas. No Controle de NFs, conferir as que mostram "Parece já existir como nota" e usar "Vincular todas".'
+        ]
+    },
+    {
+        numero: 40, nome: 'Correções: importar relatório ERP, recurso das notas, menu lateral e arquivar em massa', status: 'concluida',
+        implementado: [
+            'Importar Relatório (ERP): corrigido o erro "Cannot access \'duplicata\' before initialization" que impedia a prévia de abrir (uma variável era usada antes de ser declarada). A importação volta a funcionar, inclusive o aviso de NF duplicada na relação ou no histórico.',
+            'Recurso: o "Recurso:" mostrado no cartão do Gerenciar NF vem da Entrada de NF, mas a Saída de Texto e o campo de edição usam o recurso da própria nota — que ficava vazio em notas importadas por versões antigas. Agora o cartão mostra o botão "Aplicar recurso: X" quando a nota não tem recurso e a NF tem um recurso só; no alto do Gerenciar há "Aplicar em todas". O campo de edição passa a mostrar o recurso da nota mesmo que não esteja na lista padrão (antes ficava em branco e podia ser apagado ao salvar) e já sugere o recurso conhecido.',
+            'Menu lateral (tela larga): o "Importar Relatório (ERP)", que agora fica em Mais, também aparece no menu lateral.',
+            'Gerenciar NF: a seleção em massa ganhou o botão Arquivar (confirma antes, move para o Histórico e sincroniza o ERP, como o arquivar individual). "Todas" passa a selecionar só as notas da aba aberta, e trocar de aba limpa a seleção, para nunca arquivar/excluir notas escondidas.',
+            'Login: a mensagem de erro "auth/operation-not-supported-in-this-environment" agora explica que o app foi aberto como arquivo local (file://) e que é preciso abrir pelo endereço https:// ou por um servidor local.'
+        ],
+        mudou: [
+            'Nenhuma regra da Saída de Texto mudou (getLinha continua igual). O recurso só é aplicado na nota quando você toca em "Aplicar", nunca em silêncio, e só quando a NF tem um recurso único.'
+        ],
+        testar: [
+            'Colar um relatório ERP em Mais › Importar Relatório (ERP) e tocar em Processar. No Gerenciar NF, conferir "Aplicar recurso" nas notas sem recurso e o botão de arquivar ao tocar em Selecionar.'
+        ]
+    },
+    {
+        numero: 39, nome: 'Entrada de NF em abas: Itens · Pedido · NF, com checklist no topo', status: 'concluida',
+        implementado: [
+            'Depois de carregar o XML, a Entrada de NF mostra no topo um resumo fixo (fornecedor, NF · série · data, valor · itens e "Trocar XML", além do aviso de "NF já processada" quando houver) e três abas: Itens (a lista de itens que você preenche, com Pendências/Todos), Pedido (seletor de pedido/cotação, cotação adicional, compra direta, destino, situação dos códigos e os itens da cotação ainda não faturados) e NF (dados do fornecedor, informações adicionais, unidade de dispensação e o importador).',
+            'O checklist "Antes de salvar" fica sempre logo abaixo das abas. Cada pendência vira uma linha que leva à aba certa (ex.: "Pedido/cotação ainda não identificado" → Pedido); na aba Itens aparece o checklist completo e nas outras só o que se resolve ali, com um atalho para o resto. Itens da cotação ainda não faturados aparecem como uma linha informativa que leva à aba Pedido.',
+            'As abas mostram a quantidade de itens e um ponto (●) quando há pendência naquela aba. Cada XML novo abre na aba Itens, com os itens pendentes já abertos. Salvar NF e Baixar XML Corrigido continuam no fim da tela.'
+        ],
+        mudou: [
+            'Nenhuma regra de pendência, fator, associação, cotação ou saída mudou — os mesmos campos e botões, só organizados em abas. O texto das pendências é o mesmo.'
+        ],
+        testar: [
+            'Carregar um XML: conferir o resumo no topo, tocar em cada aba e, no checklist, tocar numa pendência de pedido/cotação (deve abrir a aba Pedido). Selecionar o pedido e conferir que o ponto da aba some.'
+        ]
+    },
+    {
+        numero: 38, nome: 'Gerenciar NF só com a relação de saída e novo Controle de NFs', status: 'concluida',
+        implementado: [
+            'Gerenciar NF volta a ser só as NFs escolhidas para a Saída de Texto, com duas abas: "Para saída" e "Em espera" (as marcadas como Pendente). Um atalho no fim da lista leva ao Controle de NFs. A Saída de Texto, a edição, o arquivar e a seleção em lote não mudaram.',
+            'Controle de NFs (novo, em Mais › Atalhos; dá para trazer para a barra em Ajustes › Personalização): mostra o ciclo de cada NF com três abas. Em aberto = Recebida (já entrou por XML ou relatório ERP e ainda não está na relação) + Na relação + Em espera. Arquivadas = já foram para o financeiro, com a marca "Enviada ao financeiro". Diretas = NFs que não passam pelo financeiro. Cada NF mostra de onde veio (XML ✓ / ERP ✓ / só ERP).',
+            'NF Recebida tem duas ações: "Enviar para a relação" (abre o Adicionar já preenchido; ao salvar, a NF fica ligada à nota criada) e "Não vai ao financeiro" (vai para Diretas, sem apagar nada; "Voltar para Em aberto" desfaz). Também dá para marcar várias de uma vez em "Selecionar".',
+            '"Ignorar fornecedor ERP" agora vale também para as NFs desse fornecedor que já estavam esperando decisão: elas vão para Diretas automaticamente, e ao liberar o fornecedor voltam para Em aberto. Marcar uma NF só de XML como direta também vale quando o relatório ERP dela chegar.',
+            'Ao arquivar uma nota que veio de uma NF, o histórico guarda de qual NF ela veio, para a NF não aparecer duplicada em Arquivadas.'
+        ],
+        mudou: [
+            'Notas digitadas à mão não são cruzadas com XML/ERP por nome (não há chave confiável, como já registrado no Histórico): ficam como "Nota manual" e só se ligam a uma NF por vínculo explícito. Registros arquivados antes desta fase podem aparecer repetidos em Arquivadas.',
+            'Nenhuma regra de saída de texto, fator, associação, cProd, GTIN ou SP Data mudou. A entrada do ERP ganhou os campos valor, marcadaDireta e bloqueioFornecedor.'
+        ],
+        testar: [
+            'Em Gerenciar NF: trocar entre "Para saída" e "Em espera" e tocar em "Ver todas as NFs". No Controle: marcar uma NF Recebida como "Não vai ao financeiro", ver em Diretas e voltar; usar "Enviar para a relação" e salvar.'
+        ]
+    },
+    {
+        numero: 37, nome: 'Cotação individual em abas (Produtos · Anotações · Relatório · Dados)', status: 'concluida',
+        implementado: [
+            'A cotação individual (Central do Pedido) agora tem abas, no mesmo estilo das abas de Relatórios, logo abaixo do resumo: Produtos (os fornecedores e seus itens, com o status de entrega), Anotações (Nova Auditoria, Texto/Anotação e a anotação do pedido), Relatório (Complementar com Relatório do SmartCompras) e Dados (origem, datas, observação, Atualizar via XML e Editar Fornecedores). Abre sempre na aba Produtos.',
+            'Os blocos recolhíveis da Fase 34 saíram: o que era "Dados do pedido" e "Complementar com Relatório" virou aba. Pedido sem cotação continua mostrando tudo junto (sem abas), como antes.',
+            'Tela Mais: a seção dos destinos tirados da barra passou a se chamar "Atalhos" (antes "Fora da barra").'
+        ],
+        mudou: [
+            'Nenhum campo, botão, regra ou dado mudou — só a organização da tela. Os mesmos ids e as mesmas funções continuam valendo.'
+        ],
+        testar: [
+            'Abrir um pedido: tocar em cada aba (Produtos, Anotações, Relatório, Dados) e conferir que os campos e botões de sempre estão na aba esperada.'
+        ]
+    },
+    {
+        numero: 36, nome: 'Ajustes e Mais reorganizados, "não faturado" sem excesso de avisos, itens abertos na Entrada de NF', status: 'concluida',
+        implementado: [
+            'Central do Pedido: corrigido o bug em que "Dados do pedido" e "Complementar com Relatório do SmartCompras" apareciam vazios/achatados quando o pedido tinha muitos fornecedores (a tela é uma coluna e o navegador comprimia os blocos). Agora mantêm o tamanho e abrem normalmente.',
+            '"Não faturado": deixa de ser gerado para fornecedor que ainda não deu entrada de nenhuma NF no pedido (ele fica só como "○ Aguardando entrega"). O aviso existe quando o fornecedor JÁ deu entrada de NF e um item da cotação dele ficou de fora. Os chips de divergência em Cotações e na Central não somam mais o "não faturado" (ele já aparece como entrega parcial).',
+            'Entrada de NF: um bloco destacado lista, por nome, os itens da cotação deste fornecedor que ainda não vieram em nenhuma NF ("podem vir numa NF seguinte"). Agora considera também o pedido das associações dos itens da NF, não só o pedido escolhido no seletor (antes o aviso só aparecia com o pedido escolhido).',
+            'Entrada de NF: todo item com pendência já abre sozinho (vários ao mesmo tempo), para preencher direto; itens prontos ficam recolhidos.',
+            'Gerenciar NF: ao editar uma nota, a lista local e a Saída de Texto são atualizadas na hora (como já era na edição em lote), sem depender do retorno do banco.',
+            'Navegação: o botão "Mais" agora é sempre ativo e guarda as ferramentas — "Importar Relatório (ERP)" saiu de Ajustes e vive em Mais, em "Ferramentas"; os destinos tirados da barra aparecem em "Atalhos". Ajustes ficou só com configurações. Telas abertas por "Mais" (inclusive Ajustes) ganham o Voltar para o próprio Mais. O Voltar agora é só o símbolo (como no iOS).'
+        ],
+        mudou: [
+            'Nenhuma regra de saída de texto, fator, associação, cProd, GTIN ou SP Data foi alterada. A regra de REMESSA da Saída de Texto (vencimento vira "REMESSA") continua como sempre.'
+        ],
+        testar: [
+            'Abrir um pedido com muitos fornecedores: "Dados do pedido" e "Complementar com Relatório" devem aparecer com título e abrir.',
+            'Dar entrada num XML de um fornecedor que tem mais itens na cotação: o bloco "ainda não faturado(s)" deve listar os que faltam. Em Cotações, fornecedor sem NF não deve mais gerar divergência.',
+            'Editar uma nota no Gerenciar NF e conferir a Saída de Texto logo em seguida.'
+        ]
+    },
+    {
+        numero: 35, nome: 'Cabeçalhos e títulos padronizados; barra de salvar da Entrada de NF deixa de ser fixa', status: 'concluida',
+        implementado: [
+            'Cabeçalho: o "Voltar" passou para a esquerda do título em todas as telas internas (padrão iOS), e o título ocupa o resto da linha sem quebrar. Ações do lado direito (sincronizar, selecionar em lote, contador) ficam sempre no mesmo lugar.',
+            'Títulos dentro das telas seguem uma escala única: título da tela na Central (18), título de cartão (16) e rótulo de seção (13). Os títulos que só repetiam o cabeçalho (Entrada de NF, Produtos SP Data, Fornecedores) saíram; os que tinham tamanhos soltos (15 e 16 px avulsos) passaram para o estilo de título de cartão.',
+            'Entrada de NF: os botões Salvar NF e Baixar XML Corrigido voltaram para o fim da lista (não ficam mais fixos cobrindo os itens); a frase do que falta continua acima deles. O nome do item recolhido mostra no máximo 2 linhas (nomes com lote e validade eram enormes) e aparece inteiro quando o item está aberto.'
+        ],
+        mudou: [
+            'Só apresentação: nenhuma função, regra ou dado mudou. O botão Voltar é o mesmo (mesmo id e mesma ação), apenas movido no cabeçalho.'
+        ],
+        testar: [
+            'Abrir Ajustes › qualquer tela interna: o Voltar fica à esquerda do título e funciona. Na Entrada de NF: rolar a lista e conferir que os botões de salvar só aparecem no fim.'
+        ]
+    },
+    {
+        numero: 34, nome: 'Cotações com resumo de entrega e Central do Pedido com blocos recolhíveis', status: 'concluida',
+        implementado: [
+            'Lista de Cotações: cada pedido agora mostra, em chips, a situação das entregas dos fornecedores (✓ completas, ◐ parciais, ◐ NF no ERP, ○ aguardando) e quantas divergências estão abertas — o mesmo cálculo do card do fornecedor na Central (XML do app + ERP), sem gravar nada. Título, fornecedores e limite ficaram em linhas separadas.',
+            'Central do Pedido: o topo ganhou um resumo (fornecedores, limite e os mesmos chips). Os Fornecedores subiram para logo abaixo do resumo, e "Dados do pedido" (origem, datas, observação, Atualizar via XML, Editar Fornecedores) e "Complementar com Relatório do SmartCompras" viraram blocos recolhíveis, fechados ao abrir o pedido, com a mesma animação suave dos outros cartões.'
+        ],
+        mudou: [
+            'Nenhum campo, botão, regra ou dado foi removido ou alterado: os mesmos campos continuam no mesmo documento e os mesmos botões continuam funcionando; só mudaram a ordem na tela e o recolher/abrir. Nova Auditoria, Texto/Anotação e a Anotação do pedido continuam no fim.'
+        ],
+        testar: [
+            'Abrir Cotações e conferir os chips de cada pedido; abrir um pedido e ver o resumo no topo, os fornecedores logo abaixo e, tocando em "Dados do pedido", os campos de sempre (editar origem/data deve continuar salvando).'
+        ]
+    },
+    {
+        numero: 33, nome: 'Entrada de NF mais enxuta: resumo, pendências em linhas, itens recolhíveis e barra de salvar', status: 'concluida',
+        implementado: [
+            'Depois que o XML é carregado, o bloco de importação vira uma linha curta (trocar o arquivo + unidade de dispensação) e o resumo da NF fica compacto: fornecedor em destaque, depois NF · série · data, valor · itens e CNPJ.',
+            'Cada item agora é uma linha recolhida com nome, código, quantidade e estado (✓ Pronto ou o 1º motivo da pendência). Um item abre por vez, com a mesma animação suave dos outros cartões; ao carregar uma NF, o primeiro item com pendência já abre sozinho. Dentro do item continua tudo: código do fornecedor, fator e Confirmar fator, cotação/SP Data, associações conhecidas, código já associado, recurso.',
+            'Os avisos de "Resolva antes de salvar" viraram uma lista de linhas (uma pendência por linha). O texto e as regras são os mesmos.',
+            'Os botões Salvar NF e Baixar XML Corrigido ficam fixos embaixo da tela, com uma linha que diz o que falta ("2 pendências para resolver antes de salvar", "Tudo pronto para salvar"). Salvar continua clicável e explicando o motivo quando bloqueado, como antes.',
+            'Gerenciar NF: o contador do cabeçalho ficou curto ("4 · 2 pend.", o texto completo aparece ao segurar) e o título "Gerenciar NF" não quebra mais em duas linhas.'
+        ],
+        mudou: [
+            'Nenhuma regra de pendência, bloqueio, fator, associação, cotação ou saída mudou — só a apresentação e o recolher/abrir dos itens. cProd, GTIN, SP Data e associações históricas não foram tocados.'
+        ],
+        testar: [
+            'Carregar um XML: o resumo deve ficar curto, o primeiro item com pendência abrir sozinho e, ao tocar em outro item, o anterior fechar. Confirmar um fator e conferir que a linha do item vira ✓ Pronto.',
+            'Conferir a barra fixa embaixo com Salvar NF / Baixar XML Corrigido e a frase de pendências.'
+        ]
+    },
+    {
+        numero: 32, nome: 'Barra de navegação configurável (com "Mais") e card compacto no Gerenciar NF', status: 'concluida',
+        implementado: [
+            'Barra inferior configurável: em Ajustes › Personalização › "Ordem dos Menus e barra inferior", cada destino ganhou a opção "Na barra". A quantidade é você quem escolhe: com todos marcados a barra mostra todos e o botão "Mais" não aparece; ao desmarcar algum, o botão "Mais" surge sozinho na barra e abre uma lista com os destinos que saíram. Os ícones de todos os destinos já existem (nos 4 estilos), então qualquer um pode voltar à barra quando quiser. A ordem continua com as setas de antes e vale para a barra e para o "Mais". O menu lateral (telas largas) continua mostrando tudo.',
+            'O botão "Mais" fica destacado quando a tela atual é um destino que está dentro dele.',
+            'Gerenciar NF: card mais limpo. Em cima ficam fornecedor · NF, valor · vencimento · recurso e uma etiqueta de prazo ("Venceu há 2 dias", "Vence hoje", "Vence em 3 dias"); abaixo, a aptidão para saída e os dados do pedido. Editar, Pendente/Retomar, Arquivar, Excluir, o painel de edição com a animação de abrir/fechar, a seleção em lote e a busca continuam exatamente como eram.'
+        ],
+        mudou: [
+            'Nenhum dado, regra ou saída de texto mudou. A escolha da barra é guardada no mesmo lugar da ordem dos menus (personalização). Instalações antigas começam com todos os destinos na barra, como já era.'
+        ],
+        testar: [
+            'Em Ajustes › Personalização, desmarcar "Na barra" de 2 destinos: o botão "Mais" aparece e lista os 2. Marcar de volta: o "Mais" some.',
+            'Gerenciar NF: abrir "Editar" numa nota (a animação e os campos devem ser os de sempre) e conferir a etiqueta de prazo.'
+        ]
+    },
+    {
+        numero: '31.1', nome: 'Entrega via ERP: só conta quando a quantidade é comparável com segurança', status: 'concluida',
+        implementado: [
+            'Correção da Fase 31: uma NF associada no ERP não faz mais o item contar como entregue automaticamente. O ERP traz a quantidade na unidade de dispensação (SP Data) e a cotação não guarda unidade nem fator, então a quantidade do ERP não pode ser comparada com a cotada "no escuro".',
+            'A quantidade do ERP só é comparada quando TODAS as linhas do ERP daquele produto têm o mesmo valor unitário da cotação (mesmo critério já usado na Fase 8): preço por unidade igual significa mesma unidade. Nesse caso: quantidade do ERP >= cotada = item entregue; menor = item parcial (aparece "x/y" no card). Se o valor unitário não bate, o produto é do tipo "NF no ERP, sem como conferir a quantidade" e NÃO conta como entregue.',
+            'Fornecedor com NF no ERP mas sem item conferido aparece como "◐ NF no ERP — itens/quantidades não conferidos" (o botão manual continua disponível). O card passa a listar "Faltam: Produto (13/20)" com a quantidade já recebida, somando todas as NFs do pedido por produto.'
+        ],
+        mudou: [
+            'NFs/XML do app seguem como antes (soma de todas as NFs por produto, com conversão de unidade). Nada de cProd, GTIN, SP Data, associações históricas ou da regra de "não faturado" foi alterado.'
+        ],
+        testar: [
+            'Pedido com NF só no ERP (sem XML): se o valor unitário do ERP bate com a cotação, o card mostra completo ou parcial conforme a quantidade; se não bate, mostra "NF no ERP — itens/quantidades não conferidos".'
+        ]
+    },
+    {
+        numero: 31, nome: 'Entrega do fornecedor calculada automaticamente (XML + ERP) e busca de NF por entidade', status: 'concluida',
+        implementado: [
+            'No card de cada fornecedor da Central do Pedido, "Já chegou" agora é um status CALCULADO: ✓ Entrega completa, ◐ Entrega parcial (x/y itens) ou ○ Aguardando entrega. Cada produto da cotação conta como entregue quando há evidência: NF/XML processada no app com a quantidade cotada (a conta é a mesma da comparação, inclusive conversão de unidade), entrada do ERP associada ao pedido, ou divergência marcada como "Resolvido". Todas as NFs do pedido são somadas — uma segunda NF completa o que a primeira deixou faltando e o status vira completo sozinho.',
+            'Quando há 2 ou mais NFs do app para o fornecedor, o card mostra o histórico NF a NF (ex.: NF 1 → 1/2 itens · NF 2 → 2/2 itens). É calculado das NFs já salvas; nada novo é gravado.',
+            'ERP e XML são diferenciados: a NF associada agora aparece como "registrada no ERP e associada a este pedido · XML processado no app" ou "· sem XML processado no app". NF no ERP cujos itens o app não consegue identificar aparece como "◐ NF no ERP — itens não conferidos" (não afirma entrega completa).',
+            '"Marcar como já chegou" continua como EXCEÇÃO (material chegou sem NF/ERP no app) e fica sempre identificado como "confirmado manualmente"; só pesa quando o cálculo automático não chega em "completa". Com entrega parcial aparece "Marcar parcial como resolvida" (parcial aceita). Ambas têm "Desfazer marca manual".',
+            'Associar NF do histórico: a busca agora considera todos os CNPJs da mesma entidade do fornecedor (cadastro SP Data), não só o CNPJ exato da cotação; o mesmo vale para casar a entrada do ERP com os itens do fornecedor. O filtro por número já filtrava enquanto se digita — o texto do campo agora diz isso. Várias NFs no mesmo pedido/fornecedor já eram possíveis; o botão passa a dizer "Associar outra NF do histórico".'
+        ],
+        mudou: [
+            'A marca manual continua no mesmo lugar (chegadasPorFornecedor, no documento da cotação); só ganhou o campo opcional "tipo" para a parcial resolvida. Marcas antigas continuam valendo.',
+            'Nenhuma associação (cProd, GTIN, SP Data, fornecedor → cotação) foi alterada. As divergências "não faturado" continuam sendo geradas pela mesma regra de antes.'
+        ],
+        testar: [
+            'Abrir um pedido com fornecedor que já tem NF processada cobrindo todos os itens: o card deve mostrar ✓ Entrega completa sem precisar clicar. Com só parte dos itens: ◐ Entrega parcial; processar a NF que falta e ver virar completa.',
+            'Num fornecedor com NF do ERP associada: a linha da NF deve dizer se há ou não XML no app, e não aparecer mais "sem NF no app" junto com "NF associada ao pedido".'
+        ]
+    },
+    {
+        numero: 30, nome: 'Reaproveitar o código de fornecedor já associado ao produto', status: 'concluida',
+        implementado: [
+            'No Editor XML, cada item com produto SP Data conhecido passa a mostrar "Código de fornecedor já associado a este produto": os códigos de fornecedor (mesma entidade) que no histórico do app já foram ligados ao mesmo SP Data. Ex.: item com código novo 645, produto SP Data 98 → aparece o 123, com "Usar 123 na saída". Ao tocar, o código de saída passa a ser 123; o original continua guardado e a confirmação "original → novo" antes de gerar o XML segue obrigatória.',
+            'Só códigos VIGENTES são sugeridos (as duas pontas do vínculo: fornecedor → cotação → SP Data). Mais antigo primeiro, com "vigente desde". A "sugestão principal" só aparece quando a ordem é confiável; havendo data aproximada (registro antigo sem histórico) ou datas iguais, o app avisa e você escolhe. Todos os vigentes ficam disponíveis. Os substituídos aparecem só em "Ver substituídos — só histórico".',
+            'Compra direta: o código só é sugerido quando dá para recuperá-lo com segurança (sem "/" no código, ou confirmado pelas NFs processadas); caso contrário não é sugerido.',
+            'O botão "Usar esta associação" foi corrigido: não grava mais o código SP Data no código de saída. Agora é "Ver códigos deste produto" e só define o produto de referência da busca.',
+            'Rastreabilidade: nas NFs novas, quando o código de saída difere do original, o histórico de NFs processadas guarda também o código usado na saída (campo cProdSaida). NFs antigas não são reconstruídas.'
+        ],
+        mudou: [
+            'Nada é gravado nas associações (fornecedor → cotação → SP Data) nem na memória de fator. GTIN/SEM GTIN não participa. O código SP Data nunca vai para o cProd.',
+            'O "Excluir do histórico" não foi alterado (correção separada, Fase 30.1): hoje ele pode apagar a data de vigência de um código; quando isso acontece o app mostra "data aproximada".'
+        ],
+        testar: [
+            'Processar uma NF com um código novo do fornecedor, já associado ao SP Data de um produto que outro código do mesmo fornecedor já usou: o bloco deve listar o código antigo; tocar em "Usar ... na saída" e conferir "original → novo" na confirmação ao baixar o XML.',
+            'Conferir que o cProd do XML baixado é o código antigo (nunca o código SP Data).'
+        ]
+    },
+    {
+        numero: '29.1', nome: 'Memória de fator: itens \"SEM GTIN\" deixam de compartilhar o mesmo fator', status: 'concluida',
+        implementado: [
+            'A memória do fator de conversão (por fornecedor + produto) usava o código de barras da NF como chave. Quando o XML traz \"SEM GTIN\", todos os itens sem código de barras do mesmo fornecedor caíam na mesma chave e herdavam o fator um do outro. Agora, sem código de barras real, a chave é CNPJ do fornecedor + código do produto (cProd).'
+        ],
+        mudou: [
+            'Código de barras real: nada muda (mesma chave de antes). Itens que já vinham sem o campo cEAN: nada muda (essa já era a chave usada).',
+            'As memórias antigas gravadas sob \"SEM GTIN\" (ou zeros) NÃO são apagadas nem alteradas, mas deixam de ser aplicadas automaticamente, porque eram compartilhadas entre produtos diferentes e não dá para saber de qual produto cada uma veio. Na próxima NF desses itens o app pede a conferência da conversão uma vez, e a partir daí cada produto guarda o próprio fator.',
+            'Associações NF-e → cotação → SP Data não foram tocadas.'
+        ],
+        testar: [
+            'Processar uma NF com dois produtos sem código de barras do mesmo fornecedor, confirmar fatores diferentes e baixar o XML; processar de novo e conferir que cada produto volta com o próprio fator.',
+            'Um produto com código de barras real continua lembrando o fator como antes.'
+        ]
+    },
+    {
+        numero: 29, nome: 'Auditoria retroativa: associar NF do histórico (ERP) a partir da Central', status: 'concluida',
+        implementado: [
+            'Em cada fornecedor da Central do Pedido: \"Associar NF do histórico\". Lista as NFs do ERP já importadas daquele fornecedor (pelo CNPJ), com filtro pelo número da NF. Ao associar, a NF é vinculada ao pedido — o mesmo vínculo que o app já usa — e os itens que baterem exatamente em quantidade e valor com itens da cotação ainda sem SP Data são associados automaticamente (regra da Fase 8, sem aproximação).',
+            'Item da cotação que tem SP Data associado passa a mostrar, na comparação, a quantidade lançada no ERP da NF associada, mesmo sem XML. O selo fica \"Lançado no ERP (sem NF)\" (não \"Confere\"), e o item deixa de aparecer como \"não faturado\".',
+            'Cada NF associada por aqui tem \"Desfazer\", que restaura o vínculo anterior.'
+        ],
+        mudou: [
+            'Não compara automaticamente cotado × lançado no ERP quando não há NF/XML: a quantidade aparece lado a lado pra você conferir. Nenhuma divergência nova é criada.',
+            'NFs digitadas manualmente (sem itens) não entram aqui; pra elas use \"Marcar como já chegou\".',
+            'Reimportar o relatório do ERP da mesma NF recalcula o vínculo dela (comportamento já existente da importação).'
+        ],
+        testar: [
+            'Cotação com fornecedor cuja NF já está no histórico por importação do ERP: abrir o fornecedor, Associar NF do histórico, filtrar pelo número, Associar e conferir o toast e os itens com \"Lançado no ERP (sem NF)\".',
+            'Conferir que itens com NF/XML já processada continuam iguais, e que Desfazer remove o vínculo (os itens voltam ao estado anterior).'
+        ]
+    },
+    {
+        numero: 28, nome: 'Cotações: \"Já chegou\" por fornecedor e \"Resolvido\" por item', status: 'concluida',
+        implementado: [
+            'Dentro de cada fornecedor da Central do Pedido: botão \"Marcar como já chegou\" (com \"Desfazer\"). Com a marca, os itens daquele fornecedor deixam de aparecer como \"não faturado\" e a linha mostra \"Chegou\" — serve para quando o material chegou mas a NF não foi lançada no app.',
+            'Na comparação Cotação × NF × ERP de cada produto com divergência: \"Marcar como resolvido\" (com \"Reabrir\" e a data). O item resolvido passa a \"✓ Resolvido\" e deixa de contar como divergência pendente na aptidão da nota.'
+        ],
+        mudou: [
+            'Os dois dados ficam no próprio documento da cotação (chegadasPorFornecedor e resolvidosPorItem), sem coleção nova, e sobrevivem à reimportação da cotação.',
+            'A divergência em si continua calculada e visível; \"Resolvido\" só a sinaliza como tratada. As auditorias já geradas e o \"Alterar status\" não mudaram.'
+        ],
+        testar: [
+            'Central do Pedido de uma cotação com NF processada de só um fornecedor: marcar o outro como \"já chegou\" e conferir que os itens dele saem do \"não faturado\"; desfazer e ver voltar.',
+            'Item com divergência: Marcar como resolvido, ver o selo verde e a data; Reabrir; conferir no Gerenciador que a nota deixa de aparecer com divergência pendente enquanto resolvido.',
+            'Reimportar a cotação (XML) e conferir que as marcas continuam.'
+        ]
+    },
+    {
+        numero: 27, nome: 'Central do Pedido: linha de produto unificada e abertura suave', status: 'concluida',
+        implementado: [
+            'Dentro de cada fornecedor, cada produto agora é UMA linha recolhível. Fechada: nome, SP Data e status (\"Confere\", \"diverg.\" ou \"Auditoria pendente\"). Aberta: dados da cotação, comparação Cotação × NF × ERP (com \"Gerar auditoria\") e as divergências da auditoria daquele item (com \"Alterar status\").',
+            'As três listas separadas por fornecedor (Produtos Cotados, Comparação, Divergências) deixaram de existir como blocos; o cabeçalho do fornecedor mostra o resumo (itens, com divergência, auditorias pendentes).',
+            'Fornecedor e produto abrem e fecham com animação suave (mesma ideia do Gerenciador NF): os itens de baixo são empurrados na ida e na volta, sem redesenhar a tela.'
+        ],
+        mudou: [
+            'Uma divergência da auditoria aparece no produto cujo nome bate EXATAMENTE com um dos materiais dela; as que não batem (ou que não são por material, como \"não entregou\") ficam em \"Outras divergências deste fornecedor\" no fim do fornecedor. Nenhuma some nem se repete.',
+            'Nenhum dado ou regra mudou: só a apresentação. \"Resolvido\" na comparação e \"Já chegou\" ainda NÃO existem (próximas fases). A animação de altura exige iOS 16 ou mais novo; em versões antigas abre sem animar.'
+        ],
+        testar: [
+            'Cotação com NF processada: abrir um fornecedor, tocar num produto e conferir cotação, comparação e divergências dentro da mesma linha; fechar e ver os itens de baixo subirem suavemente.',
+            'Produto com divergência: \"Gerar auditoria\" continua abrindo a Nova Auditoria pré-preenchida; depois, a divergência registrada aparece na linha do produto e \"Alterar status\" funciona.',
+            'Conferir que nenhuma divergência antiga sumiu: as que não pertencem a um produto ficam em \"Outras divergências deste fornecedor\".'
+        ]
+    },
+    {
+        numero: 26, nome: 'Fator fixo por produto SP Data; sugestão por NF na tela Adicionar', status: 'concluida',
+        implementado: [
+            'Produtos SP Data: o botão \"Editar\" (antes \"Renomear\") ganhou o campo opcional \"Fator fixo (unidades por embalagem)\", pensado só para os poucos produtos de fator constante (ex.: clonazepam 500 gotas/frasco, prednisolona 60 doses/frasco). Sem o campo, o produto se comporta como antes.',
+            'Entrada de NF: quando o item é associado a um produto SP Data com fator fixo e não existe memória de fator do fornecedor, o campo Fator já vem preenchido e marcado \"fator fixo do produto\". Continua editável; se você mexer ou confirmar o fator, o app não sobrescreve.',
+            'Tela Adicionar: ao digitar o número da NF, aparecem sugestões das notas do histórico com exatamente esse número (fornecedor, valor, vencimento e recurso). Tocar na sugestão preenche os campos; nada é preenchido sozinho.'
+        ],
+        mudou: [
+            'A memória por fornecedor + produto continua com prioridade sobre o fator fixo.',
+            'Reimportar o relatório de Produtos SP Data preserva o fator fixo cadastrado.',
+            'Salvar só o fator fixo não marca mais o nome como editado manualmente (isso só ocorre se o nome mudar).',
+            'Ao salvar a edição de um produto SP Data, a lista é redesenhada na hora (antes podia continuar mostrando o formulário até outra atualização).'
+        ],
+        testar: [
+            'Produtos SP Data: pesquisar o clonazepam, Editar, informar 500, Salvar; reimportar o relatório e conferir que o 500 continua.',
+            'Entrada de NF com esse produto de um fornecedor sem memória: o Fator deve vir 500 com o selo \"fator fixo do produto\"; alterar o número e conferir que não volta sozinho.',
+            'Adicionar: digitar a NF de uma nota arquivada e tocar na sugestão; digitar uma NF inexistente e conferir que nada aparece.'
+        ]
+    },
+    {
+        numero: '25.4', nome: 'NF duplicada travada na importação do ERP; arquivar nota individualmente', status: 'concluida',
+        implementado: [
+            'NF + fornecedor é um dado absoluto: se já existe uma nota PENDENTE com o mesmo fornecedor e NF, a importação do relatório do ERP agora vem com o checkbox dessa linha travado (não dá mais pra marcar e importar de novo por engano). Duplicata contra uma nota já arquivada (histórico) continua só um aviso, já que reimportar algo resolvido antes pode ser proposital.',
+            'Corrigido também um nome de fornecedor que podia aparecer errado ("[object Object]") na prévia da importação.',
+            'Gerenciar NF: cada nota ganhou o botão "Arquivar", pra mandar pro Histórico sem precisar excluir.'
+        ],
+        mudou: ['Nenhuma nota existente foi alterada; só passou a impedir criar uma segunda pendente igual.'],
+        testar: ['Importar o relatório do ERP duas vezes seguidas com a mesma NF/fornecedor: na segunda vez, a linha já deve vir travada. No Gerenciar, usar "Arquivar" numa nota e conferir que ela vai pro Histórico.']
+    },
+    {
+        numero: '25.3', nome: 'Recurso sugerido ao importar o relatório do ERP', status: 'concluida',
+        implementado: [
+            'Na tela Importar Relatório (ERP), o campo Recurso de cada nota já vem preenchido quando essa NF passou antes pela Entrada de NF e todos os itens dela concordam no mesmo recurso — reaproveita o que já foi determinado lá, não recalcula nada.',
+            'Sem essa informação, ou com mais de um recurso na mesma nota, o campo continua em branco pra escolha manual, como antes.'
+        ],
+        mudou: ['Só o preenchimento inicial do campo; continua editável antes de importar.'],
+        testar: ['Importar o relatório do ERP de uma NF já processada pela Entrada de NF: o Recurso já vem selecionado, com "Sugerido pela Entrada de NF desta nota" embaixo.']
+    },
+    {
+        numero: '25.2', nome: 'Falso positivo de unidade sinalizado por produto', status: 'concluida',
+        implementado: [
+            'Botão "Falso positivo (unidade)" ao lado de "Gerar auditoria" nas divergências de quantidade/valor da Entrada de NF: sinaliza o produto SP Data pra que esse tipo de divergência deixe de aparecer nele (ex.: insulinas cotadas em uma unidade e recebidas em outra).',
+            'Em Produtos SP Data, cada produto ganhou o botão "Ignorar divergência de unidade" / "Voltar a conferir unidade", pra sinalizar antes ou desfazer. A reimportação do inventário preserva a sinalização.'
+        ],
+        mudou: ['Só as divergências de quantidade cotada e valor unitário são ignoradas nos produtos sinalizados; item não faturado e valor total continuam sendo conferidos.'],
+        testar: ['Numa NF com divergência de quantidade num item com SP Data associado: tocar "Falso positivo (unidade)" e ver a divergência sumir; desfazer em Produtos SP Data.']
+    },
+    {
+        numero: '25.1', nome: 'Correção: sugestão de cotação agora funciona com nomes reais', status: 'concluida',
+        implementado: [
+            'A sugestão automática de associação com a cotação (botão "Usar: código — nome") exigia que TODAS as palavras do nome do XML aparecessem na descrição da cotação — o que quase nunca acontece, porque o XML do fornecedor traz o sal químico, a forma farmacêutica e a embalagem ("MIDAZOLAM CLORIDRATO 5MG/ML SOL INJ 10ML") e a descrição da cotação é mais curta ("MIDAZOLAM 5MG/ML CX C/100AP X 10ML GEN"). Por isso não sugeria quase nada.',
+            'Agora, se as palavras todas não baterem, tenta um segundo critério: a primeira palavra do nome (o princípio ativo) e a dosagem (ex. "5MG/ML") precisam estar nos dois lados. Ainda é só uma sugestão — nunca associa sozinho — e sem correspondência boa continua no fluxo manual de sempre.'
+        ],
+        mudou: ['Só a sugestão de cotação; a associação, o fator e o resto do fluxo continuam iguais.'],
+        testar: ['Item do XML com sal/forma farmacêutica no nome, cuja cotação tem o nome mais curto: deve aparecer a sugestão "Usar: ..." com o item certo. Mesmo princípio ativo com dosagem diferente: não deve sugerir.']
+    },
+    {
+        numero: 25, nome: 'Falso positivo de unidade, alerta de valor total e sugestão automática de cotação', status: 'concluida',
+        implementado: [
+            'Corrigida a conferência Cotação × NF × ERP pra não acusar divergência quando o SmartCompras cota numa unidade e o SP Data dispensa em outra (ex.: cotação em frasco, dispensação em gotas — 500 gotas/frasco; ou em doses — 60 doses/frasco). A quantidade e o valor unitário faturados agora são conferidos tanto do jeito direto quanto convertidos pelo Fator confirmado na Entrada de NF; só vira divergência quando NENHuma das duas contas fecha — uma quantidade genuinamente errada continua sendo pega normalmente.',
+            'Novo alerta de valor total por fornecedor dentro do pedido, na própria Entrada de NF: compara o valor cotado com o valor já faturado (todas as NFs desse fornecedor nesse pedido, incluindo a que está sendo editada). Quando a diferença é só o quanto falta dos itens que ainda não apareceram em nenhuma NF, fica um informativo (entrega parcial é normal); quando a diferença não se explica só por isso, vira um alerta de verdade, porque algo pode estar errado (preço, quantidade, item a mais).',
+            'Associação com a cotação: quando o item ainda não está associado, o sistema já sugere direto pelo nome (o mesmo princípio já usado pra sugerir o SP Data) — aparece um botão "Usar: código — nome" pra confirmar com um toque, sem precisar abrir a lista. Cada palavra do nome do XML precisa achar uma equivalente no nome da cotação (inclusive abreviações como "COMP" de "COMPRIMIDO"); sem essa correspondência, continua caindo no fluxo manual de sempre — nunca decide sozinho.'
+        ],
+        mudou: [
+            'A conferência de valor usa o preço × quantidade ORIGINAIS da nota (antes da conversão), que é sempre o valor real pago, independente de qualquer fator — funciona certo mesmo numa NF com itens de mais de um pedido.',
+            'NFs salvas antes desta fase (sem o fator de cada linha) continuam comparadas como antes, sem regressão.'
+        ],
+        testar: [
+            'Um item cotado numa unidade e dispensado em outra (fator confirmado ≠ 1): não deve mais gerar divergência de quantidade/valor quando a conta bate pela conversão.',
+            'Uma NF que só fatura parte dos itens do fornecedor: aparece o aviso de valor total como informativo, citando os itens que faltam — sem bloquear o "pronta".',
+            'Um item com preço realmente errado (sem nenhum item pendente que explique): o aviso de valor total vira alerta de verdade.',
+            'Um item do XML com nome parecido ao de um item da cotação (mesmo com abreviação): aparece a sugestão "Usar: ..." pra confirmar com um toque.'
+        ]
+    },
+    {
+        numero: 24, nome: 'Recurso separado das pendências; NF já processada; upload de arquivo no SP Data', status: 'concluida',
+        implementado: [
+            'O resumo de recurso pelas cotações (e outros avisos puramente informativos: itens de outro pedido já resolvidos, itens que ainda podem vir numa NF seguinte) saiu da área de pendências (amarela) e ganhou um cartão neutro próprio, sem cor de alerta. Uma NF com tudo certo agora fica "✓ Pronta" (verde) mesmo tendo recurso pra mostrar.',
+            'Entrada de NF: ao carregar um XML de uma NF que já foi salva antes (mesmo número, série e fornecedor), aparece um aviso "✓ NF já processada", com a data e o pedido. Testei separadamente que o fator e as associações já confirmadas continuam sendo lembradas por fornecedor/produto — não pedem confirmação de novo.',
+            'Produtos SP Data: botão "Subir Arquivo" pra completar/atualizar o cadastro a partir de um .txt, além de colar o texto — igual já existe no cadastro de Fornecedores SP Data.'
+        ],
+        mudou: ['Nenhuma regra de recurso, fator ou associação mudou; só apresentação e o aviso de reprocessamento.'],
+        testar: [
+            'Uma NF com todos os itens certos (associação, SP Data e recurso definido): confirmar que fica "✓ Pronta" em verde, com o recurso aparecendo separado, sem amarelo.',
+            'Reabrir/reprocessar uma NF já salva: aparece o aviso "NF já processada"; os itens não voltam a pedir confirmação de fator.',
+            'Produtos SP Data: usar "Subir Arquivo" com um .txt do relatório do SGH.'
+        ]
+    },
+    {
+        numero: 23, nome: 'Importação do inventário SP Data: coluna de nome não é mais fixa em 38 caracteres', status: 'concluida',
+        implementado: [
+            'Complementar cadastro → Produtos SP Data: o leitor do relatório colado passou a ler a largura das colunas direto da borda do próprio relatório (o "+----+----+"), em vez de uma largura fixa de 38 caracteres. Agora aceita qualquer um dos relatórios do SGH (Listagem de itens, por grupo, por subgrupo, por local...), cada um com sua própria largura, sem cortar o nome quando a coluna colada é mais larga.',
+            'Testado com 6 formatos reais do SGH; o recomendado é "Itens por subgrupo II" (58 caracteres de nome, cobre os 2.682 produtos sem repetição). "Relatório de Itens por Local" também tem coluna larga (72), mas só lista os itens que têm local de armazenagem vinculado — não serve pra completar o cadastro todo.'
+        ],
+        mudou: [
+            'Continua funcionando com o formato antigo (38 caracteres) se alguém colar assim, e continua protegendo nomes editados manualmente (nomeEditadoManualmente) — reimportar nunca reverte uma renomeação feita à mão.',
+            'Sem a borda "+----+----+" reconhecível no texto colado, cai nas posições do formato antigo, como sempre foi.'
+        ],
+        testar: ['Complementar cadastro → Produtos SP Data → colar o relatório "Itens por subgrupo II" → Processar: confirmar que os nomes vêm completos (ex.: "CABO DE MADEIRA 1,3 MT", não cortado) e que um produto renomeado manualmente antes continua com o nome que você deu.']
+    },
+    {
+        numero: '22.2', nome: 'Nome real da cotação como central; reorganização da Entrada de NF; histórico recolhível e excluível', status: 'concluida',
+        implementado: [
+            'Revertido: o nome exibido como título do produto na tela Cotações volta a ser o nome oficial do SmartCompras (não mais o nome do SP Data). O SP Data aparece sempre como linha secundária, visível sem precisar expandir — evita o problema de nomes do SP Data parecidos/cortados esconderem o nome real e levarem a uma associação errada.',
+            'Entrada de NF: o botão de corrigir a associação com a COTAÇÃO agora aparece logo depois da linha "Cotação:", antes do recurso — não mais por último, escondido depois de dois outros botões. Os três botões "Corrigir" da tela ganharam nomes específicos: "Corrigir cotação", "Corrigir SP Data", "Corrigir recurso".',
+            'Histórico de associações do código do fornecedor: painel recolhido por padrão (mostra só o resumo, com "Ver histórico"/"Recolher"); cada entrada do histórico que não é a vigente hoje ganhou "Excluir do histórico", pra tirar tentativas erradas ou duplicadas que só atrapalhavam a leitura.'
+        ],
+        mudou: [
+            'A entrada vigente de uma associação nunca pode ser excluída por aqui — pra corrigi-la, continua sendo "Corrigir cotação"/"Corrigir SP Data" (que registra uma nova entrada, sem apagar as antigas).',
+            'Excluir do histórico pede confirmação e não pode ser desfeito; só remove a entrada do histórico, não muda a associação vigente nem nenhum dado de NF já salva.'
+        ],
+        testar: [
+            'Tela Cotações: o nome do produto continua sendo o nome do SmartCompras mesmo depois de associar ao SP Data; o SP Data aparece como linha abaixo, sempre visível.',
+            'Entrada de NF: o botão "Corrigir cotação" aparece logo após a linha da cotação, antes do recurso.',
+            'Um item com histórico de mais de uma associação: o painel abre recolhido; "Ver histórico" mostra a lista; a vigente não tem botão de excluir, as outras têm "Excluir do histórico".'
+        ]
+    },
+    {
+        numero: '22.1', nome: 'Ajustes: recurso por item, espaçamento e checkbox da Entrada de NF', status: 'concluida',
+        implementado: [
+            'Recurso por item: o botão "Trocar pra…" só aparece quando faz sentido — quando o item NÃO atinge o mínimo de fornecedores (Recurso Próprio) ou quando já é uma exceção definida manualmente. Quando o item já atingiu o mínimo (C/C, o caso comum) não tem mais um botão sugerindo baixar pra Recurso Próprio — só um link discreto "Corrigir" pro caso raro de precisar mesmo assim.',
+            'Cabeçalho informativo acima da lista de itens: "Recurso pelas cotações: X item(ns) com 3+ fornecedores (C/C) · Y item(ns) com menos (Recurso Próprio)" (ou "todos atingiram", quando não há nenhum abaixo do mínimo).',
+            'Entrada de NF: mais espaço entre o seletor de pedido, a cotação adicional e a caixinha "sem cotação do SmartCompras"; a caixinha ficou maior (22px), mais fácil de tocar no celular.'
+        ],
+        mudou: ['Só apresentação da Entrada de NF. Nenhuma regra de recurso, associação ou dado gravado foi alterada.'],
+        testar: ['Item com 3+ fornecedores: mostra o recurso e só o link discreto "Corrigir", sem botão de destaque. Item com menos de 3: mostra o botão "Trocar pra C/C" normalmente. Cabeçalho mostra a contagem certa.']
+    },
+    {
+        numero: 22, nome: 'NF com itens de mais de um pedido (cotação adicional)', status: 'concluida',
+        implementado: [
+            'Quando os itens da NF já têm associação confirmada apontando pra pedidos diferentes, o app não força mais escolher um só: usa o pedido principal (seletor de cima) e adiciona os demais automaticamente como "cotação adicional", mostrados em chips removíveis logo abaixo.',
+            'Também dá pra adicionar manualmente: "+ Adicionar cotação" ao lado do seletor de pedido, listando as cotações cadastradas que ainda não foram usadas nesta NF.',
+            'A lista de itens da cotação (associação de cada produto) passa a mostrar as opções de todas as cotações selecionadas; se o mesmo código do SmartCompras existir em mais de um pedido, a opção mostra "[Pedido …]" pra diferenciar.'
+        ],
+        mudou: [
+            'Recurso por item continua raro de mexer: ele já procura a cotação certa sozinho (pelo código), então não precisa de nenhuma tela nova — funciona igual com uma ou várias cotações.',
+            'NF salva: o campo "pedido" continua sendo só o principal (nenhuma NF antiga muda de formato); um campo "pedidos" (lista) só aparece quando há mais de um. Cada item ganha "pedidoItem" só nesse caso, pra a conferência não confundir o mesmo código em pedidos diferentes.',
+            'A conferência Cotação × NF × ERP, o alerta de itens esperados e "Gerar auditoria" agora consideram todas as cotações da NF, não só a principal.'
+        ],
+        testar: [
+            'NF com itens de dois pedidos já associados antes: confirmar que os dois entram automaticamente (chips) e a conferência considera os dois, sem pedir escolha manual.',
+            'Adicionar uma cotação manualmente por "+ Adicionar cotação" e depois remover pelo × do chip.',
+            'Associar um item a um código que existe em duas cotações selecionadas: o seletor mostra "[Pedido …]" em cada opção.',
+            'NF de um pedido só (o caso comum): tudo igual a antes, sem chips nem "[Pedido …]" nas opções.'
+        ]
+    },
+    {
+        numero: 21, nome: 'Tratamento da NF antes de salvar (recurso, compra direta e conferência)', status: 'concluida',
+        implementado: [
+            'Recurso na própria linha do item, antes de salvar: mostra o recurso previsto e o motivo (quantos fornecedores cotaram), com "Trocar pra…". A escolha fica na tela e só grava ao "Salvar NF" — acabou o ciclo salvar, revisar e salvar de novo. O bloco de recurso pós-salvamento saiu.',
+            'Conferência Cotação × NF × ERP ao vivo: recalcula a cada mudança (fator, associação, pedido) com a NF em edição contada como se já estivesse salva, sem gravar nada. Itens com conversão ainda não confirmada aguardam, sem falso alarme. "Gerar auditoria" também funciona antes de salvar.',
+            'Compra direta (sem cotação do SmartCompras): opção "— Sem cotação do SmartCompras (compra direta) —" no seletor de associação de cada item, e uma caixinha "Esta NF não possui cotação do SmartCompras" como atalho pra NF inteira. O item passa a associar só com o SP Data (lembrado por fornecedor + código), o recurso começa como Recurso Próprio do destino, e o destino (Santa Casa/CTI) é pedido quando não há cotação pra informá-lo.'
+        ],
+        mudou: [
+            'NFs com cotação seguem como antes. Na NF salva ficam os campos semCotacaoSmartCompras, destino e, nos itens diretos, semCotacao e recurso; a aptidão, o Gerenciar e o filtro de destino dos Relatórios leem esses dados.',
+            'A associação SP Data de itens diretos usa a mesma coleção de associações SP Data, com chave "DIRETO::" + CNPJ + código do fornecedor (nenhuma coleção nova). O ERP ignora essas chaves ao ligar itens a códigos da cotação.'
+        ],
+        testar: [
+            'NF com cotação: o recurso aparece em cada item antes de salvar, dá pra trocar, e a conferência muda ao confirmar/alterar um fator. Salvar NF grava tudo de uma vez.',
+            'NF sem cotação (caixinha): escolher o destino, associar os itens ao SP Data, conferir o recurso Recurso Próprio e trocar um item pra C/C; salvar e ver destino/recurso no Gerenciar.',
+            'NF mista: com o pedido selecionado, escolher "Sem cotação do SmartCompras" na lista de um item (ex.: álcool) e conferir que os outros itens seguem normais.',
+            'Carregar outro XML depois de salvar: nada da NF anterior deve aparecer.'
+        ]
+    },
+    {
+        numero: '20.1', nome: 'Correção: resquício da NF anterior ao carregar outro XML', status: 'concluida',
+        implementado: [
+            'Ao carregar um XML novo na Entrada de NF, o resultado da conferência ("Confere com a cotação/ERP") e o bloco de recurso da NF anterior são limpos. Antes eles continuavam na tela mostrando itens e recursos da NF que já tinha sido salva.'
+        ],
+        mudou: ['Só a limpeza da tela ao carregar outro XML; nada é gravado ou alterado no banco.'],
+        testar: ['Salve uma NF, carregue outro XML (com ou sem cotação): os blocos "Recurso definido/pendente" e "Confere com a cotação/ERP" da NF anterior não devem aparecer.']
+    },
+    {
+        numero: 20, nome: 'Recurso definido pelas cotações na Entrada de NF', status: 'concluida',
+        implementado: [
+            'Regra de negócio: item com 3 ou mais fornecedores cotando é pago com recurso público/externo (C/C); com menos (1 ou 2), é Recurso Próprio. O número de fornecedores vem do relatório de fornecedores ganhadores do próprio pedido.',
+            'Ao salvar a NF, o recurso dos itens que ainda não tinham é definido automaticamente por essa regra (C/C ou Recurso Próprio da origem do pedido) e a tela mostra, item a item, o motivo (quantos fornecedores cotaram) com o botão "Trocar pra…". Só cai na escolha manual o item sem o dado (pedido sem relatório de ganhadores).'
+        ],
+        mudou: [
+            'Removida a sugestão por histórico de outros pedidos: o mesmo produto pode ser comprado com C/C ou com Recurso Próprio, então o histórico não define recurso.',
+            'Os mínimos de Configurações → Análise de cotações agora valem: vazios, usa 3 (C/C) e 1 (Recurso Próprio). O ✓ da Central do Pedido usa o mesmo mínimo.',
+            'A gravação do recurso agora salva o mapa aninhado (recursosPorItem → código), garantindo que set + merge não crie um campo literal com ponto no nome.'
+        ],
+        testar: [
+            'Pedido 1653 (com o relatório de ganhadores importado): Entrada de NF de um fornecedor do pedido → Salvar NF: os itens com 3+ fornecedores ficam C/C e os com 1 ou 2 ficam Recurso Próprio, com o motivo na tela.',
+            'Trocar o recurso de um item pelo botão "Trocar pra…" e conferir que o item passa a aparecer como "definido manualmente".',
+            'Pedido sem relatório de ganhadores: os itens aparecem como pendentes com a mensagem explicando por quê, e a escolha manual continua funcionando.',
+            'Conferir a Central do Pedido: "Recurso" do item e o ✓ de fornecedores que cotaram.'
+        ]
+    },
+    {
+        numero: 19, nome: 'Correção: CNPJ com pontuação (XML antigo do SmartCompras)', status: 'concluida',
+        implementado: [
+            'O "Complementar com Relatório do SmartCompras" agora casa os itens por código + CNPJ comparando só os dígitos. Antes, o XML antigo (CNPJ como 44.672.062/0001-15) nunca casava com o relatório (só dígitos) e nenhum nome era complementado (0 de 112 no pedido 1653).',
+            'A mesma regra foi aplicada a todos os pontos que comparam o CNPJ vindo do XML com o da NF-e, do cadastro SP Data, do ERP ou do relatório: identificar o pedido pela NF, itens do fornecedor na Entrada de NF, alerta de itens esperados, reconciliação do ERP com a NF, associações SP Data via ERP, valor cotado por fornecedor e nome de exibição do fornecedor. Também vale ao reimportar um pedido (diferenças entre versões e nome oficial preservado), mesmo que o formato do CNPJ mude de uma versão para outra.'
+        ],
+        mudou: [
+            'Só a comparação: igualdade exata dos 14 dígitos (nunca aproximada, nunca por nome) e CNPJ vazio nunca casa. Nada foi reescrito no banco — pedidos já importados continuam como estão.',
+            'Regra pra frente: qualquer comparação nova com CNPJ deve usar normalizarCnpj / mesmoCnpj / cnpjEmLista (comentário no código).'
+        ],
+        testar: [
+            'Pedido 1653: Central do Pedido → colar o relatório de fornecedores ganhadores → Processar: deve mostrar "Nomes que serão complementados: 112" e nenhum item sem correspondência; confirmar e conferir que os itens ganham o nome oficial.',
+            'Entrada de NF com um fornecedor desse pedido: o pedido deve ser identificado automaticamente e os itens do fornecedor aparecerem na associação com a cotação.',
+            'Ao reimportar o XML de um pedido que já tinha nomes complementados, os nomes continuam lá.'
+        ]
+    },
+    {
+        numero: 18, nome: 'Paginação do Histórico', status: 'concluida',
+        implementado: [
+            'Histórico: a lista de dentro do mês (e o resultado da busca) agora aparece em lotes de 40, com o botão "Carregar mais (N restante(s))" no fim — o mesmo padrão já usado em Produtos SP Data e Fornecedores.',
+            'O limite recomeça no primeiro lote a cada nova busca ou troca de ano/mês; expandir ou recolher um registro não reinicia a lista.'
+        ],
+        mudou: [
+            'Só a exibição do Histórico: nenhum registro foi alterado ou apagado, a ordem continua por data (mais recentes primeiro) e a busca continua varrendo todos os meses.',
+            'O botão "Limpar registros simples arquivados (legado)" ficou separado no fim da tela, em vermelho, longe do "Carregar mais".'
+        ],
+        testar: [
+            'Histórico → ano → mês com mais de 40 registros: aparecem 40 e o botão informa quantos faltam; tocar em "Carregar mais" mostra os próximos até acabar.',
+            'Expandir um registro depois de carregar mais: a lista não volta ao início. Trocar de mês ou buscar: volta a mostrar o primeiro lote.',
+            'Busca por NF, fornecedor, CNPJ ou pedido continua achando registros de qualquer mês.'
+        ]
+    },
+    {
+        numero: '17.3', nome: 'Redesign — Etapa 4 (áreas de uso frequente)', status: 'concluida',
+        implementado: [
+            'Entrada de NF (XML): itens e alertas usam a mesma gramática de estados do cartão de NF (barra lateral, borda de 1px e tinta sutil) no lugar da borda tracejada amarela; selos de pendência mais leves; ações dentro de cada item (Associar, Confirmar fator) no formato de chip.',
+            'Produtos SP Data e Fornecedores: o cartão que envolvia a lista saiu (os itens já são cartões); ações Renomear/Inativar/Reativar agrupadas no formato de chip; "Cadastrar produto" é o botão principal.',
+            'Botão principal preenchido em Importar ERP (Processar Relatório e Importar Selecionadas) e Observações (Adicionar Observação).',
+            'Editor de cotação no iPhone: Razão Social em linha própria e CNPJ ao lado da lixeira, sem cortar o texto.'
+        ],
+        mudou: [
+            'Só apresentação. Nenhuma regra de negócio, cálculo, filtro, fluxo ou dado foi alterado.',
+            'Central do Pedido, editores de Anotação e Aprovações herdam o sistema sem mudança própria: já estavam coerentes.'
+        ],
+        testar: [
+            'Entrada de NF: carregar um XML e conferir itens pendentes, alerta "Resolva antes de salvar" e os botões Associar e Confirmar fator.',
+            'Produtos SP Data e Fornecedores: lista, busca, Renomear e Inativar/Reativar.',
+            'Importar ERP: Processar Relatório e Importar Selecionadas. Observações: Adicionar Observação.',
+            'Nova Cotação no iPhone: adicionar fornecedores e conferir os campos.'
+        ]
+    },
+    {
+        numero: '17.2', nome: 'Redesign — Etapa 3 (telas de consulta) e limpeza de código', status: 'concluida',
+        implementado: [
+            'Limpeza de código: removidas 13 funções e 4 variáveis sem nenhum uso (importação de fornecedores por texto, cadastro de apelidos pelo formulário antigo, checklist antigo, entre outras) e o modo "Selecionar pra saída" da Fase 12, que estava sem botão de acesso desde a Fase 14.',
+            'Limpeza de CSS: removidas as regras de classes que não existem mais e as declarações antigas que já eram sobrescritas por regras posteriores; 65 estilos inline repetidos viraram classes utilitárias (espaçamentos e textos auxiliares).',
+            'Botão principal preenchido nas telas de formulário: Cotações, Anotações, Nova Auditoria (Gerar Auditoria), Cotação, Entrada de NF (Salvar NF), Backup, Configuração da análise e edição em lote.',
+            'Relatórios: cartão "Próximos Vencimentos" neutro (sem a moldura de destaque) e painel de Filtros com indicador de aberto/fechado. Ações localizadas nos itens do Histórico, da Central do Pedido e do XML seguem a mesma linguagem dos chips. Estados vazios mais discretos. Histórico de Mudanças com destaque de 1px na versão atual.'
+        ],
+        mudou: [
+            'Texto que usa a cor de destaque passou a usar uma versão legível em cada tema (mais clara nos temas escuros, mais escura nos temas claros de destaque claro); texto sobre fundo de destaque usa a cor de contraste do tema.',
+            'Só apresentação e limpeza: nenhuma regra de negócio, cálculo, filtro, fluxo ou dado foi alterado. Notas que já tinham a marcação de "seleção pra saída" continuam no banco, sem uso.',
+            'Restam pra depois (sem urgência): refinamento visual das telas menos usadas (Produtos SP Data, Central do Pedido, editores) e o CSS antigo de seletores agrupados que ainda é sobrescrito pela camada nova.'
+        ],
+        testar: [
+            'Gerenciar NF: seleção em lote, Pendente/Retomar, Editar e Excluir; ícone de seleção no cabeçalho continua igual.',
+            'Relatórios: indicadores, painel de Filtros, as quatro abas e o toque nos indicadores.',
+            'Cotações, Anotações, Backup e Nova Auditoria: o botão principal aparece preenchido e faz o mesmo de antes.',
+            'Histórico e Central do Pedido: ações em forma de chip funcionando (ex.: Desarquivar temporariamente).',
+            'Temas Escuro, Ocean e Wine: textos e botões legíveis. Desktop: sidebar e troca de telas.'
+        ]
+    },
+    {
+        numero: '17.1', nome: 'Ajustes visuais da Fase 17 (após teste no iPhone)', status: 'concluida',
+        implementado: [
+            'Botões voltaram ao tamanho anterior (altura e fonte de antes, sem esticar na largura), mantendo a hierarquia: primário preenchido, secundário, discreto e destrutivo.',
+            'Chips de Gerenciar NF (Editar, Pendente, Excluir) agora seguem a mesma linguagem dos botões das outras telas: pílula com borda de 1,5px, só que menores.'
+        ],
+        mudou: [
+            'Selo "Ainda não passou pela Entrada Segura" e demais selos longos passam a quebrar linha em vez de sair do cartão; textos de selo, contador, tabela XML e rótulo da barra inferior voltaram ao tamanho de antes (o rótulo "Entrada de NF" deixa de quebrar em duas linhas).',
+            'Botão "Limpar Banco de Exceções" ganhou espaço em relação ao cartão acima.'
+        ],
+        testar: [
+            'Gerenciar NF: selo da Entrada Segura dentro do cartão, chips com o mesmo formato dos botões.',
+            'Exportar e Entrada de NF: tamanho dos botões como antes e barra inferior com o rótulo "Entrada de NF" em uma linha.',
+            'Conferir se algum outro texto ainda estoura em telas pequenas e me avisar qual.'
+        ]
+    },
+    {
+        numero: 17, nome: 'Redesign Visual e Sistema de Design — Etapa 2 (fundação)', status: 'concluida',
+        implementado: [
+            'Base do sistema visual: escala de tipografia (22/13/15/16/12/28), espaçamento (4-8-12-16-24-32), raios (8/12/20/pílula), cores semânticas (sucesso, perigo, atenção, info) e --accent-contrast, tudo compatível com os 7 temas, fontes, ícones, transições e densidade.',
+            'Botões com hierarquia: primário preenchido (Salvar na Entrada, Copiar em Exportar, confirmar nos modais), secundário, discreto e destrutivo (Arquivar Tudo separado das demais ações). Campos de 44px/16px, rótulos sem caixa alta.',
+            'Controle segmentado unificado (abas e filtros do Relatórios, etc.), chips, cartão de NF com uma só gramática de estados (barra lateral, etiqueta Pendente discreta, seleção com tinta), indicadores dos Relatórios em novo padrão visual e modais como folha inferior no iPhone / diálogo no desktop.',
+            'Desktop (≥900px): a barra lateral que já existia foi ativada (item atual destacado, Ajustes no rodapé) e o conteúdo usa a largura disponível; no iPhone a barra inferior continua.'
+        ],
+        mudou: [
+            'Só apresentação (style.css) e classes visuais no HTML/templates. Nenhuma regra de negócio, cálculo, filtro, fluxo ou função foi alterada.',
+            'Ordem padrão do menu agora começa pelo fluxo diário (Adicionar, Gerenciar, Exportar); quem já personalizou a ordem em Ajustes não é afetado.',
+            'Textos que estavam entre 9 e 11,5px agora têm no mínimo 12px (só o rótulo da barra inferior mantém 11px). Pesos de fonte reduzidos a 400/600/700 e raios a 8/12/20/pílula.',
+            'Restam pra próximas etapas: redesenho de cada tela, redução dos estilos inline restantes e a limpeza final do CSS antigo que a nova camada substitui.'
+        ],
+        testar: [
+            'iPhone: Adicionar (campos e botão Salvar preenchido), Gerenciar (cartões de NF, estados pendente/selecionado/vencimento), Exportar (Copiar preenchido; Arquivar Tudo separado em vermelho), Relatórios (indicadores e abas), barra inferior e um modal (abre como folha inferior).',
+            'Desktop: barra lateral com todos os itens, troca de telas, item ativo destacado, Ajustes no rodapé, conteúdo centralizado e modal centralizado.',
+            'Ajustes → Personalização: trocar tema (incluindo Ocean, Sunset, Forest e Wine — texto do botão preenchido deve ficar legível), fonte, densidade e ordem dos menus.',
+            'Confirmar que Copiar, Compartilhar, Gerar PDF, Arquivar Tudo e Salvar continuam fazendo o mesmo de antes.'
+        ]
+    },
+    {
+        numero: 16, nome: 'Revisão Geral e Estabilização Final', status: 'concluida',
+        implementado: [
+            'Limpeza: removido o código das bolinhas de novidade (funções que desenhavam/controlavam a bolinha no menu, chamadas em Ajustes/navegação e o estilo da bolinha). Nada foi criado no lugar.',
+            'Revisão integrada dos fluxos (NF → saída de texto → PDF → Relatórios, navegação entre telas, botões/IDs do HTML, textos de interface): verificação técnica sem encontrar outras falhas concretas — nenhuma outra funcionalidade foi alterada.'
+        ],
+        mudou: [
+            'Só a remoção das bolinhas. Saída de Texto, PDF, Relatórios, Importar, Gerenciar NF, Histórico e demais módulos ficaram como estavam.',
+            'O campo antigo de "novidades vistas" que ficou gravado nas configurações do Firebase não é mais usado (inofensivo; nada foi apagado).',
+            'Possíveis melhorias futuras (NÃO implementadas): remover funções antigas sem nenhum uso (ex.: importação de lista de fornecedores por texto, apelidos por formulário antigo) e o modo dormante "Selecionar pra saída" da Fase 12, que ficou sem botão de acesso desde a Fase 14.'
+        ],
+        testar: [
+            'Abrir o app e navegar pelas abas e por Ajustes: não deve aparecer nenhuma bolinha nem erro, e o menu deve continuar igual.',
+            'Fluxo completo com uma NF: Importar/cadastrar → Gerenciar NF → Exportar (texto e PDF com as mesmas NFs) → Arquivar Tudo → conferir no Histórico.',
+            'Relatórios: conferir indicadores, filtros e as abas Pedidos, Notas, Divergências e Auditorias.',
+            'Ajustes → Histórico de Mudanças: a Fase 16 aparece como fase atual.'
+        ]
+    },
+    {
+        numero: 15, nome: 'Relatórios e Indicadores', status: 'concluida',
+        implementado: [
+            'Relatórios evoluído (mesma tela, sem tela nova nem coleção nova): indicadores em destaque — NFs (quantidade e valor total), Pedidos, Auditorias e Divergências (com pendentes) — calculados na hora a partir dos registros existentes, sem estimativas.',
+            'Nova aba "Auditorias" ao lado de Pedidos, Notas e Divergências (uma auditoria = uma ocorrência registrada em Nova Auditoria).',
+            'Na aba Divergências: rankings por tipo, por fornecedor e por produto (produtos com mais divergências); tocar numa linha filtra a lista pelos registros que compõem aquele número.',
+            'Filtros (painel "Filtros"): período (De/Até), fornecedor, destino (Santa Casa/CTI), recurso e tipo de divergência; pedido e NF continuam na busca por texto (que agora também acha NF pelo pedido). Indicadores e listas usam os mesmos filtros; tocar num indicador abre a lista correspondente.'
+        ],
+        mudou: [
+            'A aba Divergências agora também mostra divergências de auditorias sem pedido ("Sem pedido").',
+            'Regras: período usa a data da NF (Notas), a data do pedido (Pedidos) e a data da auditoria (Auditorias/Divergências); registro sem data válida fica fora quando há período. Destino e pedido de uma NF só aparecem se a NF foi conferida na Entrada Segura (mesma regra da aptidão) — senão ficam fora do filtro de Destino. Recurso da NF é o texto do campo de recurso/observação. Filtros que não existem pra um tipo de registro (ex.: Tipo de divergência em Notas; Recurso em Divergências) avisam em vez de mostrar número errado.',
+            'Nada mudou em Entrada Segura, Auditoria, Histórico, Gerenciar NF, Cotações, ERP, Saída de Texto, PDF ou Arquivamento.'
+        ],
+        testar: [
+            'Relatórios sem nenhum filtro: os 4 indicadores aparecem e batem com as contagens das abas (tocar em NFs abre Notas com "Todas"; em Divergências abre a aba com "Todas").',
+            'Filtros: período, fornecedor (digitando e escolhendo da lista), destino, recurso e tipo — conferir se indicadores e lista mudam juntos; "Limpar" nos filtros ativos volta tudo.',
+            'Divergências: tocar numa linha dos rankings (tipo, fornecedor, produto) e conferir que a lista mostra exatamente as divergências que compõem o número.',
+            'Aba Auditorias: conferir a lista e que tocar abre a Central do Pedido.',
+            'Conferir com uma NF cadastrada manualmente (sem pedido/cotação): ela aparece nos totais e nos filtros de período/fornecedor/recurso, e fica fora do filtro de Destino.'
+        ]
+    },
+    {
+        numero: 14, nome: 'PDF na Saída de Texto + Importar simplificado + Logo (revisão das Fases 13-14)', status: 'concluida',
+        implementado: [
+            'Aba Exportar: novo botão "Gerar PDF" ao lado de Copiar, Compartilhar e Arquivar Tudo. O PDF usa exatamente a mesma lista (e a mesma ordem, inclusive depois de "Ordenar por Recurso") da saída de texto, no modelo em papel já usado (DATA, NF, VENCIMENTO, VALOR TOTAL, FORNECEDOR, RECEBIDO COMPRAS, RECEBIDO CONTÁBIL, OBSERVAÇÕES + assinaturas).',
+            'Indicador de novidade (bolinha) reutilizável e persistente: cada novidade tem um id e a bolinha fica na aba até o usuário abrir a tela da novidade — depois nunca mais reaparece (fica registrado nas configurações, sem coleção nova). (Recurso de bolinhas removido na Fase 16.)'
+        ],
+        mudou: [
+            'Repasse/Protocolo saiu da interface: telas de revisão, lista e detalhe, botões "Revisar e Confirmar Saída"/"Ver Repasses", selo "Repasse" no card e o botão de caminhão (seleção pra saída) em Gerenciar NF. Os repasses já gravados continuam no banco, nada foi apagado, e o protocolo não é necessário pra gerar PDF.',
+            'Importar Relatório: removidos a Pré-seleção e o botão "Enviar pro Financeiro" (só criavam a mesma NF que "Importar Selecionadas" já cria). Fluxo antigo preservado: colar/subir relatório, buscar por NF ou fornecedor, ver novas × já processadas, marcar e levar pro Gerenciar NF. As NFs importadas agora ficam ligadas à entrada do ERP, e arquivar sincroniza com o ERP.',
+            'Logo: a configuração continua em Configurações → Personalização, agora no topo da tela e com nome que indica o uso nos PDFs da aba Exportar.',
+            'Saída de texto, Copiar, Compartilhar e Arquivar Tudo não mudaram.',
+            'Ajustes visuais do PDF: título "PROTOCOLO DE REPASSE NF" em uma linha, em negrito e com fonte maior; cabeçalhos das colunas em negrito; assinaturas fixas no rodapé da última página (qualquer quantidade de NFs), cada nome centralizado sob a sua linha; fonte Helvetica (equivalente ao Arial nos PDFs) em todo o documento.',
+            'Bolinha de novidade em Exportar reforçada: nova novidade registrada pra este ajuste e a bolinha também aparece quando os ícones das abas estão desligados. (Recurso de bolinhas removido na Fase 16.)'
+        ],
+        testar: [
+            'Exportar: com notas na lista, tocar em Gerar PDF e conferir que as NFs e a ordem são as mesmas da caixa de texto; usar "Ordenar por Recurso" e gerar de novo; marcar uma NF como pendente e conferir que ela fica fora do texto e do PDF.',
+            'Enviar uma logo em Configurações → Personalização (agora no topo) e conferir no PDF; sem logo, o PDF deve sair normalmente.',
+            'Confirmar que Copiar, Compartilhar e Arquivar Tudo continuam iguais.',
+            'Importar: colar o relatório, buscar por NF e por fornecedor, conferir novas × já processadas, marcar e importar — a lista "Pré-seleção" não deve mais existir.',
+            'Depois de importar, arquivar a NF e conferir no Histórico que a NF de origem ERP aparece como arquivada.',
+            'Cadastrar uma NF manualmente (sem cotação/ERP), informar o recurso à mão e gerar texto e PDF — nada deve bloquear.',
+            'PDF: conferir título em negrito numa linha só, cabeçalhos em negrito e as três assinaturas no rodapé, com o nome centralizado sob cada linha — com poucas NFs e com muitas (várias páginas).',
+            'Bolinhas: devem aparecer em Exportar e em Configurações; abrir Exportar, Importar Relatório e Personalização apaga a bolinha correspondente, e recarregar a página não traz de volta as já vistas. (Recurso de bolinhas removido na Fase 16.)'
+        ]
+    },
+    {
+        numero: 13, nome: 'Saída/Repasse e Protocolo', status: 'concluida',
+        implementado: [
+            'NFs marcadas no modo "Selecionar pra Saída" (Fase 12) agora podem ser reunidas num repasse formal: botão "Revisar e Confirmar Saída" mostra um resumo (destino, valor total, fornecedores, pedidos, recursos) antes de confirmar.',
+            'Cada repasse recebe um protocolo único e localizável (formato SAI-AAAAMMDD-NNN).',
+            'Nova tela "Ver Repasses" (dentro de Gerenciar NF) lista os repasses já confirmados e permite abrir cada um pra ver quais NFs fizeram parte.',
+            'Possível remover uma NF da revisão antes de confirmar — nunca exclui ou altera a NF original.',
+            'Repasse pode ser marcado como "Concluído/Arquivado" depois de confirmado.'
+        ],
+        mudou: [
+            'Novos botões dentro do modo "Selecionar pra Saída": "Revisar e Confirmar Saída" e "Ver Repasses".',
+            'Se as NFs selecionadas tiverem destinos diferentes (Santa Casa e CTI misturados), a confirmação é bloqueada até resolver.',
+            'Uma NF que já fez parte de um repasse confirmado passa a mostrar um selo "Repasse [protocolo]" no card de Gerenciar NF.',
+            'Revisão (Fase 14): as telas de Repasse/Protocolo foram retiradas da interface; os repasses já criados permanecem no banco.'
+        ],
+        testar: []
+
+    },
+    {
+        numero: '12 (refino)', nome: 'Unificação Gerenciar NF × Seleção Saída + Histórico de Mudanças', status: 'concluida',
+        implementado: [
+            '"Seleção Saída" deixou de ser uma tela própria — agora é um modo dentro de Gerenciar NF (botão no cabeçalho), com filtro por situação e checkbox de seleção pra saída.',
+            'Card de Gerenciar NF passou a mostrar sempre pedido, CNPJ, destino e recurso confirmado, além do selo de aptidão (Fase 11).',
+            'Edição (fornecedor, NF, vencimento, valor) já é a mesma de sempre — nunca existiu uma segunda implementação.',
+            'Indicador de novidade corrigido: agora dispara só uma vez por carregamento do app (antes podia reaparecer sempre que uma configuração fosse salva) e aponta pra aba Gerenciar NF. (Recurso de bolinhas removido na Fase 16.)',
+            'Esta tela de Histórico de Mudanças, dentro de Configurações.'
+        ],
+        mudou: [
+            'A aba "Seleção Saída" não existe mais separadamente — use o botão de caminhão no cabeçalho de Gerenciar NF.',
+            'Busca de Gerenciar NF agora também encontra por número do pedido.'
+        ], testar: []
+    },
+    {
+        numero: 12, nome: 'Seleção de NFs para Saída/Repasse', status: 'concluida',
+        implementado: [
+            'Conceito de "aptidão para saída" (apta, com divergência, com auditoria pendente, não conferida, ambígua, sem pedido) calculado a partir de dados já existentes — Entrada Segura, Auditoria, ERP.',
+            'Seleção de NFs candidatas a uma futura saída/repasse, sem duplicar ou recriar a NF.'
+        ],
+        mudou: ['(depois unificado com Gerenciar NF no refino acima).'],
+        testar: []
+    },
+    {
+        numero: 11, nome: 'Financeiro / Aptidão para Saída', status: 'concluida',
+        implementado: [
+            'Função que cruza a nota financeira com a NF processada (Entrada Segura) e a Auditoria pra determinar a situação de conferência — sem criar nenhum campo/coleção nova, só leitura.'
+        ], mudou: [], testar: []
+    },
+    {
+        numero: 10, nome: 'Auditoria Integrada', status: 'concluida',
+        implementado: [
+            'Auditoria passou a nascer como consequência da conferência da NF/Cotação/ERP — "Gerar auditoria" pré-preenche pedido, fornecedor, NF, produto, quantidade cotada/faturada.',
+            'Divergência nasce com o TIPO ESTRUTURADO correto (NÃO FATURADO, QUANTIDADE DIFERENTE, VALOR DIFERENTE) sempre que a comparação já dá evidência — "Outro" deixou de ser usado como padrão.',
+            'Seleção de material pela divergência passou a mostrar o nome do produto (associação SP Data), não a Observação bruta do SmartCompras.'
+        ], mudou: [], testar: []
+    },
+    {
+        numero: 9, nome: 'Entrada Segura da NF', status: 'concluida',
+        implementado: [
+            'Distinção entre BLOQUEIO (impede salvar — conflito de pedido, conversão de unidade suspeita) e ALERTA (avisa mas deixa salvar — sem associação SP Data, item ainda não faturado nesta NF).',
+            'Sugestão de qual cotação/pedido provavelmente corresponde à NF, quando o CNPJ bate com mais de uma cotação, por evidência de valor compatível — nunca por data isolada.'
+        ], mudou: [], testar: []
+    },
+    {
+        numero: 8, nome: 'Reconciliação ERP', status: 'concluida',
+        implementado: [
+            'Vínculo NF↔pedido com 3 estados (confirmado/sugerido/sem associação), sempre com evidências explícitas — nunca por coincidência de data isolada.',
+            'Preenchimento automático de associação SP Data a partir do ERP quando quantidade e valor batem exatamente com um único item.',
+            '"Alimentar Histórico do ERP" separado de "Enviar pro Financeiro" — reimportar o mesmo relatório nunca duplica NF.'
+        ], mudou: [], testar: []
+    },
+    {
+        numero: '2–7', nome: 'Consolidação Pedido → Cotação → Fornecedor → NF → ERP', status: 'concluida',
+        implementado: [
+            'Central do Pedido como ponto único de consulta (fornecedor, CNPJ, itens, SP Data, NFs relacionadas).',
+            'Suporte nativo a um pedido com várias NFs e a NF parcial (nunca "1 pedido = 1 NF").'
+        ], mudou: [], testar: []
+    },
+    {
+        numero: 1, nome: 'Correção da associação SP Data + remoção de tela redundante', status: 'concluida',
+        implementado: [
+            'Busca de associação SP Data corrigida pra considerar também o código, não só o nome.',
+            'Tela geral "Ver cotações por item" removida — associação continua só no contexto do produto dentro da cotação/fornecedor.'
+        ], mudou: [], testar: []
+    }
+];
+
+function renderHistoricoMudancas() {
+    const container = document.getElementById('historico-mudancas-lista');
+    if (!container) return;
+    const ehV2 = fase => String(fase.numero).startsWith('2.');
+    const cardFase = fase => {
+        const atual = fase.status === 'atual';
+        const listaHTML = (titulo, itens) => itens && itens.length
+            ? `<div class="nota-detalhes"><strong>${titulo}:</strong><br>${itens.map(i => '• ' + escRel(i)).join('<br>')}</div>` : '';
+        return `<div class="card hmud-item${atual ? ' hmud-atual' : ''}">
+            <div class="nota-info">${atual ? '<span class="xml-item-badge pronto">VERSÃO ATUAL</span> ' : ''}${ehV2(fase) ? 'Versão' : 'Fase'} ${escRel(fase.numero)} — ${escRel(fase.nome)}</div>
+            ${fase.data ? `<div class="xml-item-meta">Atualizada em ${escRel(fase.data)}</div>` : ''}
+            ${listaHTML('O que foi implementado', fase.implementado)}
+            ${listaHTML('O que mudou nesta versão', fase.mudou)}
+            ${listaHTML('O que testar', fase.testar)}
+        </div>`;
+    };
+    const v2 = HISTORICO_FASES.filter(ehV2);
+    const v1 = HISTORICO_FASES.filter(f => !ehV2(f));
+    // Versão 1.0 fica recolhida num card; a 2.x aparece aberta no topo. <details> nativo: sem JS e sem estado a guardar.
+    container.innerHTML = v2.map(cardFase).join('') + (v1.length
+        ? `<details class="card hmud-grupo-v1"><summary><strong>Versão 1.0</strong> — ${v1.length} fases (Fase ${escRel(v1[v1.length - 1].numero)} até a ${escRel(v1[0].numero)}) · toque para abrir</summary>${v1.map(cardFase).join('')}</details>` : '');
+}
+
+function abrirConfigAnaliseCotacoes() {
+    document.getElementById('config-minimo-cc').value = appConfig.minimoCotacoesCC || '';
+    document.getElementById('config-minimo-proprio').value = appConfig.minimoCotacoesRecursoProprio || '';
+}
+async function salvarMinimosCotacoes() {
+    const cc = document.getElementById('config-minimo-cc').value;
+    const proprio = document.getElementById('config-minimo-proprio').value;
+    try {
+        await settingsDocRef.set({
+            minimoCotacoesCC: cc ? parseInt(cc, 10) : null,
+            minimoCotacoesRecursoProprio: proprio ? parseInt(proprio, 10) : null
+        }, { merge: true });
+        toast('✓ Configuração salva.');
+    } catch (e) {
+        console.error('Erro ao salvar mínimos de cotações:', e);
+        toast('✕ Erro ao salvar.');
+    }
+}
+
+// Nome de exibição de um fornecedor: reaproveita o MESMO cadastro de apelidos
+// já usado na importação do relatório de NFs do ERP (apelidosFornecedores /
+// encontrarApelidoFornecedor) — não é um cadastro paralelo. Preferência por
+// CNPJ fica registrada como limitação: o cadastro de apelidos hoje é indexado
+// por nome (não por CNPJ), então o match continua sendo por nome/prefixo.
+// Nome de exibição do fornecedor — fonte ÚNICA usada em todo o app (Central
+// do Pedido, cotação, auditoria, Entrada de NF). Unifica o que antes eram
+// dois caminhos separados: agora, quando há CNPJ disponível, consulta
+// primeiro o cadastro oficial fornecedoresSpData (determinístico — CNPJ é
+// dado concreto, não precisa de heurística de texto). Sem CNPJ ou CNPJ ainda
+// não cadastrado, cai pro nome exato no mesmo cadastro e, por último, pro
+// alias antigo por texto (encontrarApelidoFornecedor) — mantido só como
+// último recurso, sem apagar nada do que já existia.
+// 2.9.4: todos os cadastros ligados a um (matriz/filial/CD associados) — só leitura, inclui o próprio.
+// 2.19.2: índice por id e memória dos nomes, refeitos só quando a lista do SP Data é trocada (antes cada chamada varria os ~1.200 cadastros; a Central e as Cotações chamam isso centenas de vezes).
+let _spPorId = null, _spPorIdLista = null, _memoNomeForn = new Map(), _memoNomeFornLista = null;
+function indiceSpDataPorId() {
+    if (_spPorIdLista !== listaFornecedoresSpData) { _spPorIdLista = listaFornecedoresSpData; _spPorId = {}; listaFornecedoresSpData.forEach(f => { _spPorId[f.id] = f; }); }
+    return _spPorId;
+}
+function docsDaMesmaEntidadeSpData(doc) {
+    if (!doc) return [];
+    const porId = indiceSpDataPorId();
+    const visitado = new Set(), pilha = [doc.id], docs = [];
+    while (pilha.length) {
+        const id = pilha.pop();
+        if (visitado.has(id) || !porId[id]) continue;
+        visitado.add(id);
+        docs.push(porId[id]);
+        (porId[id].entidadesRelacionadas || []).forEach(o => { if (!visitado.has(o)) pilha.push(o); });
+    }
+    return docs;
+}
+// 2.9.4: o apelido vale para todos os CNPJs associados. Prioridade: apelido editado à mão neste cadastro > apelido editado
+// à mão em outro cadastro do grupo > nome de exibição do relatório deste > de outro do grupo. Nada é gravado.
+function apelidoFornecedorDoc(doc) {
+    if (!doc) return { nome: '', herdado: false };
+    const grupo = docsDaMesmaEntidadeSpData(doc).filter(d => d.id !== doc.id);
+    if (doc.nomeExibido && doc.apelidoEditadoManualmente) return { nome: doc.nomeExibido, herdado: false };
+    const manual = grupo.find(d => d.nomeExibido && d.apelidoEditadoManualmente);
+    if (manual) return { nome: manual.nomeExibido, herdado: true };
+    if (doc.nomeExibido) return { nome: doc.nomeExibido, herdado: false };
+    const outro = grupo.find(d => d.nomeExibido);
+    return outro ? { nome: outro.nomeExibido, herdado: true } : { nome: '', herdado: false };
+}
+function nomeExibicaoFornecedor(razaoSocial, cnpj) {
+    if (_memoNomeFornLista !== listaFornecedoresSpData) { _memoNomeFornLista = listaFornecedoresSpData; _memoNomeForn = new Map(); }
+    const chave = normalizarCnpj(cnpj) + '|' + (razaoSocial || '');
+    if (_memoNomeForn.has(chave)) return _memoNomeForn.get(chave);
+    const r = _nomeExibicaoFornecedorCalc(razaoSocial, cnpj);
+    _memoNomeForn.set(chave, r);
+    return r;
+}
+function _nomeExibicaoFornecedorCalc(razaoSocial, cnpj) {
+    if (cnpj) {
+        const doc = docFornecedorSpDataPorCnpj(cnpj);
+        const apel = doc ? apelidoFornecedorDoc(doc).nome : '';
+        if (apel) return apel;
+        // 2.24.1: CNPJ (ex.: filial) sem apelido próprio: usa o apelido de qualquer CNPJ da mesma entidade
+        try { for (const c of cnpjsDaMesmaEntidadeFornecedor(cnpj)) { const d = docFornecedorSpDataPorCnpj(c), n = d ? apelidoFornecedorDoc(d).nome : ''; if (n) return n; } } catch (e) { /* segue para o nome */ }
+        if (doc) return doc.nomeReal || razaoSocial || '';
+    }
+    if (!razaoSocial) return '';
+    const porNome = listaFornecedoresSpData.find(f => (f.nomeReal || '').toUpperCase() === razaoSocial.toUpperCase());
+    if (porNome) return apelidoFornecedorDoc(porNome).nome || porNome.nomeReal;
+    return encontrarApelidoFornecedor(razaoSocial) || razaoSocial;
+}
+
+// 2.8.0: padrão único de título de NF em todo o app — "APELIDO 1234" (apelido do fornecedor, ou o nome completo
+// quando não há apelido, seguido do número da NF).
+function tituloFornNf(fornecedor, cnpj, numeroNf) {
+    const nome = (nomeExibicaoFornecedor(fornecedor || '', cnpj) || fornecedor || '').trim();
+    return [nome, numeroNf ? String(numeroNf).trim() : ''].filter(Boolean).join(' ');
+}
+
+// Anotação "resumo vivo" do pedido — criada automaticamente na primeira
+// importação da cotação (título "PEDIDO - ORIGEM", cabeçalho com datas e
+// fornecedores). A MESMA anotação (casada por número de pedido, sem filtrar
+// por tipo) é reaproveitada depois pela Auditoria (salvarAuditoriaComoAnotacao
+// já faz upsert por pedido, ver Fase 2) — evita criar uma anotação separada
+// pra cada acontecimento do pedido.
+function montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores) {
+    const linhas = [];
+    if (dataPedido) linhas.push(`DATA DO PEDIDO: ${formatarDataBRSimples(dataPedido)}`);
+    if (dataLimite) linhas.push(`LIMITE: ${formatarDataBRSimples(dataLimite)}`);
+    linhas.push('FORNECEDORES:');
+    (fornecedores || []).forEach(f => linhas.push(nomeExibicaoFornecedor(f.razaoSocial, f.cnpj)));
+    return '<p>' + linhas.map(l => l.replace(/</g, '&lt;')).join('<br>') + '</p>';
+}
+
+async function criarOuAtualizarAnotacaoDaCotacao(pedido, origem, dataPedido, dataLimite, fornecedores) {
+    if (!pedido) return null;
+    const titulo = origem ? `${pedido} - ${origem}` : pedido;
+    const existente = listaAnotacoes.find(a => a.pedido === pedido);
+    try {
+        if (!existente) {
+            const ref = await anotacoesTextoCollection.add({
+                titulo,
+                conteudo: montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores),
+                tipo: 'cotacao',
+                pedido,
+                atualizadoEm: new Date().toISOString(),
+                criadoEm: new Date().toISOString()
+            });
+            return ref.id;
+        } else {
+            // Só re-escreve o cabeçalho se ainda não houver nenhuma ocorrência de
+            // auditoria registrada nessa anotação — depois que a Auditoria começa
+            // a anexar conteúdo, mexer no bloco de cabeçalho fica arriscado demais
+            // (o conteúdo já não é mais só o header, é um documento vivo com
+            // histórico). O título (pedido - origem) sempre pode ser atualizado,
+            // já que é só metadado, não mexe no corpo salvo.
+            const dadosUpdate = { titulo };
+            if (!existente.ocorrencias || existente.ocorrencias.length === 0) {
+                dadosUpdate.conteudo = montarCabecalhoAnotacaoCotacao(pedido, origem, dataPedido, dataLimite, fornecedores);
+            }
+            await anotacoesTextoCollection.doc(existente.id).update(dadosUpdate);
+            return existente.id;
+        }
+    } catch (e) {
+        console.error('Erro ao criar/atualizar anotação da cotação:', e);
+        return null;
+    }
+}
+
+function excluirCotacao() {
+    if (!cotacaoEmEdicaoPedido) return;
+    const pedido = cotacaoEmEdicaoPedido;
+    showConfirmModal({
+        title: 'Excluir Cotação',
+        message: `Deseja excluir a cotação do pedido ${pedido} permanentemente?`,
+        confirmText: 'Excluir',
+        confirmClass: 'danger',
+        onConfirm: async () => {
+            try {
+                await cotacoesCollection.doc(pedido).delete();
+                toast('🗑️ Cotação excluída.');
+                switchToScreen('screen-cotacoes', 'Cotações');
+            } catch (e) {
+                console.error('Erro ao excluir cotação:', e);
+                toast('✕ Erro ao excluir.');
+            }
+        }
+    });
+}
+
+// ============================================================
+// IMPORTAÇÃO DO XML DO SMARTCOMPRAS — Fase 4
+// O XML é tratado como uma fotografia da cotação no momento da importação
+// (nunca sobrescreve silenciosamente): pedido novo cria a cotação; pedido já
+// cadastrado gera uma NOVA VERSÃO com o snapshot anterior preservado numa
+// subcoleção, e mostra um diff antes de confirmar.
+// ============================================================
+
+let importacaoXmlPendente = null; // { parsed, cotacaoExistente, diff }
+
+function textoTag(el, tag) {
+    const node = el.querySelector(tag);
+    return node && node.textContent ? node.textContent.trim() : '';
+}
+
+function parseXmlSmartCompras(xmlTexto) {
+    const doc = new DOMParser().parseFromString(xmlTexto, 'application/xml');
+    if (doc.querySelector('parsererror')) throw new Error('XML inválido ou corrompido.');
+
+    const cabecalho = doc.querySelector('Cabecalho');
+    const pedido = cabecalho ? textoTag(cabecalho, 'PDC') : '';
+    if (!pedido) throw new Error('Não foi possível identificar o número do pedido (PDC) no XML.');
+
+    const fornecedores = Array.from(doc.querySelectorAll('Fornecedores > Fornecedor')).map(f => ({
+        cnpj: textoTag(f, 'CNPJ'),
+        razaoSocial: upAud(textoTag(f, 'Razao_Social')),
+        faturamentoMinimo: textoTag(f, 'Faturamento_Minimo'),
+        prazoEntrega: textoTag(f, 'Prazo_Entrega'),
+        validadeProposta: textoTag(f, 'Validade_Proposta'),
+        formaPagamento: textoTag(f, 'Id_Forma_Pagamento'),
+        frete: textoTag(f, 'Frete'),
+        dataConfirmacao: textoTag(f, 'Data_Confirmacao')
+    })).filter(f => f.cnpj);
+
+    const itens = Array.from(doc.querySelectorAll('Itens > Item')).map(item => {
+        const resposta = item.querySelector('Resposta');
+        const progEntrega = item.querySelector('Programacao_Entrega');
+        return {
+            codProduto: textoTag(item, 'Cod_Produto'),
+            quantidade: textoTag(item, 'Quantidade'),
+            dataProgramada: progEntrega ? textoTag(progEntrega, 'Data') : '',
+            qtdProgramada: progEntrega ? textoTag(progEntrega, 'Quantidade') : '',
+            cnpjFornecedor: resposta ? textoTag(resposta, 'CNPJ') : '',
+            fabricante: resposta ? textoTag(resposta, 'Fabricante') : '',
+            embalagem: resposta ? textoTag(resposta, 'Embalagem') : '',
+            precoUnitario: resposta ? textoTag(resposta, 'Preco_Unitario') : '',
+            precoTotal: resposta ? textoTag(resposta, 'Preco_Total') : '',
+            descricao: upAud(resposta ? textoTag(resposta, 'Comentario') : '')
+        };
+    }).filter(it => it.codProduto);
+
+    return {
+        pedido,
+        dataVencimento: cabecalho ? textoTag(cabecalho, 'Data_Vencimento') : '',
+        horaVencimento: cabecalho ? textoTag(cabecalho, 'Hora_Vencimento') : '',
+        fornecedores,
+        itens
+    };
+}
+
+// Data limite sugerida = a mais tardia entre as datas programadas de entrega
+// dos itens (é quando TODO o pedido deveria estar entregue). Só uma sugestão
+// — nunca substitui uma data limite que o usuário já tenha definido na mão.
+function sugerirDataLimiteXml(itens) {
+    const datas = itens.map(it => it.dataProgramada).filter(Boolean).map(d => {
+        const [dia, mes, ano] = d.split('/');
+        return ano && mes && dia ? `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}` : null;
+    }).filter(Boolean);
+    if (datas.length === 0) return '';
+    return datas.sort().pop();
+}
+
+// dd/mm/aaaa (formato do XML SmartCompras) -> aaaa-mm-dd (formato do <input type=date>)
+function converterDataBRparaISO(dataBR) {
+    if (!dataBR) return '';
+    const [dia, mes, ano] = dataBR.split('/');
+    return (dia && mes && ano) ? `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}` : '';
+}
+function somarDiasISO(dataISO, dias) {
+    if (!dataISO) return '';
+    const d = new Date(dataISO + 'T00:00:00');
+    d.setDate(d.getDate() + dias);
+    return d.toLocaleDateString('en-CA'); // 2.18.1: data local (toISOString dá a data em UTC)
+}
+
+// 2.23.0: prazo de entrega padrão em DIAS ÚTEIS (segunda a sexta; feriados não entram na conta).
+function somarDiasUteisISO(dataISO, dias) {
+    if (!dataISO) return '';
+    const d = new Date(dataISO + 'T00:00:00');
+    let falta = Math.max(0, dias | 0);
+    while (falta > 0) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) falta--; }
+    return d.toLocaleDateString('en-CA');
+}
+
+function calcularDiffCotacao(antiga, nova) {
+    const diffs = [];
+    const fornAntigos = new Map((antiga.fornecedores || []).map(f => [normalizarCnpj(f.cnpj), f]));
+    const fornNovos = new Map((nova.fornecedores || []).map(f => [normalizarCnpj(f.cnpj), f]));
+    fornNovos.forEach((f, cnpj) => { if (!fornAntigos.has(cnpj)) diffs.push(`+ Fornecedor adicionado: ${f.razaoSocial}`); });
+    fornAntigos.forEach((f, cnpj) => { if (!fornNovos.has(cnpj)) diffs.push(`− Fornecedor removido: ${f.razaoSocial}`); });
+
+    const itensAntigos = new Map((antiga.itens || []).map(it => [it.codProduto, it]));
+    const itensNovos = new Map((nova.itens || []).map(it => [it.codProduto, it]));
+    itensNovos.forEach((novo, cod) => {
+        const velho = itensAntigos.get(cod);
+        if (!velho) { diffs.push(`+ Item novo: ${novo.descricao || cod}`); return; }
+        if (velho.quantidade !== novo.quantidade) diffs.push(`↕ ${novo.descricao || cod}: quantidade alterada de ${velho.quantidade} para ${novo.quantidade}`);
+        if (normalizarCnpj(velho.cnpjFornecedor) !== normalizarCnpj(novo.cnpjFornecedor)) {
+            const nomeAntigo = (antiga.fornecedores || []).find(f => mesmoCnpj(f.cnpj, velho.cnpjFornecedor))?.razaoSocial || velho.cnpjFornecedor || '?';
+            const nomeNovo = (nova.fornecedores || []).find(f => mesmoCnpj(f.cnpj, novo.cnpjFornecedor))?.razaoSocial || novo.cnpjFornecedor || '?';
+            diffs.push(`↕ ${novo.descricao || cod}: fornecedor alterado de ${nomeAntigo} para ${nomeNovo}`);
+        }
+        if (velho.precoUnitario !== novo.precoUnitario) diffs.push(`↕ ${novo.descricao || cod}: preço alterado de ${velho.precoUnitario} para ${novo.precoUnitario}`);
+        if (velho.descricao !== novo.descricao) diffs.push(`↕ Produto alterado: "${velho.descricao}" → "${novo.descricao}"`);
+        if (velho.dataProgramada !== novo.dataProgramada) diffs.push(`↕ ${novo.descricao || cod}: data de entrega alterada de ${velho.dataProgramada} para ${novo.dataProgramada}`);
+    });
+    itensAntigos.forEach((velho, cod) => { if (!itensNovos.has(cod)) diffs.push(`− Item removido: ${velho.descricao || cod}`); });
+
+    return diffs;
+}
+
+function handleArquivoXmlSmartCompras(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const parsed = parseXmlSmartCompras(String(e.target.result || '').replace(/^\uFEFF/, '').replace(/^[\s\u0000]+/, ''));   // 2.25.4: aceita .txt/BOM
+            const existente = listaCotacoes.find(c => c.pedido === parsed.pedido) || null;
+            const diff = existente ? calcularDiffCotacao(existente, parsed) : [];
+            importacaoXmlPendente = { parsed, existente, diff };
+            renderPreviewImportacaoXml();
+        } catch (err) {
+            console.error('Erro ao importar XML SmartCompras:', err);
+            toast('✕ ' + (err.message || 'Erro ao ler o XML.'));
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+    document.getElementById('cotacao-xml-file-input').value = '';
+}
+
+function renderPreviewImportacaoXml() {
+    const { parsed, existente, diff } = importacaoXmlPendente;
+    // O card de prévia mora em screen-cotacoes — se o import foi disparado a
+    // partir do editor de uma cotação específica ("Atualizar via XML"),
+    // muda pra lá antes de mostrar, senão o usuário não veria a prévia.
+    switchToScreen('screen-cotacoes', 'Cotações');
+    const card = document.getElementById('card-preview-importacao-xml');
+    const resumoEl = document.getElementById('resumo-importacao-xml');
+    const diffEl = document.getElementById('diff-importacao-xml');
+
+    const proximaVersao = existente ? (existente.versaoAtual || 1) + 1 : 1;
+    resumoEl.innerHTML = `
+        <div class="xml-resumo-linha"><strong>Pedido:</strong> ${parsed.pedido}</div>
+        <div class="xml-resumo-linha"><strong>Vencimento da cotação:</strong> ${parsed.dataVencimento || '—'} ${parsed.horaVencimento || ''}</div>
+        <div class="xml-resumo-linha"><strong>Fornecedores:</strong> ${parsed.fornecedores.length}</div>
+        <div class="xml-resumo-linha"><strong>Itens:</strong> ${parsed.itens.length}</div>
+        <div class="xml-resumo-linha"><strong>${existente ? `Versão ${proximaVersao} (atual: v${existente.versaoAtual || 1})` : 'Nova cotação (versão 1)'}</strong></div>
+    `;
+
+    if (existente && diff.length > 0) {
+        diffEl.innerHTML = `<div class="xml-diff-titulo">O que mudou desde a última importação:</div><ul class="xml-diff-lista">${diff.map(l => `<li>${l.replace(/</g, '&lt;')}</li>`).join('')}</ul>`;
+    } else if (existente) {
+        diffEl.innerHTML = `<div class="xml-diff-titulo">Nenhuma mudança detectada em relação à versão atual.</div>`;
+    } else {
+        diffEl.innerHTML = '';
+    }
+
+    card.style.display = 'block';
+}
+
+// ===================================================================
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.0';
