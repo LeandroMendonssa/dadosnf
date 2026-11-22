@@ -45,7 +45,8 @@ function abrirLogoFornecedor(nomeEnc, cnpj) {
     m.innerHTML = `<div class="modal-content"><h2>Logo do fornecedor</h2>
         <p>${escRel(_logoNome)}</p>
         <div class="logo-forn-prev"><div class="ctl-av" id="logo-forn-prev">${avatarFornConteudo(_logoNome)}</div></div>
-        <button type="button" class="actions-button" style="width:100%;min-height:48px" onclick="logoFornPesquisarGoogle()">Pesquisar logotipo no Google</button>
+        <button type="button" class="actions-button is-primary" id="logo-forn-auto" style="width:100%;min-height:48px" onclick="logoFornBuscarAuto()">Buscar logo automaticamente</button>
+        <button type="button" class="actions-button" style="width:100%;min-height:48px;margin-top:10px" onclick="logoFornPesquisarGoogle()">Pesquisar logotipo no Google</button>
         <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornColar()">Colar imagem</button>
         <button type="button" class="actions-button" onclick="document.getElementById('logo-forn-arq').click()">Enviar imagem</button></div>
         <div class="txt-aux" style="margin-top:8px">No Google, toque e segure a imagem certa, escolha Copiar, volte aqui e toque em "Colar imagem".</div>
@@ -88,18 +89,52 @@ async function logoFornBuscarCnpj() {
     } catch (e) { if (g) g.textContent = 'Não consegui consultar o CNPJ agora. Tente de novo ou informe o site.'; }
 }
 window.logoFornBuscarCnpj = logoFornBuscarCnpj;
+// ---- Busca automática (Logo.dev) ----
+// Só a chave PUBLICÁVEL (pk_) fica no app; ela foi feita para ser pública. A chave secreta (sk_) nunca entra no código do navegador.
+const LOGODEV_PK = 'pk_Wl_NxluvTU6cw-PlD-I2uQ';
+const logoDevUrl = (alvo, porNome) => `https://img.logo.dev/${porNome ? 'name/' : ''}${encodeURIComponent(alvo)}?token=${LOGODEV_PK}&size=128&format=png&fallback=404`;
+const dominioLimpo = v => String(v || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[\/?#\s]/)[0];
+function nomeParaLogo(n) { return String(n || '').replace(/<[^>]*>/g, '').replace(/\b(EIRELI|LTDA|ME|EPP|S\/?A|SA|LTDA\.)\b/gi, '').replace(/\s+/g, ' ').trim(); }
+async function logoFornBuscarAuto() {
+    const g = document.getElementById('logo-forn-msg'), bt = document.getElementById('logo-forn-auto');
+    if (g) g.textContent = 'Buscando logo…'; if (bt) { bt.disabled = true; bt.textContent = 'Buscando…'; }
+    const dom = dominioLimpo((document.getElementById('logo-forn-site') || {}).value);
+    let apelido = _logoNome; try { apelido = nomeExibicaoFornecedor(_logoNome, '') || _logoNome; } catch (e) { }
+    const tentativas = [];
+    if (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) tentativas.push(logoDevUrl(dom, false));   // 1) pelo site, se informado
+    [apelido, _logoNome].map(nomeParaLogo).filter((n, i, a) => n && a.indexOf(n) === i).forEach(n => tentativas.push(logoDevUrl(n, true)));   // 2) pelo nome
+    let achou = false;
+    for (const u of tentativas) {
+        try {
+            const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 9000);
+            const r = await fetch(u, { signal: ctl.signal }); clearTimeout(t);
+            if (!r.ok) continue; const blob = await r.blob(); if (!/^image\//.test(blob.type) || blob.size < 200) continue;
+            await new Promise(ok => { const rd = new FileReader(); rd.onload = () => { logoFornProcessar(rd.result); ok(); }; rd.readAsDataURL(blob); });
+            achou = true; break;
+        } catch (e) {
+            // sem leitura direta (rede/CORS): testa se a imagem carrega e, se sim, mostra pelo endereço
+            const ok = await new Promise(res => { const im = new Image(); im.onload = () => res(im.naturalWidth > 8); im.onerror = () => res(false); im.src = u; });
+            if (ok) { logoFornProcessar(u); achou = true; break; }
+        }
+    }
+    if (bt) { bt.disabled = false; bt.textContent = 'Buscar logo automaticamente'; }
+    if (g) g.textContent = achou ? 'Logo encontrada (Logo.dev). Confira a prévia e toque em Salvar.' : 'Não foi possível buscar automaticamente. Use "Pesquisar logotipo no Google", cole ou envie a imagem, ou informe o site e tente de novo.';
+}
+window.logoFornBuscarAuto = logoFornBuscarAuto;
 function logoFornPesquisarGoogle() {
     const base = (() => { try { return nomeExibicaoFornecedor(_logoNome, '') || _logoNome; } catch (e) { return _logoNome; } })();
     window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(String(base).replace(/<[^>]*>/g, '') + ' logotipo'), '_blank');
 }
 // reduz qualquer imagem para um quadrado de 96 px (JPEG) e mostra a prévia
 function logoFornProcessar(src) {
-    const im = new Image(); im.onload = () => {
+    const im = new Image(); if (/^https?:/i.test(src)) im.crossOrigin = 'anonymous'; im.onload = () => {
+      try {
         const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d');
         x.fillStyle = '#fff'; x.fillRect(0, 0, 96, 96);
         const e = Math.max(im.width, im.height), w = 96 * im.width / e, h = 96 * im.height / e;   // inteira, sem cortar a logo
         x.drawImage(im, (96 - w) / 2, (96 - h) / 2, w, h);
-        logoFornPrever(c.toDataURL('image/jpeg', 0.88)); };
+        logoFornPrever(c.toDataURL('image/jpeg', 0.88));
+      } catch (e) { logoFornPrever(src); } };   // imagem sem permissão de leitura (CORS): guarda o endereço em vez de reduzir
     im.onerror = () => { const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = 'Não consegui ler essa imagem.'; };
     im.src = src;
 }
@@ -137,5 +172,5 @@ window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = lo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.6';
 // leandromendonssa

@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.5', nome: 'Logo pelo Google', status: 'atual', data: '22/11/2026 às 10:50',
+        numero: '2.73.6', nome: 'Busca automática de logo (Logo.dev)', status: 'atual', data: '22/11/2026 às 11:10',
+        novidades: ['Logo do fornecedor: botão principal "Buscar logo automaticamente". Tenta pelo site (se informado) e depois pelo nome do fornecedor na Logo.dev; mostra na prévia para você confirmar e salvar.', 'Se não achar, mensagem clara e os métodos manuais continuam (Google, colar, enviar, ícone do site, site pelo CNPJ).'],
+        implementado: ['js/66: logoFornBuscarAuto(), usa só a chave publicável da Logo.dev (a secreta não entra no app), reaproveitando a prévia e o redimensionamento para 96 px.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
+        mudou: ['Nenhum dado novo.'],
+        testar: ['Fornecedores > Definir logo > Buscar logo automaticamente, com um fornecedor grande e outro pequeno; conferir prévia e Salvar.']
+    },
+    {
+        numero: '2.73.5', nome: 'Logo pelo Google', status: 'concluida', data: '22/11/2026 às 10:50',
         novidades: ['Logo do fornecedor: botão "Pesquisar logotipo no Google" abre a busca de imagens com o nome do fornecedor + "logotipo". Você copia a imagem certa e toca em "Colar imagem".', 'A imagem agora é reduzida inteira (sem cortar a logo) para 96 px.', 'O botão do CNPJ passou a se chamar "Achar site pelo CNPJ" e ficou junto do site.'],
         implementado: ['js/66: pesquisa no Google, colar da área de transferência e processador de imagem único para colar e enviar.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
@@ -3983,4 +3991,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.5';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.6';
