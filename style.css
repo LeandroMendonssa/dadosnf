@@ -9,7 +9,7 @@
     --font-montserrat: 'Check Reto', 'Montserrat', sans-serif;
 
     /* Tema Padrão (Claro) */
-    --bg-primary: #f0f2f5; --bg-secondary: #ffffff;
+    --bg-primary: #f2f2f7; --bg-secondary: #ffffff;
     --bg-tertiary: #e9ecef;
     --text-dark: #1d1d1f; --text-light: #6e6e73; --border-color: #d5d9de;
     --accent-color: #2f5aa8; --accent-color-hover: #24447f; --button-success: #34c759;
@@ -140,7 +140,7 @@ input, select, textarea, button { font-family: inherit; transition: background-c
 .main-content { flex-grow: 1; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .screen-wrapper { flex-grow: 1; position: relative; overflow: hidden; }
 
-.app-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 10%, var(--bg-primary)) 0%, var(--bg-primary) 40%) no-repeat, var(--bg-primary); visibility: hidden; z-index: 1; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.app-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-primary); visibility: hidden; z-index: 1; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .app-screen.active { visibility: visible; z-index: 2; }
 
 /* 2.7.0: transições de tela no estilo do iPhone (protótipo "Minhas Notas · transições").
@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.71.0'; }
+:root { --css-versao: '2.72.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2433,3 +2433,24 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .ini-ah{font-size:var(--fs-aux);font-weight:700;color:var(--text-light)}
 .ini-ar .ctl-st{padding:4px 9px;font-size:11px}
 .ini-mais{display:block;width:100%;margin:2px 0 14px;padding:11px;border:1px solid var(--border-color);border-radius:14px;background:transparent;color:var(--text-dark);font:inherit;cursor:pointer}
+
+/* ===== 2.72.0: visual padrão no estilo dos Ajustes da Apple =====
+   - sem degradê no fundo (o degradê fica só nas telas especiais: importação de NF e onboarding)
+   - faixa superior cinza no celular; no computador, faixa preta com menu lateral branco
+   - Ajustes em grupos arredondados, sem borda */
+#screen-import{background:linear-gradient(180deg,color-mix(in srgb,var(--accent-color) 10%,var(--bg-primary)) 0%,var(--bg-primary) 40%) no-repeat,var(--bg-primary)}
+.settings-list-group{border:0;border-radius:20px;box-shadow:none}
+.settings-list-group li{border-bottom:0;position:relative}
+.settings-list-group li + li::before{content:"";position:absolute;left:16px;right:0;top:0;border-top:1px solid var(--border-color)}
+.settings-list-group li:has(> a > .icon) + li::before{left:62px}
+.ajustes-grupo-titulo{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-light);margin:26px 20px 7px}
+.ajustes-grupo-titulo:first-child{margin-top:6px}
+.ajustes-sair{margin-top:26px}
+body[data-theme="light"] .header{background-color:color-mix(in srgb,var(--bg-primary) 86%,transparent);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid color-mix(in srgb,var(--text-dark) 10%,transparent)}
+body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-width:44px;padding:0;justify-content:center;border-radius:50%;background:var(--bg-secondary);box-shadow:0 2px 8px rgba(0,0,0,.10);border:1px solid color-mix(in srgb,var(--text-dark) 8%,transparent)}
+@media (min-width:900px){
+  body[data-theme="light"] .header{background-color:#1c1c1e;border-bottom:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+  body[data-theme="light"] .header .header-title,body[data-theme="light"] .header .header-action,body[data-theme="light"] .header .header-counter{color:#fff}
+  body[data-theme="light"] .header-action.back-button{background:rgba(255,255,255,.14);border-color:transparent;box-shadow:none;width:36px;height:36px;min-width:36px;min-height:36px}
+  body[data-theme="light"] .sidebar{background:#fff}
+}
