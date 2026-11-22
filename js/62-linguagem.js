@@ -256,14 +256,23 @@ const LING = (function () {
         return null;
     }
     function fixa(id, neutro) { if (modo !== 's') return neutro; const v = FIXAS[id]; return v === undefined ? neutro : v; }
+    // leandromendonssa
     // Comentário do Início conforme o horário (expediente: seg a qui 7h-11h30 e 13h30-17h; sexta até 16h). Estável por meia hora.
+    const ROT_MSG = {};
     function comentarioBase() {
         if (modo !== 's') return '';
         const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
         const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
-        const esc = l => l[sem % l.length];
+        // 2.73.10: rodízio de verdade. Sorteia uma frase diferente da anterior e a mantém por 10 min (para não piscar a cada abertura do Início).
+        const esc = l => {
+            const k = l[0], c = ROT_MSG[k], agora = Date.now();
+            if (c && agora - c.t < 600000) return l[c.i];
+            let i; do { i = Math.floor(Math.random() * l.length); } while (l.length > 1 && c && i === c.i);
+            ROT_MSG[k] = { i, t: agora }; return l[i];
+        };
         const hm = n => n >= 60 ? Math.floor(n / 60) + 'h' + (n % 60 ? String(n % 60).padStart(2, '0') : '') : n + ' min';
-        if (dia === 0 || dia === 6) return esc(['Fim de semana e você aqui? Respeito a dedicação. 🧐', 'Dia de descanso e o app aberto. Vai ver a pendência não deixa. 😶‍🌫️', 'Sábado ou domingo, pouco importa: a pendência não tira folga. 🫠']);
+        if (dia === 6) return esc(['Sábado e você aqui? Respeito a dedicação. 🧐', 'Sábado de sol lá fora e a pendência aqui dentro. 😶‍🌫️', 'Sábado: o único dia em que a NF atrasada não cobra ninguém. Ou cobra? 🤔', 'Fim de semana não tem expediente, mas você tem pendência. 🫠', 'Sábado é dia de descansar. O app discorda de você. 😒', 'Vai passear! A NF aguenta até segunda. 🤨', 'Sábado trabalhando? A pendência agradece, o seu descanso não. 🙄', 'Até o fornecedor atrasado folga no sábado. Você também podia. 😤', 'Sábado produtivo ou só não aguenta ver o app fechado? 🧐', 'Respeito quem abre app de trabalho no sábado. E me preocupo. 🫥', 'Nada vence no sábado... ou vence e ninguém avisa. 🫠', 'Café, sofá e pendência: combinação perigosa de sábado. ☕🤡']);
+        if (dia === 0) return esc(['Domingo e o app aberto? Respeito a dedicação. 🧐', 'Domingo é dia de descanso. A pendência não leu o calendário. 🫠', 'Domingo à tarde já dá aquele friozinho de segunda, né? 😶‍🌫️', 'Quem abre app de trabalho no domingo merece um dia de folga extra. 🙄', 'Domingo: a segunda-feira já está na fila, esperando. 😒', 'Almoço de domingo primeiro, NF depois. 🤨', 'Domingo não tem pendência. Só as que você inventa. 😤', 'Vai descansar, a segunda chega rápido sem a sua ajuda. 🫥', 'Domingo de plantão voluntário? Anotado. 🧐', 'Sem expediente hoje. Só você e a sua consciência. 🫠', 'Domingo preparando a segunda: o tipo de pessoa que eu respeito. 🤔', 'Fecha o app e vai tomar um suco gelado. 🤡']);
         if (min < 5 * 60) return esc(['Madrugada. Ou você acordou cedo demais, ou nem dormiu. 🫠', 'Esse horário só existe pra quem tem pendência ou insônia. 🫥', 'A essa hora até o fornecedor atrasado tá dormindo. 😶‍🌫️']);
         if (min < 7 * 60) return esc(['Ainda nem é expediente. O café já saiu? 🧐', 'Cedo demais pra problema. Mas ele não pergunta o horário. 😒']);
         if (min < 9 * 60) return sexta ? esc(['Sextou! Só falta aguentar até as 16h. 😤', 'Sexta-feira: a pendência não sabe, mas a gente sabe. 🤨']) : dia === 1 ? esc(['Segunda-feira. Não tem como disfarçar. 😒', 'Começo de semana, começo de pendência. 😤']) : esc(['Expediente começou. Respira fundo. 😤', 'Mais um dia, a mesma pilha de pendência. 🙄', 'Bom dia pra quem tem fornecedor no prazo. Se existir. 🤔']);
@@ -337,4 +346,4 @@ const LING = (function () {
     aplicarFixas(); if (modo === 's') varrer();
     return { toast, fixa, t, saudacaoExtra, comentarioHora, definir, modo: () => modo };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.68.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.73.10';

@@ -413,7 +413,7 @@ function renderCentralPedidoCompleto(pedido) {
             const faixaHTML = [dadosEnt && dadosEnt.curta, pendTxt].filter(Boolean).map(t => `<div class="ctl-inf cf-inf">${t}</div>`).join('') + cot3.detalhe;
             return `<div class="central-fornecedor${aberto ? ' aberto' : ''} ${classeFornecedor}" data-cnpj="${f.cnpj}">
                 <div class="central-fornecedor-header" onclick="toggleCentralFornecedor('${f.cnpj}', this)">
-                    <div class="ctl-av">${iniciaisControle(nomeExibicao)}</div>
+                    <div class="ctl-av">${avatarFornConteudo(nomeExibicao)}</div>
                     <div class="cf-topo-info">
                         <div class="cf-nome">${nomeExibicao}</div>
                         ${f.cnpj ? `<div class="cf-cnpj">CNPJ ${formatarCnpjExibicao(f.cnpj)}</div>` : ''}
@@ -1203,4 +1203,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.57.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.73.10';

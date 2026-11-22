@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.9', nome: 'Colar logo inteira, avisos novos e logo só do fornecedor certo', status: 'atual', data: '22/11/2026 às 15:40',
+        numero: '2.73.10', nome: 'Logo nas Cotações, bolinha leva ao fornecedor e mensagens de fim de semana', status: 'atual', data: '22/11/2026 às 17:20',
+        novidades: ['A bolinha do fornecedor nas Cotações agora mostra a logo (ou as iniciais) igual às demais telas.', 'Tocar na bolinha de qualquer fornecedor abre o cadastro dele em Fornecedores, já filtrado e aberto, para trocar logo, apelido ou o que quiser. O botão Voltar leva de volta para onde você estava.', 'Modo Leandro: as mensagens de sábado e domingo agora são 12 para cada dia e giram de verdade (uma diferente da anterior, mantida por 10 minutos).'],
+        implementado: ['js/09: cartão do fornecedor da Cotação usa avatarFornConteudo.', 'js/66: avatarFornConteudo guarda o nome do fornecedor na bolinha; irParaFornecedorPorNome (com Voltar) e um toque global nas bolinhas.', 'js/62: comentarioBase com sorteio sem repetir e memória de 10 min; novas frases de sábado e domingo.', 'style.css: .av-fn e cursor das bolinhas.'],
+        arquivos: ['js/09-anotacoes.js', 'js/62-linguagem.js', 'js/66-logos-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Tocar na bolinha deixa de abrir o cartão da NF/nota onde ela estava e passa a abrir o fornecedor; o resto do cartão continua abrindo a nota normalmente.', 'Dentro da própria tela Fornecedores a bolinha continua só abrindo/fechando o cartão.'],
+        testar: ['Cotações > abra um pedido: a bolinha de cada fornecedor deve mostrar a logo.', 'Toque numa bolinha (Início, Controle de NFs, Cotações): deve abrir Fornecedores com o cadastro aberto. Voltar retorna.', 'Modo Leandro no fim de semana: a frase do Início muda ao reabrir o app depois de 10 minutos, sem repetir a anterior.']
+    },
+    {
+        numero: '2.73.9', nome: 'Colar logo inteira, avisos novos e logo só do fornecedor certo', status: 'concluida', data: '22/11/2026 às 15:40',
         novidades: ['Colar imagem agora usa um quadro de colagem: você toca e segura, escolhe Colar e entra a imagem inteira, do jeito que copiou.', 'Todos os avisos do app usam o modelo novo (ilha com anel de tempo), inclusive o "Desfazer".', 'A logo de um fornecedor não aparece mais em outros só porque o nome começa parecido. Vale só para o mesmo nome de exibição (e para os associados, que já dividem o apelido).', 'Fornecedores a chegar (Início) mostra a bolinha com a logo ou as iniciais de cada fornecedor.'],
         implementado: ['js/66: colagem pelo evento paste (arquivo, endereço no HTML ou texto) no lugar de navigator.clipboard.read; chaveLogoExistente só por nome exato.', 'js/07: toast() passa a chamar toastRico (título e detalhe), com o balão antigo só como reserva.', 'js/34: mostrarToastDesfazer usa toastRico com ação.', 'js/48: avatar na lista de fornecedores a chegar.', 'style.css: campo .logo-forn-colar e ajuste da linha de fornecedores a chegar.'],
         arquivos: ['js/66-logos-fornecedores.js', 'js/07-login-conta-backup.js', 'js/34-atencao.js', 'js/48-inicio-lote.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4015,4 +4023,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.10';

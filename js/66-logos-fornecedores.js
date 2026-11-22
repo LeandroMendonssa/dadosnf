@@ -20,9 +20,40 @@ function logoFornDe(nome) {
 function avatarFornConteudo(nome) {
     const u = logoFornDe(nome);
     const ini = escRel(iniciaisControle(nome));
-    return u ? `<img class="av-logo" src="${escRel(u)}" alt="" loading="lazy" data-ini="${ini}" onerror="this.outerHTML=this.dataset.ini">` : ini;
+    const miolo = u ? `<img class="av-logo" src="${escRel(u)}" alt="" loading="lazy" data-ini="${ini}" onerror="this.outerHTML=this.dataset.ini">` : ini;
+    // 2.73.10: a bolinha guarda o nome do fornecedor; tocar nela leva ao cadastro dele em Fornecedores (ver abaixo)
+    return String(nome || '').trim() ? `<span class="av-fn" data-forn="${escRel(String(nome).replace(/<[^>]*>/g, ''))}">${miolo}</span>` : miolo;
 }
 window.avatarFornConteudo = avatarFornConteudo;
+
+// ---- tocar na bolinha do fornecedor → abre o cadastro dele em Fornecedores (onde se troca logo, apelido etc.) ----
+function irParaFornecedorPorNome(nome) {
+    nome = String(nome || '').trim(); if (!nome) return;
+    let termo = nome;
+    try {
+        const n = normalizarBuscaRel(nome), nb = nomeBaseLogoForn(nome), todos = listaFornecedoresUnificada();
+        const f = todos.find(x => normalizarBuscaRel(x.nomeReal) === n || normalizarBuscaRel(x.nomeExibido) === n || (x.aliasesLegado || []).some(a => normalizarBuscaRel(a) === n))
+            || todos.find(x => nomeBaseLogoForn(x.nomeExibido || x.nomeReal) === nb)
+            || todos.find(x => normalizarBuscaRel(x.nomeReal || '').includes(n) || n.includes(normalizarBuscaRel(x.nomeExibido || '#')));
+        if (f) termo = f.nomeExibido || f.nomeReal || nome;
+    } catch (e) { }
+    termo = termo.slice(0, 60);
+    try { closeAllModals(); } catch (e) { }
+    switchToScreen('screen-fornecedores', 'Fornecedores');
+    setTimeout(() => {
+        const inp = document.querySelector('#screen-fornecedores input.form-field'); if (inp) inp.value = termo;
+        filtrarCadastroFornecedoresSpData(termo);
+        setTimeout(() => { const h = document.querySelector('#lista-cadastro-fornecedores-spdata .frn-card:not(.aberto) .frn-h'); if (h) { h.click(); try { h.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { } } }, 120);
+    }, 80);
+}
+window.irParaFornecedorPorNome = irParaFornecedorPorNome;
+try { envolverComRetorno('irParaFornecedorPorNome'); } catch (e) { }
+document.addEventListener('click', ev => {
+    const av = ev.target && ev.target.closest && ev.target.closest('.ctl-av,.ini-ai,.nv-sym'); if (!av) return;
+    if (av.closest('#screen-fornecedores,#logo-forn-modal,#logos-lote-modal')) return;   // lá o toque no cartão já abre/fecha
+    const m = av.querySelector('[data-forn]'); if (!m) return;
+    ev.preventDefault(); ev.stopPropagation(); irParaFornecedorPorNome(m.getAttribute('data-forn'));
+}, true);
 
 // ---- leitura (com nova tentativa até o login terminar) ----
 (function () {
@@ -250,5 +281,5 @@ window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.9';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.10';
 // leandromendonssa
