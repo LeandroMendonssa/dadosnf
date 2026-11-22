@@ -6,12 +6,14 @@ function chaveLogoForn(nome) {
     return String(nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/<[^>]*>/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 function nomeBaseLogoForn(nome) { let n = nome; try { n = nomeExibicaoFornecedor(nome, '') || nome; } catch (e) { } return chaveLogoForn(n); }
-function logoFornDe(nome) {
+// chave da logo que vale para este nome: a exata ou, se não houver, a de um nome parecido (o ERP costuma truncar o nome)
+function chaveLogoExistente(nome) {
     const k = nomeBaseLogoForn(nome); if (!k) return '';
-    if (logosFornecedores[k]) return logosFornecedores[k].u || '';
-    for (const c in logosFornecedores) if (c.length >= 4 && k.length >= 4 && (k.startsWith(c + ' ') || c.startsWith(k + ' '))) return logosFornecedores[c].u || '';
+    if (logosFornecedores[k]) return k;
+    for (const c in logosFornecedores) if (c.length >= 4 && k.length >= 4 && (k.startsWith(c + ' ') || c.startsWith(k + ' '))) return c;
     return '';
 }
+function logoFornDe(nome) { const c = chaveLogoExistente(nome); return c ? (logosFornecedores[c].u || '') : ''; }
 // conteúdo da bolinha: imagem (se houver logo) ou iniciais — troca direta de ${iniciaisControle(nome)}
 function avatarFornConteudo(nome) {
     const u = logoFornDe(nome);
@@ -41,7 +43,7 @@ function abrirLogoFornecedor(nomeEnc, cnpj) {
     _logoCnpj = String(cnpj || '').replace(/\D/g, ''); _logoNome = decodeURIComponent(nomeEnc); _logoChave = nomeBaseLogoForn(_logoNome); _logoPend = undefined;
     let m = document.getElementById('logo-forn-modal');
     if (!m) { m = document.createElement('div'); m.id = 'logo-forn-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
-    const tem = !!logosFornecedores[_logoChave];
+    const tem = !!chaveLogoExistente(_logoNome);   // também conta logo herdada de nome parecido: assim sempre dá para remover
     m.innerHTML = `<div class="modal-content"><h2>Logo do fornecedor</h2>
         <p>${escRel(_logoNome)}</p>
         <div class="logo-forn-prev"><div class="ctl-av" id="logo-forn-prev">${avatarFornConteudo(_logoNome)}</div></div>
@@ -155,8 +157,9 @@ function logoFornArquivo(inp) {
 async function logoFornSalvar(remover) {
     if (!remover && !_logoPend) { toast('Escolha uma imagem ou um site primeiro.'); return; }
     try {
-        await settingsDocRef.parent.doc('logosFornecedores').set({ logos: { [_logoChave]: remover ? firebase.firestore.FieldValue.delete() : { u: _logoPend } } }, { merge: true });
-        if (remover) delete logosFornecedores[_logoChave]; else logosFornecedores[_logoChave] = { u: _logoPend };
+        const alvo = remover ? (chaveLogoExistente(_logoNome) || _logoChave) : _logoChave;   // salvar vale para este nome; remover tira a que estiver valendo
+        await settingsDocRef.parent.doc('logosFornecedores').set({ logos: { [alvo]: remover ? firebase.firestore.FieldValue.delete() : { u: _logoPend } } }, { merge: true });
+        if (remover) delete logosFornecedores[alvo]; else logosFornecedores[alvo] = { u: _logoPend };
         closeAllModals(); toast(remover ? 'Logo removida.' : 'Logo salva.');
         ['renderInicio', 'renderControleNfs', 'renderListaFornecedoresUnificada'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
     } catch (e) { console.error('Erro ao salvar logo:', e); toast('✕ Não consegui salvar a logo. Tente de novo.'); }
@@ -172,5 +175,5 @@ window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = lo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.7';
 // leandromendonssa

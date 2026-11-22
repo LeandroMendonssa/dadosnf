@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.6', nome: 'Busca automática de logo (Logo.dev)', status: 'atual', data: '22/11/2026 às 11:10',
+        numero: '2.73.7', nome: 'Remover logo herdada', status: 'atual', data: '22/11/2026 às 11:40',
+        novidades: ['Corrigido: quando um fornecedor mostrava a logo de outro de nome parecido, a janela não oferecia Remover. Agora Remover tira a logo que estiver valendo e Salvar cria uma logo só para aquele nome.'],
+        implementado: ['js/66: chaveLogoExistente() (usada para mostrar, remover e salvar).'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
+        mudou: ['Nenhum dado novo.'],
+        testar: ['Num fornecedor que mostra logo errada: Fornecedores > Trocar logo > Remover.']
+    },
+    {
+        numero: '2.73.6', nome: 'Busca automática de logo (Logo.dev)', status: 'concluida', data: '22/11/2026 às 11:10',
         novidades: ['Logo do fornecedor: botão principal "Buscar logo automaticamente". Tenta pelo site (se informado) e depois pelo nome do fornecedor na Logo.dev; mostra na prévia para você confirmar e salvar.', 'Se não achar, mensagem clara e os métodos manuais continuam (Google, colar, enviar, ícone do site, site pelo CNPJ).'],
         implementado: ['js/66: logoFornBuscarAuto(), usa só a chave publicável da Logo.dev (a secreta não entra no app), reaproveitando a prévia e o redimensionamento para 96 px.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
@@ -3991,4 +3999,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.6';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.7';
