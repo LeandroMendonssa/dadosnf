@@ -40,7 +40,7 @@ function _itensDeAtencaoCalc() {
         pendenciasNf('vencida-sem-envio').map(({ v, p }) => ({ pedido: String(v.pedido || v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: p.texto, fn: `abrirEditorNf('${escRel(v.id)}')` })));
     // leandromendonssa
     // 2.73.0: Notas pendentes (paradas comigo: carta de correção, NF de devolução ou cotação), separadas das demais divergências
-    const paradas = notasParadasComigo().map(x => ({ pedido: String(x.v.pedido || x.v.pedidoSugerido || ''), forn: x.v.fornecedor, t: tituloFornNf(x.v.fornecedor, x.v.cnpj, x.v.numeroNf), s: `${rotuloMotivosPend(x.pe)} · ${avisoVencParada(x.dias)}`, dias: x.dias, fn: `abrirEditorNf('${escRel(x.v.id)}')` }));
+    const paradas = notasParadasComigo().map(x => ({ pedido: String(x.v.pedido || x.v.pedidoSugerido || ''), forn: x.v.fornecedor, t: tituloFornNf(x.v.fornecedor, x.v.cnpj, x.v.numeroNf), s: `${rotuloMotivosPend(x.pe)} · ${avisoVencParada(x.dias)}`, dias: x.dias, fn: `abrirNfNoHistorico('', '${escRel(String((x.v.nf || x.v.erp).nf))}')` }));
     add('alta', 'notas-paradas-venc', 'Notas pendentes vencidas ou que vencem hoje', 'Paradas comigo por carta de correção, nota de devolução ou cotação. Resolva e envie ao financeiro.', paradas.filter(x => x.dias != null && x.dias <= 0));
     add('media', 'notas-paradas', 'Notas pendentes (paradas comigo)', 'Aguardam carta de correção, nota fiscal de devolução ou cotação antes de ir ao financeiro.', paradas.filter(x => x.dias == null || x.dias > 0));
     add('alta', 'pedidos-sem-entrega', 'Pedidos com prazo vencido e sem sinal de entrega', 'Sem NF no app, sem NF do ERP ligada e sem marca de "já chegou".',

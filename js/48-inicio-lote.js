@@ -118,7 +118,7 @@ function iniPrioridadesHtml() {
     return `<div class="ini-prios">${g.slice(0, 4).map(x => `<button type="button" class="ini-prio ${x.nivel === 'alta' ? 'a' : 'm'}" onclick="iniAbrirPrioridade('${x.id}')"><span class="ini-pd"></span><span class="ini-pt"><b>${escIni(x.titulo)}</b><small>${escIni(x.dica || '')}</small></span><span class="ini-chip ${x.nivel === 'alta' ? 'r' : 'y'}">${x.linhas.length}</span></button>`).join('')}
         ${g.length > 4 ? `<button type="button" class="ini-mais" onclick="iniAbrirPrioridade('')">Ver todas (${g.length})</button>` : ''}</div>`;
 }
-function iniAbrirNotasParadas() { iniAbrirPrioridade('notas-paradas-venc'); try { atencaoAbertos = new Set(['notas-paradas-venc', 'notas-paradas']); } catch (e) { } }
+function iniAbrirNotasParadas() { abrirNotasPendentesResumo(); }
 function iniAbrirNf(nf) { try { abrirNfNoHistorico('', nf); } catch (e) { switchToScreen('screen-controle-nfs', 'Controle de NFs'); } }
 function iniMaisAtividade() { iniAtivExtra += 12; renderInicio(); }
 function iniAtividadeHtml() {

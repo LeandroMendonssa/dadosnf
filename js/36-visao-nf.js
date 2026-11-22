@@ -56,13 +56,15 @@ function visoesNf() {
         // 2.40.0: NF recebida (ainda sem decisão/relação) cujo vencimento já passou: antes só o Controle mostrava "vencida há N dias"; a Central não avisava
         const diasVenc = it.venc ? calcularDiasParaVencimento(it.venc) : null;
         if (it.situacao === 'recebida' && diasVenc != null && diasVenc < 0 && !pendEntregaDe(nf, erp)) pendencias.push({ id: 'vencida-sem-envio', nivel: 'alta', texto: `vencida há ${Math.abs(diasVenc)} dia${Math.abs(diasVenc) === 1 ? '' : 's'}, ainda não enviada ao financeiro` });
-        if (nf && nfSemPedidoPendente(nf)) pendencias.push({ id: 'sem-pedido', nivel: 'media', texto: 'sem pedido e sem marca de compra direta' });
-        if (pedidoSt === 'sugerido') pendencias.push({ id: 'pedido-sugerido', nivel: 'media', texto: `pedido ${pedidoSugerido} sugerido, falta confirmar` });
+        const semPedidoPorCotacao = (pendEntregaDe(nf, erp) || { motivos: [] }).motivos.includes('cotacao');   // 2.73.0: parada por cotação não notifica como "sem pedido"
+        if (nf && nfSemPedidoPendente(nf) && !semPedidoPorCotacao) pendencias.push({ id: 'sem-pedido', nivel: 'media', texto: 'sem pedido e sem marca de compra direta' });
+        if (pedidoSt === 'sugerido' && !semPedidoPorCotacao) pendencias.push({ id: 'pedido-sugerido', nivel: 'media', texto: `pedido ${pedidoSugerido} sugerido, falta confirmar` });
         if (nf) {
             const semProd = nf.semCotacaoSmartCompras ? 0 : (nf.itens || []).filter(i => !i.semCotacao && !i.tratamento && !i.codigoSmartCompras).length; // 2.17.3: item trocado já foi tratado. compra direta marcada: não há produto de cotação para associar
             if (semProd) pendencias.push({ id: 'sem-produto', nivel: 'baixa', texto: `${semProd} item(ns) sem associação` });
-            const semRec = itens.filter(i => !i.recurso).length;
-            if (semRec) pendencias.push({ id: 'sem-recurso', nivel: 'baixa', texto: `${semRec} de ${itens.length} item(ns) sem recurso` });
+            const devolvido = k => !!(nf.itens && nf.itens[k] && nf.itens[k].devolucao);   // 2.73.0: item devolvido não entra na cotação nem pede recurso
+            const consid = itens.filter((i, k) => !devolvido(k)), semRec = consid.filter(i => !i.recurso).length;
+            if (semRec) pendencias.push({ id: 'sem-recurso', nivel: 'baixa', texto: `${semRec} de ${consid.length} item(ns) sem recurso` });
         }
         if (divergencias.length) pendencias.push({ id: 'divergencias', nivel: 'baixa', texto: `${divergencias.length} pendência(s) relatada(s) em auditoria no pedido ${pedido}` }); // 2.16.0: relatada = já com o responsável
 

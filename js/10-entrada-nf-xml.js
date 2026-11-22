@@ -494,7 +494,7 @@ function statusItemXml(item) {
 function calcularResumoPendenciasXml() {
     if (!nfeInfoAtual || !itensXmlDetectados.length) return null;
 
-    let totalmentePronto = 0, semAssociacao = 0, semSpData = 0, semSpDataDireto = 0, conversaoPendente = 0, recursoSemDefinir = 0, recursoAtingiuMinimo = 0, recursoAbaixoMinimo = 0;
+    let totalmentePronto = 0, semAssociacao = 0, semSpData = 0, semSpDataDireto = 0, conversaoPendente = 0, recursoSemDefinir = 0, /* leandromendonssa */ recursoAtingiuMinimo = 0, recursoAbaixoMinimo = 0;
     itensXmlDetectados.forEach(item => {
         const s = statusItemXml(item);
         if (s.pronto) totalmentePronto++;
@@ -503,7 +503,7 @@ function calcularResumoPendenciasXml() {
         else if (!s.produtoSpData) semSpData++;
         if (s.conversaoPendente) conversaoPendente++;
         const rec = recursoPrevistoItemXml(item, s);
-        if (rec && !rec.valor && !rec.semDestino && !rec.semOrigem) recursoSemDefinir++;
+        if (rec && !rec.valor && !rec.semDestino && !rec.semOrigem && !(item.tratamentoXml && item.tratamentoXml.devolver)) recursoSemDefinir++;   // 2.73.0: item a devolver não pede recurso
         if (rec && rec.detTipo === 'cc') recursoAtingiuMinimo++;
         else if (rec && rec.detTipo === 'proprio') recursoAbaixoMinimo++;
     });
@@ -1614,4 +1614,4 @@ window.definirModoEntrada = definirModoEntrada;
         return orig.call(this, id, t);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.66.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/10-entrada-nf-xml.js'] = '2.73.0';
