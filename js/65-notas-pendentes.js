@@ -38,9 +38,9 @@ function abrirPendenciaEntrega(id) {
     m.innerHTML = `<div class="modal-content"><h2>Pendente para o financeiro</h2>
         <p>NF ${escRel(num)}. Marque o que está faltando. Enquanto houver pendência, a NF não vai ao financeiro e o aviso de "esperando decisão" para.</p>
         ${MOTIVOS_PEND_ENTREGA.map(([k, r]) => `<label class="pend-opt"><input type="checkbox" value="${k}" ${marcados.has(k) ? 'checked' : ''}><span>${r}</span></label>`).join('')}
-        <div class="confirm-actions" style="margin-top:18px"><button type="button" class="actions-button is-ghost" onclick="closeAllModals()">Cancelar</button>
-        ${pe ? `<button type="button" class="actions-button is-ghost" onclick="salvarPendenciaEntrega('${escRel(id)}', true)">Remover pendência</button>` : ''}
-        <button type="button" class="actions-button" onclick="salvarPendenciaEntrega('${escRel(id)}', false)">Salvar</button></div></div>`;
+        <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Cancelar</button>
+        ${pe ? `<button type="button" class="actions-button is-danger" onclick="salvarPendenciaEntrega('${escRel(id)}', true)">Remover pendência</button>` : ''}
+        <button type="button" class="actions-button is-primary" onclick="salvarPendenciaEntrega('${escRel(id)}', false)">Salvar</button></div></div>`;
     m.classList.add('active');
 }
 async function salvarPendenciaEntrega(id, remover) {
@@ -66,7 +66,8 @@ function abrirNotasPendentesResumo() {
     if (!m) { m = document.createElement('div'); m.id = 'notas-pend-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
     const np = notasParadasComigo();
     const lin = x => { const n = (x.v.nf || x.v.erp).nf, urg = x.dias != null && x.dias <= 0;
-        return `<button type="button" class="ini-ativ" onclick="irParaNotaPendente('${escRel(String(n))}')"><span class="ini-ai">NF</span><span class="ini-at2"><b>${escRel(nomeExibicaoFornecedor(x.v.fornecedor, x.v.cnpj || '') || x.v.fornecedor || '')} · NF ${escRel(String(n))}</b><small>${escRel(rotuloMotivosPend(x.pe))}${x.v.venc ? ' · venc. ' + escRel(x.v.venc) : ''}</small></span><span class="ini-ar"><span class="ini-chip ${urg ? 'r' : 'y'}">${escRel(avisoVencParada(x.dias))}</span></span></button>`; };
+        const nomeF = nomeExibicaoFornecedor(x.v.fornecedor, x.v.cnpj || '') || x.v.fornecedor || '';
+        return `<button type="button" class="ini-ativ" onclick="irParaNotaPendente('${escRel(String(n))}')"><span class="ini-ai">${escRel(iniciaisControle(nomeF))}</span><span class="ini-at2"><b>${escRel(nomeF)} ${escRel(String(n))}</b><small>${escRel(rotuloMotivosPend(x.pe))}</small></span><span class="ini-ar"><span class="ini-chip ${urg ? 'r' : 'y'}">${escRel(avisoVencParada(x.dias))}</span></span></button>`; };
     m.innerHTML = `<div class="modal-content"><h2>${np.length ? np.length + ' nota(s) pendente(s)' : 'Notas pendentes'}</h2>
         <p style="font-size:12px;color:var(--text-light);margin:0 0 4px">NFs paradas comigo por carta de correção, nota de devolução ou cotação, da mais urgente para a menos. Toque para abrir a NF no Controle de NFs.</p>
         <div style="max-height:60vh;overflow:auto">${np.length ? np.map(lin).join('') : '<div class="ini-vazio">Nenhuma NF parada. Para marcar, abra a NF no Controle de NFs.</div>'}</div>
@@ -74,6 +75,20 @@ function abrirNotasPendentesResumo() {
     m.classList.add('active');
 }
 function irParaNotaPendente(numero) { closeAllModals(); abrirNfNoHistorico('', numero); }
+// Editor de NF: a pendência faz parte do cartão da NF (etiqueta junto das demais + botão junto dos botões), sem bloco solto no topo
+function chipPendenciaEntrega(id) {
+    const v = visaoNfPorId(id); if (!v || ['arquivada', 'direta'].includes(v.situacao)) return '';
+    const pe = pendEntregaDe(v.nf, v.erp); if (!pe) return '';
+    const dias = v.venc ? calcularDiasParaVencimento(v.venc) : null;
+    return ` <span class="xml-item-badge ${dias != null && dias <= 0 ? 'pendente' : 'neutro'}">Pendente: ${escRel(rotuloMotivosPend(pe))} · ${escRel(avisoVencParada(dias))}</span>`;
+}
+function botaoPendenciaEntrega(id) {
+    const v = visaoNfPorId(id); if (!v || ['arquivada', 'direta'].includes(v.situacao)) return '';
+    return ` <button type="button" class="central-status-toggle" onclick="abrirPendenciaEntrega('${escRel(id)}')">${pendEntregaDe(v.nf, v.erp) ? 'Editar pendência' : 'Pendente p/ financeiro'}</button>`;
+}
+window.chipPendenciaEntrega = chipPendenciaEntrega; window.botaoPendenciaEntrega = botaoPendenciaEntrega;
+// Voltar: quem abre a Central, a Auditoria ou o Controle por atalho passa a empilhar o retorno (como o Editor da NF já fazia)
+['irParaRetroFiltro', 'iniAbrirPrioridade', 'abrirNfNoHistorico', 'irParaPendenciaControle'].forEach(n => { try { envolverComRetorno(n); } catch (e) { } });
 window.abrirNotasPendentesResumo = abrirNotasPendentesResumo; window.irParaNotaPendente = irParaNotaPendente;
 window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntrega = salvarPendenciaEntrega;
 
@@ -91,24 +106,5 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
             return o.apply(this, arguments);
         };
     }
-    // Editor de NF: bloco no topo com a situação da pendência e o botão para marcar/editar
-    const comBloco = nome => {
-        if (typeof window[nome] !== 'function') return; const o = window[nome];
-        window[nome] = function () {
-            const r = o.apply(this, arguments);
-            try {
-                const el = document.getElementById('nf-editor-conteudo'); if (!el || !nfEditorId) return r;
-                const v = visaoNfPorId(nfEditorId); if (!v || v.situacao === 'arquivada' || v.situacao === 'direta') return r;
-                const pe = pendEntregaDe(v.nf, v.erp), dias = v.venc ? calcularDiasParaVencimento(v.venc) : null;
-                el.querySelectorAll('.pend-ent-card').forEach(x => x.remove());   // o editor chama as duas telas em sequência: só um bloco por vez
-                const b = document.createElement('div'); b.className = 'nfe-dica pend-ent-card';
-                b.innerHTML = pe ? `<strong>Pendente para o financeiro:</strong> ${escRel(rotuloMotivosPend(pe))} · ${escRel(avisoVencParada(dias))} <button type="button" class="central-status-toggle" onclick="abrirPendenciaEntrega('${escRel(nfEditorId)}')">Editar</button>`
-                    : `<button type="button" class="central-status-toggle" onclick="abrirPendenciaEntrega('${escRel(nfEditorId)}')">Marcar como pendente para o financeiro</button>`;
-                el.insertBefore(b, el.firstChild);
-            } catch (e) { }
-            return r;
-        };
-    };
-    comBloco('renderEditorNf'); comBloco('renderEditorNfErp');
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.1';

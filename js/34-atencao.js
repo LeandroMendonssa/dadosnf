@@ -21,7 +21,11 @@ function itensDeAtencao() {
 // leandromendonssa
 function _itensDeAtencaoCalc() {
     const grupos = [];
-    const add = (nivel, id, titulo, dica, linhas, acaoGeral) => { if (linhas.length) grupos.push({ nivel, id, titulo, dica, linhas, acaoGeral }); };
+    // 2.73.0: regra única — NF parada por pendência de entrega só aparece nos grupos "Notas pendentes", nunca duplicada em outro aviso
+    let _paradasChave = null;
+    const chaveLinha = t => { const w = String(t || '').trim().toUpperCase().split(/\s+/); return w.length > 1 ? w[0] + '|' + w[w.length - 1] : ''; };
+    const eParada = l => { if (!_paradasChave) { _paradasChave = new Set(); try { notasParadasComigo().forEach(x => _paradasChave.add(chaveLinha(tituloFornNf(x.v.fornecedor, x.v.cnpj, x.v.numeroNf)))); } catch (e) { } } return !!l.t && _paradasChave.has(chaveLinha(l.t)); };
+    const add = (nivel, id, titulo, dica, linhas, acaoGeral) => { if (!/^notas-paradas/.test(id)) linhas = linhas.filter(l => !eParada(l)); if (linhas.length) grupos.push({ nivel, id, titulo, dica, linhas, acaoGeral }); };
     const hoje = dataLocalISO();
 
     // ---- ALTA: nota na relação com vencimento vencido
@@ -105,8 +109,8 @@ function _itensDeAtencaoCalc() {
     // confirmado pelo XML não aparece mais como "pedido sugerido" só porque o lançamento do ERP ficou com a sugestão antiga.
     const an = analiseRetroativaErp();
     const nfsDe = id => pendenciasNf(id);
-    add('media', 'sugestoes', 'NFs do ERP com pedido sugerido para confirmar', 'A Auditoria Retroativa mostra a conferência de valor, datas e itens.',
-        nfsDe('pedido-sugerido').map(({ v }) => { const c = v.erp ? conferenciaPedidoSugerido(v.erp, v.pedidoSugerido) : null; const ver = c && c.veredito; return { pedido: String(v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: `sugerido: pedido ${v.pedidoSugerido}` + ({ bate: ' · bate em tudo', conferir: ' · conferir', nao: ' · não parece' }[ver] || ''), fn: "irParaRetroFiltro('sugerido')" }; }));
+    add('media', 'sugestoes', 'NFs do ERP com pedido sugerido para confirmar', 'Toque na NF para conferir o pedido sugerido e confirmar ou mover.',
+        nfsDe('pedido-sugerido').map(({ v }) => { const c = v.erp ? conferenciaPedidoSugerido(v.erp, v.pedidoSugerido) : null; const ver = c && c.veredito; return { pedido: String(v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: `sugerido: pedido ${v.pedidoSugerido}` + ({ bate: ' · bate em tudo', conferir: ' · conferir', nao: ' · não parece' }[ver] || ''), fn: `abrirEditorNf('${escRel(v.id)}')` }; }));
     const def = an.filter(a => a.defasados > 0);
     add('media', 'defasados', 'Itens do ERP defasados', 'Atualizam sozinhos; o botão na Auditoria Retroativa faz na hora.',
         def.map(a => ({ pedido: a.pedido || '', forn: a.e.fornecedorNomeEditado || a.e.fornecedorNomeRelatorio || '', t: tituloFornNf(a.e.fornecedorNomeEditado || a.e.fornecedorNomeRelatorio || '', a.e.cnpjFornecedor, a.e.nf), s: `${a.defasados} item(ns)`, fn: "irParaRetroFiltro('defasados')" })));
@@ -239,4 +243,4 @@ function renderBannerAtencao() {
     const n = totalAtencaoNf();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.1';

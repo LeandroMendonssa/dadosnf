@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.0', nome: 'Notas pendentes e nova Tela inicial', status: 'atual', data: '21/11/2026 às 23:50',
+        numero: '2.73.1', nome: 'Correções estruturais: avisos, voltar, Editor e Início', status: 'atual', data: '22/11/2026 às 05:20',
+        novidades: ['Editor de NF: o cartão da NF vem primeiro (dados, etiquetas e botões juntos); os avisos ficam abaixo. "Pendente p/ financeiro" virou um botão e uma etiqueta dentro do cartão, sem bloco solto no topo.', 'Janela de pendência com botões no padrão (Cancelar, Remover pendência, Salvar).', 'Início: o relógio ganhou destaque; Notas pendentes mostra só a contagem regressiva; atividades e pendências no formato FORNECEDOR NÚMERO (ex.: FUTURA 1048), com as iniciais do fornecedor no ícone.', 'Auditoria Retroativa: o botão de aprender agora explica o que será aprendido e só grava depois de confirmar.'],
+        implementado: ['Regra única na Central de notificações: NF com pendência de entrega só aparece em Notas pendentes, em nenhum outro grupo.', 'Aviso "pedido sugerido" agora abre a NF (antes abria um filtro da Auditoria que podia estar vazio). Itens trocados, aceitos ou devolvidos nunca contam como "fora do pedido".', 'Marcar item (trocado/aceito/devolvido) agora confere no servidor se gravou e avisa se não gravou.', 'Atalhos para Central, Auditoria e Controle empilham o retorno: o botão Voltar aparece.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/20-editor-nf.js','js/23-conferencia-automatica.js','js/32-auditoria-retroativa.js','js/34-atencao.js','js/48-inicio-lote.js','js/65-notas-pendentes.js'],
+        mudou: ['Nenhum dado novo. Só telas, avisos e navegação.'],
+        testar: ['Editor de uma NF: ver o cartão primeiro, com a etiqueta e o botão de pendência dentro dele.', 'Marcar um item como "será devolvido", sair e voltar: deve continuar marcado; o aviso "fora do pedido" deve sumir. Se aparecer "não ficou gravada", me avise.', 'Central de notificações: tocar numa NF e ver o botão Voltar; NFs pendentes só no grupo Notas pendentes.', 'Início: relógio em destaque, Notas pendentes e Atividade recente no formato novo.', 'Auditoria > Retroativa: ler a explicação do botão de aprender.']
+    },
+    {
+        numero: '2.73.0', nome: 'Notas pendentes e nova Tela inicial', status: 'concluida', data: '21/11/2026 às 23:50',
         novidades: ['Notas pendentes: NFs paradas comigo por carta de correção, nota fiscal de devolução ou cotação. Botão "Pendente p/ financeiro" no Controle de NFs e no Editor de NF.', 'Enquanto há pendência, a NF não vai ao financeiro e o aviso "esperando decisão" para. Ela aparece na Central de notificações em grupos próprios (vencidas/vencem hoje e demais) e no cartão da Início, com o vencimento da mais urgente.', 'Início: removida "Prioridades de hoje"; Atalhos logo abaixo de "Atenção agora"; o cartão de vencidas virou "Notas pendentes"; o de "vencem hoje ou amanhã" agora soma também as vencidas na relação.', 'Atividade recente mostra só hoje e o último dia útil, com botão "Carregar mais"; Próximos vencimentos ficam abaixo.', 'O cartão Notas pendentes abre uma tela de resumo (como fornecedores a chegar); tocar na NF leva ao Controle de NFs.', 'Corrigido: item marcado "será devolvido" não conta mais como item sem recurso (aviso da Futura Urofix); NF parada por cotação não notifica como "sem pedido"; bloco do Editor de NF não duplica mais e ficou no padrão.'],
         implementado: ['js/65-notas-pendentes.js (novo): motivos, modal, gravação do campo pendenciaEntrega, bloqueio do envio ao financeiro.', 'js/10: devolvido não pede recurso. js/36: pendência para os avisos de decisão parada e vencida sem envio; expõe venc. js/34: dois grupos novos. js/17: botão e linha no cartão. js/48: nova Início.', 'index.html, style.css, novo-visual.css: versão e estilos.'],
         arquivos: ['index.html','style.css','novo-visual.css','js/10-entrada-nf-xml.js','js/17-historico-controle-nfs.js','js/34-atencao.js','js/36-visao-nf.js','js/48-inicio-lote.js','js/65-notas-pendentes.js','js/14-historico-mudancas.js'],
@@ -3943,4 +3951,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.1';

@@ -302,8 +302,8 @@ function renderEditorNf() {
             <div><span class="nfe-rot">1º vencimento</span><strong>${escRel(fmtDataXml(vencPrim))}</strong></div>
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(nf.pedido || '—')}</strong></div>
         </div>
-        <div class="nfe-chips">${badge('pronto', 'XML ✓')} ${badgeErp} ${badge('neutro', escRel(situacaoTxt))}${xd ? '' : ' ' + badge('pendente', 'XML completo não guardado')}</div>
-        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
+        <div class="nfe-chips">${badge('pronto', 'XML ✓')} ${badgeErp} ${badge('neutro', escRel(situacaoTxt))}${typeof chipPendenciaEntrega === 'function' ? chipPendenciaEntrega(nf.id) : ''}${xd ? '' : ' ' + badge('pendente', 'XML completo não guardado')}</div>
+        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Controle de NFs</button>${typeof botaoPendenciaEntrega === 'function' ? botaoPendenciaEntrega(nf.id) : ''} <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
         ${trocaPedido}
         ${cotacoesNfHTML}
     </div>`;
@@ -525,7 +525,7 @@ function renderEditorNf() {
     const alertaFora = foraNf.length ? `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ ${foraNf.length} item(ns) fora do pedido ${escRel(nf.pedido)}</div>
         ${foraNf.map(x => `<div class="nfe-alerta-txt" style="margin-top:8px"><strong>${escRel(x.nome)}</strong> — ${x.tipo === 'fora_cotacao' ? 'não está na cotação deste pedido' : 'na cotação foi ganho por ' + escRel(x.ganhador)}</div>`).join('')}
         <div class="nfe-dica" style="margin-top:8px">Se a NF for de outro pedido, mova-a em "Mover esta NF para outro pedido".</div></div>` : '';
-    el.innerHTML = htmlNfSemPedido(nf) + alertaPedido + alertaFora + cabecalho + alertaCodigosRepetidosNf(nf) + htmlDadosNf(nf, fornecedorNome) + tabs +
+    el.innerHTML = cabecalho + htmlNfSemPedido(nf) + alertaPedido + alertaFora + alertaCodigosRepetidosNf(nf) + htmlDadosNf(nf, fornecedorNome) + tabs +
         pane('itens', paneItens) + pane('fin', paneFin) + pane('fiscal', paneFiscal) + pane('partes', panePartes) + pane('transp', paneTransp) + pane('xml', paneXml);
 }
 function qdtFmt(v) { return String(numeroLimpo(Number(v))); }
@@ -561,6 +561,7 @@ function trocarSmartComprasNfItem(nfId, idx, codigo) {
         }
     });
 }
+// leandromendonssa
 // ===================================================================
 // --- 2.39.0: PRODUTO TROCADO / ACEITO COMO O PEDIDO, DEPOIS DE SALVAR A NF ---
 // ===================================================================
@@ -610,6 +611,9 @@ async function tratarNfItem(nfId, idx, tipo, codigo) {
         });
         await nfsProcessadasCollection.doc(nfId).update({ itens: novos });
         nfEditorTratAberto = {};
+        // 2.73.0: confere no servidor que o tratamento ficou gravado (antes só confiava no update) e redesenha já com o que foi salvo
+        try { const rel = await nfsProcessadasCollection.doc(nfId).get(); const gi = rel.exists ? (rel.data().itens || [])[idx] : null; if (!gi || gi.tratamento !== (tipo === 'aceito' ? 'aceito' : 'trocado') || (tipo === 'devolver' && !gi.devolucao)) { toast('✕ A marcação não ficou gravada. Tente de novo; se repetir, me avise.'); return; } nf.itens = rel.data().itens; } catch (e) { console.warn('conferência da marcação', e); }
+        try { renderEditorNf(); } catch (e) { }
         toast(tipo === 'devolver' ? '✓ Marcado como "será devolvido". O recolhimento fica pendente no Controle de NFs.' : tipo === 'trocado' ? '✓ Marcado como produto trocado.' : '✓ Aceito como o item pedido, só nesta NF.');
     } catch (e) { console.error('Erro ao tratar item da NF:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
 }
@@ -727,9 +731,9 @@ function renderEditorNfErp(erp, el) {
             <div><span class="nfe-rot">Emissão</span><strong>${escRel(erp.data || '—')}</strong></div>
             <div><span class="nfe-rot">1º vencimento</span><strong>${escRel(venc || '—')}</strong></div>
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(pedido || '—')}</strong></div></div>
-        <div class="nfe-chips">${badge('pendente', 'Só no relatório do ERP')} ${badge('pronto', 'ERP: ' + escRel(ROTULO_STATUS_ERP[erp.statusFluxo] || erp.statusFluxo || 'importada'))} ${badge('neutro', escRel(ROTULO_SITUACAO_NF[ctrl.situacao] || '—'))}</div>
+        <div class="nfe-chips">${badge('pendente', 'Só no relatório do ERP')} ${badge('pronto', 'ERP: ' + escRel(ROTULO_STATUS_ERP[erp.statusFluxo] || erp.statusFluxo || 'importada'))} ${badge('neutro', escRel(ROTULO_SITUACAO_NF[ctrl.situacao] || '—'))}${typeof chipPendenciaEntrega === 'function' ? chipPendenciaEntrega(erp.id) : ''}</div>
         <div class="nfe-acoes">${pedido ? `<button type="button" class="central-status-toggle" onclick="abrirCentralPedido('${escRel(pedido)}')">Abrir pedido ${escRel(pedido)}</button>` : ''}
-            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(erp.id)}')">Cadastrar equipamento desta NF</button></div>
+            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button>${typeof botaoPendenciaEntrega === 'function' ? botaoPendenciaEntrega(erp.id) : ''} <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(erp.id)}')">Cadastrar equipamento desta NF</button></div>
         ${troca}
     </div>`;
 
@@ -755,7 +759,7 @@ function renderEditorNfErp(erp, el) {
     }).join('');
     const itens = `<div class="card"><div class="xml-item-meta"><strong>Itens lançados no ERP (${(erp.itens || []).length})</strong></div>${linhas || '<div class="xml-item-meta">Sem itens no relatório.</div>'}</div>`;
     const aviso = `<div class="card" data-alvo="sem-xml"><div class="xml-item-meta">Esta NF veio só do relatório do ERP, sem XML. Aqui você confere os itens e troca o pedido; para editar valores, vencimento e associação item a item, processe o XML dela na Entrada de NF.</div></div>`;
-    el.innerHTML = alerta + cabecalho + htmlDadosNfErp(erp, fornNome, pedido) + aviso + itens;
+    el.innerHTML = cabecalho + alerta + htmlDadosNfErp(erp, fornNome, pedido) + aviso + itens;
 }
 
 // 2.10.7: edição dos dados da NF que só veio do ERP — nome do fornecedor, recurso e "sem pedido".
@@ -915,4 +919,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.66.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.73.1';

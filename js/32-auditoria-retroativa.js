@@ -169,6 +169,7 @@ function renderAuditoriaRetroSeAtiva() {
     const t = document.getElementById('screen-auditoria-central');
     if (t && t.classList.contains('active') && audAba === 'retro') renderAuditoriaRetroativa();
 }
+// leandromendonssa
 function filtrarRetro(f) { retroFiltro = f; retroLimite = 60; renderAuditoriaRetroativa(); }
 function maisRetro() { retroLimite += 60; renderAuditoriaRetroativa(); }
 
@@ -191,7 +192,7 @@ function renderAuditoriaRetroativa() {
         <div class="xml-item-meta">Você não precisa associar NF por NF: os itens se ligam ao produto da cotação pelo código SP Data, e o pedido é encontrado pelo CNPJ, pelos itens e pelo valor. O que depende de você aparece abaixo como sugestão ou pendência.</div>
         <div class="nfe-acoes">${c.defasados ? `<button type="button" class="central-status-toggle" onclick="reavaliarItensErp(true)">Atualizar ${c.defasados} item(ns) defasado(s)</button>` : ''}
             ${sug.length ? `<button type="button" class="central-status-toggle" onclick="confirmarSugestoesRetro()">Confirmar as ${sug.length} que batem em tudo</button>` : ''}
-            ${(apr.sp.length || apr.fornecedor.length) ? `<button type="button" class="central-status-toggle" onclick="aprenderRetroativoConfirmar()">Aprender ${apr.fornecedor.length + apr.sp.length} associação(ões) dos pedidos confirmados</button>` : ''}</div></div>`;
+            ${(apr.sp.length || apr.fornecedor.length) ? `<div class="xml-item-meta" style="margin-top:8px"><strong>Aprender com os pedidos confirmados.</strong> Em NFs cujo pedido já está confirmado e cujos itens batem com a cotação (mesma quantidade e valor), o app pode preencher sozinho: ${apr.fornecedor.length} código(s) do fornecedor → produto da cotação e ${apr.sp.length} produto(s) → código SP Data. Assim as próximas NFs desse fornecedor já vêm associadas. Nada é gravado agora: ao tocar você vê o resumo e só então confirma.</div><button type="button" class="central-status-toggle" onclick="aprenderRetroativoConfirmar()">Ver o que seria aprendido (${apr.fornecedor.length + apr.sp.length})</button>` : ''}</div></div>`;
     const chips = `<div class="retro-chips">${RETRO_FILTROS.map(([k, t]) => `<button type="button" class="retro-chip${retroFiltro === k ? ' on' : ''}" onclick="filtrarRetro('${k}')">${t}</button>`).join('')}</div>`;
     const ordem = { sugerido: 0, sem_associacao: 1, confirmado: 2, direta: 3 };
     const lista = an.filter(passaFiltroRetro).sort((x, y) => (y.defasados > 0) - (x.defasados > 0) || (ordem[x.pedidoSt] - ordem[y.pedidoSt]) || (y.semProduto - x.semProduto));
@@ -232,4 +233,4 @@ function confirmarSugestoesRetro() {
     });
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.56.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.73.1';

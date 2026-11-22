@@ -21,7 +21,7 @@ function mesmoGrupoFornecedor(nomeA, cnpjA, nomeB, cnpjB) {
     return curto.length >= 4 && longo.startsWith(curto);
 }
 
-// ---------- 3) itens fora do pedido ----------
+// ---------- 3) itens fora do pedido ---------- (leandromendonssa)
 function itensForaDoPedido(pedido) {
     const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido));
     if (!cot) return [];
@@ -41,7 +41,7 @@ function itensForaDoPedido(pedido) {
     });
     // NFs com XML no app
     listaNfsProcessadas.filter(n => String(n.pedido) === String(pedido) || (n.pedidos || []).map(String).includes(String(pedido)))
-        .forEach(nf => avaliar(nf.id, nf.nf, nf.fornecedor || '', nf.cnpjFornecedor, (nf.itens || []).filter(i => !i.semCotacao).map(i => ({ cod: i.codigoSmartCompras, nome: i.xProd }))));
+        .forEach(nf => avaliar(nf.id, nf.nf, nf.fornecedor || '', nf.cnpjFornecedor, (nf.itens || []).filter(i => !i.semCotacao && !i.tratamento && !i.devolucao).map(i => ({ cod: i.codigoSmartCompras, nome: i.xProd }))));
     // entradas do ERP sem NF/XML pareada (2.3.1: levam o id do ERP, e o botão "Abrir NF" abre o Editor da NF dessa entrada)
     const pareadas = mapaPedidoErpPelaNf();
     listaEntradasErp.filter(e => pedidoDoErpConfirmado(e) === String(pedido) && !pareadas.has(e.id))
@@ -123,4 +123,4 @@ function htmlNfExistenteAdicionar() {
         <div class="aviso-nf-dica">Se for a mesma nota, envie pelo Controle de NFs ("Enviar para a relação"): os dados já estão lá. Se salvar aqui, a nota será ligada a essa NF automaticamente.</div></div>`;
 }
 if (DOM.forn) DOM.forn.addEventListener('input', () => { if (typeof atualizarSugestoesNf === 'function') atualizarSugestoesNf(); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/23-conferencia-automatica.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/23-conferencia-automatica.js'] = '2.73.1';

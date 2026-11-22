@@ -152,9 +152,9 @@ function iniAtividadeHtml() {
         if (nv) {
             const min = Math.max(0, Math.round((Date.now() - dt.getTime()) / 60000));
             const rel = hoje ? (min < 60 ? 'há ' + min + ' min' : 'há ' + Math.floor(min / 60) + ' h') : (dia === ontemISO ? 'ontem' : '');
-            html += `<button type="button" class="nv-act" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="nv-sym">NF</span><span class="nv-main"><b>NF ${escIni(n.nf || '—')} <span class="nv-tag ${st[2]}">${st[1]}</span></b><span class="nv-sup">${escIni(nomeF || '(sem fornecedor)')}</span><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="nv-time"><b>${hora}</b>${rel ? `<small>${rel}</small>` : ''}<i>›</i></span></button>`;
+            html += `<button type="button" class="nv-act" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="nv-sym">${escIni(iniciaisControle(nomeF))}</span><span class="nv-main"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')} <span class="nv-tag ${st[2]}">${st[1]}</span></b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="nv-time"><b>${hora}</b>${rel ? `<small>${rel}</small>` : ''}<i>›</i></span></button>`;
         } else {
-            html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">NF</span><span class="ini-at2"><b>NF ${escIni(n.nf || '—')} · ${escIni(nomeF || '(sem fornecedor)')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
+            html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">${escIni(iniciaisControle(nomeF))}</span><span class="ini-at2"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
         }
     });
     const mais = nfs.length > limite ? `<button type="button" class="${nv ? 'nv-more' : 'ini-mais'}" onclick="iniMaisAtividade()">Carregar mais (${Math.min(12, nfs.length - limite)} de ${nfs.length - limite})</button>` : '';
@@ -175,7 +175,7 @@ function renderInicio() {
     // 2.73.0: cartão "Notas pendentes" (paradas comigo por carta de correção, NF de devolução ou cotação) com o vencimento da mais urgente
     let kPend; try {
         const np = notasParadasComigo(), venc = np.filter(x => x.dias != null && x.dias <= 0).length, prox = np[0];
-        const quem = prox ? `${escIni(nomeExibicaoFornecedor(prox.v.nf ? prox.v.nf.fornecedor : prox.v.erp.fornecedor, '') || '')} NF ${escIni((prox.v.nf || prox.v.erp).nf)} · ${escIni(avisoVencParada(prox.dias))}` : 'nenhuma NF parada';
+        const quem = prox ? `${escIni(nomeExibicaoFornecedor(prox.v.nf ? prox.v.nf.fornecedor : prox.v.erp.fornecedor, '') || '')} ${escIni((prox.v.nf || prox.v.erp).nf)} · ${escIni(avisoVencParada(prox.dias))}` : 'nenhuma NF parada';
         kPend = k(np.length ? (venc ? 'r' : 'y') : 'n', np.length, `notas pendentes<br>${quem}`, 'iniAbrirNotasParadas()');
     } catch (e) { kPend = k('n', 0, 'notas pendentes', 'iniAbrirNotasParadas()'); }
     const at = (ic, txt, acao, forte) => `<button type="button" class="ini-at${forte ? ' forte' : ''}" onclick="${acao}"><i class="${ic}"></i><span>${txt}</span></button>`;
@@ -187,7 +187,7 @@ function renderInicio() {
     if (novoVisualOn()) {   // 2.71.0: novo layout (cabeçalho de página, indicadores, painéis). Desligado, cai no layout anterior logo abaixo.
         const ph = (t, p, extra) => `<div class="nv-ph"><div><h2>${t}</h2>${p ? `<p>${p}</p>` : ''}</div>${extra || ''}</div><div class="nv-div"></div>`;
         el.innerHTML = `
-        <div class="nv-pagehead"><div><div class="nv-eyebrow">${DIAS_INI[agora.getDay()].toUpperCase()} · ROTINA OPERACIONAL</div><h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt} · <b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b><span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div></div>
+        <div class="nv-pagehead"><div><div class="nv-eyebrow">${DIAS_INI[agora.getDay()].toUpperCase()} · ROTINA OPERACIONAL</div><h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}<span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div></div><div class="ini-relogio"><b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b></div>
             <button type="button" class="nv-btn pri" onclick="switchToScreen('screen-xml-editor','Entrada de NF')">＋ Nova entrada de NF</button></div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
@@ -207,7 +207,7 @@ function renderInicio() {
         return;
     }
     el.innerHTML = `
-        <h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt} · <b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b><span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div>
+        <div class="ini-topo"><div><h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}<span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div></div><div class="ini-relogio"><b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b></div></div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
@@ -362,4 +362,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.1';
