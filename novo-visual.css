@@ -150,7 +150,8 @@ body.nv .ini-at.forte{background:var(--nv-surf2);border-color:var(--nv-line);col
 @media (min-width:1000px){
   body.nv .ini-grid,.nv-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
   .nv-layout{grid-template-columns:minmax(0,1.5fr) minmax(300px,.95fr);gap:17px;align-items:start}
-  .nv-recent{position:sticky;top:0}
+  .nv-layout.nv-um{grid-template-columns:minmax(0,1fr)}
+  .nv-recent{position:static}
   body.nv .ini-ats{grid-template-columns:repeat(6,1fr)}
 }
 @media (max-width:600px){
@@ -189,3 +190,8 @@ body.nv .aud-sug{border-radius:10px}
 @media (min-width:1500px){
   body.nv #controle-lista .central-colapso-inner{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+/* 2.73.0 notas pendentes */
+body.nv .pend-ent,.pend-ent{color:#9a5b00}.pend-ent.urgente{color:#c0392b}
+.pend-opt{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:16px}.pend-opt input{width:22px;height:22px}
+.pend-ent-card{margin-bottom:14px}.pend-ent-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
