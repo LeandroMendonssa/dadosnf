@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.4', nome: 'Relógio alinhado e logo pelo CNPJ', status: 'atual', data: '22/11/2026 às 10:30',
+        numero: '2.73.5', nome: 'Logo pelo Google', status: 'atual', data: '22/11/2026 às 10:50',
+        novidades: ['Logo do fornecedor: botão "Pesquisar logotipo no Google" abre a busca de imagens com o nome do fornecedor + "logotipo". Você copia a imagem certa e toca em "Colar imagem".', 'A imagem agora é reduzida inteira (sem cortar a logo) para 96 px.', 'O botão do CNPJ passou a se chamar "Achar site pelo CNPJ" e ficou junto do site.'],
+        implementado: ['js/66: pesquisa no Google, colar da área de transferência e processador de imagem único para colar e enviar.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
+        mudou: ['Nenhum dado novo.'],
+        testar: ['Fornecedores > Definir logo > Pesquisar logotipo no Google; copiar a imagem; voltar e tocar em Colar imagem; Salvar.']
+    },
+    {
+        numero: '2.73.4', nome: 'Relógio alinhado e logo pelo CNPJ', status: 'concluida', data: '22/11/2026 às 10:30',
         novidades: ['Início: o relógio ficou menor e alinhado com o título; a data e o comentário passaram para a linha de baixo.', 'Logo do fornecedor: botão "Buscar pelo CNPJ (automático)". O app consulta o cadastro público do CNPJ, pega o domínio do e-mail da empresa e mostra o ícone do site para você confirmar.'],
         implementado: ['js/66: consulta ao BrasilAPI com limite de 9 s, ignora e-mails pessoais (Gmail, Hotmail etc.) e explica o resultado na tela.', 'js/48 e style.css: novo cabeçalho da Início.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/48-inicio-lote.js','js/66-logos-fornecedores.js'],
@@ -3975,4 +3983,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.5';

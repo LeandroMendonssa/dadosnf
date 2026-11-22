@@ -45,11 +45,14 @@ function abrirLogoFornecedor(nomeEnc, cnpj) {
     m.innerHTML = `<div class="modal-content"><h2>Logo do fornecedor</h2>
         <p>${escRel(_logoNome)}</p>
         <div class="logo-forn-prev"><div class="ctl-av" id="logo-forn-prev">${avatarFornConteudo(_logoNome)}</div></div>
-        <label class="dev-lbl">Site do fornecedor<input type="text" id="logo-forn-site" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="ex.: futura.com.br"></label>
-        ${_logoCnpj.length === 14 ? `<button type="button" class="actions-button" style="width:100%;margin-top:12px" onclick="logoFornBuscarCnpj()">Buscar pelo CNPJ (automático)</button>` : ''}
-        <div class="confirm-actions" style="margin-top:12px"><button type="button" class="actions-button" onclick="logoFornBuscarSite()">Usar ícone do site</button>
+        <button type="button" class="actions-button" style="width:100%;min-height:48px" onclick="logoFornPesquisarGoogle()">Pesquisar logotipo no Google</button>
+        <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornColar()">Colar imagem</button>
         <button type="button" class="actions-button" onclick="document.getElementById('logo-forn-arq').click()">Enviar imagem</button></div>
+        <div class="txt-aux" style="margin-top:8px">No Google, toque e segure a imagem certa, escolha Copiar, volte aqui e toque em "Colar imagem".</div>
         <input type="file" id="logo-forn-arq" accept="image/*" style="display:none" onchange="logoFornArquivo(this)">
+        <label class="dev-lbl" style="margin-top:14px">Ou pelo site do fornecedor<input type="text" id="logo-forn-site" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="ex.: futura.com.br"></label>
+        <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornBuscarSite()">Ícone do site</button>
+        ${_logoCnpj.length === 14 ? `<button type="button" class="actions-button" onclick="logoFornBuscarCnpj()">Site pelo CNPJ</button>` : ''}</div>
         <div class="txt-aux" id="logo-forn-msg" style="margin-top:8px"></div>
         <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Cancelar</button>
         ${tem ? `<button type="button" class="actions-button is-danger" onclick="logoFornSalvar(true)">Remover</button>` : ''}
@@ -85,16 +88,33 @@ async function logoFornBuscarCnpj() {
     } catch (e) { if (g) g.textContent = 'Não consegui consultar o CNPJ agora. Tente de novo ou informe o site.'; }
 }
 window.logoFornBuscarCnpj = logoFornBuscarCnpj;
-function logoFornArquivo(inp) {
-    const f = inp.files && inp.files[0]; if (!f) return;
-    const rd = new FileReader();
-    rd.onload = () => { const im = new Image(); im.onload = () => {
+function logoFornPesquisarGoogle() {
+    const base = (() => { try { return nomeExibicaoFornecedor(_logoNome, '') || _logoNome; } catch (e) { return _logoNome; } })();
+    window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(String(base).replace(/<[^>]*>/g, '') + ' logotipo'), '_blank');
+}
+// reduz qualquer imagem para um quadrado de 96 px (JPEG) e mostra a prévia
+function logoFornProcessar(src) {
+    const im = new Image(); im.onload = () => {
         const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d');
         x.fillStyle = '#fff'; x.fillRect(0, 0, 96, 96);
-        const e = Math.min(im.width, im.height), sx = (im.width - e) / 2, sy = (im.height - e) / 2; x.drawImage(im, sx, sy, e, e, 0, 0, 96, 96);
-        logoFornPrever(c.toDataURL('image/jpeg', 0.85)); };
-        im.onerror = () => { const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = 'Não consegui ler essa imagem.'; };
-        im.src = rd.result; };
+        const e = Math.max(im.width, im.height), w = 96 * im.width / e, h = 96 * im.height / e;   // inteira, sem cortar a logo
+        x.drawImage(im, (96 - w) / 2, (96 - h) / 2, w, h);
+        logoFornPrever(c.toDataURL('image/jpeg', 0.88)); };
+    im.onerror = () => { const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = 'Não consegui ler essa imagem.'; };
+    im.src = src;
+}
+async function logoFornColar() {
+    const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = '';
+    try {
+        const itens = await navigator.clipboard.read();
+        for (const it of itens) { const t = it.types.find(x => x.startsWith('image/')); if (t) { const blob = await it.getType(t); const rd = new FileReader(); rd.onload = () => logoFornProcessar(rd.result); rd.readAsDataURL(blob); return; } }
+        if (g) g.textContent = 'Não há imagem copiada. No Google, toque e segure a imagem e escolha Copiar.';
+    } catch (e) { if (g) g.textContent = 'Não consegui ler a área de transferência. Permita colar quando o iPhone perguntar, ou salve a imagem em Fotos e use "Enviar imagem".'; }
+}
+window.logoFornPesquisarGoogle = logoFornPesquisarGoogle; window.logoFornColar = logoFornColar;
+function logoFornArquivo(inp) {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    const rd = new FileReader(); rd.onload = () => logoFornProcessar(rd.result);
     rd.readAsDataURL(f); inp.value = '';
 }
 async function logoFornSalvar(remover) {
@@ -117,5 +137,5 @@ window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = lo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.5';
 // leandromendonssa
