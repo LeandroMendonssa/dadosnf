@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.3', nome: 'Logo do fornecedor e devolução ligada à pendência', status: 'atual', data: '22/11/2026 às 09:00',
+        numero: '2.73.4', nome: 'Relógio alinhado e logo pelo CNPJ', status: 'atual', data: '22/11/2026 às 10:30',
+        novidades: ['Início: o relógio ficou menor e alinhado com o título; a data e o comentário passaram para a linha de baixo.', 'Logo do fornecedor: botão "Buscar pelo CNPJ (automático)". O app consulta o cadastro público do CNPJ, pega o domínio do e-mail da empresa e mostra o ícone do site para você confirmar.'],
+        implementado: ['js/66: consulta ao BrasilAPI com limite de 9 s, ignora e-mails pessoais (Gmail, Hotmail etc.) e explica o resultado na tela.', 'js/48 e style.css: novo cabeçalho da Início.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/48-inicio-lote.js','js/66-logos-fornecedores.js'],
+        mudou: ['Nenhum dado novo. A logo só é gravada quando você toca em Salvar.'],
+        testar: ['Início: relógio ao lado do "Bom dia", sem desalinhar.', 'Fornecedores > cartão com CNPJ > Definir logo > Buscar pelo CNPJ: ver o que aparece (site encontrado ou a explicação).']
+    },
+    {
+        numero: '2.73.3', nome: 'Logo do fornecedor e devolução ligada à pendência', status: 'concluida', data: '22/11/2026 às 09:00',
         novidades: ['Logo do fornecedor nas bolinhas: em Fornecedores, o cartão ganhou "Definir logo". Você envia uma imagem ou informa o site (usa o ícone do site). Sem logo, continuam as iniciais.', 'A logo aparece na Início, Controle de NFs, Fornecedores, Auditoria e Notas pendentes.', 'Ao marcar o recolhimento de uma devolução informando a NF de devolução, o app tira sozinho o motivo "Nota fiscal de devolução" da pendência da NF (e avisa se já pode ir ao financeiro).'],
         implementado: ['js/66-logos-fornecedores.js (novo): guarda as logos em config/logosFornecedores, janela de escolha, leitura com nova tentativa.', 'js/05, 17, 18, 32, 48, 65 passaram a usar avatarFornConteudo() nas bolinhas. js/65: ligação devolução ↔ pendência. style.css: estilos da logo.'],
         arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/14-historico-mudancas.js','js/17-historico-controle-nfs.js','js/18-erp-fornecedores-spdata.js','js/32-auditoria-retroativa.js','js/48-inicio-lote.js','js/65-notas-pendentes.js','js/66-logos-fornecedores.js'],
@@ -3967,4 +3975,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.4';

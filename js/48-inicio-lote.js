@@ -207,7 +207,7 @@ function renderInicio() {
         return;
     }
     el.innerHTML = `
-        <div class="ini-topo"><div><h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-sub">${dataTxt}<span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div></div><div class="ini-relogio"><b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b></div></div>
+        <div class="ini-topo"><h1 class="ini-h1">${inicioSaudacao()}${nome ? ', ' + escIni(nome) : ''}</h1><div class="ini-relogio"><b class="ini-hora" id="ini-hora">${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}</b></div></div><div class="ini-sub">${dataTxt}<span id="ini-coment">${LING.saudacaoExtra() ? ' · ' + escIni(LING.saudacaoExtra()) : ''}</span></div>
         <form class="ini-busca" onsubmit="event.preventDefault(); inicioEnviarBusca(this.q.value)"><i class="fa-solid fa-magnifying-glass"></i><input name="q" type="search" placeholder="Buscar NF, fornecedor, pedido ou produto" autocomplete="off" enterkeyhint="search" oninput="inicioBuscarProdutos(this.value)"></form>
         <div id="ini-busca-res"></div>
         <div class="ini-tit">Atenção agora</div>
@@ -362,4 +362,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.4';
