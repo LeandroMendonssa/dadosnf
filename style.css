@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.73.3'; }
+:root { --css-versao: '2.73.4'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2456,9 +2456,10 @@ body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-w
 }
 
 /* 2.73.0 relógio em destaque na Início; botões do modal de pendência; linhas do resumo */
-.ini-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.ini-relogio{flex:none;background:var(--card-bg,#fff);border:1px solid var(--border-color,rgba(128,128,128,.25));border-radius:16px;padding:6px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.ini-relogio .ini-hora{font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text-color,inherit)}
+.ini-topo{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ini-topo .ini-h1{margin:0;min-width:0}.ini-topo + .ini-sub{margin-top:4px}
+.ini-relogio{flex:none;background:var(--card-bg,#fff);border:1px solid var(--border-color,rgba(128,128,128,.25));border-radius:14px;padding:4px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06);align-self:center}
+.ini-relogio .ini-hora{font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text-color,inherit)}
 .pend-acoes{margin-top:20px}.pend-acoes .actions-button{width:100%;min-height:48px}.pend-acoes .is-primary{grid-column:1/-1}
 .pend-opt:last-of-type{border-bottom:0}
 
