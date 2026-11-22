@@ -13,7 +13,10 @@ function chaveLogoExistente(nome) {
     for (const c in logosFornecedores) if (c.length >= 4 && k.length >= 4 && (k.startsWith(c + ' ') || c.startsWith(k + ' '))) return c;
     return '';
 }
-function logoFornDe(nome) { const c = chaveLogoExistente(nome); return c ? (logosFornecedores[c].u || '') : ''; }
+function logoFornDe(nome) {
+    const c = chaveLogoExistente(nome); if (!c) return ''; const e = logosFornecedores[c];
+    return e.u || (e.d ? logoDevUrl(e.d, false) : '');   // só com o site guardado, a logo vem da Logo.dev na hora de mostrar
+}
 // conteúdo da bolinha: imagem (se houver logo) ou iniciais — troca direta de ${iniciaisControle(nome)}
 function avatarFornConteudo(nome) {
     const u = logoFornDe(nome);
@@ -38,9 +41,9 @@ window.avatarFornConteudo = avatarFornConteudo;
 })();
 
 // ---- janela para definir a logo ----
-let _logoPend = null, _logoChave = '', _logoNome = '', _logoCnpj = '';
+let _logoPend = null, _logoChave = '', _logoNome = '', _logoCnpj = '', _logoDom = '';
 function abrirLogoFornecedor(nomeEnc, cnpj) {
-    _logoCnpj = String(cnpj || '').replace(/\D/g, ''); _logoNome = decodeURIComponent(nomeEnc); _logoChave = nomeBaseLogoForn(_logoNome); _logoPend = undefined;
+    _logoCnpj = String(cnpj || '').replace(/\D/g, ''); _logoNome = decodeURIComponent(nomeEnc); _logoChave = nomeBaseLogoForn(_logoNome); _logoPend = undefined; _logoDom = '';
     let m = document.getElementById('logo-forn-modal');
     if (!m) { m = document.createElement('div'); m.id = 'logo-forn-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
     const tem = !!chaveLogoExistente(_logoNome);   // também conta logo herdada de nome parecido: assim sempre dá para remover
@@ -53,7 +56,7 @@ function abrirLogoFornecedor(nomeEnc, cnpj) {
         <button type="button" class="actions-button" onclick="document.getElementById('logo-forn-arq').click()">Enviar imagem</button></div>
         <div class="txt-aux" style="margin-top:8px">No Google, toque e segure a imagem certa, escolha Copiar, volte aqui e toque em "Colar imagem".</div>
         <input type="file" id="logo-forn-arq" accept="image/*" style="display:none" onchange="logoFornArquivo(this)">
-        <label class="dev-lbl" style="margin-top:14px">Ou pelo site do fornecedor<input type="text" id="logo-forn-site" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="ex.: futura.com.br"></label>
+        <label class="dev-lbl" style="margin-top:14px">Ou pelo site do fornecedor<input type="text" id="logo-forn-site" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="ex.: futura.com.br" value="${escRel((logosFornecedores[chaveLogoExistente(_logoNome)] || {}).d || '')}"></label>
         <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornBuscarSite()">Ícone do site</button>
         ${_logoCnpj.length === 14 ? `<button type="button" class="actions-button" onclick="logoFornBuscarCnpj()">Site pelo CNPJ</button>` : ''}</div>
         <div class="txt-aux" id="logo-forn-msg" style="margin-top:8px"></div>
@@ -71,7 +74,7 @@ function logoFornBuscarSite() {
     const v = ((document.getElementById('logo-forn-site') || {}).value || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split(/[\/?#]/)[0];
     const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = '';
     if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(v)) { if (g) g.textContent = 'Digite o endereço do site, por exemplo futura.com.br.'; return; }
-    logoFornPrever(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(v)}&sz=128`);
+    _logoDom = v; logoFornPrever(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(v)}&sz=128`);
 }
 // Busca automática: consulta pública do CNPJ (BrasilAPI, dados da Receita) → e-mail da empresa → domínio → ícone do site.
 // O cadastro público não traz o site em si; só funciona quando o e-mail é corporativo (não Gmail, Hotmail etc.).
@@ -112,6 +115,7 @@ async function logoFornBuscarAuto() {
             const r = await fetch(u, { signal: ctl.signal }); clearTimeout(t);
             if (!r.ok) continue; const blob = await r.blob(); if (!/^image\//.test(blob.type) || blob.size < 200) continue;
             await new Promise(ok => { const rd = new FileReader(); rd.onload = () => { logoFornProcessar(rd.result); ok(); }; rd.readAsDataURL(blob); });
+            if (u === tentativas[0] && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) _logoDom = dom;
             achou = true; break;
         } catch (e) {
             // sem leitura direta (rede/CORS): testa se a imagem carrega e, se sim, mostra pelo endereço
@@ -158,13 +162,67 @@ async function logoFornSalvar(remover) {
     if (!remover && !_logoPend) { toast('Escolha uma imagem ou um site primeiro.'); return; }
     try {
         const alvo = remover ? (chaveLogoExistente(_logoNome) || _logoChave) : _logoChave;   // salvar vale para este nome; remover tira a que estiver valendo
-        await settingsDocRef.parent.doc('logosFornecedores').set({ logos: { [alvo]: remover ? firebase.firestore.FieldValue.delete() : { u: _logoPend } } }, { merge: true });
-        if (remover) delete logosFornecedores[alvo]; else logosFornecedores[alvo] = { u: _logoPend };
+        await settingsDocRef.parent.doc('logosFornecedores').set({ logos: { [alvo]: remover ? firebase.firestore.FieldValue.delete() : { u: _logoPend, ...(_logoDom ? { d: _logoDom } : {}) } } }, { merge: true });
+        if (remover) delete logosFornecedores[alvo]; else logosFornecedores[alvo] = { u: _logoPend, ...(_logoDom ? { d: _logoDom } : {}) };
         closeAllModals(); toast(remover ? 'Logo removida.' : 'Logo salva.');
         ['renderInicio', 'renderControleNfs', 'renderListaFornecedoresUnificada'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
     } catch (e) { console.error('Erro ao salvar logo:', e); toast('✕ Não consegui salvar a logo. Tente de novo.'); }
 }
 window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = logoFornBuscarSite; window.logoFornArquivo = logoFornArquivo; window.logoFornSalvar = logoFornSalvar;
+
+// ---- Lote: copiar lista (CNPJ;nome) e aplicar sites (CNPJ;site) ----
+const cnpjDigitos = v => String(v || '').replace(/\D/g, '');
+function fornecedoresComCnpj() {
+    const r = [];
+    try { listaFornecedoresUnificada().forEach(f => (f.cnpjs || []).forEach(c => { const d = cnpjDigitos(c.cnpj); if (d.length === 14) r.push({ cnpj: d, nome: f.nomeExibido || f.nomeReal, real: f.nomeReal }); })); } catch (e) { }
+    return r.filter((x, i, a) => a.findIndex(y => y.cnpj === x.cnpj) === i);
+}
+function abrirLogosEmLote() {
+    let m = document.getElementById('logos-lote-modal');
+    if (!m) { m = document.createElement('div'); m.id = 'logos-lote-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
+    const n = fornecedoresComCnpj().length, com = Object.values(logosFornecedores).filter(e => e && (e.u || e.d)).length;
+    m.innerHTML = `<div class="modal-content"><h2>Logos dos fornecedores</h2>
+        <p style="font-size:12px;color:var(--text-light)">${n} fornecedor(es) com CNPJ · ${com} com logo. Copie a lista e me envie; eu devolvo o site de cada um (linhas "CNPJ;site") e você cola abaixo. Com o site certo, a logo vem sozinha.</p>
+        <button type="button" class="actions-button" style="width:100%;min-height:48px" onclick="logosLoteCopiar()">Copiar lista de fornecedores</button>
+        <label class="dev-lbl" style="margin-top:14px">Sites recebidos (um por linha: CNPJ;site)<textarea id="logos-lote-txt" rows="6" placeholder="08231734000517;futura.com.br" style="width:100%"></textarea></label>
+        <div class="txt-aux" id="logos-lote-msg" style="margin-top:6px"></div>
+        <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Fechar</button>
+        <button type="button" class="actions-button is-primary" onclick="logosLoteAplicar()">Aplicar sites</button></div></div>`;
+    m.classList.add('active');
+}
+async function logosLoteCopiar() {
+    const txt = fornecedoresComCnpj().map(x => `${x.cnpj};${x.nome}`).join('\n'), g = document.getElementById('logos-lote-msg');
+    try { await navigator.clipboard.writeText(txt); if (g) g.textContent = 'Lista copiada. Cole na conversa comigo.'; }
+    catch (e) { const t = document.getElementById('logos-lote-txt'); if (t) { t.value = txt; t.select(); } if (g) g.textContent = 'Não consegui copiar sozinho. A lista está na caixa abaixo: selecione tudo e copie.'; }
+}
+async function logosLoteAplicar() {
+    const g = document.getElementById('logos-lote-msg'), forn = fornecedoresComCnpj(), novos = {}; let ok = 0, sem = 0;
+    ((document.getElementById('logos-lote-txt') || {}).value || '').split(/\n+/).forEach(l => {
+        const [c, site] = l.split(/[;\t]/).map(x => (x || '').trim()); const d = cnpjDigitos(c), dom = dominioLimpo(site);
+        if (!d || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) return;
+        const f = forn.find(x => x.cnpj === d); if (!f) { sem++; return; }
+        [f.nome, f.real].forEach(nm => { const k = nomeBaseLogoForn(nm); if (k && !(logosFornecedores[k] && logosFornecedores[k].u)) novos[k] = { d: dom }; });   // não sobrescreve logo escolhida à mão
+        ok++;
+    });
+    if (!ok) { if (g) g.textContent = 'Nenhuma linha válida. Use CNPJ;site, uma por linha.' + (sem ? ' (' + sem + ' CNPJ(s) não estão na sua lista.)' : ''); return; }
+    try {
+        await settingsDocRef.parent.doc('logosFornecedores').set({ logos: novos }, { merge: true });
+        Object.assign(logosFornecedores, novos);
+        closeAllModals(); toast(`Sites aplicados: ${ok} fornecedor(es).`);
+        ['renderInicio', 'renderControleNfs', 'renderListaFornecedoresUnificada'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
+    } catch (e) { console.error(e); if (g) g.textContent = 'Não consegui salvar agora. Tente de novo.'; }
+}
+window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCopiar; window.logosLoteAplicar = logosLoteAplicar;
+// botão de entrada na tela Fornecedores
+(function () {
+    if (typeof renderListaFornecedoresUnificada !== 'function') return;
+    const o = renderListaFornecedoresUnificada;
+    renderListaFornecedoresUnificada = function () {
+        const r = o.apply(this, arguments);
+        try { const c = document.getElementById('contador-fornecedores-spdata'); if (c && !document.getElementById('btn-logos-lote')) c.insertAdjacentHTML('afterend', '<div class="nfe-acoes"><button type="button" class="central-status-toggle" id="btn-logos-lote" onclick="abrirLogosEmLote()">Logos dos fornecedores</button></div>'); } catch (e) { }
+        return r;
+    };
+})();
 
 // Botão no cartão do fornecedor (tela Fornecedores do ERP)
 (function () {
@@ -175,5 +233,5 @@ window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = lo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.8';
 // leandromendonssa

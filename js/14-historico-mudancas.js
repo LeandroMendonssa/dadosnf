@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.7', nome: 'Remover logo herdada', status: 'atual', data: '22/11/2026 às 11:40',
+        numero: '2.73.8', nome: 'Logos em lote por site', status: 'atual', data: '22/11/2026 às 12:10',
+        novidades: ['Fornecedores: botão "Logos dos fornecedores". "Copiar lista de fornecedores" gera linhas CNPJ;nome; depois você cola os sites (CNPJ;site) e toca em "Aplicar sites".', 'Com o site guardado, a logo vem da Logo.dev na hora de mostrar (sem baixar nem colar imagem). Se não existir, continuam as iniciais.', 'O site informado ou achado numa logo individual também fica guardado e volta preenchido na janela.'],
+        implementado: ['js/66: fornecedoresComCnpj(), abrirLogosEmLote(), logosLoteCopiar(), logosLoteAplicar(); logo pode ter só o domínio. Não sobrescreve logo escolhida à mão.'],
+        arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
+        mudou: ['config/logosFornecedores passa a aceitar { d: site } além de { u: imagem }.'],
+        testar: ['Fornecedores > Logos dos fornecedores > Copiar lista; colar a lista na conversa; depois colar a resposta (CNPJ;site) e Aplicar sites.']
+    },
+    {
+        numero: '2.73.7', nome: 'Remover logo herdada', status: 'concluida', data: '22/11/2026 às 11:40',
         novidades: ['Corrigido: quando um fornecedor mostrava a logo de outro de nome parecido, a janela não oferecia Remover. Agora Remover tira a logo que estiver valendo e Salvar cria uma logo só para aquele nome.'],
         implementado: ['js/66: chaveLogoExistente() (usada para mostrar, remover e salvar).'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
@@ -3999,4 +4007,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.8';
