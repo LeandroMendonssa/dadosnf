@@ -257,6 +257,7 @@ function iniTextoAtraso(lim) {
     if (dias <= 2) return `<b class="ini-atr y">vence em ${dias} dia(s)</b>`;
     return '<b class="ini-atr g">no prazo</b>';
 }
+// leandromendonssa
 function iniToggleProdutos(btn) {
     const box = btn.closest('.ini-forn') && btn.closest('.ini-forn').querySelector('.ini-prev'); if (!box) return;
     const abre = box.hidden; box.hidden = !abre; btn.setAttribute('aria-expanded', String(abre));
@@ -276,7 +277,7 @@ function renderFornecedoresAChegar(pf) {
                 const st = `<span class="ini-chip ${x.t === 'nao' ? 'r' : 'y'}">${x.t === 'nao' ? 'Não chegou' : 'Parcial'}</span>`;
                 const prevLinhas = (x.prod || []).map(it => `<div class="ini-tab-c">${escIni(it.n)}</div><div class="ini-tab-q">${it.q === null ? '—' : String(it.q).replace('.', ',')}${it.u ? `<small>${escIni(it.u)}</small>` : ''}</div>`).join('');
                 const prev = prevLinhas ? `<div class="ini-tab"><div class="ini-tab-h">Material</div><div class="ini-tab-h d">Quantidade</div>${prevLinhas}</div>` : '<div class="ini-vazio">Sem produtos pendentes.</div>';
-                return `<div class="ini-forn"><div class="ini-forn-linha"><button type="button" class="ini-forn-main" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><div>${escIni(x.f)}<small>${sit}${iniTextoAtraso(x.lim)}</small></div><div class="ini-forn-chips">${st}</div></button><button type="button" class="ini-seta" aria-expanded="false" aria-label="Ver produtos que faltam" onclick="iniToggleProdutos(this)"><i class="fa-solid fa-chevron-down"></i></button></div><div class="ini-prev" hidden>${prev}</div></div>`;
+                return `<div class="ini-forn"><div class="ini-forn-linha"><button type="button" class="ini-forn-main" onclick="closeAllModals(); irParaFornecedorPedido('${escIni(p)}','${escIni(x.c || '')}')"><span class="ini-ai">${avatarFornConteudo(nomeExibicaoFornecedor(x.f, x.c || '') || x.f)}</span><div>${escIni(x.f)}<small>${sit}${iniTextoAtraso(x.lim)}</small></div><div class="ini-forn-chips">${st}</div></button><button type="button" class="ini-seta" aria-expanded="false" aria-label="Ver produtos que faltam" onclick="iniToggleProdutos(this)"><i class="fa-solid fa-chevron-down"></i></button></div><div class="ini-prev" hidden>${prev}</div></div>`;
             }).join('') + '</div>';
         }).join('');
 }
@@ -362,4 +363,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.4';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.9';

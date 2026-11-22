@@ -6,12 +6,11 @@ function chaveLogoForn(nome) {
     return String(nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/<[^>]*>/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 function nomeBaseLogoForn(nome) { let n = nome; try { n = nomeExibicaoFornecedor(nome, '') || nome; } catch (e) { } return chaveLogoForn(n); }
-// chave da logo que vale para este nome: a exata ou, se não houver, a de um nome parecido (o ERP costuma truncar o nome)
+// 2.73.9: a logo vale só para o MESMO nome de exibição (apelido). Nomes parecidos (um começando igual ao outro) não herdam mais.
+// Fornecedores associados (matriz/filial/mesmo CNPJ base) já dividem o mesmo apelido, então dividem a logo sem precisar de regra de semelhança.
 function chaveLogoExistente(nome) {
     const k = nomeBaseLogoForn(nome); if (!k) return '';
-    if (logosFornecedores[k]) return k;
-    for (const c in logosFornecedores) if (c.length >= 4 && k.length >= 4 && (k.startsWith(c + ' ') || c.startsWith(k + ' '))) return c;
-    return '';
+    return logosFornecedores[k] ? k : '';
 }
 function logoFornDe(nome) {
     const c = chaveLogoExistente(nome); if (!c) return ''; const e = logosFornecedores[c];
@@ -54,7 +53,8 @@ function abrirLogoFornecedor(nomeEnc, cnpj) {
         <button type="button" class="actions-button" style="width:100%;min-height:48px;margin-top:10px" onclick="logoFornPesquisarGoogle()">Pesquisar logotipo no Google</button>
         <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornColar()">Colar imagem</button>
         <button type="button" class="actions-button" onclick="document.getElementById('logo-forn-arq').click()">Enviar imagem</button></div>
-        <div class="txt-aux" style="margin-top:8px">No Google, toque e segure a imagem certa, escolha Copiar, volte aqui e toque em "Colar imagem".</div>
+        <div id="logo-forn-colar" class="logo-forn-colar" contenteditable="true" hidden data-ph="Toque e segure aqui, depois escolha Colar" onpaste="logoFornColou(event)" autocapitalize="off" spellcheck="false"></div>
+        <div class="txt-aux" style="margin-top:8px">No Google, abra a imagem certa, segure nela e escolha Copiar. Volte aqui, toque em "Colar imagem" e cole no quadro.</div>
         <input type="file" id="logo-forn-arq" accept="image/*" style="display:none" onchange="logoFornArquivo(this)">
         <label class="dev-lbl" style="margin-top:14px">Ou pelo site do fornecedor<input type="text" id="logo-forn-site" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="ex.: futura.com.br" value="${escRel((logosFornecedores[chaveLogoExistente(_logoNome)] || {}).d || '')}"></label>
         <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornBuscarSite()">Ícone do site</button>
@@ -127,6 +127,7 @@ async function logoFornBuscarAuto() {
     if (g) g.textContent = achou ? 'Logo encontrada (Logo.dev). Confira a prévia e toque em Salvar.' : 'Não foi possível buscar automaticamente. Use "Pesquisar logotipo no Google", cole ou envie a imagem, ou informe o site e tente de novo.';
 }
 window.logoFornBuscarAuto = logoFornBuscarAuto;
+// leandromendonssa
 function logoFornPesquisarGoogle() {
     const base = (() => { try { return nomeExibicaoFornecedor(_logoNome, '') || _logoNome; } catch (e) { return _logoNome; } })();
     window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(String(base).replace(/<[^>]*>/g, '') + ' logotipo'), '_blank');
@@ -144,14 +145,30 @@ function logoFornProcessar(src) {
     im.onerror = () => { const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = 'Não consegui ler essa imagem.'; };
     im.src = src;
 }
-async function logoFornColar() {
-    const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = '';
-    try {
-        const itens = await navigator.clipboard.read();
-        for (const it of itens) { const t = it.types.find(x => x.startsWith('image/')); if (t) { const blob = await it.getType(t); const rd = new FileReader(); rd.onload = () => logoFornProcessar(rd.result); rd.readAsDataURL(blob); return; } }
-        if (g) g.textContent = 'Não há imagem copiada. No Google, toque e segure a imagem e escolha Copiar.';
-    } catch (e) { if (g) g.textContent = 'Não consegui ler a área de transferência. Permita colar quando o iPhone perguntar, ou salve a imagem em Fotos e use "Enviar imagem".'; }
+// 2.73.9: colar pelo campo de colagem do próprio iPhone (evento "paste"). A leitura direta da área de transferência
+// (navigator.clipboard.read) pisca e é bloqueada pelo iOS, e só entregava o "objeto recortado". No campo, o iPhone entrega a imagem inteira
+// do jeito que foi copiada (arquivo, ou o endereço da imagem quando o site não permite copiar o arquivo).
+function logoFornColar() {
+    const g = document.getElementById('logo-forn-msg'), c = document.getElementById('logo-forn-colar'); if (!c) return;
+    if (g) g.textContent = 'Toque e segure no quadro abaixo e escolha Colar.';
+    c.hidden = false; c.innerHTML = ''; try { c.focus(); } catch (e) { }
+    try { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { }
 }
+function logoFornColou(ev) {
+    ev.preventDefault();
+    const g = document.getElementById('logo-forn-msg'), c = document.getElementById('logo-forn-colar'), cd = ev.clipboardData; if (!cd) return;
+    const limpar = () => { if (c) { c.innerHTML = ''; c.hidden = true; c.blur(); } };
+    const arq = Array.from(cd.files || []).find(f => /^image\//.test(f.type)) || (Array.from(cd.items || []).find(i => i.kind === 'file' && /^image\//.test(i.type)) || { getAsFile: () => null }).getAsFile();
+    if (arq) { const rd = new FileReader(); rd.onload = () => logoFornProcessar(rd.result); rd.readAsDataURL(arq); if (g) g.textContent = 'Imagem colada. Confira a prévia e toque em Salvar.'; limpar(); return; }
+    // sem arquivo: tenta o endereço da imagem (no HTML copiado ou no texto)
+    let src = ''; const html = cd.getData('text/html') || '';
+    const m = /<img[^>]+src=["']([^"']+)["']/i.exec(html); if (m) src = m[1].replace(/&amp;/g, '&');
+    if (!src) { const t = (cd.getData('text/uri-list') || cd.getData('text/plain') || '').trim().split(/\s+/)[0]; if (/^(https?:\/\/|data:image\/)/i.test(t)) src = t; }
+    if (src) { logoFornProcessar(src); if (g) g.textContent = 'Imagem colada. Confira a prévia e toque em Salvar.'; limpar(); return; }
+    if (g) g.textContent = 'Não veio imagem. No Google, toque na imagem para abrir, segure e escolha Copiar (não "Copiar assunto"). Ou use "Enviar imagem".';
+    limpar();
+}
+window.logoFornColou = logoFornColou;
 window.logoFornPesquisarGoogle = logoFornPesquisarGoogle; window.logoFornColar = logoFornColar;
 function logoFornArquivo(inp) {
     const f = inp.files && inp.files[0]; if (!f) return;
@@ -233,5 +250,5 @@ window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.9';
 // leandromendonssa

@@ -29,8 +29,15 @@ function toast(msg){
     iconEl.className = 'toast-icon' + (ehSucesso ? ' success' : ehErro ? ' error' : '');
     iconEl.innerHTML = ehSucesso ? '<i class="fa-solid fa-circle-check"></i>' : ehErro ? '<i class="fa-solid fa-circle-exclamation"></i>' : '';
     const textoLing = (typeof LING !== 'undefined') ? LING.toast(texto, ehSucesso, ehErro) : null;   // 2.62.0: só na linguagem "Sem paciência"
-    textEl.textContent = textoLing !== null ? textoLing : personalizarMensagem(texto, ehSucesso);
-    const rico0 = document.getElementById('toast-rico'); if (rico0) toastRicoFechar(true);
+    const final = textoLing !== null ? textoLing : personalizarMensagem(texto, ehSucesso);
+    // 2.73.9: TODO aviso do app usa o modelo novo (ilha com anel de tempo). O balão antigo só fica como reserva se o novo falhar.
+    try {
+        let titulo = final, detalhe = '';
+        if (final.length > 70) { const i = final.search(/[.!?]\s+\S/); if (i > 12 && i < 90) { titulo = final.slice(0, i + 1); detalhe = final.slice(i + 1).trim(); } }
+        toastRico({ titulo, detalhe, tipo: ehErro ? 'erro' : 'ok' });
+        return;
+    } catch (e) { console.error(e); }
+    textEl.textContent = final;
     t.style.display = 'flex';
     t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
     clearTimeout(window.__toastTimer);
@@ -619,4 +626,4 @@ function popularListaFornecedores(){
     atualizarBulkBarFornecedores();
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.65.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/07-login-conta-backup.js'] = '2.73.9';

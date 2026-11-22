@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.8', nome: 'Logos em lote por site', status: 'atual', data: '22/11/2026 às 12:10',
+        numero: '2.73.9', nome: 'Colar logo inteira, avisos novos e logo só do fornecedor certo', status: 'atual', data: '22/11/2026 às 15:40',
+        novidades: ['Colar imagem agora usa um quadro de colagem: você toca e segura, escolhe Colar e entra a imagem inteira, do jeito que copiou.', 'Todos os avisos do app usam o modelo novo (ilha com anel de tempo), inclusive o "Desfazer".', 'A logo de um fornecedor não aparece mais em outros só porque o nome começa parecido. Vale só para o mesmo nome de exibição (e para os associados, que já dividem o apelido).', 'Fornecedores a chegar (Início) mostra a bolinha com a logo ou as iniciais de cada fornecedor.'],
+        implementado: ['js/66: colagem pelo evento paste (arquivo, endereço no HTML ou texto) no lugar de navigator.clipboard.read; chaveLogoExistente só por nome exato.', 'js/07: toast() passa a chamar toastRico (título e detalhe), com o balão antigo só como reserva.', 'js/34: mostrarToastDesfazer usa toastRico com ação.', 'js/48: avatar na lista de fornecedores a chegar.', 'style.css: campo .logo-forn-colar e ajuste da linha de fornecedores a chegar.'],
+        arquivos: ['js/66-logos-fornecedores.js', 'js/07-login-conta-backup.js', 'js/34-atencao.js', 'js/48-inicio-lote.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Logos que antes apareciam em fornecedores de nome parecido somem desses; para devolver, defina a logo neles ou deixe com o mesmo apelido.', 'Fornecedores do ERP com nome truncado diferente do apelido deixam de herdar a logo.'],
+        testar: ['Fornecedores > Definir logo > Colar imagem: no Google abra a imagem, segure, Copiar; volte, toque Colar imagem, segure no quadro e Colar. A prévia deve mostrar a imagem inteira.', 'Se a imagem não vier, use Enviar imagem.', 'Conferir que a logo não aparece em fornecedores de nome parecido.', 'Fazer qualquer ação que dê aviso (salvar, vincular fornecedor): o aviso deve ser a ilha nova, sem balão redondo grande.', 'Início > fornecedores a chegar: cada linha com a bolinha do fornecedor.']
+    },
+    {
+        numero: '2.73.8', nome: 'Logos em lote por site', status: 'concluida', data: '22/11/2026 às 12:10',
         novidades: ['Fornecedores: botão "Logos dos fornecedores". "Copiar lista de fornecedores" gera linhas CNPJ;nome; depois você cola os sites (CNPJ;site) e toca em "Aplicar sites".', 'Com o site guardado, a logo vem da Logo.dev na hora de mostrar (sem baixar nem colar imagem). Se não existir, continuam as iniciais.', 'O site informado ou achado numa logo individual também fica guardado e volta preenchido na janela.'],
         implementado: ['js/66: fornecedoresComCnpj(), abrirLogosEmLote(), logosLoteCopiar(), logosLoteAplicar(); logo pode ter só o domínio. Não sobrescreve logo escolhida à mão.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/66-logos-fornecedores.js'],
@@ -4007,4 +4015,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.8';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.9';

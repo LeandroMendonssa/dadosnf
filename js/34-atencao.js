@@ -150,12 +150,11 @@ function ignorarAtencao(chave, nome) {
 }
 function restaurarAtencao(chave) { const set = atencaoIgnoradasSet(); set.delete(chave); _atencaoGravarIgnoradas(set); }
 function mostrarToastDesfazer(msg, desfazer) {
-    let t = document.getElementById('toast-desfazer'); if (t) t.remove();
-    t = document.createElement('div'); t.id = 'toast-desfazer'; t.className = 'toast-desfazer';
-    t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-clear,0px) + 84px);max-width:92vw;background:#222;color:#fff;border-radius:14px;padding:10px 14px;display:flex;gap:12px;align-items:center;z-index:400;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.35)';
-    const sp = document.createElement('span'); sp.textContent = msg; const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Desfazer'; b.style.cssText = 'border:0;background:transparent;color:#8ab4ff;font:inherit;font-weight:700;cursor:pointer';
-    b.onclick = () => { t.remove(); desfazer(); }; t.appendChild(sp); t.appendChild(b); document.body.appendChild(t); setTimeout(() => { if (t.parentNode) t.remove(); }, 6000);
+    // 2.73.9: mesmo modelo de aviso do resto do app (ilha com anel de tempo), com a ação "Desfazer"
+    const antigo = document.getElementById('toast-desfazer'); if (antigo) antigo.remove();
+    toastRico({ titulo: String(msg || ''), acao: 'Desfazer', onAcao: desfazer });
 }
+// leandromendonssa
 function irParaFornecedorCadastro(codigo) {
     const f = listaFornecedoresSpData.find(x => String(x.codigo) === String(codigo)); if (!f) return;
     switchToScreen('screen-fornecedores', 'Fornecedores');
@@ -243,4 +242,4 @@ function renderBannerAtencao() {
     const n = totalAtencaoNf();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.9';
