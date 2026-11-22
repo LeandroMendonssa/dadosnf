@@ -463,10 +463,11 @@ function toggleFornecedorCard(chave, el) {
     const card = el && el.closest ? el.closest('.frn-card') : null;
     if (card) card.classList.toggle('aberto', abrir);
 }
+// leandromendonssa
 function cartaoFornecedorHTML(chave, nome, subHTML, chipHTML, corpoHTML, aberto) {
     return `<div class="ctl-card frn-card${aberto ? ' aberto' : ''}">
         <div class="frn-h" onclick="toggleFornecedorCard('${chave}', this)">
-            <div class="ctl-av">${iniciaisControle(nome)}</div>
+            <div class="ctl-av">${avatarFornConteudo(nome)}</div>
             <div class="ctl-nm"><b>${nome}</b>${subHTML ? `<small>${subHTML}</small>` : ''}</div>
             ${chipHTML}
             <span class="ctl-chev"></span>
@@ -902,4 +903,4 @@ function vincularEntidadeSelecionada(chave, principalId) {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.56.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.73.3';

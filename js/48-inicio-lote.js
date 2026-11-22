@@ -152,9 +152,9 @@ function iniAtividadeHtml() {
         if (nv) {
             const min = Math.max(0, Math.round((Date.now() - dt.getTime()) / 60000));
             const rel = hoje ? (min < 60 ? 'há ' + min + ' min' : 'há ' + Math.floor(min / 60) + ' h') : (dia === ontemISO ? 'ontem' : '');
-            html += `<button type="button" class="nv-act" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="nv-sym">${escIni(iniciaisControle(nomeF))}</span><span class="nv-main"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')} <span class="nv-tag ${st[2]}">${st[1]}</span></b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="nv-time"><b>${hora}</b>${rel ? `<small>${rel}</small>` : ''}<i>›</i></span></button>`;
+            html += `<button type="button" class="nv-act" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="nv-sym">${avatarFornConteudo(nomeF)}</span><span class="nv-main"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')} <span class="nv-tag ${st[2]}">${st[1]}</span></b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="nv-time"><b>${hora}</b>${rel ? `<small>${rel}</small>` : ''}<i>›</i></span></button>`;
         } else {
-            html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">${escIni(iniciaisControle(nomeF))}</span><span class="ini-at2"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
+            html += `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">${avatarFornConteudo(nomeF)}</span><span class="ini-at2"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')}</b><small>${n.pedido ? 'Pedido ' + escIni(n.pedido) : 'Sem pedido'}</small></span><span class="ini-ar"><span class="ini-ah">${hora}</span><span class="ctl-st ${st[0]}">${st[1]}</span></span></button>`;
         }
     });
     const mais = nfs.length > limite ? `<button type="button" class="${nv ? 'nv-more' : 'ini-mais'}" onclick="iniMaisAtividade()">Carregar mais (${Math.min(12, nfs.length - limite)} de ${nfs.length - limite})</button>` : '';
@@ -362,4 +362,4 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.3';

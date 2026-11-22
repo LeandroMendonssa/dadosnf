@@ -67,7 +67,7 @@ function abrirNotasPendentesResumo() {
     const np = notasParadasComigo();
     const lin = x => { const n = (x.v.nf || x.v.erp).nf, urg = x.dias != null && x.dias <= 0;
         const nomeF = nomeExibicaoFornecedor(x.v.fornecedor, x.v.cnpj || '') || x.v.fornecedor || '';
-        return `<button type="button" class="ini-ativ" onclick="irParaNotaPendente('${escRel(String(n))}')"><span class="ini-ai">${escRel(iniciaisControle(nomeF))}</span><span class="ini-at2"><b>${escRel(nomeF)} ${escRel(String(n))}</b><small>${escRel(rotuloMotivosPend(x.pe))}</small></span><span class="ini-ar"><span class="ini-chip ${urg ? 'r' : 'y'}">${escRel(avisoVencParada(x.dias))}</span></span></button>`; };
+        return `<button type="button" class="ini-ativ" onclick="irParaNotaPendente('${escRel(String(n))}')"><span class="ini-ai">${avatarFornConteudo(nomeF)}</span><span class="ini-at2"><b>${escRel(nomeF)} ${escRel(String(n))}</b><small>${escRel(rotuloMotivosPend(x.pe))}</small></span><span class="ini-ar"><span class="ini-chip ${urg ? 'r' : 'y'}">${escRel(avisoVencParada(x.dias))}</span></span></button>`; };
     m.innerHTML = `<div class="modal-content"><h2>${np.length ? np.length + ' nota(s) pendente(s)' : 'Notas pendentes'}</h2>
         <p style="font-size:12px;color:var(--text-light);margin:0 0 4px">NFs paradas comigo por carta de correção, nota de devolução ou cotação, da mais urgente para a menos. Toque para abrir a NF no Controle de NFs.</p>
         <div style="max-height:60vh;overflow:auto">${np.length ? np.map(lin).join('') : '<div class="ini-vazio">Nenhuma NF parada. Para marcar, abra a NF no Controle de NFs.</div>'}</div>
@@ -89,6 +89,25 @@ function botaoPendenciaEntrega(id) {
 window.chipPendenciaEntrega = chipPendenciaEntrega; window.botaoPendenciaEntrega = botaoPendenciaEntrega;
 // Voltar: quem abre a Central, a Auditoria ou o Controle por atalho passa a empilhar o retorno (como o Editor da NF já fazia)
 ['irParaRetroFiltro', 'iniAbrirPrioridade', 'abrirNfNoHistorico', 'irParaPendenciaControle'].forEach(n => { try { envolverComRetorno(n); } catch (e) { } });
+// 2.73.3: recolhimento da devolução com NF de devolução informada tira sozinho o motivo "Nota fiscal de devolução" da pendência
+(function () {
+    if (typeof confirmarRecolhimentoDevolucao !== 'function') return;
+    const o = confirmarRecolhimentoDevolucao;
+    confirmarRecolhimentoDevolucao = async function (nfId, idx) {
+        const nfDev = ((document.getElementById('dev-nf') || {}).value || '').trim();
+        const r = await o.apply(this, arguments);
+        try {
+            if (!nfDev) return r;
+            const v = visaoNfPorId(nfId), pe = v && pendEntregaDe(v.nf, v.erp);
+            if (!pe || !pe.motivos.includes('nf_devolucao')) return r;
+            const resto = pe.motivos.filter(m => m !== 'nf_devolucao');
+            const doc = v.nf ? nfsProcessadasCollection.doc(v.nf.id) : entradasErpCollection.doc(v.erp.id);
+            await doc.update({ pendenciaEntrega: resto.length ? { ...pe, motivos: resto, atualizadoEm: new Date().toISOString() } : firebase.firestore.FieldValue.delete() });
+            toastRico({ titulo: resto.length ? 'Pendência atualizada' : 'Pendência resolvida', detalhe: `NF ${(v.nf || v.erp).nf} · nota de devolução recebida${resto.length ? '. Falta: ' + rotuloMotivosPend({ motivos: resto }) : '. Já pode ir ao financeiro.'}` });
+        } catch (e) { console.warn('pendência x devolução', e); }
+        return r;
+    };
+})();
 window.abrirNotasPendentesResumo = abrirNotasPendentesResumo; window.irParaNotaPendente = irParaNotaPendente;
 window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntrega = salvarPendenciaEntrega;
 
@@ -107,4 +126,4 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
         };
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.3';

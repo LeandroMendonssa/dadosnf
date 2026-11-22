@@ -2,6 +2,7 @@
 // Parte do script do app (v2.0.1). Arquivo comum, carregado em ordem pelo index.html; compartilha funções e variáveis globais com os demais.
 // --- LISTENERS DE DADOS ---
 // 2.3.3: ajustes de compatibilidade da ordem do menu (antes ficavam dentro do ouvinte; agora também valem no caminho leve)
+// leandromendonssa
 function migrarMenuOrderConfig() {
     // --- CORREÇÃO: FORÇA A INCLUSÃO DA NOVA ABA 'RELATÓRIOS' ---
     // Se o usuário já tinha uma ordem salva sem 'screen-reports', insere ela agora.
@@ -471,7 +472,7 @@ function rebuildNotasPendentesList(){
         const dvNota = (typeof divergenciaNotaComFonte === 'function') ? divergenciaNotaComFonte(nota) : null;
         const divergHTML = dvNota ? `<div class="ctl-inf" style="margin-top:6px"><div style="margin-bottom:6px">⚠ A ${dvNota.fonte.origem} mudou: ${dvNota.difs.join(' · ')}</div><button class="action-chip" onclick="event.stopPropagation(); usarDadosDaNf('${nota.id}')">Usar da ${dvNota.fonte.origem}</button></div>` : '';
         const infHTML = (infPartes.length || aplicarRecursoHTML) ? `<div class="ctl-inf">${infPartes.join(' · ')}${aplicarRecursoHTML ? `<div style="margin-top:8px">${aplicarRecursoHTML}</div>` : ''}</div>` : '';
-        return `${checkboxHTML}<div class="ctl-top"><div class="ctl-av">${iniciaisControle(nota.fornecedor)}</div>
+        return `${checkboxHTML}<div class="ctl-top"><div class="ctl-av">${avatarFornConteudo(nota.fornecedor)}</div>
             <div class="ctl-nm"><b>${titulo}</b><small>Criada em ${(new Date(nota.dataCriacao)).toLocaleDateString('pt-BR')}</small></div>
             ${nota.emEspera ? '<span class="ctl-st m">Em espera</span>' : ''}</div>
         <div class="ctl-dd"><div><span>Vencimento</span><strong>${venc}</strong></div><div><span>Prazo</span><strong class="${prazoCls.trim()}">${prazoTxt}</strong></div><div${aptidao.pedido ? ` class="ctl-link" onclick="event.stopPropagation(); irParaPedidoFornecedor('${aptidao.pedido}', '${aptidao.cnpjFornecedor || ''}')"` : ''}><span>Pedido</span><strong>${aptidao.pedido || '—'}</strong></div></div>
@@ -647,4 +648,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.62.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.73.3';

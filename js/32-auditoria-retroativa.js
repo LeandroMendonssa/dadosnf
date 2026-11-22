@@ -208,7 +208,7 @@ function renderAuditoriaRetroativa() {
             return `<div class="retro-linha"><span>${escRel(it.nome)} · ${escRel(qdtFmt(it.quantidade))}</span>${st}</div>`;
         }).join('');
         return `<div class="ctl-card">
-            <div class="ctl-top"><div class="ctl-av">${escRel(iniciaisControle(e.fornecedorNomeRelatorio || ''))}</div>
+            <div class="ctl-top"><div class="ctl-av">${avatarFornConteudo(e.fornecedorNomeRelatorio || '')}</div>
                 <div class="ctl-nm"><b>${escRel(nome)}</b><small>${escRel(e.data || '—')} · ${a.xml ? 'XML no app' : 'só ERP'}</small></div>
                 <span class="ctl-st ${rot[0]}">${escRel(rot[1])}</span></div>
             <div class="ctl-inf">${a.ligados}/${a.itens.length} item(ns) com produto${a.defasados ? ` · <strong>${a.defasados} defasado(s)</strong>` : ''}</div>
@@ -234,4 +234,4 @@ function confirmarSugestoesRetro() {
     });
 }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.73.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/32-auditoria-retroativa.js'] = '2.73.3';

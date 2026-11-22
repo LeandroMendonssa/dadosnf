@@ -186,6 +186,7 @@ const ICONES_CTRL = {
     arq: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>',
     ger: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>'
 };
+// leandromendonssa
 function iniciaisControle(nome) {
     return String(nome || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 }
@@ -297,7 +298,7 @@ function renderCardControleNf(it) {
     const marcado = sel && selecionadasControle.has(it.chave);
     const notaAdv = htmlPendenciaEntregaCard(it) + ((it.situacao === 'direta' && it.subtipo === 'fornecedor') ? '<div class="ctl-inf">Fornecedor ignorado no ERP — para voltar, libere o fornecedor em Fornecedores.</div>' : '');
     return `<div class="ctl-card controle-item${marcado ? ' sel' : ''}${sel ? ' selecionavel' : ''}" data-controle-chave="${escRel(it.chave)}"${sel ? ` onclick="toggleSelecionadaControle('${chaveJs}')"` : ''}>
-        <div class="ctl-top"><div class="ctl-av">${escRel(iniciaisControle(it.nomeFornecedor))}</div>
+        <div class="ctl-top"><div class="ctl-av">${avatarFornConteudo(it.nomeFornecedor)}</div>
             <div class="ctl-nm"><b>${escRel(titulo)}</b><small>${sub}</small></div>
             <span class="ctl-st ${classeSt}">${rotuloSt}</span></div>
         <div class="ctl-dd"><div><span>Lançada</span><strong>${dataCurtaControle(it.dataISO)}</strong></div><div><span>Vencimento</span><strong>${escRel(vencCurtoControle(it.venc))}</strong></div><div><span>Pedido</span><strong>${escRel(it.pedido || '—')}</strong></div></div>
@@ -1065,7 +1066,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.73.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.73.3';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

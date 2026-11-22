@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.2', nome: 'Botões e espaçamentos', status: 'atual', data: '22/11/2026 às 08:10',
+        numero: '2.73.3', nome: 'Logo do fornecedor e devolução ligada à pendência', status: 'atual', data: '22/11/2026 às 09:00',
+        novidades: ['Logo do fornecedor nas bolinhas: em Fornecedores, o cartão ganhou "Definir logo". Você envia uma imagem ou informa o site (usa o ícone do site). Sem logo, continuam as iniciais.', 'A logo aparece na Início, Controle de NFs, Fornecedores, Auditoria e Notas pendentes.', 'Ao marcar o recolhimento de uma devolução informando a NF de devolução, o app tira sozinho o motivo "Nota fiscal de devolução" da pendência da NF (e avisa se já pode ir ao financeiro).'],
+        implementado: ['js/66-logos-fornecedores.js (novo): guarda as logos em config/logosFornecedores, janela de escolha, leitura com nova tentativa.', 'js/05, 17, 18, 32, 48, 65 passaram a usar avatarFornConteudo() nas bolinhas. js/65: ligação devolução ↔ pendência. style.css: estilos da logo.'],
+        arquivos: ['index.html','style.css','js/05-listeners-dados.js','js/14-historico-mudancas.js','js/17-historico-controle-nfs.js','js/18-erp-fornecedores-spdata.js','js/32-auditoria-retroativa.js','js/48-inicio-lote.js','js/65-notas-pendentes.js','js/66-logos-fornecedores.js'],
+        mudou: ['Novo documento no Firebase: config/logosFornecedores (só existe depois da primeira logo salva). Se as regras do Firebase não permitirem esse caminho, o app avisa "Não consegui salvar a logo".'],
+        testar: ['Fornecedores: abrir um cartão, tocar em "Definir logo", enviar uma imagem e salvar; conferir a bolinha em Início e Controle de NFs.', 'Testar também "Usar ícone do site" com o endereço do fornecedor.', 'Remover a logo e ver as iniciais voltarem.', 'Numa NF com pendência "Nota fiscal de devolução", marcar o recolhimento informando o número da NF de devolução: a pendência deve sair.']
+    },
+    {
+        numero: '2.73.2', nome: 'Botões e espaçamentos', status: 'concluida', data: '22/11/2026 às 08:10',
         novidades: ['Devolução: o ajuste de quantidade (− e +) ficou compacto, com botões de 44 px, e não estoura mais a largura da tela.', 'Janela de pendência: Cancelar e Remover com o mesmo tamanho, Salvar em largura total, e espaço entre a lista e os botões.', 'Auditoria Retroativa: o texto de "aprender" ficou em bloco próprio acima do botão, que voltou ao tamanho padrão.'],
         implementado: ['style.css: novas classes nfe-passo (passo de quantidade) e pend-acoes. js/20 e js/32 usam as novas classes; js/65 encurtou o rótulo "Remover".', 'Regra de trabalho: todo botão novo ou reformatado é conferido em tamanho, posição, responsividade e cor antes de entregar.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js','js/20-editor-nf.js','js/32-auditoria-retroativa.js','js/65-notas-pendentes.js'],
@@ -3959,4 +3967,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.3';
