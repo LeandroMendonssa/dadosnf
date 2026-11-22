@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.71.0', nome: 'Novo visual: refatoração do CSS no conceito do protótipo', status: 'atual', data: '21/11/2026 às 19:00',
+        numero: '2.72.0', nome: 'Visual padrão estilo Apple, Ajustes em grupos e Operacional como tema', status: 'atual', data: '21/11/2026 às 19:40',
+        novidades: ['O novo visual virou um tema: Personalização > Aparência > Tema > "Operacional (claro)" ou "Operacional (escuro)". A chave separada foi removida; qualquer outro tema mostra o visual padrão.', 'Visual padrão: sem degradê no fundo (o degradê ficou só na importação de NF e no onboarding) e fundo cinza claro no padrão da Apple.', 'Faixa superior: no celular fica cinza translúcida, com botão Voltar redondo e branco; no computador fica preta, com o menu lateral branco (tema Claro).', 'Ajustes separado em grupos: Conta, Cadastros, Cotações e auditoria, Aparência e uso, Dados, Ajuda e sobre, Avançado e Sair, com cantos arredondados e divisórias como nos Ajustes da Apple.'],
+        implementado: ['style.css: fundo, degradê só em #screen-import, faixa superior, grupos de lista no estilo Apple.', 'index.html: Ajustes agrupado, duas opções novas no seletor de tema.', 'js/64: o visual Operacional liga pelo tema (sem chave própria). novo-visual.css: paleta atrelada ao tema.'],
+        arquivos: ['index.html','style.css','novo-visual.css','js/64-novo-visual.js','js/14-historico-mudancas.js'],
+        mudou: ['Quem estava com o Novo visual ligado volta ao visual padrão; para usar de novo, escolha o tema Operacional.', 'Nenhuma regra de negócio ou dado foi alterado. A busca em Ajustes continua achando todos os itens.'],
+        testar: ['Ajustes: ver os grupos, a busca e abrir cada item.', 'Celular: faixa superior cinza e botão Voltar redondo nas telas internas.', 'Computador: faixa preta com menu branco.', 'Importação de NF: degradê mantido. Telas comuns: fundo liso.', 'Aparência: escolher Operacional (claro/escuro) e voltar ao Claro.']
+    },
+    {
+        numero: '2.71.0', nome: 'Novo visual: refatoração do CSS no conceito do protótipo', status: 'concluida', data: '21/11/2026 às 19:00',
         novidades: ['O novo visual agora é um conceito próprio, em folha separada (novo-visual.css): paleta, tipografia, cabeçalho translúcido, barra lateral com marca, etiquetas de status tintadas, painéis, indicadores e filtros no padrão do protótipo.', 'Início reorganizado: cabeçalho de página com "Nova entrada de NF", indicadores, e painéis "Prioridades de hoje", "Atalhos", "Próximos vencimentos" e "Atividade recente" (linha do tempo por dia, com status, hora e "há X min"). No computador, painéis lado a lado.', 'Central de Auditoria: cabeçalho de página e indicadores (Detectadas, Relatadas, Resolvidas, Excluídas) no padrão do protótipo; registros continuam em cards.', 'Entrada de NF: cabeçalho de página e etapas "01 Identificação, 02 Conferência, 03 Revisão e salvar"; confirmação de salvamento no mesmo padrão.', 'Cards de NF e de pedido com nova hierarquia (rótulos pequenos, valores em destaque, etiquetas de status). Filtros quebram linha, sem rolagem lateral.'],
         implementado: ['novo-visual.css (novo): todo o visual novo, só vale com a chave ligada. style.css ficou como o visual estável.', 'js/48: layout novo do Início por trás da chave (o antigo continua logo abaixo).', 'js/64: carrega/descarrega a folha, indicadores da Auditoria, etapas da Entrada.', 'index.html: link da folha. js/14: histórico.'],
         arquivos: ['index.html','style.css','novo-visual.css','js/48-inicio-lote.js','js/64-novo-visual.js','js/14-historico-mudancas.js'],
@@ -3927,4 +3935,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.71.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.72.0';

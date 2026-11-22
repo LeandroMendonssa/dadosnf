@@ -3,16 +3,16 @@
 // Desligado = o app volta a ficar exatamente como era na 2.69.0 (nada daqui roda e o CSS "body.nv" deixa de valer).
 // Reaproveita as funções existentes (nada de contagem ou fonte de dados paralela).
 // ===================================================================
-function novoVisualOn() { try { return localStorage.getItem('novoVisual') !== '0'; } catch (e) { return true; } }
-function nvAplicar() { document.body.classList.toggle('nv', novoVisualOn()); const lk = document.getElementById('nv-css'); if (lk) lk.media = novoVisualOn() ? 'all' : 'not all'; const s = document.getElementById('nv-select'); if (s) s.value = novoVisualOn() ? '1' : '0'; }
-function nvDefinir(v) {
-    try { localStorage.setItem('novoVisual', v === '0' ? '0' : '1'); } catch (e) { }
-    nvAplicar();
-    ['renderInicio', 'renderControleNfs', 'renderCentralAuditoria', 'renderCotacoes'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
+// O "Novo visual" agora é um TEMA (Personalização > Aparência > Tema: "Operacional (claro/escuro)").
+// Só vale quando body[data-theme] começa com "operacional"; qualquer outro tema = visual padrão do app.
+function novoVisualOn() { const t = document.body && document.body.getAttribute('data-theme'); return !!t && t.indexOf('operacional') === 0; }
+function nvAplicar() {
+    const on = novoVisualOn(); document.body.classList.toggle('nv', on);
+    ['renderInicio', 'renderControleNfs', 'renderCentralAuditoria'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
     nvStepper();
-    toast(v === '0' ? 'Visual anterior restaurado.' : 'Novo visual ligado.');
 }
-window.nvDefinir = nvDefinir; window.novoVisualOn = novoVisualOn;
+window.novoVisualOn = novoVisualOn;
+try { new MutationObserver(() => { if (document.body.classList.contains('nv') !== novoVisualOn()) nvAplicar(); }).observe(document.body, { attributes: true, attributeFilter: ['data-theme'] }); } catch (e) { }
 
 // ---------- Módulo 3: fornecedores no pedido (mesma regra da Início: calcularEntregaFornecedorPedido + statusEntregaRelCot) ----------
 let _nvFornCache = { t: 0, m: new Map() };
@@ -110,6 +110,6 @@ function nvNovaEntrada(manual) {
     if (manual) { const e = document.getElementById('nf'); if (e) e.focus(); } else { const f = document.getElementById('xml-file-input'); if (f) f.click(); }
 }
 window.nvNfSalva = nvNfSalva; window.nvNovaEntrada = nvNovaEntrada;
-document.addEventListener('DOMContentLoaded', () => { nvAplicar(); nvStepper(); });
-nvAplicar();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/64-novo-visual.js'] = '2.71.0';
+document.addEventListener('DOMContentLoaded', () => { document.body.classList.toggle('nv', novoVisualOn()); nvStepper(); });
+document.body.classList.toggle('nv', novoVisualOn());
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/64-novo-visual.js'] = '2.72.0';
