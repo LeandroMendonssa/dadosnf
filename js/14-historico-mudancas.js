@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.16', nome: 'Limpeza: nome do fornecedor sai de Dados desta NF e botão de logos em lote sai do topo', status: 'atual', data: '23/11/2026 às 20:00',
+        numero: '2.73.17', nome: 'Saúde dos cadastros (diagnóstico somente leitura, passo 1 da unificação de fornecedores)', status: 'atual', data: '23/11/2026 às 20:40',
+        novidades: ['Modo Desenvolvedor > Saúde dos cadastros: mostra, sem alterar nada, o estado dos fornecedores: mesmo CNPJ em cadastros diferentes, matriz e filial separadas, nomes repetidos, cadastros sem CNPJ, fornecedores só da lista simples, apelidos soltos, logos quebradas ou duplicadas e fornecedores de NFs sem cadastro.', 'Botão Copiar relatório leva a lista completa de cada item.'],
+        implementado: ['js/67 (novo): saudeCadastrosCalcular, saudeCadastrosRender e saudeCadastrosCopiar, só leitura (usa listaFornecedoresUnificada, indiceFornLogo, entidadeForn, apelidos, logos e as NFs já carregadas).', 'index.html: item no Modo Desenvolvedor, tela screen-saude-cad e o script novo.'],
+        arquivos: ['js/67-saude-cadastros.js (novo)', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Nada nos dados nem nas telas atuais: é só uma tela nova de consulta.', 'A leitura usa as NFs que o app já carregou, então a lista de NFs sem cadastro reflete o período carregado.'],
+        testar: ['Ajustes > Modo Desenvolvedor > Saúde dos cadastros: abrir, conferir os números e abrir cada item.', 'Copiar relatório e colar em um bloco de notas.']
+    },
+    {
+        numero: '2.73.16', nome: 'Limpeza: nome do fornecedor sai de Dados desta NF e botão de logos em lote sai do topo', status: 'concluida', data: '23/11/2026 às 20:00',
         novidades: ['Dados desta NF: removido o campo "Nome do fornecedor" (nas NFs do ERP e nas de XML). O nome passa a vir só do cadastro do fornecedor (apelido / nome de exibição).', 'Tela Fornecedores: removido o botão "Logos dos fornecedores" do topo e o lote de logos por CNPJ;site.'],
         implementado: ['js/20: retirados os dois campos de nome e as funções salvarNomeFornecedorErpSo e salvarNomeFornecedorNfSalva. aplicarNomeFornecedorPorCnpj fica por enquanto.', 'js/66: retirados fornecedoresComCnpj, abrirLogosEmLote, logosLoteCopiar, logosLoteAplicar e o botão do topo.'],
         arquivos: ['js/20-editor-nf.js', 'js/66-logos-fornecedores.js', 'js/14-historico-mudancas.js'],
@@ -4071,4 +4079,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.16';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.17';
