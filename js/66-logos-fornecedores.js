@@ -56,16 +56,39 @@ function logoRes(nome, cnpj) {
     _logoCache.set(ck, r); return r;
 }
 const logoCacheLimpa = () => { _logoCache = new Map(); };
+// 2.73.12: quando as logos mudam, redesenha só a tela que está aberta (e uma vez só, mesmo que cheguem várias alterações seguidas).
+// As outras telas são redesenhadas ao serem abertas. Antes eram 3 telas pesadas, 2 a 3 vezes por gravação.
+const TELAS_COM_LOGO = { 'screen-inicio': 'renderInicio', 'screen-controle-nfs': 'renderControleNfs', 'screen-fornecedores': 'renderListaFornecedoresUnificada' };
+const _logoSujas = new Set(); let _logoRenderT = null;
+function logosRenderizar() {
+    Object.keys(TELAS_COM_LOGO).forEach(t => _logoSujas.add(t));
+    clearTimeout(_logoRenderT);
+    _logoRenderT = setTimeout(() => {
+        const at = document.querySelector('.app-screen.active'), fn = at && TELAS_COM_LOGO[at.id];
+        if (fn && typeof window[fn] === 'function') { _logoSujas.delete(at.id); try { window[fn](); } catch (e) { console.error(e); } }
+    }, 350);
+}
 function chaveLogoExistente(nome) { const r = logoRes(nome); return r ? r.k : ''; }
+// 2.73.12: a imagem guardada (data:) vira um endereço curto (blob:) uma única vez. Antes o texto inteiro da imagem era copiado dentro de
+// cada cartão (dezenas de KB por tela), o que pesava a tela e fazia o iPhone engasgar ao redesenhar.
+const _blobLogo = new Map();
+function logoUrlLeve(u) {
+    if (!/^data:image\/[a-z+.-]+;base64,/i.test(u)) return u;
+    let b = _blobLogo.get(u); if (b) return b;
+    try {
+        const i = u.indexOf(','), bin = atob(u.slice(i + 1)), a = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) a[k] = bin.charCodeAt(k);
+        b = URL.createObjectURL(new Blob([a], { type: /^data:([^;,]+)/.exec(u)[1] })); _blobLogo.set(u, b); return b;
+    } catch (e) { return u; }
+}
 function logoFornDe(nome, cnpj) {
     const r = logoRes(nome, cnpj); if (!r) return '';
-    return r.ent.u || (r.ent.d ? logoDevUrl(r.ent.d, false) : '');   // só com o site guardado, a logo vem da Logo.dev na hora de mostrar
+    return r.ent.u ? logoUrlLeve(r.ent.u) : (r.ent.d ? logoDevUrl(r.ent.d, false) : '');   // só com o site guardado, a logo vem da Logo.dev na hora de mostrar
 }
 // conteúdo da bolinha: imagem (se houver logo) ou iniciais — troca direta de ${iniciaisControle(nome)}
 function avatarFornConteudo(nome) {
     const u = logoFornDe(nome);
     const ini = escRel(iniciaisControle(nome));
-    const miolo = u ? `<img class="av-logo" src="${escRel(u)}" alt="" loading="lazy" data-ini="${ini}" onerror="this.outerHTML=this.dataset.ini">` : ini;
+    const miolo = u ? `<img class="av-logo" src="${escRel(u)}" alt="" loading="lazy" decoding="async" data-ini="${ini}" onerror="this.outerHTML=this.dataset.ini">` : ini;
     // a bolinha guarda o nome do fornecedor; tocar nela leva ao cadastro dele
     return String(nome || '').trim() ? `<span class="av-fn" data-forn="${escRel(String(nome).replace(/<[^>]*>/g, ''))}">${miolo}</span>` : miolo;
 }
@@ -73,27 +96,28 @@ window.avatarFornConteudo = avatarFornConteudo;
 
 // ---- tocar na bolinha → vai EXATAMENTE ao cadastro reconhecido (sem pesquisa), ou explica que não há cadastro ----
 function irParaCartaoFornecedor(chave) {
-    fornecedoresCardAbertos.add(chave);
+    // já deixa só este fornecedor selecionado ANTES de trocar de tela: a tela desenha uma única vez (e só um cartão)
+    fornecedoresCardAbertos.add(chave); filtroCadastroFornecedoresSpDataTexto = ''; limiteExibicaoFornecedores = LOTE_FORNECEDORES; fornecedorFocoChave = chave;
+    const inp = document.querySelector('#screen-fornecedores input.form-field'); if (inp) inp.value = '';
     switchToScreen('screen-fornecedores', 'Fornecedores');
-    setTimeout(() => {
-        const inp = document.querySelector('#screen-fornecedores input.form-field'); if (inp) inp.value = '';
-        filtrarCadastroFornecedoresSpData('');
-        fornecedorFocoChave = chave; renderListaFornecedoresUnificada();
-        try { window.scrollTo({ top: 0 }); } catch (e) { }
-    }, 80);
+    setTimeout(() => { fornecedorFocoChave = chave; renderListaFornecedoresUnificada(); try { window.scrollTo({ top: 0 }); } catch (e) { } }, 90);
 }
+try { envolverComRetorno('irParaCartaoFornecedor'); } catch (e) { }   // o Voltar devolve você para a tela de onde saiu
 function abrirFornecedorDaBolinha(nome) {
     nome = String(nome || '').trim(); if (!nome) return;
     const e = entidadeForn(nome, '');
-    try { closeAllModals(); } catch (x) { }
-    if (e.chave) irParaCartaoFornecedor(e.chave); else abrirSemCadastroForn(nome);
+    if (e.chave) { try { closeAllModals(); } catch (x) { } irParaCartaoFornecedor(e.chave); } else abrirSemCadastroForn(nome);
 }
 window.abrirFornecedorDaBolinha = abrirFornecedorDaBolinha; window.irParaFornecedorPorNome = abrirFornecedorDaBolinha;
-try { envolverComRetorno('abrirFornecedorDaBolinha'); } catch (e) { }
 (function () {   // sair da tela Fornecedores desfaz o "mostrando só este fornecedor"
     if (typeof switchToScreen !== 'function') return;
     const o = switchToScreen;
-    switchToScreen = function (id) { if (id !== 'screen-fornecedores' && typeof fornecedorFocoChave !== 'undefined') fornecedorFocoChave = ''; return o.apply(this, arguments); };
+    switchToScreen = function (id) {
+        if (id !== 'screen-fornecedores' && typeof fornecedorFocoChave !== 'undefined') fornecedorFocoChave = '';
+        const r = o.apply(this, arguments);
+        if (_logoSujas.has(id) && TELAS_COM_LOGO[id]) { _logoSujas.delete(id); setTimeout(() => { try { if (typeof window[TELAS_COM_LOGO[id]] === 'function') window[TELAS_COM_LOGO[id]](); } catch (e) { } }, 60); }
+        return r;
+    };
 })();
 function abrirSemCadastroForn(nome) {
     const enc = encodeURIComponent(nome).replace(/'/g, '%27');
@@ -129,8 +153,7 @@ document.addEventListener('click', ev => {
         if (ligado || tent++ > 40) return;
         try {
             settingsDocRef.parent.doc('logosFornecedores').onSnapshot(d => {
-                ligado = true; logosFornecedores = (d.exists && d.data().logos) || {}; logoCacheLimpa(); logosAgendarProtecao();
-                ['renderInicio', 'renderControleNfs', 'renderListaFornecedoresUnificada'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
+                ligado = true; logosFornecedores = (d.exists && d.data().logos) || {}; logoCacheLimpa(); logosAgendarProtecao(); logosRenderizar();
             }, () => { ligado = false; setTimeout(ligar, 4000); });
         } catch (e) { setTimeout(ligar, 2000); }
     };
@@ -160,6 +183,8 @@ setTimeout(logosAgendarProtecao, 9000);
 // ---- janela para definir a logo ----
 let _logoPend = null, _logoChave = '', _logoNome = '', _logoCnpj = '', _logoDom = '';
 function abrirLogoFornecedor(nomeEnc, cnpj) {
+    try { closeAllModals(); } catch (e) { }   // evita a janela anterior ficar por baixo desta
+    _siteCands = []; _siteI = -1; _siteAuto = '';
     _logoCnpj = String(cnpj || '').replace(/\D/g, ''); _logoNome = decodeURIComponent(nomeEnc); _logoChave = nomeBaseLogoForn(_logoNome); _logoPend = undefined; _logoDom = '';
     const _ent = entidadeForn(_logoNome, _logoCnpj), _res = logoRes(_logoNome, _logoCnpj);
     if (_logoCnpj.length !== 14 && _ent.cnpjs[0]) { const d14 = String(_ent.cnpjs[0].cnpj || '').replace(/\D/g, ''); if (d14.length === 14) _logoCnpj = d14; }
@@ -178,8 +203,7 @@ function abrirLogoFornecedor(nomeEnc, cnpj) {
         <div class="txt-aux" style="margin-top:8px">No Google, abra a imagem certa, segure nela e escolha Copiar. Volte aqui, toque em "Colar imagem" e cole no quadro.</div>
         <input type="file" id="logo-forn-arq" accept="image/*" style="display:none" onchange="logoFornArquivo(this)">
         <label class="dev-lbl" style="margin-top:14px">Ou pelo site do fornecedor<input type="text" id="logo-forn-site" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="ex.: futura.com.br" value="${escRel((_res && _res.ent.d) || '')}"></label>
-        <div class="confirm-actions" style="margin-top:10px"><button type="button" class="actions-button" onclick="logoFornBuscarSite()">Ícone do site</button>
-        ${_logoCnpj.length === 14 ? `<button type="button" class="actions-button" onclick="logoFornBuscarCnpj()">Site pelo CNPJ</button>` : ''}</div>
+        <button type="button" class="actions-button" style="width:100%;min-height:48px;margin-top:10px" onclick="logoFornBuscarSite()">Ícone do site</button>
         <div class="txt-aux" id="logo-forn-msg" style="margin-top:8px"></div>
         <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Cancelar</button>
         ${tem ? `<button type="button" class="actions-button is-danger" onclick="logoFornSalvar(true)">Remover</button>` : ''}
@@ -191,30 +215,45 @@ function logoFornPrever(url) {
     el.innerHTML = `<img class="av-logo" src="${escRel(url)}" alt="">`;
     const img = el.querySelector('img'); img.onerror = () => { _logoPend = undefined; el.innerHTML = escRel(iniciaisControle(_logoNome)); const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = 'Não consegui carregar essa imagem. Confira o site ou envie uma imagem.'; };
 }
+// "Ícone do site": se o campo estiver vazio, o app monta combinações com o nome do fornecedor (apelido.com.br, apelido.com, 1ª palavra...) e
+// mostra uma por vez, pulando as que não têm logo. Toque de novo para ver a próxima. Se você digitar o site, usa exatamente o que digitou.
+let _siteCands = [], _siteI = -1, _siteAuto = '';
+const PALAVRAS_SITE_FRACAS = new Set(['ltda', 'me', 'epp', 'eireli', 'sa', 'de', 'da', 'do', 'das', 'dos', 'e', 'comercio', 'comercial', 'industria', 'ind', 'distribuidora', 'distribuicao', 'servicos', 'produtos', 'materiais', 'hospitalares', 'hospitalar', 'medicos', 'medico', 'cia', 'grupo', 'filial', 'matriz']);
+function candidatosSiteForn(nome) {
+    const bases = []; try { bases.push(nomeExibicaoFornecedor(nome, '') || nome); } catch (e) { }
+    bases.push(nome); try { bases.push(entidadeForn(nome, _logoCnpj).nomeReal); } catch (e) { }
+    const out = [], add = d => { if (/^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+$/.test(d) && !out.includes(d)) out.push(d); };
+    bases.filter(Boolean).forEach(b => {
+        const w = chaveLogoForn(b).toLowerCase().split(' ').filter(x => x && !PALAVRAS_SITE_FRACAS.has(x) && !/^\d+$/.test(x));
+        if (!w.length) return;
+        [w.join(''), w.slice(0, 2).join(''), w[0], w.slice(0, 2).join('-')].forEach(sl => { if (sl && sl.length >= 3) { add(sl + '.com.br'); add(sl + '.com'); } });
+    });
+    return out.slice(0, 12);
+}
 function logoFornBuscarSite() {
-    const v = ((document.getElementById('logo-forn-site') || {}).value || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split(/[\/?#]/)[0];
-    const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = '';
-    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(v)) { if (g) g.textContent = 'Digite o endereço do site, por exemplo futura.com.br.'; return; }
-    _logoDom = v; logoFornPrever(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(v)}&sz=128`);
+    const inp = document.getElementById('logo-forn-site'), g = document.getElementById('logo-forn-msg'); if (!inp) return;
+    const digitado = dominioLimpo(inp.value); if (g) g.textContent = '';
+    if (digitado && digitado !== _siteAuto) {   // você digitou: usa exatamente isso
+        if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(digitado)) { if (g) g.textContent = 'Digite o endereço do site, por exemplo futura.com.br.'; return; }
+        _logoDom = digitado; _siteCands = []; _siteI = -1; _siteAuto = ''; logoFornPrever(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(digitado)}&sz=128`); return;
+    }
+    if (!_siteCands.length) { _siteCands = candidatosSiteForn(_logoNome); _siteI = -1; }
+    if (!_siteCands.length) { if (g) g.textContent = 'Não consegui montar combinações com esse nome. Digite o site, por exemplo futura.com.br.'; return; }
+    siteMostrar(_siteCands.length);
 }
-// Busca automática: consulta pública do CNPJ (BrasilAPI, dados da Receita) → e-mail da empresa → domínio → ícone do site.
-// O cadastro público não traz o site em si; só funciona quando o e-mail é corporativo (não Gmail, Hotmail etc.).
-const DOMINIOS_EMAIL_LIVRES = /^(gmail|hotmail|outlook|live|yahoo|uol|bol|terra|ig|globo|globomail|icloud|msn|r7|zipmail|oi|veloxmail|mail|protonmail)\./i;
-async function logoFornBuscarCnpj() {
-    const g = document.getElementById('logo-forn-msg'); if (g) g.textContent = 'Consultando o CNPJ…';
-    try {
-        const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 9000);
-        const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + _logoCnpj, { signal: ctl.signal }); clearTimeout(t);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const d = await r.json(); const em = String(d.email || '').toLowerCase().trim();
-        const dom = em.includes('@') ? em.split('@')[1] : '';
-        if (!dom || DOMINIOS_EMAIL_LIVRES.test(dom)) { if (g) g.textContent = dom ? 'O e-mail cadastrado é pessoal (' + dom + '), então não dá para achar o site. Informe o site ou envie a imagem.' : 'O cadastro público desse CNPJ não traz e-mail. Informe o site ou envie a imagem.'; return; }
-        const inp = document.getElementById('logo-forn-site'); if (inp) inp.value = dom;
-        if (g) g.textContent = 'Site encontrado pelo e-mail do cadastro: ' + dom + '. Confira se a logo é a certa.';
-        logoFornPrever(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(dom)}&sz=128`);
-    } catch (e) { if (g) g.textContent = 'Não consegui consultar o CNPJ agora. Tente de novo ou informe o site.'; }
+function siteMostrar(restantes) {
+    const inp = document.getElementById('logo-forn-site'), g = document.getElementById('logo-forn-msg'), n = _siteCands.length;
+    _siteI = (_siteI + 1) % n; const d = _siteCands[_siteI], url = logoDevUrl(d, false), i0 = _siteI;
+    if (g) g.textContent = 'Testando ' + d + '…';
+    const im = new Image();
+    const falha = () => { if (restantes > 1) siteMostrar(restantes - 1); else if (g) g.textContent = 'Nenhuma combinação tem logo. Digite o site correto e toque de novo.'; };
+    im.onload = () => {
+        if (im.naturalWidth < 8) return falha();
+        if (inp) inp.value = d; _siteAuto = d; _logoDom = d; logoFornPrever(url);
+        if (g) g.textContent = 'Opção ' + (i0 + 1) + ' de ' + n + ': ' + d + '. Não é essa? Toque de novo em "Ícone do site" para a próxima.';
+    };
+    im.onerror = falha; im.src = url;
 }
-window.logoFornBuscarCnpj = logoFornBuscarCnpj;
 // ---- Busca automática (Logo.dev) ----
 // Só a chave PUBLICÁVEL (pk_) fica no app; ela foi feita para ser pública. A chave secreta (sk_) nunca entra no código do navegador.
 const LOGODEV_PK = 'pk_Wl_NxluvTU6cw-PlD-I2uQ';
@@ -313,8 +352,7 @@ async function logoFornSalvar(remover) {
         if (!Object.keys(doc).length) { closeAllModals(); return; }
         await settingsDocRef.parent.doc('logosFornecedores').set({ logos: doc }, { merge: true });
         Object.keys(doc).forEach(k => { if (remover) delete logosFornecedores[k]; else logosFornecedores[k] = doc[k]; });
-        logoCacheLimpa(); closeAllModals(); toast(remover ? 'Logo removida.' : 'Logo salva.');
-        ['renderInicio', 'renderControleNfs', 'renderListaFornecedoresUnificada'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
+        logoCacheLimpa(); closeAllModals(); toast(remover ? 'Logo removida.' : 'Logo salva.'); logosRenderizar();
     } catch (e) { console.error('Erro ao salvar logo:', e); toast('✕ Não consegui salvar a logo. Tente de novo.'); }
 }
 window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = logoFornBuscarSite; window.logoFornArquivo = logoFornArquivo; window.logoFornSalvar = logoFornSalvar;
@@ -361,8 +399,7 @@ async function logosLoteAplicar() {
     try {
         await settingsDocRef.parent.doc('logosFornecedores').set({ logos: novos }, { merge: true });
         Object.assign(logosFornecedores, novos); logoCacheLimpa();
-        closeAllModals(); toast(`Sites aplicados: ${ok} fornecedor(es).`);
-        ['renderInicio', 'renderControleNfs', 'renderListaFornecedoresUnificada'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
+        closeAllModals(); toast(`Sites aplicados: ${ok} fornecedor(es).`); logosRenderizar();
     } catch (e) { console.error(e); if (g) g.textContent = 'Não consegui salvar agora. Tente de novo.'; }
 }
 window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCopiar; window.logosLoteAplicar = logosLoteAplicar;
@@ -387,5 +424,5 @@ window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.11';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.12';
 // leandromendonssa

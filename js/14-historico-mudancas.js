@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.11', nome: 'Identidade do fornecedor: a logo não se perde mais', status: 'atual', data: '23/11/2026 às 07:10',
+        numero: '2.73.12', nome: 'Menos engasgo nas logos, Voltar certo e Ícone do site com combinações', status: 'atual', data: '23/11/2026 às 06:20',
+        novidades: ['Fornecedor sem cadastro: "Definir logo" agora fecha a janela anterior e abre a de logo na frente (antes ficava por baixo).', 'Criar cadastro simples e abrir o fornecedor a partir da bolinha agora têm o botão Voltar certo: volta para a tela onde você estava, não para Ajustes.', 'Menos engasgo: a imagem da logo vira um endereço curto uma única vez, em vez de ser copiada inteira dentro de cada cartão; ao salvar uma logo só a tela aberta é redesenhada (antes eram 3 telas pesadas, 2 a 3 vezes); abrir o fornecedor pela bolinha desenha só um cartão, uma vez.', 'Ícone do site: com o campo vazio, o app monta combinações com o nome (apelido.com.br, apelido.com, primeira palavra...), testa cada uma e mostra a primeira que tem logo; toque de novo para a próxima. Se você digitar o site, usa exatamente o digitado.', 'Removido o botão Site pelo CNPJ.'],
+        implementado: ['js/66: logoUrlLeve (blob), logosRenderizar com redesenho só da tela aberta e das demais ao entrar, irParaCartaoFornecedor com retorno e uma única desenhada, closeAllModals ao abrir a logo, candidatosSiteForn e siteMostrar, remoção da consulta por CNPJ.'],
+        arquivos: ['js/66-logos-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['As outras telas (Início, Controle de NFs, Fornecedores) mostram a logo nova ao serem abertas, não no mesmo instante em que ela é salva.'],
+        testar: ['Nota sem cadastro: toque na bolinha > Definir logo: a janela de logo deve aparecer na frente e a anterior sumir.', 'Criar cadastro simples: ao tocar em Voltar, deve voltar para a tela das NFs.', 'Fornecedores: abra Definir/Trocar logo e salve algumas vezes; o app deve responder sem travar. Se travar, gere o relatório de novo e me envie.', 'Ícone do site com o campo vazio: toque algumas vezes e veja as combinações.']
+    },
+    {
+        numero: '2.73.11', nome: 'Identidade do fornecedor: a logo não se perde mais', status: 'concluida', data: '23/11/2026 às 07:10',
         novidades: ['A logo agora pertence ao fornecedor, não ao apelido. Ele é reconhecido pelo CNPJ (matriz e filiais), razão social, nome de exibição, apelido e nomes vinculados: qualquer um deles encontra a logo.', 'Mudar apelido, mudar nome de exibição ou fazer uma nova associação não faz mais a logo sumir. As logos que você já tinha são protegidas automaticamente.', 'Compras diretas e notas sem XML: a logo fica guardada para o nome da nota e continua valendo quando você cadastrar ou vincular esse nome depois.', 'Tocar na bolinha leva ao cadastro EXATO do fornecedor reconhecido (sem pesquisa), com a faixa "Mostrando só ..." e o botão Mostrar todos. Se não houver cadastro, abre uma janela que explica e permite definir logo, criar cadastro simples ou vincular a um fornecedor.', 'A janela de logo mostra "Reconhecido como: ..." para você ver qual cadastro o app ligou àquele nome.'],
         implementado: ['js/66: identidade (índice nome/CNPJ → cadastro), logo guardada na chave principal com apontamentos {r}, proteção automática das logos existentes, salvar/remover/lote por identidade, bolinha abre o cartão exato, janela de fornecedor sem cadastro.', 'js/18: foco em um fornecedor (fornecedorFocoChave) com faixa e botão Mostrar todos.', 'style.css: .frn-foco.'],
         arquivos: ['js/66-logos-fornecedores.js', 'js/18-erp-fornecedores-spdata.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4031,4 +4039,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.11';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.12';
