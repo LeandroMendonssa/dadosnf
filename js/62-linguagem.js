@@ -259,12 +259,17 @@ const LING = (function () {
     // leandromendonssa
     // Comentário do Início conforme o horário (expediente: seg a qui 7h-11h30 e 13h30-17h; sexta até 16h). Estável por meia hora.
     const ROT_MSG = {};
+    // 2.73.14: frases de almoço e café dependem do horário de quem trabalha; só a conta mestre as vê. As demais contas recebem as frases do resto do dia.
+    function ehMestreLing() { try { return typeof isContaAdmin === 'function' && isContaAdmin(auth.currentUser); } catch (e) { return false; } }
+    const REF_REFEICAO = /almo[çc]o|caf[ée]|estômago|digest|sagrado/i;
+    const NEUTRAS_DIA = ['Meio do expediente: a pendência segue no mesmo lugar. 🧐', 'O dia anda e a lista também. 😒', 'Calma, uma NF de cada vez. 🤨'];
     function comentarioBase() {
         if (modo !== 's') return '';
         const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
         const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
         // 2.73.10: rodízio de verdade. Sorteia uma frase diferente da anterior e a mantém por 10 min (para não piscar a cada abertura do Início).
         const esc = l => {
+            if (!ehMestreLing()) { const f = l.filter(x => !REF_REFEICAO.test(x)); l = f.length ? f : NEUTRAS_DIA; }
             const k = l[0], c = ROT_MSG[k], agora = Date.now();
             if (c && agora - c.t < 600000) return l[c.i];
             let i; do { i = Math.floor(Math.random() * l.length); } while (l.length > 1 && c && i === c.i);
@@ -292,14 +297,15 @@ const LING = (function () {
         if (modo !== 's') return '';
         const d = new Date(), dia = d.getDay(), min = d.getHours() * 60 + d.getMinutes(), sexta = dia === 5, fim = sexta ? 16 * 60 : 17 * 60;
         if (dia > 0 && dia < 6) {
+            const mestreLing = ehMestreLing();
             const sem = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + Math.floor(min / 30) * 7;
             const alea = (salt, p) => (((sem % 9973) * 7919 + salt * 31) % 100) < p;
             const hm = n => n >= 60 ? Math.floor(n / 60) + 'h' + (n % 60 ? String(n % 60).padStart(2, '0') : '') : n + ' min';
             const esc = (salt, l) => l[(sem + salt) % l.length];
             let c = null;
-            if (min >= 9 * 60 && min < 11 * 60 + 30) c = esc(1, [`Faltam ${hm(11 * 60 + 30 - min)} pro almoço. 🤨`, `Almoço em ${hm(11 * 60 + 30 - min)}. Aguenta firme. 😤`]);
-            else if (min >= 12 * 60 && min < 13 * 60 + 30) c = esc(2, [`O almoço acaba em ${hm(13 * 60 + 30 - min)}. A pendência esperou. 🫠`, `Faltam ${hm(13 * 60 + 30 - min)} pra voltar. Aproveita. 🧐`]);
-            else if (min >= 13 * 60 + 30 && min < 15 * 60) c = esc(3, [`Faltam ${hm(15 * 60 - min)} pro café das 15h. 🫠`, `Café das 15h em ${hm(15 * 60 - min)}. O corpo já sabe. 🤔`]);
+            if (mestreLing && min >= 9 * 60 && min < 11 * 60 + 30) c = esc(1, [`Faltam ${hm(11 * 60 + 30 - min)} pro almoço. 🤨`, `Almoço em ${hm(11 * 60 + 30 - min)}. Aguenta firme. 😤`]);
+            else if (mestreLing && min >= 12 * 60 && min < 13 * 60 + 30) c = esc(2, [`O almoço acaba em ${hm(13 * 60 + 30 - min)}. A pendência esperou. 🫠`, `Faltam ${hm(13 * 60 + 30 - min)} pra voltar. Aproveita. 🧐`]);
+            else if (mestreLing && min >= 13 * 60 + 30 && min < 15 * 60) c = esc(3, [`Faltam ${hm(15 * 60 - min)} pro café das 15h. 🫠`, `Café das 15h em ${hm(15 * 60 - min)}. O corpo já sabe. 🤔`]);
             else if (min >= fim - 150 && min < fim) c = sexta ? `Sextou. Faltam ${hm(fim - min)} pra ir embora. 😤` : esc(4, [`Faltam ${hm(fim - min)} pra ir embora. 😒`, `Contagem regressiva: ${hm(fim - min)} pra liberdade. 🤨`]);
             if (c && alea(5, min >= fim - 30 && min < fim ? 80 : 45)) return c;
         }
@@ -346,4 +352,4 @@ const LING = (function () {
     aplicarFixas(); if (modo === 's') varrer();
     return { toast, fixa, t, saudacaoExtra, comentarioHora, definir, modo: () => modo };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.73.10';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.73.14';

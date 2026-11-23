@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.13', nome: 'Filtro Falta entregar, logos no Repasse de NF, relatório de notas pendentes e resgate de códigos', status: 'atual', data: '23/11/2026 às 16:45',
+        numero: '2.73.14', nome: 'Datas no relatório de notas pendentes e frases de almoço/café só na conta mestre', status: 'atual', data: '23/11/2026 às 17:40',
+        novidades: ['Relatório de notas pendentes: saiu o "parada desde"; cada NF mostra a data do primeiro vencimento ou, se não houver, a data de emissão.', 'Modo Leandro: as frases de almoço e café (inclusive a contagem regressiva) aparecem só para a conta mestre. As outras contas continuam com as frases de início, fim do expediente, noite, sexta e fim de semana.'],
+        implementado: ['js/65: linha do relatório com vencimento ou emissão.', 'js/62: ehMestreLing (isContaAdmin) e filtro das frases com almoço/café para as demais contas, com frases neutras de reserva.'],
+        arquivos: ['js/65-notas-pendentes.js', 'js/62-linguagem.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['A tela do relatório não mostra mais há quantos dias a NF está parada.', 'Contas que não são mestre deixam de ver frases de almoço e café; o resto do dia permanece igual.'],
+        testar: ['Início > Notas pendentes > Relatório: cada NF deve trazer "vencimento dd/mm/aaaa" (ou "emissão ...").', 'Conta mestre, no horário de almoço/café: as frases continuam aparecendo.', 'Outra conta, no mesmo horário: nenhuma frase cita almoço ou café.']
+    },
+    {
+        numero: '2.73.13', nome: 'Filtro Falta entregar, logos no Repasse de NF, relatório de notas pendentes e resgate de códigos', status: 'concluida', data: '23/11/2026 às 16:45',
         novidades: ['Cotações: novo filtro "Falta entregar", que mostra só as cotações em que algum fornecedor ainda não entregou tudo (parciais já resolvidas ou relatadas ficam de fora). O botão mostra quantas são.', 'Repasse de NF: as logos dos fornecedores passam a aparecer nas bolinhas, mesmo quando a lista já estava na tela antes das logos carregarem.', 'No computador, a faixa preta do topo foi removida: o cabeçalho usa o mesmo visual cinza do celular.', 'Notas pendentes: botão "Relatório" gera o resumo das NFs paradas comigo, agrupado por motivo, nos mesmos moldes do Resumo de pendências (texto editável, Copiar, PDF, Word e TXT).', 'Repasse de NF: botão "Resgatar último arquivamento" recupera a lista de códigos (o mesmo texto do Copiar) de um arquivamento já feito, com opção de ver os anteriores.'],
         implementado: ['js/13: cotacaoFaltaEntregar, alternarFiltroCotacoesFaltaEntregar e cache do resumo de entrega por renderização.', 'js/66: logosAtualizarBolinhas troca as iniciais pela logo no lugar, sem redesenhar a tela.', 'style.css: removido o bloco de cabeçalho preto do desktop; botões da área de arquivamento com a mesma largura.', 'js/65 e js/47: relatório de notas pendentes (blocos por motivo reaproveitando PDF/Word do Resumo).', 'js/08: lotesArquivamentoRecentes agrupa as notas arquivadas com menos de 60 s de diferença; abrirResgateCodigos monta o texto com buildSaidaText.'],
         arquivos: ['js/13-relatorios-divergencias.js', 'js/66-logos-fornecedores.js', 'js/65-notas-pendentes.js', 'js/47-resumo-pendencias.js', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4047,4 +4055,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.13';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.14';

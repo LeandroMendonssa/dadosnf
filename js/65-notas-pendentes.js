@@ -84,8 +84,9 @@ function textoRelatorioNotasPendentes() {
         grupo.forEach(x => {
             const v = x.v, n = (v.nf || v.erp).nf, nomeF = String(nomeExibicaoFornecedor(v.fornecedor, v.cnpj || '') || v.fornecedor || '').toUpperCase();
             const outros = x.pe.motivos.filter(m => m !== k).map(m => (MOTIVOS_PEND_ENTREGA.find(y => y[0] === m) || [m, m])[1]);
-            let desde = ''; if (x.pe.desde) { const d = String(x.pe.desde).split('-'); if (d.length === 3) desde = `parada desde ${d[2]}/${d[1]}/${d[0]}`; }
-            L.push(`${nomeF} - N.F. ${n}`, [avisoVencParada(x.dias), desde, outros.length ? 'também falta: ' + outros.join(', ') : ''].filter(Boolean).join(' · ') + '.', '');
+            // data do primeiro vencimento da NF; sem vencimento, a data de emissão
+            let quando = ''; if (v.venc) quando = 'vencimento ' + v.venc; else if (v.dataISO) quando = 'emissão ' + dataBRdeISO(v.dataISO);
+            L.push(`${nomeF} - N.F. ${n}`, [quando, outros.length ? 'também falta: ' + outros.join(', ') : ''].filter(Boolean).join(' · ') + '.', '');
         });
     });
     return L.join('\n').replace(/\n{4,}/g, '\n\n\n').trimEnd() + '\n';
@@ -176,4 +177,4 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
         };
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.13';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.14';
