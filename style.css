@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.73.12'; }
+:root { --css-versao: '2.73.13'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2437,7 +2437,7 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 
 /* ===== 2.72.0: visual padrão no estilo dos Ajustes da Apple =====
    - sem degradê no fundo (o degradê fica só nas telas especiais: importação de NF e onboarding)
-   - faixa superior cinza no celular; no computador, faixa preta com menu lateral branco
+   - faixa superior cinza no celular e no computador (a faixa preta do PC foi removida na 2.73.13)
    - Ajustes em grupos arredondados, sem borda */
 #screen-import{background:linear-gradient(180deg,color-mix(in srgb,var(--accent-color) 10%,var(--bg-primary)) 0%,var(--bg-primary) 40%) no-repeat,var(--bg-primary)}
 .settings-list-group{border:0;border-radius:20px;box-shadow:none}
@@ -2449,12 +2449,7 @@ input[type="password"]{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text
 .ajustes-sair{margin-top:26px}
 body[data-theme="light"] .header{background-color:color-mix(in srgb,var(--bg-primary) 86%,transparent);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid color-mix(in srgb,var(--text-dark) 10%,transparent)}
 body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-width:44px;padding:0;justify-content:center;border-radius:50%;background:var(--bg-secondary);box-shadow:0 2px 8px rgba(0,0,0,.10);border:1px solid color-mix(in srgb,var(--text-dark) 8%,transparent)}
-@media (min-width:900px){
-  body[data-theme="light"] .header{background-color:#1c1c1e;border-bottom:0;-webkit-backdrop-filter:none;backdrop-filter:none}
-  body[data-theme="light"] .header .header-title,body[data-theme="light"] .header .header-action,body[data-theme="light"] .header .header-counter{color:#fff}
-  body[data-theme="light"] .header-action.back-button{background:rgba(255,255,255,.14);border-color:transparent;box-shadow:none;width:36px;height:36px;min-width:36px;min-height:36px}
-  body[data-theme="light"] .sidebar{background:#fff}
-}
+/* 2.73.13: no computador o cabeçalho usa o mesmo visual do celular (sem faixa preta) */
 
 /* 2.73.0 relógio em destaque na Início; botões do modal de pendência; linhas do resumo */
 .ini-topo{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -2493,3 +2488,7 @@ body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-w
 /* 2.73.11 mostrando só um fornecedor */
 .frn-foco{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px;color:var(--text-light)}
 .frn-foco b{color:var(--text-dark)}
+
+/* 2.73.13: botões da área de arquivamento do Repasse de NF com a mesma largura, um embaixo do outro */
+#screen-manage .actions-destrutivas{flex-direction:column;align-items:center}
+#screen-manage .actions .actions-button{width:min(100%,264px)}
