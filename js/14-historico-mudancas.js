@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.15', nome: 'Compra direta some do pedido sugerido, relatório rápido de fornecedores a chegar e logos nos próximos vencimentos', status: 'atual', data: '23/11/2026 às 19:20',
+        numero: '2.73.16', nome: 'Limpeza: nome do fornecedor sai de Dados desta NF e botão de logos em lote sai do topo', status: 'atual', data: '23/11/2026 às 20:00',
+        novidades: ['Dados desta NF: removido o campo "Nome do fornecedor" (nas NFs do ERP e nas de XML). O nome passa a vir só do cadastro do fornecedor (apelido / nome de exibição).', 'Tela Fornecedores: removido o botão "Logos dos fornecedores" do topo e o lote de logos por CNPJ;site.'],
+        implementado: ['js/20: retirados os dois campos de nome e as funções salvarNomeFornecedorErpSo e salvarNomeFornecedorNfSalva. aplicarNomeFornecedorPorCnpj fica por enquanto.', 'js/66: retirados fornecedoresComCnpj, abrirLogosEmLote, logosLoteCopiar, logosLoteAplicar e o botão do topo.'],
+        arquivos: ['js/20-editor-nf.js', 'js/66-logos-fornecedores.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Nada foi apagado dos dados: nomes já editados em NFs (fornecedorNomeEditado), apelidos e logos continuam gravados e valendo como antes.', 'Para mudar o nome de um fornecedor, use o apelido na tela Fornecedores.'],
+        testar: ['Abrir uma NF (XML e ERP): o cartão "Dados desta NF" não tem mais o nome do fornecedor; recurso e compra direta continuam.', 'Fornecedores: o botão "Logos dos fornecedores" não aparece; Definir/Trocar logo no cartão continua funcionando.']
+    },
+    {
+        numero: '2.73.15', nome: 'Compra direta some do pedido sugerido, relatório rápido de fornecedores a chegar e logos nos próximos vencimentos', status: 'concluida', data: '23/11/2026 às 19:20',
         novidades: ['NF marcada como compra direta deixa de aparecer na Central em "NFs do ERP com pedido sugerido para confirmar".', 'Fornecedores a chegar (tela inicial): novo botão "Relatório" com Copiar, PDF, Word e TXT, agrupado por pedido. A opção "Incluir produtos pendentes" lista cada produto que falta, com a quantidade. O relatório completo continua em Relatórios.', 'Próximos vencimentos: cada NF agora tem a logo do fornecedor e o mesmo cartão da Atividade recente (logo à esquerda, mesma altura); tocar abre a NF.'],
         implementado: ['js/36: compra direta marcada (erp.semPedido ou nf.semCotacaoSmartCompras) passa à frente do pedido sugerido ao definir pedidoSt.', 'js/47: abrirRelRapido (modal genérico de relatório com opção, copiar e arquivos) e produtos listados com "•" no leitor do texto.', 'js/48: textoFornecedoresAChegar, botão no card e cartões de próximos vencimentos nos dois layouts.'],
         arquivos: ['js/36-visao-nf.js', 'js/47-resumo-pendencias.js', 'js/48-inicio-lote.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4063,4 +4071,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.15';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.16';

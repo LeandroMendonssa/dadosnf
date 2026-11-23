@@ -771,9 +771,6 @@ function htmlDadosNfErp(erp, fornNome, pedido) {
     const recursoDaCotacao = vz && vz.recursoOrigem === 'cotacao' && !erp.recursoManual && vz.recursos.length ? vz.recursos : null;
     const sel = `<select class="input-box" onchange="definirRecursoErpSo('${id}', this.value)"><option value="">(não definido)</option>${opcoesRec.map(o => `<option value="${escRel(o)}"${o === atual ? ' selected' : ''}>${escRel(o)}</option>`).join('')}</select>`;
     return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
-        <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
-            <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorErpSo('${id}')">Salvar</button></div>
-            <div class="xml-item-meta">O nome vale para todas as NFs deste CNPJ; nas próximas importações do ERP com este nome, o fornecedor já vem certo.</div></div>
         ${recursoDaCotacao ? `<div class="nfe-trocar"><span class="nfe-rot">Recurso</span><div class="xml-item-meta">Vem da cotação do pedido: <strong>${escRel(recursoDaCotacao.join(', '))}</strong>.</div><details class="retro-det"><summary>Mudar só nesta NF</summary>${sel}</details></div>` : `<div class="nfe-trocar"><span class="nfe-rot">Recurso</span>${sel}</div>`}
         <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${erp.semPedido && !pedido ? 'checked' : ''} ${pedido ? 'disabled' : ''} onchange="definirSemPedidoErpSo('${id}', this.checked)"> <span>Esta NF não tem pedido (compra direta)</span></label>${pedido ? '<div class="xml-item-meta">Há pedido vinculado; para marcar “sem pedido”, mova a NF para nenhum pedido primeiro.</div>' : ''}</div></div>`;
 }
@@ -805,28 +802,12 @@ async function aplicarNomeFornecedorPorCnpj(cnpj, novo, nfIdAtual, erpIdAtual) {
     if (notas.length) { notas.forEach(n => { n.fornecedor = novo; }); try { DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao(); rebuildNotasPendentesList(); } catch (e) { /* a lista se atualiza no próximo retorno do banco */ } }
     return alvos.length;
 }
-async function salvarNomeFornecedorErpSo(id) {
-    const erp = listaEntradasErp.find(e => e.id === id); const inp = document.getElementById('nfed-nome-forn');
-    if (!erp || !inp) return;
-    const novo = nomeTextoSeguro(inp.value).trim().toUpperCase();
-    if (!novo) return toast('Digite o nome do fornecedor.');
-    try {
-        await entradasErpCollection.doc(id).update({ fornecedorNomeEditado: novo });
-        const original = nomeTextoSeguro(erp.fornecedorNomeRelatorio).trim().toUpperCase();
-        if (original && original !== novo) {
-            apelidosFornecedores[original] = novo;
-            await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
-            await adicionarFornecedor(novo, true);
-        }
-        const outras = await aplicarNomeFornecedorPorCnpj(erp.cnpjFornecedor, novo, null, id);
-        toast(outras ? `✓ Nome salvo e aplicado em mais ${outras} registro(s) deste fornecedor.` : '✓ Nome do fornecedor salvo.');
-    } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
-}
 
 
 // ===================================================================
 // 2.10.8: "Dados desta NF" também para NF com XML — nome do fornecedor, recurso da NF inteira e compra direta (sem cotação).
 // ===================================================================
+// leandromendonssa
 function destinoDaNfSalva(nf) {
     const cot = nf.pedido ? listaCotacoes.find(c => String(c.pedido) === String(nf.pedido)) : null;
     return (cot && cot.origem) || nf.destino || null;
@@ -843,30 +824,12 @@ function htmlDadosNf(nf, fornecedorNome) {
     const resumo = atuais.length === 0 ? 'Nenhum item com recurso definido.' : `Recurso da NF: <strong>${escRel(atuais[0])}</strong>. É definido sozinho: se algum item teve menos de 3 cotações, a NF inteira é Recurso Próprio.`;
     const direta = !!(nf.semCotacaoSmartCompras || (nf.itens || []).some(i => i.semCotacao));
     return `<div class="card" data-alvo="dados-nf"><div class="xml-item-meta"><strong>Dados desta NF</strong></div>
-        <div class="nfe-trocar"><span class="nfe-rot">Nome do fornecedor</span>
-            <div style="display:flex;gap:6px"><input type="text" id="nfed-nome-forn" class="input-box" value="${escRel(fornecedorNome)}" style="flex:1"><button type="button" class="central-status-toggle" onclick="salvarNomeFornecedorNfSalva('${id}')">Salvar</button></div>
-            <div class="xml-item-meta">O nome vale para todas as NFs deste CNPJ e fica lembrado nas próximas importações.</div></div>
         <div class="nfe-trocar"><span class="nfe-rot">Recurso da NF inteira</span><div class="xml-item-meta">${resumo}${destino ? '' : (direta ? ' Escolha abaixo o destino (Santa Casa ou CTI).' : ' Defina antes a origem (destino) da cotação do pedido.')}</div>
             <div class="nfe-acoes"><button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'cc')">${escRel(rotCC)}</button> <button type="button" class="central-status-toggle" onclick="definirRecursoNfSalva('${id}', 'proprio')">${escRel(rotPR)}</button></div></div>
         <div class="nfe-trocar"><label class="nfe-check"><input type="checkbox" ${direta ? 'checked' : ''} onchange="definirCompraDiretaNf('${id}', this.checked)"> <span>Esta NF não tem cotação (compra direta)</span></label>
             <div class="xml-item-meta">Marcar tira o pedido da NF e ela deixa de aparecer como "sem pedido".</div></div>
         ${direta ? `<div class="nfe-trocar"><span class="nfe-rot">Destino da compra direta</span><select class="input-box" onchange="definirDestinoNfDireta('${id}', this.value)"><option value="">(escolha)</option>${Object.keys(RECURSOS_OFICIAIS).map(o => `<option value="${escRel(o)}"${nf.destino === o ? ' selected' : ''}>${escRel(o)}</option>`).join('')}</select>
             <div class="xml-item-meta">Sem cotação do SmartCompras não há origem para dar o destino: é aqui que você diz para onde foi. Com o destino, os botões de recurso (C/C ou próprio) acima passam a funcionar.</div></div>` : ''}</div>`;
-}
-async function salvarNomeFornecedorNfSalva(id) {
-    const nf = listaNfsProcessadas.find(n => n.id === id); const inp = document.getElementById('nfed-nome-forn'); if (!nf || !inp) return;
-    const novo = nomeTextoSeguro(inp.value).trim().toUpperCase(); if (!novo) return toast('Digite o nome do fornecedor.');
-    try {
-        await nfsProcessadasCollection.doc(id).update({ fornecedorNomeEditado: novo });
-        const original = nomeTextoSeguro(nf.fornecedor || (nf.xmlDados && nf.xmlDados.emit && nf.xmlDados.emit.xNome) || '').trim().toUpperCase();
-        if (original && original !== novo) {
-            apelidosFornecedores[original] = novo;
-            await settingsDocRef.set({ apelidosFornecedores: { [original]: novo } }, { merge: true });
-            await adicionarFornecedor(novo, true);
-        }
-        const outras = await aplicarNomeFornecedorPorCnpj(nf.cnpjFornecedor, novo, id, null);
-        toast(outras ? `✓ Nome salvo e aplicado em mais ${outras} registro(s) deste fornecedor.` : '✓ Nome do fornecedor salvo.');
-    } catch (e) { console.error(e); toast('✕ Erro ao salvar o nome.'); }
 }
 async function definirRecursoNfSalva(id, tipo) {
     const nf = listaNfsProcessadas.find(n => n.id === id); if (!nf) return;
@@ -919,4 +882,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.73.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.73.16';

@@ -149,7 +149,7 @@ async function semCadastroCriar(enc) {
 window.semCadastroCriar = semCadastroCriar;
 document.addEventListener('click', ev => {
     const av = ev.target && ev.target.closest && ev.target.closest('.ctl-av,.ini-ai,.nv-sym'); if (!av) return;
-    if (av.closest('#screen-fornecedores,#logo-forn-modal,#logos-lote-modal,#forn-sem-cad-modal')) return;   // lá o toque no cartão já abre/fecha
+    if (av.closest('#screen-fornecedores,#logo-forn-modal,#forn-sem-cad-modal')) return;   // lá o toque no cartão já abre/fecha
     const m = av.querySelector('[data-forn]'); if (!m) return;
     ev.preventDefault(); ev.stopPropagation(); abrirFornecedorDaBolinha(m.getAttribute('data-forn'));
 }, true);
@@ -365,62 +365,7 @@ async function logoFornSalvar(remover) {
 }
 window.abrirLogoFornecedor = abrirLogoFornecedor; window.logoFornBuscarSite = logoFornBuscarSite; window.logoFornArquivo = logoFornArquivo; window.logoFornSalvar = logoFornSalvar;
 
-// ---- Lote: copiar lista (CNPJ;nome) e aplicar sites (CNPJ;site) ----
-const cnpjDigitos = v => String(v || '').replace(/\D/g, '');
-function fornecedoresComCnpj() {
-    const r = [];
-    try { listaFornecedoresUnificada().forEach(f => (f.cnpjs || []).forEach(c => { const d = cnpjDigitos(c.cnpj); if (d.length === 14) r.push({ cnpj: d, nome: f.nomeExibido || f.nomeReal, real: f.nomeReal }); })); } catch (e) { }
-    return r.filter((x, i, a) => a.findIndex(y => y.cnpj === x.cnpj) === i);
-}
-function abrirLogosEmLote() {
-    let m = document.getElementById('logos-lote-modal');
-    if (!m) { m = document.createElement('div'); m.id = 'logos-lote-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
-    const n = fornecedoresComCnpj().length, com = Object.values(logosFornecedores).filter(e => e && (e.u || e.d) && !e.r).length;
-    m.innerHTML = `<div class="modal-content"><h2>Logos dos fornecedores</h2>
-        <p style="font-size:12px;color:var(--text-light)">${n} fornecedor(es) com CNPJ · ${com} com logo. Copie a lista e me envie; eu devolvo o site de cada um (linhas "CNPJ;site") e você cola abaixo. Com o site certo, a logo vem sozinha.</p>
-        <button type="button" class="actions-button" style="width:100%;min-height:48px" onclick="logosLoteCopiar()">Copiar lista de fornecedores</button>
-        <label class="dev-lbl" style="margin-top:14px">Sites recebidos (um por linha: CNPJ;site)<textarea id="logos-lote-txt" rows="6" placeholder="08231734000517;futura.com.br" style="width:100%"></textarea></label>
-        <div class="txt-aux" id="logos-lote-msg" style="margin-top:6px"></div>
-        <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Fechar</button>
-        <button type="button" class="actions-button is-primary" onclick="logosLoteAplicar()">Aplicar sites</button></div></div>`;
-    m.classList.add('active');
-}
-async function logosLoteCopiar() {
-    const txt = fornecedoresComCnpj().map(x => `${x.cnpj};${x.nome}`).join('\n'), g = document.getElementById('logos-lote-msg');
-    try { await navigator.clipboard.writeText(txt); if (g) g.textContent = 'Lista copiada. Cole na conversa comigo.'; }
-    catch (e) { const t = document.getElementById('logos-lote-txt'); if (t) { t.value = txt; t.select(); } if (g) g.textContent = 'Não consegui copiar sozinho. A lista está na caixa abaixo: selecione tudo e copie.'; }
-}
-async function logosLoteAplicar() {
-    const g = document.getElementById('logos-lote-msg'), forn = fornecedoresComCnpj(), novos = {}; let ok = 0, sem = 0;
-    ((document.getElementById('logos-lote-txt') || {}).value || '').split(/\n+/).forEach(l => {
-        const [c, site] = l.split(/[;\t]/).map(x => (x || '').trim()); const d = cnpjDigitos(c), dom = dominioLimpo(site);
-        if (!d || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) return;
-        const f = forn.find(x => x.cnpj === d); if (!f) { sem++; return; }
-        const e = entidadeForn(f.real || f.nome, d), r = logoRes(f.real || f.nome, d);
-        ok++; if (r && r.ent.u) return;   // não sobrescreve logo escolhida à mão
-        const principal = (r && !logosFornecedores[r.k].r) ? r.k : (e.keys.find(k => k.startsWith('CNPJ:')) || chaveLogoForn(e.nomeReal));
-        if (!principal || novos[principal]) return;
-        novos[principal] = { d: dom };
-        e.keys.forEach(k => { if (k !== principal && !novos[k] && !(logosFornecedores[k] && !logosFornecedores[k].r && (logosFornecedores[k].u || logosFornecedores[k].d))) novos[k] = { r: principal }; });
-    });
-    if (!ok) { if (g) g.textContent = 'Nenhuma linha válida. Use CNPJ;site, uma por linha.' + (sem ? ' (' + sem + ' CNPJ(s) não estão na sua lista.)' : ''); return; }
-    try {
-        await settingsDocRef.parent.doc('logosFornecedores').set({ logos: novos }, { merge: true });
-        Object.assign(logosFornecedores, novos); logoCacheLimpa();
-        closeAllModals(); toast(`Sites aplicados: ${ok} fornecedor(es).`); logosRenderizar();
-    } catch (e) { console.error(e); if (g) g.textContent = 'Não consegui salvar agora. Tente de novo.'; }
-}
-window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCopiar; window.logosLoteAplicar = logosLoteAplicar;
-// botão de entrada na tela Fornecedores
-(function () {
-    if (typeof renderListaFornecedoresUnificada !== 'function') return;
-    const o = renderListaFornecedoresUnificada;
-    renderListaFornecedoresUnificada = function () {
-        const r = o.apply(this, arguments);
-        try { const c = document.getElementById('contador-fornecedores-spdata'); if (c && !document.getElementById('btn-logos-lote')) c.insertAdjacentHTML('afterend', '<div class="nfe-acoes"><button type="button" class="central-status-toggle" id="btn-logos-lote" onclick="abrirLogosEmLote()">Logos dos fornecedores</button></div>'); } catch (e) { }
-        return r;
-    };
-})();
+// 2.73.16: removido o lote de logos por CNPJ;site e o botão "Logos dos fornecedores" do topo da tela Fornecedores.
 
 // Botão no cartão do fornecedor (tela Fornecedores do ERP)
 (function () {
@@ -432,5 +377,5 @@ window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.13';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.16';
 // leandromendonssa
