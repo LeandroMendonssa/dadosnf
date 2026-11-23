@@ -128,7 +128,8 @@ function blocosResumoPendencias(texto) {
         if (/^N[ÃA]O ENTREGARAM:?$/i.test(l)) { if (atual) atual.toks.push({ k: 'rotulo', t: 'Não entregaram:' }); modo = 'nomes'; return; }
         if (/^PEND[ÊE]NCIAS:?$/i.test(l)) { if (atual) atual.toks.push({ k: 'rotulo', t: 'Pendências:' }); modo = 'pend'; return; }
         if (!atual) { b.previa.push(l); return; }
-        if (modo === 'nomes') atual.toks.push({ k: (l === l.toUpperCase() && l.length < 40) ? 'nome' : 'texto', t: l });
+        if (/^•\s/.test(l)) atual.toks.push({ k: 'item', t: l });   // 2.73.15: produto listado sob o fornecedor
+        else if (modo === 'nomes') atual.toks.push({ k: (l === l.toUpperCase() && l.length < 40) ? 'nome' : 'texto', t: l });
         else if (modo === 'pend') atual.toks.push({ k: ((/:$/.test(l) || /\sN\.?\s?F\./i.test(l)) && l === l.toUpperCase() && l.length < 90) ? 'forn' : 'item', t: l });
         else atual.toks.push({ k: 'texto', t: l });
     });
@@ -342,4 +343,46 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.73.13';
+
+// ---------- 2.73.15: relatório rápido (modal com texto editável; copiar, PDF, Word e TXT) ----------
+// cfg: { titulo, dica, opcao:{rotulo, sub}, texto(incluir)->string, arquivo }
+let _relRapido = null;
+function abrirRelRapido(cfg) {
+    _relRapido = cfg; closeAllModals();
+    let m = document.getElementById('rel-rapido-modal');
+    if (!m) { m = document.createElement('div'); m.id = 'rel-rapido-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
+    m.innerHTML = `<div class="modal-content"><h2>${escRel(cfg.titulo)}</h2>
+        <p style="font-size:12px;color:var(--text-light);margin:0 0 8px">${escRel(cfg.dica || '')}</p>
+        ${cfg.opcao ? `<label class="rp-op" style="margin-bottom:8px"><input type="checkbox" id="rel-rapido-op" onchange="relRapidoAtualizar()"><span><b>${escRel(cfg.opcao.rotulo)}</b><small>${escRel(cfg.opcao.sub || '')}</small></span></label>` : ''}
+        <textarea id="rel-rapido-texto" class="form-field" style="width:100%;min-height:40vh;font-size:13px;line-height:1.4" spellcheck="false"></textarea>
+        <div class="confirm-actions pend-acoes">
+            <button type="button" class="actions-button is-primary" onclick="copiarRelRapido()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarRelRapido('pdf')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> PDF</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarRelRapido('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarRelRapido('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
+            <button type="button" class="actions-button" style="grid-column:1/-1" onclick="closeAllModals()">Fechar</button></div></div>`;
+    relRapidoAtualizar(); m.classList.add('active');
+}
+function relRapidoAtualizar() {
+    const c = _relRapido, a = document.getElementById('rel-rapido-texto'); if (!c || !a) return;
+    const op = document.getElementById('rel-rapido-op'); a.value = c.texto(!!(op && op.checked));
+}
+async function copiarRelRapido() {
+    const a = document.getElementById('rel-rapido-texto'); if (!a || !a.value.trim()) return toast('Nada para copiar.');
+    try { await navigator.clipboard.writeText(a.value); toast('✓ Relatório copiado.'); } catch (e) { a.focus(); a.select(); toast('Selecione e copie o texto.'); }
+}
+async function baixarRelRapido(formato) {
+    const a = document.getElementById('rel-rapido-texto'), texto = a ? a.value : ''; if (!texto.trim() || !_relRapido) return toast('Nada para exportar.');
+    const base = (_relRapido.arquivo || 'Relatorio') + '-' + dataLocalISO();
+    try {
+        let ok = false;
+        if (formato === 'doc') ok = await entregarArquivoRelCot(base + '.doc', new Blob(['﻿', htmlResumoPendencias(texto)], { type: 'application/msword' }));
+        else if (formato === 'pdf') {
+            if (typeof jspdf === 'undefined') return toast('✕ A biblioteca de PDF ainda não carregou — aguarde um instante e tente de novo.');
+            ok = await entregarArquivoRelCot(base + '.pdf', gerarPdfResumoPendencias(texto).output('blob'));
+        } else ok = await entregarArquivoRelCot(base + '.txt', new Blob([texto], { type: 'text/plain;charset=utf-8' }));
+        if (ok) toast('✓ Arquivo gerado.');
+    } catch (err) { console.error('Relatório rápido:', err); toast('✕ Erro ao gerar o arquivo.'); }
+}
+window.abrirRelRapido = abrirRelRapido; window.relRapidoAtualizar = relRapidoAtualizar; window.copiarRelRapido = copiarRelRapido; window.baixarRelRapido = baixarRelRapido;
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.73.15';

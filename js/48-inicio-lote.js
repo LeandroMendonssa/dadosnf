@@ -180,10 +180,17 @@ function renderInicio() {
     } catch (e) { kPend = k('n', 0, 'notas pendentes', 'iniAbrirNotasParadas()'); }
     const at = (ic, txt, acao, forte) => `<button type="button" class="ini-at${forte ? ' forte' : ''}" onclick="${acao}"><i class="${ic}"></i><span>${txt}</span></button>`;
     const chipDias = n => { const x = d.dias(n); return x < 0 ? `<span class="ini-chip r">${-x} dia(s) atrás</span>` : x === 0 ? '<span class="ini-chip r">Hoje</span>' : x === 1 ? '<span class="ini-chip y">Amanhã</span>' : `<span class="ini-chip">${x} dias</span>`; };
-    const linhasProx = d.proximas.map(n => {
+    // 2.73.15: próximos vencimentos com o MESMO cartão da Atividade recente (logo do fornecedor à esquerda, 34 px, e toque abre a NF)
+    const proxCartao = (nv) => d.proximas.map(n => {
         let nomeF = n.fornecedor || ''; try { nomeF = nomeExibicaoFornecedor(n.fornecedor, n.cnpj || '') || nomeF; } catch (e) { }
-        return `<div class="ini-lin"><div>${escIni(nomeF)} ${escIni(n.nf || '')}<small>${escIni(n.vencimento)}${n.valor ? ' · R$ ' + escIni(n.valor) : ''}</small></div>${chipDias(n)}</div>`;
-    }).join('') || `<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>${LING.fixa('ini-sem-nf', {t:'Nenhuma NF aberta'}).t}</b><p>${LING.fixa('ini-sem-nf', {p:'A relação está vazia.'}).p}</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen('screen-reports','Relatórios')">Ver todas as NFs</button></div>`;
+        const sub = escIni(n.vencimento) + (n.valor ? ' · R$ ' + escIni(n.valor) : '');
+        return nv
+            ? `<button type="button" class="nv-act" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="nv-sym">${avatarFornConteudo(nomeF)}</span><span class="nv-main"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')}</b><small>${sub}</small></span><span class="nv-time">${chipDias(n)}<i>›</i></span></button>`
+            : `<button type="button" class="ini-ativ" data-nf="${escIni(n.nf || '')}" onclick="iniAbrirNf(this.dataset.nf)"><span class="ini-ai">${avatarFornConteudo(nomeF)}</span><span class="ini-at2"><b>${escIni(nomeF || '(sem fornecedor)')} ${escIni(n.nf || '—')}</b><small>${sub}</small></span><span class="ini-ar">${chipDias(n)}</span></button>`;
+    }).join('');
+    const vazioProx = `<div class="vazio-acao"><div class="ic"><i class="fa-solid fa-check"></i></div><b>${LING.fixa('ini-sem-nf', {t:'Nenhuma NF aberta'}).t}</b><p>${LING.fixa('ini-sem-nf', {p:'A relação está vazia.'}).p}</p><button type="button" class="actions-button is-ghost" onclick="switchToScreen('screen-reports','Relatórios')">Ver todas as NFs</button></div>`;
+    const linhasProx = proxCartao(false) || vazioProx;
+    const linhasProxNv = proxCartao(true) || vazioProx;
     if (novoVisualOn()) {   // 2.71.0: novo layout (cabeçalho de página, indicadores, painéis). Desligado, cai no layout anterior logo abaixo.
         const ph = (t, p, extra) => `<div class="nv-ph"><div><h2>${t}</h2>${p ? `<p>${p}</p>` : ''}</div>${extra || ''}</div><div class="nv-div"></div>`;
         el.innerHTML = `
@@ -201,7 +208,7 @@ function renderInicio() {
             <div class="nv-col">
                 <div class="nv-panel">${ph('Atalhos', '', `<button type="button" class="nv-btn small" onclick="iniEditarAtalhos(${iniEditando ? 'false' : 'true'})">${iniEditando ? 'Concluir' : 'Editar'}</button>`)}<div class="nv-body">${iniEditando ? htmlEdicaoAtalhos() : `<div class="ini-ats">${iniAtalhosAtuais().map((id, i) => { const c = iniCatalogo()[id]; return c ? at(c.ic, c.t, c.a, false) : ''; }).join('')}</div>`}</div></div>
                 <div class="nv-panel nv-recent">${ph('Atividade recente', 'NFs de hoje e do último dia útil, da mais recente para a mais antiga.')}<div class="nv-body">${iniAtividadeHtml()}</div></div>
-                <div class="nv-panel">${ph('Próximos vencimentos', 'NFs da relação por data de vencimento.')}<div class="nv-body nv-flat">${linhasProx}</div></div>
+                <div class="nv-panel">${ph('Próximos vencimentos', 'NFs da relação por data de vencimento.')}<div class="nv-body">${linhasProxNv}</div></div>
             </div>
         </div>`;
         return;
@@ -222,7 +229,7 @@ function renderInicio() {
         <div class="ini-tit">Atividade recente</div>
         ${iniAtividadeHtml()}
         <div class="ini-tit">Próximos vencimentos</div>
-        <div class="ini-card">${linhasProx}</div>`;
+        ${linhasProx}`;
 }
 // 2.32.0: toque em "fornecedores a chegar" mostra QUEM e de qual PEDIDO (antes abria o gerador de resumo). Usa os mesmos dados do número.
 function abrirFornecedoresAChegar() {
@@ -363,4 +370,32 @@ async function loteBuscar() {
 // entrar na tela inicial desenha o painel
 (function () { const orig = switchToScreen; switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-inicio') renderInicio(); return r; }; })();
 window.addEventListener('load', () => { renderInicioSeAtivo(); setTimeout(renderInicioSeAtivo, 600); setTimeout(renderInicioSeAtivo, 2500); setInterval(renderInicioSeAtivo, 20000); setInterval(() => { const t = document.getElementById('screen-inicio'); if (t && t.classList.contains('active')) inicioAtualizarFornecedores(); }, 3000); });
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.9';
+
+// 2.73.15: relatório rápido de fornecedores a chegar, direto do card da tela inicial (o completo continua em Relatórios > Resumo de pendências).
+function textoFornecedoresAChegar(lista, comProdutos) {
+    const L = [dataExtensoResumo(), 'RESUMO DE FORNECEDORES A CHEGAR', ''];
+    const por = {}; lista.forEach(x => { (por[x.p] = por[x.p] || { o: x.o, itens: [] }).itens.push(x); });
+    const pedidos = Object.keys(por).sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0));
+    const nome = x => String(nomeExibicaoFornecedor(x.f, x.c || '') || x.f || '').toUpperCase();
+    const prods = x => (x.prod || []).map(it => '• ' + it.n + (it.q === null || it.q === undefined ? '' : ' — ' + String(it.q).replace('.', ',') + (it.u ? ' ' + it.u : '')));
+    if (!pedidos.length) L.push('Nenhum fornecedor pendente nos pedidos.', '');
+    pedidos.forEach(p => {
+        const g = por[p], nao = g.itens.filter(x => x.t === 'nao'), par = g.itens.filter(x => x.t !== 'nao');
+        L.push('PEDIDO ' + p + (g.o ? ' · ' + g.o : ''), '');
+        if (nao.length) { L.push('NÃO ENTREGARAM:'); nao.forEach(x => { L.push(nome(x)); if (comProdutos) prods(x).forEach(t => L.push(t)); }); L.push(''); }
+        if (par.length) {
+            L.push('PENDÊNCIAS:', '');
+            par.forEach(x => { L.push(nome(x) + ':'); if (comProdutos) prods(x).forEach(t => L.push(t)); else L.push('Faltam ' + x.n + ' item(ns).'); L.push(''); });
+        }
+        L.push('');
+    });
+    return L.join('\n').replace(/\n{4,}/g, '\n\n\n').trimEnd() + '\n';
+}
+function abrirRelatorioFornecedoresAChegar() {
+    const pf = iniLerCache().forn, lista = (pf && pf.lista) || [];
+    if (!lista.length) return toast('Nenhum fornecedor pendente nos pedidos.');
+    abrirRelRapido({ titulo: 'Relatório de fornecedores a chegar', arquivo: 'Fornecedores-a-chegar', dica: 'Os fornecedores da lista, agrupados por pedido. Você pode editar o texto antes de copiar ou gerar o arquivo. O relatório completo continua em Relatórios.',
+        opcao: { rotulo: 'Incluir produtos pendentes', sub: 'cada produto que falta, com a quantidade (trocar a opção refaz o texto)' }, texto: inc => textoFornecedoresAChegar(lista, inc) });
+}
+window.abrirRelatorioFornecedoresAChegar = abrirRelatorioFornecedoresAChegar;
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/48-inicio-lote.js'] = '2.73.15';

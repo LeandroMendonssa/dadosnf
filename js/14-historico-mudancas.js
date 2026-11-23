@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.14', nome: 'Datas no relatório de notas pendentes e frases de almoço/café só na conta mestre', status: 'atual', data: '23/11/2026 às 17:40',
+        numero: '2.73.15', nome: 'Compra direta some do pedido sugerido, relatório rápido de fornecedores a chegar e logos nos próximos vencimentos', status: 'atual', data: '23/11/2026 às 19:20',
+        novidades: ['NF marcada como compra direta deixa de aparecer na Central em "NFs do ERP com pedido sugerido para confirmar".', 'Fornecedores a chegar (tela inicial): novo botão "Relatório" com Copiar, PDF, Word e TXT, agrupado por pedido. A opção "Incluir produtos pendentes" lista cada produto que falta, com a quantidade. O relatório completo continua em Relatórios.', 'Próximos vencimentos: cada NF agora tem a logo do fornecedor e o mesmo cartão da Atividade recente (logo à esquerda, mesma altura); tocar abre a NF.'],
+        implementado: ['js/36: compra direta marcada (erp.semPedido ou nf.semCotacaoSmartCompras) passa à frente do pedido sugerido ao definir pedidoSt.', 'js/47: abrirRelRapido (modal genérico de relatório com opção, copiar e arquivos) e produtos listados com "•" no leitor do texto.', 'js/48: textoFornecedoresAChegar, botão no card e cartões de próximos vencimentos nos dois layouts.'],
+        arquivos: ['js/36-visao-nf.js', 'js/47-resumo-pendencias.js', 'js/48-inicio-lote.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['A compra direta marcada pela pessoa vale mais que a sugestão do ERP; se desmarcar, a sugestão volta a valer.', 'Trocar a opção de produtos no relatório refaz o texto (edições feitas antes se perdem).'],
+        testar: ['Central de notificações: a NF FUTURA 38625 não deve mais estar em pedido sugerido para confirmar.', 'Início > Fornecedores a chegar > Relatório: com e sem "Incluir produtos pendentes"; gerar PDF e Word.', 'Início > Próximos vencimentos: logo à esquerda, igual à Atividade recente; tocar abre a NF.']
+    },
+    {
+        numero: '2.73.14', nome: 'Datas no relatório de notas pendentes e frases de almoço/café só na conta mestre', status: 'concluida', data: '23/11/2026 às 17:40',
         novidades: ['Relatório de notas pendentes: saiu o "parada desde"; cada NF mostra a data do primeiro vencimento ou, se não houver, a data de emissão.', 'Modo Leandro: as frases de almoço e café (inclusive a contagem regressiva) aparecem só para a conta mestre. As outras contas continuam com as frases de início, fim do expediente, noite, sexta e fim de semana.'],
         implementado: ['js/65: linha do relatório com vencimento ou emissão.', 'js/62: ehMestreLing (isContaAdmin) e filtro das frases com almoço/café para as demais contas, com frases neutras de reserva.'],
         arquivos: ['js/65-notas-pendentes.js', 'js/62-linguagem.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4055,4 +4063,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.14';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.15';

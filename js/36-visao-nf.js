@@ -31,7 +31,9 @@ function visoesNf() {
         const vinc = (erp && erp.vinculo) || {};
         const pedidoSugerido = !pedido && vinc.status === 'sugerido' && vinc.pedido ? String(vinc.pedido) : null;
         const compraDireta = !!((erp && erp.semPedido) || (nf && (nf.semCotacaoSmartCompras || (nf.itens || []).some(i => i.semCotacao))));
-        let pedidoSt = pedido ? 'confirmado' : (it.situacao === 'direta' ? 'direta' : (pedidoSugerido ? 'sugerido' : (compraDireta ? 'compra_direta' : 'sem_pedido')));
+        // 2.73.15: compra direta marcada pela pessoa vale mais que o pedido sugerido pelo ERP (antes a sugestão ganhava e a NF seguia na Central como "pedido sugerido para confirmar")
+        const compraDiretaMarcada = !!((erp && erp.semPedido) || (nf && nf.semCotacaoSmartCompras));
+        let pedidoSt = pedido ? 'confirmado' : (it.situacao === 'direta' ? 'direta' : (compraDiretaMarcada ? 'compra_direta' : (pedidoSugerido ? 'sugerido' : (compraDireta ? 'compra_direta' : 'sem_pedido'))));
 
         // itens: do XML quando existe, senão do ERP (cada um com o produto da cotação e o recurso que o app já conhece)
         const recursoDe = (cod, semCot, rec) => semCot ? (rec || '') : ((cot && cod && ((cot.recursosPorItem || {})[cod] || recursoEsperadoPelaCotacao(cot, cod))) || ''); // 2.16.2: sem recurso gravado, vale o que as cotações indicam (mesma regra da Entrada de NF)
@@ -80,4 +82,4 @@ function visaoNfPorId(id) { return visoesNf().find(v => v.id === id || (v.nf && 
 // Pendências de todas as NFs com um id (ex.: 'sem-pedido'), prontas para listar
 function pendenciasNf(idPendencia) { return visoesNf().filter(v => v.pendencias.some(p => p.id === idPendencia)).map(v => ({ v, p: v.pendencias.find(p => p.id === idPendencia) })); }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.73.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/36-visao-nf.js'] = '2.73.15';
