@@ -56,17 +56,25 @@ function logoRes(nome, cnpj) {
     _logoCache.set(ck, r); return r;
 }
 const logoCacheLimpa = () => { _logoCache = new Map(); };
-// 2.73.12: quando as logos mudam, redesenha só a tela que está aberta (e uma vez só, mesmo que cheguem várias alterações seguidas).
-// As outras telas são redesenhadas ao serem abertas. Antes eram 3 telas pesadas, 2 a 3 vezes por gravação.
-const TELAS_COM_LOGO = { 'screen-inicio': 'renderInicio', 'screen-controle-nfs': 'renderControleNfs', 'screen-fornecedores': 'renderListaFornecedoresUnificada' };
-const _logoSujas = new Set(); let _logoRenderT = null;
+// 2.73.13: quando as logos chegam ou mudam, as bolinhas JÁ DESENHADAS (em qualquer tela ou janela) são trocadas no lugar, sem redesenhar a tela.
+// Antes só Início, Controle de NFs e Fornecedores eram redesenhadas; telas como Repasse de NF, desenhadas antes de as logos chegarem,
+// ficavam só com as iniciais. Agora toda bolinha criada por avatarFornConteudo se atualiza sozinha, inclusive telas futuras.
+function logosAtualizarBolinhas() {
+    document.querySelectorAll('.av-fn[data-forn]').forEach(sp => {
+        if (sp.closest('#logo-forn-modal')) return;   // a prévia da janela de logo mostra a imagem ainda não salva
+        const nome = sp.getAttribute('data-forn'), u = logoFornDe(nome) || '', im = sp.querySelector('img.av-logo');
+        if (u === (im ? im.getAttribute('src') : '')) return;
+        const t = document.createElement('div'); t.innerHTML = avatarFornConteudo(nome); const novo = t.firstElementChild; if (novo) sp.replaceWith(novo);
+    });
+}
+let _logoRenderT = null;
 function logosRenderizar() {
-    Object.keys(TELAS_COM_LOGO).forEach(t => _logoSujas.add(t));
     clearTimeout(_logoRenderT);
     _logoRenderT = setTimeout(() => {
-        const at = document.querySelector('.app-screen.active'), fn = at && TELAS_COM_LOGO[at.id];
-        if (fn && typeof window[fn] === 'function') { _logoSujas.delete(at.id); try { window[fn](); } catch (e) { console.error(e); } }
-    }, 350);
+        logosAtualizarBolinhas();
+        const at = document.querySelector('.app-screen.active');   // só a lista de Fornecedores precisa redesenhar (rótulo Definir/Trocar logo)
+        if (at && at.id === 'screen-fornecedores' && typeof renderListaFornecedoresUnificada === 'function') { try { renderListaFornecedoresUnificada(); } catch (e) { console.error(e); } }
+    }, 250);
 }
 function chaveLogoExistente(nome) { const r = logoRes(nome); return r ? r.k : ''; }
 // 2.73.12: a imagem guardada (data:) vira um endereço curto (blob:) uma única vez. Antes o texto inteiro da imagem era copiado dentro de
@@ -115,7 +123,7 @@ window.abrirFornecedorDaBolinha = abrirFornecedorDaBolinha; window.irParaFornece
     switchToScreen = function (id) {
         if (id !== 'screen-fornecedores' && typeof fornecedorFocoChave !== 'undefined') fornecedorFocoChave = '';
         const r = o.apply(this, arguments);
-        if (_logoSujas.has(id) && TELAS_COM_LOGO[id]) { _logoSujas.delete(id); setTimeout(() => { try { if (typeof window[TELAS_COM_LOGO[id]] === 'function') window[TELAS_COM_LOGO[id]](); } catch (e) { } }, 60); }
+        setTimeout(logosAtualizarBolinhas, 80);   // tela desenhada antes de as logos chegarem
         return r;
     };
 })();
@@ -424,5 +432,5 @@ window.abrirLogosEmLote = abrirLogosEmLote; window.logosLoteCopiar = logosLoteCo
         return o.call(this, chave, nome, subHTML, chipHTML, (corpoHTML || '') + extra, aberto);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.12';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/66-logos-fornecedores.js'] = '2.73.13';
 // leandromendonssa

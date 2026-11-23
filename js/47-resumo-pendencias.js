@@ -121,6 +121,8 @@ function blocosResumoPendencias(texto) {
         if (!b.data && !atual && !b.titulo && /^(segunda|terça|terca|quarta|quinta|sexta|sábado|sabado|domingo)/i.test(l)) { b.data = l; return; }
         if (!b.titulo && !atual && /^RESUMO DE /i.test(l)) { b.titulo = l; return; }
         if (/^Desconsiderar/i.test(l)) { b.nota = l; return; }
+        const mg = l.match(/^GRUPO\s+(.+)$/i);   // 2.73.13: bloco por motivo (relatório de notas pendentes)
+        if (mg) { atual = { num: mg[1], grupo: true, toks: [] }; b.pedidos.push(atual); modo = 'pend'; return; }
         const mp = l.match(/^PEDIDO\s+(\S+)/i);
         if (mp) { atual = { num: mp[1], toks: [] }; b.pedidos.push(atual); modo = ''; return; }
         if (/^N[ÃA]O ENTREGARAM:?$/i.test(l)) { if (atual) atual.toks.push({ k: 'rotulo', t: 'Não entregaram:' }); modo = 'nomes'; return; }
@@ -164,14 +166,14 @@ function htmlResumoPendencias(texto) {
     const assHtml = `<table align="center" style="border-collapse:collapse"><tr>${logo ? `<td style="padding-right:14pt"><img src="${logo}" width="82" height="62"></td><td width="1" style="border-left:1pt solid #bbbbbb"></td>` : ''}<td style="padding-left:${logo ? 14 : 0}pt;font-family:Arial,sans-serif">
 ${s.nome ? `<p style="margin:0;font-size:11pt;font-weight:bold;color:${RS_AZUL}">${e(s.nome)}</p>` : ''}${s.cargo ? `<p style="margin:0 0 4pt;font-size:8.5pt;color:${RS_TEAL}">${e(s.cargo)}</p>` : ''}
 ${linhasAss.map(([i, t]) => `<p style="margin:1.5pt 0;font-size:7.6pt;color:#333333"><span style="color:${RS_TEAL}">${i}</span>&nbsp; ${e(t)}</p>`).join('')}</td></tr></table>`;
-    let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="author" content="Leandro Mendonça"><title>Resumo de pendências</title>
+    let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="author" content="Leandro Mendonça"><title>${e(b.titulo || 'Resumo de pendências')}</title>
 <style>@page WordSection1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.WordSection1{page:WordSection1}
 body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111111}p{margin:0}</style></head><body><div class="WordSection1">
 <p style="text-align:right;font-size:9.5pt;font-style:italic">${e(b.data)}</p>
 <p style="font-size:14pt;font-weight:bold;text-align:center;margin:14pt 30pt 18pt;line-height:1.25">${e(b.titulo || 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES')}</p>
 ${b.previa.map(t => `<p style="margin-bottom:8pt">${e(t)}</p>`).join('')}`;
     b.pedidos.forEach(p => {
-        h += `<p style="font-weight:bold;margin:12pt 0 6pt">PEDIDO ${e(p.num)}</p>`;
+        h += `<p style="font-weight:bold;margin:12pt 0 6pt">${p.grupo ? '' : 'PEDIDO '}${e(p.num)}</p>`;
         p.toks.forEach((t, i) => {
             if (t.k === 'rotulo') { if (!/^N[ãa]o entregaram/i.test(t.t)) h += `<p style="font-weight:bold;margin:10pt 0 6pt">${e(t.t.toUpperCase())}</p>`; }
             else if (t.k === 'nome') h += `<p style="margin:0 0 ${(p.toks[i + 1] && p.toks[i + 1].k === 'nome') ? 0 : 8}pt">${e(t.t)}</p>`;
@@ -207,7 +209,7 @@ function gerarPdfResumoPendencias(texto) {
     const garantir = alt => { if (y + alt > LIM) { doc.addPage(); y = MT; } };
     b.pedidos.forEach(p => {
         garantir(60);
-        fonte(10.5, 'bold'); ink('#000000'); doc.text('PEDIDO ' + p.num, ML, y + 10); y += 22;
+        fonte(10.5, 'bold'); ink('#000000'); doc.text((p.grupo ? '' : 'PEDIDO ') + p.num, ML, y + 10); y += 22;
         const toks = p.toks; let i = 0, primeiro = true;
         while (i < toks.length) {
             const t = toks[i];
@@ -304,7 +306,7 @@ function rpAtualizarPrevia() {
     const b = blocosResumoPendencias(area.value), e = escRel, s = assinaturaRelatorio();
     let h = `<div class="rp-dt">${e(b.data)}</div><div class="rp-tt">${e(b.titulo)}</div>${b.previa.map(t => `<div>${e(t)}</div>`).join('')}`;
     b.pedidos.forEach(p => {
-        h += `<div class="rp-pd">PEDIDO ${e(p.num)}</div>`;
+        h += `<div class="rp-pd">${p.grupo ? '' : 'PEDIDO '}${e(p.num)}</div>`;
         p.toks.forEach(t => {
             if (t.k === 'rotulo') { if (!/^N[ãa]o entregaram/i.test(t.t)) h += `<div class="rp-rot">${e(t.t.toUpperCase())}</div>`; }
             else if (t.k === 'forn') h += `<div class="rp-fn">${e(t.t)}</div>`;
@@ -340,4 +342,4 @@ async function baixarResumoPendencias(formato) {
         if (ok) toast('✓ Arquivo gerado.');
     } catch (err) { console.error('Resumo de pendências:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.61.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.73.13';

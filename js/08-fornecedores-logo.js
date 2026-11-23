@@ -475,5 +475,38 @@ async function limpar(){
         }
     });
 }
+// 2.73.13: resgatar a lista de códigos (o texto de "Copiar") de arquivamentos anteriores do Repasse de NF.
+// Um arquivamento em lote grava todas as notas com poucos milissegundos de diferença; notas arquivadas a menos de 60 s uma da outra formam o mesmo lote.
+// leandromendonssa
+function lotesArquivamentoRecentes() {
+    const com = historicoNotas.filter(n => n.arquivadoEmIso).sort((a, b) => String(a.arquivadoEmIso).localeCompare(String(b.arquivadoEmIso)));
+    const lotes = []; let ult = 0;
+    com.forEach(n => { const t = Date.parse(n.arquivadoEmIso) || 0; if (!lotes.length || t - ult > 60000) lotes.push([]); lotes[lotes.length - 1].push(n); ult = t; });
+    return lotes.reverse();
+}
+let resgateIdx = 0;
+function abrirResgateCodigos(i) {
+    const lotes = lotesArquivamentoRecentes();
+    if (!lotes.length) return toast('Nenhum arquivamento encontrado no histórico carregado.');
+    resgateIdx = Math.max(0, Math.min(lotes.length - 1, i == null ? 0 : i));
+    const lote = lotes[resgateIdx], quando = new Date(lote[lote.length - 1].arquivadoEmIso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    closeAllModals();
+    let m = document.getElementById('resgate-codigos-modal');
+    if (!m) { m = document.createElement('div'); m.id = 'resgate-codigos-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
+    m.innerHTML = `<div class="modal-content"><h2>Códigos de um arquivamento</h2>
+        <p style="font-size:12px;color:var(--text-light);margin:0 0 8px">${resgateIdx === 0 ? 'Último arquivamento' : (resgateIdx + 1) + 'º arquivamento mais recente'} · ${escRel(quando)} · ${lote.length} nota(s). É o mesmo texto que o botão Copiar entrega.</p>
+        <textarea id="resgate-codigos-texto" readonly class="form-field" style="width:100%;min-height:40vh;font-size:13px;line-height:1.4"></textarea>
+        <div class="confirm-actions pend-acoes">
+            <button type="button" class="actions-button is-primary" style="grid-column:1/-1" onclick="copiarResgateCodigos()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+            <button type="button" class="actions-button" ${resgateIdx >= lotes.length - 1 ? 'disabled' : ''} onclick="abrirResgateCodigos(${resgateIdx + 1})">Anterior</button>
+            <button type="button" class="actions-button" ${resgateIdx === 0 ? 'disabled' : ''} onclick="abrirResgateCodigos(${resgateIdx - 1})">Mais recente</button>
+            <button type="button" class="actions-button" style="grid-column:1/-1" onclick="closeAllModals()">Fechar</button></div></div>`;
+    document.getElementById('resgate-codigos-texto').value = buildSaidaText(lote);
+    m.classList.add('active');
+}
+async function copiarResgateCodigos() {
+    const a = document.getElementById('resgate-codigos-texto'); if (!a || !a.value) return toast('Nada para copiar.');
+    try { await navigator.clipboard.writeText(a.value); toast('✓ Lista copiada!'); } catch (e) { a.removeAttribute('readonly'); a.focus(); a.select(); toast('Selecione e copie o texto.'); }
+}
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",confirmText:"Limpar histórico",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.54.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.73.13';

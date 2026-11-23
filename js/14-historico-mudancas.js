@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.12', nome: 'Menos engasgo nas logos, Voltar certo e Ícone do site com combinações', status: 'atual', data: '23/11/2026 às 06:20',
+        numero: '2.73.13', nome: 'Filtro Falta entregar, logos no Repasse de NF, relatório de notas pendentes e resgate de códigos', status: 'atual', data: '23/11/2026 às 16:45',
+        novidades: ['Cotações: novo filtro "Falta entregar", que mostra só as cotações em que algum fornecedor ainda não entregou tudo (parciais já resolvidas ou relatadas ficam de fora). O botão mostra quantas são.', 'Repasse de NF: as logos dos fornecedores passam a aparecer nas bolinhas, mesmo quando a lista já estava na tela antes das logos carregarem.', 'No computador, a faixa preta do topo foi removida: o cabeçalho usa o mesmo visual cinza do celular.', 'Notas pendentes: botão "Relatório" gera o resumo das NFs paradas comigo, agrupado por motivo, nos mesmos moldes do Resumo de pendências (texto editável, Copiar, PDF, Word e TXT).', 'Repasse de NF: botão "Resgatar último arquivamento" recupera a lista de códigos (o mesmo texto do Copiar) de um arquivamento já feito, com opção de ver os anteriores.'],
+        implementado: ['js/13: cotacaoFaltaEntregar, alternarFiltroCotacoesFaltaEntregar e cache do resumo de entrega por renderização.', 'js/66: logosAtualizarBolinhas troca as iniciais pela logo no lugar, sem redesenhar a tela.', 'style.css: removido o bloco de cabeçalho preto do desktop; botões da área de arquivamento com a mesma largura.', 'js/65 e js/47: relatório de notas pendentes (blocos por motivo reaproveitando PDF/Word do Resumo).', 'js/08: lotesArquivamentoRecentes agrupa as notas arquivadas com menos de 60 s de diferença; abrirResgateCodigos monta o texto com buildSaidaText.'],
+        arquivos: ['js/13-relatorios-divergencias.js', 'js/66-logos-fornecedores.js', 'js/65-notas-pendentes.js', 'js/47-resumo-pendencias.js', 'js/08-fornecedores-logo.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['O resgate usa o histórico carregado no app (últimos 2 meses); arquivamentos mais antigos exigem "Carregar todas as arquivadas" no histórico.', 'Notas arquivadas uma a uma também entram na contagem de arquivamentos se forem feitas com menos de 1 minuto de diferença.'],
+        testar: ['Cotações > Falta entregar: só cotações com entrega pendente; toque de novo para voltar a todas.', 'Repasse de NF: as bolinhas dos fornecedores devem mostrar a logo.', 'Repasse de NF > Resgatar último arquivamento: confira a lista e toque em Copiar; use Anterior para ver arquivamentos antes.', 'Início > Notas pendentes > Relatório: confira o texto e gere PDF/Word.', 'No computador: o topo não deve mais ter faixa preta.']
+    },
+    {
+        numero: '2.73.12', nome: 'Menos engasgo nas logos, Voltar certo e Ícone do site com combinações', status: 'concluida', data: '23/11/2026 às 06:20',
         novidades: ['Fornecedor sem cadastro: "Definir logo" agora fecha a janela anterior e abre a de logo na frente (antes ficava por baixo).', 'Criar cadastro simples e abrir o fornecedor a partir da bolinha agora têm o botão Voltar certo: volta para a tela onde você estava, não para Ajustes.', 'Menos engasgo: a imagem da logo vira um endereço curto uma única vez, em vez de ser copiada inteira dentro de cada cartão; ao salvar uma logo só a tela aberta é redesenhada (antes eram 3 telas pesadas, 2 a 3 vezes); abrir o fornecedor pela bolinha desenha só um cartão, uma vez.', 'Ícone do site: com o campo vazio, o app monta combinações com o nome (apelido.com.br, apelido.com, primeira palavra...), testa cada uma e mostra a primeira que tem logo; toque de novo para a próxima. Se você digitar o site, usa exatamente o digitado.', 'Removido o botão Site pelo CNPJ.'],
         implementado: ['js/66: logoUrlLeve (blob), logosRenderizar com redesenho só da tela aberta e das demais ao entrar, irParaCartaoFornecedor com retorno e uma única desenhada, closeAllModals ao abrir a logo, candidatosSiteForn e siteMostrar, remoção da consulta por CNPJ.'],
         arquivos: ['js/66-logos-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4039,4 +4047,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.12';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.13';

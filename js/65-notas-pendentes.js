@@ -71,9 +71,59 @@ function abrirNotasPendentesResumo() {
     m.innerHTML = `<div class="modal-content"><h2>${np.length ? np.length + ' nota(s) pendente(s)' : 'Notas pendentes'}</h2>
         <p style="font-size:12px;color:var(--text-light);margin:0 0 4px">NFs paradas comigo por carta de correção, nota de devolução ou cotação, da mais urgente para a menos. Toque para abrir a NF no Controle de NFs.</p>
         <div style="max-height:60vh;overflow:auto">${np.length ? np.map(lin).join('') : '<div class="ini-vazio">Nenhuma NF parada. Para marcar, abra a NF no Controle de NFs.</div>'}</div>
-        <div class="confirm-actions"><button type="button" class="actions-button" onclick="closeAllModals()">Fechar</button></div></div>`;
+        <div class="confirm-actions"><button type="button" class="actions-button" onclick="closeAllModals()">Fechar</button>${np.length ? `<button type="button" class="actions-button is-primary" onclick="abrirRelatorioNotasPendentes()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Relatório</button>` : ''}</div></div>`;
     m.classList.add('active');
 }
+// 2.73.13: relatório das NFs paradas comigo, nos mesmos moldes do Resumo de pendências (texto editável; copiar, PDF, Word e TXT)
+function textoRelatorioNotasPendentes() {
+    const np = notasParadasComigo(), L = [dataExtensoResumo(), 'RESUMO DE NOTAS PENDENTES DE ENTREGA AO FINANCEIRO', ''];
+    if (!np.length) L.push('Nenhuma NF parada no momento.', '');
+    MOTIVOS_PEND_ENTREGA.forEach(([k, rot]) => {
+        const grupo = np.filter(x => x.pe.motivos.includes(k)); if (!grupo.length) return;
+        L.push('GRUPO ' + rot.toUpperCase() + ' (' + grupo.length + ')', '');
+        grupo.forEach(x => {
+            const v = x.v, n = (v.nf || v.erp).nf, nomeF = String(nomeExibicaoFornecedor(v.fornecedor, v.cnpj || '') || v.fornecedor || '').toUpperCase();
+            const outros = x.pe.motivos.filter(m => m !== k).map(m => (MOTIVOS_PEND_ENTREGA.find(y => y[0] === m) || [m, m])[1]);
+            let desde = ''; if (x.pe.desde) { const d = String(x.pe.desde).split('-'); if (d.length === 3) desde = `parada desde ${d[2]}/${d[1]}/${d[0]}`; }
+            L.push(`${nomeF} - N.F. ${n}`, [avisoVencParada(x.dias), desde, outros.length ? 'também falta: ' + outros.join(', ') : ''].filter(Boolean).join(' · ') + '.', '');
+        });
+    });
+    return L.join('\n').replace(/\n{4,}/g, '\n\n\n').trimEnd() + '\n';
+}
+function abrirRelatorioNotasPendentes() {
+    closeAllModals();
+    let m = document.getElementById('rel-notas-pend-modal');
+    if (!m) { m = document.createElement('div'); m.id = 'rel-notas-pend-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
+    m.innerHTML = `<div class="modal-content"><h2>Relatório de notas pendentes</h2>
+        <p style="font-size:12px;color:var(--text-light);margin:0 0 8px">NFs paradas comigo, agrupadas pelo que falta. Você pode editar o texto antes de copiar ou gerar o arquivo.</p>
+        <textarea id="rel-notas-pend-texto" class="form-field" style="width:100%;min-height:42vh;font-size:13px;line-height:1.4" spellcheck="false"></textarea>
+        <div class="confirm-actions pend-acoes">
+            <button type="button" class="actions-button is-primary" onclick="copiarRelatorioNotasPendentes()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarRelatorioNotasPendentes('pdf')"><span class="icon-wrapper"><i class="fa-solid fa-file-pdf"></i></span> PDF</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarRelatorioNotasPendentes('doc')"><span class="icon-wrapper"><i class="fa-solid fa-file-word"></i></span> Word</button>
+            <button type="button" class="actions-button is-neutral" onclick="baixarRelatorioNotasPendentes('txt')"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> TXT</button>
+            <button type="button" class="actions-button" style="grid-column:1/-1" onclick="closeAllModals()">Fechar</button></div></div>`;
+    document.getElementById('rel-notas-pend-texto').value = textoRelatorioNotasPendentes();
+    m.classList.add('active');
+}
+async function copiarRelatorioNotasPendentes() {
+    const a = document.getElementById('rel-notas-pend-texto'); if (!a || !a.value.trim()) return toast('Nada para copiar.');
+    try { await navigator.clipboard.writeText(a.value); toast('✓ Relatório copiado.'); } catch (e) { a.focus(); a.select(); toast('Selecione e copie o texto.'); }
+}
+async function baixarRelatorioNotasPendentes(formato) {
+    const a = document.getElementById('rel-notas-pend-texto'), texto = a ? a.value : ''; if (!texto.trim()) return toast('Nada para exportar.');
+    const base = 'Notas-pendentes-' + dataLocalISO();
+    try {
+        let ok = false;
+        if (formato === 'doc') ok = await entregarArquivoRelCot(base + '.doc', new Blob(['\ufeff', htmlResumoPendencias(texto)], { type: 'application/msword' }));
+        else if (formato === 'pdf') {
+            if (typeof jspdf === 'undefined') return toast('✕ A biblioteca de PDF ainda não carregou — aguarde um instante e tente de novo.');
+            ok = await entregarArquivoRelCot(base + '.pdf', gerarPdfResumoPendencias(texto).output('blob'));
+        } else ok = await entregarArquivoRelCot(base + '.txt', new Blob([texto], { type: 'text/plain;charset=utf-8' }));
+        if (ok) toast('✓ Arquivo gerado.');
+    } catch (err) { console.error('Relatório de notas pendentes:', err); toast('✕ Erro ao gerar o arquivo.'); }
+}
+window.abrirRelatorioNotasPendentes = abrirRelatorioNotasPendentes; window.copiarRelatorioNotasPendentes = copiarRelatorioNotasPendentes; window.baixarRelatorioNotasPendentes = baixarRelatorioNotasPendentes;
 function irParaNotaPendente(numero) { closeAllModals(); abrirNfNoHistorico('', numero); }
 // Editor de NF: a pendência faz parte do cartão da NF (etiqueta junto das demais + botão junto dos botões), sem bloco solto no topo
 function chipPendenciaEntrega(id) {
@@ -126,4 +176,4 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
         };
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.13';

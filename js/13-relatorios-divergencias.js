@@ -216,8 +216,15 @@ function renderDivergenciasAuditoria() {
 
 
 let filtroCotacoesTexto = '';
+// 2.73.13: filtro "Falta entregar" = cotações em que ainda falta algum fornecedor entregar. Não entram: cotações com todos entregues, com entrega
+// parcial já resolvida (marcada como resolvida ou com a falta relatada em auditoria) e fornecedores com entrega cancelada.
+let filtroCotacoesFaltaEntregar = false;
+let _resumoCotCache = null;
+function cotacaoFaltaEntregar(c) { const r = resumoEntregaCotacao(c); return r.total > 0 && (r.total - r.completa - r.parcialRel) > 0; }
+function alternarFiltroCotacoesFaltaEntregar() { filtroCotacoesFaltaEntregar = !filtroCotacoesFaltaEntregar; renderListaCotacoes(); }
 let ordenacaoCotacoes = 'entrada'; // 'entrada' (padrão, mais recente primeiro) ou 'pedido' (numérico)
 
+// leandromendonssa
 function filtrarCotacoes(texto) {
     filtroCotacoesTexto = texto;
     renderListaCotacoes();
@@ -246,6 +253,7 @@ function itensCorrespondentesCotacao(cotacao, termo) {
 // Fase 34: resumo de entrega do pedido (quantos fornecedores completos/parciais/aguardando).
 // Só leitura: usa as mesmas funções do card do fornecedor na Central (Fase 31). Nunca quebra a lista.
 function resumoEntregaCotacao(c) {
+    if (_resumoCotCache && _resumoCotCache.has(c.pedido)) return _resumoCotCache.get(c.pedido);
     const r = { completa: 0, parcial: 0, parcialRel: 0, erp: 0, aguardando: 0, cancelada: 0, divergencias: 0, total: 0 };
     try {
         const fornecedores = c.fornecedores || [];
@@ -266,6 +274,7 @@ function resumoEntregaCotacao(c) {
             else r.aguardando++;
         });
     } catch (err) { console.warn('resumoEntregaCotacao', err); }
+    if (_resumoCotCache) _resumoCotCache.set(c.pedido, r);
     return r;
 }
 function chipsResumoEntrega(r) {
@@ -389,11 +398,18 @@ function renderListaCotacoes() {
     if (!container) return;
 
     const termo = filtroCotacoesTexto.trim().toUpperCase();
-    const lista = ordenarCotacoes(listaCotacoes);
+    _resumoCotCache = new Map();   // o resumo de cada cotação é calculado uma vez só nesta desenhada (filtro + cartão)
+    try {
+    let lista = ordenarCotacoes(listaCotacoes);
+    if (filtroCotacoesFaltaEntregar) lista = lista.filter(cotacaoFaltaEntregar);
+    const btnF = document.getElementById('btn-filtro-cotacoes-falta');
+    if (btnF) { btnF.classList.toggle('active', filtroCotacoesFaltaEntregar); const t = btnF.querySelector('.selb-t'); if (t) t.textContent = filtroCotacoesFaltaEntregar ? `Falta entregar · ${lista.length}` : 'Falta entregar'; }
 
     if (!termo) {
         if (lista.length === 0) {
-            container.innerHTML = '<div class="empty-state">Nenhuma cotação cadastrada ainda. Importe o arquivo da primeira cotação para começar.</div>';
+            container.innerHTML = filtroCotacoesFaltaEntregar
+                ? '<div class="empty-state">Nenhuma cotação com entrega pendente. Todas já chegaram ou tiveram a parcial resolvida.</div>'
+                : '<div class="empty-state">Nenhuma cotação cadastrada ainda. Importe o arquivo da primeira cotação para começar.</div>';
             return;
         }
         container.innerHTML = lista.map(renderCardCotacao).join('');
@@ -416,6 +432,7 @@ function renderListaCotacoes() {
     });
 
     container.innerHTML = blocos.length ? blocos.join('') : '<div class="empty-state">Nenhuma cotação encontrada.</div>';
+    } finally { _resumoCotCache = null; }
 }
 
 
@@ -594,4 +611,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.41.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.73.13';
