@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.10', nome: 'Logo nas Cotações, bolinha leva ao fornecedor e mensagens de fim de semana', status: 'atual', data: '22/11/2026 às 17:20',
+        numero: '2.73.11', nome: 'Identidade do fornecedor: a logo não se perde mais', status: 'atual', data: '23/11/2026 às 07:10',
+        novidades: ['A logo agora pertence ao fornecedor, não ao apelido. Ele é reconhecido pelo CNPJ (matriz e filiais), razão social, nome de exibição, apelido e nomes vinculados: qualquer um deles encontra a logo.', 'Mudar apelido, mudar nome de exibição ou fazer uma nova associação não faz mais a logo sumir. As logos que você já tinha são protegidas automaticamente.', 'Compras diretas e notas sem XML: a logo fica guardada para o nome da nota e continua valendo quando você cadastrar ou vincular esse nome depois.', 'Tocar na bolinha leva ao cadastro EXATO do fornecedor reconhecido (sem pesquisa), com a faixa "Mostrando só ..." e o botão Mostrar todos. Se não houver cadastro, abre uma janela que explica e permite definir logo, criar cadastro simples ou vincular a um fornecedor.', 'A janela de logo mostra "Reconhecido como: ..." para você ver qual cadastro o app ligou àquele nome.'],
+        implementado: ['js/66: identidade (índice nome/CNPJ → cadastro), logo guardada na chave principal com apontamentos {r}, proteção automática das logos existentes, salvar/remover/lote por identidade, bolinha abre o cartão exato, janela de fornecedor sem cadastro.', 'js/18: foco em um fornecedor (fornecedorFocoChave) com faixa e botão Mostrar todos.', 'style.css: .frn-foco.'],
+        arquivos: ['js/66-logos-fornecedores.js', 'js/18-erp-fornecedores-spdata.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['A logo deixa de depender só do apelido. Nada é apagado: o app apenas acrescenta apontamentos no mesmo documento de logos.', 'Se dois cadastros diferentes tiverem exatamente o mesmo apelido, eles dividem a logo (como já faziam).'],
+        testar: ['Fornecedores > troque o apelido de um fornecedor que tem logo: a bolinha deve continuar com a logo.', 'Defina a logo de uma compra direta (sem cadastro), depois vincule esse nome a um fornecedor: a logo continua.', 'Toque numa bolinha: abre só o cadastro certo, com a faixa Mostrando só. Numa nota sem cadastro, abre a janela explicando.', 'Janela Definir logo: confira a linha "Reconhecido como".']
+    },
+    {
+        numero: '2.73.10', nome: 'Logo nas Cotações, bolinha leva ao fornecedor e mensagens de fim de semana', status: 'concluida', data: '22/11/2026 às 17:20',
         novidades: ['A bolinha do fornecedor nas Cotações agora mostra a logo (ou as iniciais) igual às demais telas.', 'Tocar na bolinha de qualquer fornecedor abre o cadastro dele em Fornecedores, já filtrado e aberto, para trocar logo, apelido ou o que quiser. O botão Voltar leva de volta para onde você estava.', 'Modo Leandro: as mensagens de sábado e domingo agora são 12 para cada dia e giram de verdade (uma diferente da anterior, mantida por 10 minutos).'],
         implementado: ['js/09: cartão do fornecedor da Cotação usa avatarFornConteudo.', 'js/66: avatarFornConteudo guarda o nome do fornecedor na bolinha; irParaFornecedorPorNome (com Voltar) e um toque global nas bolinhas.', 'js/62: comentarioBase com sorteio sem repetir e memória de 10 min; novas frases de sábado e domingo.', 'style.css: .av-fn e cursor das bolinhas.'],
         arquivos: ['js/09-anotacoes.js', 'js/62-linguagem.js', 'js/66-logos-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4023,4 +4031,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.10';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.11';

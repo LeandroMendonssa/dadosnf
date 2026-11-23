@@ -431,6 +431,8 @@ async function confirmarImportacaoCadastroFornecedoresSpData() {
 }
 
 let filtroCadastroFornecedoresSpDataTexto = '';
+let fornecedorFocoChave = '';   // 2.73.11: quando se chega pela bolinha, mostra só o cadastro reconhecido (sem pesquisa)
+function limparFocoFornecedor() { fornecedorFocoChave = ''; renderListaFornecedoresUnificada(); }
 // Desempenho: a lista de fornecedores tende a crescer bastante, e renderizar
 // centenas de cards de uma vez (cada um com inputs de edição em potencial)
 // trava a tela ao abrir. Em vez de paginação por página numerada, mostra um
@@ -441,6 +443,7 @@ const LOTE_FORNECEDORES = 40;
 let limiteExibicaoFornecedores = LOTE_FORNECEDORES;
 function filtrarCadastroFornecedoresSpData(texto) {
     filtroCadastroFornecedoresSpDataTexto = texto;
+    fornecedorFocoChave = '';
     limiteExibicaoFornecedores = LOTE_FORNECEDORES; // toda nova busca recomeça do lote 1
     renderListaFornecedoresUnificada();
 }
@@ -777,7 +780,7 @@ function renderListaFornecedoresUnificada() {
     const termo = normalizarBuscaRel(termoOriginal);
     const termoNumerico = termoOriginal.replace(/\D/g, '');
     const todos = listaFornecedoresUnificada();
-    const lista = todos.filter(f => {
+    const lista0 = todos.filter(f => {
         if (!termoOriginal) return true;
         if ((f.docs || []).some(d => normalizarBuscaRel(d.codigo).includes(termo))) return true;
         if (normalizarBuscaRel(f.nomeReal).includes(termo)) return true;
@@ -786,6 +789,9 @@ function renderListaFornecedoresUnificada() {
         if (termoNumerico && f.cnpjs.some(c => c.cnpj.includes(termoNumerico))) return true;
         return false;
     });
+    const focoOk = !!fornecedorFocoChave && lista0.some(f => f.chave === fornecedorFocoChave);
+    if (!focoOk) fornecedorFocoChave = '';
+    const lista = focoOk ? lista0.filter(f => f.chave === fornecedorFocoChave) : lista0;
 
     const contadorEl = document.getElementById('contador-fornecedores-spdata');
     if (contadorEl) contadorEl.textContent = `${todos.length} fornecedor(es) cadastrado(s)`;
@@ -806,7 +812,8 @@ function renderListaFornecedoresUnificada() {
         .map(f => `<option value="${f.id}">${escRel(f.nomeReal)}${f.cnpjs.length ? ' — ' + formatarCnpjExibicao(f.cnpjs[0].cnpj) : ''}</option>`)
         .join('');
 
-    container.innerHTML = visiveis.map(f => {
+    const focoHTML = focoOk ? `<div class="frn-foco"><span>Mostrando só <b>${escRel(visiveis[0].nomeExibido || visiveis[0].nomeReal)}</b></span><button type="button" class="central-status-toggle" onclick="limparFocoFornecedor()">Mostrar todos</button></div>` : '';
+    container.innerHTML = focoHTML + visiveis.map(f => {
         if (f.origem === 'legado') {
             const vincularHTML = `<div class="central-spdata-busca" onclick="event.stopPropagation()">
                 <label class="txt-aux">Mesmo fornecedor de um já cadastrado com CNPJ? Busque e vincule (não apaga este registro):</label>
@@ -903,4 +910,4 @@ function vincularEntidadeSelecionada(chave, principalId) {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.73.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/18-erp-fornecedores-spdata.js'] = '2.73.11';
