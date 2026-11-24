@@ -3,7 +3,7 @@
 // caso a caso: Unir ou "Não é a mesma empresa". Só por CNPJ, nunca por nome. Unir grava apenas a ligação entre os dois cadastros
 // (entidadesRelacionadas, o mesmo mecanismo que já existe); nenhum cadastro, CNPJ, apelido ou logo é apagado ou alterado. Desfazer remove só essa ligação.
 // leandromendonssa
-let ufRecusadas = null, ufFeitos = [], ufCarregando = false, ufLegFeitos = [];
+let ufRecusadas = null, ufFeitos = [], ufCarregando = false, ufVinc = [], ufFechados = new Set();
 const ufChavesFeitas = () => new Set(ufFeitos.map(x => x.chave));
 const ufDoc = () => settingsDocRef.parent.doc('uniaoFornecedores');
 async function ufCarregarRecusadas() {
@@ -66,46 +66,56 @@ function ufCandidatos(nome) {
         });
         if (sc) out.push({ d, sc });
     });
-    return out.sort((a, b) => b.sc - a.sc).slice(0, 3);
+    return out.sort((a, b) => b.sc - a.sc).slice(0, 5);
 }
-function ufLegadoLista() {
-    const feitos = new Set(ufLegFeitos.map(x => x.nome));
-    return listaFornecedoresUnificada().filter(f => f.origem === 'legado' && !feitos.has(f.nomeReal) && !(ufRecusadas && ufRecusadas.has('lg:' + f.nomeReal)))
-        .map(f => ({ nome: f.nomeReal, cands: ufCandidatos(f.nomeReal) })).filter(x => x.cands.length);
-}
+function ufNomesLegado() { return listaFornecedoresUnificada().filter(f => f.origem === 'legado').map(f => f.nomeReal); }
 function ufCandHTML(d) {
     const nome = d.nomeExibido && d.nomeExibido !== d.nomeReal ? d.nomeExibido : d.nomeReal; let av = ''; try { av = avatarFornConteudo(nome); } catch (e) { }
     const cnpj = (d.cnpjs || [])[0] ? formatarCnpjExibicao(d.cnpjs[0].cnpj) : 'sem CNPJ';
     return `<div class="uf-lado"><span class="uf-av">${av}</span><div class="uf-txt"><b>${escRel(d.nomeReal || '')}</b><small>${escRel(cnpj)}${d.codigo ? ' · cód. ' + escRel(d.codigo) : ''}</small></div></div>`;
 }
+// Cada candidato tem o próprio botão: dá para ligar um, vários ou nenhum. O card só some quando você toca em "Terminei" ou "Nenhum destes".
+function ufCardCand(tipo, nome, cabHTML, cands) {
+    const meus = ufVinc.filter(v => v.tipo === tipo && v.nome === nome);
+    return `<div class="card mt-4" data-tipo="${tipo}" data-nome="${escRel(nome)}">${cabHTML}` + cands.map(c => {
+        const lig = meus.some(v => v.id === c.d.id);
+        return `<div class="uf-cand${lig ? ' is-lig' : ''}">${ufCandHTML(c.d)}` + (lig
+            ? `<div class="uf-lig">✓ Vinculado a este</div><button type="button" class="actions-button is-neutral" style="width:100%" data-id="${escRel(c.d.id)}" onclick="ufDesvincular(this)">Desfazer</button>`
+            : `<button type="button" class="actions-button is-primary" style="width:100%" data-id="${escRel(c.d.id)}" onclick="ufVincular(this)">É este</button>`) + `</div>`;
+    }).join('') + (meus.length
+        ? `<button type="button" class="actions-button is-primary" style="width:100%;margin-top:10px" onclick="ufFechar(this)">Terminei</button>`
+        : `<button type="button" class="actions-button is-neutral" style="width:100%;margin-top:10px" onclick="ufPular(this)">Nenhum destes</button>`) + `</div>`;
+}
+const ufEscondido = (tipo, nome) => ufFechados.has(tipo + ':' + nome) || (ufRecusadas && ufRecusadas.has(tipo + ':' + nome));
+function ufLegadoLista() {
+    const nomes = new Set(ufNomesLegado()); ufVinc.filter(v => v.tipo === 'lg').forEach(v => nomes.add(v.nome));
+    return [...nomes].filter(n => !ufEscondido('lg', n)).map(nome => ({ nome, cands: ufCandidatos(nome) })).filter(x => x.cands.length);
+}
 function ufLegadoHTML() {
-    const feitos = ufLegFeitos.map((x, i) => `<div class="card mt-4"><div class="xml-item-meta"><b>✓ "${escRel(x.nome)}"</b> agora é nome alternativo de <b>${escRel(x.d.nomeReal)}</b></div><button type="button" class="actions-button is-neutral" style="width:100%;margin-top:8px" onclick="ufDesfazerLegado(${i})">Desfazer</button></div>`).join('');
     const lista = ufLegadoLista();
-    return `<div class="card mt-4"><p class="desc-tela"><b>Nomes só da lista simples.</b> Quando um nome parece abreviar um fornecedor cadastrado, toque no cadastro certo para ele virar nome alternativo dele. O nome antigo continua existindo; nada é apagado.</p><div class="xml-item-meta">${lista.length} nome(s) com sugestão</div></div>` + feitos +
-        lista.map(x => `<div class="card mt-4" data-lg="${escRel(x.nome)}"><div class="xml-item-meta"><b>${escRel(x.nome)}</b> deve ser:</div>` +
-            x.cands.map(c => `<div>${ufCandHTML(c.d)}<button type="button" class="actions-button is-primary" style="width:100%" data-id="${escRel(c.d.id)}" onclick="ufVincLegado(this)">É este</button></div>`).join('') +
-            `<button type="button" class="actions-button is-neutral" style="width:100%;margin-top:10px" onclick="ufPularLegado(this)">Nenhum destes</button></div>`).join('');
+    return `<div class="card mt-4"><p class="desc-tela"><b>Nomes só da lista simples.</b> Cada cadastro candidato tem o seu botão: toque em <b>É este</b> em quantos forem o mesmo fornecedor (um, vários ou nenhum). O nome antigo continua existindo; nada é apagado.</p><div class="xml-item-meta">${lista.length} nome(s) com sugestão</div></div>` +
+        lista.map(x => ufCardCand('lg', x.nome, `<div class="xml-item-meta"><b>${escRel(x.nome)}</b> pode ser:</div>`, x.cands)).join('');
 }
-async function ufVincLegado(bt) {
-    const card = bt.closest('[data-lg]'), nome = card.dataset.lg, id = bt.dataset.id, d = listaFornecedoresSpData.find(f => f.id === id); if (!d) return;
-    card.querySelectorAll('button').forEach(b => b.disabled = true);
-    try { await fornecedoresSpDataCollection.doc(id).update({ aliasesLegado: firebase.firestore.FieldValue.arrayUnion(nome) }); ufLegFeitos.unshift({ nome, id, d }); toast('✓ Vinculado. O nome antigo não foi apagado.'); }
-    catch (e) { console.error('Vincular nome', e); toast('✕ Não consegui vincular. Tente de novo.'); card.querySelectorAll('button').forEach(b => b.disabled = false); return; }
+async function ufVincular(bt) {
+    const card = bt.closest('[data-tipo]'), tipo = card.dataset.tipo, nome = card.dataset.nome, id = bt.dataset.id, d = listaFornecedoresSpData.find(f => f.id === id); if (!d) return;
+    bt.disabled = true;
+    try { await fornecedoresSpDataCollection.doc(id).update({ aliasesLegado: firebase.firestore.FieldValue.arrayUnion(nome) }); if (!ufVinc.some(v => v.tipo === tipo && v.nome === nome && v.id === id)) ufVinc.push({ tipo, nome, id, d }); toast('✓ Vinculado. Nada foi apagado.'); }
+    catch (e) { console.error('Vincular', e); toast('✕ Não consegui vincular. Tente de novo.'); bt.disabled = false; return; }
     ufRender();
 }
-async function ufDesfazerLegado(i) {
-    const x = ufLegFeitos[i]; if (!x) return;
-    try { await fornecedoresSpDataCollection.doc(x.id).update({ aliasesLegado: firebase.firestore.FieldValue.arrayRemove(x.nome) }); ufLegFeitos.splice(i, 1); toast('✓ Vínculo desfeito.'); }
-    catch (e) { console.error('Desfazer vínculo', e); toast('✕ Não consegui desfazer. Tente de novo.'); return; }
+async function ufDesvincular(bt) {
+    const card = bt.closest('[data-tipo]'), tipo = card.dataset.tipo, nome = card.dataset.nome, id = bt.dataset.id; bt.disabled = true;
+    try { await fornecedoresSpDataCollection.doc(id).update({ aliasesLegado: firebase.firestore.FieldValue.arrayRemove(nome) }); ufVinc = ufVinc.filter(v => !(v.tipo === tipo && v.nome === nome && v.id === id)); toast('✓ Vínculo desfeito.'); }
+    catch (e) { console.error('Desvincular', e); toast('✕ Não consegui desfazer. Tente de novo.'); bt.disabled = false; return; }
     ufRender();
 }
-async function ufPularLegado(bt) {
-    const card = bt.closest('[data-lg]'), nome = card.dataset.lg; card.querySelectorAll('button').forEach(b => b.disabled = true);
-    try { await ufDoc().set({ recusadas: firebase.firestore.FieldValue.arrayUnion('lg:' + nome) }, { merge: true }); ufRecusadas.add('lg:' + nome); toast('Anotado. Esse nome não volta a ser sugerido.'); }
-    catch (e) { console.error('Pular nome', e); toast('✕ Não consegui anotar. Tente de novo.'); card.querySelectorAll('button').forEach(b => b.disabled = false); return; }
+function ufFechar(bt) { const c = bt.closest('[data-tipo]'); ufFechados.add(c.dataset.tipo + ':' + c.dataset.nome); ufRender(); }
+async function ufPular(bt) {
+    const c = bt.closest('[data-tipo]'), k = c.dataset.tipo + ':' + c.dataset.nome; bt.disabled = true;
+    try { await ufDoc().set({ recusadas: firebase.firestore.FieldValue.arrayUnion(k) }, { merge: true }); ufRecusadas.add(k); toast('Anotado. Não volta a ser sugerido.'); }
+    catch (e) { console.error('Pular', e); toast('✕ Não consegui anotar. Tente de novo.'); bt.disabled = false; return; }
     ufRender();
 }
-const ufPar = bt => { const k = bt.closest('[data-uf]').dataset.uf; return ufSugestoes().find(s => s.chave === k); };
 async function ufUnir(bt) {
     const s = ufPar(bt); if (!s) return; bt.disabled = true;
     try {
@@ -136,13 +146,12 @@ async function ufRecusar(bt) {
 // ---- 5.3: logos sem cadastro e fornecedores com duas logos próprias ----
 // Logo sem cadastro: o nome da chave vira nome alternativo do cadastro escolhido (aliasesLegado, mecanismo já existente). Nenhuma imagem é apagada nem movida;
 // se o cadastro já tem logo, continua valendo a que vale hoje e a outra fica guardada. Duas logos próprias: só mostra qual vale hoje, sem alterar.
-let ufLogoFeitos = [];
 const ufImg = en => { try { const u = en.u ? logoUrlLeve(en.u) : (en.d ? logoDevUrl(en.d, false) : ''); return u ? `<img src="${escRel(u)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''; } catch (e) { return ''; } };
 function ufLogosSemCadastro() {
     const L = logosFornecedores || {}, ix = indiceFornLogo(), raizes = new Set();
     listaFornecedoresSpData.forEach(d => (d.cnpjs || []).forEach(c => { const g = String(c.cnpj || '').replace(/\D/g, ''); if (g.length >= 8) raizes.add(g.slice(0, 8)); }));
-    const feitos = new Set(ufLogoFeitos.map(x => x.chave));
-    return Object.keys(L).filter(k => L[k] && !L[k].r && (L[k].u || L[k].d) && !feitos.has(k) && !(ufRecusadas && ufRecusadas.has('lgo:' + k)) && !(k.startsWith('CNPJ:') ? raizes.has(k.slice(5)) : ix.nomes.has(k)))
+    const sessao = new Set(ufVinc.filter(v => v.tipo === 'lgo').map(v => v.nome));
+    return Object.keys(L).filter(k => L[k] && !L[k].r && (L[k].u || L[k].d) && !ufEscondido('lgo', k) && (sessao.has(k) || !(k.startsWith('CNPJ:') ? raizes.has(k.slice(5)) : ix.nomes.has(k))))
         .map(k => ({ k, cands: k.startsWith('CNPJ:') ? [] : ufCandidatos(k) }));
 }
 function ufLogosDuplas() {
@@ -155,32 +164,10 @@ function ufLogosDuplas() {
 }
 function ufLogosHTML() {
     const L = logosFornecedores || {}, sem = ufLogosSemCadastro(), com = sem.filter(x => x.cands.length), semSug = sem.length - com.length, dup = ufLogosDuplas();
-    const feitos = ufLogoFeitos.map((x, i) => `<div class="card mt-4"><div class="xml-item-meta"><b>✓ Logo "${escRel(x.chave)}"</b> ligada a <b>${escRel(x.d.nomeReal)}</b></div><button type="button" class="actions-button is-neutral" style="width:100%;margin-top:8px" onclick="ufDesfazerLogo(${i})">Desfazer</button></div>`).join('');
-    return `<div class="card mt-4"><p class="desc-tela"><b>Logos sem cadastro.</b> Toque no cadastro a que a logo pertence. Nenhuma imagem é apagada: se o cadastro já tem logo, a que vale hoje continua valendo e esta fica guardada.</p><div class="xml-item-meta">${com.length} com sugestão${semSug ? ` · ${semSug} sem sugestão (ex.: só o CNPJ)` : ''}</div></div>` + feitos +
-        com.map(x => `<div class="card mt-4" data-lgo="${escRel(x.k)}"><div class="uf-lado"><span class="uf-av">${ufImg(L[x.k])}</span><div class="uf-txt"><b>${escRel(x.k)}</b><small>logo sem cadastro; deve ser de:</small></div></div>` +
-            x.cands.map(c => `<div>${ufCandHTML(c.d)}<button type="button" class="actions-button is-primary" style="width:100%" data-id="${escRel(c.d.id)}" onclick="ufVincLogo(this)">É este</button></div>`).join('') +
-            `<button type="button" class="actions-button is-neutral" style="width:100%;margin-top:10px" onclick="ufPularLogo(this)">Nenhum destes</button></div>`).join('') +
+    return `<div class="card mt-4"><p class="desc-tela"><b>Logos sem cadastro.</b> Cada cadastro candidato tem o seu botão: toque em <b>É este</b> nos que forem o dono da logo. Nenhuma imagem é apagada: se o cadastro já tem logo, a que vale hoje continua valendo e esta fica guardada.</p><div class="xml-item-meta">${com.length} com sugestão${semSug ? ` · ${semSug} sem sugestão (ex.: só o CNPJ)` : ''}</div></div>` +
+        com.map(x => ufCardCand('lgo', x.k, `<div class="uf-lado"><span class="uf-av">${ufImg(L[x.k])}</span><div class="uf-txt"><b>${escRel(x.k)}</b><small>logo sem cadastro; pode ser de:</small></div></div>`, x.cands)).join('') +
         `<div class="card mt-4"><p class="desc-tela"><b>Fornecedores com duas logos próprias.</b> Só informativo: a marcada com ✓ é a que vale hoje; a outra fica guardada. Nada é alterado.</p><div class="xml-item-meta">${dup.length} fornecedor(es)</div></div>` +
         dup.map(x => `<div class="card mt-4"><div class="xml-item-meta"><b>${escRel(x.nome)}</b></div>` + x.proprias.map(k => `<div class="uf-lado"><span class="uf-av">${ufImg(L[k])}</span><div class="uf-txt"><b>${escRel(k)}</b><small>${k === x.vale ? '✓ vale hoje' : 'guardada'}</small></div></div>`).join('') + `</div>`).join('');
 }
-async function ufVincLogo(bt) {
-    const card = bt.closest('[data-lgo]'), chave = card.dataset.lgo, id = bt.dataset.id, d = listaFornecedoresSpData.find(f => f.id === id); if (!d) return;
-    card.querySelectorAll('button').forEach(b => b.disabled = true);
-    try { await fornecedoresSpDataCollection.doc(id).update({ aliasesLegado: firebase.firestore.FieldValue.arrayUnion(chave) }); ufLogoFeitos.unshift({ chave, id, d }); toast('✓ Logo ligada ao cadastro. Nenhuma imagem foi apagada.'); }
-    catch (e) { console.error('Ligar logo', e); toast('✕ Não consegui ligar. Tente de novo.'); card.querySelectorAll('button').forEach(b => b.disabled = false); return; }
-    ufRender();
-}
-async function ufDesfazerLogo(i) {
-    const x = ufLogoFeitos[i]; if (!x) return;
-    try { await fornecedoresSpDataCollection.doc(x.id).update({ aliasesLegado: firebase.firestore.FieldValue.arrayRemove(x.chave) }); ufLogoFeitos.splice(i, 1); toast('✓ Ligação desfeita.'); }
-    catch (e) { console.error('Desfazer logo', e); toast('✕ Não consegui desfazer. Tente de novo.'); return; }
-    ufRender();
-}
-async function ufPularLogo(bt) {
-    const card = bt.closest('[data-lgo]'), k = card.dataset.lgo; card.querySelectorAll('button').forEach(b => b.disabled = true);
-    try { await ufDoc().set({ recusadas: firebase.firestore.FieldValue.arrayUnion('lgo:' + k) }, { merge: true }); ufRecusadas.add('lgo:' + k); toast('Anotado. Essa logo não volta a ser sugerida.'); }
-    catch (e) { console.error('Pular logo', e); toast('✕ Não consegui anotar. Tente de novo.'); card.querySelectorAll('button').forEach(b => b.disabled = false); return; }
-    ufRender();
-}
-window.ufRender = ufRender; window.ufUnir = ufUnir; window.ufDesfazer = ufDesfazer; window.ufRecusar = ufRecusar; window.ufSugestoes = ufSugestoes; window.ufVincLegado = ufVincLegado; window.ufDesfazerLegado = ufDesfazerLegado; window.ufPularLegado = ufPularLegado; window.ufLegadoLista = ufLegadoLista; window.ufVincLogo = ufVincLogo; window.ufDesfazerLogo = ufDesfazerLogo; window.ufPularLogo = ufPularLogo; window.ufLogosSemCadastro = ufLogosSemCadastro; window.ufLogosDuplas = ufLogosDuplas;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/69-unir-fornecedores.js'] = '2.73.25';
+window.ufRender = ufRender; window.ufUnir = ufUnir; window.ufDesfazer = ufDesfazer; window.ufRecusar = ufRecusar; window.ufSugestoes = ufSugestoes; window.ufVincular = ufVincular; window.ufDesvincular = ufDesvincular; window.ufFechar = ufFechar; window.ufPular = ufPular; window.ufLegadoLista = ufLegadoLista; window.ufLogosSemCadastro = ufLogosSemCadastro; window.ufLogosDuplas = ufLogosDuplas;
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/69-unir-fornecedores.js'] = '2.73.26';

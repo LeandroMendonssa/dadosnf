@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.25', nome: 'Unir fornecedores: logos sem cadastro e logos duplas (passo 5.3)', status: 'atual', data: '24/11/2026 às 12:40',
+        numero: '2.73.26', nome: 'Unir fornecedores: um botão por candidato (nomes e logos)', status: 'atual', data: '24/11/2026 às 12:55',
+        novidades: ['Nomes da lista simples e logos sem cadastro: cada cadastro candidato agora tem o seu próprio botão É este. Tocar em um não afeta os outros: dá para ligar um, vários ou nenhum (como os 3 cadastros da Magazine Luiza).', 'O card só some quando você toca em Terminei (depois de ligar) ou Nenhum destes (se nenhum for). Cada ligação feita mostra "Vinculado a este" e tem o seu Desfazer.', 'Mostra até 5 candidatos por nome.'],
+        implementado: ['js/69: ufCardCand (card único para nomes e logos), ufVincular, ufDesvincular, ufFechar e ufPular, no lugar das funções separadas. A tela lembra na sessão o que foi ligado, então o card não some quando o banco atualiza no meio do trabalho.', 'style.css: visual do candidato ligado.'],
+        arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Mesmo mecanismo de antes (nome alternativo do cadastro); nada é apagado. Desfazer remove só aquela ligação.'],
+        testar: ['Em Unir fornecedores, no card de MAGAZINELUIZA: toque em É este num dos cadastros e confira que só ele muda para "Vinculado a este" e os outros continuam com o botão normal. Toque em outro, depois em Terminei. Teste também o Desfazer de um deles.']
+    },
+    {
+        numero: '2.73.25', nome: 'Unir fornecedores: logos sem cadastro e logos duplas (passo 5.3)', status: 'concluida', data: '24/11/2026 às 12:40',
         novidades: ['Unir fornecedores: nova seção "Logos sem cadastro". Para cada logo cujo nome não bate com nenhum fornecedor (como WHITE MARINS ou MED CENTER COMERCIAL LTDA), o app sugere o cadastro e você toca em É este ou Nenhum destes. Há Desfazer.', 'Nova seção informativa "Fornecedores com duas logos próprias": mostra qual vale hoje e qual fica guardada, sem alterar nada.', 'O reconhecimento de nomes abreviados agora tolera uma letra trocada (MARINS e MARTINS).'],
         implementado: ['js/69: ufLogosSemCadastro, ufLogosDuplas, ufVincLogo, ufDesfazerLogo e ufPularLogo. A ligação usa aliasesLegado do cadastro (mecanismo já existente); o documento das logos não é alterado.', 'js/69: ufDist (distância de edição) em ufCandidatos.'],
         arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4143,4 +4151,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.25';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.26';
