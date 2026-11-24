@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.20', nome: 'Conferência de NFs: parcelamento não conta mais como divergência', status: 'atual', data: '24/11/2026 às 06:50',
+        numero: '2.73.21', nome: 'Aviso de atualização incompleta: sem falso alarme e só uma vez', status: 'atual', data: '24/11/2026 às 06:35',
+        novidades: ['Corrigido o falso aviso "Atualização incompleta" que citava js/67 mesmo com tudo atualizado: o histórico trazia o nome do arquivo com a anotação "(novo)" e o verificador procurava um arquivo com esse nome.', 'O aviso agora aparece uma única vez para cada conjunto de arquivos faltando. Fechar, sair e voltar ao app não o traz de novo; só reaparece se uma atualização nova deixar arquivos faltando.'],
+        implementado: ['js/43: arqNome ignora anotações entre parênteses nos nomes de arquivos; arqAssinatura e o registro arqAvisoVisto em localStorage controlam o "uma vez".', 'js/14: removido o "(novo)" do campo arquivos da 2.73.17.'],
+        arquivos: ['js/43-verificar-arquivos.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['O quadro "Versões dos arquivos carregados" no Histórico continua mostrando o estado real a qualquer momento.', 'Etapa de unificação da NF cancelada a pedido: nada nas regras de NF foi alterado.'],
+        testar: ['Abrir o app: o aviso vermelho não deve mais aparecer.', 'Histórico de mudanças: "Versões dos arquivos carregados" deve dizer tudo em dia.']
+    },
+    {
+        numero: '2.73.20', nome: 'Conferência de NFs: parcelamento não conta mais como divergência', status: 'concluida', data: '24/11/2026 às 06:50',
         novidades: ['Na conferência, quando o valor do XML (total) é múltiplo exato da parcela do ERP (2 a 12x), a NF deixa de aparecer como divergente.'],
         implementado: ['js/67: ehParcelamento na comparação ERP × XML.'],
         arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -39,7 +47,7 @@ const HISTORICO_FASES = [
         numero: '2.73.17', nome: 'Saúde dos cadastros (diagnóstico somente leitura, passo 1 da unificação de fornecedores)', status: 'concluida', data: '23/11/2026 às 20:40',
         novidades: ['Modo Desenvolvedor > Saúde dos cadastros: mostra, sem alterar nada, o estado dos fornecedores: mesmo CNPJ em cadastros diferentes, matriz e filial separadas, nomes repetidos, cadastros sem CNPJ, fornecedores só da lista simples, apelidos soltos, logos quebradas ou duplicadas e fornecedores de NFs sem cadastro.', 'Botão Copiar relatório leva a lista completa de cada item.'],
         implementado: ['js/67 (novo): saudeCadastrosCalcular, saudeCadastrosRender e saudeCadastrosCopiar, só leitura (usa listaFornecedoresUnificada, indiceFornLogo, entidadeForn, apelidos, logos e as NFs já carregadas).', 'index.html: item no Modo Desenvolvedor, tela screen-saude-cad e o script novo.'],
-        arquivos: ['js/67-saude-cadastros.js (novo)', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
         mudou: ['Nada nos dados nem nas telas atuais: é só uma tela nova de consulta.', 'A leitura usa as NFs que o app já carregou, então a lista de NFs sem cadastro reflete o período carregado.'],
         testar: ['Ajustes > Modo Desenvolvedor > Saúde dos cadastros: abrir, conferir os números e abrir cada item.', 'Copiar relatório e colar em um bloco de notas.']
     },
@@ -4103,4 +4111,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.20';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.21';

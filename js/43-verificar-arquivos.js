@@ -4,9 +4,11 @@
 // Aqui comparamos: se um arquivo carregou com versão menor do que a última atualização que o citou (ou nem carregou), aparece o aviso no topo.
 // Só há aviso quando o index.html e este arquivo estão no lugar. Vale para atualizações a partir da 2.20.8.
 function arqVerNum(v) { const p = String(v || '0').split('.').map(n => parseInt(n, 10) || 0); return p[0] * 1e6 + (p[1] || 0) * 1e3 + (p[2] || 0); }
+// 2.73.21: o campo "arquivos" às vezes traz anotação ("js/67-x.js (novo)"): só o nome do arquivo conta.
+function arqNome(a) { return String(a || '').replace(/\s*\(.*\)\s*$/, '').trim(); }
 function arqVerificar() {
     const esperado = {};   // arquivo → maior versão que o citou
-    (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []).forEach(f => (f.arquivos || []).forEach(a => { if (!esperado[a] || arqVerNum(f.numero) > arqVerNum(esperado[a])) esperado[a] = f.numero; }));
+    (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []).forEach(f => (f.arquivos || []).map(arqNome).forEach(a => { if (!esperado[a] || arqVerNum(f.numero) > arqVerNum(esperado[a])) esperado[a] = f.numero; }));
     const tem = {}, reg = window.ARQ_V || {};
     try { const m = document.querySelector('meta[name="app-versao"]'); tem['index.html'] = m ? m.content : '0'; } catch (e) { tem['index.html'] = '0'; }
     try { tem['style.css'] = (getComputedStyle(document.documentElement).getPropertyValue('--css-versao') || '').replace(/['"\s]/g, '') || '0'; } catch (e) { tem['style.css'] = '0'; }
@@ -18,11 +20,18 @@ function arqVerificar() {
     });
     return problemas;
 }
+// 2.73.21: o aviso aparece UMA vez para cada conjunto de problemas (lembrado neste aparelho). Voltar ao app ou fechar o aviso não o traz de novo;
+// só aparece outra vez se o conjunto mudar (uma atualização nova com arquivos faltando). O quadro de versões no Histórico continua mostrando o estado.
+let _arqAvisoMostrado = false;
+function arqAssinatura(problemas) { return problemas.map(p => p.arq + '@' + p.ver).sort().join('|'); }
 function arqMostrarAviso(problemas) {
-    if (!problemas.length || document.getElementById('aviso-arquivos')) return;
+    if (!problemas.length || document.getElementById('aviso-arquivos') || _arqAvisoMostrado) return;
+    const sig = arqAssinatura(problemas);
+    try { if (localStorage.getItem('arqAvisoVisto') === sig) return; } catch (e) { /* sem armazenamento: vale só a memória */ }
+    _arqAvisoMostrado = true; try { localStorage.setItem('arqAvisoVisto', sig); } catch (e) { }
     // 2.24.6: resumo geral primeiro (quantos arquivos faltam do total da última atualização); a lista fica em "Ver arquivos"
     const fases = (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []), ult = fases[0] || {};
-    const total = (ult.arquivos || []).filter(a => /^js\//.test(a) || a === 'index.html' || a === 'style.css').length;
+    const total = (ult.arquivos || []).map(arqNome).filter(a => /^js\//.test(a) || a === 'index.html' || a === 'style.css').length;
     const faltam = problemas.length, alvo = problemas.reduce((m, p) => arqVerNum(p.ver) > arqVerNum(m) ? p.ver : m, '0');
     const resumo = total && faltam <= total ? `Faltam ${faltam} de ${total} arquivos da versão ${escRel(ult.numero || alvo)}.` : `${faltam} arquivo(s) estão antigos ou não carregaram (versão ${escRel(alvo)}).`;
     const b = document.createElement('div'); b.id = 'aviso-arquivos'; b.setAttribute('role', 'alert');
@@ -33,6 +42,7 @@ function arqMostrarAviso(problemas) {
 }
 // 2.40.0: confere de novo depois (a publicação do GitHub Pages pode demorar e os arquivos chegam em momentos diferentes), ao voltar para o app e
 // quando um botão chama algo que não existe (arquivo antigo no ar). O aviso só aparece uma vez; "Fechar" não o impede de voltar numa próxima conferência.
+// leandromendonssa
 function arqConferirAgora() { try { const p = arqVerificar(); if (p.length) { console.warn('Arquivos desatualizados:', p); arqMostrarAviso(p); } return p; } catch (e) { console.error('Verificação de arquivos:', e); return []; } }
 window.addEventListener('load', () => { [1500, 6000, 15000].forEach(t => setTimeout(arqConferirAgora, t)); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(arqConferirAgora, 800); });
@@ -43,7 +53,7 @@ window.addEventListener('error', e => {
 // Lista com a versão que cada arquivo carregou (aparece no topo do Histórico de Mudanças)
 function arqRelatorio() {
     const esperado = {};
-    (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []).forEach(f => (f.arquivos || []).forEach(a => { if (!/^js\//.test(a) && a !== 'index.html' && a !== 'style.css') return; if (!esperado[a] || arqVerNum(f.numero) > arqVerNum(esperado[a])) esperado[a] = f.numero; }));
+    (typeof HISTORICO_FASES !== 'undefined' ? HISTORICO_FASES : []).forEach(f => (f.arquivos || []).map(arqNome).forEach(a => { if (!/^js\//.test(a) && a !== 'index.html' && a !== 'style.css') return; if (!esperado[a] || arqVerNum(f.numero) > arqVerNum(esperado[a])) esperado[a] = f.numero; }));
     const reg = window.ARQ_V || {};
     const meta = document.querySelector('meta[name="app-versao"]');
     const css = (getComputedStyle(document.documentElement).getPropertyValue('--css-versao') || '').replace(/['"\s]/g, '');
@@ -65,4 +75,4 @@ function arqDesenharVersoes() {
     const orig = switchToScreen;
     switchToScreen = function (id, t) { const r = orig.apply(this, arguments); if (id === 'screen-historico-mudancas') setTimeout(arqDesenharVersoes, 50); return r; };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.55.7';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/43-verificar-arquivos.js'] = '2.73.21';
