@@ -110,7 +110,7 @@ function _itensDeAtencaoCalc() {
     const an = analiseRetroativaErp();
     const nfsDe = id => pendenciasNf(id);
     add('media', 'sugestoes', 'NFs do ERP com pedido sugerido para confirmar', 'Toque na NF para conferir o pedido sugerido e confirmar ou mover.',
-        nfsDe('pedido-sugerido').map(({ v }) => { const c = v.erp ? conferenciaPedidoSugerido(v.erp, v.pedidoSugerido) : null; const ver = c && c.veredito; return { pedido: String(v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: `sugerido: pedido ${v.pedidoSugerido}` + ({ bate: ' · bate em tudo', conferir: ' · conferir', nao: ' · não parece' }[ver] || ''), fn: `abrirEditorNf('${escRel(v.id)}')` }; }));
+        nfsDe('pedido-sugerido').map(({ v }) => { const c = v.erp ? conferenciaPedidoSugerido(v.erp, v.pedidoSugerido) : null; const ver = c && c.veredito; return { pedido: String(v.pedidoSugerido || ''), forn: v.fornecedor, t: tituloFornNf(v.fornecedor, v.cnpj, v.numeroNf), s: `sugerido: pedido ${v.pedidoSugerido}` + ({ bate: ' · bate em tudo', conferir: ' · conferir', nao: ' · não parece' }[ver] || ''), fn: `abrirEditorNf('${escRel(v.id)}')`, conf: (ver === 'bate' && v.erp && v.pedidoSugerido) ? { erp: v.erp.id, pedido: String(v.pedidoSugerido) } : null }; }));
     const def = an.filter(a => a.defasados > 0);
     add('media', 'defasados', 'Itens do ERP defasados', 'Atualizam sozinhos; o botão na Auditoria Retroativa faz na hora.',
         def.map(a => ({ pedido: a.pedido || '', forn: a.e.fornecedorNomeEditado || a.e.fornecedorNomeRelatorio || '', t: tituloFornNf(a.e.fornecedorNomeEditado || a.e.fornecedorNomeRelatorio || '', a.e.cnpjFornecedor, a.e.nf), s: `${a.defasados} item(ns)`, fn: "irParaRetroFiltro('defasados')" })));
@@ -221,7 +221,7 @@ function _renderAtencaoBase() {
             const ru = atencaoModo === 'fornecedor' && reune.get(nome);
             return `<div class="ctl-card atn-grupo"><div class="ctl-top" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(nome)}</b></div><span class="ctl-st">${ls.length}</span></div>
                 ${ru && ru.size > 1 ? `<div class="atn-reune">Reúne ${ru.size} cadastros: ${escRel([...ru].join(' · '))}</div>` : ''}
-                ${aberto ? ls.map(({ g, l }) => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(g.titulo)} · ${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') : `<div class="ctl-inf"><a class="ctl-pend-link" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})">Ver itens</a></div>`}</div>`;
+                ${aberto ? ls.map(({ g, l }) => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(g.titulo)} · ${escRel(l.s)}</small></span>${l.conf ? `<button type="button" class="atn-conf" title="Confirmar o pedido ${escRel(l.conf.pedido)}" onclick="event.stopPropagation();confirmarSugeridoCentral('${escRel(l.conf.erp)}','${escRel(l.conf.pedido)}')">Confirmar</button>` : ''}${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') : `<div class="ctl-inf"><a class="ctl-pend-link" onclick="toggleGrupoAtencao(${JSON.stringify(nome).replace(/"/g, '&quot;')})">Ver itens</a></div>`}</div>`;
         }).join('');
         return;
     }
@@ -232,7 +232,7 @@ function _renderAtencaoBase() {
                 <div class="ctl-top" onclick="toggleGrupoAtencao('${g.id}')" style="cursor:pointer"><div class="ctl-nm"><b>${escRel(g.titulo)}</b><small>${escRel((typeof LING !== 'undefined') ? LING.t(g.dica) : g.dica)}</small></div>
                     <span class="ctl-st ${cls}">${g.linhas.length}</span></div>
                 <div class="ctl-inf"><span class="ctl-st ${cls}" style="font-size:11px;padding:3px 9px">${rot}</span> <a class="ctl-pend-link" onclick="toggleGrupoAtencao('${g.id}')">${aberto ? 'Fechar' : 'Ver itens'}</a></div>
-                ${aberto ? g.linhas.slice(0, 12).map(l => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(l.s)}</small></span>${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') + (g.linhas.length > 12 ? `<div class="xml-item-meta" style="margin-top:6px">…e mais ${g.linhas.length - 12}.</div>` : '') : ''}
+                ${aberto ? g.linhas.slice(0, 12).map(l => `<div class="retro-linha atn-linha" onclick="${l.fn}" style="cursor:pointer"><span>${escRel(l.t)}<br><small>${escRel(l.s)}</small></span>${l.conf ? `<button type="button" class="atn-conf" title="Confirmar o pedido ${escRel(l.conf.pedido)}" onclick="event.stopPropagation();confirmarSugeridoCentral('${escRel(l.conf.erp)}','${escRel(l.conf.pedido)}')">Confirmar</button>` : ''}${l.ign ? `<button type="button" class="atn-ign" title="Parar de avisar" onclick="event.stopPropagation();pedirIgnorarAtencao('${escRel(l.ign)}','${escRel(String(l.t).replace(/'/g, ''))}')">✕</button>` : ''}<span class="atn-seta">›</span></div>`).join('') + (g.linhas.length > 12 ? `<div class="xml-item-meta" style="margin-top:6px">…e mais ${g.linhas.length - 12}.</div>` : '') : ''}
             </div>`;
         }).join('');
 }
@@ -242,4 +242,7 @@ function renderBannerAtencao() {
     const n = totalAtencaoNf();
     el.innerHTML = n ? `<button type="button" class="atn-banner" onclick="switchToScreen('screen-atencao','Central de notificações'); prepararAtencao()"><span><b>${n}</b> ite${n === 1 ? 'm de NF precisa' : 'ns de NF precisam'} de atenção</span><span class="atn-seta">›</span></button>` : '';
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.9';
+// 2.73.28: na Central, o pedido sugerido que "bate em tudo" pode ser confirmado direto na linha (mesma função do editor da NF; para mover para outro pedido, toque na linha).
+async function confirmarSugeridoCentral(erpId, pedido) { try { await confirmarVinculoErpComPedido(erpId, pedido); } catch (e) { console.error('Confirmar sugerido', e); toast('✕ Não consegui confirmar. Tente de novo.'); } }
+window.confirmarSugeridoCentral = confirmarSugeridoCentral;
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/34-atencao.js'] = '2.73.28';

@@ -83,7 +83,7 @@ function ufCardCand(tipo, nome, cabHTML, cands) {
             ? `<div class="uf-lig">✓ Vinculado a este</div><button type="button" class="actions-button is-neutral" style="width:100%" data-id="${escRel(c.d.id)}" onclick="ufDesvincular(this)">Desfazer</button>`
             : `<button type="button" class="actions-button is-primary" style="width:100%" data-id="${escRel(c.d.id)}" onclick="ufVincular(this)">É este</button>`) + `</div>`;
     }).join('') + (meus.length
-        ? `<button type="button" class="actions-button is-primary" style="width:100%;margin-top:10px" onclick="ufFechar(this)">Terminei</button>`
+        ? `<button type="button" class="actions-button is-success" style="width:100%;margin-top:10px" onclick="ufFechar(this)">✓ Terminei este</button>`
         : `<button type="button" class="actions-button is-neutral" style="width:100%;margin-top:10px" onclick="ufPular(this)">Nenhum destes</button>`) + `</div>`;
 }
 const ufEscondido = (tipo, nome) => ufFechados.has(tipo + ':' + nome) || (ufRecusadas && ufRecusadas.has(tipo + ':' + nome));
@@ -166,8 +166,45 @@ function ufLogosHTML() {
     const L = logosFornecedores || {}, sem = ufLogosSemCadastro(), com = sem.filter(x => x.cands.length), semSug = sem.length - com.length, dup = ufLogosDuplas();
     return `<div class="card mt-4"><p class="desc-tela"><b>Logos sem cadastro.</b> Cada cadastro candidato tem o seu botão: toque em <b>É este</b> nos que forem o dono da logo. Nenhuma imagem é apagada: se o cadastro já tem logo, a que vale hoje continua valendo e esta fica guardada.</p><div class="xml-item-meta">${com.length} com sugestão${semSug ? ` · ${semSug} sem sugestão (ex.: só o CNPJ)` : ''}</div></div>` +
         com.map(x => ufCardCand('lgo', x.k, `<div class="uf-lado"><span class="uf-av">${ufImg(L[x.k])}</span><div class="uf-txt"><b>${escRel(x.k)}</b><small>logo sem cadastro; pode ser de:</small></div></div>`, x.cands)).join('') +
-        `<div class="card mt-4"><p class="desc-tela"><b>Fornecedores com duas logos próprias.</b> Só informativo: a marcada com ✓ é a que vale hoje; a outra fica guardada. Nada é alterado.</p><div class="xml-item-meta">${dup.length} fornecedor(es)</div></div>` +
-        dup.map(x => `<div class="card mt-4"><div class="xml-item-meta"><b>${escRel(x.nome)}</b></div>` + x.proprias.map(k => `<div class="uf-lado"><span class="uf-av">${ufImg(L[k])}</span><div class="uf-txt"><b>${escRel(k)}</b><small>${k === x.vale ? '✓ vale hoje' : 'guardada'}</small></div></div>`).join('') + `</div>`).join('');
+        ufLogoDesfeitosHTML() + `<div class="card mt-4"><p class="desc-tela"><b>Fornecedores com duas logos próprias.</b> A marcada com ✓ é a que vale hoje. Você pode <b>Manter só esta</b> (as outras imagens são excluídas) ou <b>Excluir esta</b>. Gere a foto de segurança antes: excluir uma imagem não tem volta depois que você sair da tela.</p><div class="xml-item-meta">${dup.length} fornecedor(es)</div></div>` +
+        dup.map((x, n) => `<div class="card mt-4" data-dup="${n}"><div class="xml-item-meta"><b>${escRel(x.nome)}</b></div>` + x.proprias.map(k => `<div class="uf-cand"><div class="uf-lado"><span class="uf-av">${ufImg(L[k])}</span><div class="uf-txt"><b>${escRel(k)}</b><small>${k === x.vale ? '✓ vale hoje' : 'guardada'}</small></div></div><div class="uf-acoes"><button type="button" class="actions-button is-primary" data-k="${escRel(k)}" onclick="ufLogoManter(this)">Manter só esta</button><button type="button" class="actions-button is-danger" data-k="${escRel(k)}" onclick="ufLogoExcluir(this)">Excluir esta</button></div></div>`).join('') + `</div>`).join('');
 }
-window.ufRender = ufRender; window.ufUnir = ufUnir; window.ufDesfazer = ufDesfazer; window.ufRecusar = ufRecusar; window.ufSugestoes = ufSugestoes; window.ufVincular = ufVincular; window.ufDesvincular = ufDesvincular; window.ufFechar = ufFechar; window.ufPular = ufPular; window.ufLegadoLista = ufLegadoLista; window.ufLogosSemCadastro = ufLogosSemCadastro; window.ufLogosDuplas = ufLogosDuplas;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/69-unir-fornecedores.js'] = '2.73.26';
+
+// Escolher ou excluir logo (fornecedor com duas logos próprias). Quem apontava para a imagem removida passa a apontar para a que ficou, então nenhuma identificação perde a logo.
+// Guarda na sessão o que foi removido para poder desfazer enquanto a tela estiver aberta.
+let ufLogoUndo = [];
+function ufLogoDup(bt) { return ufLogosDuplas()[+bt.closest('[data-dup]').dataset.dup]; }
+async function ufLogoAplicar(remover, manter, tituloUndo) {
+    const L = logosFornecedores, F = firebase.firestore.FieldValue, FP = firebase.firestore.FieldPath, args = [], prev = {}, novos = {};
+    const rem = new Set(remover);
+    remover.forEach(k => { prev[k] = L[k]; novos[k] = { r: manter }; });
+    Object.keys(L).forEach(k => { if (L[k] && L[k].r && rem.has(L[k].r) && !rem.has(k)) { prev[k] = L[k]; novos[k] = { r: manter }; } });
+    Object.keys(novos).forEach(k => { args.push(new FP('logos', k), novos[k]); });
+    await settingsDocRef.parent.doc('logosFornecedores').update(...args);
+    Object.keys(novos).forEach(k => { logosFornecedores[k] = novos[k]; }); logoCacheLimpa();
+    ufLogoUndo.unshift({ titulo: tituloUndo, prev }); try { logosAtualizarBolinhas(); } catch (e) { }
+}
+function ufLogoManter(bt) {
+    const x = ufLogoDup(bt), k = bt.dataset.k; if (!x) return;
+    const outras = x.proprias.filter(o => o !== k);
+    showConfirmModal({ title: 'Manter só esta logo?', message: `A logo ${k} fica para ${x.nome}. ${outras.length > 1 ? 'As outras ' + outras.length + ' imagens serão excluídas' : 'A outra imagem (' + outras[0] + ') será excluída'}. Deseja continuar?`, confirmText: 'Manter só esta', confirmClass: 'danger',
+        onConfirm: async () => { try { await ufLogoAplicar(outras, k, 'Mantida ' + k + ' em ' + x.nome); toast('✓ Pronto. Só ficou a logo escolhida.'); } catch (e) { console.error('Manter logo', e); toast('✕ Não consegui. Tente de novo.'); } ufRender(); } });
+}
+function ufLogoExcluir(bt) {
+    const x = ufLogoDup(bt), k = bt.dataset.k; if (!x) return;
+    const resto = x.proprias.filter(o => o !== k), manter = (resto.includes(x.vale) ? x.vale : resto[0]);
+    showConfirmModal({ title: 'Excluir esta logo?', message: `A imagem ${k} será excluída. Continua valendo a logo ${manter} de ${x.nome}.`, confirmText: 'Excluir', confirmClass: 'danger',
+        onConfirm: async () => { try { await ufLogoAplicar([k], manter, 'Excluída ' + k + ' de ' + x.nome); toast('✓ Logo excluída.'); } catch (e) { console.error('Excluir logo', e); toast('✕ Não consegui. Tente de novo.'); } ufRender(); } });
+}
+async function ufLogoDesfazer(i) {
+    const u = ufLogoUndo[i]; if (!u) return; const FP = firebase.firestore.FieldPath, args = [];
+    Object.keys(u.prev).forEach(k => args.push(new FP('logos', k), u.prev[k]));
+    try { await settingsDocRef.parent.doc('logosFornecedores').update(...args); Object.assign(logosFornecedores, u.prev); logoCacheLimpa(); ufLogoUndo.splice(i, 1); try { logosAtualizarBolinhas(); } catch (e) { } toast('✓ Logo restaurada.'); }
+    catch (e) { console.error('Desfazer logo', e); toast('✕ Não consegui restaurar. Tente de novo.'); return; }
+    ufRender();
+}
+function ufLogoDesfeitosHTML() {
+    return ufLogoUndo.map((u, i) => `<div class="card mt-4"><div class="xml-item-meta"><b>✓ ${escRel(u.titulo)}</b></div><button type="button" class="actions-button is-neutral" style="width:100%;margin-top:8px" onclick="ufLogoDesfazer(${i})">Desfazer</button></div>`).join('');
+}
+window.ufRender = ufRender; window.ufUnir = ufUnir; window.ufDesfazer = ufDesfazer; window.ufRecusar = ufRecusar; window.ufSugestoes = ufSugestoes; window.ufLogoManter = ufLogoManter; window.ufLogoExcluir = ufLogoExcluir; window.ufLogoDesfazer = ufLogoDesfazer; window.ufVincular = ufVincular; window.ufDesvincular = ufDesvincular; window.ufFechar = ufFechar; window.ufPular = ufPular; window.ufLegadoLista = ufLegadoLista; window.ufLogosSemCadastro = ufLogosSemCadastro; window.ufLogosDuplas = ufLogosDuplas;
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/69-unir-fornecedores.js'] = '2.73.28';

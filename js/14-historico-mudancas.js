@@ -12,7 +12,23 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.26', nome: 'Unir fornecedores: um botão por candidato (nomes e logos)', status: 'atual', data: '24/11/2026 às 12:55',
+        numero: '2.73.28', nome: 'Logos duplas: escolher ou excluir; copiar códigos antes de arquivar; Confirmar na Central; lembrar filtro', status: 'atual', data: '24/11/2026 às 17:40',
+        novidades: ['Unir fornecedores: o botão "Terminei" agora é verde, diferente do "É este", para não confundir.', 'Fornecedores com duas logos próprias: cada logo tem Manter só esta e Excluir esta (com confirmação). Quem usava a imagem excluída passa a usar a que ficou, então nenhum nome perde a logo. Enquanto a tela está aberta há Desfazer, que restaura a imagem.', 'Arquivar Tudo (Repasse de NF): copia a lista de códigos antes de arquivar. Se a cópia falhar, arquiva do mesmo jeito e o texto continua em Resgatar último arquivamento.', 'Central: no pedido sugerido que "bate em tudo", aparece o botão Confirmar direto na linha (os demais continuam abrindo a NF).', 'Cotações: o filtro "Falta entregar" passa a ser lembrado neste aparelho.'],
+        implementado: ['js/69: ufLogoManter, ufLogoExcluir, ufLogoAplicar e ufLogoDesfazer (atualizam só o documento config/logosFornecedores, apontando as referências para a logo que ficou); Terminei com is-success.', 'js/08: limpar() copia buildSaidaText das notas a arquivar antes de gravar.', 'js/34: confirmarSugeridoCentral (usa confirmarVinculoErpComPedido, a mesma função do editor da NF) e botão atn-conf nas linhas.', 'js/13: filtroCotFaltaEntregar guardado no aparelho.', 'style.css: .atn-conf.'],
+        arquivos: ['js/69-unir-fornecedores.js', 'js/08-fornecedores-logo.js', 'js/13-relatorios-divergencias.js', 'js/34-atencao.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Excluir logo apaga a imagem (por isso a confirmação e a foto de segurança antes). Nada mais é apagado. Arquivar Tudo faz o mesmo de antes, só que copia os códigos primeiro.'],
+        testar: ['Unir fornecedores > "Fornecedores com duas logos próprias": toque em Excluir esta, confirme e veja o fornecedor sair da lista; use Desfazer. Teste também Terminei (verde) num nome da lista simples.', 'Repasse de NF: Arquivar Tudo e depois colar o texto em qualquer lugar para ver que os códigos foram copiados.', 'Central > NFs do ERP com pedido sugerido: toque em Confirmar numa linha "bate em tudo". Cotações: ative Falta entregar, saia e volte.']
+    },
+    {
+        numero: '2.73.27', nome: 'Saúde dos cadastros: comparação antes e agora (passo 5.4)', status: 'concluida', data: '24/11/2026 às 17:10',
+        novidades: ['Saúde dos cadastros: ao lado do número de cada seção aparece "antes N" (os números de quando você gerou a última foto de segurança), para ver os problemas diminuindo depois de unir.', 'Nova seção informativa: fornecedores unidos que ainda mostram nomes de exibição diferentes entre os cadastros.'],
+        implementado: ['js/67: a foto de segurança passa a guardar também a contagem de cada seção (neste aparelho); saudeCadastrosRender compara; nova seção exib-dif em saudeCadastrosCalcular.'],
+        arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Somente leitura: nenhum dado do Firebase é alterado. A comparação só aparece depois de gerar uma foto de segurança com esta versão.'],
+        testar: ['Em Saúde dos cadastros, gere uma foto de segurança (o "antes"), una ou vincule alguns itens em Unir fornecedores, volte e abra Saúde dos cadastros: as seções que diminuíram mostram "antes N" ao lado do número novo.']
+    },
+    {
+        numero: '2.73.26', nome: 'Unir fornecedores: um botão por candidato (nomes e logos)', status: 'concluida', data: '24/11/2026 às 12:55',
         novidades: ['Nomes da lista simples e logos sem cadastro: cada cadastro candidato agora tem o seu próprio botão É este. Tocar em um não afeta os outros: dá para ligar um, vários ou nenhum (como os 3 cadastros da Magazine Luiza).', 'O card só some quando você toca em Terminei (depois de ligar) ou Nenhum destes (se nenhum for). Cada ligação feita mostra "Vinculado a este" e tem o seu Desfazer.', 'Mostra até 5 candidatos por nome.'],
         implementado: ['js/69: ufCardCand (card único para nomes e logos), ufVincular, ufDesvincular, ufFechar e ufPular, no lugar das funções separadas. A tela lembra na sessão o que foi ligado, então o card não some quando o banco atualiza no meio do trabalho.', 'style.css: visual do candidato ligado.'],
         arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4151,4 +4167,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.26';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.28';

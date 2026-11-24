@@ -218,10 +218,10 @@ function renderDivergenciasAuditoria() {
 let filtroCotacoesTexto = '';
 // 2.73.13: filtro "Falta entregar" = cotações em que ainda falta algum fornecedor entregar. Não entram: cotações com todos entregues, com entrega
 // parcial já resolvida (marcada como resolvida ou com a falta relatada em auditoria) e fornecedores com entrega cancelada.
-let filtroCotacoesFaltaEntregar = false;
+let filtroCotacoesFaltaEntregar = false; try { filtroCotacoesFaltaEntregar = localStorage.getItem('filtroCotFaltaEntregar') === '1'; } catch (e) { }   // 2.73.28: lembra a escolha neste aparelho
 let _resumoCotCache = null;
 function cotacaoFaltaEntregar(c) { const r = resumoEntregaCotacao(c); return r.total > 0 && (r.total - r.completa - r.parcialRel) > 0; }
-function alternarFiltroCotacoesFaltaEntregar() { filtroCotacoesFaltaEntregar = !filtroCotacoesFaltaEntregar; renderListaCotacoes(); }
+function alternarFiltroCotacoesFaltaEntregar() { filtroCotacoesFaltaEntregar = !filtroCotacoesFaltaEntregar; try { localStorage.setItem('filtroCotFaltaEntregar', filtroCotacoesFaltaEntregar ? '1' : '0'); } catch (e) { } renderListaCotacoes(); }
 let ordenacaoCotacoes = 'entrada'; // 'entrada' (padrão, mais recente primeiro) ou 'pedido' (numérico)
 
 // leandromendonssa
@@ -611,4 +611,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.73.13';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.73.28';

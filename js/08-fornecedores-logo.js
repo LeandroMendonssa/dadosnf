@@ -451,11 +451,13 @@ async function limpar(){
         title: "Confirmar Arquivamento",
         message: notasParaArquivar.length === 0
             ? `Todas as ${notasPendentes.length} nota(s) atuais estão marcadas como pendentes e não serão arquivadas até serem resolvidas.`
-            : `Arquivar ${notasParaArquivar.length} nota(s)?${notasPendentesRestantes.length ? ` As ${notasPendentesRestantes.length} nota(s) pendente(s) permanecerão ativas na relação.` : ''}`,
-        confirmText: "Arquivar",
+            : `Arquivar ${notasParaArquivar.length} nota(s)? A lista de códigos (o texto do Copiar) é copiada antes de arquivar.${notasPendentesRestantes.length ? ` As ${notasPendentesRestantes.length} nota(s) pendente(s) permanecerão ativas na relação.` : ''}`,
+        confirmText: "Copiar e arquivar",
         confirmClass: "success",
         onConfirm: async () => {
             if (notasParaArquivar.length === 0) return toast("Nada para arquivar — só restam notas pendentes.");
+            // 2.73.28: copia os códigos antes de arquivar (se a cópia falhar, o arquivamento segue; o texto continua em "Resgatar último arquivamento")
+            let copiou = false; try { await navigator.clipboard.writeText(buildSaidaText(notasParaArquivar)); copiou = true; } catch (e) { }
             const batch = firestore.batch();
             for (const nota of notasParaArquivar) {
                 const {id, ...notaData} = nota;
@@ -471,7 +473,7 @@ async function limpar(){
                 if (entradaVinculada) batch.update(entradasErpCollection.doc(entradaVinculada.id), { statusFluxo: 'arquivada' });
             }
             await batch.commit();
-            toast(`${notasParaArquivar.length} nota(s) arquivada(s).${notasPendentesRestantes.length ? ` ${notasPendentesRestantes.length} pendente(s) mantida(s) na relação.` : ''}`);
+            toast(`${notasParaArquivar.length} nota(s) arquivada(s).${copiou ? ' Códigos copiados.' : ''}${notasPendentesRestantes.length ? ` ${notasPendentesRestantes.length} pendente(s) mantida(s) na relação.` : ''}`);
         }
     });
 }
@@ -509,4 +511,4 @@ async function copiarResgateCodigos() {
     try { await navigator.clipboard.writeText(a.value); toast('✓ Lista copiada!'); } catch (e) { a.removeAttribute('readonly'); a.focus(); a.select(); toast('Selecione e copie o texto.'); }
 }
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",confirmText:"Limpar histórico",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.73.13';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.73.28';
