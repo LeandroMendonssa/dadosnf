@@ -12,7 +12,23 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.23', nome: 'Unir fornecedores: matriz e filial (passo 5.1 da unificação)', status: 'atual', data: '24/11/2026 às 07:10',
+        numero: '2.73.25', nome: 'Unir fornecedores: logos sem cadastro e logos duplas (passo 5.3)', status: 'atual', data: '24/11/2026 às 12:40',
+        novidades: ['Unir fornecedores: nova seção "Logos sem cadastro". Para cada logo cujo nome não bate com nenhum fornecedor (como WHITE MARINS ou MED CENTER COMERCIAL LTDA), o app sugere o cadastro e você toca em É este ou Nenhum destes. Há Desfazer.', 'Nova seção informativa "Fornecedores com duas logos próprias": mostra qual vale hoje e qual fica guardada, sem alterar nada.', 'O reconhecimento de nomes abreviados agora tolera uma letra trocada (MARINS e MARTINS).'],
+        implementado: ['js/69: ufLogosSemCadastro, ufLogosDuplas, ufVincLogo, ufDesfazerLogo e ufPularLogo. A ligação usa aliasesLegado do cadastro (mecanismo já existente); o documento das logos não é alterado.', 'js/69: ufDist (distância de edição) em ufCandidatos.'],
+        arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Nenhuma imagem é apagada ou movida. Ligar uma logo só acrescenta o nome dela como nome alternativo do cadastro; se o cadastro já tem logo, continua valendo a de hoje. Desfazer remove só isso.'],
+        testar: ['Em Unir fornecedores, role até "Logos sem cadastro": toque em É este num caso óbvio, confira que o card some e aparece em ✓, e toque em Desfazer. Depois, em Saúde dos cadastros, gere de novo o relatório e veja os números de "Logos sem cadastro" e "Nomes só da lista simples" diminuírem.']
+    },
+    {
+        numero: '2.73.24', nome: 'Unir fornecedores: correção do card que duplicava e nomes abreviados (passo 5.2)', status: 'concluida', data: '24/11/2026 às 12:10',
+        novidades: ['Corrigido: ao tocar em Unir, o card agora some da lista e aparece uma única vez em "Unidos", com o botão Desfazer (antes ele se repetia a cada toque).', 'Nova seção na mesma tela: nomes que existem só na lista simples e parecem abreviar um cadastro (como MAGAZINELUIZA ou BD). Você toca em "É este" no cadastro certo, ou em "Nenhum destes".'],
+        implementado: ['js/69: a tela passa a lembrar na hora o que acabou de ser unido (ufFeitos), sem depender da lista recarregar do banco, que era a causa do card repetido.', 'js/69: ufCandidatos, ufLegadoLista, ufVincLegado, ufDesfazerLegado e ufPularLegado (usam aliasesLegado, o mesmo mecanismo do Vincular que já existe; recusas em config/uniaoFornecedores).'],
+        arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Nenhum nome ou cadastro é apagado. "É este" só acrescenta o nome antigo como nome alternativo do cadastro; Desfazer remove só isso.'],
+        testar: ['Em Unir fornecedores: toque em Unir num par e confira que o card some e aparece só um em Unidos; toque em Desfazer e ele volta. Na seção de nomes da lista simples, toque em É este num caso óbvio, depois em Desfazer; em outro, toque em Nenhum destes.']
+    },
+    {
+        numero: '2.73.23', nome: 'Unir fornecedores: matriz e filial (passo 5.1 da unificação)', status: 'concluida', data: '24/11/2026 às 07:10',
         novidades: ['Modo Desenvolvedor > Unir fornecedores (matriz e filial): mostra lado a lado cadastros diferentes que têm a mesma raiz de CNPJ, com nome, apelido, CNPJ, código e logo.', 'Você decide caso a caso: Unir, ou Não é a mesma (a sugestão não volta mais). Depois de unir, aparece o botão Desfazer.'],
         implementado: ['js/69 (novo): ufSugestoes (só por raiz de CNPJ, nunca por nome), ufUnir e ufDesfazer (usam entidadesRelacionadas, o mesmo mecanismo já existente) e ufRecusar (guarda as recusas em config/uniaoFornecedores).', 'index.html: item no Modo Desenvolvedor, tela screen-unir-forn e o script novo. style.css: visual da tela.'],
         arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4127,4 +4143,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.23';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.25';
