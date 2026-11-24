@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.22', nome: 'Aviso de conflito de edição (notas do Repasse de NF e cadastro de fornecedor)', status: 'atual', data: '24/11/2026 às 07:10',
+        numero: '2.73.23', nome: 'Unir fornecedores: matriz e filial (passo 5.1 da unificação)', status: 'atual', data: '24/11/2026 às 07:10',
+        novidades: ['Modo Desenvolvedor > Unir fornecedores (matriz e filial): mostra lado a lado cadastros diferentes que têm a mesma raiz de CNPJ, com nome, apelido, CNPJ, código e logo.', 'Você decide caso a caso: Unir, ou Não é a mesma (a sugestão não volta mais). Depois de unir, aparece o botão Desfazer.'],
+        implementado: ['js/69 (novo): ufSugestoes (só por raiz de CNPJ, nunca por nome), ufUnir e ufDesfazer (usam entidadesRelacionadas, o mesmo mecanismo já existente) e ufRecusar (guarda as recusas em config/uniaoFornecedores).', 'index.html: item no Modo Desenvolvedor, tela screen-unir-forn e o script novo. style.css: visual da tela.'],
+        arquivos: ['js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Unir grava só a ligação entre os dois cadastros. Nenhum cadastro, CNPJ, apelido ou logo é apagado ou alterado. Desfazer remove apenas essa ligação.'],
+        testar: ['Gere antes uma foto de segurança (Saúde dos cadastros). Abra Unir fornecedores, confira um par e toque em Unir; veja o fornecedor aparecer junto na lista; toque em Desfazer para voltar. Em outro par, toque em Não é a mesma e confira que ele some.']
+    },
+    {
+        numero: '2.73.22', nome: 'Aviso de conflito de edição (notas do Repasse de NF e cadastro de fornecedor)', status: 'concluida', data: '24/11/2026 às 07:10',
         novidades: ['Ao editar uma nota do Repasse de NF ou o nome/apelido de um fornecedor, o app guarda uma foto dos campos ao abrir a edição. Se outro aparelho (ou a importação do ERP) alterar o mesmo registro enquanto você edita, ao tocar em Salvar aparece o aviso com o que mudou (por exemplo "valor: 10,00 → 99,00") e as opções Salvar mesmo assim ou Cancelar.', 'Se a nota ou o fornecedor deixar de existir (arquivado ou excluído em outro aparelho), o app avisa em vez de tentar gravar.'],
         implementado: ['js/68 (novo): conflitoFoto, conflitoDifs, conflitoPerguntar e os envoltórios de toggleEditPanel/salvarEdicao (js/08) e toggleEditarApelidoFornecedor/salvarApelidoFornecedor (js/18). Compara com os dados ao vivo dos ouvintes: nenhuma leitura nova, sem custo de cota.', 'index.html: script novo.'],
         arquivos: ['js/68-conflito-edicao.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4119,4 +4127,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.22';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.23';
