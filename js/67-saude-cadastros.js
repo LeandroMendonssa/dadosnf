@@ -153,7 +153,9 @@ function conferenciaNfsCalcular() {
         const ve = it.erp.vencimento || (parcela && parcela.data) || '';
         const vlE = valorNfNumerico(it.erp.valor) || valorNfNumerico(parcela && parcela.valor), vlX = valorNfNumerico(it.nf.valorTotal);
         const dif = [];
-        if (vlE && vlX && !valoresNfIguais(vlE, vlX)) dif.push(`valor ERP ${formatarValorMonetarioBR(vlE)} × XML ${formatarValorMonetarioBR(vlX)}`);
+        // o ERP lista a PARCELA e o XML traz o TOTAL: se o total é um múltiplo exato da parcela (2 a 12x), é parcelamento e não divergência
+        const ehParcelamento = vlE && vlX && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].some(k => Math.abs(vlE * k - vlX) <= 0.05 * k);
+        if (vlE && vlX && !valoresNfIguais(vlE, vlX) && !ehParcelamento) dif.push(`valor ERP ${formatarValorMonetarioBR(vlE)} × XML ${formatarValorMonetarioBR(vlX)}`);
         if (ve && vx && normDataCurta(ve) !== normDataCurta(vx)) dif.push(`vencimento ERP ${ve} × XML ${vx}`);
         const ce = saudeDig(it.erp.cnpjFornecedor), cx = saudeDig(it.nf.cnpjFornecedor);
         if (ce && cx && ce !== cx) dif.push(`CNPJ ERP ${ce} × XML ${cx}`);
@@ -184,4 +186,4 @@ async function conferenciaNfsCopiar() {
 }
 window.conferenciaNfsRender = conferenciaNfsRender; window.conferenciaNfsCopiar = conferenciaNfsCopiar; window.conferenciaNfsCalcular = conferenciaNfsCalcular;
 window.saudeCadastrosRender = saudeCadastrosRender; window.saudeCadastrosCopiar = saudeCadastrosCopiar; window.saudeCadastrosCalcular = saudeCadastrosCalcular;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.19';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.20';

@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.19', nome: 'Conferência das NFs × saída de texto (passo 4 da unificação, somente leitura)', status: 'atual', data: '24/11/2026 às 06:40',
+        numero: '2.73.20', nome: 'Conferência de NFs: parcelamento não conta mais como divergência', status: 'atual', data: '24/11/2026 às 06:50',
+        novidades: ['Na conferência, quando o valor do XML (total) é múltiplo exato da parcela do ERP (2 a 12x), a NF deixa de aparecer como divergente.'],
+        implementado: ['js/67: ehParcelamento na comparação ERP × XML.'],
+        arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Só a tela de conferência; nenhuma regra nem dado.'],
+        testar: ['Saúde dos cadastros > Conferir agora: as 16 NFs parceladas não devem mais aparecer em "ERP × XML".']
+    },
+    {
+        numero: '2.73.19', nome: 'Conferência das NFs × saída de texto (passo 4 da unificação, somente leitura)', status: 'concluida', data: '24/11/2026 às 06:40',
         novidades: ['Modo Desenvolvedor > Saúde dos cadastros: novo bloco "Conferência das NFs × saída de texto". Compara, NF por NF, a linha que sai no texto do Repasse de NF com o que o XML e o ERP dizem hoje: valor, vencimento, fornecedor, recurso e número, além das NFs em que ERP e XML discordam entre si.', 'Botão Copiar conferência leva a lista completa.'],
         implementado: ['js/67: conferenciaNfsCalcular, conferenciaNfsRender e conferenciaNfsCopiar, reaproveitando montarControleNfs, fonteDaNota e dadosEnvioNfParaRelacao (nenhuma regra existente foi alterada).'],
         arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4095,4 +4103,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.19';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.20';
