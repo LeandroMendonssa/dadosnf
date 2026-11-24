@@ -60,6 +60,8 @@ function saudeCadastrosRender() {
     el.innerHTML = `<div class="card"><h3 class="card-titulo card-titulo-sm">Foto de segurança</h3><p class="desc-tela">Antes de qualquer mudança nos fornecedores, gere uma cópia em arquivo de cadastros, apelidos, logos e associações. Nada é gravado no Firebase: o arquivo vai para o seu aparelho. Guarde-o em Arquivos ou iCloud.</p>
         <div class="xml-item-meta" id="foto-seg-ultima"></div><div class="xml-item-meta" id="foto-seg-msg"></div>
         <button type="button" id="foto-seg-btn" class="actions-button is-primary" style="margin-top:10px;width:100%" onclick="fotoSegGerar()"><span class="icon-wrapper"><i class="fa-solid fa-camera"></i></span> Gerar foto de segurança</button></div>
+        <div class="card mt-4"><h3 class="card-titulo card-titulo-sm">Conferência das NFs × saída de texto</h3><p class="desc-tela">Compara o que sai no texto do Repasse de NF com o que o XML e o ERP dizem hoje, campo a campo. Somente leitura.</p>
+        <button type="button" class="actions-button is-primary" style="width:100%" onclick="conferenciaNfsRender()"><span class="icon-wrapper"><i class="fa-solid fa-scale-balanced"></i></span> Conferir agora</button><div id="conf-nf-conteudo"></div></div>
         <div class="card mt-4"><p class="desc-tela">Diagnóstico somente leitura: nada aqui altera seus dados. Serve para ver o estado dos cadastros antes de unificar os fornecedores.</p>
         <div class="xml-item-meta">${r.total} fornecedores (${r.sp} cadastrados, ${r.lg} só na lista simples) · ${r.apel} apelidos · ${r.logos} chaves de logo · ${r.nfs} NFs carregadas</div>
         <button type="button" class="actions-button is-primary" style="margin-top:10px;width:100%" onclick="saudeCadastrosCopiar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar relatório</button></div>` +
@@ -112,5 +114,74 @@ function fotoSegAtualizar() {
     const msg = document.getElementById('foto-seg-msg'); if (msg && u) msg.textContent = '';
 }
 window.fotoSegGerar = fotoSegGerar; window.fotoSegMontar = fotoSegMontar;
+
+// ---------- Conferência XML/ERP × saída de texto (2.73.19) — passo 3 da unificação, SOMENTE LEITURA ----------
+// A linha que sai no texto (data, NF, vencimento, valor, fornecedor, recurso) é uma CÓPIA gravada na nota quando ela entra na relação.
+// Aqui comparamos essa cópia com o que o XML/ERP dizem hoje, campo a campo, para ver onde as fontes divergem. Não altera nada.
+function conferenciaNfsCalcular() {
+    const itens = montarControleNfs(), L = { numero: [], fornecedor: [], valor: [], venc: [], recurso: [], erpxml: [], semFonte: [] };
+    let comFonte = 0, naRelacao = 0;
+    const fm = v => (v == null || v === '') ? '—' : String(v);
+    itens.forEach(it => {
+        const nota = it.nota; if (!nota) return;
+        if (it.tipo === 'nota') { naRelacao++; L.semFonte.push(`NF ${nota.nf} · ${nota.fornecedor}`); return; }
+        if (it.tipo === 'nf') {
+            naRelacao++;
+            if (!it.nf && !it.erp) { L.semFonte.push(`NF ${nota.nf} · ${nota.fornecedor}`); return; }
+            comFonte++;
+            const rot = `NF ${nota.nf} · ${nota.fornecedor}`;
+            if (normNfNumero(nota.nf) !== normNfNumero(it.numeroNf)) L.numero.push(`${rot}: saída "${nota.nf}" | fonte "${it.numeroNf}"`);
+            let d = null; try { d = dadosEnvioNfParaRelacao(it); } catch (e) { }
+            if (d) {
+                if (chaveLogoForn(d.fornecedor) !== chaveLogoForn(nota.fornecedor)) {
+                    const raw = String((it.nf && it.nf.fornecedor) || (it.erp && it.erp.fornecedorNomeRelatorio) || '');
+                    L.fornecedor.push(`NF ${nota.nf}: saída "${nota.fornecedor}" | hoje geraria "${d.fornecedor}" | nome no XML/ERP "${raw}"`);
+                }
+                if ((d.obs || '') && String(nota.obs || '') !== d.obs) L.recurso.push(`${rot}: saída "${fm(nota.obs)}" | sugerido pelas cotações "${d.obs}"`);
+            }
+            const f = fonteDaNota(nota);
+            if (f) {
+                if (f.valorNum !== null && !valoresNfIguais(nota.valor, f.valorNum)) L.valor.push(`${rot}: saída R$ ${fm(nota.valor)} | ${f.origem} ${formatarValorMonetarioBR(f.valorNum)}`);
+                if (f.venc && normDataCurta(nota.vencimento) !== normDataCurta(f.venc)) L.venc.push(`${rot}: saída ${fm(nota.vencimento)} | ${f.origem} ${f.venc}`);
+            }
+        }
+    });
+    itens.forEach(it => {   // XML e ERP da mesma NF dizendo coisas diferentes
+        if (it.tipo !== 'nf' || !it.nf || !it.erp) return;
+        const parcela = Array.isArray(it.erp.parcelas) && it.erp.parcelas[0] ? it.erp.parcelas[0] : null;
+        const vx = Array.isArray(it.nf.vencimentos) && it.nf.vencimentos[0] ? String(it.nf.vencimentos[0]).slice(0, 10).split('-').reverse().join('/') : '';
+        const ve = it.erp.vencimento || (parcela && parcela.data) || '';
+        const vlE = valorNfNumerico(it.erp.valor) || valorNfNumerico(parcela && parcela.valor), vlX = valorNfNumerico(it.nf.valorTotal);
+        const dif = [];
+        if (vlE && vlX && !valoresNfIguais(vlE, vlX)) dif.push(`valor ERP ${formatarValorMonetarioBR(vlE)} × XML ${formatarValorMonetarioBR(vlX)}`);
+        if (ve && vx && normDataCurta(ve) !== normDataCurta(vx)) dif.push(`vencimento ERP ${ve} × XML ${vx}`);
+        const ce = saudeDig(it.erp.cnpjFornecedor), cx = saudeDig(it.nf.cnpjFornecedor);
+        if (ce && cx && ce !== cx) dif.push(`CNPJ ERP ${ce} × XML ${cx}`);
+        if (dif.length) L.erpxml.push(`NF ${it.numeroNf} · ${it.nomeFornecedor}: ${dif.join('; ')}`);
+    });
+    const S = (id, tom, titulo, desc, itens) => ({ id, tom, titulo, desc, itens });
+    return { total: itens.length, naRelacao, comFonte, secoes: [
+        S('c-valor', 'r', 'Valor: saída × XML/ERP', 'O valor que sai no texto é diferente do valor da fonte.', L.valor),
+        S('c-venc', 'r', 'Vencimento: saída × XML/ERP', 'O vencimento que sai no texto é diferente do da fonte.', L.venc),
+        S('c-forn', 'y', 'Fornecedor: saída × cadastro atual', 'O nome que sai no texto não é o que o app geraria hoje (apelido mudou, nome do XML etc.).', L.fornecedor),
+        S('c-rec', 'y', 'Recurso: saída × cotações', 'O recurso gravado na nota difere do que as cotações sugerem.', L.recurso),
+        S('c-num', 'y', 'Número da NF', 'O número da NF na saída difere do da fonte (zeros à esquerda não contam).', L.numero),
+        S('c-erpxml', 'y', 'ERP × XML da mesma NF', 'As duas fontes da mesma NF discordam entre si.', L.erpxml),
+        S('c-semfonte', 'n', 'Notas na relação sem XML/ERP ligado', 'Digitadas à mão ou de outro caminho: não há com o que comparar.', L.semFonte)
+    ] };
+}
+function conferenciaNfsRender() {
+    const el = document.getElementById('conf-nf-conteudo'); if (!el) return;
+    let r; try { r = conferenciaNfsCalcular(); } catch (e) { console.error('Conferência de NFs', e); el.innerHTML = '<div class="xml-item-meta">Não consegui analisar agora. Os dados podem estar carregando; tente de novo.</div>'; return; }
+    window._confNfUltimo = r;
+    el.innerHTML = `<div class="xml-item-meta" style="margin:8px 0">${r.naRelacao} NFs na relação, ${r.comFonte} com XML/ERP ligado para comparar.</div>` + r.secoes.map(s => `<details class="retro-det" style="margin-top:8px"${s.itens.length && s.tom === 'r' ? ' open' : ''}><summary><b>${escRel(s.titulo)}</b> <span class="ini-chip ${s.itens.length ? s.tom : 'g'}">${s.itens.length}</span></summary><p class="xml-item-meta">${escRel(s.desc)}</p>${s.itens.length ? s.itens.slice(0, SAUDE_LIMITE).map(t => `<div class="xml-item-meta" style="padding:4px 0;border-top:1px solid var(--border-color);word-break:break-word">${escRel(t)}</div>`).join('') + (s.itens.length > SAUDE_LIMITE ? `<div class="xml-item-meta">… e mais ${s.itens.length - SAUDE_LIMITE}. O relatório copiado traz todos.</div>` : '') : '<div class="xml-item-meta">Nada encontrado. ✓</div>'}</details>`).join('') +
+        `<button type="button" class="actions-button is-neutral" style="margin-top:10px;width:100%" onclick="conferenciaNfsCopiar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar conferência</button>`;
+}
+async function conferenciaNfsCopiar() {
+    const r = window._confNfUltimo; if (!r) return;
+    const t = ['CONFERÊNCIA XML/ERP × SAÍDA DE TEXTO — ' + new Date().toLocaleString('pt-BR'), `${r.naRelacao} NFs na relação, ${r.comFonte} com fonte`, ''].concat(...r.secoes.map(s => [`## ${s.titulo} (${s.itens.length})`, s.desc].concat(s.itens.map(i => '- ' + i), ['']))).join('\n');
+    try { await navigator.clipboard.writeText(t); toast('✓ Conferência copiada.'); } catch (e) { toast('✕ Não consegui copiar agora.'); }
+}
+window.conferenciaNfsRender = conferenciaNfsRender; window.conferenciaNfsCopiar = conferenciaNfsCopiar; window.conferenciaNfsCalcular = conferenciaNfsCalcular;
 window.saudeCadastrosRender = saudeCadastrosRender; window.saudeCadastrosCopiar = saudeCadastrosCopiar; window.saudeCadastrosCalcular = saudeCadastrosCalcular;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.18';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.19';

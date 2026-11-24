@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.18', nome: 'Foto de segurança dos fornecedores (passo 2 da unificação)', status: 'atual', data: '24/11/2026 às 05:55',
+        numero: '2.73.19', nome: 'Conferência das NFs × saída de texto (passo 4 da unificação, somente leitura)', status: 'atual', data: '24/11/2026 às 06:40',
+        novidades: ['Modo Desenvolvedor > Saúde dos cadastros: novo bloco "Conferência das NFs × saída de texto". Compara, NF por NF, a linha que sai no texto do Repasse de NF com o que o XML e o ERP dizem hoje: valor, vencimento, fornecedor, recurso e número, além das NFs em que ERP e XML discordam entre si.', 'Botão Copiar conferência leva a lista completa.'],
+        implementado: ['js/67: conferenciaNfsCalcular, conferenciaNfsRender e conferenciaNfsCopiar, reaproveitando montarControleNfs, fonteDaNota e dadosEnvioNfParaRelacao (nenhuma regra existente foi alterada).'],
+        arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Nada nos dados nem nas regras: só consulta. O resultado mostra onde as fontes divergem, para definir a regra única da NF no próximo passo.'],
+        testar: ['Saúde dos cadastros > Conferir agora: veja as seções vermelhas (valor e vencimento) e as amarelas; copie a conferência e me envie.']
+    },
+    {
+        numero: '2.73.18', nome: 'Foto de segurança dos fornecedores (passo 2 da unificação)', status: 'concluida', data: '24/11/2026 às 05:55',
         novidades: ['Modo Desenvolvedor > Saúde dos cadastros: botão "Gerar foto de segurança". Gera um arquivo .json com cadastros de fornecedores, lista simples, apelidos, logos, associações de fornecedor e os campos de fornecedor das NFs (XML e ERP).', 'A tela mostra a data e as contagens da última foto gerada neste aparelho.'],
         implementado: ['js/67: fotoSegMontar, fotoSegGerar e fotoSegAtualizar. O arquivo é entregue pelo compartilhar do iPhone (mesmo mecanismo dos relatórios). Nada é gravado no Firebase.'],
         arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4087,4 +4095,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.18';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.19';
