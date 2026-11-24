@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.21', nome: 'Aviso de atualização incompleta: sem falso alarme e só uma vez', status: 'atual', data: '24/11/2026 às 06:35',
+        numero: '2.73.22', nome: 'Aviso de conflito de edição (notas do Repasse de NF e cadastro de fornecedor)', status: 'atual', data: '24/11/2026 às 07:10',
+        novidades: ['Ao editar uma nota do Repasse de NF ou o nome/apelido de um fornecedor, o app guarda uma foto dos campos ao abrir a edição. Se outro aparelho (ou a importação do ERP) alterar o mesmo registro enquanto você edita, ao tocar em Salvar aparece o aviso com o que mudou (por exemplo "valor: 10,00 → 99,00") e as opções Salvar mesmo assim ou Cancelar.', 'Se a nota ou o fornecedor deixar de existir (arquivado ou excluído em outro aparelho), o app avisa em vez de tentar gravar.'],
+        implementado: ['js/68 (novo): conflitoFoto, conflitoDifs, conflitoPerguntar e os envoltórios de toggleEditPanel/salvarEdicao (js/08) e toggleEditarApelidoFornecedor/salvarApelidoFornecedor (js/18). Compara com os dados ao vivo dos ouvintes: nenhuma leitura nova, sem custo de cota.', 'index.html: script novo.'],
+        arquivos: ['js/68-conflito-edicao.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['As funções de salvar continuam as mesmas; o aviso só entra antes delas quando há mudança de outro aparelho. Sem mudança, o salvar segue direto como antes.', 'Outras telas de edição ainda não têm o aviso (Editor da NF, cotações): entram conforme você indicar.'],
+        testar: ['Com dois aparelhos: abra a edição de uma nota no iPhone, altere o valor no outro aparelho e toque em Salvar no iPhone: deve aparecer o aviso.', 'Edição normal de nota e de fornecedor sem mudança no outro aparelho: salva direto, sem aviso.']
+    },
+    {
+        numero: '2.73.21', nome: 'Aviso de atualização incompleta: sem falso alarme e só uma vez', status: 'concluida', data: '24/11/2026 às 06:35',
         novidades: ['Corrigido o falso aviso "Atualização incompleta" que citava js/67 mesmo com tudo atualizado: o histórico trazia o nome do arquivo com a anotação "(novo)" e o verificador procurava um arquivo com esse nome.', 'O aviso agora aparece uma única vez para cada conjunto de arquivos faltando. Fechar, sair e voltar ao app não o traz de novo; só reaparece se uma atualização nova deixar arquivos faltando.'],
         implementado: ['js/43: arqNome ignora anotações entre parênteses nos nomes de arquivos; arqAssinatura e o registro arqAvisoVisto em localStorage controlam o "uma vez".', 'js/14: removido o "(novo)" do campo arquivos da 2.73.17.'],
         arquivos: ['js/43-verificar-arquivos.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4111,4 +4119,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.21';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.22';
