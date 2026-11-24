@@ -57,7 +57,10 @@ function saudeCadastrosRender() {
     let r; try { r = saudeCadastrosCalcular(); } catch (e) { console.error('Saúde dos cadastros', e); el.innerHTML = '<div class="card"><p class="desc-tela">Não consegui analisar agora. Os dados ainda podem estar carregando; tente de novo em instantes.</p></div>'; return; }
     window._saudeUltimo = r;
     const chip = (s) => `<span class="ini-chip ${s.itens.length ? s.tom : 'g'}">${s.itens.length}</span>`;
-    el.innerHTML = `<div class="card"><p class="desc-tela">Somente leitura: nada aqui altera seus dados. Serve para ver o estado dos cadastros antes de unificar os fornecedores.</p>
+    el.innerHTML = `<div class="card"><h3 class="card-titulo card-titulo-sm">Foto de segurança</h3><p class="desc-tela">Antes de qualquer mudança nos fornecedores, gere uma cópia em arquivo de cadastros, apelidos, logos e associações. Nada é gravado no Firebase: o arquivo vai para o seu aparelho. Guarde-o em Arquivos ou iCloud.</p>
+        <div class="xml-item-meta" id="foto-seg-ultima"></div><div class="xml-item-meta" id="foto-seg-msg"></div>
+        <button type="button" id="foto-seg-btn" class="actions-button is-primary" style="margin-top:10px;width:100%" onclick="fotoSegGerar()"><span class="icon-wrapper"><i class="fa-solid fa-camera"></i></span> Gerar foto de segurança</button></div>
+        <div class="card mt-4"><p class="desc-tela">Diagnóstico somente leitura: nada aqui altera seus dados. Serve para ver o estado dos cadastros antes de unificar os fornecedores.</p>
         <div class="xml-item-meta">${r.total} fornecedores (${r.sp} cadastrados, ${r.lg} só na lista simples) · ${r.apel} apelidos · ${r.logos} chaves de logo · ${r.nfs} NFs carregadas</div>
         <button type="button" class="actions-button is-primary" style="margin-top:10px;width:100%" onclick="saudeCadastrosCopiar()"><span class="icon-wrapper"><i class="fa-solid fa-copy"></i></span> Copiar relatório</button></div>` +
         r.secoes.map(s => `<div class="card mt-4"><details class="retro-det"${s.itens.length && s.tom === 'r' ? ' open' : ''}><summary><b>${escRel(s.titulo)}</b> ${chip(s)}</summary><p class="xml-item-meta">${escRel(s.desc)}</p>${s.itens.length ? s.itens.slice(0, SAUDE_LIMITE).map(t => `<div class="xml-item-meta" style="padding:4px 0;border-top:1px solid var(--border-color);word-break:break-word">${escRel(t)}</div>`).join('') + (s.itens.length > SAUDE_LIMITE ? `<div class="xml-item-meta">… e mais ${s.itens.length - SAUDE_LIMITE}. O relatório copiado traz todos.</div>` : '') : '<div class="xml-item-meta">Nada encontrado. ✓</div>'}</details></div>`).join('');
@@ -67,5 +70,47 @@ async function saudeCadastrosCopiar() {
     const t = ['SAÚDE DOS CADASTROS — ' + new Date().toLocaleString('pt-BR'), `${r.total} fornecedores (${r.sp} cadastrados, ${r.lg} só na lista simples) · ${r.apel} apelidos · ${r.logos} chaves de logo · ${r.nfs} NFs`, ''].concat(...r.secoes.map(s => [`## ${s.titulo} (${s.itens.length})`, s.desc].concat(s.itens.map(i => '- ' + i), ['']))).join('\n');
     try { await navigator.clipboard.writeText(t); toast('✓ Relatório copiado.'); } catch (e) { toast('✕ Não consegui copiar agora.'); }
 }
+
+// ---------- Foto de segurança (2.73.18): cópia, em arquivo, de tudo que a unificação de fornecedores pode tocar ----------
+// Não grava nada no Firebase: o arquivo vai para o seu aparelho (Arquivos / compartilhar). Servirá para desfazer qualquer migração.
+const FOTO_SEG_CHAVE = 'fotoSegurancaFornecedores';
+function fotoSegLimpar(o) { try { return JSON.parse(JSON.stringify(o, (k, v) => (v && typeof v === 'object' && typeof v.toDate === 'function') ? { _ts: v.toDate().toISOString() } : v)); } catch (e) { return null; } }
+function fotoSegMontar() {
+    const nfs = (listaNfsProcessadas || []).map(n => ({ id: n.id, nf: n.nf || n.numeroNf || '', fornecedor: n.fornecedor || '', fornecedorNomeEditado: n.fornecedorNomeEditado || '', cnpjFornecedor: n.cnpjFornecedor || '', pedido: n.pedido || '' }));
+    const erp = (listaEntradasErp || []).map(e => ({ id: e.id, nf: e.nf || '', fornecedorNomeRelatorio: e.fornecedorNomeRelatorio || '', fornecedorNomeEditado: e.fornecedorNomeEditado || '', cnpjFornecedor: e.cnpjFornecedor || '', pedido: e.pedido || '' }));
+    const foto = {
+        tipo: 'foto-seguranca-fornecedores', formato: 1, geradoEm: new Date().toISOString(), versaoApp: (document.querySelector('meta[name="app-versao"]') || {}).content || '',
+        fornecedoresSpData: fotoSegLimpar(listaFornecedoresSpData || []), fornecedoresSugeridos: [...(fornecedoresSugeridos || [])], apelidosFornecedores: { ...(apelidosFornecedores || {}) },
+        logosFornecedores: fotoSegLimpar(logosFornecedores || {}), associacoesFornecedor: fotoSegLimpar(typeof bancoAssociacoesFornecedor === 'object' ? bancoAssociacoesFornecedor : {}),
+        nfsProcessadas: nfs, entradasErp: erp
+    };
+    foto.contagens = { fornecedoresSpData: foto.fornecedoresSpData.length, fornecedoresSugeridos: foto.fornecedoresSugeridos.length, apelidos: Object.keys(foto.apelidosFornecedores).length, logos: Object.keys(foto.logosFornecedores || {}).length, associacoesFornecedor: Object.keys(foto.associacoesFornecedor || {}).length, nfsProcessadas: nfs.length, entradasErp: erp.length };
+    return foto;
+}
+function fotoSegResumo(c) { return `${c.fornecedoresSpData} cadastros · ${c.fornecedoresSugeridos} na lista simples · ${c.apelidos} apelidos · ${c.logos} logos · ${c.associacoesFornecedor} associações · ${c.nfsProcessadas} NFs de XML · ${c.entradasErp} NFs do ERP`; }
+async function fotoSegGerar() {
+    const bt = document.getElementById('foto-seg-btn'), msg = document.getElementById('foto-seg-msg');
+    if (bt) bt.disabled = true; if (msg) msg.textContent = 'Carregando os dados e montando a foto…';
+    try {
+        ['fornecedoresSpData', 'nfsProcessadas', 'entradasErp', 'associacoesFornecedor'].forEach(n => { try { assinarDados(n); } catch (e) { } });
+        await new Promise(r => setTimeout(r, 2500));
+        const foto = fotoSegMontar(), c = foto.contagens;
+        if (!c.fornecedoresSpData && !c.apelidos && !c.logos) { if (msg) msg.textContent = 'Os dados ainda não carregaram. Aguarde alguns segundos e toque de novo.'; return; }
+        const d = new Date(), ymd = d.toLocaleDateString('en-CA'), hm = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+        const ok = await entregarArquivoRelCot(`Foto-seguranca-fornecedores-${ymd}-${hm}.json`, new Blob([JSON.stringify(foto)], { type: 'application/json' }));
+        if (ok) {
+            try { localStorage.setItem(FOTO_SEG_CHAVE, JSON.stringify({ em: foto.geradoEm, c })); } catch (e) { }
+            fotoSegAtualizar(); toast('✓ Foto de segurança gerada. Guarde o arquivo.');
+        } else if (msg) msg.textContent = 'Cancelado. Nada foi gerado.';
+    } catch (err) { console.error('Foto de segurança:', err); if (msg) msg.textContent = 'Não consegui gerar agora. Tente de novo.'; }
+    finally { if (bt) bt.disabled = false; }
+}
+function fotoSegAtualizar() {
+    const el = document.getElementById('foto-seg-ultima'); if (!el) return;
+    let u = null; try { u = JSON.parse(localStorage.getItem(FOTO_SEG_CHAVE) || 'null'); } catch (e) { }
+    el.textContent = u ? `Última foto neste aparelho: ${new Date(u.em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} — ${fotoSegResumo(u.c)}.` : 'Nenhuma foto gerada neste aparelho ainda.';
+    const msg = document.getElementById('foto-seg-msg'); if (msg && u) msg.textContent = '';
+}
+window.fotoSegGerar = fotoSegGerar; window.fotoSegMontar = fotoSegMontar;
 window.saudeCadastrosRender = saudeCadastrosRender; window.saudeCadastrosCopiar = saudeCadastrosCopiar; window.saudeCadastrosCalcular = saudeCadastrosCalcular;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.17';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.18';

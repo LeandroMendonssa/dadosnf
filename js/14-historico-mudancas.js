@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.17', nome: 'Saúde dos cadastros (diagnóstico somente leitura, passo 1 da unificação de fornecedores)', status: 'atual', data: '23/11/2026 às 20:40',
+        numero: '2.73.18', nome: 'Foto de segurança dos fornecedores (passo 2 da unificação)', status: 'atual', data: '24/11/2026 às 05:55',
+        novidades: ['Modo Desenvolvedor > Saúde dos cadastros: botão "Gerar foto de segurança". Gera um arquivo .json com cadastros de fornecedores, lista simples, apelidos, logos, associações de fornecedor e os campos de fornecedor das NFs (XML e ERP).', 'A tela mostra a data e as contagens da última foto gerada neste aparelho.'],
+        implementado: ['js/67: fotoSegMontar, fotoSegGerar e fotoSegAtualizar. O arquivo é entregue pelo compartilhar do iPhone (mesmo mecanismo dos relatórios). Nada é gravado no Firebase.'],
+        arquivos: ['js/67-saude-cadastros.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Nenhum dado alterado. Para montar a foto o app pode carregar listas que ainda não estavam abertas (uma leitura normal, como ao abrir a Entrada de NF).'],
+        testar: ['Saúde dos cadastros > Gerar foto de segurança: salvar o arquivo em Arquivos/iCloud e conferir se as contagens mostradas batem com o que você espera.']
+    },
+    {
+        numero: '2.73.17', nome: 'Saúde dos cadastros (diagnóstico somente leitura, passo 1 da unificação de fornecedores)', status: 'concluida', data: '23/11/2026 às 20:40',
         novidades: ['Modo Desenvolvedor > Saúde dos cadastros: mostra, sem alterar nada, o estado dos fornecedores: mesmo CNPJ em cadastros diferentes, matriz e filial separadas, nomes repetidos, cadastros sem CNPJ, fornecedores só da lista simples, apelidos soltos, logos quebradas ou duplicadas e fornecedores de NFs sem cadastro.', 'Botão Copiar relatório leva a lista completa de cada item.'],
         implementado: ['js/67 (novo): saudeCadastrosCalcular, saudeCadastrosRender e saudeCadastrosCopiar, só leitura (usa listaFornecedoresUnificada, indiceFornLogo, entidadeForn, apelidos, logos e as NFs já carregadas).', 'index.html: item no Modo Desenvolvedor, tela screen-saude-cad e o script novo.'],
         arquivos: ['js/67-saude-cadastros.js (novo)', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4079,4 +4087,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.17';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.18';
