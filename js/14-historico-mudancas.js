@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.29', nome: 'Testes automáticos no Modo Desenvolvedor', status: 'atual', data: '25/11/2026 às 00:55',
+        numero: '2.73.30', nome: 'Botão voltar nas telas novas e Unir fornecedores começando limpo', status: 'atual', data: '25/11/2026 às 06:40',
+        novidades: ['Unir fornecedores, Testes automáticos e Saúde dos cadastros agora têm o botão de voltar (levam de volta ao Modo Desenvolvedor).', 'Unir fornecedores: ao entrar, a tela mostra só o que ainda falta decidir. O que já foi unido, vinculado ou excluído está gravado e não aparece mais (antes a lista "Unidos"/"Vinculado" da visita anterior continuava na tela e parecia que os mesmos fornecedores voltavam).', 'As três telas passam a carregar os dados de que precisam ao abrir, e Unir fornecedores se redesenha sozinha quando a lista chega do banco.'],
+        implementado: ['js/01: screen-saude-cad, screen-unir-forn e screen-testes-auto em screenParentMap e closeBtnBackScreen.', 'js/05: as três telas em DADOS_POR_TELA.', 'js/69: ufAbrir (zera o estado da visita) e verificação periódica da lista enquanto a tela está aberta.', 'js/67: incluído de novo (versão 2.73.27, comparação "antes N"), porque o teste automático mostrou que o seu aparelho ainda estava com a 2.73.20.'],
+        arquivos: ['js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/67-saude-cadastros.js', 'js/69-unir-fornecedores.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Nenhum dado alterado. Conferi com a sua foto de segurança de hoje: nenhum par de matriz/filial pendente, o que mostra que as uniões foram gravadas.'],
+        testar: ['Abra Unir fornecedores, faça uma união, toque em voltar e entre de novo: o par não deve aparecer mais. Confira o botão de voltar nas três telas. Rode os Testes automáticos: devem passar os 26.']
+    },
+    {
+        numero: '2.73.29', nome: 'Testes automáticos no Modo Desenvolvedor', status: 'concluida', data: '25/11/2026 às 00:55',
         novidades: ['Modo Desenvolvedor > Testes automáticos: um botão roda cerca de 30 conferências e mostra ✓ ou ✕ em cada uma, com o motivo quando falha, e dá para copiar o resultado.', 'Conferem: versões e histórico em dia, funções essenciais, valores e CNPJ, ligações e códigos dos fornecedores, logos que apontam para o nada, regras da tela Unir fornecedores (com dados de exemplo) e se o controle de NFs e o texto de saída montam sem erro.'],
         implementado: ['js/70 (novo): lista de testes (teste/comListas), testesRodar, testesRender e testesCopiar. Os que usam dados de exemplo trocam as listas só na memória e as devolvem na hora.', 'index.html: item no Modo Desenvolvedor, tela screen-testes-auto e o script novo.', 'js/14: 8 entradas antigas (2.58.3 a 2.59.0) estavam marcadas como "atual" por engano; agora são "concluida". O teste automático de histórico apontou isso.'],
         arquivos: ['js/70-testes-automaticos.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4175,4 +4183,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.29';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.30';

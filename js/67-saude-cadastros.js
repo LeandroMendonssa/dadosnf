@@ -39,6 +39,9 @@ function saudeCadastrosCalcular() {
     secoes.push({ id: 'logo-sem-forn', tom: 'n', titulo: 'Logos sem fornecedor cadastrado', desc: 'A chave da logo não bate com nenhum cadastro (pode ser de fornecedor que só aparece em NFs).', itens: chaves.filter(k => L[k] && (L[k].u || L[k].d) && !existeChave(k)) });
     const logoDupla = [];
     uni.forEach(f => { try { const e = entidadeForn(f.nomeReal, ((f.cnpjs || [])[0] || {}).cnpj); const proprias = (e.keys || []).filter(k => L[k] && (L[k].u || L[k].d)); if (proprias.length > 1) logoDupla.push(`${rotulo(f)}: ${proprias.join(', ')}`); } catch (x) { } });
+    const exibDif = [];
+    uni.forEach(f => { try { if ((f.docs || []).length > 1) { const nomes = [...new Set(f.docs.map(d => apelidoFornecedorDoc(d).nome).filter(Boolean))]; if (nomes.length > 1) exibDif.push(`${rotulo(f)}: ${nomes.join(' | ')}`); } } catch (x) { } });
+    secoes.push({ id: 'exib-dif', tom: 'y', titulo: 'Fornecedores unidos com nome de exibição diferente', desc: 'Cadastros ligados como o mesmo fornecedor, mas cada um mostra um nome diferente na tela. Só informativo.', itens: exibDif });
     secoes.push({ id: 'logo-dupla', tom: 'y', titulo: 'Mais de uma logo própria para o mesmo fornecedor', desc: 'Há mais de uma chave com imagem para o mesmo fornecedor; só uma vale.', itens: logoDupla });
 
     // 5) NFs
@@ -56,7 +59,9 @@ function saudeCadastrosRender() {
     const el = document.getElementById('saude-cad-conteudo'); if (!el) return;
     let r; try { r = saudeCadastrosCalcular(); } catch (e) { console.error('Saúde dos cadastros', e); el.innerHTML = '<div class="card"><p class="desc-tela">Não consegui analisar agora. Os dados ainda podem estar carregando; tente de novo em instantes.</p></div>'; return; }
     window._saudeUltimo = r;
-    const chip = (s) => `<span class="ini-chip ${s.itens.length ? s.tom : 'g'}">${s.itens.length}</span>`;
+    let antes = null; try { antes = (JSON.parse(localStorage.getItem(FOTO_SEG_CHAVE) || 'null') || {}).sc || null; } catch (e) { }
+    // 2.73.27: compara com os números da última foto de segurança ("antes 12"), para ver a unificação reduzindo os problemas
+    const chip = (s) => `<span class="ini-chip ${s.itens.length ? s.tom : 'g'}">${s.itens.length}</span>` + (antes && antes[s.id] !== undefined && antes[s.id] !== s.itens.length ? ` <small class="xml-item-meta">antes ${antes[s.id]}</small>` : '');
     el.innerHTML = `<div class="card"><h3 class="card-titulo card-titulo-sm">Foto de segurança</h3><p class="desc-tela">Antes de qualquer mudança nos fornecedores, gere uma cópia em arquivo de cadastros, apelidos, logos e associações. Nada é gravado no Firebase: o arquivo vai para o seu aparelho. Guarde-o em Arquivos ou iCloud.</p>
         <div class="xml-item-meta" id="foto-seg-ultima"></div><div class="xml-item-meta" id="foto-seg-msg"></div>
         <button type="button" id="foto-seg-btn" class="actions-button is-primary" style="margin-top:10px;width:100%" onclick="fotoSegGerar()"><span class="icon-wrapper"><i class="fa-solid fa-camera"></i></span> Gerar foto de segurança</button></div>
@@ -101,7 +106,8 @@ async function fotoSegGerar() {
         const d = new Date(), ymd = d.toLocaleDateString('en-CA'), hm = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
         const ok = await entregarArquivoRelCot(`Foto-seguranca-fornecedores-${ymd}-${hm}.json`, new Blob([JSON.stringify(foto)], { type: 'application/json' }));
         if (ok) {
-            try { localStorage.setItem(FOTO_SEG_CHAVE, JSON.stringify({ em: foto.geradoEm, c })); } catch (e) { }
+            try { let sc = {}; try { saudeCadastrosCalcular().secoes.forEach(x => { sc[x.id] = x.itens.length; }); } catch (e2) { }
+            localStorage.setItem(FOTO_SEG_CHAVE, JSON.stringify({ em: foto.geradoEm, c, sc })); } catch (e) { }
             fotoSegAtualizar(); toast('✓ Foto de segurança gerada. Guarde o arquivo.');
         } else if (msg) msg.textContent = 'Cancelado. Nada foi gerado.';
     } catch (err) { console.error('Foto de segurança:', err); if (msg) msg.textContent = 'Não consegui gerar agora. Tente de novo.'; }
@@ -186,4 +192,4 @@ async function conferenciaNfsCopiar() {
 }
 window.conferenciaNfsRender = conferenciaNfsRender; window.conferenciaNfsCopiar = conferenciaNfsCopiar; window.conferenciaNfsCalcular = conferenciaNfsCalcular;
 window.saudeCadastrosRender = saudeCadastrosRender; window.saudeCadastrosCopiar = saudeCadastrosCopiar; window.saudeCadastrosCalcular = saudeCadastrosCalcular;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.20';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/67-saude-cadastros.js'] = '2.73.30';

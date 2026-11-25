@@ -206,5 +206,11 @@ async function ufLogoDesfazer(i) {
 function ufLogoDesfeitosHTML() {
     return ufLogoUndo.map((u, i) => `<div class="card mt-4"><div class="xml-item-meta"><b>✓ ${escRel(u.titulo)}</b></div><button type="button" class="actions-button is-neutral" style="width:100%;margin-top:8px" onclick="ufLogoDesfazer(${i})">Desfazer</button></div>`).join('');
 }
+// 2.73.30: enquanto a tela está aberta, redesenha sozinha quando a lista de fornecedores chega ou muda do banco (antes ela podia mostrar o que já foi unido).
+let _ufRef = null;
+setInterval(() => { const el = document.getElementById('screen-unir-forn'); if (!el || !el.classList.contains('active')) return; const ref = listaFornecedoresSpData; if (ref !== _ufRef) { _ufRef = ref; if (ufRecusadas) ufRender(); } }, 1200);
+// Ao ENTRAR na tela começa limpa: só o que ainda falta decidir. O que foi unido/vinculado/excluído já está gravado e não volta (a lista "Unidos"/"Vinculado" e o Desfazer valem só enquanto a tela fica aberta).
+function ufAbrir() { ufFeitos = []; ufVinc = []; ufFechados = new Set(); ufLogoUndo = []; ufRender(); }
+window.ufAbrir = ufAbrir;
 window.ufRender = ufRender; window.ufUnir = ufUnir; window.ufDesfazer = ufDesfazer; window.ufRecusar = ufRecusar; window.ufSugestoes = ufSugestoes; window.ufLogoManter = ufLogoManter; window.ufLogoExcluir = ufLogoExcluir; window.ufLogoDesfazer = ufLogoDesfazer; window.ufVincular = ufVincular; window.ufDesvincular = ufDesvincular; window.ufFechar = ufFechar; window.ufPular = ufPular; window.ufLegadoLista = ufLegadoLista; window.ufLogosSemCadastro = ufLogosSemCadastro; window.ufLogosDuplas = ufLogosDuplas;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/69-unir-fornecedores.js'] = '2.73.28';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/69-unir-fornecedores.js'] = '2.73.30';
