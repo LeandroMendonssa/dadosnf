@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.28', nome: 'Logos duplas: escolher ou excluir; copiar códigos antes de arquivar; Confirmar na Central; lembrar filtro', status: 'atual', data: '24/11/2026 às 17:40',
+        numero: '2.73.29', nome: 'Testes automáticos no Modo Desenvolvedor', status: 'atual', data: '25/11/2026 às 00:55',
+        novidades: ['Modo Desenvolvedor > Testes automáticos: um botão roda cerca de 30 conferências e mostra ✓ ou ✕ em cada uma, com o motivo quando falha, e dá para copiar o resultado.', 'Conferem: versões e histórico em dia, funções essenciais, valores e CNPJ, ligações e códigos dos fornecedores, logos que apontam para o nada, regras da tela Unir fornecedores (com dados de exemplo) e se o controle de NFs e o texto de saída montam sem erro.'],
+        implementado: ['js/70 (novo): lista de testes (teste/comListas), testesRodar, testesRender e testesCopiar. Os que usam dados de exemplo trocam as listas só na memória e as devolvem na hora.', 'index.html: item no Modo Desenvolvedor, tela screen-testes-auto e o script novo.', 'js/14: 8 entradas antigas (2.58.3 a 2.59.0) estavam marcadas como "atual" por engano; agora são "concluida". O teste automático de histórico apontou isso.'],
+        arquivos: ['js/70-testes-automaticos.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
+        mudou: ['Somente leitura: nada é gravado no Firebase e nenhum dado é alterado.'],
+        testar: ['Modo Desenvolvedor > Testes automáticos > Rodar os testes. O esperado é "Tudo certo". Se algum aparecer com ✕, toque em Copiar resultado e me envie.']
+    },
+    {
+        numero: '2.73.28', nome: 'Logos duplas: escolher ou excluir; copiar códigos antes de arquivar; Confirmar na Central; lembrar filtro', status: 'concluida', data: '24/11/2026 às 17:40',
         novidades: ['Unir fornecedores: o botão "Terminei" agora é verde, diferente do "É este", para não confundir.', 'Fornecedores com duas logos próprias: cada logo tem Manter só esta e Excluir esta (com confirmação). Quem usava a imagem excluída passa a usar a que ficou, então nenhum nome perde a logo. Enquanto a tela está aberta há Desfazer, que restaura a imagem.', 'Arquivar Tudo (Repasse de NF): copia a lista de códigos antes de arquivar. Se a cópia falhar, arquiva do mesmo jeito e o texto continua em Resgatar último arquivamento.', 'Central: no pedido sugerido que "bate em tudo", aparece o botão Confirmar direto na linha (os demais continuam abrindo a NF).', 'Cotações: o filtro "Falta entregar" passa a ser lembrado neste aparelho.'],
         implementado: ['js/69: ufLogoManter, ufLogoExcluir, ufLogoAplicar e ufLogoDesfazer (atualizam só o documento config/logosFornecedores, apontando as referências para a logo que ficou); Terminei com is-success.', 'js/08: limpar() copia buildSaidaText das notas a arquivar antes de gravar.', 'js/34: confirmarSugeridoCentral (usa confirmarVinculoErpComPedido, a mesma função do editor da NF) e botão atn-conf nas linhas.', 'js/13: filtroCotFaltaEntregar guardado no aparelho.', 'style.css: .atn-conf.'],
         arquivos: ['js/69-unir-fornecedores.js', 'js/08-fornecedores-logo.js', 'js/13-relatorios-divergencias.js', 'js/34-atencao.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -388,7 +396,7 @@ const HISTORICO_FASES = [
         testar: ['Ajustes > Aparência > Windows XP. Toque em Iniciar e abra uma tela por grupo.', 'Toque nos atalhos da barra: cada um deve abrir a tela certa.', 'Confira os botões do cabeçalho, que devem aparecer escuros e legíveis.'],
     },
     {
-        numero: '2.59.0', nome: 'Tema Windows XP (opcional)', status: 'atual', data: '19/11/2026 às 20:55',
+        numero: '2.59.0', nome: 'Tema Windows XP (opcional)', status: 'concluida', data: '19/11/2026 às 20:55',
         novidades: ['Novo tema "Windows XP" em Ajustes > Aparência. O tema padrão continua igual.', 'No celular, a barra de navegação vira um botão Iniciar, que abre a tela Mais com todas as telas.'],
         implementado: ['style-xp.css (novo): visual do tema, ativo só com o tema XP escolhido.', 'index.html: opção Windows XP no seletor de tema, link para style-xp.css, botão Iniciar no celular.', 'style.css e js/14: número da versão.'],
         arquivos: ['index.html','style.css','style-xp.css','js/14-historico-mudancas.js'],
@@ -396,7 +404,7 @@ const HISTORICO_FASES = [
         testar: ['Ajustes > Aparência > Tema > Windows XP: confira o cabeçalho, os botões e os cartões.', 'No iPhone, confira o botão Iniciar na parte de baixo e abra algumas telas.', 'Volte para Claro e confira que nada mudou.'],
     },
     {
-        numero: '2.58.10', nome: 'Prazo em linha própria', status: 'atual', data: '19/11/2026 às 18:25',
+        numero: '2.58.10', nome: 'Prazo em linha própria', status: 'concluida', data: '19/11/2026 às 18:25',
         novidades: ['O prazo (atraso ou vence em X dias) fica em uma linha própria, abaixo da quantidade de itens, sem quebrar no meio.'],
         implementado: ['js/48: prazo em bloco separado, sem o separador ·.', 'style.css: prazo em bloco, sem quebra de linha.', 'index.html e js/14: número da versão.'],
         arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
@@ -404,7 +412,7 @@ const HISTORICO_FASES = [
         testar: ['Início > fornecedores a chegar: o prazo deve aparecer em uma linha própria, inteiro, em cor.'],
     },
     {
-        numero: '2.58.9', nome: 'Fornecedores a chegar: uma etiqueta e botão Fechar padrão', status: 'atual', data: '19/11/2026 às 18:20',
+        numero: '2.58.9', nome: 'Fornecedores a chegar: uma etiqueta e botão Fechar padrão', status: 'concluida', data: '19/11/2026 às 18:20',
         novidades: ['Cada fornecedor a chegar tem uma só etiqueta de status (Não chegou ou Parcial).', 'O prazo (atraso ou vence em X dias) aparece no texto da linha, em cor.', 'O botão Fechar da lista usa o mesmo estilo dos outros botões do app.'],
         implementado: ['js/48: prazo como texto da linha (iniTextoAtraso); só a etiqueta de status fica no lado direito.', 'style.css: cores do texto de prazo.', 'index.html: botão Fechar com o estilo padrão de botão.', 'index.html e js/14: número da versão.'],
         arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
@@ -412,7 +420,7 @@ const HISTORICO_FASES = [
         testar: ['Início > fornecedores a chegar: cada fornecedor deve ter uma só etiqueta e o prazo na linha de baixo, em cor.', 'Botão Fechar no fim da lista deve ter o mesmo estilo dos outros botões.'],
     },
     {
-        numero: '2.58.8', nome: 'Ajuste de alinhamento da tabela da prévia', status: 'atual', data: '19/11/2026 às 18:10',
+        numero: '2.58.8', nome: 'Ajuste de alinhamento da tabela da prévia', status: 'concluida', data: '19/11/2026 às 18:10',
         novidades: ['As linhas da tabela de materiais da prévia ficam alinhadas: os fios de cada linha acompanham a linha inteira, e a quantidade fica alinhada à direita.'],
         implementado: ['style.css: células da tabela da prévia centralizadas na própria linha, sem quebrar o alinhamento dos fios.', 'index.html e js/14: número da versão.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
@@ -420,7 +428,7 @@ const HISTORICO_FASES = [
         testar: ['Início > fornecedores a chegar > seta de um fornecedor com materiais de nomes longos: os fios devem continuar alinhados de um lado a outro.'],
     },
     {
-        numero: '2.58.7', nome: 'Fornecedores a chegar: materiais em tabela', status: 'atual', data: '19/11/2026 às 18:05',
+        numero: '2.58.7', nome: 'Fornecedores a chegar: materiais em tabela', status: 'concluida', data: '19/11/2026 às 18:05',
         novidades: ['Na prévia de cada fornecedor (seta), os materiais aparecem em tabela: Material à esquerda e Quantidade à direita, com a unidade quando o item tiver.', 'A quantidade é o que ainda falta chegar do material.'],
         implementado: ['js/48: a lista guarda, para cada material, a quantidade que falta (total do pedido menos o que já entrou) e a unidade, quando houver.', 'style.css: tabela da prévia.', 'index.html e js/14: número da versão.'],
         arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
@@ -428,7 +436,7 @@ const HISTORICO_FASES = [
         testar: ['Início > fornecedores a chegar > seta de um fornecedor: confira a tabela e se as quantidades batem com o pedido.', 'Veja um item que já teve entrega parcial: a quantidade deve ser só o que falta.'],
     },
     {
-        numero: '2.58.6', nome: 'Fornecedores a chegar: produtos e dias de atraso', status: 'atual', data: '19/11/2026 às 07:55',
+        numero: '2.58.6', nome: 'Fornecedores a chegar: produtos e dias de atraso', status: 'concluida', data: '19/11/2026 às 07:55',
         novidades: ['Na lista de fornecedores a chegar, a seta ao lado de cada fornecedor abre os produtos que ainda faltam chegar.', 'Cada fornecedor mostra os dias de atraso pela data limite do pedido, ou "vence em X dias" quando falta pouco.'],
         implementado: ['js/48: inicioContarFornecedores guarda os produtos que faltam e a data limite do pedido; renderFornecedoresAChegar mostra a seta e a prévia; iniChipAtraso calcula o atraso.', 'style.css: estilos da seta, da prévia e do chip verde "no prazo".', 'index.html: texto da lista e número da versão.'],
         arquivos: ['index.html','style.css','js/48-inicio-lote.js','js/14-historico-mudancas.js'],
@@ -436,7 +444,7 @@ const HISTORICO_FASES = [
         testar: ['iPhone: Início > toque em "fornecedores a chegar". Toque na seta de um fornecedor: devem aparecer só os produtos que faltam.', 'Confira se o chip de dias de atraso bate com a data limite do pedido na Central.', 'Toque na linha do fornecedor: deve abrir o pedido como antes.'],
     },
     {
-        numero: '2.58.5', nome: 'Busca de Ajustes igual à da tela inicial', status: 'atual', data: '19/11/2026 às 06:30',
+        numero: '2.58.5', nome: 'Busca de Ajustes igual à da tela inicial', status: 'concluida', data: '19/11/2026 às 06:30',
         novidades: ['O campo de busca de Ajustes passa a ter o mesmo visual do campo da tela inicial.', 'As abas voltam ao visual anterior.'],
         implementado: ['style.css: campo de busca de Ajustes com o estilo do campo da tela inicial.', 'style.css: abas restauradas ao visual anterior.', 'index.html e style.css: número da versão.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
@@ -452,7 +460,7 @@ const HISTORICO_FASES = [
         testar: ['Abra Repasse de NF, Cotações e Anotações e confira o campo de busca.', 'Se ainda aparecer o visual antigo, feche o app por completo e abra de novo.'],
     },
     {
-        numero: '2.58.3', nome: 'Mais contraste na busca e nas abas', status: 'atual', data: '19/11/2026 às 06:20',
+        numero: '2.58.3', nome: 'Mais contraste na busca e nas abas', status: 'concluida', data: '19/11/2026 às 06:20',
         novidades: ['A caixa de busca e as abas (Para saída, Em espera, Exportar texto) ficaram mais visíveis sobre o novo fundo.'],
         implementado: ['style.css: busca e abas com fundo e borda próprios nas telas do app.', 'index.html e style.css: número da versão.'],
         arquivos: ['index.html','style.css','js/14-historico-mudancas.js'],
@@ -4167,4 +4175,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.28';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.29';
