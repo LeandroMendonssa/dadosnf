@@ -12,11 +12,11 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.74.0', nome: 'Central do Pedido: divergências em cards, edição estruturada, Alterações e anotações fixadas', status: 'atual', data: '26/11/2026 às 12:20',
+        numero: '2.74.0', nome: 'Central do Pedido: divergências em cards, edição estruturada, Alterações e anotações fixadas', status: 'atual', data: '26/11/2026 às 18:45',
         novidades: ['Aba Anotações: todas as divergências do pedido aparecem em cards agrupados por fornecedor, com Exportar e Editar em cada um.', 'Editar abre o card em versão compacta do registro da auditoria (tipo, campos, item da cotação, botões Puxar) e mostra "Vai ficar no histórico" antes de salvar.', 'Selecionar (dock) compartilha várias divergências de uma vez, agrupadas por fornecedor.', 'Abas: Produtos · Anotações · Dados · Alterações (Relatório foi para Dados). Alterações mostra o histórico do SmartCompras do pedido.', 'O relatório do pedido continua no topo, agora com ícone de compartilhar.', 'Anotações: dá para fixar no topo.'],
         implementado: ['js/71 novo: cards, editor estruturado (grava entrada edicao no historico e mantém codProduto), seleção em lote via DOCK_SELECAO_TELAS.divpedido, aba Alterações (historicoSmartCompras).', 'index.html: abas, painéis e ícone; js/09: fixar anotações e rótulo Editada; style.css: .dvc-*.'],
         arquivos: ['js/71-divergencias-cards.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'index.html', 'style.css'],
-        mudou: 'Central do Pedido e lista de Anotações.',
+        mudou: ['Central do Pedido (abas, cards de divergências, editor, Alterações) e lista de Anotações (fixar).'],
         testar: ['Pedido com auditoria > aba Anotações: cards por fornecedor; Editar, mudar quantidade, Salvar: aparece Editada no Histórico.', 'Em Editar, ligar item da cotação e usar Puxar.', 'Selecionar > Compartilhar na dock.', 'Aba Alterações e aba Dados (com o relatório colado).', 'Anotações: fixar uma nota e ver a seção Fixadas.']
     },
     {
