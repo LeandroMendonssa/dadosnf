@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.73.31', nome: 'Troca de tela, avisos do modo Leandro, ordem dos fornecedores e datas no iPhone', status: 'atual', data: '25/11/2026 às 22:10',
+        numero: '2.74.0', nome: 'Central do Pedido: divergências em cards, edição estruturada, Alterações e anotações fixadas', status: 'atual', data: '26/11/2026 às 12:20',
+        novidades: ['Aba Anotações: todas as divergências do pedido aparecem em cards agrupados por fornecedor, com Exportar e Editar em cada um.', 'Editar abre o card em versão compacta do registro da auditoria (tipo, campos, item da cotação, botões Puxar) e mostra "Vai ficar no histórico" antes de salvar.', 'Selecionar (dock) compartilha várias divergências de uma vez, agrupadas por fornecedor.', 'Abas: Produtos · Anotações · Dados · Alterações (Relatório foi para Dados). Alterações mostra o histórico do SmartCompras do pedido.', 'O relatório do pedido continua no topo, agora com ícone de compartilhar.', 'Anotações: dá para fixar no topo.'],
+        implementado: ['js/71 novo: cards, editor estruturado (grava entrada edicao no historico e mantém codProduto), seleção em lote via DOCK_SELECAO_TELAS.divpedido, aba Alterações (historicoSmartCompras).', 'index.html: abas, painéis e ícone; js/09: fixar anotações e rótulo Editada; style.css: .dvc-*.'],
+        arquivos: ['js/71-divergencias-cards.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'index.html', 'style.css'],
+        mudou: 'Central do Pedido e lista de Anotações.',
+        testar: ['Pedido com auditoria > aba Anotações: cards por fornecedor; Editar, mudar quantidade, Salvar: aparece Editada no Histórico.', 'Em Editar, ligar item da cotação e usar Puxar.', 'Selecionar > Compartilhar na dock.', 'Aba Alterações e aba Dados (com o relatório colado).', 'Anotações: fixar uma nota e ver a seção Fixadas.']
+    },
+    {
+        numero: '2.73.31', nome: 'Troca de tela, avisos do modo Leandro, ordem dos fornecedores e datas no iPhone', status: 'concluida', data: '25/11/2026 às 22:10',
         novidades: ['Troca de tela: o esmaecer em todas as telas acontece porque o iPhone está com "Reduzir Movimento" ligado (Ajustes › Acessibilidade › Movimento); nesse caso o iOS pede às apps que só esmaeçam. Em Personalização há uma nova opção para manter o movimento do app mesmo assim.', 'Modo Leandro: os avisos que só ganhavam uma frase solta no final ("NF salva. Anota aí: funcionou.") voltaram ao texto normal. Só ficam os avisos que têm frase própria inteira.', 'Central do Pedido: o fornecedor que já entregou desce para o fim da lista (cancelados por último) e os que ainda vão chegar sobem.', 'Campos de data (Data do Pedido, Data Limite e outros) não passam mais da largura do cartão no iPhone e alinham à esquerda como os demais campos.'],
         implementado: ['js/28 + index.html + style.css: reduzirMov (Personalização) e html[data-mov-total] anulam o esmaecer forçado do @media prefers-reduced-motion.', 'js/62: removidos os sufixos SUF_* e o bloco que os acrescentava em toast().', 'js/09: rankEntrega e fornecedoresOrdenados em renderCentralPedido (ordem estável dentro de cada grupo).', 'style.css: input[type=date/time].form-field com largura 100%, min-width 0 e appearance none.'],
         arquivos: ['js/28-transicoes-ios.js', 'js/62-linguagem.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'style.css', 'index.html'],
@@ -4191,4 +4199,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.73.31';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.74.0';

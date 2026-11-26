@@ -28,28 +28,45 @@ function renderListaAnotacoes() {
     });
 
     if (typeof ordenarAnotacoesLista === 'function') ordenarAnotacoesLista(lista);   // 2.41.0: Ordenar (js/54)
+    // 2.74.0: anotações fixadas ficam no topo (mantendo a ordem escolhida dentro de cada grupo)
+    const fixadasLista = lista.filter(a => a.fixada), demaisLista = lista.filter(a => !a.fixada);
+    lista.length = 0; fixadasLista.concat(demaisLista).forEach(a => lista.push(a));
     if (lista.length === 0) {
         container.innerHTML = `<div class="empty-state">${listaAnotacoes.length === 0 ? 'Nenhuma anotação ainda. Toque em "Nova Anotação" para começar.' : 'Nenhuma anotação encontrada.'}</div>`;
         return;
     }
 
+    let rotuloAnterior = null;
     container.innerHTML = lista.map(a => {
+        const rotuloGrupo = fixadasLista.length ? (a.fixada ? 'Fixadas' : 'Outras anotações') : '';
+        const cabecalhoGrupo = rotuloGrupo && rotuloGrupo !== rotuloAnterior ? `<div class="anot-grupo-rot">${rotuloGrupo === 'Fixadas' ? '<i class="fa-solid fa-thumbtack"></i> ' : ''}${rotuloGrupo}</div>` : '';
+        rotuloAnterior = rotuloGrupo;
         const snippet = stripHtmlAnotacao(a.conteudo).slice(0, 90) || 'Sem conteúdo ainda...';
         const data = a.atualizadoEm ? new Date(a.atualizadoEm).toLocaleString('pt-BR') : '';
         const concluida = a.status === 'concluido';
         const sinalizada = !!a.sinalizada;
         const selecionada = selecaoAnotacoesAtiva && anotacoesSelecionadas.has(a.id);
-        return `<div class="nota-item anotacao-item ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : `abrirAnotacao('${a.id}')`}">            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
+        return cabecalhoGrupo + `<div class="nota-item anotacao-item ${a.fixada ? 'anotacao-fixada' : ''} ${concluida ? 'anotacao-concluida' : ''} ${selecionada ? 'nota-selected' : ''}" onclick="${selecaoAnotacoesAtiva ? `toggleSelecaoAnotacao('${a.id}')` : `abrirAnotacao('${a.id}')`}">            <div class="nota-info">${a.titulo || 'Sem título'}${concluida ? ' <span class="badge-concluida">Concluída</span>' : ''}</div>
             <div class="nota-detalhes">${snippet}${snippet.length >= 90 ? '…' : ''}</div>
             <div class="nota-data">Atualizado em: ${data}</div>
             ${!selecaoAnotacoesAtiva ? `<div class="anotacao-card-actions">
                 ${a.pedido && listaCotacoes.some(c => String(c.pedido) === String(a.pedido)) ? `<button type="button" class="anotacao-icon-btn" title="Abrir a cotação do pedido ${escRel(String(a.pedido))}" onclick="event.stopPropagation(); abrirCentralPedido('${escRel(String(a.pedido))}')"><i class="fa-solid fa-file-invoice"></i></button>` : ''}
+                <button type="button" class="anotacao-icon-btn ${a.fixada ? 'is-pinned' : ''}" title="${a.fixada ? 'Desafixar' : 'Fixar no topo'}" onclick="event.stopPropagation(); toggleFixarAnotacao('${a.id}')"><i class="fa-solid fa-thumbtack"></i></button>
                 <button type="button" class="anotacao-icon-btn ${sinalizada ? 'is-flagged' : ''}" title="Sinalizar" onclick="event.stopPropagation(); toggleFlagAnotacao('${a.id}')"><i class="fa-solid fa-flag"></i></button>
                 <button type="button" class="anotacao-icon-btn ${concluida ? 'is-done' : ''}" title="${concluida ? 'Reabrir' : 'Concluir'}" onclick="event.stopPropagation(); toggleConcluidaAnotacao('${a.id}')"><i class="fa-solid fa-check"></i></button>
                 <button type="button" class="anotacao-icon-btn is-delete" title="Excluir" onclick="event.stopPropagation(); excluirAnotacaoRapida('${a.id}')"><i class="fa-solid fa-trash"></i></button>
             </div>` : ''}
         </div>`;
     }).join('');
+}
+
+function toggleFixarAnotacao(id) {
+    const nota = listaAnotacoes.find(a => a.id === id);
+    if (!nota) return;
+    const novoValor = !nota.fixada;
+    anotacoesTextoCollection.doc(id).update({ fixada: novoValor })
+        .then(() => toast(novoValor ? '📌 Fixada no topo.' : 'Desafixada.'))
+        .catch(e => { console.error('Erro ao fixar anotação:', e); toast('✕ Erro ao fixar.'); });
 }
 
 function toggleFlagAnotacao(id) {
@@ -184,9 +201,9 @@ let centralFornecedoresAbertos = new Set();
 let centralStatusFormAberto = new Set();
 let voltarAnotacaoEditorParaCentral = null; // guarda o pedido, se o editor de texto foi aberto a partir da Central
 
-const ROTULOS_HISTORICO = { identificacao: 'Identificado', resolucao: 'Resolvido', encerramento: 'Encerrado', reabertura: 'Reaberto', relato: 'Relatado', geracao: 'Gerado' };
+const ROTULOS_HISTORICO = { identificacao: 'Identificado', resolucao: 'Resolvido', encerramento: 'Encerrado', reabertura: 'Reaberto', relato: 'Relatado', geracao: 'Gerado', edicao: 'Editado' };
 
-// Fase 37: a cotação individual tem abas (Produtos · Anotações · Relatório · Dados), no mesmo padrão das abas de Relatórios.
+// Fase 37: a cotação individual tem abas (Produtos · Anotações · Dados · Alterações), no mesmo padrão das abas de Relatórios.
 function alternarAbaCentral(aba) {
     document.querySelectorAll('#screen-central-pedido .central-aba-pane').forEach(p => p.classList.toggle('ativa', p.dataset.aba === aba));
     document.querySelectorAll('#screen-central-pedido .central-abas .xml-filtro-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.aba === aba));
@@ -253,7 +270,7 @@ function renderBlocoDivergencia(d, oc, ocIdx, divIdx) {
     const chips = [oc.fornecedor ? upAud(nomeExibicaoFornecedor(oc.fornecedor, oc.fornecedorCnpj) || oc.fornecedor) : '', oc.notaFiscal ? `NF ${oc.notaFiscal}` : '', centralPedidoAtual ? `Pedido ${centralPedidoAtual}` : ''].filter(Boolean)
         .map(x => `<span class="cdv-chip">${escRel(x)}</span>`).join('');
 
-    const ROT = { identificacao: 'Relatada na auditoria', resolucao: 'Resolvida', encerramento: 'Encerrada', reabertura: 'Reaberta', relato: 'Relatada', geracao: 'Gerada' };
+    const ROT = { identificacao: 'Relatada na auditoria', resolucao: 'Resolvida', encerramento: 'Encerrada', reabertura: 'Reaberta', relato: 'Relatada', geracao: 'Gerada', edicao: 'Editada' };
     const historico = d.historico || [];
     const historicoHTML = historico.length ? `<div class="cdv-hist">
         ${historico.map(h => `<div class="cdv-hist-item"><span class="cdv-ponto ${h.tipo === 'resolucao' ? 'ok' : h.tipo === 'encerramento' ? 'fim' : ''}"></span><span class="cdv-hist-data">${escRel(formatarDataBRSimples(h.data))}</span><span>${escRel(ROT[h.tipo] || ROTULOS_HISTORICO[h.tipo] || h.tipo)}${h.observacao ? ' — ' + escRel(h.observacao) : ''}</span></div>`).join('')}
@@ -1207,4 +1224,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.73.31';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.74.0';
