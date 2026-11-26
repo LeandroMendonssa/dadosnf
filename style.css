@@ -181,8 +181,8 @@ body[data-transition="ios"][data-aba-efeito="nenhum"] .t-ent.t-troca, body[data-
 body[data-transition="none"] .t-ent, body[data-transition="none"] .saindo { animation: none; }
 /* "Reduzir Movimento" do aparelho: o iOS troca empurrando por uma dissolução curta */
 @media (prefers-reduced-motion: reduce) {
-  body:not([data-transition="none"]) .app-screen.t-ent { animation: t-fade-in .2s ease-out both !important; z-index: 3; box-shadow: none !important; }
-  body:not([data-transition="none"]) .app-screen.saindo { animation: none !important; filter: none !important; }
+  html:not([data-mov-total="1"]) body:not([data-transition="none"]) .app-screen.t-ent { animation: t-fade-in .2s ease-out both !important; z-index: 3; box-shadow: none !important; }
+  html:not([data-mov-total="1"]) body:not([data-transition="none"]) .app-screen.saindo { animation: none !important; filter: none !important; }
 }
 
 .header { padding: 16px 24px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); position: relative; z-index: 10; }
@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.73.30'; }
+:root { --css-versao: '2.73.31'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2493,7 +2493,7 @@ body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-w
 #screen-manage .actions-destrutivas{flex-direction:column;align-items:center}
 #screen-manage .actions .actions-button{width:min(100%,264px)}
 
-/* 2.73.30: tela Unir fornecedores (matriz e filial) */
+/* 2.73.31: tela Unir fornecedores (matriz e filial) */
 .uf-lado{display:flex;gap:10px;align-items:center;margin:10px 0}
 .uf-txt{min-width:0;display:flex;flex-direction:column}
 .uf-txt b{word-break:break-word}.uf-txt small{color:var(--text-light);word-break:break-word}
@@ -2502,3 +2502,7 @@ body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-w
 .uf-acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
 .uf-cand{border-top:1px solid var(--border,rgba(128,128,128,.25));padding-top:4px;margin-top:6px}.uf-cand.is-lig{opacity:1}.uf-lig{color:var(--success,#1a8f3c);font-weight:600;margin:0 0 8px 44px}
 .atn-conf{margin-left:auto;flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--success-text);background:transparent;color:var(--success-text);font-size:13px;font-weight:600;cursor:pointer}.atn-conf+.atn-ign{margin-left:0}
+
+/* 2.73.31: campos de data no iPhone não passam mais da largura do cartão (o iOS dá uma largura mínima própria a input date) e alinham à esquerda como os demais campos */
+input[type="date"].form-field, input[type="time"].form-field { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none; text-align: left; }
+input[type="date"].form-field::-webkit-date-and-time-value, input[type="time"].form-field::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; margin: 0; }
