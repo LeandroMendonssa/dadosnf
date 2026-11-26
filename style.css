@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.73.31'; }
+:root { --css-versao: '2.74.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2506,3 +2506,39 @@ body[data-theme="light"] .header-action.back-button{width:44px;height:44px;min-w
 /* 2.73.31: campos de data no iPhone não passam mais da largura do cartão (o iOS dá uma largura mínima própria a input date) e alinham à esquerda como os demais campos */
 input[type="date"].form-field, input[type="time"].form-field { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none; text-align: left; }
 input[type="date"].form-field::-webkit-date-and-time-value, input[type="time"].form-field::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; margin: 0; }
+
+/* 2.74.0 — Central do Pedido: divergências em cards, aba Alterações, fixar anotações */
+.dvc-barra{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 8px}
+.dvc-titulo{margin:0;font-size:var(--fs-input);font-weight:700}
+.dvc-sel-bt{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--border-color);border-radius:var(--r-md);background:transparent;color:var(--text-light);font-size:var(--fs-min);font-weight:600}
+.dvc-sel-bt.active{color:var(--accent-color);border-color:var(--accent-color)}
+.dvc-forn{margin-bottom:8px}
+.dvc-forn-nome{font-size:var(--fs-min);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-light);margin:14px 2px 8px;display:flex;align-items:center;gap:8px}
+.dvc-forn-nome span{background:color-mix(in srgb,var(--text-light) 15%,transparent);border-radius:var(--r-sm);padding:0 7px;font-size:var(--fs-xs)}
+.dvc-card{padding:14px}
+.dvc-card.editando{border-color:var(--accent-color)}
+.dvc-topo{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.dvc-topo .cdv-tipo{flex:1;min-width:0;font-weight:700}
+.dvc-meta{font-size:var(--fs-min);color:var(--text-light);margin:4px 0 8px}
+.dvc-meta:empty{display:none}
+.dvc-acomp{font-size:var(--fs-min);color:var(--text-light);margin-top:8px;overflow-wrap:anywhere}
+.dvc-hist-bt{margin-top:8px;padding:6px 0;border:0;background:transparent;color:var(--accent-text,var(--accent-color));font-size:var(--fs-min);font-weight:600}
+.dvc-acoes{margin-top:12px;display:flex;gap:8px}
+.dvc-acoes .actions-button{flex:1;min-width:0}
+.dvc-chk{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border-color);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:transparent}
+.dvc-chk.on{background:var(--accent-color);border-color:var(--accent-color);color:var(--on-solid,#fff)}
+.dvc-ed{margin-top:8px}
+.dvc-ed .campo{margin-bottom:12px}
+.dvc-puxar-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.dvc-puxar{min-height:32px;padding:0 10px;border:1px solid var(--border-color);border-radius:var(--r-md);background:transparent;color:var(--accent-text,var(--accent-color));font-size:var(--fs-min);font-weight:600}
+.dvc-diff{border:1px dashed var(--border-color);border-radius:var(--r-md);padding:10px 12px;font-size:var(--fs-min);margin:4px 0 0}
+.dvc-diff-t{font-weight:700;margin-bottom:4px}
+.dvc-diff-l{margin-top:2px;overflow-wrap:anywhere}
+.dvc-diff-vazio{color:var(--text-light)}
+#central-alteracoes-conteudo .hs-linha{border-color:var(--border-color)}
+.dvc-alt h3{margin:0 0 10px;font-size:var(--fs-input)}
+.dvc-alt-q{margin:10px 0 0;font-size:var(--fs-min);color:var(--text-light)}
+.central-sem-abas .central-aba-pane[data-aba="alteracoes"]{display:none}
+.anot-grupo-rot{font-size:var(--fs-min);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-light);margin:12px 2px 6px}
+.anotacao-icon-btn.is-pinned{color:var(--accent-color);border-color:var(--accent-color)}
+.dvc-ed .actions-row{margin:8px 0 16px}.dvc-ed .dvc-acoes{margin-top:16px}

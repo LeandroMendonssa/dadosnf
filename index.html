@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="author" content="Leandro Mendonça">
-    <meta name="app-versao" content="2.73.31">
+    <meta name="app-versao" content="2.74.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Slab:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
      
-    <link rel="stylesheet" href="style.css?v=2.73.31">
+    <link rel="stylesheet" href="style.css?v=2.74.0">
     <link rel="stylesheet" id="nv-css" href="novo-visual.css?v=2.73.0">
     <link rel="stylesheet" href="style-xp.css?v=2.60.0">
     <link rel="stylesheet" href="style-vidro.css?v=2.64.0">
@@ -142,7 +142,7 @@
             <div class="header-actions">
                 <span id="manage-counter" class="manage-counter header-counter" style="display: none;">0 notas</span>
                 <button id="bulk-select-all-notas" class="manage-toolbar-btn" onclick="selecionarTodasNotasToggle()" style="display: none;">Todas</button>
-                <button class="header-action" id="hdr-ped-exp" style="display:none" onclick="pedHdrExportar()" title="Exportar relatório" aria-label="Exportar relatório"><span class="icon-wrapper"><i class="fa-solid fa-file-export"></i></span></button>
+                <button class="header-action" id="hdr-ped-exp" style="display:none" onclick="pedHdrExportar()" title="Compartilhar relatório do pedido" aria-label="Compartilhar relatório do pedido"><span class="icon-wrapper"><i class="fa-solid fa-arrow-up-from-bracket"></i></span></button>
                 <button class="header-action" id="hdr-ped-mais" style="display:none" onclick="pedHdrMais()" title="Mais ações do pedido" aria-label="Mais ações do pedido"><span class="icon-wrapper"><i class="fa-solid fa-ellipsis"></i></span></button>
                 <div class="nota-capsula" id="nota-capsula" onmousedown="event.preventDefault()">
                     <button class="header-action" id="nota-menu-btn" onclick="toggleMenuNota(event)" title="Mais ações da anotação" aria-label="Mais ações">
@@ -593,9 +593,7 @@
                     <button class="actions-button is-primary" onclick="document.getElementById('cotacao-xml-file-input').click(); switchToScreen('screen-cotacoes','Cotações')"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Adicionar cotação (XML)</button>
                 </div>
 
-                <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="relatorio" onclick="alternarAbaCentral('relatorio')">Relatório</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
-                    <button class="actions-button" onclick="iniciarAuditoriaDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-clipboard-check"></i></span> Nova Auditoria</button>
-                    <button class="actions-button is-neutral" onclick="exportarDivergenciasPedido(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-share-nodes"></i></span> Exportar divergências do pedido</button>
+                <div class="xml-filtro-toggle central-abas mt-3"><button type="button" class="xml-filtro-btn active" data-aba="produtos" onclick="alternarAbaCentral('produtos')">Produtos</button><button type="button" class="xml-filtro-btn" data-aba="anotacoes" onclick="alternarAbaCentral('anotacoes')">Anotações</button><button type="button" class="xml-filtro-btn" data-aba="dados" onclick="alternarAbaCentral('dados')">Dados</button><button type="button" class="xml-filtro-btn" data-aba="alteracoes" onclick="alternarAbaCentral('alteracoes')">Alterações</button></div> <div class="central-aba-pane ativa" data-aba="produtos"><div id="central-fornecedores-container"></div></div> <div class="central-aba-pane" data-aba="anotacoes"><div class="actions-row" style="margin:16px 0;">
                     <button class="actions-button is-neutral" id="central-btn-texto-livre" onclick="abrirTextoLivreDoPedidoCentral()"><span class="icon-wrapper"><i class="fa-solid fa-file-lines"></i></span> Texto / Anotação</button>
                 </div>
 
@@ -610,20 +608,9 @@
                     <p style="margin:0 0 12px;color:var(--text-light);font-size:13px;">Nenhuma anotação para este pedido ainda.</p>
                     <button class="actions-button" onclick="criarAnotacaoInlineCentral()"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Criar Anotação</button>
                 </div>
-            </div> <div class="central-aba-pane" data-aba="relatorio"><div class="card" id="central-relatorio-card"><h3 class="card-titulo card-titulo-sm">Complementar com Relatório do SmartCompras</h3>
-                    <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
-                    <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
-                    <div class="actions-row">
-                        <button class="actions-button" onclick="processarRelatorioSmartComprasColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar Relatório</button>
-                    </div>
-                    <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
-                        <div id="relatorio-smartcompras-resumo"></div>
-                        <div class="actions-row mt-3" >
-                            <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
-                            <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
-                        </div>
-                    </div>
-                </div></div> <div class="central-aba-pane" data-aba="dados"><div class="card" id="central-header-card" style="display:none;">
+                <div class="dvc-barra" id="central-div-barra" style="display:none;"><h3 class="dvc-titulo">Divergências do pedido</h3><button type="button" class="dvc-sel-bt" id="central-div-selecionar" onclick="dvcSelEntrar()"><i class="fa-solid fa-square-check"></i> Selecionar</button></div>
+                <div id="central-div-cards"></div>
+            </div> <div class="central-aba-pane" data-aba="dados"><div class="card" id="central-header-card" style="display:none;">
                     <div class="campo"><label>Origem</label>
                         <select id="central-origem" class="form-field" onchange="salvarCabecalhoCotacaoCentral()">
                             <option value="">Selecione...</option>
@@ -638,7 +625,21 @@
                         <button class="actions-button is-neutral" onclick="document.getElementById('cotacao-xml-file-input').click()"><span class="icon-wrapper"><i class="fa-solid fa-file-import"></i></span> Atualizar via XML</button>
                         <button class="actions-button is-neutral" onclick="abrirCotacaoParaEdicao(centralPedidoAtual)"><span class="icon-wrapper"><i class="fa-solid fa-truck"></i></span> Editar Fornecedores</button>
                     </div>
-                </div></div>
+                </div>
+<div class="card" id="central-relatorio-card"><h3 class="card-titulo card-titulo-sm">Complementar com Relatório do SmartCompras</h3>
+                    <p style="margin:0 0 10px;font-size:12px;color:var(--text-light);">Cole aqui o texto copiado do relatório de fornecedores ganhadores — ele traz o nome oficial dos produtos, que não vem no XML.</p>
+                    <div class="campo"><textarea id="relatorio-smartcompras-texto" class="form-field" style="min-height:90px;" placeholder="Cole o texto do relatório aqui..."></textarea></div>
+                    <div class="actions-row">
+                        <button class="actions-button" onclick="processarRelatorioSmartComprasColado()"><span class="icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span> Processar Relatório</button>
+                    </div>
+                    <div class="central-relatorio-preview" id="relatorio-smartcompras-preview" style="display:none;">
+                        <div id="relatorio-smartcompras-resumo"></div>
+                        <div class="actions-row mt-3" >
+                            <button class="actions-button is-success" onclick="confirmarRelatorioSmartCompras()"><span class="icon-wrapper"><i class="fa-solid fa-check"></i></span> Confirmar</button>
+                            <button class="actions-button is-neutral" onclick="cancelarRelatorioSmartCompras()">Cancelar</button>
+                        </div>
+                    </div>
+                </div></div> <div class="central-aba-pane" data-aba="alteracoes"><div id="central-alteracoes-conteudo"></div></div>
       </div>
 <div class="app-screen" id="screen-conta">
                 <div class="card">
@@ -1190,6 +1191,7 @@
   <script src="js/68-conflito-edicao.js"></script>
   <script src="js/69-unir-fornecedores.js"></script>
   <script src="js/70-testes-automaticos.js"></script>
+  <script src="js/71-divergencias-cards.js"></script>
   <script src="js/43-verificar-arquivos.js"></script>
 
 <script>function xpIr(id,t){document.getElementById("xp-iniciar").hidden=true;switchToScreen(id,t);}</script>
