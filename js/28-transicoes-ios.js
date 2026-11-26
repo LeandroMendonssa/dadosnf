@@ -22,6 +22,9 @@
         const ef = efeitoAba();
         if (document.body.getAttribute('data-aba-efeito') !== ef) document.body.setAttribute('data-aba-efeito', ef);
         document.querySelectorAll('#aba-efeito-options .transition-option').forEach(b => b.classList.toggle('active', b.dataset.value === ef));
+        const rm = pz.reduzirMov === 'ignorar' ? 'ignorar' : 'seguir';   // 2.73.31
+        if (document.documentElement.getAttribute('data-mov-total') !== (rm === 'ignorar' ? '1' : '0')) document.documentElement.setAttribute('data-mov-total', rm === 'ignorar' ? '1' : '0');
+        const rs = document.getElementById('reduzir-mov-select'); if (rs) rs.value = rm;
         const cs = document.getElementById('cascata-select'); if (cs) cs.value = pz.cascata === 'nao' ? 'nao' : 'sim';
         const modo = pz.carregamento === 'texto' ? 'texto' : 'blocos';
         document.querySelectorAll('#carregamento-options .transition-option').forEach(b => b.classList.toggle('active', b.dataset.value === modo));
@@ -37,6 +40,12 @@
         aplicarTransicoesExtras();
         salvarPersonalizacao();
     };
+    window.escolherReduzirMov = function (v) {
+        appConfig.personalizacao.reduzirMov = v === 'ignorar' ? 'ignorar' : 'seguir';
+        aplicarTransicoesExtras();
+        salvarPersonalizacao();
+    };
+// leandromendonssa
     window.escolherCascata = function (v) {
         appConfig.personalizacao.cascata = v === 'nao' ? 'nao' : 'sim';
         salvarPersonalizacao();
@@ -220,4 +229,4 @@
         mostrarCarregando(screenId);
     };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/28-transicoes-ios.js'] = '2.42.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/28-transicoes-ios.js'] = '2.73.31';

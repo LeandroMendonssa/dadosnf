@@ -216,11 +216,6 @@ const LING = (function () {
         return neutro;
     }
     const FRASES_ATIVAS = new Map();   // preenchido abaixo
-    const SUF_OK = ['Menos uma pra conta.', 'Anota aí: funcionou.', 'Sobrevivemos a mais uma.', 'Milagre, mas aconteceu.', 'Finalmente.', 'Sem drama, pra variar.', 'Hoje o sistema acordou bonzinho.', 'Fornecedor nenhum atrasou isso, pelo menos.'];
-    const SUF_FALHA = ['Clássico.', 'Ninguém está surpreso.', 'O sistema só colabora quando quer.', 'Mais uma pro caderninho.', 'Como esperado.', 'Se fosse fácil não era aqui.', 'Isso aqui adora escolher o pior momento.'];
-    const SUF_FALTA = ['Sem isso eu não adivinho.', 'Detalhe que não dá pra pular.', 'Eu bem que queria ajudar, mas não leio mente.', 'Falta o básico.', 'Dado faltando é assim que a bagunça começa.'];
-    const SUF_NADA = ['Nem sinal de vida.', 'Silêncio total por aqui.', 'Deserto.', 'Parece até que alguém arrumou a casa.'];
-    const SUF_JA = ['Já tá feito, não precisa insistir.', 'Isso já foi resolvido, juro.', 'Duas vezes não adianta.'];
     const ultimo = {};
     let modo = 'n';
     try { const v = localStorage.getItem(CHAVE); if (v === 's') modo = 's'; } catch (e) { }
@@ -238,21 +233,7 @@ const LING = (function () {
             let t = sorteia(r.id, r.s).replace('$1', m[1] || '');
             return (r.pre || '') + t;
         }
-        // Sem regra própria: mantém o texto original (com nomes e números) e acrescenta um comentário no fim.
-        if (ehSucesso) return texto.replace(/[.!\s]+$/, '') + '. ' + sorteia('suf-ok', SUF_OK);
-        if (ehErro) {
-            const base = texto.replace(/[.!\s]+$/, '');
-            if (/^(Erro|Não (consegui|foi possível)|Falha)/.test(texto)) return base + '. ' + sorteia('suf-falha', SUF_FALHA);
-            if (/^(Preencha|Selecione|Digite|Informe|Escolha|Cole)/.test(texto)) return base + '. ' + sorteia('suf-falta', SUF_FALTA);
-        }
-        if (!ehSucesso && !ehErro) {
-            const t = texto.trim(), base = t.replace(/\s*✓\s*/g, ' ').replace(/[.!\s]+$/, '');
-            if (/✓/.test(t)) return base + '. ' + sorteia('suf-ok', SUF_OK);
-            if (/^(Não consegui|Não foi possível|Falha|Erro)/.test(t)) return base + '. ' + sorteia('suf-falha', SUF_FALHA);
-            if (/^(Selecione|Escolha|Informe|Digite|Cole|Preencha|Marque|Carregue|Associe|Adicione|Gere|Cadastre)/.test(t)) return base + '. ' + sorteia('suf-falta', SUF_FALTA);
-            if (/^(Nada|Nenhum|Nenhuma|Não há)\b/.test(t)) return base + '. ' + sorteia('suf-nada', SUF_NADA);
-            if (/^(Esse|Essa|Esta|Este|A NF)\b.*\bjá\b/.test(t)) return base + '. ' + sorteia('suf-ja', SUF_JA);
-        }
+        // 2.73.31: sem frase própria, o aviso fica como está. Não se acrescenta mais comentário solto no final.
         return null;
     }
     function fixa(id, neutro) { if (modo !== 's') return neutro; const v = FIXAS[id]; return v === undefined ? neutro : v; }
@@ -352,4 +333,4 @@ const LING = (function () {
     aplicarFixas(); if (modo === 's') varrer();
     return { toast, fixa, t, saudacaoExtra, comentarioHora, definir, modo: () => modo };
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.73.14';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/62-linguagem.js'] = '2.73.31';

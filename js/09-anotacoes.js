@@ -331,7 +331,11 @@ function renderCentralPedidoCompleto(pedido) {
         const audLigadas = new Map();   // "ocIdx-divIdx" → CNPJ do fornecedor do item a que a comparação ligou a auditoria
         compItens.forEach(c => (c.auditorias || []).forEach(a => { const k = `${a.ocIdx}-${a.divIdx}`; if (!audLigadas.has(k)) audLigadas.set(k, normalizarCnpj(c.cnpjFornecedor)); }));
         const normNome = x => String(x || '').trim().toUpperCase();
-        const fornecedoresHTML = (cotacao.fornecedores || []).map(f => {
+        // 2.73.31: quem já entregou desce para o fim da lista (cancelada por último) e quem ainda vai chegar sobe; dentro de cada grupo vale a ordem original.
+        const rankEntrega = f => { try { const e = calcularEntregaFornecedorPedido(pedido, f, compItens.filter(item => normalizarCnpj(item.cnpjFornecedor) === normalizarCnpj(f.cnpj))); return !e ? 0 : e.estado === 'completa' ? 1 : e.estado === 'cancelada' ? 2 : 0; } catch (er) { return 0; } };
+        const fornecedoresOrdenados = (cotacao.fornecedores || []).map((f, i) => ({ f, i, r: rankEntrega(f) })).sort((a, b) => (a.r - b.r) || (a.i - b.i)).map(x => x.f);
+        // leandromendonssa
+        const fornecedoresHTML = fornecedoresOrdenados.map(f => {
             const nomeExibicao = nomeExibicaoFornecedor(f.razaoSocial, f.cnpj);
             const produtos = (cotacao.itens || []).filter(it => normalizarCnpj(it.cnpjFornecedor) === normalizarCnpj(f.cnpj));
             // 2.25.2: auditoria sem CNPJ que a comparação já ligou a um item deste fornecedor aparece no item (e não só no fim da tela)
@@ -1203,4 +1207,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.73.10';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.73.31';
