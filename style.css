@@ -1901,7 +1901,7 @@ body.keyboard-open .dock-selecao{opacity:0;pointer-events:none}
 .uso-lin i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent-color);opacity:.5}
 
 /* 2.20.8 — versão do CSS (lida por js/43 para avisar se o arquivo ficou antigo) e aviso de arquivos desatualizados */
-:root { --css-versao: '2.74.0'; }
+:root { --css-versao: '2.75.0'; }
 #aviso-arquivos{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(env(safe-area-inset-top,0px) + var(--space-3));z-index:10003;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--r-lg);background:var(--bg-secondary);border:1.5px solid var(--danger);box-shadow:var(--shadow-lg);color:var(--text-dark)}
 #aviso-arquivos div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--fs-aux);text-align:left;overflow-wrap:anywhere}
 #aviso-arquivos b{color:var(--danger);font-size:var(--fs-md)}
@@ -2542,3 +2542,30 @@ input[type="date"].form-field::-webkit-date-and-time-value, input[type="time"].f
 .anot-grupo-rot{font-size:var(--fs-min);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-light);margin:12px 2px 6px}
 .anotacao-icon-btn.is-pinned{color:var(--accent-color);border-color:var(--accent-color)}
 .dvc-ed .actions-row{margin:8px 0 16px}.dvc-ed .dvc-acoes{margin-top:16px}
+/* 2.75.0 — Central do Pedido: aba Divergências (abas rolam na horizontal, como no Editor de NF) e tela dedicada de edição */
+.central-abas{display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.central-abas::-webkit-scrollbar{display:none}
+.central-abas .xml-filtro-btn{flex:1 0 auto;white-space:nowrap;padding:7px 14px}
+.central-aba-n{display:inline-block;margin-left:6px;min-width:18px;padding:0 6px;border-radius:999px;font-size:var(--fs-xs);font-weight:700;line-height:18px;background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+.central-abas .xml-filtro-btn.active .central-aba-n{background:rgba(255,255,255,.28);color:inherit}
+#screen-div-editar .card{margin-bottom:12px}
+.dvc-ctx{display:flex;flex-direction:column;gap:2px}
+.dvc-ctx-tag{font-size:var(--fs-xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-text,var(--accent-color))}
+.dvc-ctx-t{font-size:var(--fs-input);font-weight:700}
+.dvc-ctx-m{font-size:var(--fs-min);color:var(--text-light);overflow-wrap:anywhere}
+.dvc-st-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dvc-st-grid button{min-height:44px;border-radius:var(--r-md);border:1.5px solid var(--border-color);background:var(--bg-secondary);color:var(--text-dark);font-size:var(--fs-md);font-weight:600}
+.dvc-st-grid button.on{border-color:var(--accent-color);color:var(--accent-text,var(--accent-color));background:color-mix(in srgb,var(--accent-color) 12%,transparent)}
+.dvc-folha{max-height:78vh;overflow:auto}
+.dvc-hi{list-style:none;margin:6px 0 0 6px;padding:0;border-left:2px solid var(--border-color)}
+.dvc-hi li{position:relative;padding:6px 0 6px 14px;font-size:var(--fs-aux)}
+.dvc-hi li::before{content:"";position:absolute;left:-6px;top:13px;width:8px;height:8px;border-radius:50%;background:var(--text-light)}
+.dvc-hi li.ed::before{background:var(--accent-color)}
+.dvc-hi small{display:block;color:var(--text-light);font-size:var(--fs-min)}
+.dvc-hi .dvc-ver{border:0;background:transparent;color:var(--accent-text,var(--accent-color));font-weight:600;font-size:var(--fs-min);padding:6px 0;min-height:32px}
+.dvc-snap{background:var(--bg-tertiary);border-radius:var(--r-md);padding:8px 10px;font-size:var(--fs-min);line-height:1.5;margin:2px 0 6px}
+.dvc-st-grid{margin-top:4px}
+/* 2.75.0: botões do cartão de divergência lado a lado; abas com selo alinhado */
+.dvc-card .dvc-acoes{flex-wrap:nowrap}
+.dvc-card .dvc-acoes > .actions-button{min-width:0 !important;flex:1 1 0}
+.central-abas .xml-filtro-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
