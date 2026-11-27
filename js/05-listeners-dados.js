@@ -337,6 +337,9 @@ const ASSINATURAS_DADOS = {
 
 // 2.19.2: o cartão do Gerenciar NF usa NFs processadas, ERP e cotações (pedido, aptidão). Ele era desenhado antes de esses dados chegarem e nunca
 // era redesenhado: por isso "Pedido" ficava em branco e todas as NFs diziam que não passaram pela Entrada Segura.
+// 2.75.0: notas cuja NF está com pendência para o financeiro (n.pendFin) saem do Repasse de NF e ficam só no Controle de NF
+function notasSaida() { return notasPendentes.filter(n => !n.emEspera && !n.pendFin); }
+function notasEmEspera() { return notasPendentes.filter(n => n.emEspera && !n.pendFin); }
 function atualizarGerenciarComDados() { if (DOM && DOM.listaNotas && notasPendentes.length) agendarRender('gerenciar', rebuildNotasPendentesList, 200); }
 // 2.19.4: o cadastro de fornecedores (~1.200 documentos, quase não muda) fica guardado neste aparelho por até 12 h e só é lido de novo no Firebase
 // quando o cache vence ou quando você abre uma tela que altera o cadastro (Fornecedores, Importar, Entrada/Editor de NF). Nessas telas ele volta a ser "ao vivo".
@@ -365,6 +368,7 @@ const DADOS_POR_TELA = {
     'screen-spdata': ['produtosSpData', 'associacoesSpData'],
     'screen-cotacoes': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-cotacao-editor': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
+    'screen-div-editar': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'entradasErp'],
     'screen-central-pedido': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-auditoria-nova': ['cotacoes', 'associacoesSpData', 'produtosSpData', 'nfsProcessadas', 'relatorioGanhadores', 'entradasErp', 'associacoesFornecedor'],
     'screen-auditoria-central': ['cotacoes', 'nfsProcessadas', 'entradasErp', 'associacoesSpData', 'produtosSpData', 'associacoesFornecedor', 'relatorioGanhadores'],
@@ -420,7 +424,7 @@ function handleSnapshotChanges(snapshot){
     
     // Atualiza funcionalidades dependentes. Notas marcadas como "pendente" (em
     // espera) ficam de fora do texto de exportação.
-    DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+    DOM.saida.value = buildSaidaText(notasSaida());
     atualizarContadorExportacao();
     atualizarAreaRelatorios();
 }
@@ -489,7 +493,7 @@ function rebuildNotasPendentesList(){
 
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".
     /* leandromendonssa */
-    const notasParaExibir = notasPendentes.filter(n => abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera);
+    const notasParaExibir = notasPendentes.filter(n => !n.pendFin && (abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera));
     if (typeof ordenarNotasGerenciar === 'function') ordenarNotasGerenciar(notasParaExibir);   // 2.41.0: Ordenar (js/54)
     if(notasParaExibir.length===0){
         DOM.listaNotas.innerHTML = abaGerenciar === 'espera'
@@ -557,19 +561,19 @@ let abaGerenciar = 'saida';
 function alternarAbaGerenciar(aba) {
     abaGerenciar = aba;
     const sc = document.getElementById('screen-manage'); if (sc) sc.classList.toggle('modo-exportar', aba === 'exportar');
-    if (aba === 'exportar') { try { DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao(); } catch (e) { console.error('Exportar texto:', e); } }
+    if (aba === 'exportar') { try { DOM.saida.value = buildSaidaText(notasSaida()); atualizarContadorExportacao(); } catch (e) { console.error('Exportar texto:', e); } }
     if (notasSelecionadas.size) { notasSelecionadas.clear(); atualizarBulkBarNotas(); } // Fase 40: a seleção não atravessa abas
     rebuildNotasPendentesList();
 }
 function atualizarContadorGerenciar() {
     const contSaida = document.getElementById('gerenciar-cont-saida'), contEspera = document.getElementById('gerenciar-cont-espera');
-    if (contSaida) contSaida.textContent = notasPendentes.filter(n => !n.emEspera).length;
-    if (contEspera) contEspera.textContent = notasPendentes.filter(n => n.emEspera).length;
+    if (contSaida) contSaida.textContent = notasSaida().length;
+    if (contEspera) contEspera.textContent = notasEmEspera().length;
     document.querySelectorAll('#gerenciar-abas .xml-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.aba === abaGerenciar));
     const counterEl = document.getElementById('manage-counter');
     if (!counterEl) return;
-    const total = notasPendentes.length;
-    const pendentesCount = notasPendentes.filter(n => n.emEspera).length;
+    const total = notasPendentes.filter(n => !n.pendFin).length;
+    const pendentesCount = notasEmEspera().length;
     // Fase 33: texto curto pra não espremer o título "Gerenciar NF"; o completo fica no title.
     counterEl.textContent = `${total}${pendentesCount > 0 ? ` · ${pendentesCount} pend.` : ''}`;
     counterEl.title = `${total} nota${total === 1 ? '' : 's'}${pendentesCount > 0 ? ` · ${pendentesCount} pendente${pendentesCount === 1 ? '' : 's'}` : ''}`;
@@ -652,4 +656,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.73.30';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.75.0';

@@ -4,7 +4,7 @@
 
 function atualizarContadorExportacao() {
     if(DOM.totalNotasExport) {
-        DOM.totalNotasExport.textContent = notasPendentes.filter(n => !n.emEspera).length;
+        DOM.totalNotasExport.textContent = notasSaida().length;
     }
 }
 
@@ -278,4 +278,5 @@ function divergenciasRel() {
 function auditoriaCasaTermoRel(x, termo) {
     return normalizarBuscaRel(x.pedido).includes(termo) || normalizarBuscaRel(x.fornecedor).includes(termo) || normalizarBuscaRel(x.notaFiscal).includes(termo);
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/04-relatorios-base.js'] = '2.49.0';
+// leandromendonssa
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/04-relatorios-base.js'] = '2.75.0';

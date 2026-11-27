@@ -200,7 +200,7 @@ async function aplicarRecursoSugeridoNota(id) {
     try {
         nota.obs = rec;
         await notasCollection.doc(id).update({ obs: rec });
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        DOM.saida.value = buildSaidaText(notasSaida()); atualizarContadorExportacao();
         rebuildNotasPendentesList();
         toast(`✓ Recurso aplicado: ${rec}`);
     } catch (e) { console.error('Erro ao aplicar recurso:', e); toast('✕ Erro ao aplicar o recurso.'); }
@@ -214,7 +214,7 @@ async function aplicarRecursosSugeridosTodos() {
             alvos.slice(i, i + 400).forEach(({ n, rec }) => { n.obs = rec; batch.update(notasCollection.doc(n.id), { obs: rec }); });
             await batch.commit();
         }
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        DOM.saida.value = buildSaidaText(notasSaida()); atualizarContadorExportacao();
         rebuildNotasPendentesList();
         toast(`✓ Recurso aplicado em ${alvos.length} nota(s).`);
     } catch (e) { console.error('Erro ao aplicar recursos:', e); toast('✕ Erro ao aplicar os recursos.'); }
@@ -233,7 +233,7 @@ async function autoAplicarRecursosSugeridos() {
             alvos.slice(i, i + 400).forEach(({ n, rec }) => { n.obs = rec; batch.update(notasCollection.doc(n.id), { obs: rec }); });
             await batch.commit();
         }
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        DOM.saida.value = buildSaidaText(notasSaida()); atualizarContadorExportacao();
         rebuildNotasPendentesList();
     } catch (e) { console.error('Erro ao aplicar recursos automaticamente:', e); _autoRecFalhouEm = Date.now(); alvos.forEach(({ n }) => { n.obs = ''; }); rebuildNotasPendentesList(); }
     finally { _autoRecRodando = false; }
@@ -247,7 +247,7 @@ async function sincronizarRecursoDaNfComNotas(nfId, recurso) {
         const batch = firestore.batch();
         alvos.forEach(n => { n.obs = recurso; batch.update(notasCollection.doc(n.id), { obs: recurso }); });
         await batch.commit();
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao();
+        DOM.saida.value = buildSaidaText(notasSaida()); atualizarContadorExportacao();
         rebuildNotasPendentesList();
     } catch (e) { console.error('Erro ao refletir o recurso na nota:', e); toast('✕ O recurso foi salvo na NF, mas não consegui refletir na nota do Repasse de NF.'); }
 }
@@ -260,7 +260,7 @@ function atualizarAvisoRecursosGerenciar() {
     const t = document.getElementById('gerenciar-aplicar-recursos-txt'); if (t) t.textContent = `${n} nota(s) sem recurso, mas o recurso já é conhecido pela Entrada de NF`;
 }
 
-function notasDaAbaGerenciar() { return notasPendentes.filter(n => abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera); }
+function notasDaAbaGerenciar() { return notasPendentes.filter(n => !n.pendFin && (abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera)); }
 
 async function bulkMarcarPendente(valor) {
     const ids = Array.from(notasSelecionadas);
@@ -273,7 +273,7 @@ async function bulkMarcarPendente(valor) {
             batch.update(notasCollection.doc(id), { emEspera: valor });
         });
         rebuildNotasPendentesList();
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+        DOM.saida.value = buildSaidaText(notasSaida());
         atualizarContadorExportacao();
         await batch.commit();
         toast(valor ? `⏳ ${ids.length} nota(s) marcada(s) como pendente.` : `✓ ${ids.length} nota(s) removida(s) da pendência.`);
@@ -349,7 +349,7 @@ async function salvarEdicaoEmLoteNotas() {
         await batch.commit();
         if (forn) await adicionarFornecedor(forn, true);
         rebuildNotasPendentesList();
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+        DOM.saida.value = buildSaidaText(notasSaida());
         fecharEdicaoEmLoteNotas();
         toast(`✓ ${ids.length} nota(s) atualizada(s).`);
     } catch (e) {
@@ -368,7 +368,7 @@ function getLinha(nota){
 function buildSaidaText(notas){ return notas.map(getLinha).join("\n"); }
 
 function ordenarExportacao() {
-    const notasParaExportar = notasPendentes.filter(n => !n.emEspera);
+    const notasParaExportar = notasSaida();
     if (notasParaExportar.length === 0) return toast("Nada para ordenar.");
     const notasOrdenadas = [...notasParaExportar].sort((a, b) => {
         const recursoA = (a.obs || '').toUpperCase();
@@ -465,4 +465,4 @@ function marcaAutoriaPdf(doc) {
 // Assinatura discreta no console do navegador.
 try { console.log('%cAlmoxarifado · desenvolvido por Leandro Mendonça', 'color:#8a97a8;font-size:11px'); } catch (e) { }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.61.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.75.0';

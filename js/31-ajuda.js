@@ -154,7 +154,7 @@ const AJUDA_ARTIGOS = [
       ],
       dicas: ['O recurso de cada nota no texto é o campo Recurso dela. Se uma nota sai sem recurso, aplique o recurso no Repasse de NF ou edite a nota.',
               'Os vencimentos dos próximos 7 dias aparecem na tela Início.'], tutorial: 'xml-ao-texto' },
-    { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.15.0',
+    { id: 'controle-nfs', cat: 'Notas fiscais', titulo: 'Controle de NFs e suas pendências', versao: '2.75.0',
       resumo: 'Ver todas as NFs e resolver o que falta tocando na pendência.',
       palavras: 'controle nfs pendencia erp xml vinculo cartao divergencia editor',
       tela: [{ id: 'screen-controle-nfs', titulo: 'Controle de NFs', rotulo: 'Abrir Controle de NFs' }],
@@ -163,6 +163,7 @@ const AJUDA_ARTIGOS = [
         'Toque numa pendência (texto vermelho ou o selo "N pendências"): o app abre o lugar certo e destaca o ponto em amarelo.',
         'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Repasse de NF.',
         'O ícone de selecionar (canto superior direito, igual ao de Cotações, Anotações e Repasse de NF) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
+        'Pendente p/ financeiro: no cartão da NF (inclusive as que vieram só do ERP) ou no Editor da NF, escolha os motivos. Enquanto houver pendência a NF sai da lista do Repasse de NF e fica só aqui no Controle. Quando resolver, remova a pendência: a NF NÃO volta sozinha para o Repasse; aparece o botão "Enviar à relação" para você mandar quando quiser.',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).',
         'No Repasse de NF, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
       ],
@@ -345,11 +346,15 @@ const AJUDA_ARTIGOS = [
         'Pendências do Controle de NFs levam direto à aba e ao cartão certos, destacados em amarelo.'
       ],
       dicas: ['O Voltar devolve você ao ponto de onde chegou (por exemplo, o pedido ou o Controle).'], tutorial: null },
-    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.22.7',
+    { id: 'central-pedido', cat: 'Cotações e recurso', titulo: 'Pedido (Central do Pedido): fornecedores, NF e divergências', versao: '2.75.0',
       resumo: 'Acompanhar um pedido fornecedor a fornecedor.',
-      palavras: 'pedido central fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
+      palavras: 'pedido central aba divergencias editar historico versao anterior fornecedor cartao divergencia associar nf abrir nf chegou parcial entrega itens',
       tela: [{ id: 'screen-cotacoes', titulo: 'Cotações', rotulo: 'Abrir Cotações' }],
       passos: [
+        'A Central do Pedido tem abas que rolam para o lado: Dados, Alterações, Anotações, Divergências e as demais. Em Anotações ficam só os textos; as divergências têm aba própria (o número na aba mostra quantas há).',
+        'Aba Divergências: um cartão por divergência, agrupado por fornecedor. "Exportar" gera o texto da divergência; "Histórico (n)" abre uma folha por baixo com todo o histórico (nada é apagado). Para várias de uma vez, toque em Selecionar, marque os cartões e use Compartilhar na dock.',
+        'Editar abre uma tela só daquela divergência, com os mesmos campos do registro da auditoria (tipo, materiais, vínculo com o item da cotação, botões Puxar, observação e status). Veja o quadro "Vai ficar no histórico" e toque em Salvar alterações no fim da tela, ou em Cancelar.',
+        'Se a divergência foi alterada em outro aparelho enquanto você editava, o app mostra o que mudou e pergunta se quer salvar mesmo assim. Cada edição guarda a versão anterior: no Histórico, toque em "Ver versão anterior".',
         'Cada divergência da auditoria é um cartão: tipo, fornecedor, NF e pedido, o texto, a linha do tempo (data e o que foi registrado) e "Alterar status". "Pendência relatada" é a auditoria aberta (já com o responsável).',
         'Ao abrir um produto, o card traz Produto, Quantidade e valores, Cotação e recurso e o SP Data. Em "Cotação e recurso" você vê quantos fornecedores cotaram, o vencedor e o recurso: "Pela cotação" (previsto pelo número de fornecedores, gravado ao salvar a NF) ou "Confirmado na NF".',
         'Em Cotações, toque no cartão do pedido.',
@@ -644,4 +649,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.67.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.75.0';

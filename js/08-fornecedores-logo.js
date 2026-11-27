@@ -399,7 +399,7 @@ async function toggleEmEspera(id) {
     // que "não funcionava" até o listener eventualmente sincronizar.
     nota.emEspera = novoValor;
     rebuildNotasPendentesList();
-    DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+    DOM.saida.value = buildSaidaText(notasSaida());
     atualizarContadorExportacao();
 
     try {
@@ -409,7 +409,7 @@ async function toggleEmEspera(id) {
         // Escrita falhou: desfaz a mudança local pra não ficar dessincronizado.
         nota.emEspera = !novoValor;
         rebuildNotasPendentesList();
-        DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera));
+        DOM.saida.value = buildSaidaText(notasSaida());
         atualizarContadorExportacao();
         console.error('Erro ao marcar nota como pendente:', e);
         toast('✕ Erro ao atualizar a nota.');
@@ -445,8 +445,8 @@ async function arquivarNotaIndividual(id) {
     });
 }
 async function limpar(){
-    const notasParaArquivar = notasPendentes.filter(n => !n.emEspera);
-    const notasPendentesRestantes = notasPendentes.filter(n => n.emEspera);
+    const notasParaArquivar = notasSaida();
+    const notasPendentesRestantes = notasEmEspera();
     showConfirmModal({
         title: "Confirmar Arquivamento",
         message: notasParaArquivar.length === 0
@@ -511,4 +511,4 @@ async function copiarResgateCodigos() {
     try { await navigator.clipboard.writeText(a.value); toast('✓ Lista copiada!'); } catch (e) { a.removeAttribute('readonly'); a.focus(); a.select(); toast('Selecione e copie o texto.'); }
 }
 async function limparHistorico(){showConfirmModal({title:"Limpar Histórico?",confirmText:"Limpar histórico",message:"Esta ação é irreversível.",onConfirm:async()=>{if(historicoNotas.length===0)return;const batch=firestore.batch();historicoNotas.forEach(nota=>batch.delete(historicoCollection.doc(nota.id)));await batch.commit();toast("Histórico limpo!")}})}
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.73.28';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/08-fornecedores-logo.js'] = '2.75.0';

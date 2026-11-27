@@ -55,8 +55,13 @@ async function salvarPendenciaEntrega(id, remover) {
         await alvoPrincipal.update({ pendenciaEntrega: valor });
         // se o outro documento da mesma NF (ERP ou XML) tinha a marca, limpa para não ficar duas verdades
         if (nf && erp && erp.pendenciaEntrega) await entradasErpCollection.doc(erp.id).update({ pendenciaEntrega: firebase.firestore.FieldValue.delete() });
+        // 2.75.0: NF com pendência para o financeiro sai do Repasse de NF (a nota fica retida e só aparece no Controle de NF).
+        // Ao resolver a pendência a nota NÃO volta sozinha: fica disponível no Controle com o botão "Enviar à relação".
+        const notaId = (nf && nf.notaVinculadaId) || (erp && erp.notaVinculadaId) || null;
+        const nota = notaId ? notasPendentes.find(n => n.id === notaId) : null;
+        if (nota && motivos.length && !nota.pendFin) { try { await notasCollection.doc(nota.id).update({ pendFin: true }); } catch (e) { console.warn('pendFin', e); } }
         closeAllModals();
-        toastRico({ titulo: motivos.length ? 'Pendência registrada' : 'Pendência removida', detalhe: `NF ${(nf || erp).nf}${motivos.length ? ' · ' + motivos.map(k => (MOTIVOS_PEND_ENTREGA.find(x => x[0] === k) || [k, k])[1]).join(', ') : ''}` });
+        toastRico({ titulo: motivos.length ? 'Pendência registrada' : 'Pendência removida', detalhe: `NF ${(nf || erp).nf}${motivos.length ? ' · ' + motivos.map(k => (MOTIVOS_PEND_ENTREGA.find(x => x[0] === k) || [k, k])[1]).join(', ') + (nota ? ' · saiu do Repasse de NF' : '') : (nota && nota.pendFin ? ' · já pode voltar para a relação (botão no Controle de NF)' : '')}` });
         ['renderControleNfs', 'renderEditorNf', 'renderInicio'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
     } catch (e) { console.error('Erro ao salvar pendência de entrega:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
 }
@@ -160,6 +165,14 @@ window.chipPendenciaEntrega = chipPendenciaEntrega; window.botaoPendenciaEntrega
     };
 })();
 window.abrirNotasPendentesResumo = abrirNotasPendentesResumo; window.irParaNotaPendente = irParaNotaPendente;
+// Devolve ao Repasse de NF a nota retida por pendência (ação do usuário, nunca automática)
+async function liberarNotaParaRelacao(chave) {
+    const it = itemControlePorChave(chave); if (!it || !it.nota) return;
+    if (pendEntregaDe(it.nf, it.erp)) return toast('Ainda há pendência para o financeiro nesta NF.');
+    try { await notasCollection.doc(it.nota.id).update({ pendFin: firebase.firestore.FieldValue.delete() }); toastRico({ titulo: `NF ${it.numeroNf} enviada para a relação`, acao: 'Ver', onAcao: () => switchToScreen('screen-manage', 'Repasse de NF') }); }
+    catch (e) { console.error('liberarNotaParaRelacao', e); toast('✕ Erro ao enviar para a relação.'); }
+}
+window.liberarNotaParaRelacao = liberarNotaParaRelacao;
 window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntrega = salvarPendenciaEntrega;
 
 // Pendência impede o envio ao financeiro (por qualquer caminho que arquiva o item do Controle)
@@ -177,4 +190,4 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
         };
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.73.14';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.75.0';

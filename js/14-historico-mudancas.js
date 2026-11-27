@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.74.0', nome: 'Central do Pedido: divergências em cards, edição estruturada, Alterações e anotações fixadas', status: 'atual', data: '26/11/2026 às 18:45',
+        numero: '2.75.0', nome: 'Aba Divergências, tela própria de edição, aviso de conflito e pendência fora do Repasse', status: 'atual', data: '27/11/2026 às 00:30',
+        novidades: ['Central do Pedido: nova aba Divergências (as Anotações voltam a ter só texto), com abas cinza que rolam para o lado como no Editor de NF.', 'Editar uma divergência abre uma tela dedicada, com os mesmos campos da auditoria, sem cabeçalho fixo.', 'Se outro aparelho mudou a divergência enquanto você editava, o app avisa o que mudou antes de salvar.', 'Cada edição guarda a versão anterior: no Histórico (folha por baixo), toque em "Ver versão anterior".', 'NF com pendência para o financeiro sai do Repasse de NF e fica só no Controle de NF; ao resolver, aparece "Enviar à relação" (não volta sozinha).', 'Cotação: removido o botão repetido "Atualizar via XML" do editor; a atualização fica em Dados.'],
+        implementado: ['js/71: aba, cards, tela de edição (screen-div-editar), dvcGravar com conferência ao vivo (sem leitura extra) e snapshot "antes", folha de histórico.', 'js/05: notasSaida()/notasEmEspera() ignoram notas com pendFin; tela nova em DADOS_POR_TELA. js/04, 06, 08, 17, 20: usam essas funções.', 'js/65: marca/libera pendFin na nota ligada à NF. js/17: botão Enviar à relação. js/31: Ajuda. index.html e style.css: aba, painel, tela e estilos.'],
+        arquivos: ['index.html', 'style.css', 'js/71-divergencias-cards.js', 'js/05-listeners-dados.js', 'js/65-notas-pendentes.js', 'js/17-historico-controle-nfs.js', 'js/04-relatorios-base.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Divergências: edição agora em tela própria e a edição passa a gravar a versão anterior no histórico.', 'Notas (coleção notas): novo campo opcional pendFin, só nas notas de NFs com pendência para o financeiro.'],
+        testar: ['Pedido com divergência > aba Divergências: cards por fornecedor, Histórico, Exportar e Selecionar > Compartilhar.', 'Editar > mudar algo > Salvar: Histórico mostra Editada e "Ver versão anterior".', 'Controle de NF: marcar "Pendente p/ financeiro" numa NF que está no Repasse: ela some do Repasse; remover a pendência e tocar Enviar à relação.', 'Rolar as abas da Central do Pedido para o lado.']
+    },
+    {
+        numero: '2.74.0', nome: 'Central do Pedido: divergências em cards, edição estruturada, Alterações e anotações fixadas', status: 'concluida', data: '26/11/2026 às 18:45',
         novidades: ['Aba Anotações: todas as divergências do pedido aparecem em cards agrupados por fornecedor, com Exportar e Editar em cada um.', 'Editar abre o card em versão compacta do registro da auditoria (tipo, campos, item da cotação, botões Puxar) e mostra "Vai ficar no histórico" antes de salvar.', 'Selecionar (dock) compartilha várias divergências de uma vez, agrupadas por fornecedor.', 'Abas: Produtos · Anotações · Dados · Alterações (Relatório foi para Dados). Alterações mostra o histórico do SmartCompras do pedido.', 'O relatório do pedido continua no topo, agora com ícone de compartilhar.', 'Anotações: dá para fixar no topo.'],
         implementado: ['js/71 novo: cards, editor estruturado (grava entrada edicao no historico e mantém codProduto), seleção em lote via DOCK_SELECAO_TELAS.divpedido, aba Alterações (historicoSmartCompras).', 'index.html: abas, painéis e ícone; js/09: fixar anotações e rótulo Editada; style.css: .dvc-*.'],
         arquivos: ['js/71-divergencias-cards.js', 'js/09-anotacoes.js', 'js/14-historico-mudancas.js', 'index.html', 'style.css'],
@@ -4199,4 +4207,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.74.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.0';

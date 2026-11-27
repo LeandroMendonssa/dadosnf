@@ -799,7 +799,7 @@ async function aplicarNomeFornecedorPorCnpj(cnpj, novo, nfIdAtual, erpIdAtual) {
         alvos.slice(i, i + 400).forEach(a => batch.update(a.ref, a.dados));
         await batch.commit();
     }
-    if (notas.length) { notas.forEach(n => { n.fornecedor = novo; }); try { DOM.saida.value = buildSaidaText(notasPendentes.filter(n => !n.emEspera)); atualizarContadorExportacao(); rebuildNotasPendentesList(); } catch (e) { /* a lista se atualiza no próximo retorno do banco */ } }
+    if (notas.length) { notas.forEach(n => { n.fornecedor = novo; }); try { DOM.saida.value = buildSaidaText(notasSaida()); atualizarContadorExportacao(); rebuildNotasPendentesList(); } catch (e) { /* a lista se atualiza no próximo retorno do banco */ } }
     return alvos.length;
 }
 
@@ -882,4 +882,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.73.16';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.75.0';
