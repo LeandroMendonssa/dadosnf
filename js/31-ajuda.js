@@ -163,7 +163,7 @@ const AJUDA_ARTIGOS = [
         'Toque numa pendência (texto vermelho ou o selo "N pendências"): o app abre o lugar certo e destaca o ponto em amarelo.',
         'Pelos ícones do cartão você abre o Editor da NF ou vê a nota no Repasse de NF.',
         'O ícone de selecionar (canto superior direito, igual ao de Cotações, Anotações e Repasse de NF) permite marcar várias NFs em aberto; a dock de seleção traz "Financeiro" (enviada ao financeiro) e "Direta" (não vai ao financeiro).',
-        'Pendente p/ financeiro: no cartão da NF (inclusive as que vieram só do ERP) ou no Editor da NF, escolha os motivos. Enquanto houver pendência a NF sai da lista do Repasse de NF e fica só aqui no Controle. Quando resolver, remova a pendência: a NF NÃO volta sozinha para o Repasse; aparece o botão "Enviar à relação" para você mandar quando quiser.',
+        'Pendente p/ financeiro: no cartão da NF no Controle de NF, no cartão do Repasse de NF (botão "Pendente p/ financeiro", vale também para as NFs do ERP) ou no Editor da NF, escolha os motivos. Enquanto houver pendência a NF sai da lista do Repasse de NF e fica só aqui no Controle. Quando resolver, remova a pendência: a NF NÃO volta sozinha para o Repasse; aparece o botão "Enviar à relação" para você mandar quando quiser.',
         'Para voltar ao ponto exato de onde veio, use o Voltar (botão ou gesto).',
         'No Repasse de NF, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
       ],
@@ -649,4 +649,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.75.3';

@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.75.2', nome: 'Correção: abas da Central do Pedido encolhendo ao rolar e espaçamento na aba Dados', status: 'atual', data: '27/11/2026 às 06:20',
+        numero: '2.75.3', nome: 'Repasse de NF: Pendente p/ financeiro direto no cartão (inclui NFs do ERP)', status: 'atual', data: '27/11/2026 às 06:50',
+        novidades: ['Cartão do Repasse de NF ganhou o botão "Pendente p/ financeiro" (também nas NFs que vieram do ERP). Ao marcar, a NF sai do Repasse e fica só no Controle de NF.', 'Pendências marcadas antes desta versão também tiram a NF do Repasse.'],
+        implementado: ['js/05: botão no cartão e notaRetidaPorPendencia() (marca pendFin ou pendência ativa na NF ligada). js/06 e js/17 usam a mesma regra. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/17-historico-controle-nfs.js', 'js/31-ajuda.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Repasse de NF: um botão novo no cartão; a lista passa a esconder também NFs com pendência ativa.'],
+        testar: ['Repasse de NF > cartão de uma NF do ERP > Pendente p/ financeiro > marcar: o cartão some do Repasse e aparece no Controle de NF com a pendência.', 'Controle de NF > remover a pendência > Enviar à relação: o cartão volta ao Repasse.']
+    },
+    {
+        numero: '2.75.2', nome: 'Correção: abas da Central do Pedido encolhendo ao rolar e espaçamento na aba Dados', status: 'concluida', data: '27/11/2026 às 06:20',
         novidades: ['As abas da Central do Pedido não ficam mais "engolidas" ao rolar a tela.', 'Aba Dados: espaço entre os cartões (dados do pedido e Complementar com Relatório do SmartCompras).'],
         implementado: ['style.css: a tela do pedido é uma coluna flexível e a faixa de abas encolhia; agora ela não encolhe (flex 0 0 auto, altura mínima). Margem padrão entre os cartões da aba.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
@@ -4223,4 +4231,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.2';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.3';

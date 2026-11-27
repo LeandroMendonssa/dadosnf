@@ -283,7 +283,7 @@ function renderCardControleNf(it) {
         if (it.tipo === 'nf' && it.situacao === 'recebida') {
             botoes.push(btn('dir', 'Não vai ao financeiro', `marcarNfDireta('${chaveJs}')`));
             botoes.push(it.possivelNota ? btn('rel', 'É a mesma nota — vincular', `vincularNfANota('${chaveJs}')`) : btn('rel', 'Enviar à relação', `enviarNfParaRelacao('${chaveJs}')`));
-        } else if (it.nota && it.nota.pendFin) {   // 2.75.0: retida por pendência — só volta à relação quando o usuário mandar
+        } else if (it.nota && notaRetidaPorPendencia(it.nota)) {   // 2.75.0: retida por pendência — só volta à relação quando o usuário mandar
             if (!pendEntregaDe(it.nf, it.erp)) botoes.push(btn('rel', 'Enviar à relação', `liberarNotaParaRelacao('${chaveJs}')`));
         } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
             botoes.push(btn('ger', 'Ver no Repasse de NF', `verNoGerenciarNf('${chaveJs}')`));
@@ -1068,7 +1068,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.75.3';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

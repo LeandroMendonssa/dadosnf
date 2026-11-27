@@ -260,7 +260,7 @@ function atualizarAvisoRecursosGerenciar() {
     const t = document.getElementById('gerenciar-aplicar-recursos-txt'); if (t) t.textContent = `${n} nota(s) sem recurso, mas o recurso já é conhecido pela Entrada de NF`;
 }
 
-function notasDaAbaGerenciar() { return notasPendentes.filter(n => !n.pendFin && (abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera)); }
+function notasDaAbaGerenciar() { return notasPendentes.filter(n => !notaRetidaPorPendencia(n) && (abaGerenciar === 'espera' ? !!n.emEspera : !n.emEspera)); }
 
 async function bulkMarcarPendente(valor) {
     const ids = Array.from(notasSelecionadas);
@@ -465,4 +465,4 @@ function marcaAutoriaPdf(doc) {
 // Assinatura discreta no console do navegador.
 try { console.log('%cAlmoxarifado · desenvolvido por Leandro Mendonça', 'color:#8a97a8;font-size:11px'); } catch (e) { }
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/06-exportar-pdf.js'] = '2.75.3';
