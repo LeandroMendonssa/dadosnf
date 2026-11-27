@@ -13,25 +13,32 @@ function renderCentralAuditoriaSeAtiva() { const t = document.getElementById('sc
 
 // 2.45.0: Auditoria e Auditoria Retroativa numa tela só, com abas. Cada aba guarda o seu próprio estado (filtro, busca, itens abertos, rolagem) e nunca se misturam.
 let audAba = 'central', _audIniciada = false;
-const _audRolagem = { central: 0, retro: 0 };
+const _audRolagem = { central: 0, retro: 0, pend: 0 };
 function aplicarAbaAuditoria() {
-    const c = document.getElementById('aud-pane-central'), r = document.getElementById('aud-pane-retro'); if (!c || !r) return;
-    c.style.display = audAba === 'central' ? '' : 'none'; r.style.display = audAba === 'retro' ? '' : 'none';
+    const c = document.getElementById('aud-pane-central'), r = document.getElementById('aud-pane-retro'), pn = document.getElementById('aud-pane-pend'); if (!c || !r) return;
+    c.style.display = audAba === 'central' ? '' : 'none'; r.style.display = audAba === 'retro' ? '' : 'none'; if (pn) pn.style.display = audAba === 'pend' ? '' : 'none';   // 2.76.0: aba Pendências (NF pendente / cotação pendente)
     document.querySelectorAll('#aud-abas .xml-filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.aba === audAba));
 }
 function mudarAbaAuditoria(a) {
     if (a === audAba) return;
     const tela = document.getElementById('screen-auditoria-central');
     if (tela) _audRolagem[audAba] = tela.scrollTop;
+    if (audAba === 'pend' && typeof dvcSelSair === 'function' && dvcSelAtivo) dvcSelSair();
     audAba = a; aplicarAbaAuditoria();
-    if (a === 'retro') renderAuditoriaRetroativa(); else renderCentralAuditoria();
+    auditoriaRenderAba();
     if (tela) tela.scrollTop = _audRolagem[a] || 0;
 }
 function prepararAuditoriaUnificada(aba) {
     if (!_audIniciada) { _audIniciada = true; prepararCentralAuditoria(); prepararAuditoriaRetroativa(); }
     if (aba) audAba = aba;
     aplicarAbaAuditoria();
-    if (audAba === 'retro') renderAuditoriaRetroativa(); else renderCentralAuditoria();
+    auditoriaRenderAba();
+}
+function auditoriaRenderAba() {
+    if (typeof dvcModo !== 'undefined') dvcModo = audAba === 'pend' ? 'avulsa' : 'pedido';
+    if (audAba === 'retro') renderAuditoriaRetroativa();
+    else if (audAba === 'pend') { if (typeof dvcRender === 'function') dvcRender(); }
+    else { renderCentralAuditoria(); if (typeof dvcRender === 'function') { const m = dvcModo; dvcModo = 'pedido'; dvcRender(); dvcModo = m; } }   // atualiza só o selo da aba Pendências
 }
 
 // Todas as ocorrências (uma por item de cotação com divergência, auditoria ligada ou exclusão).
@@ -201,4 +208,5 @@ async function exportarDivergenciasPedido(pedido) {
     window[nome] = function () { return comMemoComparacao(() => orig.apply(this, arguments)); };
 });
 
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/39-central-auditoria.js'] = '2.49.0';
+// leandromendonssa
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/39-central-auditoria.js'] = '2.76.0';

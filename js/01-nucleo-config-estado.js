@@ -120,6 +120,8 @@ const AUDITORIA_TEXTOS_DEFAULT = {
     destinatario: '',
     modelo_nao_faturado: '{produto}, quantidade {quantidade}, não foi faturado.',
     modelo_nao_entregue: '{produto}, quantidade {quantidade}, não foi entregue.',
+    modelo_nf_pendente: '{produto}[[, quantidade {quantidade}]], NF pendente.',
+    modelo_cotacao_pendente: '[[{produto}, ]]cotação pendente[[ (N.F. {nfRef})]].',
     modelo_nao_cotado: '{produto}, quantidade {quantidade}, não constava na cotação.',
     modelo_produto_diferente: 'Solicitamos {produtoPedido}[[, {quantidade}[[ {unidade}]]]], porém foi faturado {produtoFaturado}.',
     modelo_quantidade_diferente: '{produto}: cotado {quantidadeCotada}[[ {unidade}]], porém faturado {quantidadeFaturada}[[ {unidade}]].',
@@ -218,4 +220,4 @@ const closeBtnBackScreen = { 'screen-saude-cad': 'screen-dev', 'screen-unir-forn
 const speedTextMap = { 0: 'Off', 1: 'Lenta', 2: 'Normal', 3: 'Rápida' };
 const speedValueMap = { 0: '0s', 1: '0.6s', 2: '0.35s', 3: '0.2s' };
 const checklistDefinition={tirarFoto:"Tirar Foto",entradaSistema:"Entrada no sistema",produtosTransferidos:"Produtos transferidos",fotosNoServidor:"Fotos no servidor",cotacaoNoServidor:"Cotação no Servidor",notaEscaneada:"Nota Escaneada",estaNaPlanilha:"Está na planilha",cotacaoAnexada:"Cotação Anexada",notaCarimbada:"Nota Carimbada"};
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.73.30';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/01-nucleo-config-estado.js'] = '2.76.0';

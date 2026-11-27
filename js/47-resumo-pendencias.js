@@ -26,7 +26,8 @@ function dataExtensoResumo() { const s = new Date().toLocaleDateString('pt-BR', 
 // Cada linha leva o seu tipo: 'nf' (produto não faturado), 'div' (outra divergência de auditoria) e 'obs' (observação da ocorrência).
 // Só entram ocorrências de auditoria ainda "geradas, não relatadas" (resolvida/relatada = já sinalizada). Anotações de texto livre NÃO são usadas.
 // { pedido, nao:[nomes], forn:[{ nome, linhas:[{k,t,nf}] }] } ou null
-const RP_TIPOS = ['nao', 'nf', 'div', 'obs'], RP_PADRAO = { nao: true, nf: true, div: false, obs: false };
+// 2.76.0: 'rel' = incluir também as divergências já relatadas (e ainda não resolvidas); 'av' = pendências avulsas (NF pendente / cotação pendente), sem pedido
+const RP_TIPOS = ['nao', 'nf', 'div', 'obs', 'av', 'rel'], RP_PADRAO = { nao: true, nf: true, div: false, obs: false, av: true, rel: false };
 function dadosResumoPendenciasPedido(pedido) {
     const d = dadosRelatorioCotacao(pedido); if (!d) return null;
     const cot = listaCotacoes.find(c => String(c.pedido) === String(pedido)) || {};
@@ -37,7 +38,7 @@ function dadosResumoPendenciasPedido(pedido) {
         const nome = maiusculoResumo((() => { try { return nomeExibicaoFornecedor(f.nome, f.cnpj) || f.nome; } catch (e) { return f.nome; } })()), ch = normalizarCnpj(f.cnpj);
         if (f.status.chave === 'cancelada') return;
         const linhas = [], visto = new Set();
-        const add = (k, t, nf) => { const c = maiusculoResumo(t).replace(/\s+/g, ' ').trim(); if (c && !visto.has(c)) { visto.add(c); linhas.push({ k, t, nf: nf ? String(nf) : '' }); } };
+        const add = (k, t, nf, rel) => { const c = maiusculoResumo(t).replace(/\s+/g, ' ').trim(); if (c && !visto.has(c)) { visto.add(c); linhas.push({ k, t, nf: nf ? String(nf) : '', rel: !!rel }); } };
         // (a) detectado pelo app e ainda sem auditoria
         comp.filter(x => normalizarCnpj(x.cnpjFornecedor) === ch && x.estado === 'detectada' && x.soNaoChegou).forEach(x => {
             const dv = (x.divergencias || []).find(v => v.tipo === 'nao_faturado') || {};
@@ -49,14 +50,15 @@ function dadosResumoPendenciasPedido(pedido) {
         ((nota && nota.ocorrencias) || []).filter(oc => normalizarCnpj(oc.fornecedorCnpj) === ch || (!oc.fornecedorCnpj && oc.fornecedor && maiusculoResumo(oc.fornecedor) === nome)).forEach(oc => {
             let teve = false;
             (oc.divergencias || []).forEach(dv => {
-                if ((dv.status || 'pendente') !== 'pendente' || dv.relatado !== false) return;
+                if ((dv.status || 'pendente') !== 'pendente' || divAvulsa(dv)) return;   // resolvida/encerrada nunca sai; pendência avulsa tem bloco próprio
+                const rel = dv.relatado !== false;   // 2.76.0: "relatada" continua pendente: entra com a marca rel e só sai no texto se a caixinha estiver ligada
                 let ls = []; try { ls = linhasDeMateriais(dv); } catch (e) { /* tipo antigo */ }
-                ls.forEach(t => add(dv.tipo === 'nao_faturado' ? 'nf' : 'div', t, oc.notaFiscal)); if (ls.length) teve = true;
+                ls.forEach(t => add(dv.tipo === 'nao_faturado' ? 'nf' : 'div', t, oc.notaFiscal, rel)); if (ls.length && !rel) teve = true;
             });
             if (teve && String(oc.observacaoGeral || '').trim()) add('obs', String(oc.observacaoGeral).trim(), oc.notaFiscal);
         });
         if (linhas.length) r.forn.push({ nome, linhas });
-        else if (f.status.chave === 'pendente' && !/ERP/i.test(f.status.detalhe || '')) r.nao.push(nome);
+        if (!linhas.some(l => !l.rel) && f.status.chave === 'pendente' && !/ERP/i.test(f.status.detalhe || '')) r.nao.push(nome);
     });
     r.nao.sort((a, b) => a.localeCompare(b)); r.forn.sort((a, b) => a.nome.localeCompare(b.nome));
     return r;
@@ -76,16 +78,44 @@ function dadosResumoTodos(extras) {
     return out.sort((a, b) => (Number(a.pedido) || 0) - (Number(b.pedido) || 0));
 }
 function filtrarResumoPedido(r, op) {
-    const nao = op.nao ? r.nao : [];
-    const forn = r.forn.map(f => ({ nome: f.nome, linhas: f.linhas.filter(l => op[l.k]) })).filter(f => f.linhas.length);
+    const forn = r.forn.map(f => ({ nome: f.nome, linhas: f.linhas.filter(l => op[l.k] && (!l.rel || op.rel)) })).filter(f => f.linhas.length);
+    const comLinhas = new Set(forn.map(f => f.nome));
+    const nao = op.nao ? r.nao.filter(n => !comLinhas.has(n)) : [];   // quem já aparece em PENDÊNCIAS não repete em NÃO ENTREGARAM
     return { pedido: r.pedido, nao, forn };
 }
 function contagemResumo(todos) {
-    const c = { nao: 0, nf: 0, div: 0, obs: 0 };
-    todos.forEach(x => { c.nao += x.r.nao.length; x.r.forn.forEach(f => f.linhas.forEach(l => c[l.k]++)); });
+    const c = { nao: 0, nf: 0, div: 0, obs: 0, av: 0, rel: 0 };
+    todos.forEach(x => { c.nao += x.r.nao.length; x.r.forn.forEach(f => f.linhas.forEach(l => { if (l.rel) c.rel++; else c[l.k]++; })); });
+    c.av = pendenciasAvulsasResumo().total;
     return c;
 }
 
+// 2.76.0: pendências avulsas (NF pendente / cotação pendente) vêm das ocorrências da auditoria SEM depender de pedido/NF.
+// Só entram as que ainda estão abertas (relatada ou não): resolvida/encerrada nunca sai. { nf:[{forn,linhas}], cot:[{forn,linhas}], total }
+function diasEmAbertoPend(d, oc) {
+    const h = (d.historico || []).find(x => x.tipo === 'identificacao'), ini = (h && h.data) || oc.data || oc.criadoEm || '';
+    const t = Date.parse(String(ini).length === 10 ? ini + 'T00:00:00' : ini); if (!t) return '';
+    const n = Math.max(0, Math.floor((Date.now() - t) / 86400000));
+    return n === 0 ? 'aberta hoje' : `aberta há ${n} ${n === 1 ? 'dia' : 'dias'}`;
+}
+function pendenciasAvulsasResumo() {
+    const g = { nf: new Map(), cot: new Map() }; let total = 0;
+    (typeof listaAnotacoes !== 'undefined' ? listaAnotacoes : []).forEach(a => (a.ocorrencias || []).forEach(oc => (oc.divergencias || []).forEach(d => {
+        if (!divAvulsa(d) || (d.status || 'pendente') !== 'pendente') return;
+        const forn = maiusculoResumo((() => { try { return nomeExibicaoFornecedor(oc.fornecedor, oc.fornecedorCnpj) || oc.fornecedor; } catch (e) { return oc.fornecedor; } })() || 'FORNECEDOR NÃO IDENTIFICADO');
+        const dias = diasEmAbertoPend(d, oc), mats = materiaisDaDivergencia(d), alvo = d.tipo === 'nf_pendente' ? g.nf : g.cot;
+        const itens = mats.length ? mats : [{}];
+        itens.forEach(m => {
+            const partes = d.tipo === 'nf_pendente'
+                ? [maiusculoResumo(m.produto || ''), m.quantidade ? 'quantidade ' + m.quantidade : '']
+                : [m.nfRef ? 'N.F. ' + m.nfRef : '', maiusculoResumo(m.produto || '')];
+            const txt = (partes.filter(Boolean).join(d.tipo === 'nf_pendente' ? ', ' : ' — ') || (d.tipo === 'nf_pendente' ? 'NF pendente' : 'cotação pendente')) + (dias ? ' — ' + dias : '');
+            if (!alvo.has(forn)) alvo.set(forn, []); alvo.get(forn).push(txt); total++;
+        });
+    })));
+    const lista = m => [...m.entries()].sort((x, y) => x[0].localeCompare(y[0])).map(([forn, linhas]) => ({ forn, linhas }));
+    return { nf: lista(g.nf), cot: lista(g.cot), total };
+}
 function textoResumoPendencias(todos, op) {
     const L = [dataExtensoResumo(), 'RESUMO DE PENDÊNCIAS DE ENTREGA DOS FORNECEDORES', ''], naoAchados = [];
     let algum = false;
@@ -106,6 +136,13 @@ function textoResumoPendencias(todos, op) {
         if (!r.nao.length && !r.forn.length) L.push('Sem pendências de entrega.', '');
         L.push('');
     });
+    if (op.av) {
+        const av = pendenciasAvulsasResumo();
+        [['COTAÇÃO PENDENTE:', av.cot], ['N.F PENDENTE:', av.nf]].forEach(([rot, grupos]) => {
+            if (!grupos.length) return; algum = true;
+            L.push(rot, ''); grupos.forEach(g => { L.push(g.forn + ':'); g.linhas.forEach(t => L.push('• ' + t)); L.push(''); }); L.push('');
+        });
+    }
     if (!algum) L.push('Nenhum pedido com pendência de entrega no momento.', '');
     if (naoAchados.length) L.push(`Pedido(s) não encontrado(s) em Cotações: ${naoAchados.join(', ')}.`, '');
     L.push(NOTA_RESUMO_PADRAO);
@@ -123,6 +160,8 @@ function blocosResumoPendencias(texto) {
         if (/^Desconsiderar/i.test(l)) { b.nota = l; return; }
         const mg = l.match(/^GRUPO\s+(.+)$/i);   // 2.73.13: bloco por motivo (relatório de notas pendentes)
         if (mg) { atual = { num: mg[1], grupo: true, toks: [] }; b.pedidos.push(atual); modo = 'pend'; return; }
+        const mav = l.match(/^(COTA[ÇC][ÃA]O PENDENTE|N\.?\s?F\.? PENDENTE):?$/i);   // 2.76.0: blocos de pendências avulsas (sem pedido)
+        if (mav) { atual = { num: mav[1].toUpperCase() + ':', grupo: true, toks: [] }; b.pedidos.push(atual); modo = 'pend'; return; }
         const mp = l.match(/^PEDIDO\s+(\S+)/i);
         if (mp) { atual = { num: mp[1], toks: [] }; b.pedidos.push(atual); modo = ''; return; }
         if (/^N[ÃA]O ENTREGARAM:?$/i.test(l)) { if (atual) atual.toks.push({ k: 'rotulo', t: 'Não entregaram:' }); modo = 'nomes'; return; }
@@ -385,4 +424,4 @@ async function baixarRelRapido(formato) {
     } catch (err) { console.error('Relatório rápido:', err); toast('✕ Erro ao gerar o arquivo.'); }
 }
 window.abrirRelRapido = abrirRelRapido; window.relRapidoAtualizar = relRapidoAtualizar; window.copiarRelRapido = copiarRelRapido; window.baixarRelRapido = baixarRelRapido;
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.73.15';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/47-resumo-pendencias.js'] = '2.76.0';

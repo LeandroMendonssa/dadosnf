@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.75.3', nome: 'Repasse de NF: Pendente p/ financeiro direto no cartão (inclui NFs do ERP)', status: 'atual', data: '27/11/2026 às 06:50',
+        numero: '2.76.0', nome: 'Pendências avulsas (NF pendente e Cotação pendente) e Resumo com relatadas', status: 'atual', data: '27/11/2026 às 18:00',
+        novidades: ['Auditoria: dois tipos novos, "NF pendente" (falta a NF de um produto) e "Cotação pendente" (falta cotação), que não exigem pedido nem NF: só o fornecedor.', 'Auditoria ganhou a aba Pendências, com os cartões dessas pendências (Exportar, Editar, Histórico, status), no mesmo padrão das Divergências do pedido.', 'Resumo de pendências: novas caixinhas "Pendências avulsas" (blocos COTAÇÃO PENDENTE e N.F PENDENTE, com os dias em aberto) e "Já relatadas (não resolvidas)".', 'Corrigido: divergência marcada como relatada, mas ainda não resolvida, não saía no Resumo; agora sai quando a caixinha estiver ligada.'],
+        implementado: ['js/12: tipos nf_pendente e cotacao_pendente. js/01: frases padrão. js/09: divAvulsa().', 'js/47: relatadas entram com marca rel; pendenciasAvulsasResumo() e blocos no texto, no PDF e no Word.', 'js/71: lista, edição, histórico e seleção passam a funcionar também para as pendências avulsas (dvcModo). js/39 e index.html: aba Pendências.', 'js/05: Auditoria carrega as anotações. js/31: Ajuda.'],
+        arquivos: ['index.html', 'style.css', 'js/01-nucleo-config-estado.js', 'js/05-listeners-dados.js', 'js/09-anotacoes.js', 'js/12-recurso-lote-rastro.js', 'js/39-central-auditoria.js', 'js/47-resumo-pendencias.js', 'js/71-divergencias-cards.js', 'js/31-ajuda.js', 'js/14-historico-mudancas.js'],
+        mudou: ['Nada foi apagado: as divergências existentes continuam iguais; os tipos novos são opcionais.', 'No Resumo, a caixinha "Já relatadas" vem desligada: o relatório sai como antes até você ligar.'],
+        testar: ['Nova Auditoria > tipo "NF pendente", só o fornecedor e o produto > salvar: aparece em Auditoria > Pendências.', 'Fazer o mesmo com "Cotação pendente" (só fornecedor e N.F.).', 'Resumo de pendências: ligar "Pendências avulsas" e conferir os blocos e os dias em aberto; baixar o PDF.', 'Marcar uma divergência como relatada, ligar "Já relatadas" no Resumo e conferir que ela sai.', 'Em Pendências: Editar, mudar o status para Resolvida e conferir que some do Resumo.']
+    },
+    {
+        numero: '2.75.3', nome: 'Repasse de NF: Pendente p/ financeiro direto no cartão (inclui NFs do ERP)', status: 'concluida', data: '27/11/2026 às 06:50',
         novidades: ['Cartão do Repasse de NF ganhou o botão "Pendente p/ financeiro" (também nas NFs que vieram do ERP). Ao marcar, a NF sai do Repasse e fica só no Controle de NF.', 'Pendências marcadas antes desta versão também tiram a NF do Repasse.'],
         implementado: ['js/05: botão no cartão e notaRetidaPorPendencia() (marca pendFin ou pendência ativa na NF ligada). js/06 e js/17 usam a mesma regra. js/31: Ajuda.'],
         arquivos: ['index.html', 'style.css', 'js/05-listeners-dados.js', 'js/06-exportar-pdf.js', 'js/17-historico-controle-nfs.js', 'js/31-ajuda.js', 'js/14-historico-mudancas.js'],
@@ -4231,4 +4239,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.76.0';

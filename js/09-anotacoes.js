@@ -233,6 +233,8 @@ function textoOcorrenciaUnica(tipo, c) {
 
 // 2.10.5: auditorias ANTIGAS guardavam o produto em d.campos (um só) em vez de d.materiais[]. Sem isso, o relatório não mostrava o produto
 // e três divergências diferentes pareciam a mesma. Esta função devolve sempre a lista de materiais, qualquer que seja o formato gravado.
+// 2.76.0: pendência avulsa (NF pendente / cotação pendente): não depende de pedido nem de NF
+function divAvulsa(d) { return !!(d && (TIPOS_DIVERGENCIA_AUDITORIA[d.tipo] || {}).avulsa); }
 function materiaisDaDivergencia(d) {
     if (!d) return [];
     if (Array.isArray(d.materiais) && d.materiais.length) return d.materiais;
@@ -1224,4 +1226,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.74.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.76.0';

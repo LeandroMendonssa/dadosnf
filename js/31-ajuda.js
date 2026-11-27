@@ -168,9 +168,9 @@ const AJUDA_ARTIGOS = [
         'No Repasse de NF, se o valor ou o vencimento da nota ficar diferente da NF/ERP ligada, o cartão mostra o aviso "A ERP mudou" com o botão "Usar da ERP". Nada muda sozinho; se você editou a nota de propósito, o aviso some até a fonte mudar de novo.'
       ],
       dicas: ['Itens com seta (›) ou sublinhado pontilhado são tocáveis.'], tutorial: null },
-    { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.19.1',
+    { id: 'auditoria-central', cat: 'Auditoria', titulo: 'Auditoria: todas as ocorrências em um lugar', versao: '2.76.0',
       resumo: 'Ver, relatar, resolver, excluir e restaurar as ocorrências (uma por item) de todos os pedidos.',
-      palavras: 'auditoria ocorrencia divergencia relatar relatada resolvida excluir restaurar unidade fator embalagem falso positivo total nf cotacao',
+      palavras: 'auditoria pendencias avulsas nf pendente cotacao pendente resumo relatadas ocorrencia divergencia relatar relatada resolvida excluir restaurar unidade fator embalagem falso positivo total nf cotacao',
       tela: [{ id: 'screen-auditoria-central', titulo: 'Auditoria', rotulo: 'Abrir Auditoria' }],
       passos: [
         'Abra Auditoria (na dock ou em Mais). A lista reúne uma ocorrência por item, de todos os pedidos. Os mesmos dados aparecem na Central do pedido, na Entrada de NF, na Central de notificações e nos relatórios: aqui é onde você mexe.',
@@ -181,6 +181,8 @@ const AJUDA_ARTIGOS = [
         'Com várias ocorrências do mesmo fornecedor em aberto (por exemplo, vários itens não faturados), use "Relatar as N de ..." para marcar todas de uma vez.',
         'Na Entrada de NF, o resumo mostra o total da NF contra o total cotado só dos itens que vieram. A diferença é de preço, já com a unidade convertida; a de quantidade aparece como ocorrência própria.',
         '"Não chegou" é o item da cotação que ainda não veio em NF. Não conta como divergência (pode vir em outra NF), tem selo azul e filtro próprio, e dá para relatar igual. O cartão do fornecedor mostra "20 de 37 itens chegaram".',
+        'Aba Pendências: reúne as pendências que não dependem de pedido nem de NF. Para cadastrar, abra a Nova Auditoria, escolha o tipo "NF pendente" (falta a NF de um produto) ou "Cotação pendente" (falta cotação) e informe o fornecedor; produto, quantidade e número da NF são opcionais. Elas ficam na aba Pendências, com Exportar, Editar, Histórico e status (relatada, resolvida, encerrada), igual às divergências do pedido.',
+        'No Resumo de pendências, ligue "Pendências avulsas" para elas saírem nos blocos "COTAÇÃO PENDENTE" e "N.F PENDENTE", com os dias em aberto. Ligue "Já relatadas (não resolvidas)" para incluir também as divergências que você já marcou como relatadas e ainda não resolveu. Resolvidas e encerradas nunca saem.',
         'Para enviar tudo de uma vez, use "Exportar divergências do pedido" na Central do pedido: gera um texto com as divergências em aberto de todos os fornecedores e depois pergunta se marca como relatadas.'
       ] },
     { id: 'auditoria-retroativa', cat: 'Notas fiscais', titulo: 'Auditoria Retroativa: o que o app entendeu das NFs do ERP', versao: '2.11.5',
@@ -649,4 +651,4 @@ function voltarInternoTela() { if (!voltarInternoDisponivel()) return false; vol
     }, true);
     document.addEventListener('pointercancel', () => { g = null; }, true);
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.75.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/31-ajuda.js'] = '2.76.0';

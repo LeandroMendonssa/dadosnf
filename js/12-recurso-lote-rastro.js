@@ -414,6 +414,15 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
         { key: 'produto', label: 'Produto', maiusculo: true },
         { key: 'quantidade', label: 'Quantidade' }
     ]},
+    // 2.76.0: pendências SEM pedido/NF obrigatórios (só o fornecedor): falta a NF de um produto / falta cotação. Aparecem na aba "Pendências" da Auditoria e no Resumo de pendências.
+    'nf_pendente': { label: 'NF pendente (falta a NF do produto)', multiMaterial: true, avulsa: true, campos: [
+        { key: 'produto', label: 'Produto', maiusculo: true },
+        { key: 'quantidade', label: 'Quantidade (opcional)' }
+    ]},
+    'cotacao_pendente': { label: 'Cotação pendente (falta cotação)', multiMaterial: true, avulsa: true, campos: [
+        { key: 'nfRef', label: 'N.F. (opcional)' },
+        { key: 'produto', label: 'Produto (opcional)', maiusculo: true }
+    ]},
     'produto_diferente': { label: 'Produto diferente do pedido', multiMaterial: true, campos: [
         { key: 'produtoPedido', label: 'Produto Pedido', maiusculo: true },
         { key: 'produtoFaturado', label: 'Produto Faturado', maiusculo: true },
@@ -629,4 +638,5 @@ function garantirDatalistSpDataAuditoria() {
 // Ao focar, o campo fica em branco para mostrar tudo; se a pessoa não digitar nada, o valor anterior volta ao sair.
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.56.0';
+// leandromendonssa
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.76.0';

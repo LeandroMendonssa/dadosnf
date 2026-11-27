@@ -9,6 +9,7 @@
 // sem leitura nova) e avisa se outro aparelho mudou a divergência. Seleção em lote usa a dock de seleção (js/38). A aba Alterações lê
 // historicoSmartCompras/{pedido} (js/59).
 // ===================================================================
+let dvcModo = 'pedido';        // 'pedido' = aba Divergências da Central do Pedido · 'avulsa' = aba Pendências da Auditoria (NF pendente / cotação pendente, sem pedido)
 let dvcEdit = null;            // { key, ocIdx, divIdx, anotId, ident, ctx, orig, d }  — orig = foto ao abrir a edição; d = rascunho em edição
 let dvcSelAtivo = false;
 const dvcSel = new Set();      // chaves "ocIdx-divIdx"
@@ -22,6 +23,7 @@ function dvcNota() { return (listaAnotacoes || []).find(a => String(a.pedido) ==
 function dvcClone(x) { return JSON.parse(JSON.stringify(x)); }
 function dvcStatusDe(d) { const s = d.status || 'pendente'; return (s === 'pendente' && d.relatado === false) ? 'gerada' : s; }
 function dvcItensCotacao() {
+    if (((dvcEdit && dvcEdit.modo) || dvcModo) === 'avulsa') return [];   // pendência avulsa não tem pedido: nada para ligar/puxar
     const c = (listaCotacoes || []).find(x => String(x.pedido) === String(centralPedidoAtual));
     const vistos = new Set(), r = [];
     ((c && c.itens) || []).forEach(it => { if (it.codProduto && !vistos.has(it.codProduto)) { vistos.add(it.codProduto); r.push(it); } });
@@ -33,19 +35,32 @@ function dvcCampoProduto(def) { return (def.campos.find(c => c.key === 'produto'
 
 // Todas as divergências do pedido, achatadas, com os índices reais dentro de nota.ocorrencias[ocIdx].divergencias[divIdx]
 function dvcLista() {
-    const nota = dvcNota(); if (!nota) return [];
     const r = [];
+    if (dvcModo === 'avulsa') {   // todas as pendências avulsas, de qualquer anotação de auditoria (não dependem de pedido)
+        (listaAnotacoes || []).forEach(nota => (nota.ocorrencias || []).forEach((oc, ocIdx) => (oc.divergencias || []).forEach((d, divIdx) => {
+            if (!divAvulsa(d)) return;
+            r.push({ key: `${nota.id}~${ocIdx}-${divIdx}`, d, oc, ocIdx, divIdx, anotId: nota.id, pedido: nota.pedido || '' });
+        })));
+        const aberto = x => ['pendente', 'gerada'].includes(dvcStatusDe(x.d)) ? 0 : 1;
+        return r.sort((x, y) => aberto(x) - aberto(y) || String(y.oc.criadoEm || y.oc.data || '').localeCompare(String(x.oc.criadoEm || x.oc.data || '')));
+    }
+    const nota = dvcNota(); if (!nota) return [];
     (nota.ocorrencias || []).forEach((oc, ocIdx) => (oc.divergencias || []).forEach((d, divIdx) => {
         if (!linhasDeMateriais(d).length) return;
-        r.push({ key: `${ocIdx}-${divIdx}`, d, oc, ocIdx, divIdx, anotId: nota.id });
+        r.push({ key: `${nota.id}~${ocIdx}-${divIdx}`, d, oc, ocIdx, divIdx, anotId: nota.id, pedido: nota.pedido || '' });
     }));
     return r;
+}
+function dvcContagemAvulsasAbertas() {
+    let n = 0;
+    (listaAnotacoes || []).forEach(nota => (nota.ocorrencias || []).forEach(oc => (oc.divergencias || []).forEach(d => { if (divAvulsa(d) && ['pendente', 'gerada'].includes(dvcStatusDe(d))) n++; })));
+    return n;
 }
 function dvcNomeForn(oc) { return upAud(nomeExibicaoFornecedor(oc.fornecedor, oc.fornecedorCnpj) || oc.fornecedor || 'Fornecedor não identificado'); }
 
 // ---------- texto de exportação (sempre regenerado dos campos) ----------
 function dvcTextoUma(x) {
-    const cab = [dvcNomeForn(x.oc), x.oc.notaFiscal ? 'NF ' + x.oc.notaFiscal : '', 'Pedido ' + centralPedidoAtual].filter(Boolean).join(' — ');
+    const cab = [dvcNomeForn(x.oc), x.oc.notaFiscal ? 'NF ' + x.oc.notaFiscal : '', x.pedido ? 'Pedido ' + x.pedido : ''].filter(Boolean).join(' — ');
     return `*${cab}*\n` + linhasDeMateriais(x.d).map(l => '• ' + l).join('\n');
 }
 function dvcTextoVarias(itens) {
@@ -56,7 +71,7 @@ function dvcTextoVarias(itens) {
         const nfs = [...new Set(lista.flatMap(x => String(x.oc.notaFiscal || '').split(',').map(t => t.trim()).filter(Boolean)))];
         blocos.push(`*${forn}*${nfs.length ? ' — NF ' + nfs.join(', ') : ''}\n` + lista.flatMap(x => linhasDeMateriais(x.d).map(l => '• ' + l)).join('\n'));
     });
-    return `*Pedido ${centralPedidoAtual} — divergências*\n\n` + blocos.join('\n\n———\n\n');
+    return (dvcModo === 'avulsa' ? '*Pendências*' : `*Pedido ${centralPedidoAtual} — divergências*`) + '\n\n' + blocos.join('\n\n———\n\n');
 }
 async function dvcCompartilhar(texto, titulo) {
     try {
@@ -75,18 +90,25 @@ function dvcPerguntarRelatar(itens) {
     });
 }
 async function dvcMarcarRelatadas(chaves) {
-    const nota = dvcNota(); if (!nota) return;
-    const ocorrencias = dvcClone(nota.ocorrencias || []);
-    chaves.forEach(k => {
-        const [o, i] = k.split('-').map(Number); const d = ((ocorrencias[o] || {}).divergencias || [])[i]; if (!d) return;
-        d.status = 'pendente'; d.relatado = true; (d.historico = d.historico || []).push({ tipo: 'relato', data: dataLocalISO(), observacao: 'Exportada' });
-    });
-    try { await anotacoesTextoCollection.doc(nota.id).update({ ocorrencias, atualizadoEm: new Date().toISOString() }); toast(`✓ ${chaves.length} marcada(s) como relatada(s).`); }
-    catch (e) { console.error(e); toast('✕ Erro ao atualizar.'); }
+    const porNota = new Map();
+    chaves.forEach(k => { const [aid, pos] = k.split('~'); if (!porNota.has(aid)) porNota.set(aid, []); porNota.get(aid).push(pos.split('-').map(Number)); });
+    let ok = 0;
+    try {
+        for (const [aid, posicoes] of porNota) {
+            const nota = (listaAnotacoes || []).find(a => a.id === aid); if (!nota) continue;
+            const ocorrencias = dvcClone(nota.ocorrencias || []);
+            posicoes.forEach(([o, i]) => {
+                const d = ((ocorrencias[o] || {}).divergencias || [])[i]; if (!d) return;
+                d.status = 'pendente'; d.relatado = true; (d.historico = d.historico || []).push({ tipo: 'relato', data: dataLocalISO(), observacao: 'Exportada' }); ok++;
+            });
+            await anotacoesTextoCollection.doc(nota.id).update({ ocorrencias, atualizadoEm: new Date().toISOString() });
+        }
+        toast(`✓ ${ok} marcada(s) como relatada(s).`);
+    } catch (e) { console.error(e); toast('✕ Erro ao atualizar.'); }
 }
 async function dvcExportar(key) {
     const x = dvcLista().find(i => i.key === key); if (!x) return;
-    if (await dvcCompartilhar(dvcTextoUma(x), 'Divergência — pedido ' + centralPedidoAtual)) dvcPerguntarRelatar([x]);
+    if (await dvcCompartilhar(dvcTextoUma(x), dvcModo === 'avulsa' ? 'Pendência' : 'Divergência — pedido ' + centralPedidoAtual)) dvcPerguntarRelatar([x]);
 }
 
 // ---------- seleção em lote (dock) ----------
@@ -96,7 +118,7 @@ function dvcSelEntrar() {
 function dvcSelSair() { dvcSelAtivo = false; dvcSel.clear(); dvcSelAvisar(); dvcRender(); }
 function dvcSelAvisar() {
     const tot = dvcLista().length;
-    if (typeof dockSelecaoAtualizar === 'function') dockSelecaoAtualizar('divpedido', dvcSelAtivo, dvcSel.size, tot > 0 && dvcSel.size === tot);
+    if (typeof dockSelecaoAtualizar === 'function') dockSelecaoAtualizar(dvcModo === 'avulsa' ? 'divavulsa' : 'divpedido', dvcSelAtivo, dvcSel.size, tot > 0 && dvcSel.size === tot);
 }
 function dvcSelToggle(key) { if (dvcSel.has(key)) dvcSel.delete(key); else dvcSel.add(key); dvcSelAvisar(); dvcRender(); }
 function dvcSelTodas() {
@@ -105,13 +127,14 @@ function dvcSelTodas() {
 }
 async function dvcCompartilharSel() {
     const itens = dvcLista().filter(x => dvcSel.has(x.key)); if (!itens.length) return;
-    if (await dvcCompartilhar(dvcTextoVarias(itens), 'Divergências do pedido ' + centralPedidoAtual)) { dvcSelSair(); dvcPerguntarRelatar(itens); }
+    if (await dvcCompartilhar(dvcTextoVarias(itens), dvcModo === 'avulsa' ? 'Pendências' : 'Divergências do pedido ' + centralPedidoAtual)) { dvcSelSair(); dvcPerguntarRelatar(itens); }
 }
 if (typeof DOCK_SELECAO_TELAS !== 'undefined') {
     DOCK_SELECAO_TELAS.divpedido = {
         tela: 'screen-central-pedido', sair: 'dvcSelSair()', todas: 'dvcSelTodas()',
         acoes: [{ ic: 'fa-solid fa-share-nodes', t: 'Compartilhar selecionadas', f: 'dvcCompartilharSel()', rotulo: 'Compartilhar', primaria: true }]
     };
+    DOCK_SELECAO_TELAS.divavulsa = Object.assign({}, DOCK_SELECAO_TELAS.divpedido, { tela: 'screen-auditoria-central' });
 }
 
 // ---------- edição estruturada (tela dedicada) ----------
@@ -127,11 +150,11 @@ function dvcIdent(x) { return [x.oc.fornecedor || '', x.oc.notaFiscal || ''].joi
 function dvcAbrirEdicao(key) {
     const x = dvcLista().find(i => i.key === key); if (!x) return;
     const rasc = dvcRascunho(x.d);
-    dvcEdit = { key, ocIdx: x.ocIdx, divIdx: x.divIdx, anotId: x.anotId, ident: dvcIdent(x), ctx: { forn: dvcNomeForn(x.oc), nf: x.oc.notaFiscal || '', data: x.oc.data || '' }, orig: dvcClone(rasc), d: rasc };
+    dvcEdit = { modo: dvcModo, key, ocIdx: x.ocIdx, divIdx: x.divIdx, anotId: x.anotId, ident: dvcIdent(x), ctx: { forn: dvcNomeForn(x.oc), nf: x.oc.notaFiscal || '', data: x.oc.data || '' }, orig: dvcClone(rasc), d: rasc };
     if (dvcSelAtivo) { dvcSelAtivo = false; dvcSel.clear(); dvcSelAvisar(); }
     // "Voltar" leva de volta à aba Divergências, no ponto em que você estava (pilha de retorno do js/30)
     const ctx = typeof capturarContextoTela === 'function' ? capturarContextoTela() : null, pedido = String(centralPedidoAtual);
-    if (ctx) ctx.restaurar = () => { abrirCentralPedido(pedido); alternarAbaCentral('divergencias'); };
+    if (ctx) ctx.restaurar = dvcModo === 'avulsa' ? dvcIrParaAvulsas : () => { abrirCentralPedido(pedido); alternarAbaCentral('divergencias'); };
     dvcRenderEditor(false);
     navRetornoAtiva++;
     try { switchToScreen('screen-div-editar', 'Editar divergência'); } finally { navRetornoAtiva--; }
@@ -141,8 +164,11 @@ function dvcAbrirEdicao(key) {
 function dvcFecharEdicao() {
     dvcEdit = null;
     if (typeof voltarPelaPilha === 'function' && voltarPelaPilha()) return;
+    if (dvcModo === 'avulsa') return dvcIrParaAvulsas();
     switchToScreen('screen-central-pedido', String(centralPedidoAtual)); alternarAbaCentral('divergencias');
 }
+// aba Pendências da Auditoria (NF pendente / cotação pendente)
+function dvcIrParaAvulsas() { dvcModo = 'avulsa'; switchToScreen('screen-auditoria-central', 'Auditoria'); if (typeof prepararAuditoriaUnificada === 'function') prepararAuditoriaUnificada('pend'); }
 function dvcCancelarEdicao() {
     if (dvcEdit && dvcDiff().length) return showConfirmModal({ title: 'Descartar as alterações?', message: 'O que você mudou nesta divergência ainda não foi salvo.', confirmText: 'Descartar', confirmClass: 'danger', onConfirm: dvcFecharEdicao });
     dvcFecharEdicao();
@@ -372,7 +398,7 @@ function dvcHtmlCard(x) {
     const click = dvcSelAtivo ? ` onclick="dvcSelToggle('${x.key}')"` : '';
     return `<div class="ctl-card dvc-card${dvcSelAtivo ? ' selecionavel' : ''}${sel ? ' sel' : ''}" id="dvc-${x.key}"${click}>
         <div class="dvc-topo">${dvcSelAtivo ? `<span class="dvc-chk${sel ? ' on' : ''}"><i class="fa-solid fa-check"></i></span>` : ''}<span class="cdv-tipo">${escRel(def ? def.label : (d.tipo || 'Ocorrência'))}</span><span class="central-status-badge status-${st === 'gerada' ? 'encerrada' : st}">${escRel(DVC_STATUS[st])}</span></div>
-        <div class="dvc-meta">${[x.oc.notaFiscal ? 'NF ' + escRel(x.oc.notaFiscal) : '', dataOc ? escRel(dataOc) : ''].filter(Boolean).join(' · ')}</div>
+        <div class="dvc-meta">${[divAvulsa(d) ? 'Pendência avulsa' : '', x.pedido && dvcModo === 'avulsa' ? 'Pedido ' + escRel(x.pedido) : '', x.oc.notaFiscal ? 'NF ' + escRel(x.oc.notaFiscal) : '', dataOc ? escRel(dataOc) : ''].filter(Boolean).join(' · ')}</div>
         <div class="cdv-texto">${linhasDeMateriais(d).map(l => `<div class="cdv-linha">${escRel(l)}</div>`).join('')}</div>
         ${acomp.length ? `<div class="dvc-acomp"><i class="fa-solid fa-link"></i> Acompanhando: ${acomp.join(' · ')}</div>` : ''}
         ${hist.length ? `<button type="button" class="dvc-hist-bt" onclick="event.stopPropagation(); dvcAbrirHistorico('${x.key}')">Histórico (${hist.length}) <i class="fa-solid fa-chevron-right"></i></button>` : ''}
@@ -401,17 +427,21 @@ function dvcVerAnterior(bt) {
     box.style.display = abre ? '' : 'none'; bt.textContent = abre ? 'Ocultar versão anterior' : 'Ver versão anterior';
 }
 function dvcRender() {
-    const el = document.getElementById('central-div-cards'); if (!el) return;
+    const av = dvcModo === 'avulsa', P = av ? 'aud-pend' : 'central-div';
+    const el = document.getElementById(av ? 'aud-pend-cards' : 'central-div-cards');
+    const cont = document.getElementById(av ? 'aud-aba-pend-n' : 'central-aba-div-n');
+    if (!av) { const n = dvcContagemAvulsasAbertas(), c2 = document.getElementById('aud-aba-pend-n'); if (c2) { c2.textContent = n; c2.style.display = n ? '' : 'none'; } }
+    if (!el) return;
     const lista = dvcLista();
-    const barra = document.getElementById('central-div-barra'), vazio = document.getElementById('central-div-vazio'), cont = document.getElementById('central-aba-div-n');
+    const barra = document.getElementById(P + '-barra'), vazio = document.getElementById(P + '-vazio');
     if (barra) barra.style.display = lista.length ? '' : 'none';
     if (vazio) vazio.style.display = lista.length ? 'none' : '';
-    if (cont) { cont.textContent = lista.length; cont.style.display = lista.length ? '' : 'none'; }
+    if (cont) { const n = av ? dvcContagemAvulsasAbertas() : lista.length; cont.textContent = n; cont.style.display = n ? '' : 'none'; }
     if (!lista.length) { el.innerHTML = ''; return; }
     const porForn = new Map();
     lista.forEach(x => { const k = dvcNomeForn(x.oc); if (!porForn.has(k)) porForn.set(k, []); porForn.get(k).push(x); });
     el.innerHTML = [...porForn.entries()].map(([forn, itens]) => `<div class="dvc-forn"><div class="dvc-forn-nome">${escRel(forn)} <span>${itens.length}</span></div>${itens.map(dvcHtmlCard).join('')}</div>`).join('');
-    const bt = document.getElementById('central-div-selecionar'); if (bt) bt.classList.toggle('active', dvcSelAtivo);
+    const bt = document.getElementById(P + '-selecionar'); if (bt) bt.classList.toggle('active', dvcSelAtivo);
 }
 
 // ---------- aba Alterações (histórico do SmartCompras) ----------
@@ -440,7 +470,7 @@ function dvcRenderAlteracoes(pedido) {
     const antesAba = window.alternarAbaCentral;
     window.alternarAbaCentral = function (aba) {
         antesAba.apply(this, arguments);
-        if (aba !== 'divergencias' && dvcSelAtivo) dvcSelSair();
+        if (dvcModo === 'pedido' && aba !== 'divergencias' && dvcSelAtivo) dvcSelSair();
         if (aba === 'alteracoes') dvcCarregarAlteracoes(false);
     };
     const antesRender = window.renderCentralPedidoCompleto;
@@ -451,10 +481,16 @@ function dvcRenderAlteracoes(pedido) {
     };
     const antesAbrir = window.abrirCentralPedido;
     window.abrirCentralPedido = function (pedido) {
-        dvcEdit = null; dvcSelAtivo = false; dvcSel.clear(); dvcFecharHistorico(); dvcSelAvisar();
+        dvcModo = 'pedido'; dvcEdit = null; dvcSelAtivo = false; dvcSel.clear(); dvcFecharHistorico(); dvcSelAvisar();
         return antesAbrir.apply(this, arguments);
+    };
+    const antesRef = window.refrescarTelasOcorrencias;
+    if (typeof antesRef === 'function') window.refrescarTelasOcorrencias = function () {
+        const r = antesRef.apply(this, arguments);
+        try { const tela = document.getElementById('screen-auditoria-central'); if (tela && tela.classList.contains('active') && typeof audAba !== 'undefined' && audAba === 'pend') { dvcModo = 'avulsa'; dvcRender(); } else dvcRender(); } catch (e) { console.error(e); }
+        return r;
     };
 })();
 // a tela de edição é uma "sub-tela" da Central do Pedido (botão Voltar no topo e transição de entrada/saída)
 if (typeof closeBtnBackScreen !== 'undefined') { closeBtnBackScreen['screen-div-editar'] = 'screen-central-pedido'; screenParentMap['screen-div-editar'] = screenParentMap['screen-central-pedido'] || 'screen-cotacoes'; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/71-divergencias-cards.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/71-divergencias-cards.js'] = '2.76.0';
