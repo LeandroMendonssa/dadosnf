@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.75.0', nome: 'Aba Divergências, tela própria de edição, aviso de conflito e pendência fora do Repasse', status: 'atual', data: '27/11/2026 às 00:30',
+        numero: '2.75.1', nome: 'Correção: abas da Central do Pedido cortadas no iPhone', status: 'atual', data: '27/11/2026 às 01:25',
+        novidades: ['As abas da Central do Pedido voltam a aparecer inteiras, numa linha só, rolando para o lado (no tema novo elas ficavam cortadas).'],
+        implementado: ['style.css: regra das abas com a força do id da tela (igual ao Editor de NF), para vencer o estilo do tema novo.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
+        mudou: ['Só o visual das abas da Central do Pedido; nenhum dado nem regra mudou.'],
+        testar: ['Abrir um pedido e conferir as abas (Produtos, Divergências, Anotações, Dados...) inteiras e rolando para o lado.']
+    },
+    {
+        numero: '2.75.0', nome: 'Aba Divergências, tela própria de edição, aviso de conflito e pendência fora do Repasse', status: 'concluida', data: '27/11/2026 às 00:30',
         novidades: ['Central do Pedido: nova aba Divergências (as Anotações voltam a ter só texto), com abas cinza que rolam para o lado como no Editor de NF.', 'Editar uma divergência abre uma tela dedicada, com os mesmos campos da auditoria, sem cabeçalho fixo.', 'Se outro aparelho mudou a divergência enquanto você editava, o app avisa o que mudou antes de salvar.', 'Cada edição guarda a versão anterior: no Histórico (folha por baixo), toque em "Ver versão anterior".', 'NF com pendência para o financeiro sai do Repasse de NF e fica só no Controle de NF; ao resolver, aparece "Enviar à relação" (não volta sozinha).', 'Cotação: removido o botão repetido "Atualizar via XML" do editor; a atualização fica em Dados.'],
         implementado: ['js/71: aba, cards, tela de edição (screen-div-editar), dvcGravar com conferência ao vivo (sem leitura extra) e snapshot "antes", folha de histórico.', 'js/05: notasSaida()/notasEmEspera() ignoram notas com pendFin; tela nova em DADOS_POR_TELA. js/04, 06, 08, 17, 20: usam essas funções.', 'js/65: marca/libera pendFin na nota ligada à NF. js/17: botão Enviar à relação. js/31: Ajuda. index.html e style.css: aba, painel, tela e estilos.'],
         arquivos: ['index.html', 'style.css', 'js/71-divergencias-cards.js', 'js/05-listeners-dados.js', 'js/65-notas-pendentes.js', 'js/17-historico-controle-nfs.js', 'js/04-relatorios-base.js', 'js/06-exportar-pdf.js', 'js/08-fornecedores-logo.js', 'js/20-editor-nf.js', 'js/31-ajuda.js', 'js/14-historico-mudancas.js'],
@@ -4207,4 +4215,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.1';
