@@ -12,7 +12,15 @@
 // leandromendonssa
 const HISTORICO_FASES = [
     {
-        numero: '2.75.1', nome: 'Correção: abas da Central do Pedido cortadas no iPhone', status: 'atual', data: '27/11/2026 às 01:25',
+        numero: '2.75.2', nome: 'Correção: abas da Central do Pedido encolhendo ao rolar e espaçamento na aba Dados', status: 'atual', data: '27/11/2026 às 06:20',
+        novidades: ['As abas da Central do Pedido não ficam mais "engolidas" ao rolar a tela.', 'Aba Dados: espaço entre os cartões (dados do pedido e Complementar com Relatório do SmartCompras).'],
+        implementado: ['style.css: a tela do pedido é uma coluna flexível e a faixa de abas encolhia; agora ela não encolhe (flex 0 0 auto, altura mínima). Margem padrão entre os cartões da aba.'],
+        arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
+        mudou: ['Só o visual da Central do Pedido; nenhum dado nem regra mudou.'],
+        testar: ['Abrir um pedido, rolar a tela para baixo e para cima: as abas devem continuar inteiras.', 'Aba Dados: conferir o espaço entre os dois cartões.']
+    },
+    {
+        numero: '2.75.1', nome: 'Correção: abas da Central do Pedido cortadas no iPhone', status: 'concluida', data: '27/11/2026 às 01:25',
         novidades: ['As abas da Central do Pedido voltam a aparecer inteiras, numa linha só, rolando para o lado (no tema novo elas ficavam cortadas).'],
         implementado: ['style.css: regra das abas com a força do id da tela (igual ao Editor de NF), para vencer o estilo do tema novo.'],
         arquivos: ['index.html', 'style.css', 'js/14-historico-mudancas.js'],
@@ -4215,4 +4223,4 @@ function renderPreviewImportacaoXml() {
 }
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.1';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/14-historico-mudancas.js'] = '2.75.2';
