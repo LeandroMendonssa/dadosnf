@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="author" content="Leandro Mendonça">
-    <meta name="app-versao" content="2.75.3">
+    <meta name="app-versao" content="2.76.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minhas Notas</title>
     <meta name="mobile-web-app-capable" content="yes">
@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Slab:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
      
-    <link rel="stylesheet" href="style.css?v=2.75.3">
+    <link rel="stylesheet" href="style.css?v=2.76.0">
     <link rel="stylesheet" id="nv-css" href="novo-visual.css?v=2.73.0">
     <link rel="stylesheet" href="style-xp.css?v=2.60.0">
     <link rel="stylesheet" href="style-vidro.css?v=2.64.0">
@@ -379,9 +379,17 @@
                 <div class="xml-filtro-toggle" id="aud-abas">
                     <button type="button" class="xml-filtro-btn active" data-aba="central" onclick="mudarAbaAuditoria('central')">Auditoria</button>
                     <button type="button" class="xml-filtro-btn" data-aba="retro" onclick="mudarAbaAuditoria('retro')">Retroativa</button>
+                    <button type="button" class="xml-filtro-btn" data-aba="pend" onclick="mudarAbaAuditoria('pend')">Pendências<span class="central-aba-n" id="aud-aba-pend-n" style="display:none;"></span></button>
                 </div>
                 <div id="aud-pane-central"><div id="auditoria-central-conteudo"></div></div>
                 <div id="aud-pane-retro" style="display:none"><div id="retro-conteudo"></div></div>
+                <div id="aud-pane-pend" style="display:none">
+                    <p class="rp-intro">Pendências que não dependem de pedido nem de NF: <b>falta a NF de um produto</b> e <b>falta cotação</b>. Para cadastrar, abra a Nova Auditoria e escolha o tipo &quot;NF pendente&quot; ou &quot;Cotação pendente&quot;; só o fornecedor é obrigatório. Elas saem no Resumo de pendências, com os dias em aberto.</p>
+                    <div class="actions-row" style="margin:10px 0 14px"><button type="button" class="actions-button is-neutral" onclick="switchToScreen('screen-auditoria-nova', 'Nova Auditoria')"><span class="icon-wrapper"><i class="fa-solid fa-plus"></i></span> Nova pendência</button></div>
+                    <div class="dvc-barra" id="aud-pend-barra" style="display:none;"><h3 class="dvc-titulo">Pendências</h3><button type="button" class="dvc-sel-bt" id="aud-pend-selecionar" onclick="dvcSelEntrar()"><i class="fa-solid fa-square-check"></i> Selecionar</button></div>
+                    <div id="aud-pend-cards"></div>
+                    <div class="card" id="aud-pend-vazio" style="display:none;"><p style="margin:0;color:var(--text-light);font-size:13px;">Nenhuma pendência avulsa cadastrada.</p></div>
+                </div>
             </div>
             <div class="app-screen" id="screen-historico-mudancas">
                 <div id="historico-mudancas-lista"></div>
@@ -818,13 +826,15 @@
                 <div id="equipamentos-root"></div>
             </div>
             <div class="app-screen" id="screen-resumo-pend"><div id="resumo-pend-modal" class="resumo-tela">
-          <p class="rp-intro">Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência. Só entram ocorrências de auditoria ainda não relatadas.</p>
+          <p class="rp-intro">Os pedidos entram sozinhos: todo pedido recente com fornecedor que ainda não entregou ou que entregou e deixou pendência. Só entram ocorrências de auditoria ainda não relatadas; para incluir as já relatadas (e ainda não resolvidas), ligue &quot;Já relatadas&quot;.</p>
           <div class="rp-sec">O que incluir</div>
           <div class="rp-lista">
           <label class="rp-op"><input type="checkbox" id="rp-nao" onchange="resumoPendOpcaoMudou()"><span><b>Fornecedores que não entregaram</b><small>lista simples sob o número do pedido</small></span><i id="rp-n-nao"></i></label>
           <label class="rp-op"><input type="checkbox" id="rp-nf" onchange="resumoPendOpcaoMudou()"><span><b>Produtos não faturados</b><small>“..., quantidade 10, não foi faturado.”</small></span><i id="rp-n-nf"></i></label>
           <label class="rp-op"><input type="checkbox" id="rp-div" onchange="resumoPendOpcaoMudou()"><span><b>Divergências em aberto</b><small>quantidade, valor, troca de produto etc. das ocorrências da auditoria</small></span><i id="rp-n-div"></i></label>
-          <label class="rp-op"><input type="checkbox" id="rp-obs" onchange="resumoPendOpcaoMudou()"><span><b>Observação da ocorrência</b><small>o que você escreveu na observação da auditoria (ex.: confirmar recurso)</small></span><i id="rp-n-obs"></i></label></div>
+          <label class="rp-op"><input type="checkbox" id="rp-obs" onchange="resumoPendOpcaoMudou()"><span><b>Observação da ocorrência</b><small>o que você escreveu na observação da auditoria (ex.: confirmar recurso)</small></span><i id="rp-n-obs"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-av" onchange="resumoPendOpcaoMudou()"><span><b>Pendências avulsas</b><small>NF pendente e cotação pendente, sem pedido (cadastradas na Auditoria)</small></span><i id="rp-n-av"></i></label>
+          <label class="rp-op"><input type="checkbox" id="rp-rel" onchange="resumoPendOpcaoMudou()"><span><b>Já relatadas (não resolvidas)</b><small>divergências que você marcou como relatadas, mas ainda estão pendentes</small></span><i id="rp-n-rel"></i></label></div>
           <div class="rp-sec">Outros pedidos (opcional)</div>
           <input type="text" id="resumo-pend-pedidos" class="form-field rp-extra" inputmode="numeric" placeholder="Incluir também outros pedidos (opcional): 1748, 1749" oninput="gerarResumoPendencias('extras')" >
           <div class="rp-sec">Prévia</div>
