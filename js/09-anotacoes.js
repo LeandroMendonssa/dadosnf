@@ -369,7 +369,7 @@ function renderCentralPedidoCompleto(pedido) {
             // 2.9.3: fechado, o cartão mostra só o cabeçalho e a barra de ações; faixa de entrega e números ficam no topo da parte que expande.
             // 2.22.6: botão para gerar de uma vez as auditorias de todas as ocorrências em aberto deste fornecedor (voltou ao cartão)
             const nLoteAud = compForn.filter(c => c.estado === 'detectada' && c.codProduto).length;
-            const acoesLista = (dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)]).concat(nLoteAud > 1 ? [{ i: 'dir', t: `Gerar auditorias (${nLoteAud})`, fn: `registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }] : [])
+            const acoesLista = (dadosEnt ? dadosEnt.acoes : [acaoAssociarNf(pedido, f.cnpj)]).concat([{ i: 'novo', t: '+ Divergência', fn: `novaDivergenciaCentral('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }]).concat(nLoteAud > 1 ? [{ i: 'dir', t: `Gerar auditorias (${nLoteAud})`, fn: `registrarTodasDivergenciasDoFornecedor('${escRel(String(pedido))}','${escRel(String(f.cnpj))}')` }] : [])
                 .concat(dupQtdAbertasFornecedor(pedido, f.cnpj) ? [{ i: 'dir', t: `Pedido duplicado (${dupQtdAbertasFornecedor(pedido, f.cnpj)})`, fn: `centralFornecedoresAbertos.add('${escRel(String(f.cnpj))}'); renderCentralPedidoCompleto('${escRel(String(pedido))}')` }] : []);
             const acoesHTML = `<div class="ctl-bar cf-bar">${acoesLista.map(a => `<button type="button" class="${a.on ? 'on ' : ''}${a.i === 'fin' ? 'p' : ''}"${a.on ? ' aria-pressed="true"' : ''} onclick="event.stopPropagation(); ${a.fn}">${ICONES_CTRL[a.i] || ''}<span>${a.t}</span></button>`).join('')}</div>
                 ${htmlPainelAssociarNf(pedido, f.cnpj)}`;
@@ -401,7 +401,7 @@ function renderCentralPedidoCompleto(pedido) {
                     const comp = compForn.find(c => c.codProduto === it.codProduto && (c.temNf || c.temErp || c.divergencias.length));
                     const divs = divPorProduto[it.codProduto] || [];
                     return renderLinhaProduto(it, `${f.cnpj}-${it.codProduto}`, {
-                        comp, chegou: !!chegada, estado: (compForn.find(c => c.codProduto === it.codProduto) || {}).estado || 'nenhuma',
+                        cnpjForn: f.cnpj, comp, chegou: !!chegada, estado: (compForn.find(c => c.codProduto === it.codProduto) || {}).estado || 'nenhuma',
                         compHTML: comp ? renderComparacaoItemHTML(pedido, comp, true) : `<div class="central-item-vazio">${chegada ? 'Fornecedor marcado como já chegou (sem NF no app).' : 'Ainda sem NF/ERP para este item.'}</div>`,
                         divsHTML: divs.map(x => renderBlocoDivergencia(x.d, x.oc, x.ocIdx, x.divIdx)).join(''),
                         divsPendentes: divs.filter(x => (x.d.status || 'pendente') === 'pendente').length
@@ -709,6 +709,7 @@ function renderLinhaProduto(it, chaveUnica, ctx) {
             <div class="central-item-meta"><span>${resumoMeta}${participantesResumo}</span><span class="central-prod-badges">${badges}<i class="fa-solid fa-chevron-down central-item-chevron"></i></span></div>
         </div>
         <div class="central-colapso"><div class="central-colapso-inner">
+            ${(it.codProduto && centralPedidoAtual && c.cnpjForn) ? `<div class="ctl-bar cf-bar cf-prod-bar"><button type="button" onclick="event.stopPropagation(); novaDivergenciaCentral('${escRel(String(centralPedidoAtual))}','${escRel(String(c.cnpjForn))}','${escRel(String(it.codProduto))}')">${ICONES_CTRL.novo}<span>+ Divergência deste produto</span></button></div>` : ''}
             ${detalhesHTML}
             ${c.compHTML ? `<div class="central-secao-titulo">Comparação Cotação × NF × ERP</div>${c.compHTML}` : ''}
             ${c.divsHTML ? `<div class="central-secao-titulo">Divergências (auditoria)</div>${c.divsHTML}` : ''}
@@ -807,6 +808,7 @@ function iniciarAuditoriaDoPedidoCentral() {
     abrirNovaAuditoria();
     document.getElementById('aud-pedido').value = pedido;
     buscarCotacaoParaAuditoria();
+    audVoltarParaPedido = pedido;   // 2.77.0
 }
 
 function abrirTextoLivreDoPedidoCentral() {
@@ -1226,4 +1228,4 @@ function inserirTabelaAnotacao(linhas, colunas) {
     fecharPopoversRte();
     agendarAutoSaveAnotacao();
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.76.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/09-anotacoes.js'] = '2.77.0';

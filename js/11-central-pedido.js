@@ -1561,6 +1561,33 @@ function camposMaterialDivergencia(tipoEstruturado, item, div) {
 // nova divergência é ACRESCENTADA ao rascunho em vez de abrirNovaAuditoria()
 // resetar tudo. Só abre/limpa quando é de fato um pedido diferente do que já
 // estava sendo preenchido.
+// 2.77.0: botão "+ Divergência" da Central do Pedido (no fornecedor, sem codProduto; no produto, com ele). Abre a Nova Auditoria já com pedido,
+// fornecedor, NF(s) vinculada(s) e, no produto, o produto e a quantidade da cotação num card sem tipo (o tipo quem escolhe é a pessoa).
+// Nunca grava sozinho. Ao salvar, a auditoria volta para a aba Divergências deste pedido (audVoltarParaPedido, js/12).
+function novaDivergenciaCentral(pedido, cnpj, codProduto) {
+    const cotacao = listaCotacoes.find(c => c.pedido === pedido); if (!cotacao) return;
+    const forn = (cotacao.fornecedores || []).find(f => mesmoCnpj(f.cnpj, cnpj));
+    let comps = []; try { comps = compararFontesPedido(pedido, { nfExtra: nfExtraDaTela(pedido) }).filter(i => mesmoCnpj(i.cnpjFornecedor, cnpj)); } catch (e) { }
+    const doProduto = codProduto ? comps.filter(i => i.codProduto === codProduto) : [];
+    const nfs = [...new Set((doProduto.length ? doProduto : comps).flatMap(i => i.nfs || []))];
+    abrirNovaAuditoria();
+    document.getElementById('aud-pedido').value = pedido;
+    buscarCotacaoParaAuditoria();
+    if (forn) document.getElementById('aud-fornecedor').value = nomeExibicaoFornecedor(forn.razaoSocial, forn.cnpj);
+    if (nfs.length) document.getElementById('aud-nf').value = nfs.join(', ');
+    if (codProduto) {
+        const it = itemCotacaoAuditoriaPorCodigo(codProduto);
+        if (it) {
+            divergenciasAuditoria.forEach(d => d.aberto = false);
+            divergenciasAuditoria.push({ id: ++contadorDivergenciaId, tipo: '', aberto: true, materiais: [], observacao: '', campos: {}, prefill: { produto: nomeConhecidoItemCotacao(it), quantidade: it.quantidade || '', ref: codProduto } });
+            renderDivergenciasAuditoria();
+        }
+    }
+    audVoltarParaPedido = pedido;
+    toast(codProduto ? 'Escolha o tipo da divergência; produto e quantidade já estão preenchidos.' : 'Fornecedor e NF preenchidos. Adicione a divergência.');
+}
+window.novaDivergenciaCentral = novaDivergenciaCentral;
+
 function registrarDivergenciaDaComparacao(pedido, codProduto) {
     const item = compararFontesPedido(pedido, { nfExtra: nfExtraDaTela(pedido) }).find(i => i.codProduto === codProduto);
     const cotacao = listaCotacoes.find(c => c.pedido === pedido);
@@ -1875,4 +1902,4 @@ function marcarFalsoPositivoUnidade(codigoSpData) {
     if (!produto.ignorarDivergenciaUnidade) alternarIgnorarDivergenciaProdutoSpData(codigoSpData);
 }
 function multiPedidoAtivo() { return pedidosAdicionaisXml.length > 0; }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.70.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/11-central-pedido.js'] = '2.77.0';

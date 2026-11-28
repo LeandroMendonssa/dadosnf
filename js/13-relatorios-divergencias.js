@@ -23,6 +23,15 @@ function mudarTipoDivergencia(id, tipo) {
     d.observacao = '';
     const def = TIPOS_DIVERGENCIA_AUDITORIA[tipo];
     d.materiais = (def && def.multiMaterial) ? [{ id: ++contadorMaterialId, campos: {} }] : [];
+    // 2.77.0: card criado pelo botão "+ Divergência" da Central do Pedido guarda produto/quantidade e aplica ao escolher o tipo
+    if (d.prefill && d.materiais[0]) {
+        const keys = ((def && def.campos) || []).map(c => c.key), m = d.materiais[0], pf = d.prefill;
+        const kProd = keys.includes('produto') ? 'produto' : (keys.includes('produtoPedido') ? 'produtoPedido' : '');
+        const kQtd = keys.includes('quantidade') ? 'quantidade' : (keys.includes('quantidadeCotada') ? 'quantidadeCotada' : '');
+        if (kProd && pf.produto) m.campos[kProd] = pf.produto;
+        if (kQtd && pf.quantidade) m.campos[kQtd] = pf.quantidade;
+        if (pf.ref) m.ref = pf.ref;
+    }
     renderDivergenciasAuditoria();
 }
 // Campos de ocorrência única (só usado por tipos com multiMaterial:false,
@@ -611,4 +620,4 @@ function calcularRecursoOficial(origemPedido, tipo) {
 // existe pra dar um "condição atendida/verificar" com base real, nunca um
 // número inventado pelo sistema. Fica vazio até o usuário definir.
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.73.28';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/13-relatorios-divergencias.js'] = '2.77.0';

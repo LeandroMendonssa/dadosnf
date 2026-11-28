@@ -184,6 +184,8 @@ const ICONES_CTRL = {
     esp: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     del: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
     arq: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>',
+    novo: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+    pend: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>',
     ger: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>'
 };
 // leandromendonssa
@@ -284,7 +286,7 @@ function renderCardControleNf(it) {
             botoes.push(btn('dir', 'Não vai ao financeiro', `marcarNfDireta('${chaveJs}')`));
             botoes.push(it.possivelNota ? btn('rel', 'É a mesma nota — vincular', `vincularNfANota('${chaveJs}')`) : btn('rel', 'Enviar à relação', `enviarNfParaRelacao('${chaveJs}')`));
         } else if (it.nota && notaRetidaPorPendencia(it.nota)) {   // 2.75.0: retida por pendência — só volta à relação quando o usuário mandar
-            if (!pendEntregaDe(it.nf, it.erp)) botoes.push(btn('rel', 'Enviar à relação', `liberarNotaParaRelacao('${chaveJs}')`));
+            if (!pendEntregaDe(it.nf, it.erp, it.nota)) botoes.push(btn('rel', 'Enviar à relação', `liberarNotaParaRelacao('${chaveJs}')`));
         } else if (it.situacao === 'na_relacao' || it.situacao === 'em_espera') {
             botoes.push(btn('ger', 'Ver no Repasse de NF', `verNoGerenciarNf('${chaveJs}')`));
         }
@@ -294,7 +296,8 @@ function renderCardControleNf(it) {
     }
     const devPend = it.nf ? devolucaoPendenteDaNf(it.nf) : null;
     if (devPend) botoes.unshift(btn('reab', 'Marcar como recolhido', `abrirRecolhimentoDevolucao('${String(it.nf.id).replace(/'/g, "\\'")}', ${devPend.idx})`));
-    if (aba === 'aberto' && it.tipo === 'nf' && (it.nf || it.erp)) { const pe = pendEntregaDe(it.nf, it.erp); botoes.push(btn('esp', pe ? 'Editar pendência' : 'Pendente p/ financeiro', `abrirPendenciaEntrega('${String((it.nf || it.erp).id).replace(/'/g, "\\'")}')`)); }   // 2.73.0
+    if (aba === 'aberto' && it.tipo === 'nf' && (it.nf || it.erp)) { const pe = pendEntregaDe(it.nf, it.erp); botoes.push(btn('pend', pe ? 'Editar pendência' : 'Pendente p/ financeiro', `abrirPendenciaEntrega('${String((it.nf || it.erp).id).replace(/'/g, "\\'")}')`)); }   // 2.73.0
+    if (aba === 'aberto' && it.tipo === 'nota' && it.nota) { const pe = pendEntregaDe(null, null, it.nota); botoes.push(btn('pend', pe ? 'Editar pendência' : 'Pendente p/ financeiro', `abrirPendenciaEntrega('nota:${String(it.nota.id).replace(/'/g, "\\'")}')`)); }   // 2.77.0: NF manual também
     if (editor) botoes.push(editor);
     const sel = selecaoControleAtiva && it.tipo === 'nf' && aba === 'aberto';
     const marcado = sel && selecionadasControle.has(it.chave);
@@ -1068,7 +1071,7 @@ async function compartilharLista(){const texto=DOM.saida.value;if(!texto.trim())
 async function exportar(){if(DOM.saida.value==="")return toast("Nada para copiar.");await navigator.clipboard.writeText(DOM.saida.value);toast("✓ Lista copiada!")}
 
 // ===================================================================
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.75.3';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/17-historico-controle-nfs.js'] = '2.77.0';
 
 // 2.29.0: a nota do Gerenciar é uma cópia (valor/vencimento) feita no envio. Se a NF/ERP ligada mudar depois
 // (ERP reimportado, XML corrigido), a cópia ficava velha sem aviso. Aqui só se DETECTA e se oferece "Usar da NF":

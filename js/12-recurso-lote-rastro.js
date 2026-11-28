@@ -487,7 +487,9 @@ const TIPOS_DIVERGENCIA_AUDITORIA = {
 
 function upAud(s) { return (s || '').toString().toUpperCase(); }
 
+let audVoltarParaPedido = null;   // 2.77.0: pedido da Central de onde a auditoria foi aberta; ao salvar, volta para a aba Divergências dele
 function abrirNovaAuditoria() {
+    audVoltarParaPedido = null;
     limparFormularioAuditoria();
     document.getElementById('card-resultado-auditoria').style.display = 'none';
     document.getElementById('config-textos-body').style.display = 'none';
@@ -512,6 +514,8 @@ function limparFormularioAuditoria() {
 }
 function finalizarAposSalvarAuditoria() {
     limparFormularioAuditoria();
+    const volta = audVoltarParaPedido; audVoltarParaPedido = null;
+    if (volta) { try { abrirCentralPedido(volta); alternarAbaCentral('divergencias'); } catch (e) { console.warn('voltar à Central', e); } }
 }
 
 // Ao digitar/sair do campo Pedido, procura a cotação cadastrada (manual ou
@@ -639,4 +643,4 @@ function garantirDatalistSpDataAuditoria() {
 function audListaFocar(el) { el.dataset.anterior = el.value; el.dataset.tocou = ''; el.value = ''; }
 function audListaSair(el) { if (!el.dataset.tocou && el.dataset.anterior !== undefined && !el.value) el.value = el.dataset.anterior; delete el.dataset.anterior; }
 // leandromendonssa
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.76.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/12-recurso-lote-rastro.js'] = '2.77.0';

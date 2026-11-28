@@ -4,9 +4,9 @@
 // Dado novo (mínimo): campo pendenciaEntrega { motivos: [...], desde: 'AAAA-MM-DD' } no documento da própria NF (nfsProcessadas, ou entradasErp se só veio do ERP).
 // Só leitura da visão única (js/36); nada de contagem paralela.
 const MOTIVOS_PEND_ENTREGA = [['carta_correcao', 'Carta de correção'], ['nf_devolucao', 'Nota fiscal de devolução'], ['cotacao', 'Cotação']];
-function pendEntregaDe(nf, erp) {
+function pendEntregaDe(nf, erp, nota) {   // 2.77.0: 3º parâmetro = nota manual (sem XML/ERP): a marca fica na própria nota
     const ok = x => x && x.pendenciaEntrega && Array.isArray(x.pendenciaEntrega.motivos) && x.pendenciaEntrega.motivos.length ? x.pendenciaEntrega : null;
-    return ok(nf) || ok(erp) || null;
+    return ok(nf) || ok(erp) || ok(nota) || null;
 }
 function rotuloMotivosPend(pe) { return (pe && pe.motivos || []).map(m => (MOTIVOS_PEND_ENTREGA.find(x => x[0] === m) || [m, m])[1]).join(', '); }
 // leandromendonssa
@@ -19,15 +19,20 @@ function avisoVencParada(dias) {
 function notasParadasComigo() {
     return visoesNf().map(v => ({ v, pe: pendEntregaDe(v.nf, v.erp) })).filter(x => x.pe && !['arquivada', 'direta'].includes(x.v.situacao))
         .map(x => ({ ...x, dias: x.v.venc ? calcularDiasParaVencimento(x.v.venc) : null }))
+        .concat(notasManuaisComPendencia().map(n => { const pe = pendEntregaDe(null, null, n);
+            return { v: { nf: null, erp: { nf: n.nf }, fornecedor: n.fornecedor, cnpj: '', venc: n.vencimento || '', dataISO: (n.dataCriacao || '').slice(0, 10) || null, situacao: 'na_relacao', notaManualId: n.id }, pe, dias: n.vencimento ? calcularDiasParaVencimento(n.vencimento) : null }; }))
         .sort((a, b) => (a.dias == null ? 9999 : a.dias) - (b.dias == null ? 9999 : b.dias));
 }
+// 2.77.0: notas digitadas à mão (sem NF/ERP ligada) com pendência para o financeiro
+function notasManuaisComPendencia() { return (notasPendentes || []).filter(n => pendEntregaDe(null, null, n) && !idEditorNfDaNota(n)); }
 // linha informativa no cartão do Controle de NFs
 function htmlPendenciaEntregaCard(it) {
-    const pe = pendEntregaDe(it.nf, it.erp); if (!pe || ['arquivada', 'direta'].includes(it.situacao)) return '';
+    const pe = pendEntregaDe(it.nf, it.erp, it.nota); if (!pe || ['arquivada', 'direta'].includes(it.situacao)) return '';
     const dias = it.venc ? calcularDiasParaVencimento(it.venc) : null;
     return `<div class="ctl-inf pend-ent${dias != null && dias <= 0 ? ' urgente' : ''}"><b>Pendente para o financeiro:</b> ${escRel(rotuloMotivosPend(pe))} · ${escRel(avisoVencParada(dias))}</div>`;
 }
 function abrirPendenciaEntrega(id) {
+    if (String(id).startsWith('nota:')) return abrirPendenciaNotaManual(String(id).slice(5));
     const v = typeof visaoNfPorId === 'function' ? visaoNfPorId(id) : null;
     const nf = listaNfsProcessadas.find(n => n.id === id), erp = !nf ? listaEntradasErp.find(e => e.id === id) : null;
     if (!nf && !erp) return toast('NF não encontrada.');
@@ -44,6 +49,7 @@ function abrirPendenciaEntrega(id) {
     m.classList.add('active');
 }
 async function salvarPendenciaEntrega(id, remover) {
+    if (String(id).startsWith('nota:')) return salvarPendenciaNotaManual(String(id).slice(5), remover);
     const v = visaoNfPorId(id);
     const nf = (v && v.nf) || listaNfsProcessadas.find(n => n.id === id) || null, erp = (v && v.erp) || (!nf ? listaEntradasErp.find(e => e.id === id) : null) || null;
     if (!nf && !erp) return;
@@ -64,6 +70,32 @@ async function salvarPendenciaEntrega(id, remover) {
         toastRico({ titulo: motivos.length ? 'Pendência registrada' : 'Pendência removida', detalhe: `NF ${(nf || erp).nf}${motivos.length ? ' · ' + motivos.map(k => (MOTIVOS_PEND_ENTREGA.find(x => x[0] === k) || [k, k])[1]).join(', ') + (nota ? ' · saiu do Repasse de NF' : '') : (nota && nota.pendFin ? ' · já pode voltar para a relação (botão no Controle de NF)' : '')}` });
         ['renderControleNfs', 'renderEditorNf', 'renderInicio'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
     } catch (e) { console.error('Erro ao salvar pendência de entrega:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
+}
+// 2.77.0: NF digitada à mão não tem XML nem ERP: a pendência fica na própria nota (pendenciaEntrega + pendFin) e ela sai do Repasse, como as demais
+function abrirPendenciaNotaManual(notaId) {
+    const nota = notasPendentes.find(n => n.id === notaId); if (!nota) return toast('Nota não encontrada.');
+    const pe = pendEntregaDe(null, null, nota), marcados = new Set(pe ? pe.motivos : []);
+    let m = document.getElementById('pend-entrega-modal');
+    if (!m) { m = document.createElement('div'); m.id = 'pend-entrega-modal'; m.className = 'modal-screen'; document.body.appendChild(m); }
+    m.innerHTML = `<div class="modal-content"><h2>Pendente para o financeiro</h2>
+        <p>NF ${escRel(nota.nf || '(sem número)')}. Marque o que está faltando. Enquanto houver pendência, a NF não vai ao financeiro e sai do Repasse de NF.</p>
+        ${MOTIVOS_PEND_ENTREGA.map(([k, r]) => `<label class="pend-opt"><input type="checkbox" value="${k}" ${marcados.has(k) ? 'checked' : ''}><span>${r}</span></label>`).join('')}
+        <div class="confirm-actions pend-acoes"><button type="button" class="actions-button" onclick="closeAllModals()">Cancelar</button>
+        ${pe ? `<button type="button" class="actions-button is-danger" onclick="salvarPendenciaEntrega('nota:${escRel(notaId)}', true)">Remover</button>` : ''}
+        <button type="button" class="actions-button is-primary" onclick="salvarPendenciaEntrega('nota:${escRel(notaId)}', false)">Salvar</button></div></div>`;
+    m.classList.add('active');
+}
+async function salvarPendenciaNotaManual(notaId, remover) {
+    const nota = notasPendentes.find(n => n.id === notaId); if (!nota) return;
+    const motivos = remover ? [] : [...document.querySelectorAll('#pend-entrega-modal input[type=checkbox]:checked')].map(x => x.value);
+    const atual = pendEntregaDe(null, null, nota);
+    const upd = motivos.length ? { pendenciaEntrega: { motivos, desde: (atual && atual.desde) || dataLocalISO(), atualizadoEm: new Date().toISOString() }, pendFin: true } : { pendenciaEntrega: firebase.firestore.FieldValue.delete() };
+    try {
+        await notasCollection.doc(nota.id).update(upd);
+        closeAllModals();
+        toastRico({ titulo: motivos.length ? 'Pendência registrada' : 'Pendência removida', detalhe: `NF ${nota.nf || '(sem número)'}${motivos.length ? ' · ' + rotuloMotivosPend({ motivos }) + ' · saiu do Repasse de NF' : ' · já pode voltar à relação pelo Controle de NFs'}` });
+        ['renderControleNfs', 'renderInicio', 'rebuildNotasPendentesList'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { } });
+    } catch (e) { console.error('Erro ao salvar pendência da nota manual:', e); toast('✕ Erro ao salvar. Tente novamente.'); }
 }
 // Resumo na Início (mesma ideia de "fornecedores a chegar"): lista as NFs paradas; tocar leva à NF no Controle de NFs
 function abrirNotasPendentesResumo() {
@@ -168,7 +200,7 @@ window.abrirNotasPendentesResumo = abrirNotasPendentesResumo; window.irParaNotaP
 // Devolve ao Repasse de NF a nota retida por pendência (ação do usuário, nunca automática)
 async function liberarNotaParaRelacao(chave) {
     const it = itemControlePorChave(chave); if (!it || !it.nota) return;
-    if (pendEntregaDe(it.nf, it.erp)) return toast('Ainda há pendência para o financeiro nesta NF.');
+    if (pendEntregaDe(it.nf, it.erp, it.nota)) return toast('Ainda há pendência para o financeiro nesta NF.');
     try { await notasCollection.doc(it.nota.id).update({ pendFin: firebase.firestore.FieldValue.delete() }); toastRico({ titulo: `NF ${it.numeroNf} enviada para a relação`, acao: 'Ver', onAcao: () => switchToScreen('screen-manage', 'Repasse de NF') }); }
     catch (e) { console.error('liberarNotaParaRelacao', e); toast('✕ Erro ao enviar para a relação.'); }
 }
@@ -190,4 +222,4 @@ window.abrirPendenciaEntrega = abrirPendenciaEntrega; window.salvarPendenciaEntr
         };
     }
 })();
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/65-notas-pendentes.js'] = '2.77.0';

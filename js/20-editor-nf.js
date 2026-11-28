@@ -303,7 +303,7 @@ function renderEditorNf() {
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(nf.pedido || '—')}</strong></div>
         </div>
         <div class="nfe-chips">${badge('pronto', 'XML ✓')} ${badgeErp} ${badge('neutro', escRel(situacaoTxt))}${typeof chipPendenciaEntrega === 'function' ? chipPendenciaEntrega(nf.id) : ''}${xd ? '' : ' ' + badge('pendente', 'XML completo não guardado')}</div>
-        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Controle de NFs</button>${typeof botaoPendenciaEntrega === 'function' ? botaoPendenciaEntrega(nf.id) : ''} <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
+        <div class="nfe-acoes">${pedidosBotoes || ''} <button type="button" class="central-status-toggle" onclick="abrirNfNoHistorico('${escRel(nf.serie ? nf.nf + '_' + nf.serie : String(nf.nf))}', '${escRel(nf.nf)}')">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(nf.id)}')">Cadastrar equipamento desta NF</button></div>
         ${trocaPedido}
         ${cotacoesNfHTML}
     </div>`;
@@ -733,7 +733,7 @@ function renderEditorNfErp(erp, el) {
             <div><span class="nfe-rot">Pedido</span><strong>${escRel(pedido || '—')}</strong></div></div>
         <div class="nfe-chips">${badge('pendente', 'Só no relatório do ERP')} ${badge('pronto', 'ERP: ' + escRel(ROTULO_STATUS_ERP[erp.statusFluxo] || erp.statusFluxo || 'importada'))} ${badge('neutro', escRel(ROTULO_SITUACAO_NF[ctrl.situacao] || '—'))}${typeof chipPendenciaEntrega === 'function' ? chipPendenciaEntrega(erp.id) : ''}</div>
         <div class="nfe-acoes">${pedido ? `<button type="button" class="central-status-toggle" onclick="abrirCentralPedido('${escRel(pedido)}')">Abrir pedido ${escRel(pedido)}</button>` : ''}
-            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button>${typeof botaoPendenciaEntrega === 'function' ? botaoPendenciaEntrega(erp.id) : ''} <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(erp.id)}')">Cadastrar equipamento desta NF</button></div>
+            <button type="button" class="central-status-toggle" onclick="abrirControleNfs()">Ver no Controle de NFs</button> <button type="button" class="central-status-toggle" onclick="cadastrarEquipamentoDaNf('${escRel(erp.id)}')">Cadastrar equipamento desta NF</button></div>
         ${troca}
     </div>`;
 
@@ -882,4 +882,4 @@ function alertaCodigosRepetidosNf(nf) {
     return `<div class="card nfe-alerta"><div class="nfe-alerta-tit">⚠ Itens diferentes com o mesmo produto da cotação</div>
         <div class="nfe-alerta-txt">Estes itens desta NF estão associados ao mesmo produto e suas quantidades são somadas na comparação (pode gerar divergência falsa): ${txt}. Confira a associação na aba Itens.</div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.75.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/20-editor-nf.js'] = '2.77.0';

@@ -481,7 +481,12 @@ function rebuildNotasPendentesList(){
         const titulo = tituloFornNf(nota.fornecedor, aptidao.cnpjFornecedor, nota.nf);
         const venc = String(nota.vencimento || '').replace(/^(\d{2}\/\d{2}\/)\d{2}(\d{2})$/, '$1$2') || '—';
         const valorTxt = nota.valor ? 'R$ ' + String(nota.valor).replace(/^R\$\s*/, '') : '—';
-        const infPartes = [...complementoPartes.filter(p => !/^Pedido /.test(p))];
+        // 2.77.0: o cartão mostra o que SAI no texto (nota.obs = recurso da saída). NF manual (sem XML/ERP): "Nota manual · Recurso" no mesmo resumo das demais.
+        const recSaida = (nota.obs && String(nota.obs).trim()) ? `Recurso: ${nota.obs}` : null;
+        const infPartes = idNfEd
+            ? [...complementoPartes.filter(p => !/^Pedido /.test(p) && !/^Recurso: /.test(p)), ...(recSaida ? [recSaida] : (aptidao.recursos && aptidao.recursos.length ? [`Recurso: ${aptidao.recursos.join(', ')}`] : []))]
+            : ['Nota manual', recSaida || 'Recurso não definido'];
+        const pendIdJs = (idNfEd ? String(idNfEd) : 'nota:' + nota.id).replace(/'/g, "\\'");
         const dvNota = (typeof divergenciaNotaComFonte === 'function') ? divergenciaNotaComFonte(nota) : null;
         const divergHTML = dvNota ? `<div class="ctl-inf" style="margin-top:6px"><div style="margin-bottom:6px">⚠ A ${dvNota.fonte.origem} mudou: ${dvNota.difs.join(' · ')}</div><button class="action-chip" onclick="event.stopPropagation(); usarDadosDaNf('${nota.id}')">Usar da ${dvNota.fonte.origem}</button></div>` : '';
         const infHTML = (infPartes.length || aplicarRecursoHTML) ? `<div class="ctl-inf">${infPartes.join(' · ')}${aplicarRecursoHTML ? `<div style="margin-top:8px">${aplicarRecursoHTML}</div>` : ''}</div>` : '';
@@ -492,9 +497,8 @@ function rebuildNotasPendentesList(){
         <div class="ctl-vl"><b>${valorTxt}</b>${aptidao.status === 'nao_conferida' ? '' : aptidaoHTML}</div>
         ${aptidao.status === 'nao_conferida' ? '<div class="ctl-discreta">sem XML processado</div>' : ''}
         ${infHTML}
-        ${idNfEd ? `<div class="ctl-pend"><button type="button" class="action-chip" onclick="event.stopPropagation(); abrirPendenciaEntrega('${String(idNfEd).replace(/'/g, "\\'")}')">Pendente p/ financeiro</button></div>` : ''}
         ${divergHTML}
-        <div class="ctl-bar" style="grid-template-columns:repeat(${idNfEd ? 5 : 4},1fr)">${bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${idNfEd ? bt('ger', 'Editar NF', `abrirEditorNf('${String(idNfEd).replace(/'/g, "\\'")}')`) : ''}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;
+        <div class="ctl-bar" style="grid-template-columns:repeat(5,1fr)">${idNfEd ? bt('ger', 'Editar NF', `abrirEditorNf('${String(idNfEd).replace(/'/g, "\\'")}')`) : bt('ed', 'Editar', `toggleEditPanel(this, '${nota.id}')`)}${bt('pend', 'Pendência', `abrirPendenciaEntrega('${pendIdJs}')`)}${nota.emEspera ? bt('reab', 'Retomar', `toggleEmEspera('${nota.id}')`) : bt('esp', 'Em espera', `toggleEmEspera('${nota.id}')`)}${bt('arq', 'Arquivar', `event.stopPropagation(); arquivarNotaIndividual('${nota.id}')`)}${bt('del', 'Excluir', `deletarNota('${nota.id}')`)}</div><div class="edit-panel"></div>`;
     };
 
     // Fase 38: Gerenciar NF = só o que foi escolhido pra Saída de Texto; as retidas (Pendente) ficam na aba "Em espera".
@@ -662,4 +666,4 @@ function historicoBannerHTML() {
     if (historicoCarregando) return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="uso-barra" style="margin:4px 0 8px"><i style="width:40%;opacity:.5"></i></div><div class="xml-item-meta">Carregando as notas arquivadas…</div></div></div>`;
     return `<div class="acao-legado"><div class="ctl-card" style="margin:0"><div class="xml-item-meta">Mostrando as notas arquivadas dos últimos ${HISTORICO_JANELA_MESES} meses. As mais antigas ficam no servidor e são buscadas quando precisar.</div><div class="xml-item-acao"><button type="button" class="central-status-toggle" onclick="historicoCarregarTudo()">Carregar todas as arquivadas</button></div></div></div>`;
 }
-/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.76.0';
+/* ARQ_V */ (window.ARQ_V = window.ARQ_V || {})['js/05-listeners-dados.js'] = '2.77.0';
